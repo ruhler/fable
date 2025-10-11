@@ -1,0 +1,26 @@
+# @module[/Std/Char/Lit%]
+#  Universal unicode character literals.
+
+@ Char@ = /Std/Char%.Char@;
+% Char = /Std/Char%.Char;
+
+@ HexLit@ = /Std/Int/Lit%.HexLit@;
+% Hex = /Std/Int/Lit%.Hex;
+
+# @func[U] Unicode character literal.
+#  Example:
+#
+#  @code[fble]
+#   Char@ a = U|0061;
+#
+#  Supports upper and lowercase hex digits as well as '_' separators, just
+#  as in /Std/Int/Lit%.Hex;
+#
+#  @arg[HexLit@][hex] Sequence of hex digits describing the character.
+#  @returns[Char@] The character value associated with that hex code point.
+(HexLit@) { Char@; }
+U = (HexLit@ hex) {
+  Char(Hex(hex));
+};
+
+@(U);

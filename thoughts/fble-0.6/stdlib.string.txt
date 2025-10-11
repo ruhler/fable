@@ -909,3 +909,5 @@ want to avoid depending on List% for /Std/Int/Lit%.
 
 Let's move discussion of integer literals to stdlib.int.txt.
 
+Now that we have that, I'm thinking: /Std/Char/Lit%.U for unicode literals?
+Separate it out, and we can reuse it for /Std/Char/Ascii%.

@@ -1,9 +1,6 @@
 
 @ Char@ = /Std/Char%.Char@;
-% Unicode = /Std/Char%.Char;
-
-@ Int@ = /Std/Int%.Int@;
-% Int = /Std/Int/Lit%.Int;
+% U = /Std/Char/Lit%.U;
 
 <@>@ List@ = /Std/List%.List@;
 
@@ -41,43 +38,43 @@
   Unit@ '{', Unit@ '|', Unit@ '}', Unit@ '~'
 );
 
-# Unicode code points for each character.
+# Ascii character values.
 % Ascii = @(
-  nl: Int|10, tab: Int|9, cr: Int|13,
+  nl: U|0A, tab: U|09, cr: U|0D,
 
-  '	': Int|9,  '': Int|13, ' ': Int|32,
+  '	': U|09,  '': U|0D, ' ': U|20,
 
-  '!': Int|33, '"': Int|34, '#': Int|35, '$': Int|36,
-  '%': Int|37, '&': Int|38, '''': Int|39, '(': Int|40,
-  ')': Int|41, '*': Int|42, '+': Int|43, ',': Int|44,
-  '-': Int|45, '.': Int|46, '/': Int|47,
+  '!': U|21, '"': U|22, '#': U|23, '$': U|24,
+  '%': U|25, '&': U|26, '''': U|27, '(': U|28,
+  ')': U|29, '*': U|2A, '+': U|2B, ',': U|2C,
+  '-': U|2D, '.': U|2E, '/': U|2F,
 
-  '0': Int|48, '1': Int|49, '2': Int|50, '3': Int|51,
-  '4': Int|52, '5': Int|53, '6': Int|54, '7': Int|55,
-  '8': Int|56, '9': Int|57,
+  '0': U|30, '1': U|31, '2': U|32, '3': U|33,
+  '4': U|34, '5': U|35, '6': U|36, '7': U|37,
+  '8': U|38, '9': U|39,
 
-  ':': Int|58, ';': Int|59, '<': Int|60, '=': Int|61,
-  '>': Int|62, '?': Int|63, '@': Int|64,
+  ':': U|3A, ';': U|3B, '<': U|3C, '=': U|3D,
+  '>': U|3E, '?': U|3F, '@': U|40,
 
-  A: Int|65, B: Int|66, C: Int|67, D: Int|68, E: Int|69, F: Int|70,
-  G: Int|71, H: Int|72, I: Int|73, J: Int|74, K: Int|75, L: Int|76,
-  M: Int|77, N: Int|78, O: Int|79, P: Int|80, Q: Int|81, R: Int|82,
-  S: Int|83, T: Int|84, U: Int|85, V: Int|86, W: Int|87, X: Int|88,
-  Y: Int|89, Z: Int|90,
+  A: U|41, B: U|42, C: U|43, D: U|44, E: U|45, F: U|46,
+  G: U|47, H: U|48, I: U|49, J: U|4A, K: U|4B, L: U|4C,
+  M: U|4D, N: U|4E, O: U|4F, P: U|50, Q: U|51, R: U|52,
+  S: U|53, T: U|54, U: U|55, V: U|56, W: U|57, X: U|58,
+  Y: U|59, Z: U|5A,
 
-  '[': Int|91, '\': Int|92, ']': Int|93,
-  '^': Int|94, '_': Int|95, '`': Int|96,
+  '[': U|5B, '\': U|5C, ']': U|5D,
+  '^': U|5E, '_': U|5F, '`': U|60,
 
-  a: Int|97, b: Int|98, c: Int|99, d: Int|100, e: Int|101, f: Int|102,
-  g: Int|103, h: Int|104, i: Int|105, j: Int|106, k: Int|107, l: Int|108,
-  m: Int|109, n: Int|110, o: Int|111, p: Int|112, q: Int|113, r: Int|114,
-  s: Int|115, t: Int|116, u: Int|117, v: Int|118, w: Int|119, x: Int|120,
-  y: Int|121, z: Int|122,
+  a: U|61, b: U|62, c: U|63, d: U|64, e: U|65, f: U|66,
+  g: U|67, h: U|68, i: U|69, j: U|6A, k: U|6B, l: U|6C,
+  m: U|6D, n: U|6E, o: U|6F, p: U|70, q: U|71, r: U|72,
+  s: U|73, t: U|74, u: U|75, v: U|76, w: U|77, x: U|78,
+  y: U|79, z: U|7A,
 
-  '{': Int|123, '|': Int|124, '}': Int|125, '~': Int|126
+  '{': U|7B, '|': U|7C, '}': U|7D, '~': U|7E
 );
 
-(Ascii@) { Int@; } Ord = (Ascii@ c) {
+ToChar@<Ascii@> ToChar = (Ascii@ c) {
   c.?('
 ': Ascii.nl, '	': Ascii.tab, '': Ascii.cr, ' ': Ascii.' ',
     '!': Ascii.'!', '"': Ascii.'"', '#': Ascii.'#', '$': Ascii.'$',
@@ -110,13 +107,9 @@
     '{': Ascii.'{', '|': Ascii.'|', '}': Ascii.'}', '~': Ascii.'~');
 };
 
-ToChar@<Ascii@> ToChar = (Ascii@ ascii) {
-  Unicode(Ord(ascii));
-};
-
-Char@ nl = Unicode(Ascii.nl);
-Char@ tab = Unicode(Ascii.tab);
-Char@ cr = Unicode(Ascii.cr);
+Char@ nl = Ascii.nl;
+Char@ tab = Ascii.tab;
+Char@ cr = Ascii.cr;
 
 # Chars --
 #   A collection of characters that can be referenced more easily than
