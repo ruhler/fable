@@ -1,6 +1,6 @@
 
 @ Char@ = /Std/Char%.Char@;
-% Char = /Core/Char/Ascii%.Char;
+% Char = /Core/String/Ascii%.Char;
 
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
@@ -13,7 +13,7 @@
 <@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Core/String/Ascii%.Str;
 
 (String@) { Int@; } Read = {
   (Char@) { Int@; } Digit = (Char@ c) {

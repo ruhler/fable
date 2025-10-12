@@ -4,7 +4,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Core/String/Ascii%.Str;
 
 # ShowTail --
 #   Shows the tail part of a list.

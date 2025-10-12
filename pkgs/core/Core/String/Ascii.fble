@@ -1,0 +1,33 @@
+
+@ Char@ = /Std/Char%.Char@;
+
+@ Ascii@ = /Core/Char/Ascii%.Ascii@;
+% ToChar = /Core/Char/Ascii%.ToChar;
+
+<@>@ List@ = /Std/List%.List@;
+
+@ String@ = /Core/String%.String@;
+
+# Character literal.
+#  Behavior is undefined if thre are more or less than one character in the
+#  literal.
+(List@<Ascii@>) { Char@; } Char = /Core/String%.Char(ToChar);
+
+# Str --
+#   A string literal.
+#
+# Example Use:
+#   String@ s = Str|'hello, world'
+(List@<Ascii@>) { String@; } Str = /Core/String%.Str(ToChar);
+
+# StrE --
+#   A string literal that supports the following escape sequences:
+#   \\ - backslash
+#   \n - newline
+#   \t - tab
+#   \r - carriage return
+# 
+# Any other use of \ is undefined.
+(List@<Ascii@>) { String@; } StrE = /Core/String/Format%.StrE(ToChar);
+
+@(Char, Str, StrE);

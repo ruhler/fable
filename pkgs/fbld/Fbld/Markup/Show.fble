@@ -3,7 +3,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Core/String/Ascii%.Str;
 
 @ Command@ = /Fbld/Markup%.Command@;
 @ Markup@ = /Fbld/Markup%.Markup@;

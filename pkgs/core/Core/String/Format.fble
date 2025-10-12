@@ -1,5 +1,6 @@
 
 @ Char@ = /Std/Char%.Char@;
+<@>@ ToChar@ = /Std/Char%.ToChar@;
 % Unicode = /Std/Char%.Char;
 
 <@>@ List@ = /Std/List%.List@;
@@ -9,31 +10,7 @@
 % Int = /Std/Int/Lit%.Int;
 
 @ String@ = /Core/String%.String@;
-
-@ Unit@ = /Std/Unit%.Unit@;
-
-# A character literal is anything that can be converted to a Char@.
-<@>@ ToChar@ = <@ T@>(T@) { Char@; };
-
-# Character literal.
-#  Behavior is undefined if thre are more or less than one character in the
-#  literal.
-<@ T@>(ToChar@<T@>, List@<T@>) { Char@; }
-Char = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
-  # Assert length is 1
-  Unit@ _ = str.items.tail.empty;
-  toChar(str.items.head);
-};
-
-# Str --
-#   A string literal.
-#
-# Example Use:
-#   String@ s = Str|'hello, world'
-<@ T@>(ToChar@<T@>, List@<T@>) { String@; }
-Str = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
-  /Std/List%.Map(str, toChar);
-};
+<@>% Str = /Core/String%.Str;
 
 # Interpret escape sequences in the given string.
 # Sequences:
@@ -86,4 +63,4 @@ StrE = <@ T@>(ToChar@<T@> toChar, List@<T@> chars) {
   Escape(Str(toChar, chars));
 };
 
-@(ToChar@, Char, Str, StrE, Escape);
+@(Escape, StrE);

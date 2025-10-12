@@ -1,7 +1,7 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
 <@>@ Show@ = /Core/Show%.Show@;
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Core/String/Ascii%.Str;
 
 # Show -- see documentation of /Show%.Show@.
 Show@<Bool@> Show = (Bool@ x) {

@@ -2,7 +2,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-% Char = /Core/Char/Ascii%.Char;
+% Char = /Core/String/Ascii%.Char;
 
 % Chr = /Std/Char%.Char;
 % Pos = /Std/Char%.Pos;
@@ -17,7 +17,7 @@
 
 <@>% List = /Std/List%.List;
 
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Core/String/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;

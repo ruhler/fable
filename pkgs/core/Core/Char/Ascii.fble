@@ -1,11 +1,7 @@
 
 @ Char@ = /Std/Char%.Char@;
+<@>@ ToChar@ = /Std/Char%.ToChar@;
 % U = /Std/Char/Lit%.U;
-
-<@>@ List@ = /Std/List%.List@;
-
-@ String@ = /Core/String%.String@;
-<@>@ ToChar@ = /Core/String/Literal%.ToChar@;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -116,26 +112,4 @@ Char@ cr = Ascii.cr;
 #   creating character values directly.
 % Chars = @(nl, tab, cr);
 
-# Character literal.
-#  Behavior is undefined if thre are more or less than one character in the
-#  literal.
-(List@<Ascii@>) { Char@; } Char = /Core/String/Literal%.Char(ToChar);
-
-# Str --
-#   A string literal.
-#
-# Example Use:
-#   String@ s = Str|'hello, world'
-(List@<Ascii@>) { String@; } Str = /Core/String/Literal%.Str(ToChar);
-
-# StrE --
-#   A string literal that supports the following escape sequences:
-#   \\ - backslash
-#   \n - newline
-#   \t - tab
-#   \r - carriage return
-# 
-# Any other use of \ is undefined.
-(List@<Ascii@>) { String@; } StrE = /Core/String/Literal%.StrE(ToChar);
-
-@(Ascii@, ToChar, Char, Chars, Str, StrE);
+@(Ascii@, ToChar, Chars);

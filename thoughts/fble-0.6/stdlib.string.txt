@@ -911,3 +911,30 @@ Let's move discussion of integer literals to stdlib.int.txt.
 
 Now that we have that, I'm thinking: /Std/Char/Lit%.U for unicode literals?
 Separate it out, and we can reuse it for /Std/Char/Ascii%.
+
+---
+
+Summary of methods to place somewhere useful:
+* ToChar,
+* Char, Str (general and ascii specific)
+* Escape,
+* Format, StrE (general and ascii specific)
+
+Straw proposal:
+* /Std/Char%: ToChar@
+* /Std/Char/Ascii%: Ascii@, ToChar, Chars
+* /Std/String%: String@, Char, Str (general)
+* /Std/String/Format%: Escape, Format, StrE (general)
+* /Std/String/Ascii%: Str, StrE (ascii specific)
+
+Okay? Sounds reasonable, right? Let's shuffle things around and see how it
+feels.
+
+The only thing is, it feels very strange to me to have /Std/String/Ascii%.Char
+when there is a /Std/Char/Ascii% module.
+
+Why not have a single /Std/Char/Ascii% module with everything? It's because
+that was supposed to depend on /Std/String/Format%, which was supposed to
+depend on Ascii? But it doesn't? Should it?
+
+

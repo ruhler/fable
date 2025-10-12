@@ -2,7 +2,7 @@
 % True = /Std/Bool%.True;
 
 @ Char@ = /Std/Char%.Char@;
-% Char = /Core/Char/Ascii%.Char;
+% Char = /Core/String/Ascii%.Char;
 % Chars = /Core/Char/Ascii%.Chars;
 
 <@>@ List@ = /Std/List%.List@;
@@ -19,8 +19,8 @@
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
-% StrE = /Core/Char/Ascii%.StrE;
+% Str = /Core/String/Ascii%.Str;
+% StrE = /Core/String/Ascii%.StrE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

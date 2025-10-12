@@ -6,7 +6,7 @@
 <@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Core/String/Ascii%.Str;
 
 @ Clause@ = /Sat/Solver%.Clause@;
 @ VarId@ = /Sat/Solver%.VarId@;

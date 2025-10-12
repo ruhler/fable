@@ -15,7 +15,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Core/String/Ascii%.Str;
 
 # Vec@ -- 
 #   A 2D vector.
