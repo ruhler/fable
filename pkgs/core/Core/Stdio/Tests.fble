@@ -23,7 +23,7 @@
 <@>% PureResultShow = /Core/Stdio/Pure/Show%.PureResult;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;

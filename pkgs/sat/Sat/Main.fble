@@ -17,7 +17,7 @@
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

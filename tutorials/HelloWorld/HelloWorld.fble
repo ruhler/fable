@@ -6,7 +6,7 @@ Bool@ False = /Std/Bool%.False;
 
 # Import character type and values.
 @ Char@ = /Std/Char%.Char@;
-% Char = /Core/String/Ascii%.Char;
+% Char = /Core/Char/Ascii%.Char;
 
 # Import integer type and literal.
 @ Int@ = /Std/Int%.Int@;
@@ -17,7 +17,7 @@ Bool@ False = /Std/Bool%.False;
 
 # Import string type and functions.
 @ String@ = /Core/String%.String@;
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 % Lines = /Core/String/Lines%.Lines;
 
 # Specify the output string.

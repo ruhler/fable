@@ -14,7 +14,7 @@
 <@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
 
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;

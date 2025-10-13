@@ -3,7 +3,7 @@
 <@>% Concat = /Std/List%.Concat;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

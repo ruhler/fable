@@ -7,7 +7,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 Show@<Bit@> ShowBit = (Bit@ b) {
   b.?(0: Str|0, 1: Str|1);

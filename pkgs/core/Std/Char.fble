@@ -7,11 +7,6 @@
 #  The character type corresponds to unicode code points.
 @ Char@ = *(Int@ pos).%(@/Std/Char%);
 
-# @type[ToChar@] Interface for types that can be converted to Char@.
-#  Helpful for defining character and string literals of various different
-#  character sets.
-<@>@ ToChar@ = <@ T@>(T@) { Char@; };
-
 # @func[Char] Construct a character from a unicode code point.
 #  @arg[Int@][pos] The unicode code point of the character to construct.
 #  @returns[Char@] A character with the given unicode code point.
@@ -26,4 +21,4 @@
   c.pos;
 };
 
-@(Char@, ToChar@, Char, Pos);
+@(Char@, Char, Pos);

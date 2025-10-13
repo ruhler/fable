@@ -2,7 +2,7 @@
 @ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
 
-% Char = /Core/String/Ascii%.Char;
+% Char = /Core/Char/Ascii%.Char;
 % Chars = /Core/Char/Ascii%.Chars;
 
 @ Int@ = /Std/Int%.Int@;

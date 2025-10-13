@@ -1,24 +1,12 @@
 
 @ Char@ = /Std/Char%.Char@;
-<@>@ ToChar@ = /Std/Char%.ToChar@;
+<@>@ ToChar@ = /Std/Char/Lit%.ToChar@;
 
 <@>@ List@ = /Std/List%.List@;
-
-@ Unit@ = /Std/Unit%.Unit@;
 
 # String@ --
 #   A character string.
 @ String@ = List@<Char@>;
-
-# Character literal.
-#  Behavior is undefined if thre are more or less than one character in the
-#  literal.
-<@ T@>(ToChar@<T@>, List@<T@>) { Char@; }
-Char = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
-  # Assert length is 1
-  Unit@ _ = str.items.tail.empty;
-  toChar(str.items.head);
-};
 
 # Str --
 #   A string literal.
@@ -30,4 +18,4 @@ Str = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
   /Std/List%.Map(str, toChar);
 };
 
-@(String@, Char, Str);
+@(String@, Str);

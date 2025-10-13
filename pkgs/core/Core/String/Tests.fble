@@ -3,7 +3,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-% Char = /Core/String/Ascii%.Char;
+% Char = /Core/Char/Ascii%.Char;
 % Chars = /Core/Char/Ascii%.Chars;
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
@@ -12,8 +12,8 @@
 <@>% List = /Std/List%.List;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String/Ascii%.Str;
-% StrE = /Core/String/Ascii%.StrE;
+% Str = /Core/Char/Ascii%.Str;
+% StrE = /Core/Char/Ascii%.StrE;
 % Lines = /Core/String/Lines%.Lines;
 % SplitLines = /Core/String/Lines%.SplitLines;
 

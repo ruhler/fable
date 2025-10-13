@@ -4,7 +4,7 @@
 @ Int@ = /Std/Int%.Int@;
 % Int = /Std/Int/Lit%.Int;
 
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;

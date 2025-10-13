@@ -8,7 +8,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;

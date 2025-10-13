@@ -6,7 +6,7 @@
 
 @ Char@ = /Std/Char%.Char@;
 % Pos = /Std/Char%.Pos;
-% Char = /Core/String/Ascii%.Char;
+% Char = /Core/Char/Ascii%.Char;
 % Chars = /Core/Char/Ascii%.Chars;
 
 (Char@) { Bool@; } IsUpper = (Char@ c) {

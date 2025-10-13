@@ -8,7 +8,7 @@
 
 <@>% Concat = /Std/List%.Concat;
 
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 # Coord@ --
 #   A coordinate identifying a location in the memory/design grid.

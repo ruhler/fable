@@ -23,7 +23,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 # Num@ -- 
 #   A number with sufficient precision for the pinball game.

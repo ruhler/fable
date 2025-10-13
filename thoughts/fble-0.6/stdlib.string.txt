@@ -937,4 +937,31 @@ Why not have a single /Std/Char/Ascii% module with everything? It's because
 that was supposed to depend on /Std/String/Format%, which was supposed to
 depend on Ascii? But it doesn't? Should it?
 
+I don't know. I'm torn here. It's awkward that Char literal depends on
+String@. It doesn't have to you know. We could define it as part of
+/Std/Char%, with or without a dependency on List@.
+
+The cost of the dependency on List@ is all those list functions that we may
+not otherwise make use of.
+
+My vote: Move 'Char' from /Std/String% to /Core/Char%. Let /Core/Char% depend
+on /Std/List% - if we don't want the overhead from the methods, we can define
+an /Std/List/List% module that just has the type definition we can reuse. Or
+maybe an /Std/Literal% module that defines a Lit@ type we can reuse. But why
+do that when you could just use List@?
+
+Then move Char to /Std/Char/Ascii%, keep Str and StrE in /Std/String/Ascii%?
+
+---
+
+How about: Move Char to /Std/Char/Lit%. Move Char, Str, StrE to
+/Std/Char/Ascii%, get rid of /Std/String/Ascii%? Let's see how that feels.
+
+Now we have:
+* ToChar@, Char are in /Std/Char/Lit%.
+* /Std/Char/Ascii% is everything to do with ascii
+* /Std/String% has string literal.
+
+The only thing that feels unfortunate is the overloaded name 'Char' for Char
+constructor versus Char literal. Oh well.
 

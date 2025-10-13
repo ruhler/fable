@@ -6,7 +6,7 @@
 
 @ Char@ = /Std/Char%.Char@;
 @ Ascii@ = /Core/Char/Ascii%.Ascii@;
-% Char = /Core/String/Ascii%.Char;
+% Char = /Core/Char/Ascii%.Char;
 
 @ Coord@ = /Hwdg/Coord%.Coord@; 
 
@@ -30,7 +30,7 @@
 @ Set@ = Set.Set@;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 # Ports@ --
 #   Convenience type for capturing information about each of the 4 adjacent

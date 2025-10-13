@@ -7,7 +7,7 @@
 <@>% List = /Std/List%.List;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 % Lines = /Core/String/Lines%.Lines;
 
 @ Test@ = /Core/Test%.Test@;

@@ -1,6 +1,6 @@
 
 @ Char@ = /Std/Char%.Char@;
-% Char = /Core/String/Ascii%.Char;
+% Char = /Core/Char/Ascii%.Char;
 % Chars = /Core/Char/Ascii%.Chars;
 % IsSpace = /Core/Char/Type%.IsSpace;
 
@@ -21,7 +21,7 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

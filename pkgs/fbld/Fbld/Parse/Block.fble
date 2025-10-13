@@ -14,8 +14,8 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String/Ascii%.Str;
-% StrE = /Core/String/Ascii%.StrE;
+% Str = /Core/Char/Ascii%.Str;
+% StrE = /Core/Char/Ascii%.StrE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

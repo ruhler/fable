@@ -16,7 +16,7 @@
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String/Ascii%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 
 <<@>@ M@>(Monad@<M@> m) {
