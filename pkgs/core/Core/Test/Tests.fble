@@ -13,7 +13,7 @@
 @ MainResult@ = /Core/Stdio/Pure%.MainResult@;
 % RunMain = /Core/Stdio/Pure%.RunMain;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;

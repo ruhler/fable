@@ -1,0 +1,33 @@
+# @module[/Std/Char%]
+#  The string type.
+
+@ Char@ = /Std/Char%.Char@;
+<@>@ ToChar@ = /Std/Char/Lit%.ToChar@;
+
+<@>@ List@ = /Std/List%.List@;
+
+# @type[String@] The string type.
+#   A character string, represented as a list of Char@.
+@ String@ = List@<Char@>;
+
+# @func[Str] String literal function.
+#  For any literal letter type @l{T@} that can be converted to @l{Char@} using
+#  a provided @l{toChar} function, this returns a string literal function for
+#  constructing strings.
+#
+#  For example:
+#
+#  @code[fble]
+#   (List@<Ascii@>) { String@; } Str = /Std/String%.Str(AsciiToChar);
+#   String@ hello = Str|'hello, world';
+#
+#  @arg[@][T@] The literal letter type.
+#  @arg[ToChar@<T@>][toChar] Function to convert letter to @l{Char@}.
+#  @arg[List@<T@>][str] The literal string.
+#  @returns[String@] A string value formed from the literal.
+<@ T@>(ToChar@<T@>, List@<T@>) { String@; }
+Str = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
+  /Std/List%.Map(str, toChar);
+};
+
+@(String@, Str);

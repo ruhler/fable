@@ -30,14 +30,14 @@
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
-% Split = /Core/String/Eq%.Split;
+% Split = /Std/String/Eq%.Split;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
-@ String@ = /Core/String%.String@;
-% Lines = /Core/String/Lines%.Lines;
+@ String@ = /Std/String%.String@;
+% Lines = /Std/String/Lines%.Lines;
 % Str = /Core/Char/Ascii%.Str;
 % StrE = /Core/Char/Ascii%.StrE;
 
@@ -92,7 +92,7 @@ GetArgs = (List@<String@> args, Args@ default) {
   String@ arg = args.items.head;
 
   (List@<String@>) { Bool@; } ArgAnyOf = (List@<String@> options) {
-    /Std/List/Search%.Any(options, /Core/String/Eq%.Eq(arg));
+    /Std/List/Search%.Any(options, /Std/String/Eq%.Eq(arg));
   };
 
   ArgAnyOf[Str|'-h', Str|'--help'].?(true: {
@@ -317,7 +317,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     # Skip past the request headers. We don't care about those.
     M@<Unit@> SkipHeaders = {
       String@ line <- m.do(I.GetLine(ios.in));
-      /Core/String/Eq%.Eq(StrE|'\r\n', line).?(true: m.return(Unit));
+      /Std/String/Eq%.Eq(StrE|'\r\n', line).?(true: m.return(Unit));
       SkipHeaders;
     };
     Unit@ _ <- m.do(SkipHeaders);
@@ -342,12 +342,12 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
     Unit@ _ <- m.do(O.PutStr(ios.out, Lines[/Pprof/Server/Menu%.Menu]));
 
-    /Core/String/Eq%.Eq(Str|'/', path).?(true: OverviewPage(ios.out));
-    /Core/String/Eq%.Eq(Str|'/overall', path).?(true: OverallPage(ios.out));
-    /Core/String/Eq%.Eq(Str|'/self', path).?(true: SelfPage(ios.out));
-    /Core/String/Eq%.Eq(Str|'/seqs', path).?(true: SeqsPage(ios.out));
+    /Std/String/Eq%.Eq(Str|'/', path).?(true: OverviewPage(ios.out));
+    /Std/String/Eq%.Eq(Str|'/overall', path).?(true: OverallPage(ios.out));
+    /Std/String/Eq%.Eq(Str|'/self', path).?(true: SelfPage(ios.out));
+    /Std/String/Eq%.Eq(Str|'/seqs', path).?(true: SeqsPage(ios.out));
 
-    /Core/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
+    /Std/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
       List@<String@> ids = Split(Drop(path, Int|5), Str|',');
       SeqPage(ios.out, /Std/List%.Map(ids, /Core/Int/Show%.Read));
     });

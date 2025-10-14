@@ -13,7 +13,7 @@
 <@>% Empty = /Std/List%.Empty;
 <@>% Append = /Std/List%.Append;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 

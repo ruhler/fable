@@ -9,7 +9,7 @@
 @ World@ = /Core/Monad/IO%.World@;
 <@>@ R@ = /Core/Monad/IO%.R@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 
 <<@>@>@ Server@ = /Network/Sockets%.Server@;
 <<@>@>@ Sockets@ = /Network/Sockets%.Sockets@;

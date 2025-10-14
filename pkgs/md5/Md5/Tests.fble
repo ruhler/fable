@@ -24,7 +24,7 @@
 
 <<@>@>% Md5 = /Md5/Md5%.Md5;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;

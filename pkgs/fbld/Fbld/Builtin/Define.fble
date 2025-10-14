@@ -18,7 +18,7 @@ Int@ 4 = Int|4;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
@@ -65,13 +65,13 @@ PreLookup = (Env@ env, Markup@ markup) {
     empty: markup,
     plain: markup,
     command: {
-      /Core/String/Eq%.Eq(Str|'define', markup.command.name.text).?(true: {
+      /Std/String/Eq%.Eq(Str|'define', markup.command.name.text).?(true: {
         # Avoid doing prelookup in the body of @define, in case it references
         # the new function being defined.
         markup;
       });
 
-      /Core/String/Eq%.Eq(Str|'let', markup.command.name.text).?(true: {
+      /Std/String/Eq%.Eq(Str|'let', markup.command.name.text).?(true: {
         # Avoid doing prelookup in the body of @let, in case it references
         # the new value being defined.
         markup;

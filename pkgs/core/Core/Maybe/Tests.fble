@@ -14,7 +14,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
@@ -75,13 +75,13 @@ Test@ Tests = TestSuite(Str|Maybe, List[
   Test(Str|Show_Just, (Unit@ _) {
     String@ wnt = Str|'Just:b';
     String@ got = Show(Just(B));
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_Nothing, (Unit@ _) {
     String@ wnt = Str|'Nothing';
     String@ got = Show(Nothing<AB@>);
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })
 ]);
 

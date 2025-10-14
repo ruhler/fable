@@ -14,7 +14,7 @@
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
@@ -129,7 +129,7 @@ State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48))
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
   % O = /Core/Stream/OStream%(m);
 
-  Any(args, /Core/String/Eq%.Eq(Str|'--help')).?(true: {
+  Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ <- m.do(O.PutStr(stdio.out, /Graphics/Usage%));
     m.return(True);
   });

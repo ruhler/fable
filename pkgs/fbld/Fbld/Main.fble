@@ -16,7 +16,7 @@
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
@@ -51,7 +51,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
     String@ filename = filenames.items.head;
     Maybe@<IStream@<M@>> fin <- m.do({
-      /Core/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
+      /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
       stdio.read(filename, /Core/Stdio%.Text);
     });
 

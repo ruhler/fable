@@ -42,7 +42,7 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;

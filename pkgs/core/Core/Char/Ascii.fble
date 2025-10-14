@@ -6,7 +6,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -127,7 +127,7 @@ Char@ cr = Ascii.cr;
 #
 # Example Use:
 #   String@ s = Str|'hello, world'
-(List@<Ascii@>) { String@; } Str = /Core/String%.Str(ToChar);
+(List@<Ascii@>) { String@; } Str = /Std/String%.Str(ToChar);
 
 # StrE --
 #   A string literal that supports the following escape sequences:

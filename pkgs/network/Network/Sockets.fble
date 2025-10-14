@@ -5,7 +5,7 @@
 
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 
 # Server@ --
 #  A server can be used to repeatedly accept connections from clients.

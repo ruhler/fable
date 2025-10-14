@@ -6,7 +6,7 @@
 <@>% List = /Std/List%.List;
 <@>% Append = /Std/List%.Append;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

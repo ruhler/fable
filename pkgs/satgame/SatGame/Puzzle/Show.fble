@@ -4,8 +4,8 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-@ String@ = /Core/String%.String@;
-% Lines = /Core/String/Lines%.Lines;
+@ String@ = /Std/String%.String@;
+% Lines = /Std/String/Lines%.Lines;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Literal@ = /SatGame/Puzzle%.Literal@;

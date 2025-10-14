@@ -14,7 +14,7 @@
 @ MainResult@ = /Core/Stdio/Pure%.MainResult@;
 % RunMain = /Core/Stdio/Pure%.RunMain;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 
 @ Test@ = /Core/Test%.Test@;
 

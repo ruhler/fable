@@ -16,9 +16,9 @@ Bool@ False = /Std/Bool%.False;
 <@>% Concat = /Std/List%.Concat;
 
 # Import string type and functions.
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
-% Lines = /Core/String/Lines%.Lines;
+% Lines = /Std/String/Lines%.Lines;
 
 # Specify the output string.
 Char@ c = Char|A;

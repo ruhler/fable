@@ -2,7 +2,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% Concat = /Std/List%.Concat;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
@@ -53,7 +53,7 @@ TestSuite = (String@ name, List@<Test@> tests) {
 ExpectFails = (TestResult@ result, String@ msg) {
   result.?(
     pass: Fail(Str|'Expected failure, but test passed'),
-    fail: /Core/String/Eq%.Contains(result.fail, msg).?(
+    fail: /Std/String/Eq%.Contains(result.fail, msg).?(
       true: ExpectedFail,
       false: Fail(Concat[
         Str|'Expected failure containing "', msg,

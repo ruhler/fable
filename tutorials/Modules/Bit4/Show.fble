@@ -1,7 +1,7 @@
 
 <@>% Concat = /Std/List%.Concat;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 
 % ShowBit = /Bit/Show%.Show;
 

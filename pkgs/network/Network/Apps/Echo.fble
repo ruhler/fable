@@ -27,7 +27,7 @@
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 % StrE = /Core/Char/Ascii%.StrE;
 
@@ -61,7 +61,7 @@ GetArgs = (List@<String@> args, Args@ default) {
   String@ arg = args.items.head;
 
   (List@<String@>) { Bool@; } ArgAnyOf = (List@<String@> options) {
-    Any(options, /Core/String/Eq%.Eq(arg));
+    Any(options, /Std/String/Eq%.Eq(arg));
   };
 
   ArgAnyOf(List[Str|'-h', Str|'--help']).?(true: {

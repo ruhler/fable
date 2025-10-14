@@ -1,0 +1,52 @@
+# @module[/Std/String/Lines%]
+#  Utilities for working with lines in strings.
+
+@ Bool@ = /Std/Bool%.Bool@;
+
+@ Char@ = /Std/Char%.Char@;
+% U = /Std/Char/Lit%.U;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Items = /Std/List%.Items;
+<@>% Append = /Std/List%.Append;
+<@>% Empty = /Std/List%.Empty;
+
+<@>@ Span@ = /Std/List/Search%.Span@;
+<@>% Break = /Std/List/Search%.Break;
+
+@ String@ = /Std/String%.String@;
+
+# @value[Newline] The newline character.
+#  @type[Char@]
+Char@ Newline = U|0A;
+
+# @func[IsNewline] Tests for the newline character.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@]
+#   True if the character to check is the newline character, false otherwise.
+(Char@) { Bool@; } IsNewline = /Std/Char/Eq%.Eq(Newline);
+
+# @func[Lines] Concatenate lines together into a single string.
+#  Adds a newline after each string in the list and concatenates the results
+#  together.
+#
+#  @arg[List@<String@>][strs] The lines to concatenate.
+#  @returns[String@] A single string with the concatenated lines.
+(List@<String@>) { String@; } Lines = (List@<String@> strs) {
+  strs.?(empty: Empty<Char@>);
+  String@ tail = Lines(strs.items.tail);
+  Append(strs.items.head, Items(Newline, tail));
+};
+
+# @func[SplitLines] Split a string into lines.
+#  @arg[String@][str] The string to split.
+#  @returns[List@<String@>] The list of lines that make up the string.
+(String@) { List@<String@>; } SplitLines = (String@ str) {
+  str.?(empty: Empty<String@>);
+  Span@<Char@> span = Break(str, IsNewline);
+  span.tail.?(empty: List[span.span]);
+  Items(span.span, SplitLines(span.tail.items.tail));
+};
+
+@(Newline, IsNewline, Lines, SplitLines);

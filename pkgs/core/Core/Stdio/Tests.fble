@@ -22,7 +22,7 @@
 <@>% PureResultEq = /Core/Stdio/Pure/Eq%.PureResult;
 <@>% PureResultShow = /Core/Stdio/Pure/Show%.PureResult;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
@@ -70,7 +70,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
 ');
     PureResult@<String@> got = Run(GetLine(Stdio.in), inputs);
     AssertEquals(
-      PureResultEq(/Core/String/Eq%.Eq),
+      PureResultEq(/Std/String/Eq%.Eq),
       PureResultShow(/Core/String/Show%.Show),
       wnt, got);
   }),
@@ -81,7 +81,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
       PureState@(Empty<Int@>, Empty<Int@>, Empty<Int@>), Str|'');
     PureResult@<String@> got = Run(GetLine(Stdio.in), inputs);
     AssertEquals(
-      PureResultEq(/Core/String/Eq%.Eq),
+      PureResultEq(/Std/String/Eq%.Eq),
       PureResultShow(/Core/String/Show%.Show),
       wnt, got);
   }),

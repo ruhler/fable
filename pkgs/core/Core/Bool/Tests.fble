@@ -11,7 +11,7 @@
 
 <@>% List = /Std/List%.List;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
@@ -89,13 +89,13 @@ Test@ Tests = TestSuite(Str|Bool, List[
   Test(Str|Show_True, (Unit@ _) {
     String@ wnt = Str|'True';
     String@ got = /Core/Bool/Show%.Show(True);
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_False, (Unit@ _) {
     String@ wnt = Str|'False';
     String@ got = /Core/Bool/Show%.Show(False);
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })
 ]);
 

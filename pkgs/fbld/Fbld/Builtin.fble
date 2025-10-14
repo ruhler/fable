@@ -1,7 +1,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Impl@ = /Fbld/Markup%.Impl@;

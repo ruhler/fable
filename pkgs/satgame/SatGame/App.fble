@@ -20,7 +20,7 @@
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
@@ -79,19 +79,19 @@ GetArgs = (List@<String@> args, Args@ default) {
   Int@ value = /Core/Int/Show%.Read(args.items.tail.items.head);
 
   Args@ nargs = {
-    /Core/String/Eq%.Eq(arg, Str|'--vars').?(true: {
+    /Std/String/Eq%.Eq(arg, Str|'--vars').?(true: {
       default.@(num_vars: value);
     });
 
-    /Core/String/Eq%.Eq(arg, Str|'--clauses').?(true: {
+    /Std/String/Eq%.Eq(arg, Str|'--clauses').?(true: {
       default.@(num_clauses: value);
     });
 
-    /Core/String/Eq%.Eq(arg, Str|'--lits-per-clause').?(true: {
+    /Std/String/Eq%.Eq(arg, Str|'--lits-per-clause').?(true: {
       default.@(num_literals_per_clause: value);
     });
 
-    /Core/String/Eq%.Eq(arg, Str|'--seed').?(true: {
+    /Std/String/Eq%.Eq(arg, Str|'--seed').?(true: {
       default.@(seed: value);
     });
 

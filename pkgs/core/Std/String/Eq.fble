@@ -1,0 +1,128 @@
+# @module[/Std/String/Eq%]
+#  Utilities for working with string equality and substrings. This is a
+#  specialization of /Std/List/Eq% for strings.
+
+@ Bool@ = /Std/Bool%.Bool@;
+
+@ Char@ = /Std/Char%.Char@;
+% CharEq = /Std/Char/Eq%.Eq;
+
+<@>@ List@ = /Std/List%.List@;
+
+<@>@ Eq@ = /Std/Eq%.Eq@;
+@ String@ = /Std/String%.String@;
+
+# @func[Eq] Check if two strings are equal.
+#  @arg[String@][a] The first string.
+#  @arg[String@][b] The second string.
+#  @returns[Bool@] True if the string are equal, false otherwise.
+Eq@<String@> Eq = /Std/List/Eq%.Eq(CharEq);
+
+# @func[StartsWith] Check if a string starts with a given prefix.
+#  @arg[String@][string] The string to check.
+#  @arg[String@][prefix] The prefix to check for.
+#  @returns[Bool@]
+#   True if the string begins with the given prefix. False otherwise.
+(String@, String@) { Bool@; } StartsWith = /Std/List/Eq%.StartsWith(CharEq);
+
+# @func[EndsWith] Check if a string ends with a given suffix
+#  @arg[String@][string] The string to check.
+#  @arg[String@][suffix] The suffix to check for.
+#  @returns[Bool@]
+#   True if the string ends with the given suffix. False otherwise.
+(String@, String@) { Bool@; } EndsWith = /Std/List/Eq%.EndsWith(CharEq);
+
+# @func[Contains] Check if a string contains the given substring.
+#  @arg[String@][string] The string to check.
+#  @arg[String@][substring] The substring to check for.
+#  @returns[Bool@]
+#   True if the string contains the given suffix. False otherwise.
+(String@, String@) { Bool@; } Contains = /Std/List/Eq%.Contains(CharEq);
+
+# @func[Skip] Skips past a prefix of the string.
+#  @arg[String@][string] The string to check.
+#  @arg[String@][prefix] The prefix to skip over.
+#  @returns[String@]
+#   The elements of the string following the given prefix. The complete string
+#   if it does not start with the given prefix.
+(String@, String@) { String@; } Skip = /Std/List/Eq%.Skip(CharEq);
+
+# @func[Trim] Removes a suffix from the end of a string.
+#  @arg[String@][string] The string to check.
+#  @arg[String@][suffix] The suffix to remove.
+#  @returns[String@]
+#   The elements of the string without the given suffix. The complete string if
+#   it does not end with the given suffix.
+(String@, String@) { String@; } Trim = /Std/List/Eq%.Trim(CharEq);
+
+# @func[Strip] Removes a substring from the front and end of a string.
+#  @arg[String@][string] The string to check.
+#  @arg[String@][substring] The substring to remove.
+#  @returns[String@]
+#   The elements of the string without the substring prefix and substring suffix
+#   removed if present.
+(String@, String@) { String@; } Strip = /Std/List/Eq%.Strip(CharEq);
+
+# @func[Search] Finds the longest suffix of a string with the given prefix.
+#  @arg[String@][string] The string to check.
+#  @arg[String@][prefix] The prefix of the string to search for.
+#  @returns[String@]
+#   The longest suffix of the string that starts with the given prefix, or an
+#   empty string if the prefix is not found anywhere in the string.
+(String@, String@) { String@; } Search = /Std/List/Eq%.Search(CharEq);
+
+# @func[SearchR] Finds the shortest suffix of a string with the given prefix.
+#  @arg[String@][string] The string to check.
+#  @arg[String@][prefix] The prefix of the string to search for.
+#  @returns[String@]
+#   The shortest suffix of the string that starts with the given prefix, or an
+#   empty string if the prefix is not found anywhere in the string.
+(String@, String@) { String@; } SearchR = /Std/List/Eq%.SearchR(CharEq);
+
+# @func[Until] Takes elements from the string until a substring is found.
+#  @arg[String@][string] The string to take elements from.
+#  @arg[String@][substring] The substring of the string to get up to.
+#  @returns[String@]
+#   The prefix of the string up to but not including elements from the first
+#   occurence of the substring in the string.
+(String@, String@) { String@; } Until = /Std/List/Eq%.Until(CharEq);
+
+# @struct[Span@]
+#  The return type of the @l{Break} function.
+#
+#  @field[String@][span] A prefix of a string.
+#  @field[String@][tail] The remainder of the string.
+@ Span@ = /Std/List/Eq%.Span@<Char@>;
+
+# @func[Break] Splits the string in two around a given substring.
+#  @arg[String@][string] The string to check.
+#  @arg[String@][substring] The substring to break at.
+#  @returns[Span@<T@>]
+#   The elements of the string up to the first occurrence of the given substring,
+#   followed by the remainder of the string with substring included.
+(String@, String@) { Span@; } Break = /Std/List/Eq%.Break(CharEq);
+
+# @func[Split] Splits a string around the given delimiter.
+#  @arg[String@][string] The string to check.
+#  @arg[String@][delim] The delimiter to split around.
+#  @returns[String@]
+#   Split the string into a sequence of strings using the delim sequence as the
+#   delimiter.
+(String@, String@) { List@<String@>; } Split = /Std/List/Eq%.Split(CharEq);
+
+# @func[Replace] Replaces occurrences of a substring in a string.
+#  @arg[String@][string] The string to do the replacement in.
+#  @arg[String@][from] The substring to replace.
+#  @arg[String@][to] The value to put in place of the substring.
+#  @returns[String@]
+#   Replaces all occurrence of @a[from] in @a[string] with @a[to].
+(String@, String@, String@) { String@; } Replace = /Std/List/Eq%.Replace(CharEq);
+
+
+@(Eq,
+  StartsWith, EndsWith, Contains,
+  Skip, Trim, Strip,
+  Search, SearchR, Until,
+  Span@, Break,
+  Split, Replace
+);

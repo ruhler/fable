@@ -14,7 +14,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

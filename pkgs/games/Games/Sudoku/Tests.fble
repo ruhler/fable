@@ -17,7 +17,7 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 <@>% DoWhile = /Core/Maybe%.DoWhile;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;

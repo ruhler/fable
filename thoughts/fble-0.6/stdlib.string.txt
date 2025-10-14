@@ -963,5 +963,14 @@ Now we have:
 * /Std/String% has string literal.
 
 The only thing that feels unfortunate is the overloaded name 'Char' for Char
-constructor versus Char literal. Oh well.
+constructor versus Char literal. Oh well. Also, we can't reuse
+/Std/Char/Ascii% in /Std/String/Format% now. Unless I'm okay having a
+/Std/Char/Ascii/Format% submodule. Or just hard code the relevant unicode
+character needed for /Std/String/Format%.
+
+Look. This is good enough for now. It's a decent enough start. Let's not get
+too caught up here. I can reorganize again later if there's decent reason to.
+
+Let's move on to the next step: implementing /Std/String/Format% and switching
+over to that for StrE.
 

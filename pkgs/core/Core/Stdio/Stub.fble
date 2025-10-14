@@ -6,7 +6,7 @@
 @ Mode@ = /Core/Stdio%.Mode@;
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 
 % Unit = /Std/Unit%.Unit;
 

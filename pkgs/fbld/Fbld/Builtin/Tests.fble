@@ -6,9 +6,9 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
-% Lines = /Core/String/Lines%.Lines;
+% Lines = /Std/String/Lines%.Lines;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
@@ -45,7 +45,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     ];
     Result@<String@> wnt = Ok(Str|'a: hello, b: there');
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -58,7 +58,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     ];
     Result@<String@> wnt = Ok(Str|'hello,AAAA,CCCC');
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -70,7 +70,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     ];
     Result@<String@> wnt = Ok(Str|'hello');
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -83,7 +83,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     ];
     Result@<String@> wnt = Ok(Str|'aaaa');
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -94,7 +94,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     ];
     Result@<String@> wnt = Ok(Str|'therewhats');
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -105,7 +105,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     ];
     Result@<String@> wnt = Ok(Str|'helloup');
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -118,7 +118,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     ];
     Result@<String@> wnt = Ok(Str|'done');
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -128,7 +128,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     ];
     Result@<String@> wnt = Ok(Str|'f');
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -138,7 +138,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     ];
     Result@<String@> wnt = Ok(Str|'oo');
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -154,7 +154,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     ];
     Result@<String@> wnt = Ok(Str|'ahi bcabye bc');
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -169,7 +169,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     ];
     Result@<String@> wnt = Ok(Str|'bd');
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -185,7 +185,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     ];
     Result@<String@> wnt = Ok(Str|'bd');
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -198,7 +198,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       Str|'Oh no!'
     );
     AssertEquals(
-      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Eq%.Eq(/Std/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
@@ -211,7 +211,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     String@ wnt = Lines[
       Str|'foo.fbld:1:2: error: Oh no!',
       Str|'foo.fbld:2:2: error: Not good.'];
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })
 ]);
 

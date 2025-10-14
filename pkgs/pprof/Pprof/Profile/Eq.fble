@@ -15,8 +15,8 @@
 Eq@<BlockId@> BlockId = /Std/Int/Eq%.Eq;
 
 Eq@<Block@> Block = (Block@ a, Block@ b) {
-  /Core/String/Eq%.Eq(a.name, b.name).?(false: False);
-  /Core/String/Eq%.Eq(a.file, b.file).?(false: False);
+  /Std/String/Eq%.Eq(a.name, b.name).?(false: False);
+  /Std/String/Eq%.Eq(a.file, b.file).?(false: False);
   /Std/Int/Eq%.Eq(a.line, b.line).?(false: False);
   /Std/Int/Eq%.Eq(a.column, b.column).?(false: False);
   True;
@@ -35,7 +35,7 @@ Eq@<Sample@> Sample = (Sample@ a, Sample@ b) {
 };
 
 Eq@<Profile@> Profile = (Profile@ a, Profile@ b) {
-  /Std/List/Eq%.Eq(/Core/String/Eq%.Eq, a.metrics, b.metrics).?(false: False);
+  /Std/List/Eq%.Eq(/Std/String/Eq%.Eq, a.metrics, b.metrics).?(false: False);
   Blocks(a.blocks, b.blocks).?(false: False);
   /Std/List/Eq%.Eq(Sample, a.samples, b.samples).?(false: False);
   True;

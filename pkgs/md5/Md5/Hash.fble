@@ -12,7 +12,7 @@
 <@>% Concat = /Std/List%.Concat;
 <@>% ForEach = /Std/List%.ForEach;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 
 % H8 = /Md5/Bits/Bit8%.H8;
 

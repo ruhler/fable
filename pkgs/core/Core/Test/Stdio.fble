@@ -6,7 +6,7 @@
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
@@ -24,7 +24,7 @@
 
   String@ prefix = {
     args.?(empty: Str|'');
-    /Core/String/Eq%.Eq(Str|'--prefix', args.items.head).?(false: Str|'');
+    /Std/String/Eq%.Eq(Str|'--prefix', args.items.head).?(false: Str|'');
     args.items.tail.items.head;
   };
 

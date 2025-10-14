@@ -20,7 +20,7 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
@@ -112,11 +112,11 @@ ParseM@<Unit@> ParseClauses = {
   String@ p = words.items.head;
   String@ cnf = words.items.tail.items.head;
 
-  /Core/String/Eq%.Eq(p, Str|'p').?(false: {
+  /Std/String/Eq%.Eq(p, Str|'p').?(false: {
     Error<Unit@>(Concat[Str|'expected ''p'', but got: ', p]);
   });
 
-  /Core/String/Eq%.Eq(cnf, Str|'cnf').?(false: {
+  /Std/String/Eq%.Eq(cnf, Str|'cnf').?(false: {
     Error<Unit@>(Concat[Str|'expected ''cnf'', but got: ', cnf]);
   });
 

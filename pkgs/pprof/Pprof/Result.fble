@@ -7,7 +7,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 
@@ -35,7 +35,7 @@ Apply = <@ A@, @ B@>((A@) { B@; } f, Result@<A@> r) {
 Eq = <@ A@>(Eq@<A@> eq, Result@<A@> a, Result@<A@> b) {
   a.?(ok: b.?(ok: eq(a.ok, b.ok), : False));
   b.?(ok: False);
-  /Core/String/Eq%.Eq(a.error, b.error);
+  /Std/String/Eq%.Eq(a.error, b.error);
 };
 
 <@ A@>(Show@<A@>) { Show@<Result@<A@>>; }

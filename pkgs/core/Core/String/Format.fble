@@ -9,8 +9,8 @@
 
 % Int = /Std/Int/Lit%.Int;
 
-@ String@ = /Core/String%.String@;
-<@>% Str = /Core/String%.Str;
+@ String@ = /Std/String%.String@;
+<@>% Str = /Std/String%.Str;
 
 # Interpret escape sequences in the given string.
 # Sequences:

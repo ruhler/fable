@@ -3,7 +3,7 @@
 
 <@>% List = /Std/List%.List;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
@@ -47,25 +47,25 @@ Test@ Tests = TestSuite(Str|Show, List[
   Test(Str|Show_Positive, (Unit@ _) {
     String@ wnt = Str|'10325487960';
     String@ got = Show(Int|10325487960);
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_Zero, (Unit@ _) {
     String@ wnt = Str|'0';
     String@ got = Show(Int|0);
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_Negative, (Unit@ _) {
     String@ wnt = Str|'-42';
     String@ got = Show(Neg(Int|42));
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_AllDigits, (Unit@ _) {
     String@ wnt = Str|'1234567890';
     String@ got = Show(Int|1234567890);
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })
 ]);
 

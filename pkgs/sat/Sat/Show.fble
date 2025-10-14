@@ -5,7 +5,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Clause@ = /Sat/Solver%.Clause@;

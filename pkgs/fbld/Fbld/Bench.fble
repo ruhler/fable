@@ -14,7 +14,7 @@
 % Stdio = /Core/Stdio/Pure%.Stdio;
 <@>% Run = /Core/Stdio/Pure%.Run;
 
-@ String@ = /Core/String%.String@;
+@ String@ = /Std/String%.String@;
 % Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
