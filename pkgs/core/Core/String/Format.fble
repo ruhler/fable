@@ -1,13 +1,11 @@
 
 @ Char@ = /Std/Char%.Char@;
-% Unicode = /Std/Char%.Char;
 <@>@ ToChar@ = /Std/Char/Lit%.ToChar@;
+% U = /Std/Char/Lit%.U;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Empty = /Std/List%.Empty;
 <@>% Items = /Std/List%.Items;
-
-% Int = /Std/Int/Lit%.Int;
 
 @ String@ = /Std/String%.String@;
 <@>% Str = /Std/String%.Str;
@@ -16,19 +14,13 @@
 # Sequences:
 #   \\ - backslash
 #   \n - newline
-#   \t - tab
-#   \r - carriage return
 # 
 # Any other use of \ is undefined.
 (String@) { String@; }
 Escape = {
-  Char@ slash = Unicode(Int|92);
-  Char@ nl = Unicode(Int|10);
-  Char@ tab = Unicode(Int|9);
-  Char@ cr = Unicode(Int|13);
-  Char@ n = Unicode(Int|110);
-  Char@ r = Unicode(Int|114);
-  Char@ t = Unicode(Int|116);
+  Char@ slash = U|5C;
+  Char@ nl = U|0A;
+  Char@ n = U|6E;
 
   (String@ chars) {
     chars.?(empty: Empty<Char@>);
@@ -40,8 +32,6 @@ Escape = {
       Char@ head = {
         /Std/Char/Eq%.Eq(slash, e).?(true: slash);
         /Std/Char/Eq%.Eq(n, e).?(true: nl);
-        /Std/Char/Eq%.Eq(r, e).?(true: cr);
-        /Std/Char/Eq%.Eq(t, e).?(true: tab);
         /Std/Undef%.Undef.undef<Char@>;
       };
       Items(head, tail);
@@ -54,8 +44,6 @@ Escape = {
 #   A string literal that supports the following escape sequences:
 #   \\ - backslash
 #   \n - newline
-#   \t - tab
-#   \r - carriage return
 # 
 # Any other use of \ is undefined.
 <@ T@>(ToChar@<T@>, List@<T@>) { String@; }

@@ -974,3 +974,11 @@ too caught up here. I can reorganize again later if there's decent reason to.
 Let's move on to the next step: implementing /Std/String/Format% and switching
 over to that for StrE.
 
+---
+
+What to do about \t and \r?
+* There are no current uses of \t outside of tests. So it wouldn't be hard to
+  get rid of. But should we support %t anyway? How about %tab?
+* The only place we use \r is in the pprof http server. It wouldn't be hard to
+  get rid of. But should we support it anyway?
+

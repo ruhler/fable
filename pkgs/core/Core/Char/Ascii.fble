@@ -133,8 +133,6 @@ Char@ cr = Ascii.cr;
 #   A string literal that supports the following escape sequences:
 #   \\ - backslash
 #   \n - newline
-#   \t - tab
-#   \r - carriage return
 # 
 # Any other use of \ is undefined.
 (List@<Ascii@>) { String@; } StrE = /Core/String/Format%.StrE(ToChar);
