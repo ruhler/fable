@@ -12,34 +12,49 @@
 
 # Interpret escape sequences in the given string.
 # Sequences:
+#   \0 - null
+#   \a - bell
 #   \\ - backslash
+#   \b - backspace
+#   \f - form feed
 #   \n - newline
-#   \t - tab
 #   \r - carriage return
+#   \t - tab
+#   \v - vertical tab
+#   \u...; - unicode character (TODO)
 # 
-# Any other use of \ is undefined.
+# Any other use of \ is undefined and reserved for future use.
 (String@) { String@; }
 Escape = {
-  Char@ tab = U|09;
-  Char@ nl = U|0A;
-  Char@ cr = U|0D;
-  Char@ slash = U|5C;
-  Char@ n = U|6E;
-  Char@ r = U|72;
-  Char@ t = U|74;
+  Char@ '\' = U|5C;
+  Char@ 0 = U|30; Char@ nul = U|00;
+  Char@ a = U|61; Char@ bel = U|07;
+  Char@ b = U|62; Char@ bs = U|08;
+  Char@ f = U|66; Char@ ff = U|0C;
+  Char@ n = U|6E; Char@ nl = U|0A;
+  Char@ r = U|72; Char@ cr = U|0D;
+  Char@ t = U|74; Char@ tab = U|09;
+  Char@ u = U|75;
+  Char@ v = U|76; Char@ vt = U|0B;
 
   (String@ chars) {
     chars.?(empty: Empty<Char@>);
     Char@ c = chars.items.head;
-    /Std/Char/Eq%.Eq(slash, c).?(true: {
+    /Std/Char/Eq%.Eq('\', c).?(true: {
       chars.items.tail.?(empty: /Std/Undef%.Undef.undef<String@>);
       String@ tail = Escape(chars.items.tail.items.tail);
       Char@ e = chars.items.tail.items.head;
       Char@ head = {
-        /Std/Char/Eq%.Eq(slash, e).?(true: slash);
+        /Std/Char/Eq%.Eq('\', e).?(true: '\');
+        /Std/Char/Eq%.Eq(0, e).?(true: nul);
+        /Std/Char/Eq%.Eq(a, e).?(true: bel);
+        /Std/Char/Eq%.Eq(b, e).?(true: bs);
+        /Std/Char/Eq%.Eq(f, e).?(true: ff);
         /Std/Char/Eq%.Eq(n, e).?(true: nl);
         /Std/Char/Eq%.Eq(r, e).?(true: cr);
         /Std/Char/Eq%.Eq(t, e).?(true: tab);
+        /Std/Char/Eq%.Eq(v, e).?(true: vt);
+        /Std/Char/Eq%.Eq(u, e).?(true: /Std/Undef%.Undef.undef<Char@>); # TODO
         /Std/Undef%.Undef.undef<Char@>;
       };
       Items(head, tail);
