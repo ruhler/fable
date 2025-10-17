@@ -14,13 +14,19 @@
 # Sequences:
 #   \\ - backslash
 #   \n - newline
+#   \t - tab
+#   \r - carriage return
 # 
 # Any other use of \ is undefined.
 (String@) { String@; }
 Escape = {
-  Char@ slash = U|5C;
+  Char@ tab = U|09;
   Char@ nl = U|0A;
+  Char@ cr = U|0D;
+  Char@ slash = U|5C;
   Char@ n = U|6E;
+  Char@ r = U|72;
+  Char@ t = U|74;
 
   (String@ chars) {
     chars.?(empty: Empty<Char@>);
@@ -32,6 +38,8 @@ Escape = {
       Char@ head = {
         /Std/Char/Eq%.Eq(slash, e).?(true: slash);
         /Std/Char/Eq%.Eq(n, e).?(true: nl);
+        /Std/Char/Eq%.Eq(r, e).?(true: cr);
+        /Std/Char/Eq%.Eq(t, e).?(true: tab);
         /Std/Undef%.Undef.undef<Char@>;
       };
       Items(head, tail);
@@ -44,6 +52,8 @@ Escape = {
 #   A string literal that supports the following escape sequences:
 #   \\ - backslash
 #   \n - newline
+#   \t - tab
+#   \r - carriage return
 # 
 # Any other use of \ is undefined.
 <@ T@>(ToChar@<T@>, List@<T@>) { String@; }

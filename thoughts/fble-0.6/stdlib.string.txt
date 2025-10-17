@@ -982,3 +982,102 @@ What to do about \t and \r?
 * The only place we use \r is in the pprof http server. It wouldn't be hard to
   get rid of. But should we support it anyway?
 
+---
+
+It doesn't feel great to remove \t and \r. They are useful. I'm also anxious
+about change \n to %n, which looks pretty different from what I'm used to.
+
+How about if we use \ everywhere for format instead of %?
+
+ 'Hello.\nHere is a slash: \\. Here is a unicode: \u002a;'
+ 'Hello.%nHere is a slash: %%. Here is a unicode: %u002a;'
+
+ 'a: \s, b: \s'[a, b];
+ 'a: %s, b: %s'[a, b];
+
+
+ 'a: \3$l8s, b: \s'[x, y];
+
+Honestly, backslash for %s looks fine to me. That's less of a change. \u looks
+fine to me too, though we have a different interpretation now with semicolon
+terminated instead of assuming a specific number of hex chars.
+
+ \4u00ABcde
+ \2u0Acde
+ \u00AB;cde
+ \u0A;cde
+
+How about adding back other standard escape characters then? Look at unicode
+control characters and see if there's a clear convention? Or just special case
+C/ascii? But there are so many ascii control codes without escape sequences.
+How does it make sense to support some arbitrary subset of control characters?
+
+---
+
+Review of C99 escapes:
+* \' \" \? \\
+  \a \b \f \n \r \t \v
+  \OOO - octal, 1 to 3 chars - longest possible sequence
+  \xHH... - hex, any number of hex digits - longest possible sequence
+    counts as a single character. Truncated to a single byte?
+  \uHHHH
+  \UHHHHHHHH
+
+  Note that \u and \U can be used in identifiers, not just string literals.
+
+Review of unicode control characters:
+* There are 65 control codes.
+* There are 10 control codes worthy of specification in unicode:
+  \t, \n, \v, \f, \r, 4 information separators, and NEL.
+* There are approximately 40 'control code picture' characters.
+
+So, options are:
+1. Just use the same thing as everyone else. Except add \s for format?
+2. \n and nothing else.
+3. ??
+
+We could do something like <CR> <LR>... but how many do we want to include? I
+don't want unicode tables for this.
+
+Or, make some general syntax?
+
+Like: \...;
+
+Anything in ... is parsed. And then you can provide your escape sequences
+separately as a function from String@ to Char@. Except, format args would be
+special in this case.
+
+Then ascii could define its own set. Any code page could define its own set.
+You could compose those sets together.
+
+---
+
+If we only have \n, there's very little difference between Str and StrE. Once
+we have \ at all, we may as well make full use of it. Thus, I vote we support
+all the traditional escapes:
+  \\, \a, \b, \f, \n, \r, \t, \v
+
+Octal is not useful anymore, but \0 may be, so keep \0.
+
+For hex, we don't distinguish between bytes and characters, and I don't want
+hacks where you take longest possible sequence that cannot be worked around,
+and I want variable width unicode hex strings, so have: \u[hex]+; with the
+terminating semicolon.
+
+For string formatting, let's just use %% and %s, or variations thereof.
+No need to make %s look like an escape string. The cost of % versus \
+conceptually is not high. In fact, because of what people are used to, it's
+probably costlier cognitively to use \s than %% and %s.
+
+Now Format and Escape can be two separate things. Say Format starts by
+escaping the format string, then applying the format. Which means you don't
+escape whatever is substituted in to the string, and you do treat '\u25;s' as
+a format specifier.
+
+Any other characters following \ should be undefined for now, to leave us open
+to adding more escapes in the future. Because again, once we have \, there's
+not really any cost to adding more escapes. Maybe we want \e for 'ESC', or
+whatever other things we might dream up.
+
+Clear? Good? Yes. Let me revert my recent changes then.
+

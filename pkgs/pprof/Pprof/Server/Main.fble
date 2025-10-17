@@ -3,8 +3,6 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-@ Char@ = /Std/Char%.Char@;
-% U = /Std/Char/Lit%.U;
 % Char = /Core/Char/Ascii%.Char;
 
 @ Int@ = /Std/Int%.Int@;
@@ -139,9 +137,6 @@ Percent = (Int@ numerator, Int@ denominator) {
   Concat[/Core/Int/Show%.Show(qr.q), Str|'.',
     /Core/Int/Show%.Show(Add(Int|100, qr.r)).items.tail, Str|'%'];
 };
-
-Char@ LF = U|0A;    # \n
-Char@ CR = U|0D;    # \r 
 
 Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, List@<String@> argv) {
   % I = /Core/Stream/IStream%(m);
@@ -322,7 +317,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     # Skip past the request headers. We don't care about those.
     M@<Unit@> SkipHeaders = {
       String@ line <- m.do(I.GetLine(ios.in));
-      /Std/String/Eq%.Eq(List[CR, LF], line).?(true: m.return(Unit));
+      /Std/String/Eq%.Eq(StrE|'\r\n', line).?(true: m.return(Unit));
       SkipHeaders;
     };
     Unit@ _ <- m.do(SkipHeaders);
@@ -341,9 +336,9 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
     Unit@ _ <- m.do(O.PutStr(ios.out, Lines[
       StrE|'HTTP/1.1 200 OK',
-      Concat[StrE|'Content-Type: text/html', List[CR]],
-      Concat[StrE|'Cache-Control: no-cache', List[CR]],
-      List[CR]]));
+      StrE|'Content-Type: text/html\r',
+      StrE|'Cache-Control: no-cache\r',
+      StrE|'\r']));
 
     Unit@ _ <- m.do(O.PutStr(ios.out, Lines[/Pprof/Server/Menu%.Menu]));
 
