@@ -137,7 +137,7 @@ Char@ cr = Ascii.cr;
 #   \r - carriage return
 # 
 # Any other use of \ is undefined.
-(List@<Ascii@>) { String@; } StrE = /Core/String/Format%.StrE(ToChar);
+(List@<Ascii@>) { String@; } StrE = /Core/String/Escape%.StrE(ToChar);
 
 
 @(Ascii@, ToChar, Chars, Char, Str, StrE);
