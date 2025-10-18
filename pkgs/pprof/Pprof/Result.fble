@@ -3,12 +3,10 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
-<@>% Concat = /Std/List%.Concat;
-
 <@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Std/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii%.Format;
 
 
 <@>@ Result@ = <@ A@> {
@@ -41,7 +39,7 @@ Eq = <@ A@>(Eq@<A@> eq, Result@<A@> a, Result@<A@> b) {
 <@ A@>(Show@<A@>) { Show@<Result@<A@>>; }
 Show = <@ A@>(Show@<A@> show, Result@<A@> x) {
   x.?(ok: show(x.ok));
-  Concat[Str|'error: ', x.error];
+  Format|'error: %s'[x.error];
 };
 
 @(Result@, Okay, Error, Apply, Eq, Show);

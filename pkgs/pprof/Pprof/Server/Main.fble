@@ -40,6 +40,7 @@
 % Lines = /Std/String/Lines%.Lines;
 % Str = /Core/Char/Ascii%.Str;
 % StrE = /Core/Char/Ascii%.StrE;
+% Format = /Core/Char/Ascii%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -108,7 +109,7 @@ GetArgs = (List@<String@> args, Args@ default) {
   });
 
   args.items.tail.?(empty: {
-    default.@(error: Concat[Str|'missing arg to option ', arg]);
+    default.@(error: Format|'missing arg to option %s'[arg]);
   });
 
   String@ value = args.items.tail.items.head;
@@ -123,7 +124,7 @@ GetArgs = (List@<String@> args, Args@ default) {
       default.@(port: /Core/Int/Show%.Read(value));
     });
 
-    default.@(error: Concat[Str|'unrecognized option ', arg]);
+    default.@(error: Format|'unrecognized option %s'[arg]);
   };
 
   nargs.error.?(items: nargs);
@@ -134,8 +135,10 @@ GetArgs = (List@<String@> args, Args@ default) {
 Percent = (Int@ numerator, Int@ denominator) {
   Int@ s = Div(Mul(Int|10000, numerator), denominator).q;
   QR@ qr = Div(s, Int|100);
-  Concat[/Core/Int/Show%.Show(qr.q), Str|'.',
-    /Core/Int/Show%.Show(Add(Int|100, qr.r)).items.tail, Str|'%'];
+  Format|'%s.%s%%'[
+    /Core/Int/Show%.Show(qr.q),
+    /Core/Int/Show%.Show(Add(Int|100, qr.r)).items.tail
+  ];
 };
 
 Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, List@<String@> argv) {
@@ -155,8 +158,8 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       Maybe@<Block@> mname = Blocks.Lookup(profile.blocks, block);
       String@ name = { 
         mname.?(just: mname.just.name);
-        Unit@ _ = /Core/Debug%.TraceLn(Concat[Str|'block ', /Core/Int/Show%.Show(block), Str|' not found']);
-        Concat[Str|'??', /Core/Int/Show%.Show(block), Str|'??'];
+        Unit@ _ = /Core/Debug%.TraceLn(Format|'block %s not found'[/Core/Int/Show%.Show(block)]);
+        Format|'??%s??'[/Core/Int/Show%.Show(block)];
       };
       Unit@ _ <- m.do(O.PutStr(out, name));
       seq.items.tail.?(empty: m.return(Unit));
@@ -180,10 +183,10 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
     (Entry@) { M@<Unit@>; }
     Row = (Entry@ entry) {
-      Unit@ _ <- m.do(O.PutStr(out, Concat[
-        Str|'<tr><td>', Percent(entry.value, total),
-        Str|'</td><td>', /Core/Int/Show%.Show(entry.value),
-        Str|'</td><td><a href="/seq/']));
+      Unit@ _ <- m.do(O.PutStr(out,
+          Format|'<tr><td>%s</td><td>%s</td><td><a href="/seq/'[
+            Percent(entry.value, total),
+            /Core/Int/Show%.Show(entry.value)]));
       Unit@ _ <- m.do(SeqBlocks(link(entry.seq)));
       Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
       Unit@ _ <- m.do(SeqNames(entry.seq));
@@ -227,15 +230,13 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
   Server@<M@> s = ms.just;
 
-  Unit@ _ <- m.do(O.PutLine(stdio.out, Concat[
-    Str|'parsing ', args.file, Str|'...'
-  ]));
+  Unit@ _ <- m.do(O.PutLine(stdio.out,
+      Format|'parsing %s...'[args.file]));
 
   Maybe@<IStream@<M@>> fin <- m.do(stdio.read(args.file, /Core/Stdio%.Binary));
   fin.?(nothing: {
-    Unit@ _ <- m.do(O.PutLine(stdio.err, Concat[
-        Str|'unable to open ''', args.file, Str|''''
-    ]));
+    Unit@ _ <- m.do(O.PutLine(stdio.err,
+        Format|'unable to open ''%s'''[args.file]));
     m.return(False);
   });
 
