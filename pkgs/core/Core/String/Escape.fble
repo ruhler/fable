@@ -1,11 +1,20 @@
 
 @ Char@ = /Std/Char%.Char@;
+% Char = /Std/Char%.Char;
 <@>@ ToChar@ = /Std/Char/Lit%.ToChar@;
 % U = /Std/Char/Lit%.U;
+
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Mul = /Std/Int%.Mul;
+% Int = /Std/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Empty = /Std/List%.Empty;
 <@>% Items = /Std/List%.Items;
+
+<@>@ Span@ = /Std/List/Search%.Span@;
+<@>% Break = /Std/List/Search%.Break;
 
 @ String@ = /Std/String%.String@;
 <@>% Str = /Std/String%.Str;
@@ -21,7 +30,7 @@
 #   \r - carriage return
 #   \t - tab
 #   \v - vertical tab
-#   \u...; - unicode character (TODO)
+#   \u[hex]+; - unicode character
 # 
 # Any other use of \ is undefined and reserved for future use.
 (String@) { String@; }
@@ -34,16 +43,58 @@ Escape = {
   Char@ n = U|6E; Char@ nl = U|0A;
   Char@ r = U|72; Char@ cr = U|0D;
   Char@ t = U|74; Char@ tab = U|09;
-  Char@ u = U|75;
+  Char@ u = U|75; Char@ semi = U|3B;
   Char@ v = U|76; Char@ vt = U|0B;
+
+  (Int@, String@) { Int@; }
+  ReadHex = (Int@ x, String@ str) {
+    str.?(empty: x);
+    Char@ c = str.items.head;
+    Int@ v = {
+      /Std/Char/Eq%.Eq(c, U|30).?(true: Int|0);
+      /Std/Char/Eq%.Eq(c, U|31).?(true: Int|1);
+      /Std/Char/Eq%.Eq(c, U|32).?(true: Int|2);
+      /Std/Char/Eq%.Eq(c, U|33).?(true: Int|3);
+      /Std/Char/Eq%.Eq(c, U|34).?(true: Int|4);
+      /Std/Char/Eq%.Eq(c, U|35).?(true: Int|5);
+      /Std/Char/Eq%.Eq(c, U|36).?(true: Int|6);
+      /Std/Char/Eq%.Eq(c, U|37).?(true: Int|7);
+      /Std/Char/Eq%.Eq(c, U|38).?(true: Int|8);
+      /Std/Char/Eq%.Eq(c, U|39).?(true: Int|9);
+      /Std/Char/Eq%.Eq(c, U|41).?(true: Int|10);
+      /Std/Char/Eq%.Eq(c, U|42).?(true: Int|11);
+      /Std/Char/Eq%.Eq(c, U|43).?(true: Int|12);
+      /Std/Char/Eq%.Eq(c, U|44).?(true: Int|13);
+      /Std/Char/Eq%.Eq(c, U|45).?(true: Int|14);
+      /Std/Char/Eq%.Eq(c, U|46).?(true: Int|15);
+      /Std/Char/Eq%.Eq(c, U|61).?(true: Int|10);
+      /Std/Char/Eq%.Eq(c, U|62).?(true: Int|11);
+      /Std/Char/Eq%.Eq(c, U|63).?(true: Int|12);
+      /Std/Char/Eq%.Eq(c, U|64).?(true: Int|13);
+      /Std/Char/Eq%.Eq(c, U|65).?(true: Int|14);
+      /Std/Char/Eq%.Eq(c, U|66).?(true: Int|15);
+      /Std/Undef%.Undef.undef<Int@>;
+    };
+    ReadHex(Add(v, Mul(Int|16, x)), str.items.tail);
+  };
 
   (String@ chars) {
     chars.?(empty: Empty<Char@>);
     Char@ c = chars.items.head;
     /Std/Char/Eq%.Eq('\', c).?(true: {
       chars.items.tail.?(empty: /Std/Undef%.Undef.undef<String@>);
-      String@ tail = Escape(chars.items.tail.items.tail);
       Char@ e = chars.items.tail.items.head;
+
+      # Handle \u...; escape sequence
+      /Std/Char/Eq%.Eq(u, e).?(true: {
+        Span@<Char@> span = Break(chars.items.tail.items.tail, /Std/Char/Eq%.Eq(semi));
+        String@ tail = Escape(span.tail.items.tail);  # assumes ';' present
+        Char@ head = Char(ReadHex(/Std/Int%.0, span.span)); # assumes all hex
+        Items(head, tail);
+      });
+
+      # Handle single character escape sequences.
+      String@ tail = Escape(chars.items.tail.items.tail);
       Char@ head = {
         /Std/Char/Eq%.Eq('\', e).?(true: '\');
         /Std/Char/Eq%.Eq(0, e).?(true: nul);
@@ -54,7 +105,6 @@ Escape = {
         /Std/Char/Eq%.Eq(r, e).?(true: cr);
         /Std/Char/Eq%.Eq(t, e).?(true: tab);
         /Std/Char/Eq%.Eq(v, e).?(true: vt);
-        /Std/Char/Eq%.Eq(u, e).?(true: /Std/Undef%.Undef.undef<Char@>); # TODO
         /Std/Undef%.Undef.undef<Char@>;
       };
       Items(head, tail);
