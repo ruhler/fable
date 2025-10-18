@@ -1,7 +1,6 @@
 
 @ Char@ = /Std/Char%.Char@;
 % Char = /Std/Char%.Char;
-<@>@ ToChar@ = /Std/Char/Lit%.ToChar@;
 % U = /Std/Char/Lit%.U;
 
 @ Int@ = /Std/Int%.Int@;
@@ -9,7 +8,6 @@
 % Mul = /Std/Int%.Mul;
 % Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
 <@>% Empty = /Std/List%.Empty;
 <@>% Items = /Std/List%.Items;
 
@@ -17,7 +15,6 @@
 <@>% Break = /Std/List/Search%.Break;
 
 @ String@ = /Std/String%.String@;
-<@>% Str = /Std/String%.Str;
 
 # Interpret escape sequences in the given string.
 # Sequences:
@@ -113,17 +110,4 @@ Escape = {
   };
 };
 
-# StrE --
-#   A string literal that supports the following escape sequences:
-#   \\ - backslash
-#   \n - newline
-#   \t - tab
-#   \r - carriage return
-# 
-# Any other use of \ is undefined.
-<@ T@>(ToChar@<T@>, List@<T@>) { String@; }
-StrE = <@ T@>(ToChar@<T@> toChar, List@<T@> chars) {
-  Escape(Str(toChar, chars));
-};
-
-@(Escape, StrE);
+@(Escape);

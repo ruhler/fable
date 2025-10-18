@@ -1,0 +1,42 @@
+
+@ Char@ = /Std/Char%.Char@;
+% U = /Std/Char/Lit%.U;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Append = /Std/List%.Append;
+
+@ String@ = /Std/String%.String@;
+% Escape = /Core/String/Escape%.Escape;
+
+Char@ '%' = U|25;
+Char@ 's' = U|73;
+
+(String@, List@<String@>) { String@; }
+Format = (String@ fmt, List@<String@> args) {
+  fmt.?(empty: fmt);
+  Char@ c = fmt.items.head;
+  /Std/Char/Eq%.Eq('%', c).?(true: {
+    fmt.items.tail.?(empty: /Std/Undef%.Undef.undef<String@>);
+    Char@ e = fmt.items.tail.items.head;
+
+    /Std/Char/Eq%.Eq('%', e).?(true: {
+      Items(c, Format(fmt.items.tail.items.tail, args));
+    });
+
+    /Std/Char/Eq%.Eq('s', e).?(true: {
+      Append(args.items.head, Format(fmt.items.tail.items.tail, args.items.tail));
+    });
+
+    /Std/Undef%.Undef.undef<String@>;
+  });
+
+  Items(c, Format(fmt.items.tail, args));
+};
+
+(String@, List@<String@>) { String@; }
+FormatE = (String@ fmt, List@<String@> args) {
+  Format(Escape(fmt), args);
+};
+
+@(Format, FormatE);
