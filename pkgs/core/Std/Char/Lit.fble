@@ -32,29 +32,6 @@ U = (HexLit@ hex) {
 #  character sets.
 <@>@ ToChar@ = <@ T@>(T@) { Char@; };
 
-# @type[Composed@] Composed character literal letter type.
-<@,@>@ Composed@ = <@ A@, @ B@> { +(A@ a, B@ b); };
-
-# @func[Compose] Composes two character sets
-#  Example use:
-#
-#  @code[fble]
-#   % Str = /Std/String%.Str(Compose(Ascii.ToChar, Greek.ToChar));
-#   String@ s = Str|'hello π';
-#
-#  @arg[@][A@] Letter type for the first character set.
-#  @arg[ToChar@<A@>][toCharA] ToChar@ implementation for first character set.
-#  @arg[@][B@] Letter type for the second character set.
-#  @arg[ToChar@<B@>][toCharB] ToChar@ implementation for second character set.
-#  @returns[ToChar@<Composed@<A@, B@>]
-#   ToChar@ implementation for composed character set.
-<@ A@>(ToChar@<A@>)<@ B@>(ToChar@<B@>) { ToChar@<Composed@<A@, B@>>; }
-Compose = <@ A@>(ToChar@<A@> toCharA)<@ B@>(ToChar@<B@> toCharB) {
-  (Composed@<A@, B@> x) {
-    x.?(a: toCharA(x.a), b: toCharB(x.b));
-  };
-};
-
 # @func[Char] Character literal helper.
 #  @arg[@][T@] Type of element used for literal letter.
 #  @arg[ToChar@<T@>][toChar] Function to convert letter to Char@.
@@ -68,6 +45,29 @@ Char = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
   # Assert length is 1
   Unit@ _ = str.items.tail.empty;
   toChar(str.items.head);
+};
+
+# @type[Composed@] Composed character literal letter type.
+<@,@>@ Composed@ = <@ A@, @ B@> { +(A@ a, B@ b); };
+
+# @func[Compose] Composes two character sets
+#  Example use:
+#
+#  @code[fble]
+#   % Str = /Std/String/Lit%.Str(Compose(Ascii.ToChar, Greek.ToChar));
+#   String@ s = Str|'hello π';
+#
+#  @arg[@][A@] Letter type for the first character set.
+#  @arg[ToChar@<A@>][toCharA] ToChar@ implementation for first character set.
+#  @arg[@][B@] Letter type for the second character set.
+#  @arg[ToChar@<B@>][toCharB] ToChar@ implementation for second character set.
+#  @returns[ToChar@<Composed@<A@, B@>]
+#   ToChar@ implementation for composed character set.
+<@ A@>(ToChar@<A@>)<@ B@>(ToChar@<B@>) { ToChar@<Composed@<A@, B@>>; }
+Compose = <@ A@>(ToChar@<A@> toCharA)<@ B@>(ToChar@<B@> toCharB) {
+  (Composed@<A@, B@> x) {
+    x.?(a: toCharA(x.a), b: toCharB(x.b));
+  };
 };
 
 @(ToChar@, Composed@, U, Compose, Char);
