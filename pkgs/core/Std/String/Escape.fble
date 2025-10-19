@@ -1,3 +1,5 @@
+# @module[/Std/String/Escape%]
+#  Support for character escape sequences in strings.
 
 @ Char@ = /Std/Char%.Char@;
 % Char = /Std/Char%.Char;
@@ -16,8 +18,11 @@
 
 @ String@ = /Std/String%.String@;
 
-# Interpret escape sequences in the given string.
-# Sequences:
+# func[Escape] Interpret escape sequences in the given string.
+#  The following character escape sequences may appear in the string. These
+#  will be replaced with their corresponding character values.
+#
+#  @code[txt] @
 #   \0 - null
 #   \a - bell
 #   \\ - backslash
@@ -29,7 +34,10 @@
 #   \v - vertical tab
 #   \u[hex]+; - unicode character
 # 
-# Any other use of \ is undefined and reserved for future use.
+#  Any other use of \ is undefined and reserved for future use.
+#
+#  @arg[String@][str] The string to process escape sequences in.
+#  @returns[String@] The given string with processed escape sequences.
 (String@) { String@; }
 Escape = {
   Char@ '\' = U|5C;

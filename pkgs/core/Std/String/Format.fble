@@ -1,0 +1,75 @@
+# @module[/Std/String/Format%]
+#  Utilities for constructing formatted strings.
+
+@ Char@ = /Std/Char%.Char@;
+% U = /Std/Char/Lit%.U;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Append = /Std/List%.Append;
+
+@ String@ = /Std/String%.String@;
+% Escape = /Std/String/Escape%.Escape;
+
+Char@ '%' = U|25;
+Char@ 's' = U|73;
+
+# @func[Format] Construct a formatted string.
+#  Provides printf like format strings, except the only supported format type
+#  is @l{%s}. More specifically, returns the format string with @l{%%}
+#  replaced with @l{%} and @l{%s} replaced with the value of the next
+#  argument string.
+#
+#  For example:
+#
+#  @code[fble] @
+#   String@ str = Format|'a: %s, b: %s'[Str|'hello', Str|'there'];
+#
+#  @arg[String@][fmt] The format specifier
+#  @arg[List@<String@>[args] Format args.
+#  @return[String@] The formatted string.
+(String@, List@<String@>) { String@; }
+Format = (String@ fmt, List@<String@> args) {
+  fmt.?(empty: fmt);
+  Char@ c = fmt.items.head;
+  /Std/Char/Eq%.Eq('%', c).?(true: {
+    fmt.items.tail.?(empty: /Std/Undef%.Undef.undef<String@>);
+    Char@ e = fmt.items.tail.items.head;
+
+    /Std/Char/Eq%.Eq('%', e).?(true: {
+      Items(c, Format(fmt.items.tail.items.tail, args));
+    });
+
+    /Std/Char/Eq%.Eq('s', e).?(true: {
+      Append(args.items.head, Format(fmt.items.tail.items.tail, args.items.tail));
+    });
+
+    /Std/Undef%.Undef.undef<String@>;
+  });
+
+  Items(c, Format(fmt.items.tail, args));
+};
+
+# @func[FormatE] Construct a formatted string from a char escaped format.
+#  Provides printf like format strings, except the only supported format type
+#  is @l{%s}. More specifically, returns the format string with @l{%%}
+#  replaced with @l{%} and @l{%s} replaced with the value of the next
+#  argument string.
+#
+#  The format string is run through /Std/String/Escape%.Escape first, so that
+#  you can include character escape sequences.
+#
+#  For example:
+#
+#  @code[fble] @
+#   String@ str = FormatE|'a: %s;\nb: %s'[Str|'hello', Str|'there'];
+#
+#  @arg[String@][fmt] The format specifier
+#  @arg[List@<String@>[args] Format args.
+#  @return[String@] The formatted string.
+(String@, List@<String@>) { String@; }
+FormatE = (String@ fmt, List@<String@> args) {
+  Format(Escape(fmt), args);
+};
+
+@(Format, FormatE);

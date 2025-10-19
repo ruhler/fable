@@ -138,12 +138,12 @@ Char@ cr = Ascii.cr;
 #   \r - carriage return
 # 
 # Any other use of \ is undefined.
-(List@<Ascii@>) { String@; } StrE = StrLit(ToChar, /Core/String/Escape%.Escape);
+(List@<Ascii@>) { String@; } StrE = StrLit(ToChar, /Std/String/Escape%.Escape);
 
 (List@<Ascii@>, List@<String@>) { String@; }
-Format = StrLit(ToChar, /Core/String/Format%.Format);
+Format = StrLit(ToChar, /Std/String/Format%.Format);
 
 (List@<Ascii@>, List@<String@>) { String@; }
-FormatE = StrLit(ToChar, /Core/String/Format%.FormatE);
+FormatE = StrLit(ToChar, /Std/String/Format%.FormatE);
 
 @(Ascii@, ToChar, Chars, Char, Str, StrE, Format, FormatE);

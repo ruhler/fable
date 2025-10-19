@@ -6,6 +6,7 @@ Things to consider doing for the fble-0.6 release.
 * Better implementation of ReadHex in /Std/String/Escape.
 * Replace uses of 'Concat' with 'Format' where appropriate.
 * Add vim syntax highlighting for \ and % escape sequences?
+* Double check @module[...] values are correct in /Std/...*.fble files.
 
 * Double check performance of ReverseComplement, specifically the
   ComplementCode function. Maybe use a map instead?
