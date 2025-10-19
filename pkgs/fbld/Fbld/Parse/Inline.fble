@@ -4,7 +4,7 @@
 
 @ Char@ = /Std/Char%.Char@;
 % Char = /Std/Char/Ascii%.Char;
-% CharE = /Std/Char/Ascii%.CharE;
+% Ascii = /Std/Char/Ascii%.Ascii;
 % IsAlNum = /Core/Char/Type%.IsAlNum;
 
 @ Int@ = /Std/Int%.Int@;
@@ -142,7 +142,7 @@ M@<Markup@> Command = {
       /Std/Char/Eq%.Eq(e.c, Char|'[').?(true: Return(Char|'['));
       /Std/Char/Eq%.Eq(e.c, Char|'\').?(true: Return(Char|'\'));
       /Std/Char/Eq%.Eq(e.c, Char|']').?(true: Return(Char|']'));
-      /Std/Char/Eq%.Eq(e.c, Char|'n').?(true: Return(CharE|'\n'));
+      /Std/Char/Eq%.Eq(e.c, Char|'n').?(true: Return(Ascii.nl));
       Unit@ _ <- Error<Char@>;
       Text@(e.l, Concat[Str|'Unsupported escape sequence: ''\', List[e.c, Char|'''']]);
     });

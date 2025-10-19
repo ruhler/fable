@@ -1102,3 +1102,16 @@ time? Honestly, is there any good reason to have CharE? Every escape sequence
 can be done directly using U|... or the actual character. Maybe put Chars with
 wherever we are defining CharE or Escape, or something like that.
 
+---
+
+Where should Newline, Tab, and CR character definitions live?
+* /Std/Char%? But then, why wouldn't we put a bunch more there?
+* /Std/Char/Lit% But then, why wouldn't we put a bunch more there?
+* /Std/Char/Ascii%? Yeah, that probably makes sense. Too bad we can't easily
+  reuse it for things like /Std/String/Escape% though.
+
+---
+
+Okay, it's a little messy near the end. I'm not entirely sure on
+/Std/String/Lit% versus /Std/Char/Lit%, but I think it's okay. Let's declare
+standard string library done for now.

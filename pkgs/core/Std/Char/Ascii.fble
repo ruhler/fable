@@ -43,7 +43,7 @@
   Unit@ '{', Unit@ '|', Unit@ '}', Unit@ '~'
 );
 
-# Ascii character values.
+# @value[Ascii] Ascii character values.
 % Ascii = @(
   nl: U|0A, tab: U|09, cr: U|0D,
 
@@ -128,19 +128,6 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 #   literal.
 (List@<Ascii@>) { Char@; } Char = /Std/Char/Lit%.Char(ToChar);
 
-# @func[Char] Ascii character literal with escape sequences.
-#  For example:
-#
-#  @code[fble] @
-#   Char@ newline = Char|'\n';
-#
-#  @arg[List@<Ascii@>][str] The literal string describing the character.
-#  @returns[Char@] The character value.
-#  @sideeffects
-#   Behavior is undefined if thre are more or less than one character in the
-#   literal.
-(List@<Ascii@>) { Char@; } CharE = /Std/Char/Lit%.CharE(ToChar);
-
 # @func[Str] An ascii string literal.
 #  Example use:
 #
@@ -173,4 +160,4 @@ Format = StrLit(ToChar, /Std/String/Format%.Format);
 (List@<Ascii@>, List@<String@>) { String@; }
 FormatE = StrLit(ToChar, /Std/String/Format%.FormatE);
 
-@(Ascii@, ToChar, Char, CharE, Str, StrE, Format, FormatE);
+@(Ascii@, Ascii, ToChar, Char, Str, StrE, Format, FormatE);

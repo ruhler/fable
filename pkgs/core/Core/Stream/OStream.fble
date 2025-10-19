@@ -1,6 +1,6 @@
 
 @ Char@ = /Std/Char%.Char@;
-% CharE = /Std/Char/Ascii%.CharE;
+% Ascii = /Std/Char/Ascii%.Ascii;
 
 @ Int@ = /Std/Int%.Int@;
 
@@ -35,7 +35,7 @@
   # This is like PutStr, except it adds a newline to the output.
   (OStream@, String@) { M@<Unit@>; } PutLine = (OStream@ out, String@ str) {
     Unit@ _ <- m.do(PutStr(out, str));
-    PutChar(out, CharE|'\n');
+    PutChar(out, Ascii.nl);
   };
 
   # Closes the given output stream.

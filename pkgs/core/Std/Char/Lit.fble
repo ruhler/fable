@@ -65,7 +65,7 @@ Compose = <@ A@>(ToChar@<A@> toCharA)<@ B@>(ToChar@<B@> toCharB) {
 #  For example:
 #
 #  @code[fble]
-#   (List@<Ascii@>) { String@; } Str = /Std/String%.Str(AsciiToChar);
+#   (List@<Ascii@>) { String@; } Str = /Std/Char/Lit%.Str(AsciiToChar);
 #   String@ hello = Str|'hello, world';
 #
 #  @arg[@][T@] The literal letter type.
@@ -105,7 +105,7 @@ StrLit = <@ T@>(ToChar@<T@> toChar)<@ A@>((String@) { A@; } f, List@<T@> str) {
 #  @arg[List@<T@>][str] A string literal.
 #  @returns[Char@] The first character of the string literal.
 #  @sideeffects
-#   Behavior is undefined if thre are more or less than one character in the
+#   Behavior is undefined if there are more or less than one character in the
 #   literal.
 <@ T@>(ToChar@<T@>, List@<T@>) { Char@; }
 Char = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
@@ -114,21 +114,4 @@ Char = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
   toChar(str.items.head);
 };
 
-# @func[Char] Character literal helper supporting character escape sequences.
-#  @arg[@][T@] Type of element used for literal letter.
-#  @arg[ToChar@<T@>][toChar] Function to convert letter to Char@.
-#  @arg[List@<T@>][str] A string literal.
-#  @returns[Char@] The first character of the string literal.
-#  @sideeffects
-#   Behavior is undefined if thre are more or less than one character in the
-#   literal.
-<@ T@>(ToChar@<T@>, List@<T@>) { Char@; }
-CharE = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
-  String@ escaped = /Std/String/Escape%.Escape(Str(toChar, str));
-
-  # Assert length is 1
-  Unit@ _ = escaped.items.tail.empty;
-  escaped.items.head;
-};
-
-@(ToChar@, Composed@, U, Compose, StrLit, Char, CharE, Str);
+@(ToChar@, Composed@, U, Compose, StrLit, Char, Str);

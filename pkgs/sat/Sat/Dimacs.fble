@@ -1,7 +1,7 @@
 
 @ Char@ = /Std/Char%.Char@;
 % Char = /Std/Char/Ascii%.Char;
-% CharE = /Std/Char/Ascii%.CharE;
+% Ascii = /Std/Char/Ascii%.Ascii;
 % IsSpace = /Core/Char/Type%.IsSpace;
 
 @ Int@ = /Std/Int%.Int@;
@@ -148,7 +148,7 @@ ParseM@<Unit@> ParseFromStart = {
 
 (String@) { Parse@<Formula@>; } Parse = (String@ dimacs) {
   ParseLines(Split(dimacs, (Char@ c) {
-    /Std/Char/Eq%.Eq(c, CharE|'\n');
+    /Std/Char/Eq%.Eq(c, Ascii.nl);
   }));
 };
 

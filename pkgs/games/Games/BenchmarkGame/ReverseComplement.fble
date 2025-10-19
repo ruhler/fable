@@ -3,7 +3,7 @@
 
 @ Char@ = /Std/Char%.Char@;
 % Char = /Std/Char/Ascii%.Char;
-% CharE = /Std/Char/Ascii%.CharE;
+% Ascii = /Std/Char/Ascii%.Ascii;
 % IsNewline = /Core/Char/Type%.IsNewline;
 
 @ Int@ = /Std/Int%.Int@;
@@ -86,10 +86,10 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _) {
 
   # Prints codes to stdout, breaking lines every 60 characters.
   (Int@, String@) { M@<Unit@>; } PrintCodes = (Int@ n, String@ codes) {
-    codes.?(empty: O.PutChar(stdio.out, CharE|'\n'));
+    codes.?(empty: O.PutChar(stdio.out, Ascii.nl));
 
     IsZero(n).?(true: {
-      Unit@ _ <- m.do(O.PutChar(stdio.out, CharE|'\n'));
+      Unit@ _ <- m.do(O.PutChar(stdio.out, Ascii.nl));
       PrintCodes(Int|60, codes);
     });
 
