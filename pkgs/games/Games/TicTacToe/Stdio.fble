@@ -2,11 +2,10 @@
 % True = /Std/Bool%.True;
 
 @ Char@ = /Std/Char%.Char@;
-% Char = /Core/Char/Ascii%.Char;
-% Chars = /Core/Char/Ascii%.Chars;
+% Char = /Std/Char/Ascii%.Char;
+% FormatE = /Std/Char/Ascii%.FormatE;
 
 <@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
 <@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -19,8 +18,8 @@
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Std/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
-% StrE = /Core/Char/Ascii%.StrE;
+% Str = /Std/Char/Ascii%.Str;
+% StrE = /Std/Char/Ascii%.StrE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -65,9 +64,9 @@
 };
 
 (Game@) { String@; } ShowGame = (Game@ game) {
-  Concat[
-    ShowBoard(game.board), List[Chars.nl],
-    ShowStatus(game.status), List[Chars.nl]];
+  FormatE|'%s\n%s\n'[
+    ShowBoard(game.board),
+    ShowStatus(game.status)];
 };
 
 @ Input@ = +(Unit@ quit, Unit@ reset, Move@ move);

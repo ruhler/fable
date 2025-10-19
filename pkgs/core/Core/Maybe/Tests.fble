@@ -15,7 +15,7 @@
 <@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Std/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Std/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;

@@ -17,7 +17,7 @@
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
 @ String@ = /Std/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Std/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

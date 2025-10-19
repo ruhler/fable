@@ -1,6 +1,6 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Std/Char/Ascii%.Str;
 @ Unit@ = /Std/Unit%.Unit@;
 
 # Show --

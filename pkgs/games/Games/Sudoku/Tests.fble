@@ -4,8 +4,6 @@
 % False = /Std/Bool%.False;
 % And = /Std/Bool%.And;
 
-% Chars = /Core/Char/Ascii%.Chars;
-
 <@>@ Eq@ = /Std/Eq%.Eq@;
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
@@ -18,7 +16,8 @@
 <@>% DoWhile = /Core/Maybe%.DoWhile;
 
 @ String@ = /Std/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Std/Char/Ascii%.Str;
+% StrE = /Std/Char/Ascii%.StrE;
 
 @ Test@ = /Core/Test%.Test@;
 @ TestResult@ = /Core/Test%.TestResult@;
@@ -77,7 +76,7 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
   };
 
   String@ space = spaced.?(true: Str|' ', false: Str|'');
-  String@ nl = spaced.?(true: List[Chars.nl], false: Str|'');
+  String@ nl = spaced.?(true: StrE|'\n', false: Str|'');
 
   (Array@<Symbol@>) { String@; } ShowRow = (Array@<Symbol@> row) {
     Concat(List[

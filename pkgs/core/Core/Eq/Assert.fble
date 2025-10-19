@@ -5,7 +5,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Std/Char/Ascii%.Str;
 
 @ TestResult@ = /Core/Test%.TestResult@;
 % Pass = /Core/Test%.Pass;

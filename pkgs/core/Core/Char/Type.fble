@@ -6,8 +6,8 @@
 
 @ Char@ = /Std/Char%.Char@;
 % Pos = /Std/Char%.Pos;
-% Char = /Core/Char/Ascii%.Char;
-% Chars = /Core/Char/Ascii%.Chars;
+% Char = /Std/Char/Ascii%.Char;
+% CharE = /Std/Char/Ascii%.CharE;
 
 (Char@) { Bool@; } IsUpper = (Char@ c) {
   /Std/Int/Ord%.Lt(Pos(c), Pos(Char|'A')).?(true: False);
@@ -33,14 +33,14 @@
 };
 
 (Char@) { Bool@; } IsNewline = (Char@ c) {
-  /Std/Char/Eq%.Eq(Chars.nl, c);
+  /Std/Char/Eq%.Eq(CharE|'\n', c);
 };
 
 (Char@) { Bool@; } IsSpace = (Char@ c) {
   /Std/Char/Eq%.Eq(Char|' ', c).?(true: True);
-  /Std/Char/Eq%.Eq(Chars.nl, c).?(true: True);
-  /Std/Char/Eq%.Eq(Chars.cr, c).?(true: True);
-  /Std/Char/Eq%.Eq(Chars.tab, c).?(true: True);
+  /Std/Char/Eq%.Eq(CharE|'\n', c).?(true: True);
+  /Std/Char/Eq%.Eq(CharE|'\r', c).?(true: True);
+  /Std/Char/Eq%.Eq(CharE|'\t', c).?(true: True);
   False;
 };
 

@@ -1087,3 +1087,18 @@ I think we're pretty close to done with string now. I just need string literal
 composition, if I don't already have it. Then move everything over to /Std%.
 It's not perfect, but it's a good start I think.
 
+---
+
+Uh, trouble with /Std/String/Lit% versus /Std/Char/Lit%. :(
+
+As soon as I tried to add CharE to /Std/Char/Lit%, things went bad.
+
+I'll duplicate some code for now to avoid the recursive dependency, but I
+should clean this up.
+
+Also concerning: CharE|'\n' versus Chars.nl. Surely it's better to refer to
+the letter directly, rather than interpreting as an escape sequence every
+time? Honestly, is there any good reason to have CharE? Every escape sequence
+can be done directly using U|... or the actual character. Maybe put Chars with
+wherever we are defining CharE or Escape, or something like that.
+

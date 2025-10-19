@@ -7,7 +7,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Std/Char/Ascii%.Str;
 
 Show@<PureState@> PureState = (PureState@ a) {
   Concat[

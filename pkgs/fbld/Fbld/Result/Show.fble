@@ -4,8 +4,8 @@
 <@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Std/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
-% StrE = /Core/Char/Ascii%.StrE;
+% Str = /Std/Char/Ascii%.Str;
+% StrE = /Std/Char/Ascii%.StrE;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 @ Text@ = /Fbld/Text%.Text@;

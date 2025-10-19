@@ -8,7 +8,7 @@
 % Rotate = /Pinball/Rotate%.Rotate;
 @ Vec@ = /Pinball/Vec%.Vec@;
 
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Std/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;

@@ -3,12 +3,14 @@
 
 @ Char@ = /Std/Char%.Char@;
 % Char = /Std/Char%.Char;
-% U = /Std/Char/Lit%.U;
 
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
 % Mul = /Std/Int%.Mul;
+
+@ HexLit@ = /Std/Int/Lit%.HexLit@;
 % Int = /Std/Int/Lit%.Int;
+% Hex = /Std/Int/Lit%.Hex;
 
 <@>% Empty = /Std/List%.Empty;
 <@>% Items = /Std/List%.Items;
@@ -17,6 +19,11 @@
 <@>% Break = /Std/List/Search%.Break;
 
 @ String@ = /Std/String%.String@;
+
+(HexLit@) { Char@; }
+U = (HexLit@ hex) {
+  Char(Hex(hex));
+};
 
 # func[Escape] Interpret escape sequences in the given string.
 #  The following character escape sequences may appear in the string. These

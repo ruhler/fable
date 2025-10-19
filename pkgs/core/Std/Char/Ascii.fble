@@ -1,3 +1,5 @@
+# @module[/Std/Char/Ascii%]
+#  Ascii character and string literals.
 
 @ Char@ = /Std/Char%.Char@;
 
@@ -11,6 +13,7 @@
 
 @ Unit@ = /Std/Unit%.Unit@;
 
+# @type[Ascii@] The ascii character letter type.
 @ Ascii@ = +(
   Unit@ '
 ',
@@ -76,6 +79,9 @@
   '{': U|7B, '|': U|7C, '}': U|7D, '~': U|7E
 );
 
+# @func[Tochar] Convert an Ascii letter to a character.
+#  @arg[Ascii@][c] The ascii letter.
+#  @returns[Char@] The character value of the letter.
 ToChar@<Ascii@> ToChar = (Ascii@ c) {
   c.?('
 ': Ascii.nl, '	': Ascii.tab, '': Ascii.cr, ' ': Ascii.' ',
@@ -109,41 +115,62 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
     '{': Ascii.'{', '|': Ascii.'|', '}': Ascii.'}', '~': Ascii.'~');
 };
 
-Char@ nl = Ascii.nl;
-Char@ tab = Ascii.tab;
-Char@ cr = Ascii.cr;
-
-# Chars --
-#   A collection of characters that can be referenced more easily than
-#   creating character values directly.
-% Chars = @(nl, tab, cr);
-
-# Character literal.
-#  Behavior is undefined if thre are more or less than one character in the
-#  literal.
+# @func[Char] Ascii character literal.
+#  For example:
+#
+#  @code[fble] @
+#   Char@ c = Char|'c';
+#
+#  @arg[List@<Ascii@>][str] The literal string describing the character.
+#  @returns[Char@] The character value.
+#  @sideeffects
+#   Behavior is undefined if thre are more or less than one character in the
+#   literal.
 (List@<Ascii@>) { Char@; } Char = /Std/Char/Lit%.Char(ToChar);
 
-# Str --
-#   A string literal.
+# @func[Char] Ascii character literal with escape sequences.
+#  For example:
 #
-# Example Use:
+#  @code[fble] @
+#   Char@ newline = Char|'\n';
+#
+#  @arg[List@<Ascii@>][str] The literal string describing the character.
+#  @returns[Char@] The character value.
+#  @sideeffects
+#   Behavior is undefined if thre are more or less than one character in the
+#   literal.
+(List@<Ascii@>) { Char@; } CharE = /Std/Char/Lit%.CharE(ToChar);
+
+# @func[Str] An ascii string literal.
+#  Example use:
+#
+#  @code[fble] @
 #   String@ s = Str|'hello, world'
+#
+#  @arg[List@<Ascii@>][str] The string literal.
+#  @returns[String@] The string value.
 (List@<Ascii@>) { String@; } Str = /Std/String/Lit%.Str(ToChar);
 
-# StrE --
-#   A string literal that supports the following escape sequences:
-#   \\ - backslash
-#   \n - newline
-#   \t - tab
-#   \r - carriage return
-# 
-# Any other use of \ is undefined.
+# @func[Str] An ascii string literal supporting character escape sequences.
+#  Supports character sequences as in /Std/String/Escape%.Escape.
+#
+#  Example use:
+#
+#  @code[fble] @
+#   String@ s = Str|'hello\nworld\n'
+#
+#  @arg[List@<Ascii@>][str] The string literal.
+#  @returns[String@] The string value.
 (List@<Ascii@>) { String@; } StrE = StrLit(ToChar, /Std/String/Escape%.Escape);
 
+# @func[Format] Format string with ascii string literal.
+#  See /Std/String/Format%.Format.
 (List@<Ascii@>, List@<String@>) { String@; }
 Format = StrLit(ToChar, /Std/String/Format%.Format);
 
+# @func[FormatE] Format string with ascii string literal.
+#  See /Std/String/FormatE%.Format.
 (List@<Ascii@>, List@<String@>) { String@; }
 FormatE = StrLit(ToChar, /Std/String/Format%.FormatE);
 
-@(Ascii@, ToChar, Chars, Char, Str, StrE, Format, FormatE);
+@(Ascii@, ToChar, Char, CharE, Str, StrE, Format, FormatE);

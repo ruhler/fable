@@ -3,7 +3,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-% Char = /Core/Char/Ascii%.Char;
+% Char = /Std/Char/Ascii%.Char;
 
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
@@ -38,9 +38,9 @@
 
 @ String@ = /Std/String%.String@;
 % Lines = /Std/String/Lines%.Lines;
-% Str = /Core/Char/Ascii%.Str;
-% StrE = /Core/Char/Ascii%.StrE;
-% Format = /Core/Char/Ascii%.Format;
+% Str = /Std/Char/Ascii%.Str;
+% StrE = /Std/Char/Ascii%.StrE;
+% Format = /Std/Char/Ascii%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

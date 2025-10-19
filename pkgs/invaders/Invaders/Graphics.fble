@@ -1,6 +1,6 @@
 
 @ Char@ = /Std/Char%.Char@;
-% Char = /Core/Char/Ascii%.Char;
+% Char = /Std/Char/Ascii%.Char;
 
 @ Decimal@ = /Core/Digits%.Decimal@;
 
@@ -18,7 +18,7 @@
 <@>@ List@ = /Std/List%.List@;
 
 @ String@ = /Std/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Std/Char/Ascii%.Str;
 
 Color@ white = Color.White;
 Color@ green = Color.Green;

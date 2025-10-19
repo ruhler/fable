@@ -6,8 +6,8 @@
 
 <@>% List = /Std/List%.List;
 
-% Str = /Core/Char/Ascii%.Str;
-% StrE = /Core/Char/Ascii%.StrE;
+% Str = /Std/Char/Ascii%.Str;
+% StrE = /Std/Char/Ascii%.StrE;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;

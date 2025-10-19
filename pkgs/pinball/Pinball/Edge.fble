@@ -10,7 +10,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Std/Char/Ascii%.Str;
 
 # Edge@ --
 #   Internal representation for a stationary edge.

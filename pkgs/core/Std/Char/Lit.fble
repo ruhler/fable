@@ -9,6 +9,8 @@
 
 <@>@ List@ = /Std/List%.List@;
 
+@ String@ = /Std/String%.String@;
+
 @ Unit@ = /Std/Unit%.Unit@;
 
 # @func[U] Unicode character literal.
@@ -47,6 +49,23 @@ Char = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
   toChar(str.items.head);
 };
 
+# @func[Char] Character literal helper supporting character escape sequences.
+#  @arg[@][T@] Type of element used for literal letter.
+#  @arg[ToChar@<T@>][toChar] Function to convert letter to Char@.
+#  @arg[List@<T@>][str] A string literal.
+#  @returns[Char@] The first character of the string literal.
+#  @sideeffects
+#   Behavior is undefined if thre are more or less than one character in the
+#   literal.
+<@ T@>(ToChar@<T@>, List@<T@>) { Char@; }
+CharE = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
+  String@ escaped = /Std/String/Escape%.Escape(/Std/String/Lit%.Str(toChar, str));
+
+  # Assert length is 1
+  Unit@ _ = escaped.items.tail.empty;
+  escaped.items.head;
+};
+
 # @type[Composed@] Composed character literal letter type.
 <@,@>@ Composed@ = <@ A@, @ B@> { +(A@ a, B@ b); };
 
@@ -70,4 +89,4 @@ Compose = <@ A@>(ToChar@<A@> toCharA)<@ B@>(ToChar@<B@> toCharB) {
   };
 };
 
-@(ToChar@, Composed@, U, Compose, Char);
+@(ToChar@, Composed@, U, Compose, Char, CharE);

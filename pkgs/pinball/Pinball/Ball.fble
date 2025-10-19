@@ -14,7 +14,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Std/Char/Ascii%.Str;
 
 # Ball@ --
 #   pos - the position of the center of the ball.

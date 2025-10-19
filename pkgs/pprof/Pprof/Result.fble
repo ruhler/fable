@@ -6,7 +6,7 @@
 <@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Std/String%.String@;
-% Format = /Core/Char/Ascii%.Format;
+% Format = /Std/Char/Ascii%.Format;
 
 
 <@>@ Result@ = <@ A@> {

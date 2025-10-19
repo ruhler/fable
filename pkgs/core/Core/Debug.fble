@@ -1,7 +1,7 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
 
-% Chars = /Core/Char/Ascii%.Chars;
+% CharE = /Std/Char/Ascii%.CharE;
 
 <@>% List = /Std/List%.List;
 <@>% Append = /Std/List%.Append;
@@ -17,7 +17,7 @@
 
 # Trace with a newline added at the end of the string.
 (String@) { Unit@; } TraceLn = (String@ s) {
-  Trace(Append(s, List[Chars.nl]));
+  Trace(Append(s, List[CharE|'\n']));
 };
 
 ((Unit@) { String@; }) { Unit@; }

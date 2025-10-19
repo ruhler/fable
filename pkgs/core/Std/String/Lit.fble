@@ -1,11 +1,13 @@
 # @module[/Std/String/Lit%]
 #  Utilities for working with string literals.
 
-<@>@ ToChar@ = /Std/Char/Lit%.ToChar@;
+@ Char@ = /Std/Char%.Char@;
 
 <@>@ List@ = /Std/List%.List@;
 
 @ String@ = /Std/String%.String@;
+
+<@>@ ToChar@ = <@ T@>(T@) { Char@; };
 
 # @func[Str] String literal function.
 #  For any literal letter type @l{T@} that can be converted to @l{Char@} using

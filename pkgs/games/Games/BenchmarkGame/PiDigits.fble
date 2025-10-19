@@ -2,8 +2,7 @@
 @ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
 
-% Char = /Core/Char/Ascii%.Char;
-% Chars = /Core/Char/Ascii%.Chars;
+% StrE = /Std/Char/Ascii%.StrE;
 
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
@@ -121,9 +120,9 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
       Int@ ni = Incr(i);
       Unit@ _ <- m.do(Eq(Int|0, Div(ni, l).r).?(true: {
-        Unit@ _ <- m.do(PutS[Chars.tab, Char|':']);
+        Unit@ _ <- m.do(PutS(StrE|'\t:'));
         Unit@ _ <- m.do(PutS(/Core/Int/Show%.Show(ni)));
-        PutS[Chars.nl];
+        PutS(StrE|'\n');
       }, false: m.return(Unit)));
 
       PiDigits(ni, r.state);

@@ -6,8 +6,8 @@
 @ Char@ = /Std/Char%.Char@;
 <@>% Compose = /Std/Char/Lit%.Compose;
 
-% Char = /Core/Char/Ascii%.Char;
-% Chars = /Core/Char/Ascii%.Chars;
+% Char = /Std/Char/Ascii%.Char;
+% CharE = /Std/Char/Ascii%.CharE;
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
@@ -15,9 +15,9 @@
 <@>% List = /Std/List%.List;
 
 @ String@ = /Std/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
-% StrE = /Core/Char/Ascii%.StrE;
-% Format = /Core/Char/Ascii%.Format;
+% Str = /Std/Char/Ascii%.Str;
+% StrE = /Std/Char/Ascii%.StrE;
+% Format = /Std/Char/Ascii%.Format;
 % Lines = /Std/String/Lines%.Lines;
 % SplitLines = /Std/String/Lines%.SplitLines;
 
@@ -34,8 +34,8 @@
 Test@ Tests = TestSuite(Str|String, List[
   Test(Str|StrE, (Unit@ _) {
     String@ wnt = List[
-      Char|a, Chars.nl,
-      Char|b, Chars.tab,
+      Char|a, CharE|'\n',
+      Char|b, CharE|'\t',
       Char|c, Char|'\',
       Char|d];
     String@ got = StrE|'a\nb\tc\\d';

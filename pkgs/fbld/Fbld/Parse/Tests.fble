@@ -1,5 +1,5 @@
 
-@ Ascii@ = /Core/Char/Ascii%.Ascii@;
+@ Ascii@ = /Std/Char/Ascii%.Ascii@;
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
@@ -10,8 +10,8 @@
 <@>% Concat = /Std/List%.Concat;
 
 @ String@ = /Std/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
-% StrE = /Core/Char/Ascii%.StrE;
+% Str = /Std/Char/Ascii%.Str;
+% StrE = /Std/Char/Ascii%.StrE;
 % Lines = /Std/String/Lines%.Lines;
 
 @ Test@ = /Core/Test%.Test@;

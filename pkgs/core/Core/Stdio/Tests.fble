@@ -2,8 +2,8 @@
 @ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
 
-@ Ascii@ = /Core/Char/Ascii%.Ascii@;
-% ToChar = /Core/Char/Ascii%.ToChar;
+@ Ascii@ = /Std/Char/Ascii%.Ascii@;
+% ToChar = /Std/Char/Ascii%.ToChar;
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
@@ -23,7 +23,7 @@
 <@>% PureResultShow = /Core/Stdio/Pure/Show%.PureResult;
 
 @ String@ = /Std/String%.String@;
-% Str = /Core/Char/Ascii%.Str;
+% Str = /Std/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
