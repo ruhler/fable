@@ -1081,3 +1081,9 @@ whatever other things we might dream up.
 
 Clear? Good? Yes. Let me revert my recent changes then.
 
+---
+
+I think we're pretty close to done with string now. I just need string literal
+composition, if I don't already have it. Then move everything over to /Std%.
+It's not perfect, but it's a good start I think.
+

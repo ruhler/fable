@@ -3,6 +3,9 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
+@ Char@ = /Std/Char%.Char@;
+<@>% Compose = /Std/Char/Lit%.Compose;
+
 % Char = /Core/Char/Ascii%.Char;
 % Chars = /Core/Char/Ascii%.Chars;
 
@@ -188,6 +191,24 @@ Test@ Tests = TestSuite(Str|String, List[
       /Std/List/Eq%.Eq(/Std/String/Eq%.Eq),
       /Core/List/Show%.Show(/Core/String/Show%.Show),
       wnt, got);
+  }),
+
+  Test(Str|Compose, (Unit@ _) {
+    @ Alpha@ = +(Unit@ a, Unit@ b, Unit@ c);
+    (Alpha@) { Char@; } AlphaToChar = (Alpha@ a) {
+      a.?(a: Char|a, b: Char|b, c: Char|c);
+    };
+
+    @ Digit@ = +(Unit@ 0, Unit@ 1, Unit@ 2);
+    (Digit@) { Char@; } DigitToChar = (Digit@ a) {
+      a.?(0: Char|0, 1: Char|1, 2: Char|2);
+    };
+
+    % S = /Std/String%.Str(Compose(AlphaToChar, DigitToChar));
+
+    String@ wnt = Str|'ab01c2';
+    String@ got = S|'ab01c2';
+    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   /Core/String/Map/Tests%.Tests
