@@ -204,7 +204,7 @@ Test@ Tests = TestSuite(Str|String, List[
       a.?(0: Char|0, 1: Char|1, 2: Char|2);
     };
 
-    % S = /Std/String/Lit%.Str(Compose(AlphaToChar, DigitToChar));
+    % S = /Std/Char/Lit%.Str(Compose(AlphaToChar, DigitToChar));
 
     String@ wnt = Str|'ab01c2';
     String@ got = S|'ab01c2';

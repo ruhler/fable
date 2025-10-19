@@ -1,5 +1,5 @@
 # @module[/Std/Char/Lit%]
-#  Character literals.
+#  Character and string literals.
 
 @ Char@ = /Std/Char%.Char@;
 % Unicode = /Std/Char%.Char;
@@ -34,6 +34,71 @@ U = (HexLit@ hex) {
 #  character sets.
 <@>@ ToChar@ = <@ T@>(T@) { Char@; };
 
+# @type[Composed@] Composed character literal letter type.
+<@,@>@ Composed@ = <@ A@, @ B@> { +(A@ a, B@ b); };
+
+# @func[Compose] Composes two character sets
+#  Example use:
+#
+#  @code[fble]
+#   % Str = /Std/Char/Lit%.Str(Compose(Ascii.ToChar, Greek.ToChar));
+#   String@ s = Str|'hello π';
+#
+#  @arg[@][A@] Letter type for the first character set.
+#  @arg[ToChar@<A@>][toCharA] ToChar@ implementation for first character set.
+#  @arg[@][B@] Letter type for the second character set.
+#  @arg[ToChar@<B@>][toCharB] ToChar@ implementation for second character set.
+#  @returns[ToChar@<Composed@<A@, B@>]
+#   ToChar@ implementation for composed character set.
+<@ A@>(ToChar@<A@>)<@ B@>(ToChar@<B@>) { ToChar@<Composed@<A@, B@>>; }
+Compose = <@ A@>(ToChar@<A@> toCharA)<@ B@>(ToChar@<B@> toCharB) {
+  (Composed@<A@, B@> x) {
+    x.?(a: toCharA(x.a), b: toCharB(x.b));
+  };
+};
+
+# @func[Str] String literal function.
+#  For any literal letter type @l{T@} that can be converted to @l{Char@} using
+#  a provided @l{toChar} function, this returns a string literal function for
+#  constructing strings.
+#
+#  For example:
+#
+#  @code[fble]
+#   (List@<Ascii@>) { String@; } Str = /Std/String%.Str(AsciiToChar);
+#   String@ hello = Str|'hello, world';
+#
+#  @arg[@][T@] The literal letter type.
+#  @arg[ToChar@<T@>][toChar] Function to convert letter to @l{Char@}.
+#  @arg[List@<T@>][str] The literal string.
+#  @returns[String@] A string value formed from the literal.
+<@ T@>(ToChar@<T@>, List@<T@>) { String@; }
+Str = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
+  /Std/List%.Map(str, toChar);
+};
+
+# @func[StrLit] Convert a String@ function to a string literal function.
+#  For any literal letter type @l{T@} that can be converted to @l{Char@} using
+#  a provided @l{toChar} function, this returns a variation of the given
+#  function on strings that takes a string literal instead of String@ as the
+#  argument.
+#
+#  For example:
+#
+#  @code[fble]
+#   (List@<Ascii@>) { String@; } Escape = /Std/String/Escape%.Escape(AsciiToChar);
+#   String@ hello = Escape|'hello, world\n';
+#
+#  @arg[@][T@] The literal letter type.
+#  @arg[ToChar@<T@>][toChar] Function to convert letter to @l{Char@}.
+#  @arg[@][A@] The function return type.
+#  @arg[(String@) { A@; }][f] The function to provide a literal variation of.
+#  @returns[(List@<T@>) { A@; }] The literal variation of the given function.
+<@ T@>(ToChar@<T@>)<@ A@>((String@) { A@; }) { (List@<T@>) { A@; }; }
+StrLit = <@ T@>(ToChar@<T@> toChar)<@ A@>((String@) { A@; } f, List@<T@> str) {
+  f(Str(toChar, str));
+};
+
 # @func[Char] Character literal helper.
 #  @arg[@][T@] Type of element used for literal letter.
 #  @arg[ToChar@<T@>][toChar] Function to convert letter to Char@.
@@ -59,34 +124,11 @@ Char = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
 #   literal.
 <@ T@>(ToChar@<T@>, List@<T@>) { Char@; }
 CharE = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
-  String@ escaped = /Std/String/Escape%.Escape(/Std/String/Lit%.Str(toChar, str));
+  String@ escaped = /Std/String/Escape%.Escape(Str(toChar, str));
 
   # Assert length is 1
   Unit@ _ = escaped.items.tail.empty;
   escaped.items.head;
 };
 
-# @type[Composed@] Composed character literal letter type.
-<@,@>@ Composed@ = <@ A@, @ B@> { +(A@ a, B@ b); };
-
-# @func[Compose] Composes two character sets
-#  Example use:
-#
-#  @code[fble]
-#   % Str = /Std/String/Lit%.Str(Compose(Ascii.ToChar, Greek.ToChar));
-#   String@ s = Str|'hello π';
-#
-#  @arg[@][A@] Letter type for the first character set.
-#  @arg[ToChar@<A@>][toCharA] ToChar@ implementation for first character set.
-#  @arg[@][B@] Letter type for the second character set.
-#  @arg[ToChar@<B@>][toCharB] ToChar@ implementation for second character set.
-#  @returns[ToChar@<Composed@<A@, B@>]
-#   ToChar@ implementation for composed character set.
-<@ A@>(ToChar@<A@>)<@ B@>(ToChar@<B@>) { ToChar@<Composed@<A@, B@>>; }
-Compose = <@ A@>(ToChar@<A@> toCharA)<@ B@>(ToChar@<B@> toCharB) {
-  (Composed@<A@, B@> x) {
-    x.?(a: toCharA(x.a), b: toCharB(x.b));
-  };
-};
-
-@(ToChar@, Composed@, U, Compose, Char, CharE);
+@(ToChar@, Composed@, U, Compose, StrLit, Char, CharE, Str);

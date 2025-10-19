@@ -9,7 +9,7 @@
 <@>@ List@ = /Std/List%.List@;
 
 @ String@ = /Std/String%.String@;
-<@>% StrLit = /Std/String/Lit%.StrLit;
+<@>% StrLit = /Std/Char/Lit%.StrLit;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -149,7 +149,7 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 #
 #  @arg[List@<Ascii@>][str] The string literal.
 #  @returns[String@] The string value.
-(List@<Ascii@>) { String@; } Str = /Std/String/Lit%.Str(ToChar);
+(List@<Ascii@>) { String@; } Str = /Std/Char/Lit%.Str(ToChar);
 
 # @func[Str] An ascii string literal supporting character escape sequences.
 #  Supports character sequences as in /Std/String/Escape%.Escape.
