@@ -1,0 +1,82 @@
+
+% True = /Std/Bool%.True;
+
+@ Int@ = /Std/Int%.Int@;
+% Sub = /Std/Int%.Sub;
+
+% Int = /Std/Int/Lit%.Int;
+
+<@>@ List@ = /Std/List%.List@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Std/String%.String@;
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Color@ = /App/Drawing%.Color@;
+% Color = /App/Drawing%.Color;
+% Drawings = /App/Drawing%.Drawings;
+% Rect = /App/Drawing%.Rect;
+
+
+@ State@ = *(
+  Int@ mouse_x,
+  Int@ mouse_y,
+  Color@ mouse_color
+);
+
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
+  M@<Event@> FilterEvent = {
+    Event@ e <- m.do(app.event);
+    e.?(tick: m.return(e),
+        key_down: e.key_down.?(q: m.return(e), : FilterEvent),
+        mouse_down: m.return(e),
+        mouse_up: m.return(e),
+        mouse_motion: m.return(e),
+        : FilterEvent);
+  };
+
+  (State@) { M@<Unit@>; } StepUI = (State@ s) {
+    Drawing@ clear = Rect(Int|0, Int|0, width, height, Color.Black);
+    Drawing@ box = Rect(
+      Int|10,
+      Int|10,
+      Sub(width, Int|20),
+      Sub(height, Int|20),
+      Color.Blue);
+
+    Drawing@ cursor = Rect(
+      Sub(s.mouse_x, Int|10),
+      Sub(s.mouse_y, Int|10),
+      Int|20,
+      Int|20,
+      s.mouse_color);
+
+    Drawing@ drawing = Drawings[clear, box, cursor];
+
+    Unit@ _ <- m.do(app.effect(Effect@(draw: drawing)));
+    Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));
+    Event@ e <- m.do(FilterEvent);
+    e.?(
+      tick: StepUI(s),
+      mouse_down: StepUI(State@(s.mouse_x, s.mouse_y, Color.Red)),
+      mouse_up: StepUI(State@(s.mouse_x, s.mouse_y, Color.Green)),
+      mouse_motion: StepUI(State@(e.mouse_motion.x, e.mouse_motion.y, s.mouse_color)),
+      : m.return(Unit));
+  };
+
+  Unit@ _ <- m.do(StepUI(State@(Int|0, Int|0, Color.Green)));
+  m.return(True);
+};
+
+/App/IO%.Run(Main);

@@ -15,6 +15,7 @@ namespace eval "pkgs" {
     pinball
     graphics
     benchmark
+    computrainer
   }
 
   # pkg --
