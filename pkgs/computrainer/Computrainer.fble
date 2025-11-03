@@ -2,6 +2,7 @@
 % True = /Std/Bool%.True;
 
 @ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
 % Sub = /Std/Int%.Sub;
 % Mul = /Std/Int%.Mul;
 
@@ -38,11 +39,35 @@ Rails@ Rails = List[
     @(x: Int|3, y: Int|3, d: Dir@(right: Unit)),
     @(x: Int|4, y: Int|3, d: Dir@(right: Unit)),
     @(x: Int|5, y: Int|3, d: Dir@(down: Unit)),
-    @(x: Int|5, y: Int|4, d: Dir@(down: Unit))
+    @(x: Int|5, y: Int|4, d: Dir@(down: Unit)),
+    @(x: Int|5, y: Int|5, d: Dir@(left: Unit)),
+    @(x: Int|4, y: Int|5, d: Dir@(up: Unit)),
+    @(x: Int|4, y: Int|4, d: Dir@(up: Unit))
 ];
 
 (Entry@) { Drawing@; } DrawRail = (Entry@ e) {
-    Rect(Mul(e.x, Int|20), Mul(e.y, Int|20), Int|20, Int|20,  Color.White);
+    e.d.?(
+        up: Drawings[
+            Rect(Sub(Mul(e.x, Int|20), Int|2), Sub(Mul(e.y, Int|20), Int|22), Int|4, Int|24,  Color.White),
+            Rect(Sub(Mul(e.x, Int|20), Int|4), Sub(Mul(e.y, Int|20), Int|14), Int|8, Int|4,  Color.White),
+            Rect(Sub(Mul(e.x, Int|20), Int|6), Sub(Mul(e.y, Int|20), Int|10), Int|12, Int|4,  Color.White)
+        ],
+        down: Drawings[
+            Rect(Sub(Mul(e.x, Int|20), Int|2), Sub(Mul(e.y, Int|20), Int|2), Int|4, Int|24,  Color.White),
+            Rect(Sub(Mul(e.x, Int|20), Int|4), Add(Mul(e.y, Int|20), Int|10), Int|8, Int|4,  Color.White),
+            Rect(Sub(Mul(e.x, Int|20), Int|6), Add(Mul(e.y, Int|20), Int|6), Int|12, Int|4,  Color.White)
+        ],
+        left: Drawings[
+            Rect(Sub(Mul(e.x, Int|20), Int|22), Sub(Mul(e.y, Int|20), Int|2), Int|24, Int|4,  Color.White),
+            Rect(Sub(Mul(e.x, Int|20), Int|14), Sub(Mul(e.y, Int|20), Int|4), Int|4, Int|8,  Color.White),
+            Rect(Sub(Mul(e.x, Int|20), Int|10), Sub(Mul(e.y, Int|20), Int|6), Int|4, Int|12,  Color.White)
+        ],
+        right: Drawings[
+            Rect(Sub(Mul(e.x, Int|20), Int|2), Sub(Mul(e.y, Int|20), Int|2), Int|24, Int|4,  Color.White),
+            Rect(Add(Mul(e.x, Int|20), Int|10), Sub(Mul(e.y, Int|20), Int|4), Int|4, Int|8,  Color.White),
+            Rect(Add(Mul(e.x, Int|20), Int|6), Sub(Mul(e.y, Int|20), Int|6), Int|4, Int|12,  Color.White)
+        ]
+        );
 };
 
 @ State@ = *(
