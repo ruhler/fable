@@ -3,10 +3,12 @@
 
 @ Int@ = /Std/Int%.Int@;
 % Sub = /Std/Int%.Sub;
+% Mul = /Std/Int%.Mul;
 
 % Int = /Std/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -28,6 +30,20 @@
 % Drawings = /App/Drawing%.Drawings;
 % Rect = /App/Drawing%.Rect;
 
+@ Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
+@ Entry@ = *(Int@ x, Int@ y, Dir@ d);
+@ Rails@ = List@<Entry@>;
+
+Rails@ Rails = List[
+    @(x: Int|3, y: Int|3, d: Dir@(right: Unit)),
+    @(x: Int|4, y: Int|3, d: Dir@(right: Unit)),
+    @(x: Int|5, y: Int|3, d: Dir@(down: Unit)),
+    @(x: Int|5, y: Int|4, d: Dir@(down: Unit))
+];
+
+(Entry@) { Drawing@; } DrawRail = (Entry@ e) {
+    Rect(Mul(e.x, Int|20), Mul(e.y, Int|20), Int|20, Int|20,  Color.White);
+};
 
 @ State@ = *(
   Int@ mouse_x,
@@ -62,7 +78,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
       Int|20,
       s.mouse_color);
 
-    Drawing@ drawing = Drawings[clear, box, cursor];
+    Drawing@ rails = Drawings(/Std/List%.Map(Rails, DrawRail));
+
+    Drawing@ drawing = Drawings[clear, box, rails, cursor];
 
     Unit@ _ <- m.do(app.effect(Effect@(draw: drawing)));
     Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));
