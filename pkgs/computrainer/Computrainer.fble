@@ -70,6 +70,10 @@ Rails@ Rails = List[
         );
 };
 
+(Int@, Int@, Color@) { Drawing@; } DrawCar = (Int@ x, Int@ y, Color@ c) {
+    Rect(Sub(Mul(x, Int|20), Int|5), Sub(Mul(y, Int|20), Int|5), Int|10, Int|10, c);
+};
+
 @ State@ = *(
   Int@ mouse_x,
   Int@ mouse_y,
@@ -104,8 +108,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
       s.mouse_color);
 
     Drawing@ rails = Drawings(/Std/List%.Map(Rails, DrawRail));
+    Drawing@ cars = DrawCar(Int|5, Int|4, Color.Yellow);
 
-    Drawing@ drawing = Drawings[clear, box, rails, cursor];
+    Drawing@ drawing = Drawings[clear, box, rails, cars, cursor];
 
     Unit@ _ <- m.do(app.effect(Effect@(draw: drawing)));
     Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));
