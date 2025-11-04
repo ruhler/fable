@@ -52,7 +52,7 @@ Rails@ Rails = List[
     @(x: Int|4, y: Int|4, d: Dir@(up: Unit))
 ];
 
-Train@ Train = Train@(Int|4, Int|3, List[Color.Yellow, Color.Cyan, Color.Red]);
+Train@ Train = Train@(Int|4, Int|3, List[Color.Yellow, Color.Yellow, Color.Red]);
 
 # Looks up the direction of the rail at the given position.
 # Behavior is undefined if no such rail is found.
@@ -103,10 +103,19 @@ Train@ Train = Train@(Int|4, Int|3, List[Color.Yellow, Color.Cyan, Color.Red]);
     Drawings[DrawCar(train.x, train.y, train.cars.items.head), DrawTrain(tail)];
 };
 
+(Train@) { Train@; } GoTrain = (Train@ train) {
+    # TODO: Make sure the train is free to move forward.
+    Dir@ d = RailAt(Rails, train.x, train.y);
+    Int@ x = d.?(up: train.x, down: train.x, left: Decr(train.x), right: Incr(train.x));
+    Int@ y = d.?(up: Decr(train.y), down: Incr(train.y), left: train.y, right: train.y);
+    Train@(x, y, train.cars);
+};
+
 @ State@ = *(
   Int@ mouse_x,
   Int@ mouse_y,
-  Color@ mouse_color
+  Color@ mouse_color,
+  Train@ train
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
@@ -137,7 +146,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
       s.mouse_color);
 
     Drawing@ rails = Drawings(/Std/List%.Map(Rails, DrawRail));
-    Drawing@ cars = DrawTrain(Train);
+    Drawing@ cars = DrawTrain(s.train);
 
     Drawing@ drawing = Drawings[clear, box, rails, cars, cursor];
 
@@ -145,14 +154,14 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
     Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));
     Event@ e <- m.do(FilterEvent);
     e.?(
-      tick: StepUI(s),
-      mouse_down: StepUI(State@(s.mouse_x, s.mouse_y, Color.Red)),
-      mouse_up: StepUI(State@(s.mouse_x, s.mouse_y, Color.Green)),
-      mouse_motion: StepUI(State@(e.mouse_motion.x, e.mouse_motion.y, s.mouse_color)),
+      tick: StepUI(s.@(train: GoTrain(s.train))),
+      mouse_down: StepUI(s.@(mouse_color: Color.Red)),
+      mouse_up: StepUI(s.@(mouse_color: Color.Green)),
+      mouse_motion: StepUI(s.@(mouse_x: e.mouse_motion.x, mouse_y: e.mouse_motion.y)),
       : m.return(Unit));
   };
 
-  Unit@ _ <- m.do(StepUI(State@(Int|0, Int|0, Color.Green)));
+  Unit@ _ <- m.do(StepUI(State@(Int|0, Int|0, Color.Green, Train)));
   m.return(True);
 };
 
