@@ -12,6 +12,8 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
+<@>% Empty = /Std/List%.Empty;
+<@>% Items = /Std/List%.Items;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -31,16 +33,14 @@
 @ Color@ = /App/Drawing%.Color@;
 % Color = /App/Drawing%.Color;
 % Drawings = /App/Drawing%.Drawings;
-% Blank = /App/Drawing%.Blank;
 % Rect = /App/Drawing%.Rect;
 
 @ Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
 @ Entry@ = *(Int@ x, Int@ y, Dir@ d);
 @ Rails@ = List@<Entry@>;
 
-# (x, y) is the position of the caboose.
-# cars are in order from back to front.
-@ Train@ = *(Int@ x, Int@ y, List@<Color@> cars);
+@ Car@ = *(Int@ x, Int@ y, Color@ v);
+@ Train@ = List@<Car@>; # front of train first.
 
 Rails@ Rails = List[
     @(x: Int|3, y: Int|3, d: Dir@(right: Unit)),
@@ -69,11 +69,6 @@ Rails@ Rails = List[
     @(x: Int|3, y: Int|4, d: Dir@(up: Unit))
 ];
 
-List@<Train@> Trains = List[
-    Train@(Int|4, Int|3, List[Color.Yellow, Color.Yellow, Color.Red]),
-    Train@(Int|8, Int|5, List[Color.Cyan, Color.Cyan])
-];
-
 # Looks up the direction of the rail at the given position.
 # Behavior is undefined if no such rail is found.
 (Rails@, Int@, Int@) { Dir@; } RailAt = (Rails@ r, Int@ x, Int@ y) {
@@ -82,6 +77,32 @@ List@<Train@> Trains = List[
     r.items.head.d;
 };
 
+# Construct a reverse train from the back given the position of the caboose and the
+# list of cars in reverse order.
+(Int@, Int@, List@<Color@>) { Train@; }
+TrainR = (Int@ x, Int@ y, List@<Color@> cars) {
+    cars.?(empty: Empty<Car@>);
+
+    Car@ caboose = Car@(x, y, cars.items.head);
+    cars.items.tail.?(empty: List[caboose]);
+
+    Dir@ d = RailAt(Rails, x, y);
+    Int@ tx = d.?(up: x, down: x, left: Decr(x), right: Incr(x));
+    Int@ ty = d.?(up: Decr(y), down: Incr(y), left: y, right: y);
+    Items(caboose, TrainR(tx, ty, cars.items.tail));
+};
+
+# Construct a train from the back given the position of the caboose and the
+# list of cars in reverse order.
+(Int@, Int@, List@<Color@>) { Train@; }
+Train = (Int@ x, Int@ y, List@<Color@> cars) {
+    /Std/List%.Reverse(TrainR(x, y, cars));
+};
+
+List@<Train@> Trains = List[
+    Train(Int|4, Int|3, List[Color.Yellow, Color.Yellow, Color.Red]),
+    Train(Int|8, Int|5, List[Color.Cyan, Color.Cyan])
+];
 
 (Entry@) { Drawing@; } DrawRail = (Entry@ e) {
     e.d.?(
@@ -108,27 +129,24 @@ List@<Train@> Trains = List[
         );
 };
 
-(Int@, Int@, Color@) { Drawing@; } DrawCar = (Int@ x, Int@ y, Color@ c) {
-    Rect(Sub(Mul(x, Int|20), Int|5), Sub(Mul(y, Int|20), Int|5), Int|10, Int|10, c);
+(Car@) { Drawing@; } DrawCar = (Car@ car) {
+    Rect(Sub(Mul(car.x, Int|20), Int|5), Sub(Mul(car.y, Int|20), Int|5), Int|10, Int|10, car.v);
 };
 
 (Train@) { Drawing@; } DrawTrain = (Train@ train) {
-    train.cars.?(empty: Blank);
-    train.cars.items.tail.?(empty: DrawCar(train.x, train.y, train.cars.items.head));
+    Drawings(/Std/List%.Map(train, DrawCar));
+};
 
-    Dir@ d = RailAt(Rails, train.x, train.y);
-    Int@ x = d.?(up: train.x, down: train.x, left: Decr(train.x), right: Incr(train.x));
-    Int@ y = d.?(up: Decr(train.y), down: Incr(train.y), left: train.y, right: train.y);
-    Train@ tail = Train@(x, y, train.cars.items.tail);
-    Drawings[DrawCar(train.x, train.y, train.cars.items.head), DrawTrain(tail)];
+(Car@) { Car@; } GoCar = (Car@ car) {
+    Dir@ d = RailAt(Rails, car.x, car.y);
+    Int@ x = d.?(up: car.x, down: car.x, left: Decr(car.x), right: Incr(car.x));
+    Int@ y = d.?(up: Decr(car.y), down: Incr(car.y), left: car.y, right: car.y);
+    car.@(x, y);
 };
 
 (Train@) { Train@; } GoTrain = (Train@ train) {
-    # TODO: Make sure the train is free to move forward.
-    Dir@ d = RailAt(Rails, train.x, train.y);
-    Int@ x = d.?(up: train.x, down: train.x, left: Decr(train.x), right: Incr(train.x));
-    Int@ y = d.?(up: Decr(train.y), down: Incr(train.y), left: train.y, right: train.y);
-    Train@(x, y, train.cars);
+    # TODO: Make sure the train is free to move forward
+    /Std/List%.Map(train, GoCar);
 };
 
 @ State@ = *(
