@@ -69,7 +69,10 @@ Rails@ Rails = List[
     @(x: Int|3, y: Int|4, d: Dir@(up: Unit))
 ];
 
-Train@ Train = Train@(Int|4, Int|3, List[Color.Yellow, Color.Yellow, Color.Red]);
+List@<Train@> Trains = List[
+    Train@(Int|4, Int|3, List[Color.Yellow, Color.Yellow, Color.Red]),
+    Train@(Int|8, Int|5, List[Color.Cyan, Color.Cyan])
+];
 
 # Looks up the direction of the rail at the given position.
 # Behavior is undefined if no such rail is found.
@@ -132,7 +135,7 @@ Train@ Train = Train@(Int|4, Int|3, List[Color.Yellow, Color.Yellow, Color.Red])
   Int@ mouse_x,
   Int@ mouse_y,
   Color@ mouse_color,
-  Train@ train
+  List@<Train@> trains
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
@@ -163,7 +166,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
       s.mouse_color);
 
     Drawing@ rails = Drawings(/Std/List%.Map(Rails, DrawRail));
-    Drawing@ cars = DrawTrain(s.train);
+    Drawing@ cars = Drawings(/Std/List%.Map(s.trains, DrawTrain));
 
     Drawing@ drawing = Drawings[clear, box, rails, cars, cursor];
 
@@ -171,14 +174,14 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
     Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));
     Event@ e <- m.do(FilterEvent);
     e.?(
-      tick: StepUI(s.@(train: GoTrain(s.train))),
+      tick: StepUI(s.@(trains: /Std/List%.Map(s.trains, GoTrain))),
       mouse_down: StepUI(s.@(mouse_color: Color.Red)),
       mouse_up: StepUI(s.@(mouse_color: Color.Green)),
       mouse_motion: StepUI(s.@(mouse_x: e.mouse_motion.x, mouse_y: e.mouse_motion.y)),
       : m.return(Unit));
   };
 
-  Unit@ _ <- m.do(StepUI(State@(Int|0, Int|0, Color.Green, Train)));
+  Unit@ _ <- m.do(StepUI(State@(Int|0, Int|0, Color.Green, Trains)));
   m.return(True);
 };
 
