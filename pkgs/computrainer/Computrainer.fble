@@ -1,5 +1,7 @@
 
+@ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
 
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;
@@ -144,8 +146,33 @@ List@<Train@> Trains = List[
     car.@(x, y);
 };
 
-(Train@) { Train@; } GoTrain = (Train@ train) {
-    # TODO: Make sure the train is free to move forward
+(Train@, Int@, Int@) { Bool@; }
+InTrain = (Train@ train, Int@ x, Int@ y) {
+    train.?(empty: False);
+    Car@ head = train.items.head;
+    Bool@ in_head = {
+        /Std/Int/Eq%.Eq(head.x, x).?(false: False);
+        /Std/Int/Eq%.Eq(head.y, y).?(false: False);
+        True;
+    };
+    in_head.?(true: True);
+    InTrain(train.items.tail, x, y);
+};
+
+(List@<Train@>, Int@, Int@) { Bool@; }
+InTrains = (List@<Train@> trains, Int@ x, Int@ y) {
+    trains.?(empty: False);
+    InTrain(trains.items.head, x, y).?(true: True);
+    InTrains(trains.items.tail, x, y);
+};
+
+(List@<Train@>, Train@) { Train@; } GoTrain = (List@<Train@> trains, Train@ train) {
+    # Make sure the train is free to move forward
+    Car@ car = train.items.head;
+    Dir@ d = RailAt(Rails, car.x, car.y);
+    Int@ x = d.?(up: car.x, down: car.x, left: Decr(car.x), right: Incr(car.x));
+    Int@ y = d.?(up: Decr(car.y), down: Incr(car.y), left: car.y, right: car.y);
+    InTrains(trains, x, y).?(true: train);
     /Std/List%.Map(train, GoCar);
 };
 
@@ -192,7 +219,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
     Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));
     Event@ e <- m.do(FilterEvent);
     e.?(
-      tick: StepUI(s.@(trains: /Std/List%.Map(s.trains, GoTrain))),
+      tick: StepUI(s.@(trains: /Std/List%.Map(s.trains, GoTrain(s.trains)))),
       mouse_down: StepUI(s.@(mouse_color: Color.Red)),
       mouse_up: StepUI(s.@(mouse_color: Color.Green)),
       mouse_motion: StepUI(s.@(mouse_x: e.mouse_motion.x, mouse_y: e.mouse_motion.y)),
