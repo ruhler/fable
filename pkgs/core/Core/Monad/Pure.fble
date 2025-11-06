@@ -1,5 +1,5 @@
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 # Pure@ --
 #   An implementation of a pure monad.

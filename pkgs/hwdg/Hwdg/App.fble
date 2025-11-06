@@ -20,7 +20,7 @@ Int@ 2 = Int|2;
 
 <@>@ List@ = /Std/List%.List@;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 

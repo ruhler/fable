@@ -1,7 +1,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 <@>% Nothing = /Core/Maybe%.Nothing;
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 @ Mode@ = /Core/Stdio%.Mode@;
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;

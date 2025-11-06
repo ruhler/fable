@@ -1,0 +1,272 @@
+Show@
+=====
+
+Show@ class is wanted for unit testing: be able to print out the value of a
+data type in human readable format, so you can tell in a test error message
+what went wrong.
+
+Typical use is for testing and debugging. You could see it used for
+interacting with humans, for example in a tictactoe game.
+
+The simplest approach is just (A@) { String@; }. The concern with that
+approach is performance. If you have a bunch of Show instances implemented as
+concatenation of show instances, this leads to lots of intermediate strings
+and copies. If, on the other hand, you can write it in such a way that it
+prepends to an existing string, you can avoid all those intermediate strings
+and copies. It is significant from a complexity point of view.
+
+My goals:
+* Implementation of Show should feel natural.
+* Avoid quadratic blowup for showing large composite objects.
+
+How do we use the result of Show? Maybe we don't need to produce a string at
+all. What if we are going directly to an output stream?
+
+Sounds tricky to me. We might want to build from the middle (current simple
+approach), build from the back (to produce efficient string), or build from
+the front (to produce efficient output stream).
+
+What does Haskell do?
+* show :: a -> String
+* showsPrec :: Int -> a -> ShowS
+* showList :: [a] -> ShowS
+
+Where ShowS is String -> String, where the meaning is prepend your show output
+to the given string.
+
+Haskell Show has a convention of it producing valid Haskell code. I don't care
+about that.
+
+Note that 'Format' strings are a convenient way to implement Show. If I need
+some special type for Show, I should have Format support that special type
+too.
+
+Imagine we are showing a pair, for example:
+
+  Format|'a: %s, b: %s'[show(a), show(b)]
+
+It's all sequencing:
+
+  'a: ', show(a), ', b: ', show(b)
+
+I would like to describe it as sequencing and using Format command. Sequencing
+shouldn't care too much about order?
+
+We could have Show produce an intermediate value that explicitly represents
+the sequence:
+
+  Show = <@ A@> { +(String@ str, List@<Show@> seq); };
+
+That way I can decide if I want to traverse forward or reverse. For example:
+
+  Print = (Show@ x) {
+    x.?(str: Print(str));
+    x.?(seq: ForEach(x.seq, Print));
+  }
+
+  ToString = (Show@ x, String@ tail) {
+    x.?(str: Append(str, tail));
+    x.?(seq: ...
+  }
+
+String to String function means allocating intermediate function values. Or,
+using Show definition above, intermediate Show values. That's unfortunate.
+Either way, it would be nice if it was real easy to produce a String for show?
+But why? The only place we ever use the final strings could be in output
+streams, for example.
+
+---
+
+Abstractly the API I want for implementing show is:
+* output a string
+* show one thing followed by another thing
+
+Best represented as an unbalanced binary tree.
+
+If we used String to String functions, it would look like:
+
+* outputStr = (String@ str) { (String@ tail) {
+   Append(str, tail);
+  }
+* AppendShow = (Show@ a, Show@ b) {
+    (String@ tail) {
+       a(b(tail));
+    }
+
+If we have tail to start, we don't need intermediate functions to be
+allocated. If we don't, this turns back into a binary tree, except less
+flexible because we are forced to construct a string with it. We can't output
+to a stream, for example.
+
+In practical use, I would expect code like:
+
+  PutLine(Show(x));
+
+Here we are calling show without the tail to start, then passing the function
+result to PutLine. I may as well just build the binary tree.
+
+---
+
+On the other hand, binary tree is an arbitrary structure mostly related to
+ease of construction of the shown output. Assuming PutStr() does atomic string
+output, that could lead to weird breaks in output conceptually. Unless we say
+PutShow(...) is atomic?
+
+If we've already allocated the intermediate substrings, it seems fine to save
+and reuse those rather than pre-compose into one big string.
+
+I guess where I'm going is that we have two types: a binary tree and an
+interface to produce a binary tree for your type. We can have top level
+functions to convert a binary tree to a string (not sure when you would use
+that) and output to a stream (seems the most likely use case).
+
+We should have a variation on Format that takes and produces the binary trees.
+Although in that case it's not quite as efficient because we have to break up
+the format string into separate substrings.
+
+Or, we could go directly to output stream, and implement a string output
+stream for that case?
+
+---
+
+Let's imagine we were defining an output stream from scratch. What do we want?
+
+<@>@ OStream@ = <@ S@> { *(
+  @ S@,
+  (String@, S@) { S@; } str,
+  (S@, S@) { S@; } seq
+); };
+  
+The string implementation is:
+  S@ = String@
+  str = Append,
+  seq = Append
+
+Is that the efficient version? No, because seq(seq(show(x), show(y)), show(z))
+builds the intermediate string for xy that it then throws away when forming
+xyz.
+
+The string builder implementation is:
+
+  S@ = (String@) { String@; }
+  str = (String@ s, S@ f, String@ t) { Append(s, f(t)); }
+  seq = (S@ a, S@ b, String@ t) { a(b(t)); }
+
+That way we can't build xy until we've already passed it z.
+
+But I would like to know, honestly, when do I use Show for anything other than
+outputting to an output stream today, not including the recursive calls? Debug
+trace, which could be redone as an output stream.
+
+I bet we don't do it ever. We never do anything with the shown string except
+show it to the user, via output stream or debug trace.
+
+That doesn't necessarily make things any easier, because output stream is
+abstract in its type to allow for, e.g. playing a game versus testing a game.
+
+---
+
+If we are going to have a special write-only output stream that we use instead
+of strings, should we also have a special read-only input stream? All the
+existing string functions for searching in strings could be applied to an
+input stream, right?
+
+I feel like I could get stuck in a deep well going around in circles for a
+long time. What can we reasonably do with Show?
+
+A. String@
+B. (String@) { String@; }
+C. <@ S@>(OStream@<S@>) { S@; }
+
+A doesn't compose well naturally. B composes well for producing a string, but
+not sending output. C has the overhead of being polymorphic, but it composes
+well for any use case you could imagine.
+
+Shall I try out (C) and see how it goes? It's certainly different from what
+I'm used to. How would I approach making this change in the first place?
+
+Now we'll have three types we need to come up with names for:
+1. S@ - actually, we can just use S@ as a type parameter.
+2. Show@<T@> - interface for types T@ implementing Show@.
+3. ShowStream@<S@> - interface for types S@ implementing stream?
+   Stream@<S@>
+   OStream@<S@>
+   StrString@<S@>
+   StrBuilder@<S@>
+   StrOut@<S@>
+   OutStr@<S@>
+   Stream@<S@>
+   Out@<S@>
+
+It's also worth thinking about io. Because whatever we pick for output stream
+type here will be similar to io output stream.
+
+Let's pencil in approach (C) for now, but spend more time thinking about io
+and unit testing framework before going ahead, in case there's anything
+obvious we can share.
+
+---
+
+Thinking more about io, it seems like a key question is whether we want Show
+to be an atomic thing or a causal time oriented thing. You can think 'Format'
+versus 'PrintF'. As String@, it is definitely the atomic thing. When I
+interleave Show calls at the app level in practice, it is the interleaved
+thing.
+
+Maybe it's useful to distinguish between the two? But why? Why not always
+allow the interleaved view? Isn't that more general?
+
+I think it's just the performance cost: we can't go directly to String@ if we
+use the interleaved view, we would need to use a state monad. But we may as
+well do that unless we rather pay the quadratic blowup cost of direct
+concatenation of strings? Not clear. We could using (String@) { String@; } to
+avoid the quadratic blowup, but we can't if we go the interleaved approach.
+Interleaved would have to be... (T@, String@) { (T@, String@); } (aka state
+monad).
+
+When I think of Show, I don't think of it getting interleaved between a bunch
+of other things. So, maybe we want to be more explicit: Show produces the
+shown thing, you have some separate atomic operation in a higher level monad
+called Print which can print the thing. In which case, let's just use a binary
+tree of strings, right? A string builder, that you have to explicitly
+collapse via a Print call.
+
+For 'Format' function, maybe it makes sense to do the tree via lists. So, for
+example:
+
+@ Shown@ = +(String@ str, List@<Shown@> seq);
+
+And at any point, we could have a function: Flatten which takes Shown@ and
+flattens it into a single str value. If we wanted.
+
+Print can be (Shown@) { M@<Unit@>; } for whatever monad you want. Or it could
+be (Shown@) { String@; } to go straight to a string.
+
+I think I should seriously consider this type as the type to use for Show@.
+
+But! This has another performance issue. Let's review.
+
+1. String@ - quadratic blowup from composition.
+2. Shown@ from above - you have to print everything completely (to Shown@
+value) before you output anything. Not good for, e.g. pprof, where we want to
+output a really long value for a list of profile stack frames.
+3. Monadic or function based with interleaving - you don't even have to build
+up the end of what you want to show until you've finished outputting the
+beginning.
+
+So honestly, if I care about performance, shouldn't I use a monadic interface?
+Isn't that better than making the user pick between abcd vs. (ab, cd) vs. (a,
+b, c, d)? And, that would naturally fit into the io stream type. As in, we say
+Show@ just means you can write the value to an output stream. Easy. One
+concept. No such thing as atomicity, but who cares? Atomicity doesn't mean
+anything in practice anyway. Use a String@ state monad, print to that, then
+print out that String@ if you want 'atomicity' (though still no guarantee
+about anything anywhere about when the data will be observed). Not unless we
+are talking about streams of strings instead of streams of characters and
+someone is counting. But when I think of Show, I don't think of it being as
+breaking up something into sub strings. I think of it as a raw sequence of
+characters that should be taken as a whole, not split up into arbitrary bits
+(like the ones we tend to make in practice when producing them).
+
+Sounds reasonable to me. My vote at the moment: implement Streams first. Then
+say Show@<T@> is a function to output an element of type T@ to a Char@ stream.

@@ -5,7 +5,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <@>@ List@ = /Std/List%.List@;
 

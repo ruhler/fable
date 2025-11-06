@@ -8,7 +8,7 @@
 % Lt = /Std/Int/Ord%.Lt;
 % Int = /Std/Int/Lit%.Int;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Random@ = /SatGame/Random%.Random@;
 

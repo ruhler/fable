@@ -1,5 +1,5 @@
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 # World@ --
 #   An abstract type representing the state of the world.

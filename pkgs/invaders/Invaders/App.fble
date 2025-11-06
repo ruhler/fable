@@ -12,7 +12,7 @@
 <@>% Any = /Std/List/Search%.Any;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;

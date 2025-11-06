@@ -15,7 +15,7 @@
 % CountUpTo = /Core/Int/Iter%.CountUpTo;
 % Int = /Std/Int/Lit%.Int;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;

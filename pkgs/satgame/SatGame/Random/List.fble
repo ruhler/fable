@@ -5,7 +5,7 @@
 <@>% Items = /Std/List%.Items;
 <@>% Append = /Std/List%.Append;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Random@ = /SatGame/Random%.Random@;
 

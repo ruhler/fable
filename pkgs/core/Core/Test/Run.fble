@@ -6,7 +6,7 @@
 <@>% Concat = /Std/List%.Concat;
 <@>% ForEach = /Std/List%.ForEach;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 

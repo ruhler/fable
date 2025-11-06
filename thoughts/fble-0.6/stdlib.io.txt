@@ -1,0 +1,554 @@
+IO
+==
+Goal is to have standard input/output stream handling in the standard library.
+What should it be? What do I need?
+
+Motivations:
+* Be able to run a command line output that accepts input from and writes
+  output to a user.
+ - e.g. be able to run a unit test and output passed or failed and a
+   diagnostic message to help debug.
+* Be able to read and write files?
+
+We may also want to consider things like opening, creating, deleting files.
+Working with environment variables. Etc. But to start I want to focus on the
+interface for writing to output streams and reading from input streams.
+
+Important properties of streams:
+* Incremental read/write
+ - Output the test name before starting the test. Only output the result after
+   we've finished the test. That way you can see which test gets blocked on.
+ - Have dependencies between the user. 2 streams, you read some from the user,
+   you write back to the user, the user reads what you read back to populate
+   more for you to read.
+* Well defined end of stream?
+ - To close socket connections, files.
+ - To know when you've reached the end of the input or the file.
+
+We could think in terms of characters or bytes. For standard input and output,
+we almost certainly want characters. For text files we want characters. For
+binary files we want bytes.
+
+Both kinds of streams could have similar interfaces, we just replace Char@
+with Byte@? Or any arbitrary T@?
+
+Do we want to do buffering in the stream? Line buffer? Other kind of
+buffering? User controlled buffer? That would be for performance. It could
+also be functional in terms of atomicity of output. Like, print line
+"hello\nthere" might want to require the user see all or none of the message,
+rather than part of a message?
+
+Which suggests maybe we want a way to check if we are waiting for data from
+the stream? The user can distinguish between what they've read and how much
+has been output so far. Shouldn't the program be able to as well?
+
+Our existing definition of output stream is:
+
+  <<@>@>@ OStream@ = <<@>@ M@>(Int@) { M@<Unit@>; };
+
+It takes bytes as output. It uses a special Int@ value End (-1) to denote end
+of stream. It's designed to work with a monadic type M@, but the instance of
+Monad@ isn't part of its definition.
+
+In stdlib.show.txt, I had proposed a different interface:
+
+  <@>@ S@ = *(
+    (String@) { S@; } str,
+    (S@, S@) { S@; } seq
+  );
+
+This is character based via String@. Says nothing about monads. Has no way of
+marking the end. Though it wouldn't be hard to add an 'end' method to it.
+
+Is it better to do sequencing explicitly like this, or do it via monadic bind?
+
+The monadic approach, even the S@ approach in practice ends up building a tree
+of things to output until you run the function, right? I'm not sure with IO.
+But if that's the case, why not just use List@<String@> as the stream type?
+Oh, I mean like BinaryTree@<String@> as the stream type? That way it's
+concrete. No need to deal with the polymorphism.
+
+---
+
+Why not change String@ to be BinaryTree@<Char@>? That way we can use String@
+everywhere and avoid the overhead of flattening into a single sequence.
+
+In that case, why not change List@<T@> to BinaryTree@<T@>? So the same applies
+to lists? And then String@ can be List@<Char@> still.
+
+Is a linear list more efficient than a binary tree? Is it easier to use?
+
+Certainly it's convenient to be be able to say:
+  list.?(empty: ...);
+  T@ head = list.cons.head;
+  T@ tail = list.cons.tail;
+
+If you have a BinaryTree instead of a List, you no longer get constant time
+access to the head of the tree. That sounds important. For output stream, we
+don't need constant time access to the head, because we are going to wait
+until you have built up a whole big thing, and then flatten it, and then we
+can easily get constant time access to the head?
+
+We can provide the same functional api with two different data structures
+where the difference is in runtime complexity of operations. In that case,
+shouldn't people be able to pick the data structure separately from their
+code? Like, for my code, I just assume the operations, and then at the top
+level I pick the data structure? Hard to say. I would argue you can't write
+great code without knowing the runtime complexity of the operations you are
+using.
+
+---
+
+Let's say we separate output stream into two different parts: putting a value
+and closing. Focus on putting a value. We can say for a stream its a value,
+for a character stream, value can be String@ rather than Char@ to show what is
+output atomically. For now, focus just on the put function.
+
+Monadic approach:
+
+  (T@) { M@<Unit@>; }
+
+Where we rely on monadic do operation for sequencing. Let's us say things
+like:
+
+  Unit@ _ <- m.do(out.put(x));
+  Unit@ _ <- m.do(out.put(y));
+
+Let's say we generalize the put operation to be: (T@) { S@; }. Could we still
+write the same code? Well, if you got your stream from an open call with some
+existing monadic type, then S@ will be concrete already. You could write the
+exact same code. Seems like that's a strictly better interface then, right?
+You get full control. It just means the sequencing isn't part of the
+interface, which is a little weird... For example, having (T@) { S@; } isn't
+enough to implement a Format function of type (String@, List@<String@>) { S@;
+}, because we can't sequence things.
+
+seq has type: (S@, S@) { S@; }. For the monadic case, I would implement it
+exactly as above:
+ 
+  seq = (S@ a, S@ b) {
+    Unit@ _ <- m.do(a);
+    Unit@ _ <- m.do(b);
+    m.return(Unit);
+  };
+
+
+I guess we could write the above example as:
+
+  Unit@ _ <- m.do(out.seq(out.put(x), out.put(y)));
+
+Which is closer to String@ show:
+
+  m.do(out.PutLine(Concat[Show(x), Show(y)]);
+
+So, again, we have three operations: put, sequence, close. Put and sequence
+both return streams. Close returns nothing. It's a side effect. Or, if you
+want, it can return a 'closed' stream for use with composition. But that feels
+weird.
+
+A show operation should never close a stream. Maybe we need layered or
+composite interfaces then.
+
+You could imagine a difference between atomic and non-atomic sequence. Atomic
+seq(a, b) means output ab as an atomic unit. Non-atomic seq(a, b) means output
+a first, then b. The monadic approach lets us interleave other non-stream
+operations in the sequence. I feel like non-atomic seq(a, b) is only
+meaningful if you can do that, in which case you don't need seq as part of the
+interface.
+
+You can't implement stream S@ as String@ if you use the monadic approach,
+because String@ can't form a monad. You can't implement the m.do function. It
+only works with a limited version of m.do where Unit@ is the passed value
+type, which we could construct using Unit instead of having to get from a
+previous m.return call. On the other hand, that's what allows you to sequence
+things in between put calls.
+
+So, when you say something like: PrintF|'...'[a, b], do we want to allow
+sequencing of other operations to happen inside of printing of 'a' and 'b', or
+do we want to say Format|'...'[a, b] is an atomic thing? In the first case,
+PrintF|'...'[a, b] is the as PrintF|...[a], PrintF|...[b]. In the second case,
+they are two different things.
+
+In practice, when I define Show, I'm getting the atomic version. But when I
+use it at the top level for real applications, I mix it up with separate
+prints for performance reasons: I don't want to build the whole thing up in
+memory when I can output the parts right away and forget about them as I go.
+
+The whole notion of stream is to allow interleavings like this.
+
+---
+
+Existing libraries for output stream like things:
+
+C99:
+* FILE - pos, buf, err, eof
+* stdout
+* text streams and binary streams supported
+* text streams:
+ - sequence of chars organized into lines
+ - what you read may not be what you wrote, depending on what happens around
+   the end of lines.
+* binary streams:
+ - what you read is what you wrote, but there may be a bunch of null
+   characters added at the end.
+* Streams are wide-oriented or byte-oriented.
+* A stream can be unbuffered, fully buffered, or line buffered.
+  Says what intermediate buffering is allowed.
+* Files can be closed.
+* Files can be flushed.
+* Some forms of program exit automatically close files, others don't.
+* You can get an encoding error when writing a wide character.
+* You can use fseek to change where you are writing into the output file.
+* You can query and clear the error indicator associated with a stream.
+
+In summary:
+* text (line based and/or wide char based) and binary streams
+* buffering
+* error handling
+* closing
+* seeking
+
+---
+
+text vs. binary is a real concern:
+* Do I read Char@ or Int@? There's a type question to start.
+* All that discussion I had on getting fble-pprof to work on windows
+  - All binary doesn't work if other programs write in text and you need to
+    recover the original data?
+
+Seems simple enough to handle though. When you open the stream, indicate if
+you are opening as text or binary. We use OStream@<Int@> for binary,
+OStream@<Char@> for text. We specify how newline is handled in the case of
+text.
+
+---
+
+Is buffering a real thing? Practically speaking for performance, probably yes?
+Imagine a connection between two computers across a bunch of long distance
+network and router hops. If we send every character individually, it's going
+to be super slow. If we send batch, it can easily be 1000x faster. But we can
+only send batch if the semantics allow.
+
+This matters when we have more than one stream. Like we have an input and
+output stream, so we can ask what the other person has seen. Send a character,
+ask them to echo it back, wait for their response. If you add any buffering in
+the system...
+
+If the buffering waits forever for characters to buffer, your program that
+would have completed just fine before deadlocks now. If the buffering doesn't
+wait forever, no problem. It just means your program goes slower.
+
+So why wouldn't we say buffering is an implementation detail? We guarantee
+whatever you write gets there in a timely fashion.
+
+Stream@<Char@> can take functions to send String@. That gives you a natural
+batching option for performance if we want. But should you or can you depend
+on batching behavior? Doesn't this mean we need the interface to stream to
+accept a String@ instead of a Char@?
+
+Maybe see if we can get away with buffering that way. The primary way to
+output to a stream being a list of objects instead of a single one. That way
+you see the cost of sending a single element, and you can control how much is
+sent at once. The implementation can buffer based on what you write, or maybe
+it can optimize by batching together things close enough together in time?
+
+---
+
+Think about fifos between two processes. There is a finite capacity of the
+fifo. If one process writes out 1GB and the other process waits before reading
+anything, you could get a deadlock due to lack of capacity. How does that show
+up to the programmer?
+
+---
+
+Error handling. Think socket connections, for example. Either end could hang
+up at any time. You would like to be able to detect this and report an error
+to a user. Or if you are writing to a file, you could go over quota, or some
+other random error could happen. Seems like you ought to have a way to tell if
+the stream is in an error state and behave accordingly.
+
+Closing. This is related to opening and tied a little to buffering. Assume we
+don't have some buffer sitting around that we need to remember to flush,
+closing a stream is basically telling the consumer the stream was explicitly
+closed. If it's a socket or a file or a pipe to another process, they all want
+to know when the end has been reached. We could do this via explicit close
+operation or a special value put onto the stream.
+
+Seeking. Seems like this should be related to how you open or reopen a stream
+in the first place? Except, someone needs to keep track of where you are.
+
+Review of last time I spent time thinking about end of stream:
+* Not much except that we need explicit close, and putting -1 was the most
+  convenient way to support that at the time.
+
+Where does this leave us?
+
+OStream@<T@> has the following interface:
+  T@ - can be Int@, Char@, or anything.
+  (List@<T@>) { M@<Result@>; } Put - batch put, with potential error result
+  M@<Result@> Close                - explicit close, with potential error
+  
+I'll have to figure out what the different kind of error codes can be.
+
+Don't worry about seek for now. We can layer something on top of this to track
+position.
+
+Now, with that for output stream, what does that imply about the type of an
+input stream?
+
+---
+
+IStream@<T@>
+  T@ - can be Int@, Char@, or anything.
+  M@<Result@<List@<T@>> Get - batch get, with potential closed or error result
+
+We get batched input. If you connect directly to an OStream, the batching may
+as well match what was given to avoid extra allocation. If it's going through
+the OS, across networks, etc, then it might want to split up your batch into
+smaller pieces. I guess it shouldn't be allowed to make them larger unless
+it's from immediate back-to-back puts, or things otherwise line up next to
+each other during transit?
+
+Result@ can indicate successful get, or say that the stream has been closed,
+or say there was some error.
+
+Interesting question: What if you never close an output stream, but you
+terminate a program. Does the receiver see it as a closed input stream or as
+an error? Seems like it should be a hang up error?
+
+I feel like reading in batches is a lot more annoying than writing in batches.
+If you don't want to write in a batch, just wrap your T@ in a single element
+list. But what if you don't want to read in batches? You want a single element
+at a time? Somebody has to keep track of the state of where you are in the
+actual batch that was sent.
+
+That somebody could be you, or a state monadic wrapper we write for it on top
+of the stream, hoping that it's supported by whatever monad you are given for
+the stream itself, or inside the stream implementation itself.
+
+Maybe you really want to read a line at a time, and you want to block until a
+full line is ready? Maybe you want to limit how big an allocation you get is,
+for example to avoid reading an entire 4GB or larger file into memory in a
+single get call.
+
+More fundamentally, this seems like a question of passing around state. If I
+have some function F that I'm calling repeatedly, or I'm calling function F
+and then function G, and one of them does the read of the stream, then we are
+passing around the state for the stream, call it M. If all we pass around is
+M, and it doesn't hold intermediate state, then we have no way to pass
+elements read from F to the function G without doing it explicitly. But we are
+already passing around the stream, so wouldn't it be great if we just always
+passed around the intermediate state along with the stream?
+
+If we did that, we need some way of indicating how much of the stream we have
+consumed. Well... we could consume N elements at a time, and hope you know how
+much N you want. Or, keep things buffered internally and get 1 element at a
+time. As long as we can make the overhead low enough with internal buffering,
+that seems superior. That's basically what the batch result does: overhead is
+super low because it's just a list traversal to get an item at a time. But you
+still only get one item at a time.
+
+Let's say we go with internal buffering and change the api to get one element
+at a time, and it's magically as efficient as a list. Could we do the same on
+the output side of the stream? Always output one element at a time, have it do
+internal buffering?
+
+---
+
+The consumer of input doesn't know how much input they will read before they
+are done reading and it is somebody else's turn. They don't know until they
+have read the data. They don't care what extra data is available that they
+haven't read yet. From that point of view, functionally, reads should be one
+at a time. For better performance, we should figure out how to make the
+sequencing operation fast so that reading one at a time is just as fast as if
+you read a batch all at once and then iterated over the list.
+
+In that case, why not do the same for output stream? It's trivial to write a
+function that converts put of a List to a sequence of puts of elements.
+Practically speaking they should happen close enough together in time that you
+could batch them internally?
+
+Thus the proposal is get rid of buffering entirely from the API. It's an
+implementation performance detail. Not something programmers should be hard
+coding assumptions into their programs. Also simplifies the API.
+
+I'm okay starting with the simple API and revisiting later if we run into real
+performance issues with it.
+
+---
+
+On error handling. What errors could there be, generically?
+
+The assumption is that your output stream is connected to something and your
+input stream is connected to something. Potential errors are:
+* The connection broke - no point sending anything anymore, it won't work.
+* The connection is temporarily down - maybe it's at capacity and needs to
+  drain. You can't send something now, but wait a bit and you could?
+
+For reading input, you have the same class of things.
+
+We could imagine nuance in the error condition you might want to convey. Like:
+"no route to host" versus "out of quota", etc.
+
+Breaking a connection is sort of like closing a connection? Except, it could
+be closed from the input end as well as the output. Like: you are told if
+nobody is listening. Practically that seems important, if you are connected
+over a network and the machine you are talking to suddenly dies. You want the
+feedback that the machine is dead. But should you get that from the output
+stream, or should that be sent other ways? If the input stream has to send
+that info to the output stream, that could add a round trip kind of latency
+cost that previously could have been entirely one way.
+
+Which makes me feel like that kind of error handling should be done out of
+bound. So that, really, we don't need any error handling at all. Outputs
+always succeed. In real life if there is an error, the data will get dropped
+at whatever point in its destination is broken.
+
+I does make sense to have a communication path from output stream to input
+stream indicating end of stream. We could do that in the element T@
+internally, or say it's something that all streams support separately.
+
+Aside from how we pick the api for closing, the choice is:
+
+1. Streams can't be closed. Get blocks until there is data. It blocks forever
+if nobody ever writes to the stream again.
+
+2. Streams can be closed. Get has a way of indicating the stream has been
+closed.
+
+You can do (2) with (1) if you want, by sending a data token that means end
+explicitly rather than a slightly out of band channel for the end of stream
+message.
+
+---
+
+Who wants/needs to know about closing of a stream?
+A. The infra that set up the connection in the first place.
+B. The consumer of data from the stream.
+
+(B) can be done based on data in the stream, or with some query to the infra.
+I suppose (A) could be done by snooping on data in the stream. Practically
+speaking I need a way to tell both A and B when a stream is closed.
+
+Or, we could say a stream always returns the same value once it has been
+closed, any time you call get, without blocking. So, three options:
+
+1. Get on a closed stream blocks forever.
+2. Get on a closed stream immediately returns a predefined value.
+3. Get on a closed stream immediately returns a value explicitly saying it is
+closed.
+
+(2) and (3) look the same to the caller of Get. It doesn't make sense to get a
+value that could be put when the stream isn't closed, does it? Not unless the
+stream could later be reopened?
+
+How about the case of tail -f? The input stream ends, but you want to wait
+until it opens again. Do you just open the input stream again, seek past what
+you read, and then consume until it closes again? 
+
+Looks like tail -f does polling every second when it's closed. It's not
+immediately obvious to me how it tracks position in the file in this case, but
+I doubt it's anything amazing.
+
+Anyway, seems like what makes most sense to me is:
+* Have a separate API for explicit close of a stream. That will go to whoever
+  set up the connection.
+* Have end of stream be an explicit part of get, queried by the infra going to
+  the data consumer.
+
+So, do we need a separate way to handle errors? Or we treat errors as natural
+closing of a stream? That doesn't sound right. Surely the program will want to
+know the difference between explicit close and broken connection.
+
+Straw proposal:
+* Output stream API:
+  - Put T@
+  - Close
+* Input stream API:
+  - Get T@, or 'closed' or 'broken'.
+
+Anything output to a closed or broken stream is ignored. The writer has no way
+to tell if the stream has been closed or broken?
+
+Reading can tell if the stream was explicitly closed or broken, but doesn't
+have any more info about why it broke? Or we could have a String@ message, but
+otherwise it really depends on the underlying connection type what kind of
+errors you could have. Or... have an Error@ type associated with the stream,
+which could be Unit, or String@, or something specific for the specific kind
+of stream in use. But a function that operates on generic streams couldn't
+make any real use of the error except perhaps to convert it to a string and
+print it out to a user or propagate it back.
+
+It feels weird to me that the writer has no way to tell of a stream has been
+broken. Could it ever want to know that to know when to stop writing? Could it
+ever want to know that to know if there was an error in the connection? But
+again, that would require some form of round trip that we don't need the other
+way around. Does that matter? I don't care enough about performance to have
+explicit buffering, but suddenly I care enough to avoid telling the writer
+when the stream is closed or broken?
+
+---
+
+Is there such a thing as non-blocking IO? Should we worry about that? I could
+certainly come up with an interface for it. You ask how much space there is to
+put before putting. You ask how many bytes are available to get before
+getting. As long as it is all sequenced, you can make sense of it in a
+deterministic way.
+
+---
+
+Do you ever want to talk about a stream object separate from the monad? Well,
+we already have that, right? But what I mean is, say we want to provide extra
+functions to query for errors, seek, etc. Does that work with the existing
+stream API?
+
+
+OStream@<T@>:
+  T@ - element type
+  (T@) { M@<Unit@>; } Put
+
+I could have something like File@<T@> which is:
+  OStream@<T@> Stream - the stream for putting.
+  M@<Status@> Status - see if stream is open, closed, errored out.
+  (Int@) { M@<Unit@>; } Seek - seek within the stream.
+  M@<Int@> Tell - see where you are in the stream.
+
+The point is, I can add extra APIs. As long as we can meaningfully sequence
+in between the stream put operations, it works out. It makes sense.
+
+So, here is where I'm leaning: Have OStream and IStream be the most basic,
+most generic put/get interface. Use monad for sequencing to facilitate
+composition with other side effecting operations on the stream that we may
+want to have externally given the particular kind of stream.
+
+Which gets me back to where I am today:
+- IStream@ is the get operation.
+- OStream@ is the put operation.
+
+Let's say close is outside of put. Let's say get tells us if there is anything
+else to read, but doesn't tell us why there is nothing else to read (e.g.
+explicitly closed or error). You have to get that information elsewhere.
+
+Perhaps I should consider renaming the interface now, because it's not really
+a stream interface, it's more of a put interface.
+
+Proposal:
+
+<<@>@,@>@ Put@ = <<@>@ M@, @ T@>(T@) { M@<Unit@>; };
+<<@>@,@>@ Get@ = <<@>@ M@, @ T@> { M@<Maybe@<T@>>; };
+
+This is slightly more generic before, because it no longer assumes Int@ as the
+element type.
+
+I think it makes sense to keep M@<Unit@> in the Put@ type rather than some
+generic S@ type to match up with the M@<...> from the Get@ interface.
+
+Now Show@ interface turns into:
+
+  <<@>@ M@, @ T@>(T@) { Put@<M@, Char@>; }
+
+Or something like that. Ideally Show@<T@> means for all monads M@ you can go
+T@ to Put@<M@, Char@>.
+
+Okay! But this means first I'll want Monad@ and Maybe@ added to the standard
+library.

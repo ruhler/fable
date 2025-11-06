@@ -16,7 +16,7 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 @ Hash@ = /Md5/Hash%.Hash@;
 % Eq = /Md5/Hash%.Eq;

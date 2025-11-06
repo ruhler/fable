@@ -5,7 +5,7 @@
 <@>% Items = /Std/List%.Items;
 <@>% Reverse = /Std/List%.Reverse;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 

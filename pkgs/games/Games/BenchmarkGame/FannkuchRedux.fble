@@ -20,7 +20,7 @@
 <@>% Init = /Std/List%.Init;
 <@>% ForEach = /Std/List%.ForEach;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

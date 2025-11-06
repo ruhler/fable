@@ -10,7 +10,7 @@
 <@>% Reverse = /Std/List%.Reverse;
 <@>% Concat = /Std/List%.Concat;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;

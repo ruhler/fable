@@ -82,6 +82,6 @@ Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
   Result@(Append(ra.errors, rb.errors), Or(ra.failed, rb.failed), rb.value);
 };
 
-/Core/Monad%.Monad@<Result@> Monad = @(return: Return, do: Do);
+/Std/Monad%.Monad@<Result@> Monad = @(return: Return, do: Do);
 
 @(Result@, Monad, Ok, Error_, Error, Fail, Raise, Try);

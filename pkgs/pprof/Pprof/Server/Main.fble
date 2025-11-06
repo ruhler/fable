@@ -25,7 +25,7 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;

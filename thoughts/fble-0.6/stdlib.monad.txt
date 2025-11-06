@@ -1,0 +1,155 @@
+Stdlib Monad
+============
+
+Initial motivation: For use in Put/Get interfaces and their consequent use in
+Show and unit testing framework.
+
+How I view the monad interface:
+* It let's you compose together other abstract interfaces through sequenced
+  interleaving of side effecting calls.
+
+Monads in Fble today:
+* 'return', 'do' methods.
+
+Monads in Haskell:
+* >>=, >>, return, fail
+* mapM, mapM_, sequence, sequence_, =<<
+* forM_, =<<, >=>, <=<, forever, void, join, msum, mfilter, filterM,
+* mapAndUnzipM, zipWithM, zipWithM_, foldM, foldM_, replicateM, replicateM_
+* guard, when, unless, liftM, liftM2, liftM3, ..., ap
+
+There's also some perhaps related classes in Haskell:
+* Functor: fmap
+* Applicative: pure, <*>, *>, <*
+* MonadPlus: mzero, mplus
+
+Let me better understand how these are all related and what they have to do
+with what I'm looking for.
+
+I'm looking for sequencing of operations that can return values. I think
+'return' and 'do' give me exactly that. return let's you do a pure computation
+in the sequence. do is... m a -> (a -> m b) -> m b, which is exactly the
+sequence of do the first operation, then the second.
+
+Functor fmap is m a -> (a -> b) -> m b. You can't create one of these things,
+you can only do transformations on what's already there. That's not the
+generic sequencing that I'm looking for. More like "pure modification of an
+existing encapsulated value".
+
+Applicative has pure, which is return, and then <*>, which is:
+  
+  m (a -> b) -> m a -> m b
+
+It says you can turn a pure function into a function over computations. Again,
+not what I'm looking for in terms of sequencing.
+
+So let's not worry about all these misc. classes. Just do Monad with 'do' and
+'return'. I like the names 'do' and 'return'. m.do is short enough it's okay
+to have it show up everywhere. m.return feels natural.
+
+Do we want a >> equivalent? That's: m a -> m b -> m b.
+
+Is that related to the need for fooM, fooM_ functions at all? I don't have
+syntax to take advantage of '>>' in fble.
+
+I don't need 'fail'. We don't have pattern matching to have to worry about
+failing.
+
+---
+
+Thoughts on >>: m a -> m b -> m b. It's a special case where you don't need
+the result of the first operation in the sequence to know what the second
+operation in the sequence is. Kind of like the string builder sequencing case.
+
+In theory (Unit@) { M@<B@>; } doesn't need to be much more expensive than
+plain M@<B@>. I think go without >> for now. The only practical downside I see
+so far is having to do something like:
+
+  Unit@ _ <- m.do(PrintLine|'...');
+  ...
+
+Instead of an imaginary supported special case syntax like:
+
+  <- m.do(PrintLine|'...');
+
+I use Unit@ _ <- ... all over the place in code, and it doesn't bother me at
+all. Let's work within the syntax we have, and not solve problems that aren't
+really problems.
+
+---
+
+On mapM and mapM_:
+
+mapM: (a -> m b) -> [a] -> m [b]
+
+I would write that as:
+
+mapM f xs = ForEach(xs, m.return(Unit), (A@ x, M@<List@<B@>> b) {
+  List@<B@> tail <- m.do(b);
+  B@ head <- m.do(f(x));
+  m.return(Items(head, tail));
+});
+  
+If it's common enough, I could see the benefit of providing a library
+function. Whether this should be a List/Monad function or a Monad/List
+function, I'm not sure.
+
+But I remember I used to have things like ForEachM and I ended up getting rid
+of them, because I can just use the general ForEach for whatever I need.
+
+Let's see if I can find an existing examples where I've implemented the
+equivalent of mapM already.
+* I also have Map.ForEach, would we need Map.mapM and all variations for that?
+* FannkuchRedux use a slight variation on this, where it uses one of the
+  resulting b elements to compute the next one.
+* /Core/Test/Run% uses a slight variation on this, where it returns M@<Bool@>
+  instead of a list of elements.
+
+That's not really much in the way of motiviation. ForEach seems plenty
+general and easier to read.
+
+But just because I haven't used it in practice, does that mean it isn't worth
+providing in the standard library? For String and List I added a bunch of
+methods to the standard library I had never wanted to use before, because they
+were prevalent across lots of other standard libraries.
+
+mapM_ is like mapM, except it ignores the result.
+
+mapM: (a -> m b) -> [a] -> m ()
+
+What's that useful for? How would I implement it?
+
+mapM_ f xs = ForEach(xs, m.return(Unit), (A@ x, M@<List@<B@>> b) {
+  Unit@ _ <- m.do(b);
+  B@ _ <- m.do(f(x));
+  m.return(Unit);
+});
+
+Not hard to implement with ForEach.
+
+Perhaps mapM and mapM_ are more useful when you try to compose a whole bunch
+of things on a single line, and my fble style is more to use vertical space,
+where the extra lines from ForEach don't harm anything?
+
+---
+
+How about an fmap equivalent? For example, we could use this to implement
+Monad map generally?
+
+  fmap = {
+    A@ x <- m.do(ma);
+    m.return(f(x));
+  };
+
+Or you could just do it manually with a combination of .do and .return.
+
+I think, to start, just have the Monad@ type. No library functions. We can add
+them later if they turn out to be useful. Or... maybe this starts to form
+guidance for what should be a library function, and that we don't want to
+provide as library functions really small simple functions that you can
+express almost as conveniently and much more clearly using bind syntax or
+helper functions like ForEach? I'm not sure.
+
+But it makes sense to me, for the sake of making forward progress, to move
+ahead with Monad@ type to start.
+        

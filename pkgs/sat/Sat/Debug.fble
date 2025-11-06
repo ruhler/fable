@@ -1,7 +1,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 

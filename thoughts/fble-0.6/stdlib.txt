@@ -390,3 +390,9 @@ The list API is now in place. What are next steps?
 Then move on to characters I think. Goal is to find the path to unit tests,
 so: Char, String, Show, Test should hopefully be enough to get us there.
 
+---
+
+We have Char and String in place now. I want to get to Test. I need show for
+that, for sure. But I also maybe need Stdio for that? Maybe Show and Stdio are
+related?
+

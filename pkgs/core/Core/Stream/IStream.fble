@@ -13,7 +13,7 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;

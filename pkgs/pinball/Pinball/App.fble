@@ -7,7 +7,7 @@
 <@>% List = /Std/List%.List;
 <@>% Any = /Std/List/Search%.Any;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
 @ String@ = /Std/String%.String@;
