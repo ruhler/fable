@@ -1,6 +1,6 @@
 /**
  * @file stdio.fble.h
- *  Routines for interacting with @l{/Core/Stdio/IO%.StdioIO@}.
+ *  Routines for interacting with @l{/Core/Stdio/IO%}.
  */
 
 #ifndef FBLE_CORE_STDIO_FBLE_H_

@@ -12,7 +12,6 @@
 @ World@ = /Core/Monad/IO%.World@;
 <@>@ R@ = /Core/Monad/IO%.R@;
 
-<<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
@@ -23,15 +22,6 @@
 @ Unit@ = /Std/Unit%.Unit@;
 
 % Builtin = /Core/Stdio/IO/Builtin%;
-
-@ StdioIO@ = *(
-  IO@<Maybe@<Int@>> stdin,
-  (Int@, World@) { R@<Unit@>; } stdout,
-  (Int@, World@) { R@<Unit@>; } stderr,
-  (String@, World@) { R@<Maybe@<IStream@<IO@>>>; } read,
-  (String@, World@) { R@<Maybe@<(Int@, World@) { R@<Unit@>; }>>; } write,
-  (String@, World@) { R@<Maybe@<String@>>; } getenv
-);
 
 Stdio@<IO@> StdioIO = @(
   in: Builtin.Stdin,
@@ -61,4 +51,4 @@ RunIO = (/Core/Stdio%.Main@<IO@> main, List@<String@> args) {
   RunIO(main<IO@>);
 };
 
-@(StdioIO@, Main@, StdioIO, Run, RunIO);
+@(Main@, StdioIO, Run, RunIO);
