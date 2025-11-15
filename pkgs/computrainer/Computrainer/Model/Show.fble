@@ -1,0 +1,12 @@
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+% Str = /Std/Char/Ascii%.Str;
+
+@ Model@ = /Computrainer/Model%.Model@;
+
+Show@<Model@> Model = (Model@ _) {
+    Str|'TODO: Show Model';
+};
+
+@(Model);

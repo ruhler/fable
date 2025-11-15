@@ -11,17 +11,17 @@
   Ord(a.y, b.y);
 };
 
-% Map = /Core/Map/Tree%.Map(CoordOrd);
+% Grid = /Core/Map/Tree%.Map(CoordOrd);
 
-<@>@ Grid@ = <@ T@> { Map.Map@<T@>; };
+<@>@ Grid@ = <@ T@> { Grid.Map@<T@>; };
 
 <@>@ Entry@ = <@ T@> { *(Int@ x, Int@ y, T@ v); };
 
 <@ T@>(List@<Entry@<T@>>) { Grid@<T@>; }
 Entries = <@ T@>(List@<Entry@<T@>> xs) {
-    xs.?(empty: Map.Empty<T@>);
+    xs.?(empty: Grid.Empty<T@>);
     Entry@<T@> head = xs.items.head;
-    Map.Insert(Entries(xs.items.tail), Coord@(head.x, head.y), head.v);
+    Grid.Insert(Entries(xs.items.tail), Coord@(head.x, head.y), head.v);
 };
 
-@(Coord@, Grid@, Map, Entries);
+@(Coord@, Grid@, Grid, Entries);

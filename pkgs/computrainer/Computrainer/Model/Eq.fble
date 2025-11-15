@@ -1,0 +1,60 @@
+
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+<@>@ Eq@ = /Std/Eq%.Eq@;
+
+@ Dir@ = /Computrainer/Model%.Dir@;
+@ Car@ = /Computrainer/Model%.Car@;
+@ Gate@ = /Computrainer/Model%.Gate@;
+@ Gates@ = /Computrainer/Model%.Gates@;
+@ Model@ = /Computrainer/Model%.Model@;
+@ S@ = /Computrainer/Model%.S@;
+@ Train@ = /Computrainer/Model%.Train@;
+@ Trains@ = /Computrainer/Model%.Trains@;
+@ Value@ = /Computrainer/Model%.Value@;
+
+Eq@<Dir@> Dir = (Dir@ a, Dir@ b) {
+    a.?(up: b.?(up: True, : False),
+        down: b.?(down: True, : False),
+        left: b.?(left: True, : False),
+        right: b.?(right: True, : False));
+};
+
+Eq@<Gate@> Gate = (Gate@ a, Gate@ b) {
+    a.?(noop: b.?(noop: True, : False),
+        rail: b.?(rail: Dir(a.rail, b.rail), : False));
+};
+
+Eq@<Gates@> Gates = /Computrainer/Grid/Eq%.Eq(Gate);
+
+Eq@<Value@> Value = (Value@ a, Value@ b) {
+    a.?(
+        C: b.?(C: True, : False),
+        0: b.?(0: True, : False),
+        1: b.?(1: True, : False),
+        S: b.?(S: True, : False),
+        L: b.?(L: True, : False));
+};
+
+Eq@<Car@> Car = (Car@ a, Car@ b) {
+    /Std/Int/Eq%.Eq(a.x, b.x).?(false: False);
+    /Std/Int/Eq%.Eq(a.y, b.y).?(false: False);
+    Value(a.v, b.v).?(false: False);
+    True;
+};
+
+Eq@<Train@> Train = /Std/List/Eq%.Eq(Car);
+Eq@<Trains@> Trains = /Std/List/Eq%.Eq(Train);
+
+Eq@<S@> S = (S@ a, S@ b) {
+    Trains(a.trains, b.trains);
+};
+
+Eq@<Model@> Model = (Model@ a, Model@ b) {
+    Gates(a.gates, b.gates).?(false: False);
+    S(a.s, b.s).?(false: False);
+    True;
+};
+
+@(Model);

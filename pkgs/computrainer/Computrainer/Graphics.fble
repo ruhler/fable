@@ -16,7 +16,7 @@
 % Rect = /App/Drawing%.Rect;
 
 @ Coord@ = /Computrainer/Grid%.Coord@;
-% Grid = /Computrainer/Grid%.Map;
+% Grid = /Computrainer/Grid%.Grid;
 
 @ Car@ = /Computrainer/Model%.Car@;
 @ Dir@ = /Computrainer/Model%.Dir@;

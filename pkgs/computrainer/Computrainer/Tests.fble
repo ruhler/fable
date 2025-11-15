@@ -1,7 +1,7 @@
 
-% True = /Std/Bool%.True;
-
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+% Int = /Std/Int/Lit%.Int;
 
 <@>% List = /Std/List%.List;
 
@@ -13,10 +13,26 @@
 
 @ Unit@ = /Std/Unit%.Unit@;
 
+<@>% Entries = /Computrainer/Grid%.Entries;
+
+@ Gate@ = /Computrainer/Model%.Gate@;
+@ Gates@ = /Computrainer/Model%.Gates@;
+@ Car@ = /Computrainer/Model%.Car@;
+@ Trains@ = /Computrainer/Model%.Trains@;
+@ Model@ = /Computrainer/Model%.Model@;
+% Model = /Computrainer/Model%.Model;
+% Tick = /Computrainer/Model%.Tick;
+% C = /Computrainer/Model%.C;
+
 Test@ Tests = TestSuite(Str|Computrainer, List[
-  Test(Str|'Test', (Unit@ _) {
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
-        True, True);
+  Test(Str|'Noop', (Unit@ _) {
+    # Noop gate shouldn't do anything to a car.
+    Gates@ gates = Entries<Gate@>[];
+    Trains@ trains = List[List[Car@(Int|3, Int|4, C)]];
+    Model@ model = Model(gates, trains);
+    Model@ wnt = model;
+    Model@ got = Tick(model);
+    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   })
 ]);
 

@@ -19,7 +19,7 @@
 
 @ Coord@ = /Computrainer/Grid%.Coord@;
 <@>@ Grid@ = /Computrainer/Grid%.Grid@;
-% Grid = /Computrainer/Grid%.Map;
+% Grid = /Computrainer/Grid%.Grid;
 
 @ Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
 Dir@ Left = Dir@(left: Unit);
@@ -140,6 +140,6 @@ Tick = (Model@ m) {
 };
 
 
-@(Model@, Gate@, Gates@, Train@, Trains@, Car@, Dir@, Value@, Tick, Model,
+@(Model@, Gate@, Gates@, Train@, Trains@, Car@, Dir@, Value@, S@, Tick, Model,
     RailUp, RailDown, RailLeft, RailRight,
     0, 1, C, L, S);

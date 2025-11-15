@@ -1,3 +1,4 @@
 
 * Change orientation of coordinate system used for drawing.
 * Parameterize the square size used for drawing graphics.
+* Move RailFoo into Rails.Foo struct.

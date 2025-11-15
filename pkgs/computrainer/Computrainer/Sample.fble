@@ -14,8 +14,6 @@
 % RailUp = /Computrainer/Model%.RailUp;
 % RailDown = /Computrainer/Model%.RailDown;
 % Model = /Computrainer/Model%.Model;
-% 0 = /Computrainer/Model%.0;
-% 1 = /Computrainer/Model%.1;
 % C = /Computrainer/Model%.C;
 
 
