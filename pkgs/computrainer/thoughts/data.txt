@@ -1,0 +1,47 @@
+Computrainer Data
+=================
+Data structures are represented using trains as follows:
+
+* Every train has exactly one caboose 'C' which is the last car in the train.
+ - So we can tell when one train ends and the next train begins.
+* The zero-argument struct train Unit is represented as a single caboose car.
+ - example: C
+* A union train is a '0' car or a '1' car followed by the cars of the argument
+  train.
+ - example: True: 1C, False: 0C.
+* A struct train is a struct header 'S', followed by the cars of the first
+  train with caboose removed, followed by linkage 'L', followed by the cars of
+  the second train. S and L act like parentheses: you count the level of
+  nesting to know when the first argument is finished.
+
+In other words, you have: Unit, 2-field struct, 2-field union.
+
+For example, let's say we have a list of booleans True, False, False: 
+
+   items(1:unit, items(0:unit, items(0:unit, empty)))
+==> 1:items(1:unit, 1:items(0:unit, 1:items(0:unit, 0:empty)))
+==> 1:(1C, 1:(0C, 1:(0C, 0C)))
+==> 1S1L1S0L1S0L0C
+
+Basic operations:
+* Create a Unit train: just keep outputting caboose cars.
+* Create a '0' union train: input is an argument, output is union '0' with
+  arg.
+* Create a '1' union train.
+* Strip the leading bit, '0' or '1', from a union train. It's an error if the
+  train doesn't start with 0 or 1. Input is a union train, output is the arg.
+* Switch on union tag:
+   3 inputs: a, b, s. Input to s is a union train (error otherwise) that
+   selects a or b. Let's say it forwards the next train on the selected track
+   and removes the next train on the unselected track, then waits for another
+   selection. Either it eats the select argument, or it passes it through on a
+   separate output track.
+* Form a struct: two input tracks, take a train from each then output the
+  struct train.
+* Access a struct: input is a struct train, output is two tracks, one track
+  for the first field another for the second. It's an error if the input isn't
+  a struct train.
+
+We can add other operations if needed or as desired. I suspect we may want
+things like synchronization, demux, etc.
+

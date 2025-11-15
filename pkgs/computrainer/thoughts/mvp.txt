@@ -1,0 +1,133 @@
+Minimum viable product
+======================
+
+Also known as: what next?
+
+Status:
+* I can show rails and trains, and we can detect train collisions.
+* I have a proposal for how to represent data using trains and the initial
+  basic operations.
+
+Let's say next goal is to implement an inverter? You send it a sequence of
+Boolean trains, it ouputs a sequence of inverted boolean trains.
+
+Input is selector for constant 0=>1, 1=>0. Maybe I can loop the output back to
+the input, and end up with a toggling train. I can initialize it by manually
+placing a train on the loop.
+
+U->0 -> 1
+U->1 -> 0 ->------->--\
+    /-> s -> <sink>   |
+    \-------------<---/
+
+Gates needed:
+* U - unit car.
+* 0 - construct 0 union
+* 1 - construct 1 union
+* select
+* sink
+
+---
+
+Implementation Strategy
+
+Make it so that there is a train car associated with every action. We create a
+schedule of actions to execute in a turn by listing the train cars. Cars are
+listed in train-atomic order. The actions associated with the cars in the
+schedule are executed in order, resulting in state updates, including
+potential updates to the schedule.
+
+A gate consists of one or more locations, each of which may or may not have a
+car on it. Gate action is only instigated from the locations of the gate that
+have cars. There is optional state associated with each gate.
+
+A turn is implemented as:
+1. Enumerate the cars in train-atomic order, forming the schedule.
+2. Execute the action associated with each location in the schedule, in order,
+until there is nothing left in the schedule.
+3. Wait for the next time event to refresh the display and go back to step (1).
+
+Rail Gate:
+* Single location. Single action.
+* Has a direction associated with it.
+* State: none
+* Initially empty.
+* Action: If the location the rail points to is empty, move the car to that
+  location.
+
+U Gate:
+* Single location. Single action.
+* State: none
+* Initially populated with a unit car.
+* Has a direction associated with it.
+* Action: If the location the gate points to is empty, move the car to that
+  location. Then populate the existing location with a new unit car.
+
+0/1 Gates:
+* Two locations: input and output. Two actions.
+* Has a direction associated with the output.
+* State: whether it is waiting or feeding.
+* Initially populated with a 0/1 car on the output and in the 'waiting' state.
+* Output Action:
+  If in the feeding state and the output points to an empty location, move car
+  to that location. If input is empty, put a new 0/1 car on the output and go
+  to the 'waiting' state.
+* Input action:
+  If in the feeding state and the output is empty, move the car to the output.
+  If in the waiting state, join the output car to the front of the input train
+  and go to the feeding state.
+
+Sink Gate:
+* Single location. Single action.
+* Action: remove the car at the given location.
+
+Select Gate:
+* 3 input. Three action?
+* State W,0,0A,0B, or W,1A,1B
+  Where 'W' means waiting for next select input.
+  0 means 0 was selected abut nothing has been output or eaten yet.
+  0A means 0 was selected and output has been passed through, but not unused.
+  0B means 0 was selected and unused has been eaten, but not output.
+  1 means 1 was selected abut nothing has been output or eaten yet.
+  1A means 1 was selected and output has been passed through, but not unused.
+  1B means 1 was selected and unused has been eaten, but not output.
+* Input S:
+   W: if car is 0, go to state 0.
+Hmm... this is tricky. It's almost like I want three separate gates that
+communicate.
+
+Summary of state queries to support:
+* Get the location where a direction points.
+* Check if a car exists in a given location.
+
+Summary of state changes to support:
+* Add a new car to a new train.
+* Move an existing car from a singleton train to the front of an existing
+  train.
+* Remove a car.
+* Move a car to a different location.
+
+---
+
+How to interpret select gate?
+1. Block-waiting: waits for select, sends one input through per select, blocks the
+unused input.
+2. Block-eating: waits for select. sends one input through per select. Eats
+the unused input.
+3. Non-blocking: input goes through whatever was last selected. The unused
+input blocks and queues up. Can toggle switch, but only in between input
+trains.
+
+For the proposed MVP example, (3) is no good. We need to block. But we could
+do it via a separate synchronizer block if we want. Wouldn't that be better?
+More explicit? More interesting? (1) versus (2) doesn't matter here because if
+we eat it, we'll just construct another train right away. I could imagine you
+want to do a speculative switch, in which case you ought to eat the unused
+input.
+
+I think it will be best to start to think of it as: you present all three
+inputs, it sends out the two outputs. That doesn't mean you have to wait for
+all three inputs, it means you have to consume all three inputs entirely
+before going to the next set of inputs. If the select and output are early,
+you are fine to output the output while waiting for the unused. If the select
+and unused are early, fine to eat the unused first.
