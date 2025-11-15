@@ -131,3 +131,33 @@ all three inputs, it means you have to consume all three inputs entirely
 before going to the next set of inputs. If the select and output are early,
 you are fine to output the output while waiting for the unused. If the select
 and unused are early, fine to eat the unused first.
+
+---
+
+Rewriting existing app with new approach. What do I need?
+* Gates: Rail only.
+* State:
+  - Schedule
+  - Grid of actions
+  - List of trains, where a train is a list of car ids
+  - Map from CarId to Car coord and value.
+
+Or something like that. Maybe start minimal and add things as we go as we
+need.
+
+What state do we really need to keep track of the cars?
+* I need a list of trains, to be able to form the schedule.
+* A train is a list of cars: x, y, data value.
+
+Options:
+* Store (x, y, data) directly on the list of trains. If I want to move a car,
+  I linear search through the trains to find and replace it.
+
+Good enough for now. Just factor out the operation to move a car.
+
+For schedule, how about we store the car, including its value? Save us the
+effort of looking that up again.
+
+Remind me in what case a gate messes with the schedule? A sink removes the
+current car. Do we ever want to remove another, distant car? Let's start no. I
+can rewrite the code to support that when we have a specific case for it.

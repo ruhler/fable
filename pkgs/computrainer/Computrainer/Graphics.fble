@@ -1,0 +1,81 @@
+
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
+% Mul = /Std/Int%.Mul;
+% Int = /Std/Int/Lit%.Int;
+
+<@>% Concat = /Std/List%.Concat;
+
+@ Color@ = /App/Drawing%.Color@;
+@ Drawing@ = /App/Drawing%.Drawing@;
+% Color = /App/Drawing%.Color;
+% Drawings = /App/Drawing%.Drawings;
+% Blank = /App/Drawing%.Blank;
+% Over = /App/Drawing%.Over;
+% Rect = /App/Drawing%.Rect;
+
+@ Coord@ = /Computrainer/Grid%.Coord@;
+% Grid = /Computrainer/Grid%.Map;
+
+@ Car@ = /Computrainer/Model%.Car@;
+@ Dir@ = /Computrainer/Model%.Dir@;
+@ Gate@ = /Computrainer/Model%.Gate@;
+@ Model@ = /Computrainer/Model%.Model@;
+@ Value@ = /Computrainer/Model%.Value@;
+
+(Value@) { Color@; }
+CarColor = (Value@ v) {
+    v.?(C: Color.Red, 0: Color.Black, 1: Color.White, S: Color.Yellow, L: Color.Magenta);
+};
+
+(Car@) { Drawing@; }
+DrawCar = (Car@ c) {
+    Rect(Sub(Mul(c.x, Int|20), Int|5), Sub(Mul(c.y, Int|20), Int|5), Int|10, Int|10, CarColor(c.v));
+};
+
+(Int@, Int@, Dir@) { Drawing@; }
+DrawRail = (Int@ x, Int@ y, Dir@ d) {
+    Color@ c = Color.Cyan;
+    d.?(
+        up: Drawings[
+            Rect(Sub(Mul(x, Int|20), Int|2), Sub(Mul(y, Int|20), Int|22), Int|4, Int|24,  c),
+            Rect(Sub(Mul(x, Int|20), Int|4), Sub(Mul(y, Int|20), Int|14), Int|8, Int|4,  c),
+            Rect(Sub(Mul(x, Int|20), Int|6), Sub(Mul(y, Int|20), Int|10), Int|12, Int|4,  c)
+        ],
+        down: Drawings[
+            Rect(Sub(Mul(x, Int|20), Int|2), Sub(Mul(y, Int|20), Int|2), Int|4, Int|24,  c),
+            Rect(Sub(Mul(x, Int|20), Int|4), Add(Mul(y, Int|20), Int|10), Int|8, Int|4,  c),
+            Rect(Sub(Mul(x, Int|20), Int|6), Add(Mul(y, Int|20), Int|6), Int|12, Int|4,  c)
+        ],
+        left: Drawings[
+            Rect(Sub(Mul(x, Int|20), Int|22), Sub(Mul(y, Int|20), Int|2), Int|24, Int|4,  c),
+            Rect(Sub(Mul(x, Int|20), Int|14), Sub(Mul(y, Int|20), Int|4), Int|4, Int|8,  c),
+            Rect(Sub(Mul(x, Int|20), Int|10), Sub(Mul(y, Int|20), Int|6), Int|4, Int|12,  c)
+        ],
+        right: Drawings[
+            Rect(Sub(Mul(x, Int|20), Int|2), Sub(Mul(y, Int|20), Int|2), Int|24, Int|4,  c),
+            Rect(Add(Mul(x, Int|20), Int|10), Sub(Mul(y, Int|20), Int|4), Int|4, Int|8,  c),
+            Rect(Add(Mul(x, Int|20), Int|6), Sub(Mul(y, Int|20), Int|6), Int|4, Int|12,  c)
+        ]
+    );
+};
+
+(Int@, Int@, Gate@) { Drawing@; }
+DrawGate = (Int@ x, Int@ y, Gate@ g) {
+    g.?(noop: Blank, rail: DrawRail(x, y, g.rail));
+};
+
+(Int@, Int@, Model@) { Drawing@; }
+DrawModel = (Int@ width, Int@ height, Model@ m) {
+    Color@ gray = Color@(Int|128, Int|128, Int|128);
+    Drawing@ clear = Rect(Int|0, Int|0, width, height, gray);
+    Drawing@ cars = Drawings(/Std/List%.Map(Concat(m.s.trains), DrawCar));
+    Drawing@ gates = Grid.ForEach(m.gates, Blank, (Coord@ xy, Gate@ g, Drawing@ d) {
+        Over(d, DrawGate(xy.x, xy.y, g));
+    });
+
+    Drawings[clear, cars, gates];
+};
+
+@(DrawModel);

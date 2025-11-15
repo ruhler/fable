@@ -1,0 +1,55 @@
+
+% Int = /Std/Int/Lit%.Int;
+
+<@>% List = /Std/List%.List;
+
+<@>% Entries = /Computrainer/Grid%.Entries;
+
+@ Gates@ = /Computrainer/Model%.Gates@;
+@ Car@ = /Computrainer/Model%.Car@;
+@ Trains@ = /Computrainer/Model%.Trains@;
+@ Model@ = /Computrainer/Model%.Model@;
+% RailRight = /Computrainer/Model%.RailRight;
+% RailLeft = /Computrainer/Model%.RailLeft;
+% RailUp = /Computrainer/Model%.RailUp;
+% RailDown = /Computrainer/Model%.RailDown;
+% Model = /Computrainer/Model%.Model;
+% 0 = /Computrainer/Model%.0;
+% 1 = /Computrainer/Model%.1;
+% C = /Computrainer/Model%.C;
+
+
+Gates@ Gates = Entries[
+    @(x: Int|3, y: Int|3, v: RailRight),
+    @(x: Int|4, y: Int|3, v: RailRight),
+    @(x: Int|5, y: Int|3, v: RailDown),
+    @(x: Int|5, y: Int|4, v: RailDown),
+    @(x: Int|5, y: Int|5, v: RailDown),
+    @(x: Int|5, y: Int|6, v: RailDown),
+    @(x: Int|5, y: Int|7, v: RailDown),
+    @(x: Int|5, y: Int|8, v: RailDown),
+    @(x: Int|5, y: Int|9, v: RailRight),
+    @(x: Int|6, y: Int|9, v: RailRight),
+    @(x: Int|7, y: Int|9, v: RailRight),
+    @(x: Int|8, y: Int|9, v: RailRight),
+    @(x: Int|9, y: Int|9, v: RailUp),
+    @(x: Int|9, y: Int|8, v: RailUp),
+    @(x: Int|9, y: Int|7, v: RailUp),
+    @(x: Int|9, y: Int|6, v: RailUp),
+    @(x: Int|9, y: Int|5, v: RailLeft),
+    @(x: Int|8, y: Int|5, v: RailLeft),
+    @(x: Int|7, y: Int|5, v: RailLeft),
+    @(x: Int|6, y: Int|5, v: RailLeft),
+    @(x: Int|4, y: Int|5, v: RailLeft),
+    @(x: Int|3, y: Int|5, v: RailUp),
+    @(x: Int|3, y: Int|4, v: RailUp)
+];
+
+Trains@ Trains = List[
+    #List[Car@(Int|5, Int|4, 0), Car@(Int|5, Int|3, 1), Car@(Int|4, Int|3, C)]
+    List[Car@(Int|4, Int|3, C)]
+];
+
+Model@ Sample = Model(Gates, Trains);
+
+@(Sample);

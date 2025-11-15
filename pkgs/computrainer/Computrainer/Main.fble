@@ -1,21 +1,11 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
 
 @ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Mul = /Std/Int%.Mul;
 
 % Int = /Std/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Empty = /Std/List%.Empty;
-<@>% Items = /Std/List%.Items;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -32,201 +22,31 @@
 @ Effect@ = /App/App%.Effect@;
 
 @ Drawing@ = /App/Drawing%.Drawing@;
-@ Color@ = /App/Drawing%.Color@;
-% Color = /App/Drawing%.Color;
-% Drawings = /App/Drawing%.Drawings;
-% Rect = /App/Drawing%.Rect;
 
-@ Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
-@ Entry@ = *(Int@ x, Int@ y, Dir@ d);
-@ Rails@ = List@<Entry@>;
-
-@ Car@ = *(Int@ x, Int@ y, Color@ v);
-@ Train@ = List@<Car@>; # front of train first.
-
-Rails@ Rails = List[
-    @(x: Int|3, y: Int|3, d: Dir@(right: Unit)),
-    @(x: Int|4, y: Int|3, d: Dir@(right: Unit)),
-    @(x: Int|5, y: Int|3, d: Dir@(down: Unit)),
-    @(x: Int|5, y: Int|4, d: Dir@(down: Unit)),
-    @(x: Int|5, y: Int|5, d: Dir@(down: Unit)),
-    @(x: Int|5, y: Int|6, d: Dir@(down: Unit)),
-    @(x: Int|5, y: Int|7, d: Dir@(down: Unit)),
-    @(x: Int|5, y: Int|8, d: Dir@(down: Unit)),
-    @(x: Int|5, y: Int|9, d: Dir@(right: Unit)),
-    @(x: Int|6, y: Int|9, d: Dir@(right: Unit)),
-    @(x: Int|7, y: Int|9, d: Dir@(right: Unit)),
-    @(x: Int|8, y: Int|9, d: Dir@(right: Unit)),
-    @(x: Int|9, y: Int|9, d: Dir@(up: Unit)),
-    @(x: Int|9, y: Int|8, d: Dir@(up: Unit)),
-    @(x: Int|9, y: Int|7, d: Dir@(up: Unit)),
-    @(x: Int|9, y: Int|6, d: Dir@(up: Unit)),
-    @(x: Int|9, y: Int|5, d: Dir@(left: Unit)),
-    @(x: Int|8, y: Int|5, d: Dir@(left: Unit)),
-    @(x: Int|7, y: Int|5, d: Dir@(left: Unit)),
-    @(x: Int|6, y: Int|5, d: Dir@(left: Unit)),
-    @(x: Int|5, y: Int|5, d: Dir@(left: Unit)),
-    @(x: Int|4, y: Int|5, d: Dir@(left: Unit)),
-    @(x: Int|3, y: Int|5, d: Dir@(up: Unit)),
-    @(x: Int|3, y: Int|4, d: Dir@(up: Unit))
-];
-
-# Looks up the direction of the rail at the given position.
-# Behavior is undefined if no such rail is found.
-(Rails@, Int@, Int@) { Dir@; } RailAt = (Rails@ r, Int@ x, Int@ y) {
-    /Std/Int/Eq%.Eq(x, r.items.head.x).?(false: RailAt(r.items.tail, x, y));
-    /Std/Int/Eq%.Eq(y, r.items.head.y).?(false: RailAt(r.items.tail, x, y));
-    r.items.head.d;
-};
-
-# Construct a reverse train from the back given the position of the caboose and the
-# list of cars in reverse order.
-(Int@, Int@, List@<Color@>) { Train@; }
-TrainR = (Int@ x, Int@ y, List@<Color@> cars) {
-    cars.?(empty: Empty<Car@>);
-
-    Car@ caboose = Car@(x, y, cars.items.head);
-    cars.items.tail.?(empty: List[caboose]);
-
-    Dir@ d = RailAt(Rails, x, y);
-    Int@ tx = d.?(up: x, down: x, left: Decr(x), right: Incr(x));
-    Int@ ty = d.?(up: Decr(y), down: Incr(y), left: y, right: y);
-    Items(caboose, TrainR(tx, ty, cars.items.tail));
-};
-
-# Construct a train from the back given the position of the caboose and the
-# list of cars in reverse order.
-(Int@, Int@, List@<Color@>) { Train@; }
-Train = (Int@ x, Int@ y, List@<Color@> cars) {
-    /Std/List%.Reverse(TrainR(x, y, cars));
-};
-
-List@<Train@> Trains = List[
-    Train(Int|4, Int|3, List[Color.Yellow, Color.Yellow, Color.Red]),
-    Train(Int|8, Int|5, List[Color.Cyan, Color.Cyan])
-];
-
-(Entry@) { Drawing@; } DrawRail = (Entry@ e) {
-    e.d.?(
-        up: Drawings[
-            Rect(Sub(Mul(e.x, Int|20), Int|2), Sub(Mul(e.y, Int|20), Int|22), Int|4, Int|24,  Color.White),
-            Rect(Sub(Mul(e.x, Int|20), Int|4), Sub(Mul(e.y, Int|20), Int|14), Int|8, Int|4,  Color.White),
-            Rect(Sub(Mul(e.x, Int|20), Int|6), Sub(Mul(e.y, Int|20), Int|10), Int|12, Int|4,  Color.White)
-        ],
-        down: Drawings[
-            Rect(Sub(Mul(e.x, Int|20), Int|2), Sub(Mul(e.y, Int|20), Int|2), Int|4, Int|24,  Color.White),
-            Rect(Sub(Mul(e.x, Int|20), Int|4), Add(Mul(e.y, Int|20), Int|10), Int|8, Int|4,  Color.White),
-            Rect(Sub(Mul(e.x, Int|20), Int|6), Add(Mul(e.y, Int|20), Int|6), Int|12, Int|4,  Color.White)
-        ],
-        left: Drawings[
-            Rect(Sub(Mul(e.x, Int|20), Int|22), Sub(Mul(e.y, Int|20), Int|2), Int|24, Int|4,  Color.White),
-            Rect(Sub(Mul(e.x, Int|20), Int|14), Sub(Mul(e.y, Int|20), Int|4), Int|4, Int|8,  Color.White),
-            Rect(Sub(Mul(e.x, Int|20), Int|10), Sub(Mul(e.y, Int|20), Int|6), Int|4, Int|12,  Color.White)
-        ],
-        right: Drawings[
-            Rect(Sub(Mul(e.x, Int|20), Int|2), Sub(Mul(e.y, Int|20), Int|2), Int|24, Int|4,  Color.White),
-            Rect(Add(Mul(e.x, Int|20), Int|10), Sub(Mul(e.y, Int|20), Int|4), Int|4, Int|8,  Color.White),
-            Rect(Add(Mul(e.x, Int|20), Int|6), Sub(Mul(e.y, Int|20), Int|6), Int|4, Int|12,  Color.White)
-        ]
-        );
-};
-
-(Car@) { Drawing@; } DrawCar = (Car@ car) {
-    Rect(Sub(Mul(car.x, Int|20), Int|5), Sub(Mul(car.y, Int|20), Int|5), Int|10, Int|10, car.v);
-};
-
-(Train@) { Drawing@; } DrawTrain = (Train@ train) {
-    Drawings(/Std/List%.Map(train, DrawCar));
-};
-
-(Car@) { Car@; } GoCar = (Car@ car) {
-    Dir@ d = RailAt(Rails, car.x, car.y);
-    Int@ x = d.?(up: car.x, down: car.x, left: Decr(car.x), right: Incr(car.x));
-    Int@ y = d.?(up: Decr(car.y), down: Incr(car.y), left: car.y, right: car.y);
-    car.@(x, y);
-};
-
-(Train@, Int@, Int@) { Bool@; }
-InTrain = (Train@ train, Int@ x, Int@ y) {
-    train.?(empty: False);
-    Car@ head = train.items.head;
-    Bool@ in_head = {
-        /Std/Int/Eq%.Eq(head.x, x).?(false: False);
-        /Std/Int/Eq%.Eq(head.y, y).?(false: False);
-        True;
-    };
-    in_head.?(true: True);
-    InTrain(train.items.tail, x, y);
-};
-
-(List@<Train@>, Int@, Int@) { Bool@; }
-InTrains = (List@<Train@> trains, Int@ x, Int@ y) {
-    trains.?(empty: False);
-    InTrain(trains.items.head, x, y).?(true: True);
-    InTrains(trains.items.tail, x, y);
-};
-
-(List@<Train@>, Train@) { Train@; } GoTrain = (List@<Train@> trains, Train@ train) {
-    # Make sure the train is free to move forward
-    Car@ car = train.items.head;
-    Dir@ d = RailAt(Rails, car.x, car.y);
-    Int@ x = d.?(up: car.x, down: car.x, left: Decr(car.x), right: Incr(car.x));
-    Int@ y = d.?(up: Decr(car.y), down: Incr(car.y), left: car.y, right: car.y);
-    InTrains(trains, x, y).?(true: train);
-    /Std/List%.Map(train, GoCar);
-};
-
-@ State@ = *(
-  Int@ mouse_x,
-  Int@ mouse_y,
-  Color@ mouse_color,
-  List@<Train@> trains
-);
+@ Model@ = /Computrainer/Model%.Model@;
+% DoTurn = /Computrainer/Model%.DoTurn;
+% DrawModel = /Computrainer/Graphics%.DrawModel;
+% Sample = /Computrainer/Sample%.Sample;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
   M@<Event@> FilterEvent = {
     Event@ e <- m.do(app.event);
     e.?(tick: m.return(e),
         key_down: e.key_down.?(q: m.return(e), : FilterEvent),
-        mouse_down: m.return(e),
-        mouse_up: m.return(e),
-        mouse_motion: m.return(e),
         : FilterEvent);
   };
 
-  (State@) { M@<Unit@>; } StepUI = (State@ s) {
-    Drawing@ clear = Rect(Int|0, Int|0, width, height, Color.Black);
-    Drawing@ box = Rect(
-      Int|10,
-      Int|10,
-      Sub(width, Int|20),
-      Sub(height, Int|20),
-      Color.Blue);
-
-    Drawing@ cursor = Rect(
-      Sub(s.mouse_x, Int|10),
-      Sub(s.mouse_y, Int|10),
-      Int|20,
-      Int|20,
-      s.mouse_color);
-
-    Drawing@ rails = Drawings(/Std/List%.Map(Rails, DrawRail));
-    Drawing@ cars = Drawings(/Std/List%.Map(s.trains, DrawTrain));
-
-    Drawing@ drawing = Drawings[clear, box, rails, cars, cursor];
+  (Model@) { M@<Unit@>; } StepUI = (Model@ model) {
+    Drawing@ drawing = DrawModel(width, height, model);
 
     Unit@ _ <- m.do(app.effect(Effect@(draw: drawing)));
     Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));
     Event@ e <- m.do(FilterEvent);
-    e.?(
-      tick: StepUI(s.@(trains: /Std/List%.Map(s.trains, GoTrain(s.trains)))),
-      mouse_down: StepUI(s.@(mouse_color: Color.Red)),
-      mouse_up: StepUI(s.@(mouse_color: Color.Green)),
-      mouse_motion: StepUI(s.@(mouse_x: e.mouse_motion.x, mouse_y: e.mouse_motion.y)),
-      : m.return(Unit));
+    e.?(tick: StepUI(DoTurn(model)));
+    m.return(Unit);
   };
 
-  Unit@ _ <- m.do(StepUI(State@(Int|0, Int|0, Color.Green, Trains)));
+  Unit@ _ <- m.do(StepUI(Sample));
   m.return(True);
 };
 

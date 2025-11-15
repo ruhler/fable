@@ -1,0 +1,144 @@
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+% And = /Std/Bool%.And;
+
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Concat = /Std/List%.Concat;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+@ Coord@ = /Computrainer/Grid%.Coord@;
+<@>@ Grid@ = /Computrainer/Grid%.Grid@;
+% Grid = /Computrainer/Grid%.Map;
+
+@ Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
+Dir@ Left = Dir@(left: Unit);
+Dir@ Right = Dir@(right: Unit);
+Dir@ Up = Dir@(up: Unit);
+Dir@ Down = Dir@(down: Unit);
+
+@ Gate@ = +(Unit@ noop, Dir@ rail);
+Gate@ Noop = Gate@(noop: Unit);
+Gate@ RailLeft = Gate@(rail: Left);
+Gate@ RailRight = Gate@(rail: Right);
+Gate@ RailUp = Gate@(rail: Up);
+Gate@ RailDown = Gate@(rail: Down);
+
+@ Gates@ = Grid@<Gate@>;
+
+@ Value@ = +(Unit@ C, Unit@ 0, Unit@ 1, Unit@ S, Unit@ L);
+Value@ C = Value@(C: Unit);
+Value@ 0 = Value@(0: Unit);
+Value@ 1 = Value@(1: Unit);
+Value@ S = Value@(S: Unit);
+Value@ L = Value@(L: Unit);
+
+@ Car@ = *(Int@ x, Int@ y, Value@ v);
+@ Train@ = List@<Car@>;
+@ Trains@ = List@<Train@>;
+@ Schedule@ = List@<Car@>;
+@ S@ = *(Trains@ trains);
+@ Model@ = *(Gates@ gates, S@ s);
+
+# Computes a new schedule for the given set of trains.
+(Trains@) { Schedule@; } Schedule = Concat<Car@>;
+
+(Int@, Int@, Dir@) { Coord@; }
+Dest = (Int@ x, Int@ y, Dir@ d) {
+    Int@ nx = d.?(up: x, down: x, left: Decr(x), right: Incr(x));
+    Int@ ny = d.?(up: Decr(y), down: Incr(y), left: y, right: y);
+    Coord@(nx, ny);
+};
+
+(Int@, Int@, Train@) { Bool@; }
+CarInTrain = (Int@ x, Int@ y, Train@ t) {
+    t.?(empty: False);
+    Car@ head = t.items.head;
+    And(/Std/Int/Eq%.Eq(head.x, x), /Std/Int/Eq%.Eq(head.y, y)).?(true: True);
+    CarInTrain(x, y, t.items.tail);
+};
+
+(Int@, Int@, Trains@) { Bool@; }
+CarInTrains = (Int@ x, Int@ y, Trains@ t) {
+    t.?(empty: False);
+    CarInTrain(x, y, t.items.head).?(true: True);
+    CarInTrains(x, y, t.items.tail);
+};
+
+(Int@, Int@, S@) { Bool@; }
+CarInS = (Int@ x, Int@ y, S@ s) {
+    CarInTrains(x, y, s.trains);
+};
+
+(Car@, Int@, Int@, Train@) { Train@; }
+MoveCarInTrain = (Car@ c, Int@ dx, Int@ dy, Train@ t) {
+    t.?(empty: t);
+    Car@ head = t.items.head;
+    And(/Std/Int/Eq%.Eq(head.x, dx), /Std/Int/Eq%.Eq(head.y, dy)).?(true: {
+        Items(Car@(dx, dy, c.v), t.items.tail);
+    });
+    Items(head, MoveCarInTrain(c, dx, dy, t.items.tail));
+};
+
+(Car@, Int@, Int@, Trains@) { Trains@; }
+MoveCarInTrains = (Car@ c, Int@ dx, Int@ dy, Trains@ t) {
+    t.?(empty: t);
+    CarInTrain(c.x, c.y, t.items.head).?(true: {
+        Items(MoveCarInTrain(c, dx, dy, t.items.head), t.items.tail);
+    });
+    Items(t.items.head, MoveCarInTrains(c, dx, dy, t.items.tail));
+};
+
+(Car@, Int@, Int@, S@) { S@; }
+MoveCarInS = (Car@ c, Int@ dx, Int@ dy, S@ s) {
+    s.@(trains: MoveCarInTrains(c, dx, dy, s.trains));
+};
+
+# Execute a rail gate.
+(Dir@, Car@, S@) { S@; }
+DoRail = (Dir@ d, Car@ c, S@ s) {
+    Coord@ dest = Dest(c.x, c.y, d);
+    CarInS(dest.x, dest.y, s).?(true: s);
+    MoveCarInS(c, dest.x, dest.y, s);
+};
+
+# Execute a gate.
+(Gate@, Car@, S@) { S@; }
+DoGate = (Gate@ g, Car@ c, S@ s) {
+  g.?(noop: s, rail: DoRail(g.rail, c, s));
+};
+
+# Execute the current schedule to completion.
+(Gates@, Schedule@, S@) { S@; }
+DoSchedule  = (Gates@ gates, Schedule@ schedule, S@ s) {
+    schedule.?(empty: s);
+    Car@ c = schedule.items.head;
+    Maybe@<Gate@> mg = Grid.Lookup(gates, Coord@(c.x, c.y));
+    Gate@ g = mg.?(just: mg.just, nothing: Noop);
+    DoSchedule(gates, schedule.items.tail, DoGate(g, c, s));
+};
+
+(Gates@, Trains@) { Model@; }
+Model = (Gates@ gates, Trains@ trains) {
+    Model@(gates, @(trains));
+};
+
+(Model@) { Model@; }
+DoTurn = (Model@ m) {
+    m.@(s: DoSchedule(m.gates, Schedule(m.s.trains), m.s));
+};
+
+
+@(Model@, Gate@, Gates@, Train@, Trains@, Car@, Dir@, Value@, DoTurn, Model,
+    RailUp, RailDown, RailLeft, RailRight,
+    0, 1, C, L, S);
