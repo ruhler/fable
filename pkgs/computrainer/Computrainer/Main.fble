@@ -24,7 +24,7 @@
 @ Drawing@ = /App/Drawing%.Drawing@;
 
 @ Model@ = /Computrainer/Model%.Model@;
-% DoTurn = /Computrainer/Model%.DoTurn;
+% Tick = /Computrainer/Model%.Tick;
 % DrawModel = /Computrainer/Graphics%.DrawModel;
 % Sample = /Computrainer/Sample%.Sample;
 
@@ -42,7 +42,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
     Unit@ _ <- m.do(app.effect(Effect@(draw: drawing)));
     Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));
     Event@ e <- m.do(FilterEvent);
-    e.?(tick: StepUI(DoTurn(model)));
+    e.?(tick: StepUI(Tick(model)));
     m.return(Unit);
   };
 

@@ -133,12 +133,13 @@ Model = (Gates@ gates, Trains@ trains) {
     Model@(gates, @(trains));
 };
 
+# Advance the model by 1 unit of time.
 (Model@) { Model@; }
-DoTurn = (Model@ m) {
+Tick = (Model@ m) {
     m.@(s: DoSchedule(m.gates, Schedule(m.s.trains), m.s));
 };
 
 
-@(Model@, Gate@, Gates@, Train@, Trains@, Car@, Dir@, Value@, DoTurn, Model,
+@(Model@, Gate@, Gates@, Train@, Trains@, Car@, Dir@, Value@, Tick, Model,
     RailUp, RailDown, RailLeft, RailRight,
     0, 1, C, L, S);
