@@ -1,0 +1,23 @@
+
+% True = /Std/Bool%.True;
+
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+<@>% List = /Std/List%.List;
+
+% Str = /Std/Char/Ascii%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+Test@ Tests = TestSuite(Str|Computrainer, List[
+  Test(Str|'Test', (Unit@ _) {
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+        True, True);
+  })
+]);
+
+/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));
