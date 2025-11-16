@@ -9,38 +9,35 @@
 @ Car@ = /Computrainer/Model%.Car@;
 @ Trains@ = /Computrainer/Model%.Trains@;
 @ Model@ = /Computrainer/Model%.Model@;
-% RailRight = /Computrainer/Model%.RailRight;
-% RailLeft = /Computrainer/Model%.RailLeft;
-% RailUp = /Computrainer/Model%.RailUp;
-% RailDown = /Computrainer/Model%.RailDown;
+% Rail = /Computrainer/Model%.Rail;
 % Model = /Computrainer/Model%.Model;
 % C = /Computrainer/Model%.C;
 
 
 Gates@ Gates = Entries[
-    @(x: Int|3, y: Int|3, v: RailRight),
-    @(x: Int|4, y: Int|3, v: RailRight),
-    @(x: Int|5, y: Int|3, v: RailDown),
-    @(x: Int|5, y: Int|4, v: RailDown),
-    @(x: Int|5, y: Int|5, v: RailDown),
-    @(x: Int|5, y: Int|6, v: RailDown),
-    @(x: Int|5, y: Int|7, v: RailDown),
-    @(x: Int|5, y: Int|8, v: RailDown),
-    @(x: Int|5, y: Int|9, v: RailRight),
-    @(x: Int|6, y: Int|9, v: RailRight),
-    @(x: Int|7, y: Int|9, v: RailRight),
-    @(x: Int|8, y: Int|9, v: RailRight),
-    @(x: Int|9, y: Int|9, v: RailUp),
-    @(x: Int|9, y: Int|8, v: RailUp),
-    @(x: Int|9, y: Int|7, v: RailUp),
-    @(x: Int|9, y: Int|6, v: RailUp),
-    @(x: Int|9, y: Int|5, v: RailLeft),
-    @(x: Int|8, y: Int|5, v: RailLeft),
-    @(x: Int|7, y: Int|5, v: RailLeft),
-    @(x: Int|6, y: Int|5, v: RailLeft),
-    @(x: Int|4, y: Int|5, v: RailLeft),
-    @(x: Int|3, y: Int|5, v: RailUp),
-    @(x: Int|3, y: Int|4, v: RailUp)
+    @(x: Int|3, y: Int|3, v: Rail.Right),
+    @(x: Int|4, y: Int|3, v: Rail.Right),
+    @(x: Int|5, y: Int|3, v: Rail.Down),
+    @(x: Int|5, y: Int|4, v: Rail.Down),
+    @(x: Int|5, y: Int|5, v: Rail.Down),
+    @(x: Int|5, y: Int|6, v: Rail.Down),
+    @(x: Int|5, y: Int|7, v: Rail.Down),
+    @(x: Int|5, y: Int|8, v: Rail.Down),
+    @(x: Int|5, y: Int|9, v: Rail.Right),
+    @(x: Int|6, y: Int|9, v: Rail.Right),
+    @(x: Int|7, y: Int|9, v: Rail.Right),
+    @(x: Int|8, y: Int|9, v: Rail.Right),
+    @(x: Int|9, y: Int|9, v: Rail.Up),
+    @(x: Int|9, y: Int|8, v: Rail.Up),
+    @(x: Int|9, y: Int|7, v: Rail.Up),
+    @(x: Int|9, y: Int|6, v: Rail.Up),
+    @(x: Int|9, y: Int|5, v: Rail.Left),
+    @(x: Int|8, y: Int|5, v: Rail.Left),
+    @(x: Int|7, y: Int|5, v: Rail.Left),
+    @(x: Int|6, y: Int|5, v: Rail.Left),
+    @(x: Int|4, y: Int|5, v: Rail.Left),
+    @(x: Int|3, y: Int|5, v: Rail.Up),
+    @(x: Int|3, y: Int|4, v: Rail.Up)
 ];
 
 Trains@ Trains = List[

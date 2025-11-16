@@ -23,7 +23,7 @@
 % Model = /Computrainer/Model%.Model;
 % Tick = /Computrainer/Model%.Tick;
 % C = /Computrainer/Model%.C;
-% RailRight = /Computrainer/Model%.RailRight;
+% Rail = /Computrainer/Model%.Rail;
 
 Test@ Tests = TestSuite(Str|Computrainer, List[
   Test(Str|'Noop', (Unit@ _) {
@@ -39,7 +39,7 @@ Test@ Tests = TestSuite(Str|Computrainer, List[
   Test(Str|'Rail', (Unit@ _) {
     # Noop gate shouldn't do anything to a car.
     Gates@ gates = Entries<Gate@>[
-        @(x: Int|3, y: Int|4, v: RailRight)
+        @(x: Int|3, y: Int|4, v: Rail.Right)
     ];
     Trains@ trains = List[List[Car@(Int|3, Int|4, C)]];
     Model@ model = Model(gates, trains);

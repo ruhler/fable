@@ -29,10 +29,12 @@ Dir@ Down = Dir@(down: Unit);
 
 @ Gate@ = +(Unit@ noop, Dir@ rail);
 Gate@ Noop = Gate@(noop: Unit);
-Gate@ RailLeft = Gate@(rail: Left);
-Gate@ RailRight = Gate@(rail: Right);
-Gate@ RailUp = Gate@(rail: Up);
-Gate@ RailDown = Gate@(rail: Down);
+% Rail = @(
+    Left: Gate@(rail: Left),
+    Right: Gate@(rail: Right),
+    Up: Gate@(rail: Up),
+    Down: Gate@(rail: Down)
+);
 
 @ Gates@ = Grid@<Gate@>;
 
@@ -141,5 +143,4 @@ Tick = (Model@ m) {
 
 
 @(Model@, Gate@, Gates@, Train@, Trains@, Car@, Dir@, Value@, S@, Tick, Model,
-    RailUp, RailDown, RailLeft, RailRight,
-    0, 1, C, L, S);
+   Rail, 0, 1, C, L, S);
