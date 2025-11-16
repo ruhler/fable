@@ -552,3 +552,376 @@ T@ to Put@<M@, Char@>.
 
 Okay! But this means first I'll want Monad@ and Maybe@ added to the standard
 library.
+
+---
+
+Let's focus on transitioning OStream@ uses to Put@ interface. Aside from the
+change to the name and extra poly arg, I also want to more clearly separate
+out the close operation. That means we should use types to distinguish between
+Put@ - which doesn't support a close operation, and something else (OStream@?)
+which does support an explicit close operation.
+
+Do I have the right type for put?
+
+<<@>@,@>@ Put@ = <<@>@ M@, @ T@>(T@) { M@<Unit@>; };
+
+This could also be:
+
+  Put@ = <@ T@>(T@)<<@>@ M@> { M@<Unit@>; };
+
+Which is better? Typically I assume both M@ and T@ are hard coded as part of
+the interface. I wouldn't pass around a Put@<M@> or a Put@<T@>. OStream@ is
+currently like a Put@<Int@>;. That suggests to me better to put the element
+type first, because the same element type is likely to be used with different
+monad implementations.
+
+Then how about:
+
+  Put@ = <@ T@><<@>@ M@>(T@) { M@<Unit@>; }
+
+That feels more accurate to me. It's not that you put an element, and then you
+can reuse that specifically put element in any monad. It's more like you are
+given the monad, and then you can use that resulting put for a bunch of
+different elements.
+
+  Put@<Char@><Monad@> Put = ...;
+  Put(a); Put(b); Put(c);
+
+Compare to:
+  
+  Put@<Char@> Put = ...;
+  Put(3)<SM@>; Put(3)<CM@>; etc.
+
+  Put@ = <@ T@, <@>@ M@>(T@) { M@<Unit@>; }
+
+If we put the T@ type arg second, we could use type inference here for the
+argument type, which we couldn't otherwise.
+
+  Put@<Monad@> Put = ...;
+  Put(3); Put(Char|'a'); etc.
+
+My implementation of Show@ is going to be, in some order:
+
+  Show@ = <@ T@> { <<@>@ M@>(Put@<Char@, M@> put, Monad@<M@> m) { M@<Unit@>; }; }
+
+Also known as:
+  Show@ = <@ T@, <@>@ M@>(Put@<Char@, M@> put, Monad@<M@> m) { M@<Unit@>; };
+
+Putting the type first in Put@ reads kind of like: put a Char@ into monad M@.
+Which sounds like a reasonable way to read things. Better than Put@<M@,
+Char@> anyway.
+
+Having both type and monad be abstract make things cognitively difficult. At
+some point, seems like I would want to define CharPut@ and IntPut@, or
+BytePut@, or PutChar@ and PutByte@ or PutInt@. Which again suggests putting
+the T@ argument first for Put@.
+
+Okay?
+
+  Put@ = <@ T@, <@>@ M@>(T@) { M@<Unit@>; }
+
+But... we don't get type inference on M@ this way. We would if we put (T@)
+before <<@>@ M@>, right?
+
+  PutChar@ put = ...;
+  Unit@ _ <- m.do(put(Char|c));
+  m.return(x);
+
+Would have to be written as:
+
+  PutChar@ put = ...;
+  Unit@ _ <- m.do(put<M@>(Char|c));
+  m.return(x);
+
+That's silly. Which brings us back to:
+
+  Put@ = <@ T@>(T@)<<@>@ M@> { M@<Unit@>; };
+
+Is that the same thing though? It's not, right? It's not as efficient, right?
+
+Oh. You would do it like this:
+
+  PutChar@<M@> put = ...<M@>;
+  Unit@ _ <- m.do(put(Char|c));
+  m.return(x);
+
+That makes sense to me. So current winner is:
+
+  Put@ = <@ T@, <@>@ M@>(T@) { M@<Unit@>; }
+
+---
+
+How to migrate to this? Part of the change will be outputting Char@ instead of
+Int@. That's what I want to use for Show@, right?
+
+Perhaps that's the best place to start? Switch Show@ from String@ to Put@.
+Switch all users of Show@ over?
+
+Where do we use OStream@ today, and how should that change given Put@?
+* Writing to text files (via Int@ today, should switch to Char@?)
+* Writing to stdio.out, stdio.err.
+* Using /Core/Stream/OStream% helpers:
+  PutChar, PutStr, PutLine, Close
+
+Note that we can't implement the OStream helpers without the Monad@ instance
+for composition. How will implementation of Show deal with this in practice?
+
+Show takes m and out as arguments. It has to pass them down everywhere,
+including to whatever equivalent we use for PutChar, PutStr, PutLine.
+
+* PutChar: Same as out(c)
+* PutStr: Implement via format? Format|'%s'[str]
+
+---
+
+New idea: use a monadic iterator type. Treat it as a single data stream
+instead of a sequence of reads or writes. That aligns much better with the
+idea of fble as describing values. When writing, I describe the entire value
+of the stream, including the end. When reading, I read the entire value of the
+stream, at my own pace.
+
+It's one type shared by both Get and Put interfaces, which is pretty cool. An
+input stream takes the stream type as an argument.
+
+  (I@) { M@<X@>; }
+
+An output stream returns the stream type:
+ 
+  (X@) { I@; }
+
+If we chose field names right, List@ can be exactly a special case of stream
+with Pure@ monad.
+
+---
+
+Let's give this a try. Define a new stream type. See if we can switch over to
+it for existing uses in md5, then IStream. Then, I suspect may be a little
+harder, OStream. Wish me luck.
+
+Experience trying to switch IStream over to the new interface:
+* It would be nice to have Empty helper function, but I'm not sure if it
+  should be on StreamR@ or Stream@ or both.
+* Same for Items helper function.
+
+---
+
+Trouble: the new interface doesn't make sense, I claim.
+
+Let's say you have an iterator, iter1, and you invoke it to get a value and an
+iterator iter2. You can invoke iter2 to get the next value. But what if you
+invoke iter1 again?
+
+For iterators, if you re-invoke iter1, it should get you the first value, not
+the second value. But that's weird. You already have the value, what side
+effect is there that requires you to re-invoke iter1?
+
+Also, and related, it's going to be pretty tedious to pass around the tail of
+the iterator everywhere. For example, think GetLine function: it takes an
+iterator, it returns the line and the rest of the iterator. Much more
+convenient to capture the iterator state in the monad as a side effect.
+
+But maybe we can keep one key idea: one stream type, shared by input and
+output?
+
+Stream type: <<@>@ M@> { M@<Maybe@<T@>>; }
+
+For input, you invoke the stream function. For output, instead of writing to a
+stream, how about we produce a stream? How would that look for show?
+
+Let's explore more the idea of having Show return an input stream instead of
+taking an output stream. Could I implement it in a reasonable way?
+
+  Show<T@> = <<@>@ M@>(Monad@<M@>) { M@<Maybe@<Char@>>; }
+
+Weird. Feels weird. Where is the sequencing?
+
+  ShowList = (List@ xs)<<@>@ M@>(Monad@<M@>) {
+    ...
+  }
+
+I don't see how we can do it. Not unless we create a state monad to hold the
+intermediate state. Somebody has to keep track of how far into the output
+stream you've read. That's kind of the crux of the issue, isn't it? In my
+failed iterator proposal, the consumer keeps track of how far they have read.
+In the original approach, the producer keeps track of how far they have read.
+It's always easier if the other side is responsible for that.
+
+Notice my existing stream api: IStream@: An input stream where the producer
+keeps track of position. OStream@: An output stream where the consumer keeps
+track of position.
+
+The important point for me is that we should be able to consume from the front
+of the stream before we have produced any subsequent elements of the stream.
+
+Abstractly, for an output stream, what I want to say is: I have all the state
+for a sequence of elements. I'm going to tell you what the next element is and
+wait for you to accept it. Then I'll continue on. We just need this way to do
+synchronization between producer and consumer. From consumer side we say: I'm
+going to tell you when I want the next element and wait for you to produce it.
+
+Thus: (T@) { M@<Unit@>; } used by the producer, and M@<Maybe@<T@>> used by the
+consumer.
+
+Is there any natural way to put those together? We need to provide these to
+the producer and consumer functions. What do we provide?
+
+Maybe. Because the put function looks like a monadic bind from the get
+function. But details aren't obvious to me.
+
+---
+
+The producer side is fine either way. Given a (T@) { M@<Unit@>} function to
+repeatedly put to, or returning a list of values with intermediate M@
+invocations. We need those intermediate M@ in general in case later parts of
+the list depend in some way on what is returned in earlier parts of the list,
+such as a dialog interaction.
+
+The consumer side is the annoying one if you don't want to consume the entire
+list, because then you have to return whatever you computed from the front of
+the list along with the rest of the list. This is a problem in general with
+state monadic like operations.
+
+Let me try to summarize the high level problem:
+* You want to compose functions that modify state while also returning values.
+* It's tedious to have to thread that modified state through everything.
+* State monad gives you a way to factor out that tediousness.
+* But state monad doesn't compose easily for combinations of different states
+  and other monads.
+
+Is there some language magic we could apply to help with this specific
+problem?
+
+In a language with side effects, we don't have a problem here at all. It's as
+if we had one common monadic type everyone uses that can have any kind of side
+effect. Then composition is easy: everyone use the same monad.
+
+What I want is to limit the side effects that a particular function can have.
+To say: here is a set of operations you can sequence together. Don't do
+anything else. That means making a function work for generic monadic type and
+passing the explicit interface it can work with. And I have to pass that
+interface everywhere we might want to use it.
+
+Let's say a function wants to use some state internally, for example to pass
+back to itself. Now the call has to know about that state, because it is the
+caller's job to pass that state back to the function the next time the
+function is called, even if the caller doesn't care at all about the presence
+or type of that state.
+
+Again, not a problem with side effects and global side effecting type, because
+people can allocate and remember their own state. That's what object oriented
+programming is all about, right?
+
+The idea of using an iterator is interesting because it encapsulates the
+interface operations in the return value. Think about it for put. If I return
+an iterator, instead of you giving me a put method in a sequential monad that
+I can call repeatedly, I'm giving you the list of calls I would make to a put
+monad in order. I don't need your interface, I'm returning the side effects I
+want to make directly, it's your job to apply them to your monad in what way
+you want. I think it's the same thing conceptually, just a convenience of not
+having to pass an interface as an argument every where.
+
+We can use monadic programming to hide whatever interface you want to pass,
+right?
+
+Take a put interface for example. Rather than pass the put everywhere, I can
+define my function as returning a function which takes the interface, and
+define a bind operation that passes that through.
+
+# ShowM@ defines the interface we want. Parameterized by underlying generic
+# type M@
+ShowM@ = <@ A@>, <@>@ M@>(Monad@<M@> monad, Put@<Char@, M@> put) { M@<A@>; }
+
+Show@ = <@ T@>(T@) { ShowM@<Unit@>; }
+
+How easy is it to use these though? Can I define Put and Bind and Return
+without having to pass a bunch of stuff around everywhere?
+
+Put = (Char@) { ShowM@<...
+
+I at least have to pass around the generic type M@, right? Do I?
+
+The question is if we can hide the details for accessing the type in Put, Bind,
+and Return, and never have to worry about them otherwise.
+
+  (Char@) { ShowM@<Unit@>; }
+  Put = (Char@ c)<<@>@ M@>(Monad@<M@> m, Put@<Char@, M@> put) {
+    put(c);
+  };
+
+Assume that works for Return and Bind too, just the same way.
+
+Now, can I implement Show using Put, Bind, and Return, without ever mentioning
+the generic M@? If so, it seems like I could add some syntactic sugar for
+defining types like ShowM@ and associated interface Put, Return, Bind?
+
+  (String@) { ShowM@; } PutStr = (String@ s) {
+    s.?(empty: Return(Unit));
+    Unit@ _ <- Do(Put(s.items.head));
+    PutStr(s.items.tail);
+  };
+
+Two questions about this:
+* Will it actually compile?
+* How terrible is the performance expressing it this way?
+
+Let me try and see. Note: Return, Do, and Put are now global values we can
+reference directly. No need to pass them as input and around everywhere. I
+feel like this captures precisely what I want to write.
+     
+---
+
+It compiles, believe it or not. Now, how would I use it in practice? How could
+I run my PutStr function, for example?
+
+Let's just do some debug prints any time you call stuff? Specifically, given a
+value of type ShowM@<Unit@>, I want to run it in my monad. Easy. I just need
+to apply the interface implementation to it, and it will go straight to my M@
+type, right?
+
+It works. It runs.
+
+Okay... how is this useful?
+
+Given any interface you can think up, I can use this strategy to let you
+implement functions that use the interface, but I don't have to pass the
+interface argument around everywhere (like I do Monad@ m today), I can refer
+to global function values and then customize the implementation at application
+time. That's pretty awesome actually.
+
+Does it help with input streams though? I can write code to consume input
+streams easily enough. It would just use what we have today for IStream@: A
+single get function that you call repeatedly to get the next value from the
+stream.
+
+Let's go back to the question: given something implementing a generic PutM@
+interface, and something else implementing a generic GetM@ interface, is there
+an easy way to compose them together? Run the GetM@ function, having it
+consume the outputs of PutM@?
+
+There must be, because that's what I implemented in md5? Not quite. md5 uses
+the iterator approach. So the way it would work is: run the Put computation to
+return an iterator. Run the Get computation with the iterator as the state
+which is consumed. that's how I did it in the md5 case.
+
+I think that's all we can get out of this. If you want to easily combine
+abstract Put and Get, the way to do it is have Put run to compute a monadic
+iterator, pass that monadic iterator as state to the Get computation. I can
+easily factor out that intermediate part, if that's what you want. But only if
+combining pure Put and pure Get computations.
+
+Does something go wrong if we want specialized Put and Get operations? Like, a
+Get operation that can also poke into some other monad with some other side
+effects? How does composition of interfaces work to that extent?
+
+I know I can write a function that, given a GetM@, can lift it into an
+arbitrary M@ by applying the interface implementation. But we can't go back,
+right? Once you have the lifted M@, you can't compose it back with pure GetM@
+implementations, you have to lift everything and compose at the M@ level.
+
+This is an important question. Because I need to decide how I want to express
+the IStream@ and OStream@ interfaces in the standard library. Do I want the
+form where you pass around Monad@ and Put@ and Get@ everywhere, or do I want
+the form where it's all abstracted? Do we want to do bind at the level of M@,
+or at the level of FooM@?
+
+

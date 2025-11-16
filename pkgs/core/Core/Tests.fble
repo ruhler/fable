@@ -9,6 +9,7 @@
 # Import to test compilation.
 % _ = /Core/Char/Show%;
 % _ = /Core/Monad/IO%;
+% _ = /Core/Scratch%;
 
 Test@ Tests = TestSuite(Str|Core, List[
   /Core/Bool/Tests%.Tests,

@@ -270,3 +270,359 @@ characters that should be taken as a whole, not split up into arbitrary bits
 
 Sounds reasonable to me. My vote at the moment: implement Streams first. Then
 say Show@<T@> is a function to output an element of type T@ to a Char@ stream.
+
+---
+
+I have a Put@<T@, M@> type now. How do we practically use it with Show@? It
+seems pretty inconvenient to pass around the output stream and monad
+everywhere. Does that mean we have to defer those to the last, build up a tree
+of functions?
+
+<@>@ Show@ = <@ T@, <@>@ M@>(Monad@<M@>, Put@<Char@, M@>) { M@<Unit@>; }
+
+PutLine = (String@ str)<<@>@ M@>(Monad@<M@> m, Put@<Char@, M@> out) {
+  ...
+};
+
+Maybe we want a type:
+
+ @ Print@ = <<@>@ M@>(Monad@<M@>, Put@<Char@, M@>) { M@<Unit@>; }
+
+So that makes:
+
+ <@>@ Show@ = <@ T@>(T@) { Print@; }
+
+Now all our composition happens at the function level, without the monad or
+put instance being mentioned anywhere? But how do we sequence that with other
+things? You can't. We are purposefully restricting the Print@ interface so all
+you can do is print. If you want to sequence it, you have to do that at a
+higher level. Show@ means it works for all monads. So it can't special case
+anything for a specific monad.
+
+And I can implement Format function internally, taking Print arguments. Maybe
+%p instead of %s?
+
+The implementation of Format will pass that monad and output args through.
+
+And then, at the top level, we have a print function... well, the thing itself
+is the print function. So you can interleave that way.
+
+Sounds reasonable ish. But is there not a performance concern here? That we
+have to build up a tree of functions before we can start outputting things? Or
+will it only be a shallow tree?
+
+Imagine I have a complex data type, like a map. If we call Show on that, are
+we strictly evaluating the whole thing into a big tree of functions, or are we
+holding on to the original object until we've output the result? I should walk
+through this by hand to better understand. Imagine a list of objects, walk
+through that. See how it scales to do a print of the list then output to IO.
+See if it builds up a huge function, or just starts unwrapping one element at
+a time.
+
+---
+
+Here are some different ways we can do things, as I see it:
+1. Create a string right away. Current Show@ interface.
+2. Create a binary tree, traversing full object at the start. Render that tree
+   to IO or String@ on demand.
+3. Create a binary tree of thunks, traversing full object at the start. Same
+as (2), just using function values instead of explicit binary tree.
+4. Lazily construct output. Don't traverse full object at the start.
+
+It sounds like I want (4). If that's the case, though, then my type for Show@
+(or Print@, or whatever I want to call it) should be a function that I call at
+time of rendering.
+
+Question: is taking Put and Monad arguments sufficient, or I need to take an
+extra Unit@ argument?
+
+  Print@ = (PutChar@<M@>, Monad@<M@>) { M@<Unit@>; }
+
+Imagine a long list.
+
+  PrintList = (List@ xs, PutChar@<M@>, Monad@<M@>) {
+    xs.?(empty: ...);
+    Unit@ _ <- Print(xs.items.head);
+    Print(xs.items.tail);
+  }
+
+This is fine, because it uses monadic bind. But that's different from:
+
+  PrintPair = (Pair@ p) {
+    Format|'(%s, %s)'[Print(p.a), Print(p.b)]
+  };
+
+Because I call the function right away, which calls Print(p.a) and Print(p.b)
+right away? I'm confused. How is Format implemented? Assume it's just Seq for
+simplicity.
+
+  Seq = (Print@ a, Print@ b, PutChar@<M@> p, Monad@<M@> m) {
+    Unit@ _ <- a(p, m);
+    b(p, m);
+  };
+
+That means the 'Seq' function isn't evaluated unti lyou provide the PutChar
+and Monad values. So if we had
+    
+  PrintList = (List@ xs) {
+    xs.?(empty: ...);
+    Seq(Print(xs.items.head), PrintList(xs.items.tail));
+  }
+
+It builds up a list, proportional to the input list, of:
+
+  Seq(Print(x0), Seq(Print(x1, Seq(Print(x2, ...)))));
+
+What I want is to not be able to call PrintList recursively until after the
+first Print function has been called. Aka, the implementation we had before:
+
+  PrintList = (List@ xs, PutChar@<M@>, Monad@<M@>) {
+    xs.?(empty: ...);
+    Unit@ _ <- Print(xs.items.head);
+    Print(xs.items.tail);
+  }
+
+Which means I don't think we can have a function that we can use like:
+
+    Format|'...'[Show(a), Show(b)]
+
+Because it doesn't express the sequencing requirement between Show(a) and
+Show(b) in the data flow graph.
+
+Slight tangent: is there any clever way we can make a function that returns a
+function in a recursive way so we can do varargs with different type args?
+
+Well... we could return a function of its own type, but I don't know how we
+would finish the recursion if you keep getting a function back. Unless what
+you get back depends on what you put in?
+
+If you are going to be lazy in evaluating a function, you have to see that
+behind a function call:
+  
+    Format|'...'[(Unit@ _) { Show(a); }, (Unit@ _) { Show(b); }]
+
+Unless we have two different functions: you implement Show, you call ShowL?
+Eager and deferred. You implement Eager. You use deferred everywhere. Then it
+can work. Format takes a list of deferred, and results in an eager.
+
+---
+
+Use of (Unit@ _) { ... } feels slightly heavyweight for a syntax. We can't
+abstract this behind a function call like L(...), because the arguments to
+functions are evaluated before the function is called. Does it make sense to
+provide a special syntax to facilitate this case? For example.
+
+   Format|'...'[<{Show(a)}, <{Show(b)}]
+
+The other use case we have today for this is unit tests
+
+  Test(Str|'RunTest.pass_passes', (Unit@ _) {
+    MainResult@ result = RunMain(Run(pass), Empty<String@>, Empty<Int@>);
+
+    Bool@ wnt = True;
+    Bool@ got = result.exit;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+Becomes:
+
+  Test(Str|'RunTest.pass_passes', <{
+    MainResult@ result = RunMain(Run(pass), Empty<String@>, Empty<Int@>);
+
+    Bool@ wnt = True;
+    Bool@ got = result.exit;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+Honestly, I don't think it helps in this case, because the function is so big
+to begin with. It's already using statement form. A special syntax would
+mostly be useful for simple expressions.
+
+   Format|'...'[*{Show(a)}, *{Show(b)}]
+   Format|'...'[(Unit@ _) {Show(a)}, (Unit@ _) {Show(b)}]
+
+It's pretty verbose this way. Either way, to be honest. Could we put it into
+the monad somehow?
+
+  Unit@ _ <- m.do(Format|'...');
+  Unit@ _ <- m.do(Show(a));
+  Unit@ _ <- m.do(Show(b));
+  m.return(Unit);
+
+That's pretty tedious too.
+
+The other option would be:
+
+Show = (...) { 
+  Format|'...'[ShowL(a), ShowL(b)];
+};
+
+ShowL = (T@ x, Unit@ _) { Show(x); };
+
+It's a pain to have to define both Show and ShowL everywhere. Do we have to
+though? Maybe not? How about always defining the lazy one?
+
+Show = (Pair@ p, Unit@ _) {
+  Format|'(%s, %s)'[Show(p.a), Show(p.b)];
+};
+
+Careful. If this was a list instead, we have to write it differently.
+
+This is wrong:
+
+Show = (List@ l, Unit@ _) {
+  Format|'%s:%s'[Show(l.items.head), Show(l.items.tail)];
+};
+
+We need to instead write, awkwardly, or maybe:
+
+Show = (List@ l, Unit@ _) {
+  Shown@ a <- Show(l.items.head);
+  Shown@ b <- Show(l.items.tail);
+  Format|'%s:%s'[a, b];
+};
+
+That might work? But we are missing sequencing.
+
+Show = (List@ l, Unit@ _) {
+  Shown@ a <- m.do(Show(l.items.head));
+  Shown@ b <- m.do(Show(l.items.tail));
+  m.return(Format|'%s:%s'[a, b]);
+};
+
+Now monad and sequencing is explicit. What is this type Shown@? Where does m
+come from and get passed to?
+
+Show = (List@ l, Monad@<M@> m, Put@<Char@, M@> out) {
+  Shown@ a <- m.do(Show(l.items.head, m, out));
+  Shown@ b <- m.do(Show(l.items.tail, m, out));
+  m.return(Format(m, out)|'%s:%s'[a, b]);
+};
+
+That doesn't really make sense.
+
+Here's an interesting idea for varargs:
+
+  Format|'(%s, %s)'<A@, B@>(a, b);
+
+No. I doubt that would work.
+
+The most basic approach with sequencing is quite tedious:
+
+Show = (List@ l, Monad@<M@> m, Put@<Char@, M@> out) {
+  Unit@ _ <- m.do(Show(l.items.head, m, out));
+  Unit@ _ <- m.do(PutStr(m, out)|':');
+  Unit@ _ <- m.do(Show(l.items.tail, m, out));
+  m.return(Unit);
+};
+
+Compared to:
+
+  Format|'%s:%s'[Show(l.items.head), Show(l.items.tail)];
+
+---
+
+New idea: iterators.
+
+I claim we can return exactly what we want for show as a data structure which
+looks very much like an iterator:
+
+  I@ = M@< +(*(T@ next, I@ tail) items, Unit@ empty) >;
+
+You invoke monadic sequencing to access the next item (or end).
+
+For example, say M@<A@> = (Unit@) { A@; }, and T@ is String@:
+
+  I@ = (Unit@) { +(*(String@ next, I@ tail) items, Unit@ empty); };
+
+Show = (List@ l, Unit@ _) {
+  l.empty.?(R@(empty: Unit));
+  R@(items: @(next: ...
+
+Anyway, you can imagine having a library function to take two iterators and
+produce one that goes through sequentially:
+
+  (I@, I@) { I@; } Seq = (I@ a, I@ b) {
+    (Unit@ _) {
+      R@ r = a(Unit);
+      r.?(empty: b(Unit));
+      r.@(tail: Seq(tail, b));
+  };
+
+Show = (List@ l, Unit@ _) {
+  l.empty.?(R@(empty: Unit));
+  Seqs[Show(l.items.head), ShowStr|':', Show(l.items.tail)];
+};
+
+Notice that the recursive applications to Show are partial, so they will
+capture the input argument without executing the body of the show. That's how
+you avoid looking at the end of the list until you've already done something
+useful with the front.
+
+We get different things depending on choice of M@ here:
+* Pure@ - A straight up list of T@.
+* (Unit@) { A@; } - A lazy list of T@, without intervening side effects.
+* M@<A@> - A generic list of T@, which can be interleaved with side effects.
+
+The general monadic sequencing would look like:
+
+  (I@, I@) { I@; } Seq = (I@ a, I@ b) {
+    R@ r <- m.do(a);
+    r.?(empty: b);
+    m.return(r.@(tail: Seq(r.tail, b)));
+  };
+
+For pure, that would turn into?
+
+   a.?(empty: b);
+   a.@(tail: Seq(a.tail, b));
+
+Which is exactly what append looks like. It's your quadratic blowup for
+string@. Especially of T@ was Char@ instead of String@. Then we have literally
+the String@ type.
+
+Hey! This looks exactly like /Md5/Stream%.
+
+If I chose the names right, we can define an iterator type such that
+I@<Pure@, T@> is equal to List@<T@>. That would be pretty cool, honestly.
+
+And then we say what? That Show@ takes an element of type T@, and returns an
+iterator of Char@, but in what monad? For Show@, I want it to be... String@,
+or (Unit@ ) { A@; }. So maybe we say it's for any monad you might provide to
+it. That forces it to be pure.
+
+Next question: how does Format look with streams? I bet it works just fine,
+exactly the way I want. You give it a list of streams, it returns a stream.
+And, we could reuse it for String@ if M@ is Pure@.
+
+We just need to be careful about how we implement Show.
+
+This is not the right implementation of Show for a list, because it traverses
+the entire list up front:
+
+Show = (List@ l) {
+  l.empty.?(Format|''[]);
+  Format|'%s:%s'[Show(l.items.head), Show(l.items.tail)];
+};
+
+Instead it should be implemented as... ???
+
+And we're back around the loop to where we started.
+
+But maybe it's like this, which doesn't look too bad:
+
+Show = (List@ l, Monad@ m) {
+  l.empty.?(Format|''[](m));
+  Format|'%s:%s'[Show(l.items.head), Show(l.items.tail)](m);
+};
+
+The key point being that we pass m through Format instead of through the
+recursive Show call. So that the recursive call is provided too few arguments,
+and thus becomes a partial application which isn't evaluated until the format
+function internally supplies the second arg, which will only be after it has
+already output the front of the list.
+
+I can deal with this I think.
+
+    
+

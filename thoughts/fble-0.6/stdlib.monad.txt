@@ -152,4 +152,4 @@ helper functions like ForEach? I'm not sure.
 
 But it makes sense to me, for the sake of making forward progress, to move
 ahead with Monad@ type to start.
-        
+
