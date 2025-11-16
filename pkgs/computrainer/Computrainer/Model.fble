@@ -84,7 +84,7 @@ CarInS = (Int@ x, Int@ y, S@ s) {
 MoveCarInTrain = (Car@ c, Int@ dx, Int@ dy, Train@ t) {
     t.?(empty: t);
     Car@ head = t.items.head;
-    And(/Std/Int/Eq%.Eq(head.x, dx), /Std/Int/Eq%.Eq(head.y, dy)).?(true: {
+    And(/Std/Int/Eq%.Eq(head.x, c.x), /Std/Int/Eq%.Eq(head.y, c.y)).?(true: {
         Items(Car@(dx, dy, c.v), t.items.tail);
     });
     Items(head, MoveCarInTrain(c, dx, dy, t.items.tail));
