@@ -2,11 +2,41 @@
 <@>@ Show@ = /Core/Show%.Show@;
 
 % Str = /Std/Char/Ascii%.Str;
+% Format = /Std/Char/Ascii%.Format;
 
+@ Car@ = /Computrainer/Model%.Car@;
+@ Gates@ = /Computrainer/Model%.Gates@;
 @ Model@ = /Computrainer/Model%.Model@;
+@ S@ = /Computrainer/Model%.S@;
+@ Train@ = /Computrainer/Model%.Train@;
+@ Trains@ = /Computrainer/Model%.Trains@;
+@ Value@ = /Computrainer/Model%.Value@;
 
-Show@<Model@> Model = (Model@ _) {
-    Str|'TODO: Show Model';
+Show@<Value@> Value = (Value@ v) {
+    v.?(C: Str|C, 0: Str|0, 1: Str|1, S: Str|S, L: Str|L);
+};
+
+Show@<Car@> Car = (Car@ a) {
+    Format|'(%s,%s,%s)'[
+        /Core/Int/Show%.Show(a.x),
+        /Core/Int/Show%.Show(a.y),
+        Value(a.v)
+    ];
+};
+
+Show@<Train@> Train = /Core/List/Show%.Show(Car);
+Show@<Trains@> Trains = /Core/List/Show%.Show(Train);
+
+Show@<S@> S = (S@ a) {
+    Trains(a.trains);
+};
+
+Show@<Gates@> Gates = (Gates@ _) {
+    Str|'TODO: Show Gates';
+};
+
+Show@<Model@> Model = (Model@ m) {
+    Format|'Model(%s, %s)'[Gates(m.gates), S(m.s)];
 };
 
 @(Model);
