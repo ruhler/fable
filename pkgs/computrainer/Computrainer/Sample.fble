@@ -10,6 +10,7 @@
 @ Trains@ = /Computrainer/Model%.Trains@;
 @ Model@ = /Computrainer/Model%.Model@;
 % Rail = /Computrainer/Model%.Rail;
+% Sink = /Computrainer/Model%.Sink;
 % Model = /Computrainer/Model%.Model;
 % C = /Computrainer/Model%.C;
 
@@ -34,10 +35,7 @@ Gates@ Gates = Entries[
     @(x: Int|9, y: Int|5, v: Rail.Left),
     @(x: Int|8, y: Int|5, v: Rail.Left),
     @(x: Int|7, y: Int|5, v: Rail.Left),
-    @(x: Int|6, y: Int|5, v: Rail.Left),
-    @(x: Int|4, y: Int|5, v: Rail.Left),
-    @(x: Int|3, y: Int|5, v: Rail.Up),
-    @(x: Int|3, y: Int|4, v: Rail.Up)
+    @(x: Int|6, y: Int|5, v: Sink)
 ];
 
 Trains@ Trains = List[

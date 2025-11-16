@@ -27,8 +27,9 @@ Dir@ Right = Dir@(right: Unit);
 Dir@ Up = Dir@(up: Unit);
 Dir@ Down = Dir@(down: Unit);
 
-@ Gate@ = +(Unit@ noop, Dir@ rail);
+@ Gate@ = +(Unit@ noop, Dir@ rail, Unit@ sink);
 Gate@ Noop = Gate@(noop: Unit);
+Gate@ Sink = Gate@(sink: Unit);
 % Rail = @(
     Left: Gate@(rail: Left),
     Right: Gate@(rail: Right),
@@ -106,6 +107,28 @@ MoveCarInS = (Car@ c, Int@ dx, Int@ dy, S@ s) {
     s.@(trains: MoveCarInTrains(c, dx, dy, s.trains));
 };
 
+(Car@, Train@) { Train@; }
+RemoveCarInTrain = (Car@ c, Train@ t) {
+    t.?(empty: t);
+    Car@ head = t.items.head;
+    And(/Std/Int/Eq%.Eq(head.x, c.x), /Std/Int/Eq%.Eq(head.y, c.y)).?(true: t.items.tail);
+    Items(head, RemoveCarInTrain(c, t.items.tail));
+};
+
+(Car@, Trains@) { Trains@; }
+RemoveCarInTrains = (Car@ c, Trains@ t) {
+    t.?(empty: t);
+    CarInTrain(c.x, c.y, t.items.head).?(true: {
+        Items(RemoveCarInTrain(c, t.items.head), t.items.tail);
+    });
+    Items(t.items.head, RemoveCarInTrains(c, t.items.tail));
+};
+
+(Car@, S@) { S@; }
+RemoveCarInS = (Car@ c, S@ s) {
+    s.@(trains: RemoveCarInTrains(c, s.trains));
+};
+
 # Execute a rail gate.
 (Dir@, Car@, S@) { S@; }
 DoRail = (Dir@ d, Car@ c, S@ s) {
@@ -114,10 +137,18 @@ DoRail = (Dir@ d, Car@ c, S@ s) {
     MoveCarInS(c, dest.x, dest.y, s);
 };
 
+# Execute a sink gate.
+(Car@, S@) { S@; }
+DoSink = (Car@ c, S@ s) {
+    RemoveCarInS(c, s);
+};
+
 # Execute a gate.
 (Gate@, Car@, S@) { S@; }
 DoGate = (Gate@ g, Car@ c, S@ s) {
-  g.?(noop: s, rail: DoRail(g.rail, c, s));
+  g.?(noop: s,
+      rail: DoRail(g.rail, c, s),
+      sink: DoSink(c, s));
 };
 
 # Execute the current schedule to completion.
@@ -141,6 +172,6 @@ Tick = (Model@ m) {
     m.@(s: DoSchedule(m.gates, Schedule(m.s.trains), m.s));
 };
 
-
 @(Model@, Gate@, Gates@, Train@, Trains@, Car@, Dir@, Value@, S@, Tick, Model,
-   Rail, 0, 1, C, L, S);
+   Noop, Sink, Rail,
+   0, 1, C, L, S);

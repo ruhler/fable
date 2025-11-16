@@ -161,3 +161,9 @@ effort of looking that up again.
 Remind me in what case a gate messes with the schedule? A sink removes the
 current car. Do we ever want to remove another, distant car? Let's start no. I
 can rewrite the code to support that when we have a specific case for it.
+
+---
+
+Rail gates are working now. Let's add something else fun. Source and sink
+maybe? Better to start with sink probably. Or source. One or the other.
+

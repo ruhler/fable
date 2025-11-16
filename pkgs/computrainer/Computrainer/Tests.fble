@@ -23,11 +23,12 @@
 % Model = /Computrainer/Model%.Model;
 % Tick = /Computrainer/Model%.Tick;
 % C = /Computrainer/Model%.C;
+% 0 = /Computrainer/Model%.0;
 % Rail = /Computrainer/Model%.Rail;
+% Sink = /Computrainer/Model%.Sink;
 
 Test@ Tests = TestSuite(Str|Computrainer, List[
   Test(Str|'Noop', (Unit@ _) {
-    # Noop gate shouldn't do anything to a car.
     Gates@ gates = Entries<Gate@>[];
     Trains@ trains = List[List[Car@(Int|3, Int|4, C)]];
     Model@ model = Model(gates, trains);
@@ -37,13 +38,23 @@ Test@ Tests = TestSuite(Str|Computrainer, List[
   }),
 
   Test(Str|'Rail', (Unit@ _) {
-    # Noop gate shouldn't do anything to a car.
     Gates@ gates = Entries<Gate@>[
         @(x: Int|3, y: Int|4, v: Rail.Right)
     ];
     Trains@ trains = List[List[Car@(Int|3, Int|4, C)]];
     Model@ model = Model(gates, trains);
     Model@ wnt = Model(gates, List[List[Car@(Int|4, Int|4, C)]]);
+    Model@ got = Tick(model);
+    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
+  }),
+
+  Test(Str|'Sink', (Unit@ _) {
+    Gates@ gates = Entries<Gate@>[
+        @(x: Int|3, y: Int|4, v: Sink)
+    ];
+    Trains@ trains = List[List[Car@(Int|3, Int|4, C), Car@(Int|4, Int|4, 0)]];
+    Model@ model = Model(gates, trains);
+    Model@ wnt = Model(gates, List[List[Car@(Int|4, Int|4, 0)]]);
     Model@ got = Tick(model);
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   })
