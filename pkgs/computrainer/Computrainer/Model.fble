@@ -9,6 +9,7 @@
 % Decr = /Std/Int%.Decr;
 
 <@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
 <@>% Concat = /Std/List%.Concat;
 
@@ -27,7 +28,7 @@ Dir@ Right = Dir@(right: Unit);
 Dir@ Up = Dir@(up: Unit);
 Dir@ Down = Dir@(down: Unit);
 
-@ Gate@ = +(Unit@ noop, Dir@ rail, Unit@ sink);
+@ Gate@ = +(Unit@ noop, Dir@ rail, Unit@ sink, Dir@ source);
 Gate@ Noop = Gate@(noop: Unit);
 Gate@ Sink = Gate@(sink: Unit);
 % Rail = @(
@@ -35,6 +36,12 @@ Gate@ Sink = Gate@(sink: Unit);
     Right: Gate@(rail: Right),
     Up: Gate@(rail: Up),
     Down: Gate@(rail: Down)
+);
+% Source = @(
+    Left: Gate@(source: Left),
+    Right: Gate@(source: Right),
+    Up: Gate@(source: Up),
+    Down: Gate@(source: Down)
 );
 
 @ Gates@ = Grid@<Gate@>;
@@ -129,6 +136,11 @@ RemoveCarInS = (Car@ c, S@ s) {
     s.@(trains: RemoveCarInTrains(c, s.trains));
 };
 
+(Train@, S@) { S@; }
+AddTrain = (Train@ train, S@ s) {
+    s.@(trains: Items(train, s.trains));
+};
+
 # Execute a rail gate.
 (Dir@, Car@, S@) { S@; }
 DoRail = (Dir@ d, Car@ c, S@ s) {
@@ -143,12 +155,21 @@ DoSink = (Car@ c, S@ s) {
     RemoveCarInS(c, s);
 };
 
+# Execute a source gate.
+(Dir@, Car@, S@) { S@; }
+DoSource = (Dir@ d, Car@ c, S@ s) {
+    Coord@ dest = Dest(c.x, c.y, d);
+    CarInS(dest.x, dest.y, s).?(true: s);
+    AddTrain(List[Car@(dest.x, dest.y, C)], s);
+};
+
 # Execute a gate.
 (Gate@, Car@, S@) { S@; }
 DoGate = (Gate@ g, Car@ c, S@ s) {
   g.?(noop: s,
       rail: DoRail(g.rail, c, s),
-      sink: DoSink(c, s));
+      sink: DoSink(c, s),
+      source: DoSource(g.source, c, s));
 };
 
 # Execute the current schedule to completion.
@@ -173,5 +194,5 @@ Tick = (Model@ m) {
 };
 
 @(Model@, Gate@, Gates@, Train@, Trains@, Car@, Dir@, Value@, S@, Tick, Model,
-   Noop, Sink, Rail,
+   Noop, Sink, Rail, Source,
    0, 1, C, L, S);

@@ -24,7 +24,8 @@ Eq@<Dir@> Dir = (Dir@ a, Dir@ b) {
 Eq@<Gate@> Gate = (Gate@ a, Gate@ b) {
     a.?(noop: b.?(noop: True, : False),
         rail: b.?(rail: Dir(a.rail, b.rail), : False),
-        sink: b.?(sink: True, : False));
+        sink: b.?(sink: True, : False),
+        source: b.?(source: Dir(a.source, b.source), : False));
 };
 
 Eq@<Gates@> Gates = /Computrainer/Grid/Eq%.Eq(Gate);

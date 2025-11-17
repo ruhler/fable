@@ -67,9 +67,39 @@ DrawSink = (Int@ x, Int@ y) {
 
 };
 
+(Int@, Int@, Dir@) { Drawing@; }
+DrawSource = (Int@ x, Int@ y, Dir@ d) {
+    Color@ c = Color.Magenta;
+    d.?(
+        up: Drawings[
+            Rect(Sub(Mul(x, Int|20), Int|2), Sub(Mul(y, Int|20), Int|22), Int|4, Int|24,  c),
+            Rect(Sub(Mul(x, Int|20), Int|4), Sub(Mul(y, Int|20), Int|14), Int|8, Int|4,  c),
+            Rect(Sub(Mul(x, Int|20), Int|6), Sub(Mul(y, Int|20), Int|10), Int|12, Int|4,  c)
+        ],
+        down: Drawings[
+            Rect(Sub(Mul(x, Int|20), Int|2), Sub(Mul(y, Int|20), Int|2), Int|4, Int|24,  c),
+            Rect(Sub(Mul(x, Int|20), Int|4), Add(Mul(y, Int|20), Int|10), Int|8, Int|4,  c),
+            Rect(Sub(Mul(x, Int|20), Int|6), Add(Mul(y, Int|20), Int|6), Int|12, Int|4,  c)
+        ],
+        left: Drawings[
+            Rect(Sub(Mul(x, Int|20), Int|22), Sub(Mul(y, Int|20), Int|2), Int|24, Int|4,  c),
+            Rect(Sub(Mul(x, Int|20), Int|14), Sub(Mul(y, Int|20), Int|4), Int|4, Int|8,  c),
+            Rect(Sub(Mul(x, Int|20), Int|10), Sub(Mul(y, Int|20), Int|6), Int|4, Int|12,  c)
+        ],
+        right: Drawings[
+            Rect(Sub(Mul(x, Int|20), Int|2), Sub(Mul(y, Int|20), Int|2), Int|24, Int|4,  c),
+            Rect(Add(Mul(x, Int|20), Int|10), Sub(Mul(y, Int|20), Int|4), Int|4, Int|8,  c),
+            Rect(Add(Mul(x, Int|20), Int|6), Sub(Mul(y, Int|20), Int|6), Int|4, Int|12,  c)
+        ]
+    );
+};
+
 (Int@, Int@, Gate@) { Drawing@; }
 DrawGate = (Int@ x, Int@ y, Gate@ g) {
-    g.?(noop: Blank, rail: DrawRail(x, y, g.rail), sink: DrawSink(x, y));
+    g.?(noop: Blank,
+        rail: DrawRail(x, y, g.rail),
+        sink: DrawSink(x, y),
+        source: DrawSource(x, y, g.source));
 };
 
 (Int@, Int@, Model@) { Drawing@; }

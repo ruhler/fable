@@ -11,12 +11,13 @@
 @ Model@ = /Computrainer/Model%.Model@;
 % Rail = /Computrainer/Model%.Rail;
 % Sink = /Computrainer/Model%.Sink;
+% Source = /Computrainer/Model%.Source;
 % Model = /Computrainer/Model%.Model;
 % C = /Computrainer/Model%.C;
 
 
 Gates@ Gates = Entries[
-    @(x: Int|3, y: Int|3, v: Rail.Right),
+    @(x: Int|3, y: Int|3, v: Source.Right),
     @(x: Int|4, y: Int|3, v: Rail.Right),
     @(x: Int|5, y: Int|3, v: Rail.Down),
     @(x: Int|5, y: Int|4, v: Rail.Down),
@@ -40,7 +41,7 @@ Gates@ Gates = Entries[
 
 Trains@ Trains = List[
     #List[Car@(Int|5, Int|4, 0), Car@(Int|5, Int|3, 1), Car@(Int|4, Int|3, C)]
-    List[Car@(Int|4, Int|3, C)]
+    List[Car@(Int|3, Int|3, C)]
 ];
 
 Model@ Sample = Model(Gates, Trains);
