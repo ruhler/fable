@@ -6,4 +6,3 @@
 * Implement gates for mvp v2 network.
 
 * Change orientation of coordinate system used for drawing.
-* Parameterize the square size used for drawing graphics.

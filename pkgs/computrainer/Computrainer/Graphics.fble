@@ -3,6 +3,8 @@
 % Add = /Std/Int%.Add;
 % Sub = /Std/Int%.Sub;
 % Mul = /Std/Int%.Mul;
+% Shl = /Std/Int%.Shl;
+% Shr = /Std/Int%.Shr;
 % Int = /Std/Int/Lit%.Int;
 
 <@>% Concat = /Std/List%.Concat;
@@ -24,6 +26,9 @@
 @ Model@ = /Computrainer/Model%.Model@;
 @ Value@ = /Computrainer/Model%.Value@;
 
+Int@ W = Int|20;    # Width and height of a grid box
+Int@ E = Int|2;     # Small epsilon width.
+
 (Value@) { Color@; }
 CarColor = (Value@ v) {
     v.?(C: Color.Red, 0: Color.Black, 1: Color.White, S: Color.Yellow, L: Color.Magenta);
@@ -31,31 +36,35 @@ CarColor = (Value@ v) {
 
 (Car@) { Drawing@; }
 DrawCar = (Car@ c) {
-    Rect(Sub(Mul(c.x, Int|20), Int|5), Sub(Mul(c.y, Int|20), Int|5), Int|10, Int|10, CarColor(c.v));
+    Int@ offset = Sub(Shr(W, Int|1), E);
+    Int@ cw = Sub(W, Shl(E, Int|1));
+    Rect(Sub(Mul(c.x, W), offset), Sub(Mul(c.y, W), offset), cw, cw, CarColor(c.v));
 };
 
 (Int@, Int@, Dir@, Color@) { Drawing@; }
 DrawDir = (Int@ x, Int@ y, Dir@ d, Color@ c) {
+    Int@ half = Shr(W, Int|1);
+    Int@ offset = Sub(half, E);
     d.?(
         up: Drawings[
-            Rect(Sub(Mul(x, Int|20), Int|2), Sub(Mul(y, Int|20), Int|22), Int|4, Int|24,  c),
-            Rect(Sub(Mul(x, Int|20), Int|4), Sub(Mul(y, Int|20), Int|14), Int|8, Int|4,  c),
-            Rect(Sub(Mul(x, Int|20), Int|6), Sub(Mul(y, Int|20), Int|10), Int|12, Int|4,  c)
+            Rect(Sub(Mul(x, W), half), Sub(Mul(y, W), offset), W, E,  c),
+            Rect(Sub(Mul(x, W), half), Sub(Mul(y, W), Sub(offset, E)), E, E,  c),
+            Rect(Add(Mul(x, W), offset), Sub(Mul(y, W), Sub(offset, E)), E, E,  c)
         ],
         down: Drawings[
-            Rect(Sub(Mul(x, Int|20), Int|2), Sub(Mul(y, Int|20), Int|2), Int|4, Int|24,  c),
-            Rect(Sub(Mul(x, Int|20), Int|4), Add(Mul(y, Int|20), Int|10), Int|8, Int|4,  c),
-            Rect(Sub(Mul(x, Int|20), Int|6), Add(Mul(y, Int|20), Int|6), Int|12, Int|4,  c)
+            Rect(Sub(Mul(x, W), half), Add(Mul(y, W), offset), W, E,  c),
+            Rect(Sub(Mul(x, W), half), Add(Mul(y, W), Sub(offset, E)), E, E,  c),
+            Rect(Add(Mul(x, W), offset), Add(Mul(y, W), Sub(offset, E)), E, E,  c)
         ],
         left: Drawings[
-            Rect(Sub(Mul(x, Int|20), Int|22), Sub(Mul(y, Int|20), Int|2), Int|24, Int|4,  c),
-            Rect(Sub(Mul(x, Int|20), Int|14), Sub(Mul(y, Int|20), Int|4), Int|4, Int|8,  c),
-            Rect(Sub(Mul(x, Int|20), Int|10), Sub(Mul(y, Int|20), Int|6), Int|4, Int|12,  c)
+            Rect(Sub(Mul(x, W), half), Sub(Mul(y, W), half), E, W, c),
+            Rect(Sub(Mul(x, W), offset), Sub(Mul(y, W), half), E, E, c),
+            Rect(Sub(Mul(x, W), offset), Add(Mul(y, W), offset), E, E, c)
         ],
         right: Drawings[
-            Rect(Sub(Mul(x, Int|20), Int|2), Sub(Mul(y, Int|20), Int|2), Int|24, Int|4,  c),
-            Rect(Add(Mul(x, Int|20), Int|10), Sub(Mul(y, Int|20), Int|4), Int|4, Int|8,  c),
-            Rect(Add(Mul(x, Int|20), Int|6), Sub(Mul(y, Int|20), Int|6), Int|4, Int|12,  c)
+            Rect(Add(Mul(x, W), offset), Sub(Mul(y, W), half), E, W, c),
+            Rect(Add(Mul(x, W), Sub(offset, E)), Sub(Mul(y, W), half), E, E, c),
+            Rect(Add(Mul(x, W), Sub(offset, E)), Add(Mul(y, W), offset), E, E, c)
         ]
     );
 };
@@ -68,7 +77,7 @@ DrawRail = (Int@ x, Int@ y, Dir@ d) {
 
 (Int@, Int@) { Drawing@; }
 DrawSink = (Int@ x, Int@ y) {
-    Rect(Sub(Mul(x, Int|20), Int|3), Sub(Mul(y, Int|20), Int|3), Int|6, Int|6, Color.Red);
+    Rect(Sub(Mul(x, W), E), Sub(Mul(y, W), E), Mul(Int|2, E), Mul(Int|2, E), Color.Cyan);
 
 };
 
