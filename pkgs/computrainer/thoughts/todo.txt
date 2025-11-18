@@ -1,3 +1,9 @@
 
+* Implement tag 0/1 gate
+* Implement select gate
+* Implement mvp sample network
+* Design mvp v2 network.
+* Implement gates for mvp v2 network.
+
 * Change orientation of coordinate system used for drawing.
 * Parameterize the square size used for drawing graphics.
