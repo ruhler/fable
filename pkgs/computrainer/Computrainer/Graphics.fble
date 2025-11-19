@@ -3,8 +3,6 @@
 % Add = /Std/Int%.Add;
 % Sub = /Std/Int%.Sub;
 % Mul = /Std/Int%.Mul;
-% Shl = /Std/Int%.Shl;
-% Shr = /Std/Int%.Shr;
 % Int = /Std/Int/Lit%.Int;
 
 <@>% Concat = /Std/List%.Concat;
@@ -25,9 +23,33 @@
 @ Gate@ = /Computrainer/Model%.Gate@;
 @ Model@ = /Computrainer/Model%.Model@;
 @ Value@ = /Computrainer/Model%.Value@;
+% Left = /Computrainer/Model%.Left;
+% Right = /Computrainer/Model%.Right;
+% C = /Computrainer/Model%.C;
+% 0 = /Computrainer/Model%.0;
+% 1 = /Computrainer/Model%.1;
 
-Int@ W = Int|20;    # Width and height of a grid box
-Int@ E = Int|2;     # Small epsilon width.
+# Anatomy of a grid location:
+#  ........
+#  .GGGGGG.
+#  .G____G.
+#  .G____G.
+#  .G____G.
+#  .G____G.
+#  .GGGGGG.
+#  ........
+#
+#  Where '.' is blank padding between squares.
+#        'G' is used to display what kind of gate it is
+#        '_' is to show what car is on the square.
+#
+#  We use the following dimensions to describe this when drawing:
+Int@ W = Int|20;     # Full width of square.
+Int@ WGC = Int|18;   # Width of square with Car and Gate area only.
+Int@ WG = Int|2;     # Width of gate region.
+Int@ WC = Int|14;    # Width of the car square.
+Int@ OG = Int|7;     # Offset to iner edge of gates.
+Int@ OB = Int|9;     # Offset to inner edge of border.
 
 (Value@) { Color@; }
 CarColor = (Value@ v) {
@@ -36,35 +58,33 @@ CarColor = (Value@ v) {
 
 (Car@) { Drawing@; }
 DrawCar = (Car@ c) {
-    Int@ offset = Sub(Shr(W, Int|1), E);
-    Int@ cw = Sub(W, Shl(E, Int|1));
-    Rect(Sub(Mul(c.x, W), offset), Sub(Mul(c.y, W), offset), cw, cw, CarColor(c.v));
+    Rect(Sub(Mul(c.x, W), OG), Sub(Mul(c.y, W), OG), WC, WC, CarColor(c.v));
 };
 
 (Int@, Int@, Dir@, Color@) { Drawing@; }
 DrawDir = (Int@ x, Int@ y, Dir@ d, Color@ c) {
-    Int@ half = Shr(W, Int|1);
-    Int@ offset = Sub(half, E);
+    Int@ cx = Mul(x, W);
+    Int@ cy = Mul(y, W);
     d.?(
         up: Drawings[
-            Rect(Sub(Mul(x, W), half), Add(Mul(y, W), offset), W, E,  c),
-            Rect(Sub(Mul(x, W), half), Add(Mul(y, W), Sub(offset, E)), E, E,  c),
-            Rect(Add(Mul(x, W), offset), Add(Mul(y, W), Sub(offset, E)), E, E,  c)
+            Rect(Sub(cx, OB), Add(cy, OG), WGC, WG, c),
+            Rect(Sub(cx, OB), cy, WG, OB, c),
+            Rect(Add(cx, OG), cy, WG, OB, c)
         ],
         down: Drawings[
-            Rect(Sub(Mul(x, W), half), Sub(Mul(y, W), offset), W, E,  c),
-            Rect(Sub(Mul(x, W), half), Sub(Mul(y, W), Sub(offset, E)), E, E,  c),
-            Rect(Add(Mul(x, W), offset), Sub(Mul(y, W), Sub(offset, E)), E, E,  c)
+            Rect(Sub(cx, OB), Sub(cy, OB), WGC, WG, c),
+            Rect(Sub(cx, OB), Sub(cy, OB), WG, OB, c),
+            Rect(Add(cx, OG), Sub(cy, OB), WG, OB, c)
         ],
         left: Drawings[
-            Rect(Sub(Mul(x, W), half), Sub(Mul(y, W), half), E, W, c),
-            Rect(Sub(Mul(x, W), offset), Sub(Mul(y, W), half), E, E, c),
-            Rect(Sub(Mul(x, W), offset), Add(Mul(y, W), offset), E, E, c)
+            Rect(Sub(cx, OB), Sub(cy, OB), WG, WGC, c),
+            Rect(Sub(cx, OB), Sub(cy, OB), OB, WG, c),
+            Rect(Sub(cx, OB), Add(cy, OG), OB, WG, c)
         ],
         right: Drawings[
-            Rect(Add(Mul(x, W), offset), Sub(Mul(y, W), half), E, W, c),
-            Rect(Add(Mul(x, W), Sub(offset, E)), Sub(Mul(y, W), half), E, E, c),
-            Rect(Add(Mul(x, W), Sub(offset, E)), Add(Mul(y, W), offset), E, E, c)
+            Rect(Add(cx, OG), Sub(cy, OB), WG, WGC, c),
+            Rect(cx, Sub(cy, OB), OB, WG, c),
+            Rect(cx, Add(cy, OG), OB, WG, c)
         ]
     );
 };
@@ -72,7 +92,7 @@ DrawDir = (Int@ x, Int@ y, Dir@ d, Color@ c) {
 
 (Int@, Int@) { Drawing@; }
 DrawSink = (Int@ x, Int@ y) {
-    Rect(Sub(Mul(x, W), E), Sub(Mul(y, W), E), Mul(Int|2, E), Mul(Int|2, E), Color.Cyan);
+    Drawings[DrawDir(x, y, Left, Color.Cyan), DrawDir(x, y, Right, Color.Cyan)];
 
 };
 
@@ -81,9 +101,9 @@ DrawGate = (Int@ x, Int@ y, Gate@ g) {
     g.?(noop: Blank,
         rail: DrawDir(x, y, g.rail, Color.Cyan),
         sink: DrawSink(x, y),
-        source: DrawDir(x, y, g.source, Color.Red),
-        zero: DrawDir(x, y, g.zero, Color.Black),
-        one: DrawDir(x, y, g.one, Color.White)
+        source: DrawDir(x, y, g.source, CarColor(C)),
+        zero: DrawDir(x, y, g.zero, CarColor(0)),
+        one: DrawDir(x, y, g.one, CarColor(1))
         );
 };
 

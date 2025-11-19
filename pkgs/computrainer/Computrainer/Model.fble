@@ -268,4 +268,5 @@ Tick = (Model@ m) {
 
 @(Model@, Gate@, Gates@, Train@, Trains@, Car@, Dir@, Value@, S@, Tick, Model,
    Noop, Sink, Rail, Source, One, Zero,
+   Left, Right, Up, Down,
    0, 1, C, L, S);
