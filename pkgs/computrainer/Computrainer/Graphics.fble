@@ -70,28 +70,21 @@ DrawDir = (Int@ x, Int@ y, Dir@ d, Color@ c) {
 };
 
 
-(Int@, Int@, Dir@) { Drawing@; }
-DrawRail = (Int@ x, Int@ y, Dir@ d) {
-    DrawDir(x, y, d, Color.Cyan);
-};
-
 (Int@, Int@) { Drawing@; }
 DrawSink = (Int@ x, Int@ y) {
     Rect(Sub(Mul(x, W), E), Sub(Mul(y, W), E), Mul(Int|2, E), Mul(Int|2, E), Color.Cyan);
 
 };
 
-(Int@, Int@, Dir@) { Drawing@; }
-DrawSource = (Int@ x, Int@ y, Dir@ d) {
-    DrawDir(x, y, d, Color.Red);
-};
-
 (Int@, Int@, Gate@) { Drawing@; }
 DrawGate = (Int@ x, Int@ y, Gate@ g) {
     g.?(noop: Blank,
-        rail: DrawRail(x, y, g.rail),
+        rail: DrawDir(x, y, g.rail, Color.Cyan),
         sink: DrawSink(x, y),
-        source: DrawSource(x, y, g.source));
+        source: DrawDir(x, y, g.source, Color.Red),
+        zero: DrawDir(x, y, g.zero, Color.Black),
+        one: DrawDir(x, y, g.one, Color.White)
+        );
 };
 
 (Int@, Int@, Model@) { Drawing@; }

@@ -1,6 +1,9 @@
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
+@ Int@ = /Std/Int%.Int@;
+% Decr = /Std/Int%.Decr;
+% IsZero = /Std/Int/Sign%.IsZero;
 % Int = /Std/Int/Lit%.Int;
 
 <@>% List = /Std/List%.List;
@@ -27,6 +30,13 @@
 % Rail = /Computrainer/Model%.Rail;
 % Sink = /Computrainer/Model%.Sink;
 % Source = /Computrainer/Model%.Source;
+% Zero = /Computrainer/Model%.Zero;
+
+(Int@, Model@) { Model@; }
+TickN = (Int@ n, Model@ m) {
+    IsZero(n).?(true: m);
+    TickN(Decr(n), Tick(m));
+};
 
 Test@ Tests = TestSuite(Str|Computrainer, List[
   Test(Str|'Noop', (Unit@ _) {
@@ -39,7 +49,7 @@ Test@ Tests = TestSuite(Str|Computrainer, List[
   }),
 
   Test(Str|'Rail', (Unit@ _) {
-    Gates@ gates = Entries<Gate@>[
+    Gates@ gates = Entries[
         @(x: Int|3, y: Int|4, v: Rail.Right)
     ];
     Trains@ trains = List[List[Car@(Int|3, Int|4, C)]];
@@ -50,7 +60,7 @@ Test@ Tests = TestSuite(Str|Computrainer, List[
   }),
 
   Test(Str|'Sink', (Unit@ _) {
-    Gates@ gates = Entries<Gate@>[
+    Gates@ gates = Entries[
         @(x: Int|3, y: Int|4, v: Sink)
     ];
     Trains@ trains = List[List[Car@(Int|3, Int|4, C), Car@(Int|4, Int|4, 0)]];
@@ -61,7 +71,7 @@ Test@ Tests = TestSuite(Str|Computrainer, List[
   }),
 
   Test(Str|'Source', (Unit@ _) {
-    Gates@ gates = Entries<Gate@>[
+    Gates@ gates = Entries[
         @(x: Int|3, y: Int|4, v: Source.Right)
     ];
     Trains@ trains = List[List[Car@(Int|3, Int|4, C)]];
@@ -69,6 +79,22 @@ Test@ Tests = TestSuite(Str|Computrainer, List[
     Model@ wnt = Model(gates, List[List[Car@(Int|4, Int|4, C)], List[Car@(Int|3, Int|4, C)]]);
     Model@ got = Tick(model);
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
+  }),
+
+  Test(Str|'Zero', (Unit@ _) {
+    Gates@ gates = Entries[
+        @(x: Int|3, y: Int|4, v: Rail.Right),
+        @(x: Int|4, y: Int|4, v: Rail.Right),
+        @(x: Int|5, y: Int|4, v: Zero.Right),
+        @(x: Int|6, y: Int|4, v: Rail.Right),
+        @(x: Int|7, y: Int|4, v: Rail.Right)
+    ];
+
+    Trains@ trains = List[List[Car@(Int|3, Int|4, C)]];
+    Model@ model = Model(gates, trains);
+    Trains@ wnt = List[List[Car@(Int|8, Int|4, 0), Car@(Int|7, Int|4, C)]];
+    Trains@ got = TickN(Int|5, model).s.trains;
+    AssertEquals(/Computrainer/Model/Eq%.Trains, /Computrainer/Model/Show%.Trains, wnt, got);
   })
 ]);
 

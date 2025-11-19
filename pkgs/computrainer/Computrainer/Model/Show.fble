@@ -39,4 +39,4 @@ Show@<Model@> Model = (Model@ m) {
     Format|'Model(%s, %s)'[Gates(m.gates), S(m.s)];
 };
 
-@(Model);
+@(Model, Trains);
