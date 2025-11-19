@@ -2,6 +2,7 @@
 % True = /Std/Bool%.True;
 
 @ Int@ = /Std/Int%.Int@;
+% Neg = /Std/Int%.Neg;
 
 % Int = /Std/Int/Lit%.Int;
 
@@ -22,6 +23,8 @@
 @ Effect@ = /App/App%.Effect@;
 
 @ Drawing@ = /App/Drawing%.Drawing@;
+@ Point@ = /App/Drawing%.Point@;
+% Affine = /App/Drawing%.Affine;
 
 @ Model@ = /Computrainer/Model%.Model@;
 % Tick = /Computrainer/Model%.Tick;
@@ -36,8 +39,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
         : FilterEvent);
   };
 
+  # Map game coordinates into screen coordinates.
+  Point@ a = @(x: Int|1, y: Neg(Int|1));
+  Point@ b = @(x: Int|0, y: height);
+
   (Model@) { M@<Unit@>; } StepUI = (Model@ model) {
-    Drawing@ drawing = DrawModel(width, height, model);
+    Drawing@ drawing = Affine(a, b, DrawModel(width, height, model));
 
     Unit@ _ <- m.do(app.effect(Effect@(draw: drawing)));
     Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));

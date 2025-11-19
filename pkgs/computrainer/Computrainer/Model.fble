@@ -94,7 +94,7 @@ TagState@ Feeding = TagState@(feeding: Unit);
 (Int@, Int@, Dir@) { Coord@; }
 Dest = (Int@ x, Int@ y, Dir@ d) {
     Int@ nx = d.?(up: x, down: x, left: Decr(x), right: Incr(x));
-    Int@ ny = d.?(up: Decr(y), down: Incr(y), left: y, right: y);
+    Int@ ny = d.?(up: Incr(y), down: Decr(y), left: y, right: y);
     Coord@(nx, ny);
 };
 

@@ -167,3 +167,24 @@ can rewrite the code to support that when we have a specific case for it.
 Rail gates are working now. Let's add something else fun. Source and sink
 maybe? Better to start with sink probably. Or source. One or the other.
 
+---
+
+Sink and source and tag gates are done. Last gate needed for mvp 1 should be
+select gate. How did we decide it works? We said one car passes per select,
+eaten otherwise, right?
+
+There are 3 parts to the gate: 0, 1, S. 0 and 1 should point to the same
+output destination. S should point to a different output destination. Ideally
+S knows where 0 and 1 are and can check and update their state?
+
+The states we have are:
+* 0, 1: waiting or feeding or sinking
+* S: waiting or feeding
+
+S waits for 0, 1, S all waiting, then advances to feeding, sinking, feeding as
+appropriate. 0 and 1 do their state as either feeding or sinking. All three
+reset to waiting when they read the caboose. Sounds like a common operation we
+can factor out for feeding, sinking? We can have 0, 1, S all be Dir@, except
+that S needs to know the location of 0 and 1 to be able to read and write
+their states.
+

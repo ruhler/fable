@@ -47,14 +47,14 @@ DrawDir = (Int@ x, Int@ y, Dir@ d, Color@ c) {
     Int@ offset = Sub(half, E);
     d.?(
         up: Drawings[
-            Rect(Sub(Mul(x, W), half), Sub(Mul(y, W), offset), W, E,  c),
-            Rect(Sub(Mul(x, W), half), Sub(Mul(y, W), Sub(offset, E)), E, E,  c),
-            Rect(Add(Mul(x, W), offset), Sub(Mul(y, W), Sub(offset, E)), E, E,  c)
-        ],
-        down: Drawings[
             Rect(Sub(Mul(x, W), half), Add(Mul(y, W), offset), W, E,  c),
             Rect(Sub(Mul(x, W), half), Add(Mul(y, W), Sub(offset, E)), E, E,  c),
             Rect(Add(Mul(x, W), offset), Add(Mul(y, W), Sub(offset, E)), E, E,  c)
+        ],
+        down: Drawings[
+            Rect(Sub(Mul(x, W), half), Sub(Mul(y, W), offset), W, E,  c),
+            Rect(Sub(Mul(x, W), half), Sub(Mul(y, W), Sub(offset, E)), E, E,  c),
+            Rect(Add(Mul(x, W), offset), Sub(Mul(y, W), Sub(offset, E)), E, E,  c)
         ],
         left: Drawings[
             Rect(Sub(Mul(x, W), half), Sub(Mul(y, W), half), E, W, c),
