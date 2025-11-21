@@ -27,10 +27,16 @@
 % Tick = /Computrainer/Model%.Tick;
 % C = /Computrainer/Model%.C;
 % 0 = /Computrainer/Model%.0;
+% 1 = /Computrainer/Model%.1;
 % Rail = /Computrainer/Model%.Rail;
 % Sink = /Computrainer/Model%.Sink;
 % Source = /Computrainer/Model%.Source;
 % Zero = /Computrainer/Model%.Zero;
+% Select = /Computrainer/Model%.Select;
+% Switch = /Computrainer/Model%.Switch;
+% Up = /Computrainer/Model%.Up;
+% Down = /Computrainer/Model%.Down;
+% Right = /Computrainer/Model%.Right;
 
 (Int@, Model@) { Model@; }
 TickN = (Int@ n, Model@ m) {
@@ -94,6 +100,68 @@ Test@ Tests = TestSuite(Str|Computrainer, List[
     Model@ model = Model(gates, trains);
     Trains@ wnt = List[List[Car@(Int|8, Int|4, 0), Car@(Int|7, Int|4, C)]];
     Trains@ got = TickN(Int|5, model).s.trains;
+    AssertEquals(/Computrainer/Model/Eq%.Trains, /Computrainer/Model/Show%.Trains, wnt, got);
+  }),
+
+  Test(Str|'Select_0', (Unit@ _) {
+    # >>>S
+    # >>>W0>
+    #    1>
+    Gates@ gates = Entries[
+        @(x: Int|3, y: Int|4, v: Rail.Right),
+        @(x: Int|4, y: Int|4, v: Rail.Right),
+        @(x: Int|5, y: Int|4, v: Rail.Right),
+        @(x: Int|6, y: Int|4, v: Select),
+
+        @(x: Int|3, y: Int|3, v: Rail.Right),
+        @(x: Int|4, y: Int|3, v: Rail.Right),
+        @(x: Int|5, y: Int|3, v: Rail.Right),
+        @(x: Int|6, y: Int|3, v: Switch(Up, Right, Down)),
+        @(x: Int|7, y: Int|3, v: Rail.Right),
+        @(x: Int|8, y: Int|3, v: Rail.Right),
+
+        @(x: Int|6, y: Int|2, v: Rail.Right),
+        @(x: Int|7, y: Int|2, v: Rail.Right)
+    ];
+
+    Trains@ trains = List[
+        List[Car@(Int|4, Int|4, 0), Car@(Int|3, Int|4, C)],
+        List[Car@(Int|3, Int|3, C)]
+    ];
+    Model@ model = Model(gates, trains);
+    Trains@ wnt = List[List[Car@(Int|9, Int|3, C)]];
+    Trains@ got = TickN(Int|10, model).s.trains;
+    AssertEquals(/Computrainer/Model/Eq%.Trains, /Computrainer/Model/Show%.Trains, wnt, got);
+  }),
+
+  Test(Str|'Select_1', (Unit@ _) {
+    # >>>S
+    # >>>W0>
+    #    1>
+    Gates@ gates = Entries[
+        @(x: Int|3, y: Int|4, v: Rail.Right),
+        @(x: Int|4, y: Int|4, v: Rail.Right),
+        @(x: Int|5, y: Int|4, v: Rail.Right),
+        @(x: Int|6, y: Int|4, v: Select),
+
+        @(x: Int|3, y: Int|3, v: Rail.Right),
+        @(x: Int|4, y: Int|3, v: Rail.Right),
+        @(x: Int|5, y: Int|3, v: Rail.Right),
+        @(x: Int|6, y: Int|3, v: Switch(Up, Right, Down)),
+        @(x: Int|7, y: Int|3, v: Rail.Right),
+        @(x: Int|8, y: Int|3, v: Rail.Right),
+
+        @(x: Int|6, y: Int|2, v: Rail.Right),
+        @(x: Int|7, y: Int|2, v: Rail.Right)
+    ];
+
+    Trains@ trains = List[
+        List[Car@(Int|4, Int|4, 1), Car@(Int|3, Int|4, C)],
+        List[Car@(Int|3, Int|3, C)]
+    ];
+    Model@ model = Model(gates, trains);
+    Trains@ wnt = List[List[Car@(Int|8, Int|2, C)]];
+    Trains@ got = TickN(Int|10, model).s.trains;
     AssertEquals(/Computrainer/Model/Eq%.Trains, /Computrainer/Model/Show%.Trains, wnt, got);
   })
 ]);

@@ -14,6 +14,8 @@
 <@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -28,17 +30,22 @@ Dir@ Right = Dir@(right: Unit);
 Dir@ Up = Dir@(up: Unit);
 Dir@ Down = Dir@(down: Unit);
 
+@ Switch@ = *(Dir@ s, Dir@ 0, Dir@ 1);
+
 @ Gate@ = +(
     Unit@ noop,
     Dir@ rail,
     Unit@ sink,
     Dir@ source,
     Dir@ zero,
-    Dir@ one
+    Dir@ one,
+    Switch@ switch,
+    Unit@ select
 );
 
 Gate@ Noop = Gate@(noop: Unit);
 Gate@ Sink = Gate@(sink: Unit);
+Gate@ Select = Gate@(select: Unit);
 
 % Rail = @(
     Left: Gate@(rail: Left),
@@ -68,6 +75,15 @@ Gate@ Sink = Gate@(sink: Unit);
     Down: Gate@(one: Down)
 );
 
+# Create a switch gate.
+#  s is direction of select gate
+#  0 is direction of 0 output
+#  1 is direction of 1 output
+(Dir@, Dir@, Dir@) { Gate@; }
+Switch = (Dir@ s, Dir@ 0, Dir@ 1) {
+    Gate@(switch: Switch@(s, 0, 1));
+};
+
 @ Gates@ = Grid@<Gate@>;
 
 @ Value@ = +(Unit@ C, Unit@ 0, Unit@ 1, Unit@ S, Unit@ L);
@@ -77,15 +93,16 @@ Value@ 1 = Value@(1: Unit);
 Value@ S = Value@(S: Unit);
 Value@ L = Value@(L: Unit);
 
-@ TagState@ = +(Unit@ waiting, Unit@ feeding);
-TagState@ Waiting = TagState@(waiting: Unit);
-TagState@ Feeding = TagState@(feeding: Unit);
+@ GateState@ = +(Unit@ waiting, Unit@ going);
+GateState@ Waiting = GateState@(waiting: Unit);
+GateState@ Going = GateState@(going: Unit);
+
 
 @ Car@ = *(Int@ x, Int@ y, Value@ v);
 @ Train@ = List@<Car@>;
 @ Trains@ = List@<Train@>;
 @ Schedule@ = List@<Car@>;
-@ S@ = *(Trains@ trains, Grid@<TagState@> tags);
+@ S@ = *(Trains@ trains, Grid@<GateState@> states);
 @ Model@ = *(Gates@ gates, S@ s);
 
 # Computes a new schedule for the given set of trains.
@@ -154,7 +171,9 @@ RemoveCarInTrain = (Car@ c, Train@ t) {
 RemoveCarInTrains = (Car@ c, Trains@ t) {
     t.?(empty: t);
     CarInTrain(c.x, c.y, t.items.head).?(true: {
-        Items(RemoveCarInTrain(c, t.items.head), t.items.tail);
+        Train@ removed = RemoveCarInTrain(c, t.items.head);
+        removed.?(empty: t.items.tail);
+        Items(removed, t.items.tail);
     });
     Items(t.items.head, RemoveCarInTrains(c, t.items.tail));
 };
@@ -180,20 +199,40 @@ PrependToTrainInS = (Car@ existing, Car@ new, S@ s) {
     s.@(trains: PrependToTrainInTrains(existing, new, s.trains));
 };
 
+(Int@, Int@, Train@) { Maybe@<Car@>; }
+GetCarInTrain = (Int@ x, Int@ y, Train@ t) {
+    t.?(empty: Nothing<Car@>);
+    Car@ head = t.items.head;
+    And(/Std/Int/Eq%.Eq(head.x, x), /Std/Int/Eq%.Eq(head.y, y)).?(true: Just(head));
+    GetCarInTrain(x, y, t.items.tail);
+};
+
+(Int@, Int@, Trains@) { Maybe@<Car@>; }
+GetCarInTrains = (Int@ x, Int@ y, Trains@ t) {
+    t.?(empty: Nothing<Car@>);
+    CarInTrain(x, y, t.items.head).?(true: GetCarInTrain(x, y, t.items.head));
+    GetCarInTrains(x, y, t.items.tail);
+};
+
+(Int@, Int@, S@) { Maybe@<Car@>; }
+GetCarInS = (Int@ x, Int@ y, S@ s) {
+    GetCarInTrains(x, y, s.trains);
+};
+
 (Train@, S@) { S@; }
 AddTrain = (Train@ train, S@ s) {
     s.@(trains: Items(train, s.trains));
 };
 
-(Int@, Int@, S@) { TagState@; }
-GetTagState = (Int@ x, Int@ y, S@ s) {
-    Maybe@<TagState@> mts = Grid.Lookup(s.tags, Coord@(x, y));
-    mts.?(just: mts.just, nothing: TagState@(waiting: Unit));
+(Int@, Int@, S@) { GateState@; }
+GetGateState = (Int@ x, Int@ y, S@ s) {
+    Maybe@<GateState@> mts = Grid.Lookup(s.states, Coord@(x, y));
+    mts.?(just: mts.just, nothing: GateState@(waiting: Unit));
 };
 
-(Int@, Int@, TagState@, S@) { S@; }
-SetTagState = (Int@ x, Int@ y, TagState@ ts, S@ s) {
-    s.@(tags: Grid.Insert(s.tags, Coord@(x, y), ts));
+(Int@, Int@, GateState@, S@) { S@; }
+SetGateState = (Int@ x, Int@ y, GateState@ ts, S@ s) {
+    s.@(states: Grid.Insert(s.states, Coord@(x, y), ts));
 };
 
 # Execute a rail gate.
@@ -224,14 +263,52 @@ DoTag = (Value@ v, Dir@ d, Car@ c, S@ s) {
     Coord@ dest = Dest(c.x, c.y, d);
     CarInS(dest.x, dest.y, s).?(true: s);
 
-    TagState@ ts = GetTagState(c.x, c.y, s);
+    GateState@ ts = GetGateState(c.x, c.y, s);
     ts.?(waiting: {
         PrependToTrainInS(c, Car@(dest.x, dest.y, v), 
-            SetTagState(c.x, c.y, Feeding, s));
+            SetGateState(c.x, c.y, Going, s));
     });
 
-    TagState@ nts = c.v.?(C: Waiting, : Feeding);
-    MoveCarInS(c, dest.x, dest.y, SetTagState(c.x, c.y, nts, s));
+    GateState@ nts = c.v.?(C: Waiting, : Going);
+    MoveCarInS(c, dest.x, dest.y, SetGateState(c.x, c.y, nts, s));
+};
+
+(Switch@, Car@, S@) { S@; }
+DoSwitch = (Switch@ g, Car@ c, S@ s) {
+    Coord@ switch = Dest(c.x, c.y, g.s);
+    GateState@ ts = GetGateState(switch.x, switch.y, s);
+    ts.?(going: s);
+
+    Maybe@<Car@> ms = GetCarInS(switch.x, switch.y, s);
+    ms.?(nothing: s);
+
+    ms.just.v.?(0: {
+        Coord@ target = Dest(c.x, c.y, g.0);
+        CarInS(target.x, target.y, s).?(true: s);
+        GateState@ nts = c.v.?(C: Going, : Waiting);
+        MoveCarInS(c, target.x, target.y,
+            SetGateState(switch.x, switch.y, nts, s));
+    });
+
+    ms.just.v.?(1: {
+        Coord@ target = Dest(c.x, c.y, g.1);
+        CarInS(target.x, target.y, s).?(true: s);
+        GateState@ nts = c.v.?(C: Going, : Waiting);
+        MoveCarInS(c, target.x, target.y,
+            SetGateState(switch.x, switch.y, nts, s));
+    });
+
+    s;
+};
+
+# Execute a select gate.
+(Car@, S@) { S@; }
+DoSelect = (Car@ c, S@ s) {
+    GateState@ ts = GetGateState(c.x, c.y, s);
+    ts.?(waiting: s);
+
+    GateState@ nts = c.v.?(C: Waiting, : Going);
+    RemoveCarInS(c, SetGateState(c.x, c.y, nts, s));
 };
 
 # Execute a gate.
@@ -242,7 +319,9 @@ DoGate = (Gate@ g, Car@ c, S@ s) {
       sink: DoSink(c, s),
       source: DoSource(g.source, c, s),
       zero: DoTag(0, g.zero, c, s),
-      one: DoTag(1, g.one, c, s));
+      one: DoTag(1, g.one, c, s),
+      switch: DoSwitch(g.switch, c, s),
+      select: DoSelect(c, s));
 };
 
 # Execute the current schedule to completion.
@@ -257,7 +336,7 @@ DoSchedule  = (Gates@ gates, Schedule@ schedule, S@ s) {
 
 (Gates@, Trains@) { Model@; }
 Model = (Gates@ gates, Trains@ trains) {
-    Model@(gates, S@(trains, Grid.Empty<TagState@>));
+    Model@(gates, S@(trains, Grid.Empty<GateState@>));
 };
 
 # Advance the model by 1 unit of time.
@@ -267,6 +346,6 @@ Tick = (Model@ m) {
 };
 
 @(Model@, Gate@, Gates@, Train@, Trains@, Car@, Dir@, Value@, S@, Tick, Model,
-   Noop, Sink, Rail, Source, One, Zero,
+   Noop, Sink, Rail, Source, One, Zero, Switch, Select,
    Left, Right, Up, Down,
    0, 1, C, L, S);

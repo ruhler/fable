@@ -90,9 +90,9 @@ DrawDir = (Int@ x, Int@ y, Dir@ d, Color@ c) {
 };
 
 
-(Int@, Int@) { Drawing@; }
-DrawSink = (Int@ x, Int@ y) {
-    Drawings[DrawDir(x, y, Left, Color.Cyan), DrawDir(x, y, Right, Color.Cyan)];
+(Int@, Int@, Color@) { Drawing@; }
+DrawSolid = (Int@ x, Int@ y, Color@ c) {
+    Drawings[DrawDir(x, y, Left, c), DrawDir(x, y, Right, c)];
 
 };
 
@@ -100,11 +100,14 @@ DrawSink = (Int@ x, Int@ y) {
 DrawGate = (Int@ x, Int@ y, Gate@ g) {
     g.?(noop: Blank,
         rail: DrawDir(x, y, g.rail, Color.Cyan),
-        sink: DrawSink(x, y),
+        sink: DrawSolid(x, y, Color.Cyan),
         source: DrawDir(x, y, g.source, CarColor(C)),
         zero: DrawDir(x, y, g.zero, CarColor(0)),
-        one: DrawDir(x, y, g.one, CarColor(1))
-        );
+        one: DrawDir(x, y, g.one, CarColor(1)),
+        switch: Drawings[
+            DrawDir(x, y, g.switch.0, Color.Green),
+            DrawDir(x, y, g.switch.1, Color.Green)],
+        select: DrawSolid(x, y, Color.Green));
 };
 
 (Int@, Int@, Model@) { Drawing@; }

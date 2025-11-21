@@ -1,5 +1,4 @@
 
-* Implement select gate
 * Implement mvp sample network
 * Design mvp v2 network.
 * Implement gates for mvp v2 network.

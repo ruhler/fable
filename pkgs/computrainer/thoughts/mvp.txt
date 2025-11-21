@@ -188,3 +188,56 @@ can factor out for feeding, sinking? We can have 0, 1, S all be Dir@, except
 that S needs to know the location of 0 and 1 to be able to read and write
 their states.
 
+---
+
+Change in plans for select. Let's do a simpler select gate: 2 input, 2 output.
+Inputs are data and select. The data goes to one of the two outputs based on
+the select. Have it eat the select train.
+
+Maybe have the select train stay on the select gate until the input train has
+passed through? Seems simple.
+
+States for select part of the gate are waiting and sinking?
+waiting: the train doesn't advance
+sinking: sink the select train. On caboose, switch to waiting.
+
+For the input part of the gate:
+* If select is waiting and has a 0 or 1 train, forward to the appropriate
+  output. On caboose, flip the select to sinking.
+* Otherwise block.
+
+No extra state needed for the input gate?
+
+Using directions to identify the outputs are a little awkward. I would like a
+2x2 square with select and input gates adjacent. Maybe specify the target
+destinations directly? Let's call it 'select' and 'switch' gates? Select has
+waiting vs. sinking state. Switch has three dests: sink, 0, and 1. What are
+all the combos?
+
+  W0 SW 1S 01
+  S1 10 0W WS
+
+  W1 SW 0S 10
+  S0 01 1W WS
+
+  S0 WS 1W 01
+  W1 10 0S SW
+
+  S1 WS 0W 10
+  W0 01 1S SW
+
+Diagonal support too?
+
+Let's just give explicit targets for 0 and 1 outputs.
+
+Or, does diagonal make more sense? So that input doesn't make a train go
+diagonal?
+
+  W0 W1 * 4 rotations
+  1S 0S
+
+Or:  SW0
+      1
+
+Maybe that's the right way to do it. W has 3 directions: 0, 1, S. And S is
+just S. Sounds reasonable. Let's try it.
