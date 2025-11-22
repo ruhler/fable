@@ -6,6 +6,8 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
+<@>@ ShowM@ = /Core/Show%.ShowM@;
+
 @ String@ = /Std/String%.String@;
 
 @ Unit@ = /Std/Unit%.Unit@;
@@ -38,10 +40,18 @@
     PutChar(out, Ascii.nl);
   };
 
+  (OStream@, ShowM@) { M@<Unit@>; } Show = (OStream@ out, ShowM@ show) {
+    show(@(
+      return: m.return(Unit),
+      do: (M@<Unit@> a, (Unit@) { M@<Unit@>; } f) { m.do(a, f); },
+      put: (Char@ c) { PutChar(out, c); }
+    ));
+  };
+
   # Closes the given output stream.
   (OStream@) { M@<Unit@>; } Close = (OStream@ out) {
     out(/Core/Stream%.End);
   };
 
-  @(OStream@, PutChar, PutStr, PutLine, Close);
+  @(OStream@, PutChar, PutStr, PutLine, Show, Close);
 };

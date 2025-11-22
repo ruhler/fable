@@ -17,6 +17,7 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 <@>@ Show@ = /Core/Show%.Show@;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 % Str = /Std/Char/Ascii%.Str;
 
@@ -119,7 +120,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
           And(eq(a.key, b.key), /Std/Bool/Eq%.Eq(a.value, b.value));
         }),
         /Core/List/Show%.Show((Entry@ e) {
-          /Std/List%.Concat[show(e.key), Str|': ', /Core/Bool/Show%.Show(e.value)];
+          Format|'%s: %s'[show(e.key), /Core/Bool/Show%.Show(e.value)];
         }),
         wnt, got);
     })

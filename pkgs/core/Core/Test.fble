@@ -1,14 +1,18 @@
 
 <@>@ List@ = /Std/List%.List@;
-<@>% Concat = /Std/List%.Concat;
+
+<@>@ ShowM@ = /Core/Show%.ShowM@;
+% ToString = /Core/Show%.ToString;
 
 @ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+
+% String = /Core/Char/Ascii/Show%.String;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-@ TestResult@ = +(Unit@ pass, String@ fail, Unit@ xfail);
+@ TestResult@ = +(Unit@ pass, ShowM@ fail, Unit@ xfail);
 @ TestCase@ = *(String@ name, (Unit@) { TestResult@; } test);
 @ TestSuite@ = *(String@ name, List@<Test@> tests),
 @ Test@ = +(TestCase@ case, TestSuite@ suite);
@@ -17,7 +21,7 @@
 TestResult@ Pass = TestResult@(pass: Unit);
 
 # A failing test result.
-(String@) { TestResult@; } Fail = (String@ msg) {
+(ShowM@) { TestResult@; } Fail = (ShowM@ msg) {
   TestResult@(fail: msg);
 };
 
@@ -51,14 +55,14 @@ TestSuite = (String@ name, List@<Test@> tests) {
 #   failing and msg is contained somewhere in the failure message.
 (TestResult@, String@) { TestResult@; }
 ExpectFails = (TestResult@ result, String@ msg) {
-  result.?(
-    pass: Fail(Str|'Expected failure, but test passed'),
-    fail: /Std/String/Eq%.Contains(result.fail, msg).?(
-      true: ExpectedFail,
-      false: Fail(Concat[
-        Str|'Expected failure containing "', msg,
-        Str|'", but failed with "', result.fail, Str|'"'])),
-    xfail: Fail(Str|'Expected failure, but was xfail'));
+  result.?(pass: Fail(String|'Expected failure, but test passed'));
+  result.?(xfail: Fail(String|'Expected failure, but was xfail'));
+
+  String@ failure = ToString(result.fail);
+  /Std/String/Eq%.Contains(failure, msg).?(true: ExpectedFail);
+
+  Fail(Format|'Expected failure containing "%s", but failed with "%s"'
+        [/Core/Show%.String(msg), /Core/Show%.String(failure)]);
 };
 
 @(TestResult@, Test@, TestSuite@, TestCase@,

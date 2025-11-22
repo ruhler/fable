@@ -12,9 +12,14 @@
 <@>% Empty = /Std/List%.Empty;
 
 <@>@ Show@ = /Core/Show%.Show@;
+<@>% Do = /Core/Show%.Do;
+<@>% Return = /Core/Show%.Return;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
 
 # ShowDigit --
 #   Convert the given digit to a string.
@@ -52,12 +57,8 @@
 #   Implementation of Show@ for IntP@.
 Show@<IntP@> Show = (IntP@ x) {
   QR@ qr = Div(x, 10);
-  String@ tail = ShowDigit(qr.r);
-  String@ head = {
-    qr.q.?(0: Empty<Char@>);
-    Show(qr.q.p);
-  };
-  Append(head, tail);
+  Unit@ _ <- Do(qr.q.?(0: Return, : Show(qr.q.p)));
+  ShowDigit(qr.r);
 };
 
 @(Show);

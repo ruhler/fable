@@ -1,0 +1,23 @@
+
+<@>% StrLit = /Std/Char/Lit%.StrLit;
+
+@ Ascii@ = /Std/Char/Ascii%.Ascii@;
+% ToChar = /Std/Char/Ascii%.ToChar;
+% StrE = /Std/Char/Ascii%.StrE;
+
+<@>@ List@ = /Std/List%.List@;
+
+<@>@ ShowM@ = /Core/Show%.ShowM@;
+
+(List@<Ascii@>) { ShowM@; }
+String = StrLit(ToChar, /Core/Show%.String);
+
+(List@<Ascii@>, List@<ShowM@>) { ShowM@; }
+Format = StrLit(ToChar, /Core/Show%.Format);
+
+(List@<Ascii@>, List@<ShowM@>) { ShowM@; }
+FormatE = (List@<Ascii@> str, List@<ShowM@> args) {
+  /Core/Show%.Format(StrE(str), args);
+};
+
+@(String, Format, FormatE);

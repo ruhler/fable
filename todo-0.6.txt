@@ -2,6 +2,16 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Double check if I should be able to write:
+   @ ShowM@ = /Core/Show%.ShowM@, when ShowM@ has kind <@>@.
+  Seems like I can't, but I thought I made it so I could.
+
+* Figure out why we see the same errors reported many times when we build.
+ - And fix it.
+
+* Get rid of /Std/String/Format% ?
+ - Prefer the Show@ version of Format?
+
 * Cover all escape chars in StrE tests.
 * Better implementation of ReadHex in /Std/String/Escape.
 * Replace uses of 'Concat' with 'Format' where appropriate.

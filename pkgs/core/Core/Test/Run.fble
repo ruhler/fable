@@ -12,6 +12,7 @@
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
+% FormatE = /Core/Char/Ascii/Show%.FormatE;
 
 @ Test@ = /Core/Test%.Test@;
 @ TestResult@ = /Core/Test%.TestResult@;
@@ -40,7 +41,7 @@
               m.return(passing);
             },
             fail: {
-              Unit@ _ <- m.do(PutLine(out, Concat[Str|'@FAILED: ', tr.fail]));
+              Unit@ _ <- m.do(O.Show(out, FormatE|'@FAILED: %s\n'[tr.fail]));
               m.return(False);
             },
             xfail: {

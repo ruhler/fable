@@ -3,6 +3,8 @@
 % U = /Std/Char/Lit%.U;
 
 <@>@ List@ = /Std/List%.List@;
+<@>% Empty = /Std/List%.Empty;
+<@>% Items = /Std/List%.Items;
 
 @ String@ = /Std/String%.String@;
 
@@ -20,28 +22,31 @@
 # ShowM@ is a computation that can show something to any stream you ask it to.
 <@>@ ShowM@ = <@ S@>(Stream@<S@>) { S@; };
 
-# ShowD@ is a deferred ShowM@ computation.
-@ ShowD@ = (Unit@) { ShowM@; };
-
-# A deferred show computation that outputs nothing.
-ShowD@ Return = (Unit@ _)<@ S@>(Stream@<S@> s) {
+# A show computation that outputs nothing.
+ShowM@ Return = <@ S@>(Stream@<S@> s) {
   s.return;
 };
 
+# Show one thing after another.
+(ShowM@, (Unit@) { ShowM@; }) { ShowM@; }
+Do = (ShowM@ ma, (Unit@) { ShowM@; } f)<@ S@>(Stream@<S@> s) {
+  s.do(ma(s), (Unit@ _) { f(Unit, s); });
+};
+
 # Show a string.
-(String@) { ShowD@; }
-String = (String@ str, Unit@ _)<@ S@>(Stream@<S@> s) {
+(String@) { ShowM@; }
+String = (String@ str)<@ S@>(Stream@<S@> s) {
   str.?(empty: s.return);
   Unit@ _ <- s.do(s.put(str.items.head));
-  String(str.items.tail, Unit, s);
+  String(str.items.tail, s);
 };
 
 Char@ '%%' = U|25;
 Char@ '%s' = U|73;
 
 # Formatted Show
-(String@, List@<ShowD@>) { ShowD@; }
-Format = (String@ fmt, List@<ShowD@> args, Unit@ _)<@ S@>(Stream@<S@> s) {
+(String@, List@<ShowM@>) { ShowM@; }
+Format = (String@ fmt, List@<ShowM@> args)<@ S@>(Stream@<S@> s) {
   fmt.?(empty: s.return);
   Char@ c = fmt.items.head;
   /Std/Char/Eq%.Eq('%%', c).?(true: {
@@ -50,19 +55,37 @@ Format = (String@ fmt, List@<ShowD@> args, Unit@ _)<@ S@>(Stream@<S@> s) {
 
     /Std/Char/Eq%.Eq('%%', e).?(true: {
       Unit@ _ <- s.do(s.put(c));
-      Format(fmt.items.tail.items.tail, args, Unit, s);
+      Format(fmt.items.tail.items.tail, args, s);
     });
 
     /Std/Char/Eq%.Eq('%s', e).?(true: {
-      Unit@ _ <- s.do(args.items.head(Unit, s));
-      Format(fmt.items.tail.items.tail, args.items.tail, Unit, s);
+      Unit@ _ <- s.do(args.items.head(s));
+      Format(fmt.items.tail.items.tail, args.items.tail, s);
     });
 
     /Std/Undef%.Undef.undef<S@>;
   });
 
   Unit@ _ <- s.do(s.put(c));
-  Format(fmt.items.tail, args, Unit, s);
+  Format(fmt.items.tail, args, s);
+};
+
+# Output a string given the tail of the string.
+@ StringStream@ = (String@) { String@; };
+
+# Implementation of Stream@ for StringStream@.
+Stream@<StringStream@> StringStream = @(
+  return: (String@ tail) { tail; },
+  do: (StringStream@ a, (Unit@) { StringStream@; } fb, String@ tail) {
+    a(fb(Unit, tail));
+  },
+  put: (Char@ c, String@ tail) { Items(c, tail); }
+);
+
+# Show to a String@.
+(ShowM@) { String@; }
+ToString = (ShowM@ show) {
+  show(StringStream, Empty<Char@>);
 };
 
 # Show@ --
@@ -78,6 +101,6 @@ Format = (String@ fmt, List@<ShowD@> args, Unit@ _)<@ S@>(Stream@<S@> s) {
 # Returns:
 #   A deferred computation to show the value to a stream in human readable
 #   form.
-<@>@ Show@ = <@ T@>(T@) { ShowD@; };
+<@>@ Show@ = <@ T@>(T@) { ShowM@; };
 
-@(Show@, ShowD@, Return, String, Format);
+@(Show@, ShowM@, Return, Do, String, Format, ToString);

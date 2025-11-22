@@ -1015,3 +1015,30 @@ better name? Shown@? Showable@? Showed@? Output@?
 
 I don't think any of those are better for now.
 
+Other observations at time of implementation:
+* Having a Do function exposed is useful for more explicit sequencing.
+* I want to switch between ascii and String versions of 'String', depending on
+  use case.
+* It's a little tedious to write:
+  Unit@ _ <- m.do(O.Show(out, Format|'...'[...]));
+  This is one of those cases where I wish ShowM@ was a little more general and
+  could return a value along with what it is showing. /Core/Test/Run%: we want
+  to print the output and record whether the test is passing or failing.
+  Otherwise I feel like I have to split it into two parts: 1. figure out all
+  the log messages, 2. compute the results I'm actually interested in.
+
+---
+
+On further thought, there's no need to distinguish between ShowM@ and ShowD@.
+We should use ShowM@ everywhere. If you're willing to know about the Unit@ arg
+for ShowD, you should be willing to use 'Do' instead for sequencing. No need
+for the extra sequencing.
+
+Specifically: ShowList should use 'Do', not a single Format call. That will be
+fine. Map should use 'Do' as it does now. Things like 'Pair' need not use do
+and need not be lazy. Anything big like Map or List will already take care of
+that.
+
+It's slightly annoying that ShowM@ has kind <@>@ and that we can't use it with
+kind @.
+

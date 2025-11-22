@@ -17,8 +17,10 @@
 % Greater = /Std/Cmp%.Greater;
 
 <@>@ Show@ = /Core/Show%.Show@;
+<@>% Do = /Core/Show%.Do;
 
 % Str = /Std/Char/Ascii%.Str;
+% String = /Core/Char/Ascii/Show%.String;
 
 @ Test@ = /Core/Test%.Test@;
 % TestSuite = /Core/Test%.TestSuite;
@@ -46,7 +48,7 @@ Cmp@<Bit1@> OrdBit1 = (Bit1@ a, Bit1@ b) {
 };
 
 Show@<Bit1@> ShowBit1 = (Bit1@ x) {
-  x.?(0: Str|0, 1: Str|1);
+  x.?(0: String|0, 1: String|1);
 };
 
 Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
@@ -59,7 +61,8 @@ Cmp@<Bit2@> OrdBit2 = (Bit2@ a, Bit2@ b) {
 };
 
 Show@<Bit2@> ShowBit2 = (Bit2@ x) {
-  Append<Char@>(ShowBit1(x.h), ShowBit1(x.l));
+  Unit@ _ <- Do(ShowBit1(x.h));
+  ShowBit1(x.l);
 };
 
 % Map = /Core/Map/Tree%.Map<Bit2@>(OrdBit2);

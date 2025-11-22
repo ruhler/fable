@@ -1,11 +1,9 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
-<@>% Concat = /Std/List%.Concat;
-
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ TestResult@ = /Core/Test%.TestResult@;
 % Pass = /Core/Test%.Pass;
@@ -14,13 +12,13 @@
 <@ T@>(Eq@<T@>, Show@<T@>, T@, T@) { TestResult@; }
 AssertEquals = <@ T@>(Eq@<T@> eq, Show@<T@> show, T@ a, T@ b) {
   eq(a, b).?(true: Pass);
-  Fail(Concat[show(a), Str|' != ', show(b)]);
+  Fail(Format|'%s != %s'[show(a), show(b)]);
 };
 
 <@ T@>(Eq@<T@>, Show@<T@>, T@, T@) { TestResult@; }
 AssertNotEquals = <@ T@>(Eq@<T@> eq, Show@<T@> show, T@ a, T@ b) {
   eq(a, b).?(false: Pass);
-  Fail(Concat[show(a), Str|' == ', show(b)]);
+  Fail(Format|'%s == %s'[show(a), show(b)]);
 };
 
 @(AssertEquals, AssertNotEquals);

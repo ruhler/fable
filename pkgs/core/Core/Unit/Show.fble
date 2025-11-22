@@ -1,12 +1,12 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
-% Str = /Std/Char/Ascii%.Str;
+% String = /Core/Char/Ascii/Show%.String;
 @ Unit@ = /Std/Unit%.Unit@;
 
 # Show --
 #   Instance of Show@ for Unit@.
-Show@<Unit@> Show = (Unit@ _a) {
-  Str|Unit;
+Show@<Unit@> Show = (Unit@ _) {
+  String|Unit;
 };
 
 @(Show);

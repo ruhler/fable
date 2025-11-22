@@ -1,15 +1,14 @@
 
-<@>% Concat = /Std/List%.Concat;
-
 <@>@ Show@ = /Core/Show%.Show@;
 @ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
+% String = /Core/Show%.String;
 
 # Show --
 #   Implementation of Show@ for String@. See documentation of /Show%.Show@.
 Show@<String@> Show = (String@ s) {
   # TODO: Better handling of the case where the string itself contains quotes.
-  Concat[Str|'"', s, Str|'"'];
+  Format|'"%s"'[String(s)];
 };
 
 @(Show);

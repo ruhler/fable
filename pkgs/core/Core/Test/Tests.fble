@@ -16,6 +16,8 @@
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 
+% String = /Core/Char/Ascii/Show%.String;
+
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
@@ -29,7 +31,7 @@
 
 
 Test@ pass = Test(Str|pass, (Unit@ _) { Pass; });
-Test@ fail = Test(Str|fail, (Unit@ _) { Fail(Str|Failed); });
+Test@ fail = Test(Str|fail, (Unit@ _) { Fail(String|Failed); });
 Test@ xfail = Test(Str|xfail, (Unit@ _) { ExpectedFail; });
 
 Test@ Tests = TestSuite(Str|'Test', List[
