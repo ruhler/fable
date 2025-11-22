@@ -624,5 +624,394 @@ already output the front of the list.
 
 I can deal with this I think.
 
+---
+
+Stepping way back. I original had show return a String@. We said that's bad
+because it has quadratic blowup and means you can't output anything until
+you've prepared everything for output. An output stream interface would allow
+you to address both of those, but it makes the interface for Show that much
+more complicated, which is unpleasant. Do I want to take the leap? Is there
+any way to get the best of both worlds?
+
+If it weren't for performance, the answer would be easy: output to String@.
+That's what we want to write. That's what we want to work with.
+
+---
+
+Maybe I can abstract things in a different way. If we want to think about
+things functionally, then an output stream should be represented as a sequence
+of elements. I just want to keep the data structure abstract so we can pick
+and choose what data structure is most appropriate given our performance
+requirements.
+
+Let's imagine some abstract type S@ for the stream. I want the following
+operations:
+
+  S@ Empty;                 # indicates end of output stream.
+  (T@, S@) { S@; } Items    # adds something to the front of the stream.
+
+Then we can have:
+
+  Show@ = <@ T@>(T@) { S@; }
+
+In other words, exactly like String@, except I'm making an abstract type S@
+and providing in ways I haven't specified yet, different functions for Empty
+and Items.
+
+Next step is to show we could pick a type S@ and functions 'Empty' and 'Items'
+that allow us to output the front of the list before showing the tail of the
+list. Except, I know I can't do that without some intervention in the code
+doing the construction, right? Maybe?
+
+  ShowList = (List@ xs) {
+    xs.?(empty: Empty);
+    ...
+
+And now I don't have a way to compose multiple sequences, which is what I
+really want. Let's be honest, the interface I really want for show is string +
+concat based, not char + prepend based.
+
+  (String@) { S@; } PutStr
+  (S@, (Unit@) { S@; }) { S@; } Seq
+
+  ShowList = (List@ xs) {
+    xs.?(empty: PutStr(""));
+    Unit@ _ <- Seq(ShowHead(xs.items.head));
+    ShowList(xs.items.tail);
+  };
+
+  ShowList = (List@ xs) {
+    xs.?(empty: PutStr(""));
+    Seq(ShowHead(xs.items.head), ShowList(xs.items.tail));
+  };
+
+We need to have the Unit@ argument somewhere to prevent unrolling the whole
+thing. Either it belongs with the ShowList function, or with the Seq function.
+
+  ShowList = (List@ xs, Unit@ u) {
+    xs.?(empty: PutStr(""));
+    Seq(ShowHead(xs.items.head), ShowList(xs.items.tail), u);
+  };
+
+Putting it with the Seq function feels much more natural to me. I may as well
+call it a 'do' function?
+
+Generic output stream:
+
+  S@ End
+  (T@) { S@; } Put
+  (S@, (Unit@) { S@; }) { S@; } Do
+
+Now the annoying thing is how to pass the functions Put and Do, and the
+generic type S@ everywhere. But I already know how to do that?
+
+  Putter@ = <@ T@, @ S@> { *(
+    S@ end,
+    (T@) { S@; } put,
+    (S@, (Unit@) { S@; }) { S@ } do
+  ); };
+
+  Shown@ = <@ S@>(Putter@<Char@, S@>) { S@; };
+  
+  Show@ = <@ T@, @ S@>(Shown@<S@>);
+  
+  Shown@ End = ...;
+  (Char@) { Shown@; } Put = ...;
+  (Shown@, (Unit@) { Shown@; }) { Shown@; } Do = ...;
+
+  (String@) { Shown@; } PutStr = (String@ s) {
+    s.?(empty: End);
+    Unit@ _ <- Do(Put(s.items.head));
+    PutStr(s.items.tail);
+  };
+
+I claim that's it. The simplest interface we can have, that lets us do
+whatever we want. You want string? Easy:
+  End = Str|'';
+  Put(c) = List[c]
+  Do(a, fb) = Append(a, fb(Unit))
+  
+You want function from string to string?
+  End = \s -> s
+  Put(c) = \s -> c:s
+  Do(a, fb) = \s -> a(fb(Unit, s))
+
+You want output stream?
+  End = m.return(Unit)
+  Put(c) = put(c)
+  Do(a, fb) = bind(a, fb)
+
+You can apply as and when you want. Easy to write. Easy to adapt. Not monadic,
+but still takes advantage of the bind syntax. The only concern left would be
+performance, right?
+
+How about we try this and see how it goes?
+
+---
+
+Revisiting how I want to implement my show functions. The answer is via a
+Format function. But I want it to evaluate arguments lazily. Should we have a
+convention that you can implement ShowL and Show, one is lazy, the other
+eager, and have Format take a list of ShowL and return a Show?
+
+The show interface is still a bit up in the air, but I'm hoping to land on:
+
+Oh. bummer. I still don't know where I want to land. Arg first or monad and
+put interface first? :(
+
+Let's look more from the Show point of view. Maybe it will give a better
+perspective than the OStream point of view. Or at least a different one.
+
+Ideal world, I could write as if it was pure strings, which I would write
+like:
+
+  Show@<Pair@> ShowPair = (Pair@ p) {
+    Format|'(%s, %s)'[ShowA(p.a), ShowB(p.b)];
+  };
+
+  Show@<List@> ShowList = (List@ xs) {
+    xs.?(empty: Empty);
+    Format|'%s, %s'[ShowX(xs.items.head), ShowList(x.items.tail)];
+  };
+
+This has a problem of traversing the whole list before showing any part of it.
+Probably we shouldn't traverse the second element of the pair before finishing
+the first element. So, regardless of types, as soon as I want to be lazy, I
+need to modify how I write the code. I suppose best would be something like...
     
+  ShowL@<Pair@> ShowPairL = (Pair@ p, Unit@ u) {
+    Format|'(%s, %s)'[ShowAL(p.a), ShowBL(p.b)](u);
+  };
+
+  Show@<Pair@> ShowPair = (Pair@ p) {
+    ShowPairL(p, Unit);
+  };
+
+  ...
+
+But if we do that, we always end up using the lazy version. So why not just
+define the lazy version?
+
+  Show@<Pair@> ShowPair = (Pair@ p, Unit@ l) {
+    Format|'(%s, %s)'[ShowA(p.a), ShowB(p.b)](l);
+  };
+
+  Show@<List@> ShowList = (List@ xs, Unit@ l) {
+    xs.?(empty: Empty);
+    Format|'%s, %s'[ShowX(xs.items.head), ShowList(x.items.tail)](l);
+  };
+
+Key is that Format takes a list of the lazy version, but returns the non-lazy
+version. I suppose you could, if you want, use Format in a non-lazy way?
+
+  Show@<Pair@> ShowPair = (Pair@ p) {
+    Format|'(%s, %s)'[ShowA(p.a), ShowB(p.b)];
+  };
+
+Which is kind of cool, to be honest. The types still work out. So you can
+chose to be lazy or not. If you do list, you probably ought to be lazy. But
+otherwise it doesn't matter.
+
+Now, this tells us nothing about the actual interface we use for showing
+things. All we know i s we have 'Empty' and 'Format' as our primitive
+constructs. Empty could be implemented as Format|''[]. So maybe all we really
+need is a primitive Format function that we can construct everything else out
+of? Imagine some abstract type FormatM@. Uh, let's be explicit. FormatM@ and
+FormatML@:
+
+  @ FormatM@ = ...
+  @ FormatML@ = (Unit@) { FormatM@; };
+  <@>@ Show@ = <@ T@>(T@) { FormatML@; };
+  (String@, List@<FormatML@>) { FormatML@; } Format = ...;
+
+Now FormatM@ can be whatever I want. Including:
+* String@
+* (String@) { String@; }
+* <<@>@ M@>(Monad@<M@>, Put@<Char@, M@>) { M@<Unit@>; }
+
+But this only works if I provide the argument to show before the monad and the
+put interface.
+
+Thus, as far as I can tell, from the Show@ perspective, I really rather not
+have to know anything about M@. Use Unit@ to make things lazy, not M@,
+Monad@<@>, or Put@<Char@, M@>.
+
+Cool? This gives me a nice way to implement show, that works efficiently and
+can be reused directly everywhere I want, where I can chose easily at
+implementation time if I want to traverse everything before showing anything
+or if I want to do things incrementally.
+
+Question: Can I do something fancy with Format and bind syntax?
+
+  Show@<Pair@> ShowPair = (Pair@ p) {
+    Formatted@ a <- ShowA(p.a);
+    Formatted@ b <- ShowB(p.b);
+    Format|'(%s, %s)'[a, b];
+  };
+
+But that's the wrong order. It would need to be more like:
+
+  Show@<Pair@> ShowPair = (Pair@ p) {
+    Unit@ _ <- Format|'(%s, %s)';
+    Unit@ _ <- ShowA(p.a);
+    Unit@ _ <- ShowB(p.b);
+  };
+
+Well, we could certainly do puts:
+
+  Show@<Pair@> ShowPair = (Pair@ p) {
+    Unit@ _ <- Put|'(';
+    Unit@ _ <- ShowA(p.a);
+    Unit@ _ <- Put|', ';
+    Unit@ _ <- ShowB(p.b);
+    Put|')';
+  };
+
+But that defeats the point of the Format function, which I would really love
+to have.
+
+  Show@<Pair@> ShowPair = (Pair@ p) {
+    F@<A@> a <- Format|'(%s, %s)';
+    Unit@ _ <- a(p.a);
+    Unit@ _ <- b(p.b);
+  };
+
+No. I think what I had before was fine. What we need to pass Format is the
+function to call to render each argument. Which is what FormatML@ gives me.
+
+Here's what I want to be able to write:
+
+  @ FormatM@ = ...
+  @ FormatML@ = (Unit@) { FormatM@; };
+  <@>@ Show@ = <@ T@>(T@) { FormatML@; };
+  (String@, List@<FormatML@>) { FormatML@; } Format = ...;
+
+  Show@<Pair@> ShowPair = (Pair@ p) {
+    Format|'(%s, %s)'[ShowA(p.a), ShowB(p.b)];
+  };
+
+  Show@<List@> ShowList = (List@ xs, Unit@ l) {
+    xs.?(empty: Format|''[](l));
+    Format|'%s, %s'[ShowX(xs.items.head), ShowList(x.items.tail)](l);
+  };
+
+Let's go back to stdlib.io.txt discussion with this in mind: Show@ doesn't
+want to know anything at all about M@, Monad@<M@>, or Put@<M@>. So there!
+
+Wait. Then we can do that easily already, no? We can make it generic to any
+type S@. If Format is the building block, then may as well output individual
+characters at a time? Format seems like a somewhat complicated function to
+build things on top of is the only problem. What we really need is...
+
+  @ FormatM@ = <@ S@>(S@, (Char@) { S@; }, (S@, S@) { S@; }) { S@; };
+
+It says: for all stream types S@, you are given a way to produce an empty
+stream: S@, a way to output a single character: (Char@) { S@; }, and a way to
+append two streams: (S@, S@) { S@; }. Or maybe bind should be:
+(S@, (Unit@) { S@; }) { S@; }. Yeah. Which brings us back to the abstract
+interface I suggested a while ago above. And this is easy to implement.
+
+Could also be written as:
+
+  @ ShowM@ = <@ S@>(ShowI@<S@>) { S@; };
+
+It's not hard to define functions to convert these to String@ or output
+stream.
+
+Thus, it feels like, whatever I decide to do with output streams, I want Show
+to be completely separate.
+
+Let me try to be very concrete in the proposal now.
+
+  # ShowI@ is an interface of stream types S@ that you can show stuff to.
+  <@>@ ShowI@ = <@ S@> {
+    S@ return,
+    (S@, (Unit@) { S@; }) { S@; } do
+    (Char@) { S@; } put
+  );
+
+  # ShowM@ is a computation that shows something.
+  @ ShowM@ = <@ S@>(ShowI@<S@>) { S@; };
+
+  # ShowL@ is a computation that shows something when you explicitly request
+  # it to.
+  @ ShowL@ = (Unit@) { ShowM@; };
+
+  # Show@ is an interface to show a value of that type.
+  <@>@ Show@ = <@ T@>(T@) { ShowL@; };
+  
+  # The preferred primitive operation for implementing show.
+  (String@, List@<ShowL@>) { ShowL@; } Format = ...;
+
+  # A helper function to show to string if you want, though presumably you'll
+  # never use this?
+  (ShowL@) { String@; } ShowToString = (ShowL@ s) {
+    s(Unit, @(
+      return: (String@ x) { x; },
+      do: ((String@) { String@; } fa, (Unit@, String@) { String@; } fb, String@ tail) {
+         fa(fb(Unit, tail))
+      },
+      put: Items<Char@>));
+  };
+
+It's feels a little weird in this case to have the Unit@ argument, but we need
+that for the monadic implementation. If I want, I can define top level 'Do',
+'Put', and 'Return' functions as well.
+
+Okay? Cool? Decided? I have my proposal for Show, and it doesn't depend at all
+on output streams anymore, but will also work fine with them once I figure out
+what to do with them. But the interesting observation is, for this to work, we
+take the less generic argument (T@ x) first, before the more generic arguments
+S@, ShowI@<S@>.
+
+Now, here's where things get interesting and I start going in circles again.
+If I was willing to generalize S@, ShowI@, and ShowM@ every so slightly, so
+that S@ now because M@<...>, return takes an argument, and do passes the
+argument in between, then we now get something that looks just like a generic
+OStream@ interface.
+
+Maybe let's not do that. Not associated with Show anyway. We can have the
+specialized version for Show and have it work fine with the generalized
+version of OStream@. But there really is an important difference here: I
+expect to mix puts to different output streams with the same generic monad M@.
+I don't ever want to do that with Show@.
+
+Okay? Good. Let's call this done before I change my mind. I can try to
+implement this now. Make forward progress. Learn something. Then spin some
+more on IO in general.
+
+---
+
+Switch over to new proposed show interface. This is going to be a slog, given
+how much we use Show all over the place. Let's get started and hope for the
+best.
+
+First thing: am I happy with the names?
+
+* ShowI@ - yes
+* Show@ - yes
+* ShowM@, ShowL@ ?? Not sure.
+
+I'll basically never use the ShowM@ one. What name makes sense for what I
+want? Focus on the name for ShowL@. Which is: a computation that shows a
+value? Or maybe, a function that shows a value when given the argument Unit? A
+deferred show?
+
+Actually, looks like I won't end up using these much anywhere in code either.
+We use Show@ to give the type of the Show function, and otherwise avoid
+writing down the return type. So these function names don't matter that much.
+
+How about: ShowM@ and ShowD@, 'D' for deferred? Yeah. Let's do so.
+
+---
+
+First questions to come up:
+* /Std/Char/Foo%.Format should be for String@ or for ShowD@?
+* /Core/Test%.Fail should take String@, or ShowD@?
+ - Probably we want it to take ShowD@.
+
+But now that means I'm starting to pass ShowD@ around more. Should I pick a
+better name? Shown@? Showable@? Showed@? Output@?
+
+I don't think any of those are better for now.
 

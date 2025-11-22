@@ -924,4 +924,380 @@ form where you pass around Monad@ and Put@ and Get@ everywhere, or do I want
 the form where it's all abstracted? Do we want to do bind at the level of M@,
 or at the level of FooM@?
 
+Let's think more about how you can compose two of these interfaces, and how
+you can add internal state.
 
+---
+
+From discussions on stdlib.show.txt, I think I have a good handle on options
+for Put interface:
+
+1. Most general / restrictive:
+  S@ End
+  (T@) { S@; } Put
+  (S@, (Unit@) { S@; }) { S@; } Do
+
+  Shown@ End = ...;
+  (Char@) { Shown@; } Put = ...;
+  (Shown@, (Unit@) { Shown@; }) { Shown@; } Do = ...;
+ 
+* Generic in stream S@ type. Not monadic.
+ - Because essentially you force hard code S@ = M@<Unit@>.
+* The Do operation forces composition of things that work for all S@. It
+  doesn't allow specialization to a specific S@ type.
+ - So, if you know, for example, you are using this with IO@, you can't
+   combine it with something that opens a file. Once you hit Shown@, you are
+   stuck there and can only get out at the top.
+
+2. Allow mixing with specific S@ implementations:
+
+  S@ End
+  (T@) { S@; } Put
+  (S@, (Unit@) { S@; }) { S@; } Do
+
+  <@ S@>(I@<S@>) { S@; } End = ...;
+  <@ S@>(I@<S@>, Char@) { S@; } Put = ...;
+  <@ S@>(I@<S@>, (S@, (Unit@) { S@; }) { S@; } Do = ...;
+
+* Now you can pass an IO@ to Do composition, for example, assuming you know
+  you are in that monad for S@.
+* Downside is you have to pass S@, I@<S@> around everywhere, which is tedious.
+
+3. Generalize to make monadic.
+  M@<Unit@> End
+  (T@) { M@<Unit@>; } Put
+  <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } Do
+
+* To support general notion of: you are doing some computation to return some
+  value that can have the side effect of outputting things.
+* Better symmetry with Get interface, which needs the ability to return
+  different values in the get monad. Unlike Put, which doesn't get any data
+  from the outside world that would need to be returned in some form or other.
+* In theory we could do ether the fully generic or the more explicit specific
+  versions of the wrappers on top of this.
+
+For Get interface, we'll want:
+  <@ A@>(A@) { M@<A@>; } Return
+  M@<Maybe@<T@>> Get
+  <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } Do
+  
+It needs to be general. Notice that 'Return' and 'Do' align with Put's 'End'
+and 'Do' if we use the general monadic approach.
+
+For these reasons, I think we should stick with the monadic approach. Better
+composition and flexibility. For example, maybe you want to compute something
+with logging to track what you are doing. Then you could reuse the 'Put'
+interface for your computation. You couldn't do that otherwise, because with
+just S@ = M@<Unit@>, you can't return anything useful from the computation.
+
+How do we decide between the generic version:
+
+  Foo@<A@>;
+
+And the specific version:
+
+  <<@>@ M@>(Monad@<M@>, FooI@<M@>) { Foo@<A@>; }
+  
+Certainly the generic version is nice to work with: much simpler types, no
+need to pass extra args around.
+
+But, if you pass the interface around explicitly, I feel like it could compose
+much better, and it's nice to have the scoping of 'm' and 'do'.
+
+Why composition is better with explicit interfaces:
+
+Say we have Get and Put interfaces, with monads. But now I want something that
+can do IO. To compose we would need: DoGet, DoPut, and DoIO. All gets get
+bundled together and then batch converted to DoIO. Same with all puts.
+
+Uh, maybe worth noting, if we use generic M@ instead of S@ for put, we can't
+directly use String@ type as the stream type. That doesn't support generic
+return operation? Well, actually it could as long as it ignores the argument.
+You would have a function (Shown@<A@>) { String@; } that doesn't give you the
+A@ back. That's nice to know.
+
+We are close now.
+
+I already have experience passing Monad@<M@> and interface Foo@<M@>
+everywhere. We do that for main apps, for example. Composition is fairly easy
+by passing multiple interface args or structs of interfaces that depend on M@.
+
+But it's annoying to have to do things like:
+
+  % O = /Core/Stream/OStream%(m);
+
+The other option being:
+
+  Unit@ _ <- m.do(PutLine(stdio.out, m, Str|'hello, world'));
+  m.return(True);
+
+We are a far way now from the ideal:
+
+  Unit@ _ <- Do(PutLine(Str|'hello, world'));
+  Return(True);
+
+But even here we can see the issue with composition. There's no easy way for
+me to specify if we are putting to stdio.out or stdio.err. I would have to be
+explicit about it regardless:
+
+  Unit@ _ <- Do(PutLine(Str|'hello, world', stdio.out);
+  Return(True);
+
+And that doesn't fix the output end. This returns something in Put@ type, not
+something in IO@ type. I would need to do something like:
+
+  Unit@ _ <- DoIO(ShowIO(PutLine(Str|'hello, world', stdio.out)));
+  ReturnIO(True);
+
+Or:
+
+  DoIO(ShowIO{
+    Unit@ _ <- DoPut(PutLine(Str|'hello, world', stdio.out));
+    ReturnPut(True);
+  });
+
+Compared to:
+
+  Unit@ _ <- m.do(PutLine(stdio.out, m, Str|'hello, world'));
+  m.return(True);
+
+Seems reasonable.
+
+Maybe we can have a helper function, like m.dol which forwards the m instance
+automatically, so you could write:
+
+  Unit@ _ <- m.dol(PutLine(stdio.out, Str|'hello, world'));
+  m.return(True);
+
+Or, as before, we could collect things into a top level module O = ...
+
+---
+
+I'm decided. Let's move forward with this plan: monadic Put and Get, with
+Monad interface passed separately from Put and Get interface. Start with
+explicitly passing everything, tedious as that is, but explore factoring that
+out with use of type aliases and function binds.
+
+The only thing to be a little careful of is order of arguments of things.
+Let's see if I can sort something out.
+
+Also, double check the error story. What did I decide before on returning
+errors or not? We said before error is done via separate interface. Let's not
+worry about it in this round. We've been stalled here long enough. Incremental
+progress is better than waiting forever for perfection.
+
+Put = <@ T@, <@>@ M@>(T@) { M@<Unit@>; }
+
+The only ordering question here is what type arg comes first, T@ or M@?
+
+I would like to be able to say things like:
+
+  PutChar@ = Put@<Char@>;
+
+I don't foresee ever wanting to say things like
+
+  IOPut@ = Put@<IO@>;
+
+I don't want type inferences on T@ - you are given a specific put type you are
+putting to.
+
+So this is clear then:
+
+  <@,<@>@>@ Put@ = <@ T@, <@>@ M@>(T@) { M@<Unit@>; };
+
+Get@ = <@ T@, <@>@ M@> { Maybe@<T@>; }
+
+Again, same logic, we rather have Get@<Char@> vs. Get@<Int@> or Get@<Byte@>
+than we want Get@<IO@> vs. Get@<SM@>; Done.
+
+Next are general put operations, which need put interface and monad. We can
+encapsulate that in a PutM@ type:
+
+PutM@ = <@ T@, @ A@, <@>@ M@>(Put@<T@, M@>, Monad@<M@>) { M@<A@>; };
+
+This one is messy. We have put element type T@, we have return type A@, and
+monad type M@. What order makes sense here?
+
+I want to supply element type first.
+
+It might be nice to abstract out an MonadM@ interface:
+
+MonadM@ = <@ A@, <@>@ M@>(Monad@<M@>) { M@<A@>; };
+
+This needs to take A@ first so we can pass around MonadM@<Unit@>, and do
+generic Do things like:
+
+Do = (MonadM@<A@>, (A@) { MonadM@<B@>; }) { MonadM@<B@>; }
+
+This represents a computation that works for all monadic types.
+
+But here's the question. Can we reuse MonadM@ for PutM@? I don't think we can.
+
+
+PutM@ = <@ T@, @ A@>(Put@<T@, M@>) { MonadM@<A@>; }
+
+Because we need access to M@ for the Put@ interface.
+
+So, as soon as we start to pass around interfaces that are tied to the monad,
+we can no longer separate them. Seems like MonadM@ may not be useful in that
+case.
+
+I know PutM@ is useful, because we can define things like PutChar, PutLine.
+
+Maybe it will be easier to think about this abstractly.
+
+We have an interface for use with a monad:
+
+  FooI@ = <<@>@ M@> { ... }
+
+We want a way to describe computations built purely on top of that interface
+combined with monad:
+
+  FooM@ = <@ A@> { <<@>@ M@>(FooI@<M@>, Monad@<M@>) { M@<A@>; }; };
+
+The only question here is whether to pass the Monad@ arg first or the FooI@
+arg first.
+
+Let's consider a stdio main program where I have stdio.in and stdio.out as
+instances of PutI@<M@> for my generic monad, and I want to call PutString on
+one or the other. PutString works for all PutI and M.
+
+If I have StdioI@<M@> as the stdio argument, I have to have M@ in the type
+signature and passed around explicitly. But I don't have to have Monad@<M@>
+necessarily.
+
+<<@>@ M@>(StdioI@<M@> stdio, Monad@<M@> m) {
+  ...
+
+Look, if I can't entirely hide the Monad@ arg, there's no point in trying.
+That is, Monad@<M@> m as an argument is not any worse than MonadM@<M@, A@> as
+a return type, right?
+
+I've had this discussion before. I used to have monad first followed by stdio.
+I switched it. There wasn't any practical difference, but conceptually I
+argued a change in m requires a change in i, but you can have multiple
+different i for a single m. Now whether that suggests we should put i first or
+m first, I'm not sure. If you put an arg first, you can partially apply it to
+hide it. If you put it last, you can put it behind a type alias and make
+something work for all of that?
+  
+In other words, it doesn't matter. So stick with monad last. I don't see the
+point of having a MonadM@ alias, because we can't hide the M@ type.
+
+Let's consider a stdio main program where I have stdio.in and stdio.out as
+instances of PutI@<M@> for my generic monad, and I want to call PutString on
+one or the other. PutString works for all PutI and M.
+
+<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
+  Unit@ _ <- m.do(PutString(Str|'hello', stdio.put, m));
+  ...
+
+That's pretty tedious, to be honest. What kind of helper functions can we
+have? First, let's get rid of m? Can we?
+
+I want to say:
+
+<@>@ M@>(Stdio@<M@> stdio) {
+  Unit@ _ <- Do(PutString(Str|'hello', stdio.put));
+  ...
+
+For this to work, the type of Do is...
+
+  (<<@>@ M@>(Monad@<M@>) { M@<A@>; })<<@>@ M2@, B@>((A@) { M2@<B@>; }) { M2@<B@>; };
+
+But that doesn't work, because PutString already has the type M@ applied to
+it. Specifically:
+
+PutString(Str|'hello', stdio.put)
+
+Has type: (Monad@<M@>) { M@<Unit@>; }, for the specific M@ instance we already
+have. So what I really want is:
+
+  <<@>@ M@>((Monad@<M@>) { M@<A@>; })<@ B@>((A@) { M@<B@>; }, Monad@<M@> { M@<B@>; }
+
+Which does have a MonadM@ type embedded inside:
+
+  MonadM@ = <<@>@ M@, @ A@>(Monad@<M@>) { M@<A@>; }
+
+  <<@>@ M@>(MonadM@<M@, A@>; })<@ B@>((A@) { M@<B@>; }, MonadM@<M@, B@>; }
+
+I suppose in this case it doesn't matter if we put M@ or A@ first to argument
+of MonadM@. We need to pass both explicitly in the do case.
+
+Alternatively, we can pull the Monad@ out to the top:
+
+<@>@ M@>(Monad@<M@> m) {
+  % M = /.../Monad%(m);
+
+  (Stdio@<M@> stdio) {
+    Unit@ _ <- M.Do(PutString(Str|'hello', stdio.put));
+    ...
+
+I don't know. It's all rather confusing.
+
+I guess this is what I want to avoid: having to pass 'm' everywhere:
+
+  Unit@ _ <- m.do(PutString(Str|'hello', stdio.put, m));
+
+Which we do reasonable well today using O = ...(m);
+
+Let's think a little more about how to solve this issue, now that we've got to
+the crux of it.
+
+---
+
+1. What we do today: O = ...(m). Defines a set of functions from the same
+module that all rely on the same interface instance.
+* Nice for defining functions that call each other. No need to pass argument
+  around explicitly.
+* Nice-ish to use functions with O = ...(m); then O.Foo(...);
+* But slightly annoying if you only want to use one of the functions?
+   ...(m).Foo(...)
+* And slightly annoying if you want to define two independent functions that
+  are parameterized the same way, because you repeat the call to ...(m);
+* And slightly annoying if you want to call into a function that itself wants
+  to reuse the same set of helpers, because both you and that function end up
+  calling the helpers.
+* And not clear how much should be included. For example, should the Put
+  operations take just m, or should they take the put as well? If they take
+  the put as well, I would need something like Oout = ...(out, m); Oerr =
+  ...(err, m), which is annoying. Versus O = ...(m), O.put(out, ...);
+
+2. Define functions individually, passing m first, then i, then args.
+* Nice-ish to use with % Foo = /Foo%.Foo(m) at top of your function.
+* Just a bit tedious of boiler plate to have at the top of every function you
+  write.
+* You can write % Foo = /Foo%.Foo(m) just as easily as % Foo = /Foo%.Foo(m,
+  put), which is nice.
+* Feels more general than (2), and only more tedious to the extent that you
+  are importing multiple different functions from the same module?
+* But imports in fble are already tedious. Having to interleave them with
+  function definitions and duplicate them sounds worse.
+* How to test this: try changing OStream to use this approach. See how it
+  feels.
+
+3. Have Do pass the monad instance to its argument directly.
+* e.g. define at top of function % Do = ...(m);
+* Then call Do(PutStr(out, Str|'...')), where PutStr takes m as an argument.
+* Only have to factor out the Do function. Can use all the others as is.
+* Interface needs to be passed to Foo function to infer the right type of M@.
+* Requires opposite order of arguments from approach (2); monad comes last
+  instead of first in this case.
+* Does it scale to pure interface things? Maybe I can define:
+  - Do = .../DoPut(out, m); Do(PutChar(Str|'...'))
+  - Which suggests the interface arg could come after the primary arg.
+* But PutStr(out, Str|'...') feels more natural than PutStr(Str|'...', out) to
+  me.
+
+When we call 'Do', we can imagine a few different cases:
+* I have something tied to the specific M@. For example, a direct interface
+  call: Do(stdio.out(c));
+* I'm reusing something generic in M@. Would be nice to auto pass the monad to
+  it: Do(PutChar(out, c));
+
+I have to decide argument order one way or another, and just stick with that.
+I've flipped back and forth before. Do we try to share in what we return or
+share in what we've already applied? Most specific argument first or last?
+
+I don't know. fputs puts string first, stream second. fprintf the other way
+around because of varargs.

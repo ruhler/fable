@@ -1,4 +1,70 @@
 
+@ Char@ = /Std/Char%.Char@;
+% U = /Std/Char/Lit%.U;
+
+<@>@ List@ = /Std/List%.List@;
+
+@ String@ = /Std/String%.String@;
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+# Stream@<S@> is an interface describing stream types S@ that you can 
+# show stuff to.
+<@>@ Stream@ = <@ S@> { *(
+  S@ return,                          # Show nothing.
+  (S@, (Unit@) { S@; }) { S@; } do,   # Show the first arg, followed by the second
+  (Char@) { S@; } put                 # Show a single character
+);};
+
+# ShowM@ is a computation that can show something to any stream you ask it to.
+<@>@ ShowM@ = <@ S@>(Stream@<S@>) { S@; };
+
+# ShowD@ is a deferred ShowM@ computation.
+@ ShowD@ = (Unit@) { ShowM@; };
+
+# A deferred show computation that outputs nothing.
+ShowD@ Return = (Unit@ _)<@ S@>(Stream@<S@> s) {
+  s.return;
+};
+
+# Show a string.
+(String@) { ShowD@; }
+String = (String@ str, Unit@ _)<@ S@>(Stream@<S@> s) {
+  str.?(empty: s.return);
+  Unit@ _ <- s.do(s.put(str.items.head));
+  String(str.items.tail, Unit, s);
+};
+
+Char@ '%%' = U|25;
+Char@ '%s' = U|73;
+
+# Formatted Show
+(String@, List@<ShowD@>) { ShowD@; }
+Format = (String@ fmt, List@<ShowD@> args, Unit@ _)<@ S@>(Stream@<S@> s) {
+  fmt.?(empty: s.return);
+  Char@ c = fmt.items.head;
+  /Std/Char/Eq%.Eq('%%', c).?(true: {
+    fmt.items.tail.?(empty: /Std/Undef%.Undef.undef<S@>);
+    Char@ e = fmt.items.tail.items.head;
+
+    /Std/Char/Eq%.Eq('%%', e).?(true: {
+      Unit@ _ <- s.do(s.put(c));
+      Format(fmt.items.tail.items.tail, args, Unit, s);
+    });
+
+    /Std/Char/Eq%.Eq('%s', e).?(true: {
+      Unit@ _ <- s.do(args.items.head(Unit, s));
+      Format(fmt.items.tail.items.tail, args.items.tail, Unit, s);
+    });
+
+    /Std/Undef%.Undef.undef<S@>;
+  });
+
+  Unit@ _ <- s.do(s.put(c));
+  Format(fmt.items.tail, args, Unit, s);
+};
+
 # Show@ --
 #   Common facility for converting values to human readable strings. Primarily
 #   used for testing and debugging.
@@ -10,7 +76,8 @@
 #   T@ - The value to convert to a string.
 #
 # Returns:
-#   A human readable representation of the given value.
-<@>@ Show@ = <@ T@>(T@) { /Std/String%.String@; };
+#   A deferred computation to show the value to a stream in human readable
+#   form.
+<@>@ Show@ = <@ T@>(T@) { ShowD@; };
 
-@(Show@);
+@(Show@, ShowD@, Return, String, Format);

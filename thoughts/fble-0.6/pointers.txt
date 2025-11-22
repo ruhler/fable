@@ -1,0 +1,91 @@
+Fble Pointers
+=============
+What do you think about adding pointers to the fble language?
+
+Two main motivations:
+1. Performance
+2. Modularity
+
+Performance comes from the ability to update a small part of a very large data
+structure in isolation. For example, change the value of a key in a large map.
+To do that today, we have to allocate a new map, which means traversing the
+spine of the data structure and making copies. That's real performance cost
+that can be avoided with pointers.
+
+Imagine all the cool things we could do with pointers: doubly linked lists,
+fifos where you insert at the front and take from the back, cross referencing
+things between different data structures.
+
+Modularity comes from the ability to have state that is visible only to
+whoever has a handle to the state. Take a state monad like how we would use it
+today. Everyone has to know about all the state that everyone uses, even
+though most users only care about a very small portion of the state. This
+adds risk: now people can read data they otherwise wouldn't be, and they could
+trash data they otherwise wouldn't be able to.
+
+The way to mitigate inappropriate reading and writing of state would be to
+make every subfunction generic in the monad it is operating on, with specific
+access to the state it cares about. Then have a good way of composing the
+different required states together. That doesn't prevent us from listing at
+the top level explicitly what everyone needs, in a sense violating modularity
+by exposing internal implementation details of blocks in the state
+transformation.
+
+I would argue as soon as you are using a giant state monad, you get all the
+costs associated with state-based computation anyway. May as well do it via
+pointers instead.
+
+The interface to use seems fairly straight forward, though there are some
+details to work out. You have a special monad, like ST, with operations to
+create a new reference to a value, read the value of the reference, and write
+a value to the reference:
+
+  <@ T@>(T@) { ST@<Ref@<T@>>; } New
+  <@ T@>(Ref@<T@>, T@>) { ST@<Unit@>; } Write
+  <@ T@>(Ref@<T@>) { ST@<T@>; } Read
+
+The monadic bind operation will provide the necessary sequencing to make it
+clear what value is read when.
+
+I don't think it would be difficult to implement at all. The corner case would
+be: how to you prevent people from running the ST and returning a reference
+that's only valid within the ST? Is that a magic I have in fble, or we need to
+do something fancy like they do in Haskell?
+
+Let's imagine we had pointers like this. Does that collapse the space of
+monads that we would want to define and compose together? Let's be honest,
+almost all the use of monads I have will be for reading and writing state. But
+we can do all of that via pointers?
+
+Not quite. The goal of the monads is to hide things that we want to be
+implicit, like an interface implementation or state. Even with pointers, we
+need some way of passing the allocated pointer to its user. This might work
+with a gate, where we can have an ST@ that returns an ST@ with the pointer
+embedded inside. It doesn't work for interfaces.
+
+So, either we start passing around pointers everywhere, or we pass around
+little interfaces in ST@ monad that wrap the pointers.
+
+What are the downsides of pointers? Why don't I already have them? Surely
+there are good reasons I can articulate?
+
+Brainstorm:
+* Hard to implement in hardware? But not harder than functions and the
+  existing use of internal references.
+* Complex lifetime management? Current data lifetime is essential: forever
+  once the object is alive. With pointers, the data gets invalidated after
+  every ST@ bind.
+* Introduces a difference between Foo@ and Ref@<Foo@> in data structures, so
+  now there are a lot more assumptions that need to be baked into data
+  structures about how they are going to be used, so they can't be reused as
+  generically?
+* Everything gets sucked into the ST@ monad? For example, you couldn't use a
+  doubly linked list outside of ST@ monad. So anyone who might want to use
+  such a data structure needs to be in ST@, and that implementation detail
+  leaks out like a contagion?
+
+I suppose the performance magic I want is the ability to hold a reference to
+something, and have something else change what that points to, without me
+having to be told about it? Except we can do that with state monad already,
+right?
+
