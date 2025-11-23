@@ -10,6 +10,7 @@
 % Rect = /App/Drawing%.Rect;
 
 @ Dir@ = /Computrainer/Model%.Dir@;
+@ Switch@ = /Computrainer/Model%.Switch@;
 
 # Anatomy of a grid location:
 #  ........
@@ -67,8 +68,14 @@ Sprite@ Down = Sprites[LBG, BLG, BRG, RBG];
 };
 
 Sprite@ Around = Sprites[LBG, BLG, BRG, RBG, LTG, TLG, TRG, RTG];
+Sprite@ Select = Around;
+Sprite@ Sink = Around;
 
-% Sprites = @(Car, Dir, Dirs, Around);
+(Switch@) { Sprite@; } Switch = (Switch@ s) {
+    Dirs(s.0, s.1);
+};
+
+% Sprites = @(Car, Dir, Select, Sink, Switch);
 
 @(Sprite@, W, Sprites);
 

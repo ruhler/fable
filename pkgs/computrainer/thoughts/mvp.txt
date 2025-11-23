@@ -275,3 +275,22 @@ So, rethink how to drive the train. Think conceptually as if the caboose is
 pushing the train forward if it can. If either of the outputs get stuck, that
 causes the input to get stuck, so neither of the outputs advance forward.
 
+---
+
+New approach, for supporting dup: cabooses are the engines, they push the
+trains.
+
+I think it could be straight forward. Cars a just a grid of values. We have a
+separate list of coordinates of engines. I implement an operation to try and
+advance an engine, which may fail.
+
+To advance an engine: if where it wants to go is free move it. Otherwise, try
+advancing the car at the destination, and if successful, then move the engine.
+Otherwise fail.
+
+The dup gate will try advancing both outputs. If either fails, then fail.
+
+Advance each engine in turn, one at a time. To break recursion and otherwise
+avoid funning cases, let's say an engine must move under its own power, it
+cannot be pushed by something else.
+

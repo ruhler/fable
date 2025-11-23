@@ -55,12 +55,12 @@ DrawGate = (Int@ x, Int@ y, Gate@ g) {
     Translate(Mul(x, W), Mul(y, W),
         g.?(noop: Blank,
             rail: Sprites.Dir(g.rail, Color.Gate),
-            sink: Sprites.Around(Color.Gate),
+            sink: Sprites.Sink(Color.Gate),
             source: Sprites.Dir(g.source, Color.C),
             zero: Sprites.Dir(g.zero, Color.0),
             one: Sprites.Dir(g.one, Color.1),
-            switch: Sprites.Dirs(g.switch.0, g.switch.1, Color.Gate),
-            select: Sprites.Around(Color.Gate)));
+            switch: Sprites.Switch(g.switch, Color.Gate),
+            select: Sprites.Select(Color.Gate)));
 };
 
 (Int@, Int@, Model@) { Drawing@; }
