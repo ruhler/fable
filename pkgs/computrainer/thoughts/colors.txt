@@ -22,4 +22,32 @@ You can get:
 
 Not sure that's going to get me very far.
 
+---
 
+How about this. We know RGB colors are a 3D vector space. If we separate out
+intensity, we can think of a color as a*x, where a is the intensity and x is a
+unit vector with some combination of red, green, and blue. Say a ranges from 0
+to 1, so that 0 is black and 1 * <sqrt(1/3), sqrt(1/3), sqrt(1/3)> is white?
+Something seems wrong there. Is 0xFF0000 less intense than 0xFFFFFF? It must
+be. But that means you can never have a red as intense as a white?
+
+Anyway...
+
+Primary colors: Red, Green, Blue
+Secondary colors:
+  Cyan = Blue + Green, complement of Red
+  Magenta = Blue + Red, complement of Green
+  Yellow = Green + Red, complement of Blue
+White = Red + Green + Blue
+
+Intensity = (R + G + B) / 3
+Saturation = 1 - min(R, G, B)/Intensity
+Hue = a more complicated trig function. Describes what color name the color
+corresponds to, e.g. blue, red, yellow, etc.
+
+So I guess my unit vector x is hue?
+
+Notice that saturation of a grey color is 0. So I guess saturation is
+non-greyness.
+
+Anyway, again, not sure what comes next in terms of picking nice colors.

@@ -1,7 +1,5 @@
 
 @ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
 % Mul = /Std/Int%.Mul;
 % Int = /Std/Int/Lit%.Int;
 
@@ -13,39 +11,18 @@
 % Blank = /App/Drawing%.Blank;
 % Over = /App/Drawing%.Over;
 % Rect = /App/Drawing%.Rect;
+% Translate = /App/Drawing%.Translate;
 
 @ Coord@ = /Computrainer/Grid%.Coord@;
 % Grid = /Computrainer/Grid%.Grid;
 
 @ Car@ = /Computrainer/Model%.Car@;
-@ Dir@ = /Computrainer/Model%.Dir@;
 @ Gate@ = /Computrainer/Model%.Gate@;
 @ Model@ = /Computrainer/Model%.Model@;
 @ Value@ = /Computrainer/Model%.Value@;
-% Left = /Computrainer/Model%.Left;
-% Right = /Computrainer/Model%.Right;
 
-# Anatomy of a grid location:
-#  ........
-#  .GGGGGG.
-#  .G____G.
-#  .G____G.
-#  .G____G.
-#  .G____G.
-#  .GGGGGG.
-#  ........
-#
-#  Where '.' is blank padding between squares.
-#        'G' is used to display what kind of gate it is
-#        '_' is to show what car is on the square.
-#
-#  We use the following dimensions to describe this when drawing:
-Int@ W = Int|20;     # Full width of square.
-Int@ WGC = Int|18;   # Width of square with Car and Gate area only.
-Int@ WG = Int|2;     # Width of gate region.
-Int@ WC = Int|14;    # Width of the car square.
-Int@ OG = Int|7;     # Offset to iner edge of gates.
-Int@ OB = Int|9;     # Offset to inner edge of border.
+% W = /Computrainer/Graphics/Sprites%.W;
+% Sprites = /Computrainer/Graphics/Sprites%.Sprites;
 
 % Color = {
     % color = /App/Drawing%.Color;
@@ -60,65 +37,30 @@ Int@ OB = Int|9;     # Offset to inner edge of border.
         Gate: color.Cyan
     );
 };
-    
+
 
 (Value@) { Color@; }
 CarColor = (Value@ v) {
     v.?(C: Color.C, 0: Color.0, 1: Color.1, S: Color.S, L: Color.L);
 };
 
+
 (Car@) { Drawing@; }
 DrawCar = (Car@ c) {
-    Rect(Sub(Mul(c.x, W), OG), Sub(Mul(c.y, W), OG), WC, WC, CarColor(c.v));
-};
-
-(Int@, Int@, Dir@, Color@) { Drawing@; }
-DrawDir = (Int@ x, Int@ y, Dir@ d, Color@ c) {
-    Int@ cx = Mul(x, W);
-    Int@ cy = Mul(y, W);
-    d.?(
-        up: Drawings[
-            Rect(Sub(cx, OB), Add(cy, OG), WGC, WG, c),
-            Rect(Sub(cx, OB), cy, WG, OB, c),
-            Rect(Add(cx, OG), cy, WG, OB, c)
-        ],
-        down: Drawings[
-            Rect(Sub(cx, OB), Sub(cy, OB), WGC, WG, c),
-            Rect(Sub(cx, OB), Sub(cy, OB), WG, OB, c),
-            Rect(Add(cx, OG), Sub(cy, OB), WG, OB, c)
-        ],
-        left: Drawings[
-            Rect(Sub(cx, OB), Sub(cy, OB), WG, WGC, c),
-            Rect(Sub(cx, OB), Sub(cy, OB), OB, WG, c),
-            Rect(Sub(cx, OB), Add(cy, OG), OB, WG, c)
-        ],
-        right: Drawings[
-            Rect(Add(cx, OG), Sub(cy, OB), WG, WGC, c),
-            Rect(cx, Sub(cy, OB), OB, WG, c),
-            Rect(cx, Add(cy, OG), OB, WG, c)
-        ]
-    );
-};
-
-
-(Int@, Int@, Color@) { Drawing@; }
-DrawSolid = (Int@ x, Int@ y, Color@ c) {
-    Drawings[DrawDir(x, y, Left, c), DrawDir(x, y, Right, c)];
-
+    Translate(Mul(c.x, W), Mul(c.y, W), Sprites.Car(CarColor(c.v)));
 };
 
 (Int@, Int@, Gate@) { Drawing@; }
 DrawGate = (Int@ x, Int@ y, Gate@ g) {
-    g.?(noop: Blank,
-        rail: DrawDir(x, y, g.rail, Color.Gate),
-        sink: DrawSolid(x, y, Color.Gate),
-        source: DrawDir(x, y, g.source, Color.C),
-        zero: DrawDir(x, y, g.zero, Color.0),
-        one: DrawDir(x, y, g.one, Color.1),
-        switch: Drawings[
-            DrawDir(x, y, g.switch.0, Color.Gate),
-            DrawDir(x, y, g.switch.1, Color.Gate)],
-        select: DrawSolid(x, y, Color.Gate));
+    Translate(Mul(x, W), Mul(y, W),
+        g.?(noop: Blank,
+            rail: Sprites.Dir(g.rail, Color.Gate),
+            sink: Sprites.Around(Color.Gate),
+            source: Sprites.Dir(g.source, Color.C),
+            zero: Sprites.Dir(g.zero, Color.0),
+            one: Sprites.Dir(g.one, Color.1),
+            switch: Sprites.Dirs(g.switch.0, g.switch.1, Color.Gate),
+            select: Sprites.Around(Color.Gate)));
 };
 
 (Int@, Int@, Model@) { Drawing@; }

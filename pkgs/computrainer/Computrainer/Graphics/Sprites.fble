@@ -1,0 +1,74 @@
+
+@ Int@ = /Std/Int%.Int@;
+% Int = /Std/Int/Lit%.Int;
+
+<@>@ List@ = /Std/List%.List@;
+
+@ Color@ = /App/Drawing%.Color@;
+@ Drawing@ = /App/Drawing%.Drawing@;
+% Drawings = /App/Drawing%.Drawings;
+% Rect = /App/Drawing%.Rect;
+
+@ Dir@ = /Computrainer/Model%.Dir@;
+
+# Anatomy of a grid location:
+#  ........
+#  .GGGGGG.
+#  .G____G.
+#  .G____G.
+#  .G____G.
+#  .G____G.
+#  .GGGGGG.
+#  ........
+#
+#  Where '.' is blank padding between squares.
+#        'G' is used to display what kind of gate it is
+#        '_' is to show what car is on the square.
+#
+#  We use the following dimensions to describe this when drawing:
+Int@ W = Int|20;   # Full width of square.
+Int@ LG = Int|1;   # Offset from left edge to left side gate.
+Int@ LC = Int|3;   # Offset from left edge to left side car.
+Int@ RG = Int|17;  # Offset from left edge to right side gate.
+Int@ C = Int|10;   # Center point.
+
+Int@ WC = Int|14;  # Width of the car square.
+Int@ WHG = Int|9;  # Width of half the gate + car area.
+Int@ WG = Int|2;   # Width of gate region.
+
+@ Sprite@ = (Color@) { Drawing@; };
+
+Sprite@ Car = Rect(LC, LC, WC, WC);
+Sprite@ TLG = Rect(LG, RG, WHG, WG);
+Sprite@ TRG = Rect(C, RG, WHG, WG);
+Sprite@ BLG = Rect(LG, LG, WHG, WG);
+Sprite@ BRG = Rect(C, LG, WHG, WG);
+Sprite@ LBG = Rect(LG, LG, WG, WHG);
+Sprite@ LTG = Rect(LG, C, WG, WHG);
+Sprite@ RBG = Rect(RG, LG, WG, WHG);
+Sprite@ RTG = Rect(RG, C, WG, WHG);
+
+(List@<Sprite@>) { Sprite@; }
+Sprites = (List@<Sprite@> xs, Color@ c) {
+    Drawings(/Std/List%.Map(xs, (Sprite@ f) { f(c); }));
+};
+
+Sprite@ Left = Sprites[LBG, LTG, TLG, BLG];
+Sprite@ Right = Sprites[RBG, RTG, TRG, BRG];
+Sprite@ Up = Sprites[LTG, TLG, TRG, RTG];
+Sprite@ Down = Sprites[LBG, BLG, BRG, RBG];
+
+(Dir@) { Sprite@; } Dir = (Dir@ d) {
+    d.?(up: Up, down: Down, left: Left, right: Right);
+};
+
+(Dir@, Dir@) { Sprite@; } Dirs = (Dir@ a, Dir@ b) {
+    Sprites[Dir(a), Dir(b)];
+};
+
+Sprite@ Around = Sprites[LBG, BLG, BRG, RBG, LTG, TLG, TRG, RTG];
+
+% Sprites = @(Car, Dir, Dirs, Around);
+
+@(Sprite@, W, Sprites);
+
