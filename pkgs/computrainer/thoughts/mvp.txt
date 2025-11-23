@@ -241,3 +241,37 @@ Or:  SW0
 
 Maybe that's the right way to do it. W has 3 directions: 0, 1, S. And S is
 just S. Sounds reasonable. Let's try it.
+
+---
+
+Switch and select are implemented. Now to rewrite my network to try out my 1
+bit counter.
+
+Uh... except I need a dup gate now, right?
+
+Is there any simple thing I can do to watch the select gate at work with what
+I have? Ideally we keep switching off which path it takes.
+
+Uh. Tricky. I'll need to design something. Could we do a simple and gate at
+least? Or an inverter? That's what I'm trying to do here. Maybe:
+
+      >>>>>>>>S
+     /  U->0->W0->.
+>>>>D         1>>>>>>>>>>
+     \        0>>/
+      | U->1->W1->.
+      >>>>>>>>S
+
+Yeah, so, I think I need to dup for this to work.
+ 
+---
+
+Dup gate is going to be hard because I'll have to rethink how to drive the
+trains. The trouble is if one side of the output gets blocked, that needs to
+cause the other side of the output to get blocked too. Otherwise the other
+side will split.
+
+So, rethink how to drive the train. Think conceptually as if the caboose is
+pushing the train forward if it can. If either of the outputs get stuck, that
+causes the input to get stuck, so neither of the outputs advance forward.
+

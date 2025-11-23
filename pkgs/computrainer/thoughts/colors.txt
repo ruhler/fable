@@ -1,0 +1,25 @@
+Colors
+======
+
+Things that need colors:
+* Each kind of car: C, 0, 1, S, L
+* The background
+* Generic gate coloring.
+
+That's 7 colors to start with. I should pick ones that look nice together.
+
+From what I read on the internet:
+* Colors X and Y are complementary if Y = White - X.
+* Complementary colors contrast really well.
+* It's nice to have three variations on the color for an object:
+  base, shade (darkened base), and tint (lightened base).
+
+What colors can we derive from complements? Well, seems like we can subtract
+colors as an operation. Start with White and some arbitrary color like blue.
+You can get:
+
+  W, X, Y = (W - X), Z = Y - X?
+
+Not sure that's going to get me very far.
+
+

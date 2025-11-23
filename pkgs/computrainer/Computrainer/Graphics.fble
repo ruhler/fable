@@ -9,7 +9,6 @@
 
 @ Color@ = /App/Drawing%.Color@;
 @ Drawing@ = /App/Drawing%.Drawing@;
-% Color = /App/Drawing%.Color;
 % Drawings = /App/Drawing%.Drawings;
 % Blank = /App/Drawing%.Blank;
 % Over = /App/Drawing%.Over;
@@ -25,9 +24,6 @@
 @ Value@ = /Computrainer/Model%.Value@;
 % Left = /Computrainer/Model%.Left;
 % Right = /Computrainer/Model%.Right;
-% C = /Computrainer/Model%.C;
-% 0 = /Computrainer/Model%.0;
-% 1 = /Computrainer/Model%.1;
 
 # Anatomy of a grid location:
 #  ........
@@ -51,9 +47,24 @@ Int@ WC = Int|14;    # Width of the car square.
 Int@ OG = Int|7;     # Offset to iner edge of gates.
 Int@ OB = Int|9;     # Offset to inner edge of border.
 
+% Color = {
+    % color = /App/Drawing%.Color;
+
+    @(
+        C: color.Red,
+        0: color.Black,
+        1: color.White,
+        S: color.Yellow,
+        L: color.Magenta,
+        Background: Color@(Int|128, Int|128, Int|128),
+        Gate: color.Cyan
+    );
+};
+    
+
 (Value@) { Color@; }
 CarColor = (Value@ v) {
-    v.?(C: Color.Red, 0: Color.Black, 1: Color.White, S: Color.Yellow, L: Color.Magenta);
+    v.?(C: Color.C, 0: Color.0, 1: Color.1, S: Color.S, L: Color.L);
 };
 
 (Car@) { Drawing@; }
@@ -99,21 +110,20 @@ DrawSolid = (Int@ x, Int@ y, Color@ c) {
 (Int@, Int@, Gate@) { Drawing@; }
 DrawGate = (Int@ x, Int@ y, Gate@ g) {
     g.?(noop: Blank,
-        rail: DrawDir(x, y, g.rail, Color.Cyan),
-        sink: DrawSolid(x, y, Color.Cyan),
-        source: DrawDir(x, y, g.source, CarColor(C)),
-        zero: DrawDir(x, y, g.zero, CarColor(0)),
-        one: DrawDir(x, y, g.one, CarColor(1)),
+        rail: DrawDir(x, y, g.rail, Color.Gate),
+        sink: DrawSolid(x, y, Color.Gate),
+        source: DrawDir(x, y, g.source, Color.C),
+        zero: DrawDir(x, y, g.zero, Color.0),
+        one: DrawDir(x, y, g.one, Color.1),
         switch: Drawings[
-            DrawDir(x, y, g.switch.0, Color.Green),
-            DrawDir(x, y, g.switch.1, Color.Green)],
-        select: DrawSolid(x, y, Color.Green));
+            DrawDir(x, y, g.switch.0, Color.Gate),
+            DrawDir(x, y, g.switch.1, Color.Gate)],
+        select: DrawSolid(x, y, Color.Gate));
 };
 
 (Int@, Int@, Model@) { Drawing@; }
 DrawModel = (Int@ width, Int@ height, Model@ m) {
-    Color@ gray = Color@(Int|128, Int|128, Int|128);
-    Drawing@ clear = Rect(Int|0, Int|0, width, height, gray);
+    Drawing@ clear = Rect(Int|0, Int|0, width, height, Color.Background);
     Drawing@ cars = Drawings(/Std/List%.Map(Concat(m.s.trains), DrawCar));
     Drawing@ gates = Grid.ForEach(m.gates, Blank, (Coord@ xy, Gate@ g, Drawing@ d) {
         Over(d, DrawGate(xy.x, xy.y, g));
