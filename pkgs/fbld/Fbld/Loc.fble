@@ -29,13 +29,13 @@ Int@ 1 = Int|1;
   l.@(col: Incr(l.col));
 };
 
-# Prefix a message with location information.
-(Loc@, String@) { ShowM@; } Report = (Loc@ l, String@ msg) {
+# Report an message with location information.
+(Loc@, ShowM@) { ShowM@; } Report = (Loc@ l, ShowM@ msg) {
   Format|'%s:%s:%s: %s'[
     /Core/Show%.String(l.file),
     /Core/Int/Show%.Show(l.line),
     /Core/Int/Show%.Show(l.col),
-    /Core/Show%.String(msg)];
+    msg];
 };
 
 Loc@ Unknown = Loc@(Str|'???', 1, 1);

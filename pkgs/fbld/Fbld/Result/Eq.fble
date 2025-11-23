@@ -3,11 +3,13 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
+% ToString = /Core/Show%.ToString;
+
 <@>@ Result@ = /Fbld/Result%.Result@;
 
 <@ T@>(Eq@<T@>) { Eq@<Result@<T@>>; }
 Eq = <@ T@>(Eq@<T@> eq, Result@<T@> a, Result@<T@> b) {
-  /Std/List/Eq%.Eq(/Fbld/Text/Eq%.Eq, a.errors, b.errors).?(false: False);
+  /Std/String/Eq%.Eq(ToString(a.errors), ToString(b.errors)).?(false: False);
   /Std/Bool/Eq%.Eq(a.failed, b.failed).?(false: False);
   /Core/Maybe/Eq%.Eq(eq, a.value, b.value);
 };

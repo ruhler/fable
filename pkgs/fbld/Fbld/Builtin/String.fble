@@ -6,15 +6,13 @@ Int@ 0 = /Std/Int%.0;
 Int@ 1 = /Std/Int%.1;
 
 <@>% List = /Std/List%.List;
-<@>% Concat = /Std/List%.Concat;
 <@>% Get = /Std/List/Index%.Get;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -39,9 +37,9 @@ Int@ 1 = /Std/Int%.1;
     empty: r.return(Nothing<Char@>),
     plain: r.return(Just(markup.plain.text.items.head)),
     command: {
-      Error<Maybe@<Char@>>(markup.command.name.loc, Concat[
-          Str|'expected plain text, but found command @',
-          markup.command.name.text]);
+      Error<Maybe@<Char@>>(markup.command.name.loc,
+        Format|'expected plain text, but found command @%s'[
+          /Core/Show%.String(markup.command.name.text)]);
     },
     sequence: HeadOf(markup.sequence.a));
 };
@@ -64,9 +62,9 @@ Impl@ Head = (Env@ env, Command@ cmd) {
       r.return(Plain(markup.plain.loc, markup.plain.text.items.tail));
     },
     command: {
-      Error<Markup@>(markup.command.name.loc, Concat[
-          Str|'expected plain text, but found command @',
-          markup.command.name.text]);
+      Error<Markup@>(markup.command.name.loc,
+        Format|'expected plain text, but found command @%s'[
+          /Core/Show%.String(markup.command.name.text)]);
     },
     sequence: {
       Markup@ a <- r.do(TailOf(markup.sequence.a));

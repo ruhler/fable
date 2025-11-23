@@ -8,17 +8,14 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Empty = /Std/List%.Empty;
-<@>% Append = /Std/List%.Append;
+<@>@ ShowM@ = /Core/Show%.ShowM@;
 
-@ String@ = /Std/String%.String@;
+% FormatE = /Core/Char/Ascii/Show%.FormatE;
+
+@ Unit@ = /Std/Unit%.Unit@;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
-
-@ Text@ = /Fbld/Text%.Text@;
-% Text = /Fbld/Text%.Text;
+% Report = /Fbld/Loc%.Report;
 
 # A result of an operation that may fail.
 # Note:
@@ -30,32 +27,26 @@
 # * If failed is False, value is Just.
 <@>@ Result@ = <@ T@> {
   *(
-    List@<Text@> errors,    # List of error messages reported.
+    ShowM@ errors,          # List of error messages reported.
     Bool@ failed,           # True if there were any errors, false otherwise.
     Maybe@<T@> value        # The value of the result.
   );
 };
 
 <@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
-  Result@(Empty<Text@>, False, Just(x));
+  Result@(/Core/Show%.Return, False, Just(x));
 };
 
-# Indicate an error with text error message. 
-<@ T@>(Text@) { Result@<T@>; }
-Error_ = <@ T@>(Text@ e) {
-  Result@(List[e], True, Nothing<T@>);
-};
-
-# Indicate an error with location and string error message.
-<@ T@>(Loc@, String@) { Result@<T@>; }
-Error = <@ T@>(Loc@ l, String@ msg) {
-  Error_<T@>(Text(l, msg));
+# Indicate an error with location and error message.
+<@ T@>(Loc@, ShowM@) { Result@<T@>; }
+Error = <@ T@>(Loc@ l, ShowM@ msg) {
+  Result@(Report(l, FormatE|'error: %s\n'[msg]), True, Nothing<T@>);
 };
 
 # Indicate an error with no error message.
 <@ T@> { Result@<T@>; }
 Fail = <@ T@> {
-  Result@(Empty<Text@>, True, Nothing<T@>);
+  Result@(/Core/Show%.Return, True, Nothing<T@>);
 };
 
 # Assuming the given result is an error, change its type.
@@ -79,9 +70,13 @@ Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
   ra.value.?(nothing: Raise<B@>(ra));
 
   Result@<B@> rb = f(ra.value.just);
-  Result@(Append(ra.errors, rb.errors), Or(ra.failed, rb.failed), rb.value);
+  ShowM@ errors = {
+    Unit@ _ <- /Core/Show%.Do(ra.errors);
+    rb.errors;
+  };
+  Result@(errors, Or(ra.failed, rb.failed), rb.value);
 };
 
 /Std/Monad%.Monad@<Result@> Monad = @(return: Return, do: Do);
 
-@(Result@, Monad, Ok, Error_, Error, Fail, Raise, Try);
+@(Result@, Monad, Ok, Error, Fail, Raise, Try);

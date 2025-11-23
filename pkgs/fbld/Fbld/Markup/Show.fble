@@ -1,27 +1,31 @@
 
-<@>% Concat = /Std/List%.Concat;
-
 <@>@ Show@ = /Core/Show%.Show@;
+% Do = /Core/Show%.Do;
 
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
+% String = /Core/Char/Ascii/Show%.String;
+
+@ Unit@ = /Std/Unit%.Unit@;
 
 @ Command@ = /Fbld/Markup%.Command@;
 @ Markup@ = /Fbld/Markup%.Markup@;
 
 Show@<Command@> Command = (Command@ x) {
-  Concat[
+  Format|'%s%s'[
     /Fbld/Text/Show%.Show(x.name),
     /Core/List/Show%.Show(Markup, x.args)
   ];
 },
 
 Show@<Markup@> Markup = (Markup@ m) {
-  # TODO: Avoid quadratic blowup from Append in case of sequence.
   m.?(
-    empty: Str|'{}',
+    empty: String|'{}',
     plain: /Fbld/Text/Show%.Show(m.plain),
     command: Command(m.command),
-    sequence: /Std/List%.Append(Markup(m.sequence.a), Markup(m.sequence.b)));
+    sequence: {
+      Unit@ _ <- Do(Markup(m.sequence.a));
+      Markup(m.sequence.b);
+    });
 
 };
 

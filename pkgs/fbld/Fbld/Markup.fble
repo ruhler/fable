@@ -1,12 +1,12 @@
 
 <@>@ List@ = /Std/List%.List@;
-<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -65,10 +65,10 @@ ToString_ = (Markup@ m, String@ s) {
     empty: r.return(s),
     plain: r.return(/Std/List%.Append(m.plain.text, s)),
     command: {
-      Error<String@>(m.command.name.loc, Concat[
-          Str|'expected plain text, but found command @',
-          m.command.name.text
-          ]);
+      Error<String@>(m.command.name.loc,
+        Format|'expected plain text, but found command @%s'[
+          /Core/Show%.String(m.command.name.text)
+        ]);
     },
     sequence: {
       String@ tail <- r.do(ToString_(m.sequence.b, s));

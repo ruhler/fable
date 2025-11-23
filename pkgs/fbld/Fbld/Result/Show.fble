@@ -1,33 +1,19 @@
 
-<@>% Concat = /Std/List%.Concat;
-
 <@>@ Show@ = /Core/Show%.Show@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% StrE = /Std/Char/Ascii%.StrE;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
-@ Text@ = /Fbld/Text%.Text@;
 
 <@ T@> { Show@<Result@<T@>>; }
 ShowErrors = <@ T@>(Result@<T@> r) {
-  r.errors.?(empty: Str|'');
-  Text@ message = r.errors.items.head;
-  String@ tail = ShowErrors(r.@(errors: r.errors.items.tail));
-  String@ head = /Fbld/Loc%.Report(message.loc,
-    Concat[Str|'error: ', message.text, StrE|'\n']);
-  Concat[head, tail];
+  r.errors;
 };
 
 <@ T@>(Show@<T@>) { Show@<Result@<T@>>; }
 Show = <@ T@>(Show@<T@> show, Result@<T@> r) {
-  r.failed.?(false: Concat[Str|'ok: ', show(r.value.just)]);
-  Concat[
-    Str|'failed: ',
-    /Core/List/Show%.Show(/Fbld/Text/Show%.Show, r.errors),
-    Str|', ',
-    /Core/Maybe/Show%.Show(show, r.value)];
+  r.failed.?(false: Format|'ok: '[show(r.value.just)]);
+  Format|'failed: %s, %s'[r.errors, /Core/Maybe/Show%.Show(show, r.value)];
 };
 
 @(Show, ShowErrors);

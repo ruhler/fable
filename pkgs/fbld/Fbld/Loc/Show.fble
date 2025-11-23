@@ -1,16 +1,15 @@
 
-<@>% Concat = /Std/List%.Concat;
-
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 
 Show@<Loc@> Show = (Loc@ x) {
-  Concat[x.file,
-    Str|':', /Core/Int/Show%.Show(x.line),
-    Str|':', /Core/Int/Show%.Show(x.col)];
+  Format|'%s:%s:%s'[
+    /Core/Show%.String(x.file),
+    /Core/Int/Show%.Show(x.line),
+    /Core/Int/Show%.Show(x.col)];
 };
 
 @(Show);

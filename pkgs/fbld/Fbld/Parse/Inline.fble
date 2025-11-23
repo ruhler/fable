@@ -45,8 +45,6 @@
 % GetL = /Fbld/Parse/M%.GetL;
 % String = /Fbld/Parse/M%.String;
 
-@ Text@ = /Fbld/Text%.Text@;
-
 (Char@) { Bool@; } IsNameChar = (Char@ c) {
   /Std/Char/Eq%.Eq(Char|'_', c).?(true: True);
   IsAlNum(c);
@@ -88,8 +86,7 @@ M@<List@<Markup@>> Args = {
     M@<Unit@> end = {
       CharL@ cl <- Do(GetL);
       /Std/Char/Eq%.Eq(Char|']', cl.c).?(true: Return(Unit));
-      Unit@ _ <- Error<Unit@>;
-      Text@(cl.l, Str|'Expected '']''');
+      Error<Unit@>(cl.l, Str|'Expected '']''');
     };
     Markup@ head <- Do(Inline(end));
     List@<Markup@> tail <- Do(Args);
@@ -114,8 +111,7 @@ M@<Markup@> Command = {
   Loc@ l <- Do(Loc);
   String@ name <- Do(Name);
   name.?(empty: {
-    Unit@ _ <- Error<Markup@>;
-    Text@(l, Str|'missing command name');
+    Error<Markup@>(l, Str|'missing command name');
   });
 
   List@<Markup@> args <- Do(Args);
@@ -143,8 +139,7 @@ M@<Markup@> Command = {
       /Std/Char/Eq%.Eq(e.c, Char|'\').?(true: Return(Char|'\'));
       /Std/Char/Eq%.Eq(e.c, Char|']').?(true: Return(Char|']'));
       /Std/Char/Eq%.Eq(e.c, Char|'n').?(true: Return(Ascii.nl));
-      Unit@ _ <- Error<Char@>;
-      Text@(e.l, Concat[Str|'Unsupported escape sequence: ''\', List[e.c, Char|'''']]);
+      Error<Char@>(e.l, Concat[Str|'Unsupported escape sequence: ''\', List[e.c, Char|'''']]);
     });
     Return(c);
   });

@@ -12,6 +12,7 @@
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 % StrE = /Std/Char/Ascii%.StrE;
+% String = /Core/Char/Ascii/Show%.String;
 % Lines = /Std/String/Lines%.Lines;
 
 @ Test@ = /Core/Test%.Test@;
@@ -325,7 +326,7 @@ Test@ Tests = TestSuite(Str|Parse, List[
     Result@<Markup@> got = Parse[T|1|1(text)];
     Result@<Markup@> wnt = Error<Markup@>(
       Loc@(Str|'foo.fbld', /Std/Int/Lit%.Int|1, /Std/Int/Lit%.Int|9),
-      Str|'unexpected end of input'
+      String|'unexpected end of input'
     );
     AssertResultEquals(wnt, got);
   })

@@ -24,6 +24,7 @@
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
+% String = /Core/Char/Ascii/Show%.String;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -59,10 +60,10 @@ Return = <@ T@>(T@ x, R@ r) {
 };
 
 # Report a parse error.
-<@ T@>((Unit@) { Text@; }) { M@<T@>; }
-Error = <@ T@>((Unit@) { Text@; } f, R@ r) {
+<@ T@>(Loc@, String@) { M@<T@>; }
+Error = <@ T@>(Loc@ l, String@ msg, R@ r) {
   r.report_errors.?(
-    true: /Fbld/Result%.Error_<SM@<T@>>(f(Unit)),
+    true: /Fbld/Result%.Error<SM@<T@>>(l, /Core/Show%.String(msg)),
     false: Fail<SM@<T@>>);
 };
 
@@ -83,7 +84,7 @@ M@<Int@> GetIndent = (R@ r) {
 # appropriate. Fails if there are no more characters in the input stream.
 M@<CharL@> GetL_ = (R@ r) {
   List@<CharL@> in = r.s;
-  in.?(empty: /Fbld/Result%.Error<SM@<CharL@>>(r.end_of_input_loc, Str|'unexpected end of input'));
+  in.?(empty: /Fbld/Result%.Error<SM@<CharL@>>(r.end_of_input_loc, String|'unexpected end of input'));
   Ok(SM@(in.items.tail, in.items.head));
 };
 
@@ -150,8 +151,7 @@ M@<CharL@> GetL = {
   /Std/Int/Ord%.Le(cl.l.col, indent).?(true: {
     IsNewline(cl.c).?(true: Return(cl));
     /Std/Char/Eq%.Eq(Char|' ', cl.c).?(true: GetL);
-    Unit@ _ <- Error<CharL@>;
-    Text@(cl.l, Str|'end of indented block');
+    Error<CharL@>(cl.l, Str|'end of indented block');
   });
 
   Return(cl);
@@ -199,8 +199,7 @@ M@<Unit@> EndOfInput = {
   Loc@ l <- Do(Loc);
   Maybe@<Char@> mc <- Do(Test(Get));
   mc.?(nothing: Return(Unit));
-  Unit@ _ <- Error<Unit@>;
-  Text@(l, Str|'expected end of input');
+  Error<Unit@>(l, Str|'expected end of input');
 };
 
 # Parse a specific string from the input stream. Fails if the input string
@@ -212,8 +211,7 @@ String = (String@ s) {
   /Std/Char/Eq%.Eq(s.items.head, c.c).?(
     true: String(s.items.tail),
     false: {
-      Unit@ _ <- Error<Unit@>;
-      Text@(c.l, Concat[ Str|'Expected ''', List[s.items.head], Str|'''']);
+      Error<Unit@>(c.l, Concat[ Str|'Expected ''', List[s.items.head], Str|'''']);
     });
 };
 
