@@ -40,7 +40,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   };
 
   # Map game coordinates into screen coordinates.
-  Point@ a = @(x: Int|4, y: Neg(Int|4));
+  Int@ scale = Int|4;
+  Point@ a = @(x: scale, y: Neg(scale));
   Point@ b = @(x: Int|0, y: height);
 
   (Model@) { M@<Unit@>; } StepUI = (Model@ model) {

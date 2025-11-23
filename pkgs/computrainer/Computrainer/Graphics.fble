@@ -24,19 +24,15 @@
 % W = /Computrainer/Graphics/Sprites%.W;
 % Sprites = /Computrainer/Graphics/Sprites%.Sprites;
 
-% Color = {
-    % color = /App/Drawing%.Color;
-
-    @(
-        C: color.Red,
-        0: color.Black,
-        1: color.White,
-        S: color.Yellow,
-        L: color.Magenta,
-        Background: Color@(Int|128, Int|128, Int|128),
-        Gate: color.Cyan
-    );
-};
+% Color = @(
+    C: Color@(Int|189, Int|45, Int|135),
+    0: Color@(Int|254, Int|198, Int|1),
+    1: Color@(Int|33, Int|131, Int|128),
+    S: Color@(Int|24, Int|48, Int|89),
+    L: Color@(Int|221, Int|110, Int|66),
+    Background: Color@(Int|13, Int|31, Int|45),
+    Gate: Color@(Int|201, Int|203, Int|207)
+);
 
 
 (Value@) { Color@; }
