@@ -71,7 +71,7 @@ DrawModel = (Int@ width, Int@ height, Model@ m) {
         Over(d, DrawGate(xy.x, xy.y, g));
     });
 
-    Drawings[clear, cars, gates];
+    Drawings[clear, gates, cars];
 };
 
 @(DrawModel);
