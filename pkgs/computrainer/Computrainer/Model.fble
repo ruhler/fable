@@ -93,16 +93,11 @@ Value@ 1 = Value@(1: Unit);
 Value@ S = Value@(S: Unit);
 Value@ L = Value@(L: Unit);
 
-@ GateState@ = +(Unit@ waiting, Unit@ going);
-GateState@ Waiting = GateState@(waiting: Unit);
-GateState@ Going = GateState@(going: Unit);
-
-
 @ Car@ = *(Int@ x, Int@ y, Value@ v);
 @ Train@ = List@<Car@>;
 @ Trains@ = List@<Train@>;
 @ Schedule@ = List@<Car@>;
-@ S@ = *(Trains@ trains, Grid@<GateState@> states);
+@ S@ = *(Trains@ trains, Grid@<Unit@> busy);
 @ Model@ = *(Gates@ gates, S@ s);
 
 # Computes a new schedule for the given set of trains.
@@ -227,20 +222,17 @@ AddTrain = (Train@ train, S@ s) {
 # Check if the gate at the given location is active.
 (Int@, Int@, S@) { Bool@; }
 IsBusy = (Int@ x, Int@ y, S@ s) {
-    Maybe@<GateState@> mts = Grid.Lookup(s.states, Coord@(x, y));
-    mts.?(nothing: False);
-    mts.just.?(waiting: False);
-    True;
+    Grid.Lookup(s.busy, Coord@(x, y)).?(just: True, nothing: False);
 };
 
 (Int@, Int@, S@) { S@; }
 ClearBusy = (Int@ x, Int@ y, S@ s) {
-    s.@(states: Grid.Insert(s.states, Coord@(x, y), Waiting));
+    s.@(busy: Grid.Delete(s.busy, Coord@(x, y)));
 };
 
 (Int@, Int@, S@) { S@; }
 SetBusy = (Int@ x, Int@ y, S@ s) {
-    s.@(states: Grid.Insert(s.states, Coord@(x, y), Going));
+    s.@(busy: Grid.Insert(s.busy, Coord@(x, y), Unit));
 };
 
 # Execute a rail gate.
@@ -335,7 +327,7 @@ DoSchedule  = (Gates@ gates, Schedule@ schedule, S@ s) {
 
 (Gates@, Trains@) { Model@; }
 Model = (Gates@ gates, Trains@ trains) {
-    Model@(gates, S@(trains, Grid.Empty<GateState@>));
+    Model@(gates, S@(trains, Grid.Empty<Unit@>));
 };
 
 # Advance the model by 1 unit of time.
