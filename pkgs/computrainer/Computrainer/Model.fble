@@ -224,15 +224,23 @@ AddTrain = (Train@ train, S@ s) {
     s.@(trains: Items(train, s.trains));
 };
 
-(Int@, Int@, S@) { GateState@; }
-GetGateState = (Int@ x, Int@ y, S@ s) {
+# Check if the gate at the given location is active.
+(Int@, Int@, S@) { Bool@; }
+IsBusy = (Int@ x, Int@ y, S@ s) {
     Maybe@<GateState@> mts = Grid.Lookup(s.states, Coord@(x, y));
-    mts.?(just: mts.just, nothing: GateState@(waiting: Unit));
+    mts.?(nothing: False);
+    mts.just.?(waiting: False);
+    True;
 };
 
-(Int@, Int@, GateState@, S@) { S@; }
-SetGateState = (Int@ x, Int@ y, GateState@ ts, S@ s) {
-    s.@(states: Grid.Insert(s.states, Coord@(x, y), ts));
+(Int@, Int@, S@) { S@; }
+ClearBusy = (Int@ x, Int@ y, S@ s) {
+    s.@(states: Grid.Insert(s.states, Coord@(x, y), Waiting));
+};
+
+(Int@, Int@, S@) { S@; }
+SetBusy = (Int@ x, Int@ y, S@ s) {
+    s.@(states: Grid.Insert(s.states, Coord@(x, y), Going));
 };
 
 # Execute a rail gate.
@@ -263,21 +271,17 @@ DoTag = (Value@ v, Dir@ d, Car@ c, S@ s) {
     Coord@ dest = Dest(c.x, c.y, d);
     CarInS(dest.x, dest.y, s).?(true: s);
 
-    GateState@ ts = GetGateState(c.x, c.y, s);
-    ts.?(waiting: {
-        PrependToTrainInS(c, Car@(dest.x, dest.y, v), 
-            SetGateState(c.x, c.y, Going, s));
+    IsBusy(c.x, c.y, s).?(false: {
+        PrependToTrainInS(c, Car@(dest.x, dest.y, v), SetBusy(c.x, c.y, s));
     });
 
-    GateState@ nts = c.v.?(C: Waiting, : Going);
-    MoveCarInS(c, dest.x, dest.y, SetGateState(c.x, c.y, nts, s));
+    MoveCarInS(c, dest.x, dest.y, c.v.?(C: ClearBusy(c.x, c.y, s), : s));
 };
 
 (Switch@, Car@, S@) { S@; }
 DoSwitch = (Switch@ g, Car@ c, S@ s) {
     Coord@ switch = Dest(c.x, c.y, g.s);
-    GateState@ ts = GetGateState(switch.x, switch.y, s);
-    ts.?(going: s);
+    IsBusy(switch.x, switch.y, s).?(true: s);
 
     Maybe@<Car@> ms = GetCarInS(switch.x, switch.y, s);
     ms.?(nothing: s);
@@ -285,17 +289,15 @@ DoSwitch = (Switch@ g, Car@ c, S@ s) {
     ms.just.v.?(0: {
         Coord@ target = Dest(c.x, c.y, g.0);
         CarInS(target.x, target.y, s).?(true: s);
-        GateState@ nts = c.v.?(C: Going, : Waiting);
         MoveCarInS(c, target.x, target.y,
-            SetGateState(switch.x, switch.y, nts, s));
+            c.v.?(C: SetBusy(switch.x, switch.y, s), : s));
     });
 
     ms.just.v.?(1: {
         Coord@ target = Dest(c.x, c.y, g.1);
         CarInS(target.x, target.y, s).?(true: s);
-        GateState@ nts = c.v.?(C: Going, : Waiting);
         MoveCarInS(c, target.x, target.y,
-            SetGateState(switch.x, switch.y, nts, s));
+            c.v.?(C: SetBusy(switch.x, switch.y, s), : s));
     });
 
     s;
@@ -304,11 +306,8 @@ DoSwitch = (Switch@ g, Car@ c, S@ s) {
 # Execute a select gate.
 (Car@, S@) { S@; }
 DoSelect = (Car@ c, S@ s) {
-    GateState@ ts = GetGateState(c.x, c.y, s);
-    ts.?(waiting: s);
-
-    GateState@ nts = c.v.?(C: Waiting, : Going);
-    RemoveCarInS(c, SetGateState(c.x, c.y, nts, s));
+    IsBusy(c.x, c.y, s).?(false: s);
+    RemoveCarInS(c, c.v.?(C: ClearBusy(c.x, c.y, s), : s));
 };
 
 # Execute a gate.
