@@ -32,7 +32,7 @@ Main@ Debug = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
       bits.?(empty: m.return(crc));
 
       CRC@ ncrc = Feed(crc, bits.items.head);
-      Unit@ _ <- m.do(O.PutLine(stdio.out, ShowBits(ncrc.checksum)));
+      Unit@ _ <- m.do(O.ShowLine(stdio.out, ShowBits(ncrc.checksum)));
       DFeeds(ncrc, bits.items.tail);
     };
 

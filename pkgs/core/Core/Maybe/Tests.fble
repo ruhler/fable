@@ -13,9 +13,11 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 <@>@ Show@ = /Core/Show%.Show@;
+% ToString = /Core/Show%.ToString;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
+% String = /Core/Char/Ascii/Show%.String;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
@@ -39,7 +41,7 @@ Eq@<AB@> EqAB = (AB@ x, AB@ y) {
 # ShowAB --
 #   An instance of Show@ for AB@.
 Show@<AB@> ShowAB = (AB@ x) {
-  x.?(a: Str|a, b: Str|b);
+  x.?(a: String|a, b: String|b);
 };
 
 Eq@<Maybe@<AB@>> Eq = /Core/Maybe/Eq%.Eq(EqAB);
@@ -74,13 +76,13 @@ Test@ Tests = TestSuite(Str|Maybe, List[
 
   Test(Str|Show_Just, (Unit@ _) {
     String@ wnt = Str|'Just:b';
-    String@ got = Show(Just(B));
+    String@ got = ToString(Show(Just(B)));
     AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_Nothing, (Unit@ _) {
     String@ wnt = Str|'Nothing';
-    String@ got = Show(Nothing<AB@>);
+    String@ got = ToString(Show(Nothing<AB@>));
     AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })
 ]);

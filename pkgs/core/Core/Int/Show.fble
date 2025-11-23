@@ -8,12 +8,11 @@
 % Mul = /Std/Int%.Mul;
 % Int = /Std/Int/Lit%.Int;
 
-<@>% Append = /Std/List%.Append;
-
 <@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
+% String = /Core/Char/Ascii/Show%.String;
 
 (String@) { Int@; } Read = {
   (Char@) { Int@; } Digit = (Char@ c) {
@@ -46,8 +45,8 @@
 
 Show@<Int@> Show = (Int@ x) {
   x.?(
-    n: Append(Str|'-', /Core/Int/IntP/Show%.Show(x.n)),
-    0: Str|0,
+    n: Format|'-%s'[/Core/Int/IntP/Show%.Show(x.n)],
+    0: String|0,
     p: /Core/Int/IntP/Show%.Show(x.p));
 };
 

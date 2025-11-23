@@ -1,16 +1,14 @@
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
-<@>% Concat = /Std/List%.Concat;
-<@>% Reverse = /Std/List%.Reverse;
-
 <<@>@,@>@ Map@ = /Core/Map%.Map@;
 
 <@>@ Show@ = /Core/Show%.Show@;
+<@>@ ShowM@ = /Core/Show%.ShowM@;
+% Do = /Core/Show%.Do;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
+% String = /Core/Char/Ascii/Show%.String;
+
+@ Unit@ = /Std/Unit%.Unit@;
 
 # Show --
 #   Implementation of Show@ for Set@<T@>. See documentation of
@@ -24,11 +22,12 @@
   % S = /Core/Set%.Set(m);
 
   Show@<S.Set@> show = (S.Set@ s) {
-    List@<String@> elems = S.ForEach(s, List[Str|'{ '],
-      (K@ x, List@<String@> es) {
-        Items(Concat[show_key(x), Str|'; '], es);
-      });
-    Concat(Reverse(Items(Str|'}', elems)));
+    Unit@ _ <- Do(S.ForEach(s, String|'{ ',
+      (K@ x, ShowM@ shown) {
+        Unit@ _ <- Do(shown);
+        Format|'%s; '[show_key(x)];
+      }));
+    String|'}';
   };
 
   show;

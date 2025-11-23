@@ -3,12 +3,9 @@
 % False = /Std/Bool%.False;
 % And = /Std/Bool%.And;
 
-@ Char@ = /Std/Char%.Char@;
-
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
 <@>% List = /Std/List%.List;
-<@>% Append = /Std/List%.Append;
 
 <@>@ Cmp@ = /Std/Cmp%.Cmp@;
 @ Compared@ = /Std/Cmp%.Compared@;
@@ -17,7 +14,7 @@
 % Greater = /Std/Cmp%.Greater;
 
 <@>@ Show@ = /Core/Show%.Show@;
-<@>% Do = /Core/Show%.Do;
+% Do = /Core/Show%.Do;
 
 % Str = /Std/Char/Ascii%.Str;
 % String = /Core/Char/Ascii/Show%.String;

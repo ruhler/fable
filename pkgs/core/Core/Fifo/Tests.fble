@@ -11,8 +11,10 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-@ String@ = /Std/String%.String@;
+<@>@ Show@ = /Core/Show%.Show@;
+
 % Str = /Std/Char/Ascii%.Str;
+% String = /Core/Char/Ascii/Show%.String;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
@@ -32,8 +34,8 @@ Elem@ A = Elem@(A: Unit);
 Elem@ B = Elem@(A: Unit);
 Elem@ C = Elem@(A: Unit);
 
-(Elem@) { String@; } ElemShow = (Elem@ e) {
-  e.?(A: Str|A, B: Str|B, C: Str|C);
+Show@<Elem@> ElemShow = (Elem@ e) {
+  e.?(A: String|A, B: String|B, C: String|C);
 };
 
 (Elem@, Elem@) { Bool@; } ElemEq = (Elem@ a, Elem@ b) {

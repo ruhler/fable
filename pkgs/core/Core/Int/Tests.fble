@@ -11,6 +11,7 @@
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
+% String = /Core/Char/Ascii/Show%.String;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
@@ -68,14 +69,14 @@ Int@ 8 = Int|8;
 (String@, (Unit@) { Bool@; }) { Test@; }
 T = (String@ name, (Unit@) { Bool@; } p) {
   Test(name, (Unit@ u) {
-    p(u).?(true: Pass, : Fail(Str|failed));
+    p(u).?(true: Pass, : Fail(String|failed));
   });
 };
 
 (String@, (Unit@) { Bool@; }) { Test@; }
 F = (String@ name, (Unit@) { Bool@; } p) {
   Test(name, (Unit@ u) {
-    p(u).?(false: Pass, : Fail(Str|failed));
+    p(u).?(false: Pass, : Fail(String|failed));
   });
 };
 

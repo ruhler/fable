@@ -9,6 +9,7 @@
 <@>@ Show@ = /Core/Show%.Show@;
 
 % Str = /Std/Char/Ascii%.Str;
+% String = /Core/Char/Ascii/Show%.String;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
@@ -159,7 +160,7 @@ Test@ Tests = TestSuite(Str|Search, List[
     Eq@<T@> eq = (T@ a, T@ b) {
       a.?(' ': b.?(' ': True, 'X': False), 'X': b.?(' ': False, 'X': True));
     };
-    Show@<T@> show = (T@ x) { x.?(' ': Str|' ', 'X': Str|'X'); };
+    Show@<T@> show = (T@ x) { x.?(' ': String|' ', 'X': String|'X'); };
 
     (T@) { Bool@; } sep = (T@ x) { x.?(' ': True, 'X': False); };
     List@<T@> list = List<T@>|'  XXX X  XX ';

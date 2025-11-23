@@ -76,7 +76,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
   Test(Str|'RunTest.SuiteFail', (Unit@ _) {
     Test@ suite = TestSuite(Str|'Suite', List[
       Test(Str|a, (Unit@ _) { Pass; }),
-      Test(Str|b, (Unit@ _) { Fail(Str|Oops); }),
+      Test(Str|b, (Unit@ _) { Fail(String|Oops); }),
       Test(Str|c, (Unit@ _) { ExpectedFail; }),
       Test(Str|c, (Unit@ _) { Pass; })]);
 

@@ -15,8 +15,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+% String = /Core/Char/Ascii/Show%.String;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -33,8 +32,8 @@
 
 (List@<Elem@>) { List@<Elem@>; } EL = List<Elem@>;
 
-(Elem@) { String@; } ElemShow = (Elem@ e) {
-  e.?(A: Str|A, B: Str|B, C: Str|C, D: Str|D, E: Str|E);
+Show@<Elem@> ElemShow = (Elem@ e) {
+  e.?(A: String|A, B: String|B, C: String|C, D: String|D, E: String|E);
 };
 
 (Elem@, Elem@) { Compared@; } ElemCmp = (Elem@ a, Elem@ b) {

@@ -1,12 +1,13 @@
 
 @ Char@ = /Std/Char%.Char@;
-<@>% List = /Std/List%.List;
+
 <@>@ Show@ = /Core/Show%.Show@;
+% Put = /Core/Show%.Put;
 
 # Show --
 #   Implementation of Show@ for Char@. See documentation of /Show%.Show@.
 Show@<Char@> Show = (Char@ x) {
-  List[x];
+  Put(x);
 };
 
 @(Show);

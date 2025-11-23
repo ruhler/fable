@@ -3,26 +3,33 @@
 @ Hex@ = /Core/Digits%.Hex@;
 
 <@>@ List@ = /Std/List%.List@;
-<@>% Map = /Std/List%.Map;
 
 <@>@ Show@ = /Core/Show%.Show@;
+<@>@ ShowM@ = /Core/Show%.ShowM@;
+% Do = /Core/Show%.Do;
+<@>% Return = /Core/Show%.Return;
 
-% Str = /Std/Char/Ascii%.Str;
+% String = /Core/Char/Ascii/Show%.String;
+
+@ Unit@ = /Std/Unit%.Unit@;
 
 Show@<Bit@> ShowBit = (Bit@ b) {
-  b.?(0: Str|0, 1: Str|1);
+  b.?(0: String|0, 1: String|1);
 };
 
 Show@<List@<Bit@>> ShowBits = (List@<Bit@> bits) {
-  /Std/List%.Concat(Map(bits, ShowBit));
+  /Std/List%.ForEach(bits, Return, (Bit@ bit, ShowM@ shown) {
+    Unit@ _ <- Do(shown);
+    ShowBit(bit);
+  });
 };
 
 Show@<Hex@> ShowHex = (Hex@ h) {
   h.?(
-    0: Str|0, 1: Str|1, 2: Str|2, 3: Str|3,
-    4: Str|4, 5: Str|5, 6: Str|6, 7: Str|7,
-    8: Str|8, 9: Str|9, A: Str|A, B: Str|B,
-    C: Str|C, D: Str|D, E: Str|E, F: Str|F);
+    0: String|0, 1: String|1, 2: String|2, 3: String|3,
+    4: String|4, 5: String|5, 6: String|6, 7: String|7,
+    8: String|8, 9: String|9, A: String|A, B: String|B,
+    C: String|C, D: String|D, E: String|E, F: String|F);
 };
 
 @(ShowBit, ShowBits, ShowHex);

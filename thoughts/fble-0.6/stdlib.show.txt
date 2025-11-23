@@ -1042,3 +1042,12 @@ that.
 It's slightly annoying that ShowM@ has kind <@>@ and that we can't use it with
 kind @.
 
+---
+
+* It's nice that I don't have to deal with concat/reverse/items and other such
+  structuring anymore when I switch over to the new show interface.
+* ToString and Str are still useful for testing show by string comparison.
+  That's a good example of a case where we create a string that we consume
+  internally.
+* Use of Format is really nice compared to Concat with text interleaved
+  between shows.

@@ -19,15 +19,13 @@
 % Ord = /Core/Int/Ord%.Ord;
 
 <@>@ List@ = /Std/List%.List@;
-<@>% Concat = /Std/List%.Concat;
 
 <@>@ Cmp@ = /Std/Cmp%.Cmp@;
 @ Compared@ = /Std/Cmp%.Compared@;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ TestResult@ = /Core/Test%.TestResult@;
 
@@ -48,9 +46,8 @@ Cmp@<Point@> OrdPoint = (Point@ a, Point@ b) {
   r.?(equal: Ord(a.y, b.y), : r);
 };
 
-(Point@) { String@; } ShowPoint = (Point@ x) {
-  Concat[Str|'(', /Core/Int/Show%.Show(x.x),
-    Str|', ', /Core/Int/Show%.Show(x.y), Str|')'];
+Show@<Point@> ShowPoint = (Point@ x) {
+  Format|'(%s, %s)'[/Core/Int/Show%.Show(x.x), /Core/Int/Show%.Show(x.y)];
 };
 
 (Color@, Color@) { Bool@; } EqColor = (Color@ a, Color@ b) {
@@ -60,12 +57,12 @@ Cmp@<Point@> OrdPoint = (Point@ a, Point@ b) {
   True;
 };
 
-(Color@) { String@; } ShowColor = (Color@ c) {
+Show@<Color@> ShowColor = (Color@ c) {
   # TODO: Show color as hex string.
-  Concat[
-    Str|'(',  /Core/Int/Show%.Show(c.r),
-    Str|', ', /Core/Int/Show%.Show(c.g),
-    Str|', ', /Core/Int/Show%.Show(c.b), Str|')'];
+  Format|'(%s, %s, %s)'[
+    /Core/Int/Show%.Show(c.r),
+    /Core/Int/Show%.Show(c.g),
+    /Core/Int/Show%.Show(c.b)];
 };
 
 % Map = /Core/Map/Tree%.Map(OrdPoint);

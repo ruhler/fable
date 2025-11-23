@@ -33,6 +33,11 @@ Do = (ShowM@ ma, (Unit@) { ShowM@; } f)<@ S@>(Stream@<S@> s) {
   s.do(ma(s), (Unit@ _) { f(Unit, s); });
 };
 
+# Show a character.
+(Char@) { ShowM@; } Put = (Char@ c)<@ S@>(Stream@<S@> s) {
+  s.put(c);
+};
+
 # Show a string.
 (String@) { ShowM@; }
 String = (String@ str)<@ S@>(Stream@<S@> s) {
@@ -103,4 +108,4 @@ ToString = (ShowM@ show) {
 #   form.
 <@>@ Show@ = <@ T@>(T@) { ShowM@; };
 
-@(Show@, ShowM@, Return, Do, String, Format, ToString);
+@(Show@, ShowM@, Return, Do, Put, String, Format, ToString);

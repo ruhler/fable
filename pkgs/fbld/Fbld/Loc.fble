@@ -7,10 +7,11 @@
 % Int = /Std/Int/Lit%.Int;
 Int@ 1 = Int|1;
 
-<@>% Concat = /Std/List%.Concat;
+<@>@ ShowM@ = /Core/Show%.ShowM@;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 # Location information used for error messages.
 @ Loc@ = *(String@ file, Int@ line, Int@ col);
@@ -29,11 +30,12 @@ Int@ 1 = Int|1;
 };
 
 # Prefix a message with location information.
-(Loc@, String@) { String@; } Report = (Loc@ l, String@ msg) {
-  Concat[l.file, Str|':',
-    /Core/Int/Show%.Show(l.line), Str|':',
-    /Core/Int/Show%.Show(l.col), Str|': ',
-    msg];
+(Loc@, String@) { ShowM@; } Report = (Loc@ l, String@ msg) {
+  Format|'%s:%s:%s: %s'[
+    /Core/Show%.String(l.file),
+    /Core/Int/Show%.Show(l.line),
+    /Core/Int/Show%.Show(l.col),
+    /Core/Show%.String(msg)];
 };
 
 Loc@ Unknown = Loc@(Str|'???', 1, 1);

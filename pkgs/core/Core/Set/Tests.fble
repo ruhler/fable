@@ -4,15 +4,12 @@
 % False = /Std/Bool%.False;
 % And = /Std/Bool%.And;
 
-@ Char@ = /Std/Char%.Char@;
-
 <@>@ Eq@ = /Std/Eq%.Eq@;
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 <@>% AssertNotEquals = /Core/Eq/Assert%.AssertNotEquals;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
-<@>% Append = /Std/List%.Append;
 <@>% Items = /Std/List%.Items;
 
 <@>@ Cmp@ = /Std/Cmp%.Cmp@;
@@ -22,9 +19,12 @@
 % Greater = /Std/Cmp%.Greater;
 
 <@>@ Show@ = /Core/Show%.Show@;
+% Do = /Core/Show%.Do;
+% ToString = /Core/Show%.ToString;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
+% String = /Core/Char/Ascii/Show%.String;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
@@ -53,7 +53,7 @@ Cmp@<Bit1@> OrdBit1 = (Bit1@ a, Bit1@ b) {
 };
 
 Show@<Bit1@> ShowBit1 = (Bit1@ x) {
-  x.?(0: Str|0, 1: Str|1);
+  x.?(0: String|0, 1: String|1);
 };
 
 Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
@@ -66,7 +66,8 @@ Cmp@<Bit2@> OrdBit2 = (Bit2@ a, Bit2@ b) {
 };
 
 Show@<Bit2@> ShowBit2 = (Bit2@ x) {
-  Append<Char@>(ShowBit1(x.h), ShowBit1(x.l));
+  Unit@ _ <- Do(ShowBit1(x.h));
+  ShowBit1(x.l);
 };
 
 % Map = /Core/Map/Tree%.Map(OrdBit2);
@@ -134,21 +135,21 @@ Test@ Tests = TestSuite(Str|Set, List[
   Test(Str|'Show empty', (Unit@ _) {
     Set@ set = Empty;
     String@ wnt = Str|'{ }';
-    String@ got = Show(set);
+    String@ got = ToString(Show(set));
     AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|'Show single', (Unit@ _) {
     Set@ set = Insert(Empty, B);
     String@ wnt = Str|'{ 01; }';
-    String@ got = Show(set);
+    String@ got = ToString(Show(set));
     AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|'Show multi', (Unit@ _) {
     Set@ set = Insert(Insert(Empty, B), C);
     String@ wnt = Str|'{ 01; 10; }';
-    String@ got = Show(set);
+    String@ got = ToString(Show(set));
     AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 

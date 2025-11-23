@@ -1,32 +1,30 @@
 
-<@>% Concat = /Std/List%.Concat;
-
 <@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
 @ PureState@ = /Core/Stdio/Pure%.PureState@;
 @ MainResult@ = /Core/Stdio/Pure%.MainResult@;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 Show@<PureState@> PureState = (PureState@ a) {
-  Concat[
-    Str|'In: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.in),
-    Str|', Out: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.out),
-    Str|', Err: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.err)];
+  Format|'In: %s, Out: %s, Err: %s'[
+    /Core/List/Show%.Show(/Core/Int/Show%.Show, a.in),
+    /Core/List/Show%.Show(/Core/Int/Show%.Show, a.out),
+    /Core/List/Show%.Show(/Core/Int/Show%.Show, a.err)];
 };
 
 <@ A@>(Show@<A@>) { Show@<PureResult@<A@>>; }
 PureResult = <@ A@>(Show@<A@> show, PureResult@<A@> a) {
-  Concat[PureState(a.s), Str|', Result: ', show(a.x)];
+  Format|'%s, Result: %s'[PureState(a.s), show(a.x)];
 };
 
 Show@<MainResult@> MainResult = (MainResult@ a) {
-  Concat[
-    Str|'Exit: ', /Core/Bool/Show%.Show(a.exit),
-    Str|'In: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.in),
-    Str|', Out: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.out),
-    Str|', Err: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.err)];
+  Format|'Exit: %s, In: %s, Out: %s, Err: %s'[
+    /Core/Bool/Show%.Show(a.exit),
+    /Core/List/Show%.Show(/Core/Int/Show%.Show, a.in),
+    /Core/List/Show%.Show(/Core/Int/Show%.Show, a.out),
+    /Core/List/Show%.Show(/Core/Int/Show%.Show, a.err)];
 };
 
 @(PureState, PureResult, MainResult);

@@ -48,10 +48,15 @@
     ));
   };
 
+  (OStream@, ShowM@) { M@<Unit@>; } ShowLine = (OStream@ out, ShowM@ show) {
+    Unit@ _ <- m.do(Show(out, show));
+    PutChar(out, Ascii.nl);
+  };
+
   # Closes the given output stream.
   (OStream@) { M@<Unit@>; } Close = (OStream@ out) {
     out(/Core/Stream%.End);
   };
 
-  @(OStream@, PutChar, PutStr, PutLine, Show, Close);
+  @(OStream@, PutChar, PutStr, PutLine, Show, ShowLine, Close);
 };
