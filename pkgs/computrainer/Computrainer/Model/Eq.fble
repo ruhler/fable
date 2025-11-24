@@ -5,13 +5,11 @@
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
 @ Dir@ = /Computrainer/Model%.Dir@;
-@ Car@ = /Computrainer/Model%.Car@;
+@ Cars@ = /Computrainer/Model%.Cars@;
 @ Gate@ = /Computrainer/Model%.Gate@;
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Model@ = /Computrainer/Model%.Model@;
 @ S@ = /Computrainer/Model%.S@;
-@ Train@ = /Computrainer/Model%.Train@;
-@ Trains@ = /Computrainer/Model%.Trains@;
 @ Value@ = /Computrainer/Model%.Value@;
 
 Eq@<Dir@> Dir = (Dir@ a, Dir@ b) {
@@ -48,18 +46,11 @@ Eq@<Value@> Value = (Value@ a, Value@ b) {
         L: b.?(L: True, : False));
 };
 
-Eq@<Car@> Car = (Car@ a, Car@ b) {
-    /Std/Int/Eq%.Eq(a.x, b.x).?(false: False);
-    /Std/Int/Eq%.Eq(a.y, b.y).?(false: False);
-    Value(a.v, b.v).?(false: False);
-    True;
-};
+Eq@<Cars@> Cars = /Computrainer/Grid/Eq%.Eq(Value);
 
-Eq@<Train@> Train = /Std/List/Eq%.Eq(Car);
-Eq@<Trains@> Trains = /Std/List/Eq%.Eq(Train);
-
+# TODO: Check for states?
 Eq@<S@> S = (S@ a, S@ b) {
-    Trains(a.trains, b.trains);
+    Cars(a.cars, b.cars);
 };
 
 Eq@<Model@> Model = (Model@ a, Model@ b) {
@@ -68,4 +59,4 @@ Eq@<Model@> Model = (Model@ a, Model@ b) {
     True;
 };
 
-@(Model, Trains);
+@(Model, Cars);

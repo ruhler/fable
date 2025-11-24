@@ -2,16 +2,15 @@
 @ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
-% And = /Std/Bool%.And;
+% Not = /Std/Bool%.Not;
 
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;
 % Decr = /Std/Int%.Decr;
 
 <@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
-<@>% Concat = /Std/List%.Concat;
+<@>% Empty = /Std/List%.Empty;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -93,15 +92,9 @@ Value@ 1 = Value@(1: Unit);
 Value@ S = Value@(S: Unit);
 Value@ L = Value@(L: Unit);
 
-@ Car@ = *(Int@ x, Int@ y, Value@ v);
-@ Train@ = List@<Car@>;
-@ Trains@ = List@<Train@>;
-@ Schedule@ = List@<Car@>;
-@ S@ = *(Trains@ trains, Grid@<Unit@> busy);
+@ Cars@ = Grid@<Value@>;
+@ S@ = *(Cars@ cars, Grid@<Unit@> busy);
 @ Model@ = *(Gates@ gates, S@ s);
-
-# Computes a new schedule for the given set of trains.
-(Trains@) { Schedule@; } Schedule = Concat<Car@>;
 
 (Int@, Int@, Dir@) { Coord@; }
 Dest = (Int@ x, Int@ y, Dir@ d) {
@@ -110,119 +103,34 @@ Dest = (Int@ x, Int@ y, Dir@ d) {
     Coord@(nx, ny);
 };
 
-(Int@, Int@, Train@) { Bool@; }
-CarInTrain = (Int@ x, Int@ y, Train@ t) {
-    t.?(empty: False);
-    Car@ head = t.items.head;
-    And(/Std/Int/Eq%.Eq(head.x, x), /Std/Int/Eq%.Eq(head.y, y)).?(true: True);
-    CarInTrain(x, y, t.items.tail);
+(Coord@, S@) { S@; }
+RemoveCar = (Coord@ c, S@ s) {
+    s.@(cars: Grid.Delete(s.cars, c));
 };
 
-(Int@, Int@, Trains@) { Bool@; }
-CarInTrains = (Int@ x, Int@ y, Trains@ t) {
-    t.?(empty: False);
-    CarInTrain(x, y, t.items.head).?(true: True);
-    CarInTrains(x, y, t.items.tail);
+(Coord@, Value@, S@) { S@; }
+AddCar = (Coord@ c, Value@ v, S@ s) {
+    Cars@ cars = Grid.Insert(s.cars, c, v);
+    s.@(cars);
 };
 
-(Int@, Int@, S@) { Bool@; }
-CarInS = (Int@ x, Int@ y, S@ s) {
-    CarInTrains(x, y, s.trains);
-};
-
-(Car@, Int@, Int@, Train@) { Train@; }
-MoveCarInTrain = (Car@ c, Int@ dx, Int@ dy, Train@ t) {
-    t.?(empty: t);
-    Car@ head = t.items.head;
-    And(/Std/Int/Eq%.Eq(head.x, c.x), /Std/Int/Eq%.Eq(head.y, c.y)).?(true: {
-        Items(Car@(dx, dy, c.v), t.items.tail);
-    });
-    Items(head, MoveCarInTrain(c, dx, dy, t.items.tail));
-};
-
-(Car@, Int@, Int@, Trains@) { Trains@; }
-MoveCarInTrains = (Car@ c, Int@ dx, Int@ dy, Trains@ t) {
-    t.?(empty: t);
-    CarInTrain(c.x, c.y, t.items.head).?(true: {
-        Items(MoveCarInTrain(c, dx, dy, t.items.head), t.items.tail);
-    });
-    Items(t.items.head, MoveCarInTrains(c, dx, dy, t.items.tail));
-};
-
-(Car@, Int@, Int@, S@) { S@; }
-MoveCarInS = (Car@ c, Int@ dx, Int@ dy, S@ s) {
-    s.@(trains: MoveCarInTrains(c, dx, dy, s.trains));
-};
-
-(Car@, Train@) { Train@; }
-RemoveCarInTrain = (Car@ c, Train@ t) {
-    t.?(empty: t);
-    Car@ head = t.items.head;
-    And(/Std/Int/Eq%.Eq(head.x, c.x), /Std/Int/Eq%.Eq(head.y, c.y)).?(true: t.items.tail);
-    Items(head, RemoveCarInTrain(c, t.items.tail));
-};
-
-(Car@, Trains@) { Trains@; }
-RemoveCarInTrains = (Car@ c, Trains@ t) {
-    t.?(empty: t);
-    CarInTrain(c.x, c.y, t.items.head).?(true: {
-        Train@ removed = RemoveCarInTrain(c, t.items.head);
-        removed.?(empty: t.items.tail);
-        Items(removed, t.items.tail);
-    });
-    Items(t.items.head, RemoveCarInTrains(c, t.items.tail));
-};
-
-(Car@, S@) { S@; }
-RemoveCarInS = (Car@ c, S@ s) {
-    s.@(trains: RemoveCarInTrains(c, s.trains));
-};
-
-# Add a car to the front of the train that starts with the given car.
-(Car@, Car@, Trains@) { Trains@; }
-PrependToTrainInTrains = (Car@ existing, Car@ new, Trains@ t) {
-    t.?(empty: t);
-    CarInTrain(existing.x, existing.y, t.items.head).?(true: {
-        Items(Items(new, t.items.head), t.items.tail);
-    });
-    Items(t.items.head, PrependToTrainInTrains(existing, new, t.items.tail));
-};
-
-# Add a car to the front of the train that starts with the given car.
-(Car@, Car@, S@) { S@; }
-PrependToTrainInS = (Car@ existing, Car@ new, S@ s) {
-    s.@(trains: PrependToTrainInTrains(existing, new, s.trains));
-};
-
-(Int@, Int@, Train@) { Maybe@<Car@>; }
-GetCarInTrain = (Int@ x, Int@ y, Train@ t) {
-    t.?(empty: Nothing<Car@>);
-    Car@ head = t.items.head;
-    And(/Std/Int/Eq%.Eq(head.x, x), /Std/Int/Eq%.Eq(head.y, y)).?(true: Just(head));
-    GetCarInTrain(x, y, t.items.tail);
-};
-
-(Int@, Int@, Trains@) { Maybe@<Car@>; }
-GetCarInTrains = (Int@ x, Int@ y, Trains@ t) {
-    t.?(empty: Nothing<Car@>);
-    CarInTrain(x, y, t.items.head).?(true: GetCarInTrain(x, y, t.items.head));
-    GetCarInTrains(x, y, t.items.tail);
-};
-
-(Int@, Int@, S@) { Maybe@<Car@>; }
-GetCarInS = (Int@ x, Int@ y, S@ s) {
-    GetCarInTrains(x, y, s.trains);
-};
-
-(Train@, S@) { S@; }
-AddTrain = (Train@ train, S@ s) {
-    s.@(trains: Items(train, s.trains));
+(Coord@, Coord@, Value@, S@) { S@; }
+MoveCar = (Coord@ src, Coord@ dest, Value@ v, S@ s) {
+    Cars@ removed = Grid.Delete(s.cars, src);
+    Cars@ cars = Grid.Insert(removed, dest, v);
+    s.@(cars);
 };
 
 # Check if the gate at the given location is active.
 (Int@, Int@, S@) { Bool@; }
 IsBusy = (Int@ x, Int@ y, S@ s) {
     Grid.Lookup(s.busy, Coord@(x, y)).?(just: True, nothing: False);
+};
+
+# Check if the gate at the given location is idle.
+(Int@, Int@, S@) { Bool@; }
+IsIdle = (Int@ x, Int@ y, S@ s) {
+    Not(IsBusy(x, y, s));
 };
 
 (Int@, Int@, S@) { S@; }
@@ -235,108 +143,166 @@ SetBusy = (Int@ x, Int@ y, S@ s) {
     s.@(busy: Grid.Insert(s.busy, Coord@(x, y), Unit));
 };
 
-# Execute a rail gate.
-(Dir@, Car@, S@) { S@; }
-DoRail = (Dir@ d, Car@ c, S@ s) {
-    Coord@ dest = Dest(c.x, c.y, d);
-    CarInS(dest.x, dest.y, s).?(true: s);
-    MoveCarInS(c, dest.x, dest.y, s);
+(Gates@, Cars@) { Model@; }
+Model = (Gates@ gates, Cars@ cars) {
+    Model@(gates, S@(cars, Grid.Empty<Unit@>));
 };
 
-# Execute a sink gate.
-(Car@, S@) { S@; }
-DoSink = (Car@ c, S@ s) {
-    RemoveCarInS(c, s);
-};
+# Try advancing each of the engines in the list.
+(Gates@, S@, List@<Coord@>) { S@; }
+GoEngines = (Gates@ gates) {
+    (Coord@, Value@, S@) { Maybe@<S@>; }
+    GoSelect = (Coord@ c, Value@ v, S@ s) {
+        # Select gate blocks cars from advancing when idle, sinks cars when busy.
+        # The associated switch gate is responsible for triggering the busy state.
+        IsIdle(c.x, c.y, s).?(true: Nothing<S@>);
+        Just(RemoveCar(c, v.?(C: ClearBusy(c.x, c.y, s), : s)));
+    };
 
-# Execute a source gate.
-(Dir@, Car@, S@) { S@; }
-DoSource = (Dir@ d, Car@ c, S@ s) {
-    Coord@ dest = Dest(c.x, c.y, d);
-    CarInS(dest.x, dest.y, s).?(true: s);
-    AddTrain(List[Car@(dest.x, dest.y, C)], s);
-};
+    (Coord@, Value@, S@) { Maybe@<S@>; }
+    GoSink = (Coord@ c, Value@ _, S@ s) {
+        Just(RemoveCar(c, s));
+    };
 
-# Execute a 0 or 1 tag gate
-(Value@, Dir@, Car@, S@) { S@; }
-DoTag = (Value@ v, Dir@ d, Car@ c, S@ s) {
-    Coord@ dest = Dest(c.x, c.y, d);
-    CarInS(dest.x, dest.y, s).?(true: s);
+    # Attempt to push a car through a rail.
+    (Dir@, Coord@, Value@, S@) { Maybe@<S@>; }
+    GoRail = (Dir@ d, Coord@ c, Value@ v, S@ s) {
+        # Make room in the output gate, then move the input there.
+        Coord@ dest = Dest(c.x, c.y, d);
+        Maybe@<S@> ms = GoAt(dest, s);
+        ms.?(nothing: Nothing<S@>);
+        Just(MoveCar(c, dest, v, ms.just));
+    },
 
-    IsBusy(c.x, c.y, s).?(false: {
-        PrependToTrainInS(c, Car@(dest.x, dest.y, v), SetBusy(c.x, c.y, s));
-    });
+    (Dir@, Coord@, Value@, S@) { Maybe@<S@>; }
+    GoSource = (Dir@ d, Coord@ c, Value@ v, S@ s) {
+        # Push out to make room in the output gate, then put a new engine there.
+        Coord@ dest = Dest(c.x, c.y, d);
+        Maybe@<S@> ms = GoAt(dest, s);
+        ms.?(nothing: Nothing<S@>);
+        Just(AddCar(dest, v, ms.just));
+    },
 
-    MoveCarInS(c, dest.x, dest.y, c.v.?(C: ClearBusy(c.x, c.y, s), : s));
-};
+    (Value@, Dir@, Coord@, Value@, S@) { Maybe@<S@>; }
+    GoTag = (Value@ tag, Dir@ d, Coord@ c, Value@ v, S@ s) {
+        # Tag: If idle, output a car with tag value. Otherwise forward the input as is.
 
-(Switch@, Car@, S@) { S@; }
-DoSwitch = (Switch@ g, Car@ c, S@ s) {
-    Coord@ switch = Dest(c.x, c.y, g.s);
-    IsBusy(switch.x, switch.y, s).?(true: s);
+        # We'll have to push anything on the output out of the way.
+        Coord@ dest = Dest(c.x, c.y, d);
+        Maybe@<S@> ms = GoAt(dest, s);
+        ms.?(nothing: Nothing<S@>);
 
-    Maybe@<Car@> ms = GetCarInS(switch.x, switch.y, s);
-    ms.?(nothing: s);
+        IsBusy(c.x, c.y, ms.just).?(true: {
+            S@ ns = v.?(C: ClearBusy(c.x, c.y, ms.just), : ms.just);
+            Just(MoveCar(c, dest, v, ns));
+        });
 
-    ms.just.v.?(0: {
-        Coord@ target = Dest(c.x, c.y, g.0);
-        CarInS(target.x, target.y, s).?(true: s);
-        MoveCarInS(c, target.x, target.y,
-            c.v.?(C: SetBusy(switch.x, switch.y, s), : s));
-    });
+        # Place the tag car, then push it out of the way to forward the current car value.
+        # TODO: this is hacky. Process gates separately so the engine doesn't
+        # have to double push in this case.
+        S@ s = AddCar(dest, tag, ms.just);
+        GoTag(tag, d, c, v, SetBusy(c.x, c.y, s));
+    },
 
-    ms.just.v.?(1: {
-        Coord@ target = Dest(c.x, c.y, g.1);
-        CarInS(target.x, target.y, s).?(true: s);
-        MoveCarInS(c, target.x, target.y,
-            c.v.?(C: SetBusy(switch.x, switch.y, s), : s));
-    });
+    (Switch@, Coord@, Value@, S@) { Maybe@<S@>; }
+    GoSwitch = (Switch@ g, Coord@ c, Value@ v, S@ s) {
+        # Switch: Forward input to the output selected by the car at the
+        # associated select gate.
 
-    s;
-};
+        # The select gate has to be idle to proceed.
+        Coord@ select = Dest(c.x, c.y, g.s);
+        IsBusy(select.x, select.y, s).?(true: Nothing<S@>);
 
-# Execute a select gate.
-(Car@, S@) { S@; }
-DoSelect = (Car@ c, S@ s) {
-    IsBusy(c.x, c.y, s).?(false: s);
-    RemoveCarInS(c, c.v.?(C: ClearBusy(c.x, c.y, s), : s));
-};
+        # The select gate has to have a car to tell us which output to select.
+        Maybe@<Value@> msv = Grid.Lookup(s.cars, select);
+        msv.?(nothing: Nothing<S@>);
 
-# Execute a gate.
-(Gate@, Car@, S@) { S@; }
-DoGate = (Gate@ g, Car@ c, S@ s) {
-  g.?(noop: s,
-      rail: DoRail(g.rail, c, s),
-      sink: DoSink(c, s),
-      source: DoSource(g.source, c, s),
-      zero: DoTag(0, g.zero, c, s),
-      one: DoTag(1, g.one, c, s),
-      switch: DoSwitch(g.switch, c, s),
-      select: DoSelect(c, s));
-};
+        # The select gate's car must be 0 or 1 to tell us which output to select.
+        Maybe@<Coord@> mout = msv.just.?(
+            0: Just(Dest(c.x, c.y, g.0)),
+            1: Just(Dest(c.x, c.y, g.1)),
+            : Nothing<Coord@>);
+        mout.?(nothing: Nothing<S@>);
 
-# Execute the current schedule to completion.
-(Gates@, Schedule@, S@) { S@; }
-DoSchedule  = (Gates@ gates, Schedule@ schedule, S@ s) {
-    schedule.?(empty: s);
-    Car@ c = schedule.items.head;
-    Maybe@<Gate@> mg = Grid.Lookup(gates, Coord@(c.x, c.y));
-    Gate@ g = mg.?(just: mg.just, nothing: Noop);
-    DoSchedule(gates, schedule.items.tail, DoGate(g, c, s));
-};
+        # We'll have to push anything on the output out of the way.
+        Coord@ target = mout.just;
+        Maybe@<S@> ms = GoAt(target, s);
+        ms.?(nothing: Nothing<S@>);
 
-(Gates@, Trains@) { Model@; }
-Model = (Gates@ gates, Trains@ trains) {
-    Model@(gates, S@(trains, Grid.Empty<Unit@>));
+        # If we've reached the end of the input train, set the select gate draining.
+        S@ ns = v.?(C: SetBusy(select.x, select.y, ms.just), : ms.just);
+
+        # Forward the car to the output.
+        Just(MoveCar(c, target, v, ns));
+    },
+    
+    # Try executing the gate at the given location for the given car.
+    (Gate@, Coord@, Value@, S@) { Maybe@<S@>; }
+    GoGate = (Gate@ g, Coord@ c, Value@ v, S@ s) {
+      g.?(noop: Just(s),
+          rail: GoRail(g.rail, c, v, s),
+          sink: GoSink(c, v, s),
+          source: GoSource(g.source, c, v, s),
+          zero: GoTag(0, g.zero, c, v, s),
+          one: GoTag(1, g.one, c, v, s),
+          switch: GoSwitch(g.switch, c, v, s),
+          select: GoSelect(c, v, s));
+    },
+
+    # Try advancing the car at the given location.
+    # Returns the updated state if the car/gate was successfully updated.
+    # Returns Nothing if the car/gate can't move the way it wants to because
+    # something is in the way.
+    # The "updated" state may be the same as the given state if there is
+    # nothing that wants moving.
+    (Coord@, S@) { Maybe@<S@>; }
+    GoAt = (Coord@ c, S@ s) {
+        Maybe@<Gate@> mg = Grid.Lookup(gates, c);
+        mg.?(nothing: Just(s));  # no gate to go here.
+        Gate@ g = mg.just;
+
+        Maybe@<Value@> mv = Grid.Lookup(s.cars, c);
+        mv.?(nothing: Just(s));  # no car to go here.
+        Value@ v = mv.just;
+
+        v.?(C: Nothing<S@>);     # only GoEngine can move engines.
+        GoGate(g, c, v, s);
+    };
+
+    # Try advancing the engine at the given location.
+    # Does nothing if the engine is unable to advance.
+    (Coord@, S@) { S@; }
+    GoEngine = (Coord@ e, S@ s) {
+        Maybe@<Gate@> mg = Grid.Lookup(gates, e);
+        Gate@ g = mg.?(just: mg.just, nothing: Noop);
+        Maybe@<S@> ms = GoGate(g, e, C, s);
+        ms.?(just: ms.just, nothing: s);
+    };
+    
+    # Try advancing each of the engines in the list.
+    (S@, List@<Coord@>) { S@; }
+    GoEs = (S@ s, List@<Coord@> es) {
+        es.?(empty: s);
+        GoEs(GoEngine(es.items.head, s), es.items.tail);
+    };
+
+    GoEs;
 };
 
 # Advance the model by 1 unit of time.
 (Model@) { Model@; }
 Tick = (Model@ m) {
-    m.@(s: DoSchedule(m.gates, Schedule(m.s.trains), m.s));
+    # Get the list of engines on the grid and try to move each on forward.
+    # TODO: Who knows what order the engines come back in. Maybe we want to
+    # make this more fair at some point.
+    List@<Coord@> engines = Grid.ForEach(m.s.cars, Empty<Coord@>,
+        (Coord@ k, Value@ v, List@<Coord@> es) {
+            v.?(C: Items(k, es), : es);
+        });
+    m.@(s: GoEngines(m.gates, m.s, engines));
 };
 
-@(Model@, Switch@, Gate@, Gates@, Train@, Trains@, Car@, Dir@, Value@, S@, Tick, Model,
+@(Model@, Switch@, Gate@, Gates@, Cars@, Dir@, Value@, S@, Tick, Model,
    Noop, Sink, Rail, Source, One, Zero, Switch, Select,
    Left, Right, Up, Down,
    0, 1, C, L, S);

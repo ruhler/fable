@@ -1,4 +1,5 @@
 
+* Test that we can't push a car through a noop gate.
 * Implement dup gate.
 * Implement mvp sample network
 * Design mvp v2 network.

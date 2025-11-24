@@ -4,31 +4,28 @@
 % Str = /Std/Char/Ascii%.Str;
 % Format = /Std/Char/Ascii%.Format;
 
-@ Car@ = /Computrainer/Model%.Car@;
+@ Coord@ = /Computrainer/Grid%.Coord@;
+% Grid = /Computrainer/Grid%.Grid;
+
+@ Cars@ = /Computrainer/Model%.Cars@;
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Model@ = /Computrainer/Model%.Model@;
 @ S@ = /Computrainer/Model%.S@;
-@ Train@ = /Computrainer/Model%.Train@;
-@ Trains@ = /Computrainer/Model%.Trains@;
 @ Value@ = /Computrainer/Model%.Value@;
+
+Show@<Coord@> Coord = (Coord@ x) {
+    Format|'(%s, %s)'[/Core/Int/Show%.Show(x.x), /Core/Int/Show%.Show(x.y)];
+};
 
 Show@<Value@> Value = (Value@ v) {
     v.?(C: Str|C, 0: Str|0, 1: Str|1, S: Str|S, L: Str|L);
 };
 
-Show@<Car@> Car = (Car@ a) {
-    Format|'(%s,%s,%s)'[
-        /Core/Int/Show%.Show(a.x),
-        /Core/Int/Show%.Show(a.y),
-        Value(a.v)
-    ];
-};
-
-Show@<Train@> Train = /Core/List/Show%.Show(Car);
-Show@<Trains@> Trains = /Core/List/Show%.Show(Train);
+Show@<Cars@> Cars = /Core/Map/Show%.Show(Grid, Coord, Value);
 
 Show@<S@> S = (S@ a) {
-    Trains(a.trains);
+    # TODO: Show state?
+    Cars(a.cars);
 };
 
 Show@<Gates@> Gates = (Gates@ _) {
@@ -39,4 +36,4 @@ Show@<Model@> Model = (Model@ m) {
     Format|'Model(%s, %s)'[Gates(m.gates), S(m.s)];
 };
 
-@(Model, Trains);
+@(Model, Cars);

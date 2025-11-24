@@ -294,3 +294,88 @@ Advance each engine in turn, one at a time. To break recursion and otherwise
 avoid funning cases, let's say an engine must move under its own power, it
 cannot be pushed by something else.
 
+---
+
+Details need working out. I have a grid of values for the cars, a set of busy
+gates, and the list of engines. How do I process things at a high level?
+
+Tick:
+  Pull the list of engines, reverse them and clear them.
+  For each engine in turn: try moving the engine.
+    - on failure: add back to the list of enginers.
+    - on success: adopt the new state. It will have added itself back?
+
+Maybe for now, don't track engines separately. We can do a linear search
+through all cars to get the engines. Scheduling might not be fair, who knows
+what order they will come back in. But it's a simple way to start. Then I
+don't have to worry about maintaing two engine state properly?
+
+Invariant:
+* The only engine an engine can end up moving is itself. It cannot push any
+  other engine.
+
+That way I can start a tick by getting the list of engines. Then for each
+engine in turn: move or try to move it.
+* On successful move, commit the new state.
+* On failure to move, skip the engine and go to the next one.
+
+The tick ends when we've got through all the engines in the list.
+
+Okay, next step is, given an engine, return a Maybe@<S@> which is the result
+of trying to move the engine. That depends on the gate. We want to apply a
+gate the same way we would apply any gate, except that it's okay for the car
+in question to be an engine.
+
+In general, to do a gate, I may as well be given the car value as input.
+Because I already know if it's an engine or not? Let's assume by the time
+we've got this far...
+
+Let's say there are two parts to doing a gate:
+1. Look up the value at the location. If it's an engine, fail. You can't move
+an engine.
+2. Given the car value at the gate, try to advance assuming you can move that
+car, even if it is an engine.
+
+Uh, I need function names.
+
+Tick - tries to advance all the engines.
+GoEngines - tries advancing one engine at a time until none left.
+GoEngine - tries advancing a single engine. Does nothing if attempt fails.
+GoAt - tries advancing whatever is at the given location. Fails if it's an engine.
+GoGate - tries advancing a gate with the given car value. Okay if it's an engine.
+
+Okay? Naming is not obvious. But let's hack it up, see how goes.
+
+It's a little annoying that GoAt and GoGate form a recursive loop. Maybe I
+should inline all the gates directly into GoGate?
+
+Also, I have to pass gates through to everywhere now. Maybe I should set up a
+proper reader/state monad for this.
+
+---
+
+Trouble: How to implement Tag gate? We'll only ever try to activate the tag
+gate if something is there. But the first time we activate it, we aren't
+moving whatever car was there forward, so we'll have to say we failed. How do
+we say: we failed, yes, but we advance state to some extent in the process, so
+don't give up on us yet.
+
+In other words, the engine pushes, and that pushing has an effect, but not
+enough for the engine to actually move forward. My model doesn't support this
+kind of thing right now. Unless I want to try pushing out twice: 1 to put the
+tag, a second push to advance the tag? That would be an easy hack to get
+started. Not sure if it makes sense conceptually.
+
+        XXX*___
+    ==> _XXX1__
+
+Let's go with easy to start. If it's too weird I can change it later.
+
+---
+
+Probably the way I should change it later is to have gates take action as well
+as engines. If the engine tries to go here, it fails. But the tag gate will
+succeed, and then the engine can go next time.
+
+I don't want to switch to that right now. Let's get things working here first.
+
