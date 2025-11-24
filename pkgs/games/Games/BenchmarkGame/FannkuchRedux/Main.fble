@@ -1,19 +1,22 @@
 
 % True = /Std/Bool%.True;
 
+@ Ascii@ = /Std/Char/Ascii%.Ascii@;
+
 @ Int@ = /Std/Int%.Int@;
 % Int = /Std/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
-<@>% Concat = /Std/List%.Concat;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
+<@>@ ShowM@ = /Core/Show%.ShowM@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -23,17 +26,18 @@
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
 
-  (List@<String@>) { M@<Unit@>; } PutL = (List@<String@> strs) {
-    O.PutLine(stdio.out, Concat(strs));
+  (List@<Ascii@>, List@<ShowM@>) { M@<Unit@>; }
+  FmtL = (List@<Ascii@> fmt, List@<ShowM@> args) {
+    O.ShowLine(stdio.out, Format(fmt, args));
   };
 
   (List@<String@> args) {
     Int@ n = args.?(items: /Core/Int/Show%.Read(args.items.head), empty: Int|7);
     Fannkuch@ result = FannkuchRedux(n);
-    Unit@ _ <- m.do(PutL[/Core/Int/Show%.Show(result.checksum)]);
-    Unit@ _ <- m.do(PutL[
-      Str|'Pfannkuchen(', /Core/Int/Show%.Show(n),
-      Str|') = ', /Core/Int/Show%.Show(result.max_flips)]);
+    Unit@ _ <- m.do(FmtL|'%s'[/Core/Int/Show%.Show(result.checksum)]);
+    Unit@ _ <- m.do(FmtL|'Pfannkuchen(%s) = %s'[
+      /Core/Int/Show%.Show(n),
+      /Core/Int/Show%.Show(result.max_flips)]);
     m.return(True);
   };
 };

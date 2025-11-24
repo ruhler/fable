@@ -1,6 +1,8 @@
 
 % True = /Std/Bool%.True;
 
+@ Ascii@ = /Std/Char/Ascii%.Ascii@;
+
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
 % Sub = /Std/Int%.Sub;
@@ -16,8 +18,10 @@
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
+<@>@ ShowM@ = /Core/Show%.ShowM@;
+
 @ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -51,8 +55,9 @@ Int@ 2 = Int|2;
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
 
-  (List@<String@>) { M@<Unit@>; } PutL = (List@<String@> strs) {
-    O.PutLine(stdio.out, /Std/List%.Concat(strs));
+  (List@<Ascii@>, List@<ShowM@>) { M@<Unit@>; }
+  FmtL = (List@<Ascii@> fmt, List@<ShowM@> args) {
+    O.ShowLine(stdio.out, Format(fmt, args));
   };
 
   (List@<String@> args) {
@@ -63,9 +68,9 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     Int@ stretch_depth = Add(1, max_depth);
 
     Int@ check = Check(Tree(stretch_depth));
-    Unit@ _ <- m.do(PutL[
-      Str|'stretch tree of depth ', /Core/Int/Show%.Show(stretch_depth),
-      Str|'	 check: ', /Core/Int/Show%.Show(check)]);
+    Unit@ _ <- m.do(FmtL|'stretch tree of depth %s	 check: %s'[
+      /Core/Int/Show%.Show(stretch_depth),
+      /Core/Int/Show%.Show(check)]);
 
     Tree@ long_lived = Tree(max_depth);
 
@@ -80,17 +85,16 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
       };
 
       Int@ check = ForIter(0, 1);
-      Unit@ _ <- m.do(PutL[
+      Unit@ _ <- m.do(FmtL|'%s	 trees of depth %s	 check: %s'[
         /Core/Int/Show%.Show(iterations),
-        Str|'	 trees of depth ', /Core/Int/Show%.Show(depth),
-        Str|'	 check: ', /Core/Int/Show%.Show(check)]);
+        /Core/Int/Show%.Show(depth),
+        /Core/Int/Show%.Show(check)]);
       ForDepth(Add(2, depth));
     };
     Unit@ _ <- m.do(ForDepth(MinDepth));
-    Unit@ _ <- m.do(PutL[
-      Str|'long lived tree of depth ',
+    Unit@ _ <- m.do(FmtL|'long lived tree of depth %s	 check: %s'[
       /Core/Int/Show%.Show(max_depth),
-      Str|'	 check: ', /Core/Int/Show%.Show(Check(long_lived))]);
+      /Core/Int/Show%.Show(Check(long_lived))]);
     m.return(True);
   };
 };

@@ -1,24 +1,22 @@
 
-<@>% Concat = /Std/List%.Concat;
-
 @ Linear@ = /Pinball/Quadratic%.Linear@;
 @ Quadratic@ = /Pinball/Quadratic%.Quadratic@;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 Show@<Linear@> ShowLinear = (Linear@ l) {
-  Concat[Str|'Linear@(',
-    /Pinball/Num%.Show(l.a), Str|', ',
-    /Pinball/Num%.Show(l.b), Str|')'];
+  Format|'Linear@(%s, %s)'[
+    /Pinball/Num%.Show(l.a),
+    /Pinball/Num%.Show(l.b)];
 };
 
 Show@<Quadratic@> ShowQuadratic = (Quadratic@ q) {
-  Concat[Str|'Quadratic@(',
-    /Pinball/Num%.Show(q.a), Str|', ',
-    /Pinball/Num%.Show(q.b), Str|', ',
-    /Pinball/Num%.Show(q.c), Str|')'];
+  Format|'Quadratic@(%s, %s, %s)'[
+    /Pinball/Num%.Show(q.a),
+    /Pinball/Num%.Show(q.b),
+    /Pinball/Num%.Show(q.c)];
 };
 
 @(ShowLinear, ShowQuadratic);

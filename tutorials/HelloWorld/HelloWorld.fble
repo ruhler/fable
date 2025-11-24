@@ -19,17 +19,18 @@ Bool@ False = /Std/Bool%.False;
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 % Lines = /Std/String/Lines%.Lines;
+% ToString = /Core/Show%.ToString;
 
 # Specify the output string.
 Char@ c = Char|A;
 Int@ x = Int|42;
 String@ output = Lines[
   Str|'hello, world',
-  Concat[Str|'A boolean: ', /Core/Bool/Show%.Show(True)],
-  Concat[Str|'A character: ', /Core/Char/Show%.Show(c)],
+  Concat[Str|'A boolean: ', ToString(/Core/Bool/Show%.Show(True))],
+  Concat[Str|'A character: ', ToString(/Core/Char/Show%.Show(c))],
   Concat[Str|'A list: ',
-    /Core/List/Show%.Show(/Core/Bool/Show%.Show)[True, False, False]],
-  Concat[Str|'An integer: ', /Core/Int/Show%.Show(x)]];
+    ToString(/Core/List/Show%.Show(/Core/Bool/Show%.Show)[True, False, False])],
+  Concat[Str|'An integer: ', ToString(/Core/Int/Show%.Show(x))]];
 
 # Call the helper function for a main function
 # that outputs a single string value.

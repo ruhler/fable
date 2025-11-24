@@ -19,11 +19,9 @@
 @ IntLit@ = /Std/Int/Lit%.IntLit@;
 % IntI = /Std/Int/Lit%.Int;
 
-<@>% Concat = /Std/List%.Concat;
-
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 # Num@ -- 
 #   A number with sufficient precision for the pinball game.
@@ -56,7 +54,7 @@ Int@ S = IntI|128;
 (Num@, Num@) { Bool@; } Le = LeI;
 
 Show@<Num@> Show = (Int@ a) {
-  Concat[ShowI(a), Str|'/', ShowI(S)];
+  Format|'%s/%s'[ShowI(a), ShowI(S)];
 };
 
 # Int --

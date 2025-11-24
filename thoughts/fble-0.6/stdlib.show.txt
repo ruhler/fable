@@ -1052,3 +1052,34 @@ kind @.
 * Use of Format is really nice compared to Concat with text interleaved
   between shows.
 * Might be nice to have 'Lines' and 'Join' and 'Seq' variations on ShowM@?
+
+---
+
+Okay! Everything is converted over to the new interface. Let me summarize my
+feedback:
+
+* For describing show implementations, this feels like an improvement
+  - Format is really much nicer to use.
+  - Explicit Do is great for explicit sequencing.
+  - Nice not to deal with complex concat/reverse/items and other stuff I did
+    to try and avoid performance issues with outputting to String@.
+* ToString and Str still useful for testing show by string comparison.
+* It would be useful to have helper functions like Lines, Join, and Seq for
+  ShowM@.
+* In practice, it was okay writing O.Show(out, ...). Doesn't seem worse than
+  what we had before, which was O.PrintStr(out, ...).
+* It's good to export Do, Show, Put as the building blocks.
+* Slight annoyance of distinguishing between /Core/Show%.String and
+  /Core/Char/Ascii/Show%.String. But makes sense to have. In once case we are
+  talking literals, in the other strings - mostly file names, command line
+  args, etc.
+* This was a very invasive API change. I can't do this kind of thing again
+  once people start using the standard library.
+* Consider renaming to StringM@. Like, this is really a string builder kind of
+  class. I was going to say distance ourselves from Haskell 'Show' class,
+  which has additional semantics of producing valid haskell code. But I'm not
+  suggesting changing the name of Show, just ShowM@.
+* No issue with 'Show' being a pure kind of computation, that doesn't
+  interleave with higher level things. ToString and O.Show functions work fine
+  to lift it into higher level computation, which composes at that level.
+

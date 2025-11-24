@@ -8,16 +8,18 @@
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 <@>% List = /Std/List%.List;
-<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 <@>% DoWhile = /Core/Maybe%.DoWhile;
 
-@ String@ = /Std/String%.String@;
+<@>@ ShowM@ = /Core/Show%.ShowM@;
+<@>% Return = /Core/Show%.Return;
+
 % Str = /Std/Char/Ascii%.Str;
-% StrE = /Std/Char/Ascii%.StrE;
+% String = /Core/Char/Ascii/Show%.String;
+% StringE = /Core/Char/Ascii/Show%.StringE;
 
 @ Test@ = /Core/Test%.Test@;
 @ TestResult@ = /Core/Test%.TestResult@;
@@ -68,30 +70,30 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
 # Print a solved board.
 # If spaced is true, insert whitespace to make it more legible.
 # Otherwise, don't include any whitespace in the output.
-(Bool@, Solved@) { String@; } ShowBoard = (Bool@ spaced) {
-  (Symbol@) { String@; } ShowCell = (Symbol@ s) {
-    s.?(1: Str|1, 2: Str|2, 3: Str|3,
-        4: Str|4, 5: Str|5, 6: Str|6,
-        7: Str|7, 8: Str|8, 9: Str|9);
+(Bool@, Solved@) { ShowM@; } ShowBoard = (Bool@ spaced) {
+  (Symbol@) { ShowM@; } ShowCell = (Symbol@ s) {
+    s.?(1: String|1, 2: String|2, 3: String|3,
+        4: String|4, 5: String|5, 6: String|6,
+        7: String|7, 8: String|8, 9: String|9);
   };
 
-  String@ space = spaced.?(true: Str|' ', false: Str|'');
-  String@ nl = spaced.?(true: StrE|'\n', false: Str|'');
+  ShowM@ space = spaced.?(true: String|' ', false: Return);
+  ShowM@ nl = spaced.?(true: StringE|'\n', false: Return);
 
-  (Array@<Symbol@>) { String@; } ShowRow = (Array@<Symbol@> row) {
-    Concat(List[
+  (Array@<Symbol@>) { ShowM@; } ShowRow = (Array@<Symbol@> row) {
+    /Core/Show%.Concat[
       ShowCell(row(1)), ShowCell(row(2)), ShowCell(row(3)), space,
       ShowCell(row(4)), ShowCell(row(5)), ShowCell(row(6)), space,
       ShowCell(row(7)), ShowCell(row(8)), ShowCell(row(9)), nl
-    ]);
+    ];
   };
 
   (Solved@ board) {
-    Concat(List[
+    /Core/Show%.Concat[
       ShowRow(board(1)), ShowRow(board(2)), ShowRow(board(3)), nl,
       ShowRow(board(4)), ShowRow(board(5)), ShowRow(board(6)), nl,
       ShowRow(board(7)), ShowRow(board(8)), ShowRow(board(9))
-    ]);
+    ];
   };
 };
 

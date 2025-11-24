@@ -4,8 +4,6 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
-<@>% Concat = /Std/List%.Concat;
-
 @ Num@ = /Pinball/Num%.Num@;
 % Add = /Pinball/Num%.Add;
 % Sub = /Pinball/Num%.Sub;
@@ -15,7 +13,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 # Vec@ -- 
 #   A 2D vector.
@@ -77,9 +75,9 @@ Eq@<Vec@> Eq = (Vec@ a, Vec@ b) {
 };
 
 Show@<Vec@> Show = (Vec@ a) {
-  Concat[Str|'(',
-    /Pinball/Num%.Show(a.x), Str|', ',
-    /Pinball/Num%.Show(a.y), Str|')'];
+  Format|'(%s, %s)'[
+    /Pinball/Num%.Show(a.x),
+    /Pinball/Num%.Show(a.y)];
 };
 
 @(Vec@, AddV, SubV, MulVS, Magnitude, Normalize, RotateTo, RotateFrom,

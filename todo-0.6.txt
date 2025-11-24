@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Rename ShowM@ to StringM@?
+  And reduce overlap between String@ construction and StringM@ construction
+  functions? e.g. Join, Lines, Concat.
 * Change /Core/Debug%.TraceLn function to take ShowM@ instead of String@?
 * Double check if I should be able to write:
    @ ShowM@ = /Core/Show%.ShowM@, when ShowM@ has kind <@>@.

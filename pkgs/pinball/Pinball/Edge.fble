@@ -1,6 +1,4 @@
 
-<@>% Concat = /Std/List%.Concat;
-
 @ Num@ = /Pinball/Num%.Num@;
 
 @ Vec@ = /Pinball/Vec%.Vec@;
@@ -10,7 +8,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 # Edge@ --
 #   Internal representation for a stationary edge.
@@ -33,11 +31,10 @@ Edge = (Vec@ start, Vec@ end, Num@ restitution) {
 };
 
 Show@<Edge@> Show = (Edge@ e) {
-  Concat[
-    Str|'(start: ', /Pinball/Vec%.Show(e.start),
-    Str|', end: ', /Pinball/Vec%.Show(e.end),
-    Str|', restitution: ', /Pinball/Num%.Show(e.restitution),
-    Str|')'];
+  Format|'(start: %s, end: %s, restitution: %s)'[
+     /Pinball/Vec%.Show(e.start),
+     /Pinball/Vec%.Show(e.end),
+     /Pinball/Num%.Show(e.restitution)];
 };
 
 @(Edge@, Edge, Show);

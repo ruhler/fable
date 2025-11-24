@@ -2,8 +2,6 @@
 @ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
 
-% StrE = /Std/Char/Ascii%.StrE;
-
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
 % Neg = /Std/Int%.Neg;
@@ -17,10 +15,13 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
+<@>@ ShowM@ = /Core/Show%.ShowM@;
+
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Std/String%.String@;
+% StringE = /Core/Char/Ascii/Show%.StringE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -105,8 +106,8 @@ State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
 
-  (String@) { M@<Unit@>; } PutS = (String@ str) {
-    O.PutStr(stdio.out, str);
+  (ShowM@) { M@<Unit@>; } PutS = (ShowM@ str) {
+    O.Show(stdio.out, str);
   };
 
   (List@<String@> args) {
@@ -120,9 +121,9 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
       Int@ ni = Incr(i);
       Unit@ _ <- m.do(Eq(Int|0, Div(ni, l).r).?(true: {
-        Unit@ _ <- m.do(PutS(StrE|'\t:'));
+        Unit@ _ <- m.do(PutS(StringE|'\t:'));
         Unit@ _ <- m.do(PutS(/Core/Int/Show%.Show(ni)));
-        PutS(StrE|'\n');
+        PutS(StringE|'\n');
       }, false: m.return(Unit)));
 
       PiDigits(ni, r.state);

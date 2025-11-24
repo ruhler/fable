@@ -1,6 +1,4 @@
 
-<@>% Concat = /Std/List%.Concat;
-
 @ Num@ = /Pinball/Num%.Num@;
 % Add = /Pinball/Num%.Add;
 % Mul = /Pinball/Num%.Mul;
@@ -15,7 +13,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 Num@ 0 = Int|0;
 
@@ -67,13 +65,12 @@ Paddle = (Vec@ center, Vec@ start, Vec@ end, Num@ vel, Num@ pos, Num@ min, Num@ 
 };
 
 Show@<Paddle@> Show = (Paddle@ p) {
-  Concat[
-    Str|'(center: ', /Pinball/Vec%.Show(p.center),
-    Str|', start: ', /Pinball/Vec%.Show(p.start),
-    Str|', end: ', /Pinball/Vec%.Show(p.end),
-    Str|', vel: ', /Pinball/Num%.Show(p.vel),
-    Str|', pos: ', /Pinball/Num%.Show(p.pos),
-    Str|')'];
+  Format|'(center: %s, start: %s, end: %s, vel: %s, pos: %s)'[
+     /Pinball/Vec%.Show(p.center),
+     /Pinball/Vec%.Show(p.start),
+     /Pinball/Vec%.Show(p.end),
+     /Pinball/Num%.Show(p.vel),
+     /Pinball/Num%.Show(p.pos)];
 };
 
 @(Paddle@, Paddle, Move, Show);

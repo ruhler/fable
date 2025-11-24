@@ -12,6 +12,11 @@
 (List@<Ascii@>) { ShowM@; }
 String = StrLit(ToChar, /Core/Show%.String);
 
+(List@<Ascii@>) { ShowM@; }
+StringE = (List@<Ascii@> str) {
+  /Core/Show%.String(StrE(str));
+};
+
 (List@<Ascii@>, List@<ShowM@>) { ShowM@; }
 Format = StrLit(ToChar, /Core/Show%.Format);
 
@@ -20,4 +25,4 @@ FormatE = (List@<Ascii@> str, List@<ShowM@> args) {
   /Core/Show%.Format(StrE(str), args);
 };
 
-@(String, Format, FormatE);
+@(String, StringE, Format, FormatE);

@@ -6,7 +6,6 @@
 % Char = /Std/Char/Ascii%.Char;
 
 @ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
 % Mul = /Std/Int%.Mul;
 
 % Ge = /Std/Int/Ord%.Ge;

@@ -1,20 +1,20 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
+% String = /Core/Char/Ascii/Show%.String;
 
 @ Position@ = /Games/TicTacToe/Board%.Position@;
 @ Status@ = /Games/TicTacToe/Board%.Status@;
 
 Show@<Position@> Position = (Position@ a) {
   a.?(
-    UL: Str|'UL', UC: Str|'UC', UR: Str|'UR',
-    ML: Str|'ML', MC: Str|'MC', MR: Str|'MR',
-    LL: Str|'LL', LC: Str|'LC', LR: Str|'LR');
+    UL: String|'UL', UC: String|'UC', UR: String|'UR',
+    ML: String|'ML', MC: String|'MC', MR: String|'MR',
+    LL: String|'LL', LC: String|'LC', LR: String|'LR');
 };
 
 Show@<Status@> Status = (Status@ a) {
-  a.?(X: Str|'X', O: Str|'O', D: Str|'D', E: Str|'E');
+  a.?(X: String|'X', O: String|'O', D: String|'D', E: String|'E');
 };
 
 @(Position, Status);

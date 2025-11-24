@@ -6,7 +6,6 @@
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 <@>% List = /Std/List%.List;
-<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -22,6 +21,7 @@
 <@>@ Show@ = /Core/Show%.Show@;
 
 % Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
@@ -38,8 +38,7 @@ Eq@<Roots@> EqRoots = (Roots@ a, Roots@ b) {
 };
 
 Show@<Roots@> ShowRoots = (Roots@ r) {
-  Concat[Str|'(', /Pinball/Num%.Show(r.first), Str|',',
-    /Pinball/Num%.Show(r.second), Str|')'];
+  Format|'(%s,%s)'[/Pinball/Num%.Show(r.first), /Pinball/Num%.Show(r.second)];
 };
 
 Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[

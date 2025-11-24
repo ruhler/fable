@@ -46,6 +46,13 @@ String = (String@ str)<@ S@>(Stream@<S@> s) {
   String(str.items.tail, s);
 };
 
+(List@<ShowM@>) { ShowM@; }
+Concat = (List@<ShowM@> xs) {
+  xs.?(empty: Return);
+  Unit@ _ <- Do(xs.items.head);
+  Concat(xs.items.tail);
+};
+
 Char@ '%%' = U|25;
 Char@ '%s' = U|73;
 
@@ -108,4 +115,4 @@ ToString = (ShowM@ show) {
 #   form.
 <@>@ Show@ = <@ T@>(T@) { ShowM@; };
 
-@(Show@, ShowM@, Return, Do, Put, String, Format, ToString);
+@(Show@, ShowM@, Return, Do, Put, String, Format, Concat, ToString);

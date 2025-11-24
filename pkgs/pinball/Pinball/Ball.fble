@@ -4,8 +4,6 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
-<@>% Concat = /Std/List%.Concat;
-
 @ Num@ = /Pinball/Num%.Num@;
 
 @ Vec@ = /Pinball/Vec%.Vec@;
@@ -14,7 +12,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 # Ball@ --
 #   pos - the position of the center of the ball.
@@ -37,10 +35,10 @@ Eq@<Ball@> Eq = (Ball@ a, Ball@ b) {
 };
 
 Show@<Ball@> Show = (Ball@ a) {
-  Concat[Str|'Ball@(pos=',
-    /Pinball/Vec%.Show(a.pos), Str|', vel=',
-    /Pinball/Vec%.Show(a.vel), Str|', radius=',
-    /Pinball/Num%.Show(a.radius), Str|')'];
+  Format|'Ball@(pos=%s, vel=%s, radius=%s)'[
+    /Pinball/Vec%.Show(a.pos),
+    /Pinball/Vec%.Show(a.vel),
+    /Pinball/Num%.Show(a.radius)];
 };
 
 @(Ball@, Move, Eq, Show);
