@@ -33,6 +33,7 @@
 % Zero = /Computrainer/Model%.Zero;
 % Select = /Computrainer/Model%.Select;
 % Switch = /Computrainer/Model%.Switch;
+% Dup = /Computrainer/Model%.Dup;
 % Up = /Computrainer/Model%.Up;
 % Down = /Computrainer/Model%.Down;
 % Right = /Computrainer/Model%.Right;
@@ -185,6 +186,22 @@ Test@ Tests = TestSuite(Str|Computrainer, List[
     ];
     Cars@ got = TickN(Int|10, model).s.cars;
     AssertEquals(/Computrainer/Model/Eq%.Cars, /Computrainer/Model/Show%.Cars, wnt, got);
+  }),
+
+  Test(Str|'Dup', (Unit@ _) {
+    Gates@ gates = Entries[
+        @(x: Int|3, y: Int|4, v: Dup(Right, Up))
+    ];
+    Cars@ cars = Entries[
+        @(x: Int|3, y: Int|4, v: C)
+    ];
+    Model@ model = Model(gates, cars);
+    Model@ wnt = Model(gates, Entries[
+        @(x: Int|4, y: Int|4, v: C),
+        @(x: Int|3, y: Int|5, v: C)
+    ]);
+    Model@ got = Tick(model);
+    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   })
 ]);
 

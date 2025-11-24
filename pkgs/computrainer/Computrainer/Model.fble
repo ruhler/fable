@@ -30,6 +30,7 @@ Dir@ Up = Dir@(up: Unit);
 Dir@ Down = Dir@(down: Unit);
 
 @ Switch@ = *(Dir@ s, Dir@ 0, Dir@ 1);
+@ Dup@ = *(Dir@ a, Dir@ b);
 
 @ Gate@ = +(
     Unit@ noop,
@@ -39,7 +40,8 @@ Dir@ Down = Dir@(down: Unit);
     Dir@ zero,
     Dir@ one,
     Switch@ switch,
-    Unit@ select
+    Unit@ select,
+    Dup@ dup
 );
 
 Gate@ Noop = Gate@(noop: Unit);
@@ -83,6 +85,11 @@ Switch = (Dir@ s, Dir@ 0, Dir@ 1) {
     Gate@(switch: Switch@(s, 0, 1));
 };
 
+(Dir@, Dir@) { Gate@; }
+Dup = (Dir@ a, Dir@ b) {
+    Gate@(dup: Dup@(a, b));
+};
+
 @ Gates@ = Grid@<Gate@>;
 
 @ Value@ = +(Unit@ C, Unit@ 0, Unit@ 1, Unit@ S, Unit@ L);
@@ -119,6 +126,11 @@ MoveCar = (Coord@ src, Coord@ dest, Value@ v, S@ s) {
     Cars@ removed = Grid.Delete(s.cars, src);
     Cars@ cars = Grid.Insert(removed, dest, v);
     s.@(cars);
+};
+
+(Coord@, Coord@, Coord@, Value@, S@) { S@; }
+DupCar = (Coord@ src, Coord@ dest1, Coord@ dest2, Value@ v, S@ s) {
+    AddCar(dest2, v, MoveCar(src, dest1, v, s));
 };
 
 # Check if the gate at the given location is active.
@@ -235,6 +247,22 @@ GoEngines = (Gates@ gates) {
         # Forward the car to the output.
         Just(MoveCar(c, target, v, ns));
     },
+
+    (Dup@, Coord@, Value@, S@) { Maybe@<S@>; }
+    GoDup = (Dup@ g, Coord@ c, Value@ v, S@ s) {
+        # Dup forwards input to both outputs.
+        Coord@ a = Dest(c.x, c.y, g.a);
+        Maybe@<S@> ms = GoAt(a, s);
+        ms.?(nothing: Nothing<S@>);
+        S@ s = ms.just;
+
+        Coord@ b = Dest(c.x, c.y, g.b);
+        Maybe@<S@> ms = GoAt(b, s);
+        ms.?(nothing: Nothing<S@>);
+        S@ s = ms.just;
+
+        Just(DupCar(c, a, b, v, s));
+    },
     
     # Try executing the gate at the given location for the given car.
     (Gate@, Coord@, Value@, S@) { Maybe@<S@>; }
@@ -246,7 +274,8 @@ GoEngines = (Gates@ gates) {
           zero: GoTag(0, g.zero, c, v, s),
           one: GoTag(1, g.one, c, v, s),
           switch: GoSwitch(g.switch, c, v, s),
-          select: GoSelect(c, v, s));
+          select: GoSelect(c, v, s),
+          dup: GoDup(g.dup, c, v, s));
     },
 
     # Try advancing the car at the given location.
@@ -302,7 +331,7 @@ Tick = (Model@ m) {
     m.@(s: GoEngines(m.gates, m.s, engines));
 };
 
-@(Model@, Switch@, Gate@, Gates@, Cars@, Dir@, Value@, S@, Tick, Model,
-   Noop, Sink, Rail, Source, One, Zero, Switch, Select,
+@(Model@, Switch@, Dup@, Gate@, Gates@, Cars@, Dir@, Value@, S@, Tick, Model,
+   Noop, Sink, Rail, Source, One, Zero, Switch, Select, Dup,
    Left, Right, Up, Down,
    0, 1, C, L, S);

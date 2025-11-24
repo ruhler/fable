@@ -11,6 +11,7 @@
 
 @ Dir@ = /Computrainer/Model%.Dir@;
 @ Switch@ = /Computrainer/Model%.Switch@;
+@ Dup@ = /Computrainer/Model%.Dup@;
 
 @ Sprite@ = (Color@) { Drawing@; };
 
@@ -59,10 +60,15 @@ Sprite@ Select = Gate;
 Sprite@ Sink = Gate;
 
 (Switch@) { Sprite@; } Switch = (Switch@ s) {
+    # TODO: show something special for select too.
     Sprites[Dir(s.0), Dir(s.1)];
 };
 
-% Sprites = @(Car, Dir, Select, Sink, Switch);
+(Dup@) { Sprite@; } Dup = (Dup@ s) {
+    Sprites[Dir(s.a), Dir(s.b)];
+};
+
+% Sprites = @(Car, Dir, Select, Sink, Switch, Dup);
 
 @(Sprite@, W, Sprites);
 

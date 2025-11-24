@@ -32,7 +32,12 @@ Eq@<Gate@> Gate = (Gate@ a, Gate@ b) {
             Dir(a.switch.1, b.switch.1).?(false: False);
             True;
             }, : False),
-        select: b.?(select: True, : False));
+        select: b.?(select: True, : False),
+        dup: b.?(dup: {
+            Dir(a.dup.a, b.dup.a).?(false: False);
+            Dir(a.dup.b, b.dup.b).?(false: False);
+            True;
+            }, : False));
 };
 
 Eq@<Gates@> Gates = /Computrainer/Grid/Eq%.Eq(Gate);

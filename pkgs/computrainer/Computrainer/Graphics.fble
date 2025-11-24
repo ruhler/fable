@@ -53,7 +53,8 @@ DrawGate = (Int@ x, Int@ y, Gate@ g) {
             zero: Sprites.Dir(g.zero, Color.0),
             one: Sprites.Dir(g.one, Color.1),
             switch: Sprites.Switch(g.switch, Color.Gate),
-            select: Sprites.Select(Color.Gate)));
+            select: Sprites.Select(Color.Gate),
+            dup: Sprites.Dup(g.dup, Color.Gate)));
 };
 
 (Int@, Int@, Model@) { Drawing@; }
