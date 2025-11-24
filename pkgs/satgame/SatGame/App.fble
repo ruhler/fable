@@ -22,6 +22,7 @@
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -134,7 +135,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename, /Core/Stdio%.Text));
     Unit@ _ <- m.do({
       ostream.?(nothing: m.return(Unit));
-      O.PutStr(ostream.just, /Core/Int/Show%.Show(Incr(seed)));
+      O.Show(ostream.just, /Core/Int/Show%.Show(Incr(seed)));
     });
 
     m.return(seed);
@@ -214,14 +215,14 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       });
   };
 
-  Unit@ _ <- m.do(O.PutLine(stdio.out, Concat[
-      Str|'Generating puzzle with params: ',
-      /SatGame/Puzzle/Show%.Params(params),
-      Str|' (seed ', /Core/Int/Show%.Show(args.seed), Str|')'
+  Unit@ _ <- m.do(O.ShowLine(stdio.out,
+      Format|'Generating puzzle with params: %s (seed %s)'[
+        /SatGame/Puzzle/Show%.Params(params),
+        /Core/Int/Show%.Show(args.seed)
   ]));
 
   Puzzle@ puzzle = PureLFSR.Run(Generate(params), args.seed);
-  Unit@ _ <- m.do(O.PutLine(stdio.out, /SatGame/Puzzle/Show%.Puzzle(puzzle)));
+  Unit@ _ <- m.do(O.ShowLine(stdio.out, /SatGame/Puzzle/Show%.Puzzle(puzzle)));
 
   Game@ game = /SatGame/Game%.Game(puzzle);
 

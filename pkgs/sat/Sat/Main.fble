@@ -75,7 +75,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     Int@ debug = GetDebugArg(args);
     Solver@ solver = AddClauses(NewSolver, parsed.parsed); 
     Result@ result <- m.do(Solve(m, Debug(m, debug, stdio.out), solver));
-    Unit@ _ <- m.do(O.PutLine(stdio.out, ShowResult(result)));
+    Unit@ _ <- m.do(O.ShowLine(stdio.out, ShowResult(result)));
     m.return(True);
   };
 };

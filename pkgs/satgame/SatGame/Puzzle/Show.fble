@@ -1,12 +1,13 @@
 
-<@>% Concat = /Std/List%.Concat;
-<@>% Join = /Std/List%.Join;
-
 <@>@ Show@ = /Core/Show%.Show@;
+% Do = /Core/Show%.Do;
+<@>% Return = /Core/Show%.Return;
 
-@ String@ = /Std/String%.String@;
-% Lines = /Std/String/Lines%.Lines;
-% Str = /Std/Char/Ascii%.Str;
+% String = /Core/Char/Ascii/Show%.String;
+% Format = /Core/Char/Ascii/Show%.Format;
+% FormatE = /Core/Char/Ascii/Show%.FormatE;
+
+@ Unit@ = /Std/Unit%.Unit@;
 
 @ Literal@ = /SatGame/Puzzle%.Literal@;
 @ Clause@ = /SatGame/Puzzle%.Clause@;
@@ -14,23 +15,32 @@
 @ Params@ = /SatGame/Puzzle%.Params@;
 
 Show@<Literal@> Literal = (Literal@ literal) {
-  String@ sign = literal.pos.?(true: Str|'+', false: Str|'-');
-  Concat[sign, /SatGame/Var/Show%.Show(literal.var)];
+  Format|'%s%s'[
+    literal.pos.?(true: String|'+', false: String|'-'), 
+    /SatGame/Var/Show%.Show(literal.var)
+  ];
 };
 
 Show@<Clause@> Clause = (Clause@ clause) {
-  Join(/Std/List%.Map(clause, Literal), Str|' ');
+  clause.?(empty: Return);
+  Unit@ _ <- Do(Literal(clause.items.head));
+  clause.items.tail.?(empty: Return);
+  Unit@ _ <- Do(String|' ');
+  Clause(clause.items.tail);
 };
 
 Show@<Puzzle@> Puzzle = (Puzzle@ puzzle) {
-  Lines(/Std/List%.Map(puzzle, Clause));
+  puzzle.?(empty: Return);
+  Unit@ _ <- Do(FormatE|'%s\n'[Clause(puzzle.items.head)]);
+  Puzzle(puzzle.items.tail);
 };
 
 Show@<Params@> Params = (Params@ params) {
-  Concat[
-    Str|'Vars: ', /Core/Int/Show%.Show(params.num_vars), Str|', ',
-    Str|'Clauses: ', /Core/Int/Show%.Show(params.num_clauses), Str|', ',
-    Str|'Vars Per Clause: ', /Core/Int/Show%.Show(params.num_literals_per_clause)];
+  Format|'Vars: %s, Clauses: %s, Vars Per Clause: %s'[
+    /Core/Int/Show%.Show(params.num_vars),
+    /Core/Int/Show%.Show(params.num_clauses),
+    /Core/Int/Show%.Show(params.num_literals_per_clause)
+  ];
 };
 
 @(Literal, Clause, Puzzle, Params);

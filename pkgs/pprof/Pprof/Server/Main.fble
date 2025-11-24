@@ -9,6 +9,8 @@
 % Add = /Std/Int%.Add;
 % Mul = /Std/Int%.Mul;
 
+% Ge = /Std/Int/Ord%.Ge;
+
 @ QR@ = /Std/Int/Div%.QR@;
 % Div = /Std/Int/Div%.Div;
 
@@ -30,17 +32,22 @@
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
+<@>@ ShowM@ = /Core/Show%.ShowM@;
+
 % Split = /Std/String/Eq%.Split;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
+% ToString = /Core/Show%.ToString;
+
 @ String@ = /Std/String%.String@;
 % Lines = /Std/String/Lines%.Lines;
 % Str = /Std/Char/Ascii%.Str;
 % StrE = /Std/Char/Ascii%.StrE;
 % Format = /Std/Char/Ascii%.Format;
+% FormatM = /Core/Char/Ascii/Show%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -131,14 +138,15 @@ GetArgs = (List@<String@> args, Args@ default) {
   GetArgs(nargv, nargs);
 };
 
-(Int@, Int@) { String@; }
+(Int@, Int@) { ShowM@; }
 Percent = (Int@ numerator, Int@ denominator) {
   Int@ s = Div(Mul(Int|10000, numerator), denominator).q;
   QR@ qr = Div(s, Int|100);
-  Format|'%s.%s%%'[
-    /Core/Int/Show%.Show(qr.q),
-    /Core/Int/Show%.Show(Add(Int|100, qr.r)).items.tail
-  ];
+  ShowM@ fraction = {
+    Ge(Int|10, qr.r).?(true: /Core/Int/Show%.Show(qr.r));
+    FormatM|'0%s'[/Core/Int/Show%.Show(qr.r)];
+  };
+  FormatM|'%s.%s%%'[/Core/Int/Show%.Show(qr.q), fraction];
 };
 
 Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, List@<String@> argv) {
@@ -156,12 +164,13 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
       BlockId@ block = seq.items.head;
       Maybe@<Block@> mname = Blocks.Lookup(profile.blocks, block);
-      String@ name = { 
-        mname.?(just: mname.just.name);
-        Unit@ _ = /Core/Debug%.TraceLn(Format|'block %s not found'[/Core/Int/Show%.Show(block)]);
-        Format|'??%s??'[/Core/Int/Show%.Show(block)];
+      ShowM@ name = { 
+        mname.?(just: /Core/Show%.String(mname.just.name));
+        Unit@ _ = /Core/Debug%.TraceLn(
+          ToString(FormatM|'block %s not found'[/Core/Int/Show%.Show(block)]));
+        FormatM|'??%s??'[/Core/Int/Show%.Show(block)];
       };
-      Unit@ _ <- m.do(O.PutStr(out, name));
+      Unit@ _ <- m.do(O.Show(out, name));
       seq.items.tail.?(empty: m.return(Unit));
 
       Unit@ _ <- m.do(O.PutChar(out, Char|';'));
@@ -173,8 +182,8 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       seq.?(empty: m.return(Unit));
 
       BlockId@ block = seq.items.head;
-      String@ name = /Core/Int/Show%.Show(block);
-      Unit@ _ <- m.do(O.PutStr(out, name));
+      ShowM@ name = /Core/Int/Show%.Show(block);
+      Unit@ _ <- m.do(O.Show(out, name));
       seq.items.tail.?(empty: m.return(Unit));
 
       Unit@ _ <- m.do(O.PutChar(out, Char|','));
@@ -183,8 +192,8 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
     (Entry@) { M@<Unit@>; }
     Row = (Entry@ entry) {
-      Unit@ _ <- m.do(O.PutStr(out,
-          Format|'<tr><td>%s</td><td>%s</td><td><a href="/seq/'[
+      Unit@ _ <- m.do(O.Show(out,
+          FormatM|'<tr><td>%s</td><td>%s</td><td><a href="/seq/'[
             Percent(entry.value, total),
             /Core/Int/Show%.Show(entry.value)]));
       Unit@ _ <- m.do(SeqBlocks(link(entry.seq)));
@@ -235,24 +244,21 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
   Maybe@<IStream@<M@>> fin <- m.do(stdio.read(args.file, /Core/Stdio%.Binary));
   fin.?(nothing: {
-    Unit@ _ <- m.do(O.PutLine(stdio.err,
-        Format|'unable to open ''%s'''[args.file]));
+    Unit@ _ <- m.do(O.ShowLine(stdio.err, FormatM|'unable to open ''%s'''[
+        /Core/Show%.String(args.file)]));
     m.return(False);
   });
 
   Result@<Profile@> parsed <- m.do(Parse(fin.just, m));
   parsed.?(error: {
-    Unit@ _ <- m.do(O.PutLine(stdio.err, Concat[
-        Str|'error:', parsed.error
-    ]));
+    Unit@ _ <- m.do(O.ShowLine(stdio.err, FormatM|'error: %s'[parsed.error]));
     m.return(False);
   });
   
-  Unit@ _ <- m.do(O.PutLine(stdio.out, Concat[
-    Str|'serving at http://',
-    args.hostname,
-    Str|':',
-    /Core/Int/Show%.Show(args.port)
+  Unit@ _ <- m.do(O.ShowLine(stdio.out,
+    FormatM|'serving at http://%s:%s'[
+      /Core/Show%.String(args.hostname),
+      /Core/Int/Show%.Show(args.port)
   ]));
 
   Profile@ profile = parsed.ok;
@@ -260,11 +266,10 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   (OStream@<M@>) { M@<Unit@>; }
   OverviewPage = (OStream@<M@> out) {
     Int@ total = Total.Total(profile);
-    O.PutStr(out, Lines[
-      Str|'<h1>Overview</h1>',
-      Str|'Profile: ', args.file, Str|'<br />',
-      Str|'Samples: ', /Core/Int/Show%.Show(total), Str|'<br />',
-      Str|'Sequences: ', /Core/Int/Show%.Show(Length(profile.samples)), Str|'<br />']);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'<h1>Overview</h1>'));
+    Unit@ _ <- m.do(O.PutLine(out, Concat[Str|'Profile: ', args.file, Str|'<br />']));
+    Unit@ _ <- m.do(O.ShowLine(out, FormatM|'Samples: %s<br />'[/Core/Int/Show%.Show(total)]));
+    O.ShowLine(out, FormatM|'Sequences: %s<br />'[/Core/Int/Show%.Show(Length(profile.samples))]);
   };
 
   (OStream@<M@>) { M@<Unit@>; }

@@ -3,16 +3,20 @@
 % And = /Std/Bool%.And;
 % True = /Std/Bool%.True;
 
-@ Char@ = /Std/Char%.Char@;
-% Char = /Std/Char/Ascii%.Char;
+% String = /Core/Char/Ascii/Show%.String;
 
 @ Hex@ = /Core/Digits%.Hex@;
 
+<@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
-<@>% Concat = /Std/List%.Concat;
 <@>% ForEach = /Std/List%.ForEach;
 
-@ String@ = /Std/String%.String@;
+<@>@ Show@ = /Core/Show%.Show@;
+<@>@ ShowM@ = /Core/Show%.ShowM@;
+% Do = /Core/Show%.Do;
+<@>% Return = /Core/Show%.Return;
+
+@ Unit@ = /Std/Unit%.Unit@;
 
 % H8 = /Md5/Bits/Bit8%.H8;
 
@@ -40,24 +44,31 @@
     True, And);
 };
 
-(Hex@) { Char@; } Hex2Char = (Hex@ h) {
+Show@<Hex@> Hex = (Hex@ h) {
   h.?(
-    0: Char|0, 1: Char|1, 2: Char|2, 3: Char|3,
-    4: Char|4, 5: Char|5, 6: Char|6, 7: Char|7,
-    8: Char|8, 9: Char|9, A: Char|a, B: Char|b,
-    C: Char|c, D: Char|d, E: Char|e, F: Char|f);
+    0: String|0, 1: String|1, 2: String|2, 3: String|3,
+    4: String|4, 5: String|5, 6: String|6, 7: String|7,
+    8: String|8, 9: String|9, A: String|a, B: String|b,
+    C: String|c, D: String|d, E: String|e, F: String|f);
 };
 
-(Hash@){ String@; } Show = (Hash@ x) {
-  Concat[
-      List[Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)],
-      List[Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)],
-      List[Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)],
-      List[Hex2Char(x.12), Hex2Char(x.13), Hex2Char(x.14), Hex2Char(x.15)],
-      List[Hex2Char(x.16), Hex2Char(x.17), Hex2Char(x.18), Hex2Char(x.19)],
-      List[Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)],
-      List[Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.27)],
-      List[Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)]];
+(List@<ShowM@>) { ShowM@; }
+Seq = (List@<ShowM@> xs) {
+  xs.?(empty: Return);
+  Unit@ _ <- Do(xs.items.head);
+  Seq(xs.items.tail);
+};
+
+Show@<Hash@> Show = (Hash@ x) {
+  Seq[
+      Hex(x.0), Hex(x.1), Hex(x.2), Hex(x.3),
+      Hex(x.4), Hex(x.5), Hex(x.6), Hex(x.7),
+      Hex(x.8), Hex(x.9), Hex(x.10), Hex(x.11),
+      Hex(x.12), Hex(x.13), Hex(x.14), Hex(x.15),
+      Hex(x.16), Hex(x.17), Hex(x.18), Hex(x.19),
+      Hex(x.20), Hex(x.21), Hex(x.22), Hex(x.23),
+      Hex(x.24), Hex(x.25), Hex(x.26), Hex(x.27),
+      Hex(x.28), Hex(x.29), Hex(x.30), Hex(x.31)];
 };
 
 @(Hash@, Eq, Show);

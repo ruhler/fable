@@ -1,12 +1,8 @@
 
-@ Char@ = /Std/Char%.Char@;
-
-<@>% Append = /Std/List%.Append;
-
 <@>@ Show@ = /Core/Show%.Show@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
+% String = /Core/Char/Ascii/Show%.String;
 
 @ Clause@ = /Sat/Solver%.Clause@;
 @ VarId@ = /Sat/Solver%.VarId@;
@@ -20,23 +16,22 @@
 Show@<VarId@> ShowId = /Core/Int/Show%.Show;
 
 Show@<Var@> ShowVar = (Var@ v) {
-  String@ sign = v.pos.?(true: Str|'+', false: Str|'-');
-  Append<Char@>(sign, ShowId(v.id));
+  Format|'%s%s'[v.pos.?(true: String|'+', false: String|'-'), ShowId(v.id)];
 };
 
 Show@<Clause@> ShowClause = /Core/List/Show%.Show(ShowVar);
 Show@<Formula@> ShowFormula = /Core/List/Show%.Show(ShowClause);
 
 Show@<Parse@<Formula@>> ShowParsedFormula = (Parse@<Formula@> x) {
-  x.?(error: x.error);
+  x.?(error: /Core/Show%.String(x.error));
   ShowFormula(x.parsed);
 };
 
 Show@<Assignment@> ShowAssignment = /Core/List/Show%.Show(ShowVar);
 
 Show@<Result@> ShowResult = (Result@ a) {
-  a.?(unsat: Str|'unsat');
-  Append(Str|'sat: ', ShowAssignment(a.sat));
+  a.?(unsat: String|'unsat');
+  Format|'sat: %s'[ShowAssignment(a.sat)];
 };
 
 @(ShowId, ShowVar, ShowClause, ShowFormula, ShowParsedFormula,

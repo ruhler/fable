@@ -1,9 +1,7 @@
 
-<@>% Concat = /Std/List%.Concat;
-
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ BlockId@ = /Pprof/Profile%.BlockId@;
 @ Block@ = /Pprof/Profile%.Block@;
@@ -16,8 +14,10 @@
 Show@<BlockId@> BlockId = /Core/Int/Show%.Show;
 
 Show@<Block@> Block = (Block@ x) {
-  Concat[x.name, Str|'@', x.file, Str|':', 
-    /Core/Int/Show%.Show(x.line), Str|':',
+  Format|'%s@%s:%s:%s'[
+    /Core/Show%.String(x.name),
+    /Core/Show%.String(x.file),
+    /Core/Int/Show%.Show(x.line),
     /Core/Int/Show%.Show(x.column)];
 };
 
@@ -29,15 +29,15 @@ Show@<Sequence@> Sequence = /Core/List/Show%.Show(BlockId);
 Show@<Metrics@> Metrics = /Core/List/Show%.Show(/Core/Int/Show%.Show);
 
 Show@<Sample@> Sample = (Sample@ x) {
-  Concat[Str|'(', Sequence(x.sequence), Str|', ', Metrics(x.values), Str|')'];
+  Format|'(%s, %s)'[Sequence(x.sequence), Metrics(x.values)];
 };
 
 Show@<Profile@> Profile = (Profile@ x) {
-  Concat[
-    Str|'(', /Core/List/Show%.Show(/Core/String/Show%.Show, x.metrics),
-    Str|', ', Blocks(x.blocks),
-    Str|', ', /Core/List/Show%.Show(Sample, x.samples),
-    Str|')'];
+  Format|'(%s, %s, %s)'[
+    /Core/List/Show%.Show(/Core/String/Show%.Show, x.metrics),
+    Blocks(x.blocks),
+    /Core/List/Show%.Show(Sample, x.samples)
+  ];
 };
 
 @(BlockId, Block, Blocks, Sequence, Metrics, Sample, Profile);

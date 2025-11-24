@@ -2,6 +2,7 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Change /Core/Debug%.TraceLn function to take ShowM@ instead of String@?
 * Double check if I should be able to write:
    @ ShowM@ = /Core/Show%.ShowM@, when ShowM@ has kind <@>@.
   Seems like I can't, but I thought I made it so I could.

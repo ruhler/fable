@@ -10,7 +10,7 @@
 <@ T@>(Show@<T@>) { Show@<Maybe@<T@>>; }
 Show = <@ T@>(Show@<T@> show, Maybe@<T@> m) {
   m.?(nothing: String|'Nothing');
-  Format|'Just: %s'[show(m.just)];
+  Format|'Just:%s'[show(m.just)];
 };
 
 @(Show);

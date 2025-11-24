@@ -19,7 +19,6 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% Empty = /Std/List%.Empty;
 <@>% Items = /Std/List%.Items;
-<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -29,6 +28,7 @@
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -52,20 +52,7 @@ Int@ 128 = Int|128;
 #  @field[List@<Int@>[bytes] Raw bytes from an I64 or I32 record.
 @ Payload@ = +(Int@ int, Int@ length, List@<Int@> bytes, Unit@ empty);
 
-(Payload@) { String@; } ShowPayload = (Payload@ a) {
-  a.?(
-    int: Concat[Str|'int ', /Core/Int/Show%.Show(a.int)],
-    length: Concat[Str|'length ', /Core/Int/Show%.Show(a.length)],
-    bytes: Str|'bytes',
-    empty: Str|'empty');
-};
-
 @ Record@ = *(FieldId@ field, Payload@ payload);
-
-(Record@) { String@; } _ShowRecord = (Record@ a) {
-  Concat[Str|'(', /Core/Int/Show%.Show(a.field), Str|':',
-    ShowPayload(a.payload), Str|')'];
-};
 
 <<@>@>@ Proto@ = <<@>@ M@> {
   # @func[Fail] Reports an error to parse.
@@ -145,9 +132,8 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
   Proto@<PM@> proto = {
     <@ A@>(String@) { PM@<A@>; }
     Fail = <@ A@>(String@ msg, S@ s) {
-      m.return(Error<R@<A@>>(Concat[
-          Str|'error:', /Core/Int/Show%.Show(s),
-          Str|': ', msg]));
+      m.return(Error<R@<A@>>(Format|'error:%s: %s'[
+          /Core/Int/Show%.Show(s), /Core/Show%.String(msg)]));
     };
 
     # Returns number of bytes read so far.

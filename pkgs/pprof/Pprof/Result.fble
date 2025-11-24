@@ -4,13 +4,14 @@
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
 <@>@ Show@ = /Core/Show%.Show@;
+<@>@ ShowM@ = /Core/Show%.ShowM@;
+% ToString = /Core/Show%.ToString;
 
-@ String@ = /Std/String%.String@;
-% Format = /Std/Char/Ascii%.Format;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 
 <@>@ Result@ = <@ A@> {
-  +(A@ ok, String@ error);
+  +(A@ ok, ShowM@ error);
 };
 
 <@ A@>(A@) { Result@<A@>; }
@@ -18,8 +19,8 @@ Okay = <@ A@>(A@ x) {
   Result@(ok: x);
 };
 
-<@ A@>(String@) { Result@<A@>; }
-Error = <@ A@>(String@ msg) {
+<@ A@>(ShowM@) { Result@<A@>; }
+Error = <@ A@>(ShowM@ msg) {
   Result@<A@>(error: msg);
 };
 
@@ -33,7 +34,7 @@ Apply = <@ A@, @ B@>((A@) { B@; } f, Result@<A@> r) {
 Eq = <@ A@>(Eq@<A@> eq, Result@<A@> a, Result@<A@> b) {
   a.?(ok: b.?(ok: eq(a.ok, b.ok), : False));
   b.?(ok: False);
-  /Std/String/Eq%.Eq(a.error, b.error);
+  /Std/String/Eq%.Eq(ToString(a.error), ToString(b.error));
 };
 
 <@ A@>(Show@<A@>) { Show@<Result@<A@>>; }

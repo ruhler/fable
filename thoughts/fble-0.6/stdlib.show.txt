@@ -1051,3 +1051,4 @@ kind @.
   internally.
 * Use of Format is really nice compared to Concat with text interleaved
   between shows.
+* Might be nice to have 'Lines' and 'Join' and 'Seq' variations on ShowM@?

@@ -16,7 +16,6 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
-<@>% Concat = /Std/List%.Concat;
 <@>% ForEach = /Std/List%.ForEach;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -26,7 +25,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
+% Format = /Core/Char/Ascii/Show%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -43,10 +42,7 @@ Cmp@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
 };
 
 Show@<Coord@> ShowCoord = (Coord@ a) {
-  Concat[
-    Str|'(', /Core/Int/Show%.Show(a.row),
-    Str|', ', /Core/Int/Show%.Show(a.col),
-    Str|')'];
+  Format|'(%s, %s)'[/Core/Int/Show%.Show(a.row), /Core/Int/Show%.Show(a.col)];
 };
 
 # The world is a set of Coord@ where there are live cells.
