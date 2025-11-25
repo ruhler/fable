@@ -10,7 +10,7 @@
 % Do = /Core/Char/Output%.Do;
 <@>% Return = /Core/Char/Output%.Return;
 
-% String = /Core/Char/Ascii/Show%.String;
+% String = /Core/Char/Ascii/Output%.String;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

@@ -3,9 +3,9 @@
 % Do = /Core/Char/Output%.Do;
 <@>% Return = /Core/Char/Output%.Return;
 
-% String = /Core/Char/Ascii/Show%.String;
-% Format = /Core/Char/Ascii/Show%.Format;
-% FormatE = /Core/Char/Ascii/Show%.FormatE;
+% String = /Core/Char/Ascii/Output%.String;
+% Format = /Core/Char/Ascii/Output%.Format;
+% FormatE = /Core/Char/Ascii/Output%.FormatE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

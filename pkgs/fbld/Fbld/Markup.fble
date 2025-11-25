@@ -6,7 +6,7 @@
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
-% Format = /Core/Char/Ascii/Show%.Format;
+% Format = /Core/Char/Ascii/Output%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

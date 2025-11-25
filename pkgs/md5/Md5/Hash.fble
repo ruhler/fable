@@ -3,7 +3,7 @@
 % And = /Std/Bool%.And;
 % True = /Std/Bool%.True;
 
-% String = /Core/Char/Ascii/Show%.String;
+% String = /Core/Char/Ascii/Output%.String;
 
 @ Hex@ = /Core/Digits%.Hex@;
 

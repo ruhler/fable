@@ -1301,3 +1301,67 @@ share in what we've already applied? Most specific argument first or last?
 
 I don't know. fputs puts string first, stream second. fprintf the other way
 around because of varargs.
+
+---
+
+I've revamped Show by splitting it into Output@ and Show@. Here, Output@
+represents a sequence of Char@ that can be written to a generic output stream.
+
+Let's revisit IO from this perspective. First off, we can generalize Output@
+to work with types other than Char@. For example, Byte@, or Int@. So don't
+worry about that anymore.
+
+The current approach for Output@ is very much atomic. You describe a bunch of
+output that happens all at once. That's great for a lot of things, but by no
+means everything we want for io.
+
+Specifically, it doesn't work for the interactive case where you output a bit,
+then read a bit in response, then output, and so on. But it could be a
+building block for that.
+
+Current use of streams:
+* Stdio in, out, err
+* Stdio read, write
+* sockets client, server
+
+That's it right now. It's fairly contained.
+
+Let's start with stdio write. If we are writing to a file, I think, vast
+majority of cases, including 100% of all current cases of writing a file in
+fble, we may as well do a single big atomic write. You give a file name and an
+Output@, it writes the file all at once. None of this interactive stuff.
+
+That won't work with stdio out, stdio err, or sockets.
+
+But it's pretty clear what we want in those cases.
+
+<<@>@>@ OStream@ = <<@>@ M@>(Output@) { M@<Unit@>; };
+
+This gives us a way to control buffering too: you are allowed to buffer an
+entire Output@. But not in between.
+
+And maybe we want separate api to close the stream. Standard out and err can
+be auto closed when the app ends. No point closing them before that. Sockets
+probably want an explicit close function.
+
+Now here's an annoying subtlety. Say I want a Test runner. Can I say the Test
+runner returns an Output@ and a pass/fail? In theory Output@ should be atomic,
+so if a test hangs, you won't see any output at all. But in practice, because
+of the sequencing of Output@, you will see output up until the test that
+hangs. In this case, it's performance sensitive - which was one of the points
+behind switching Show@ from String@ to Output@. But performance sensitive is
+exactly what we care about from the test output point of view.
+
+But, if we talk about buffering, then there is no guarantee we don't get stuck
+buffering if we return one big Output@ from a test runner. So I don't think
+that's safe to rely on. We need the notion of an interactive output stream for
+test runner.
+
+Now, imagine a program like grep with a really big input file. I could
+generate a single big Output@ and then render it. But that's probably terrible
+use of memory. So once again, I want to do lots of little outputs rather than
+a single big one. With files too, if we are writing output to a file instead
+of to the output user. That suggests atomic Output@, while convenient, is not
+well suited for writing files in general.
+
+

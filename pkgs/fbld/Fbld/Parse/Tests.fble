@@ -12,7 +12,7 @@
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 % StrE = /Std/Char/Ascii%.StrE;
-% String = /Core/Char/Ascii/Show%.String;
+% String = /Core/Char/Ascii/Output%.String;
 % Lines = /Std/String/Lines%.Lines;
 
 @ Test@ = /Core/Test%.Test@;

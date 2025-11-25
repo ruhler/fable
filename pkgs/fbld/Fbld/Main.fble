@@ -14,7 +14,7 @@
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 <@>@ Output@ = /Core/Char/Output%.Output@;
-% Format = /Core/Char/Ascii/Show%.Format;
+% Format = /Core/Char/Ascii/Output%.Format;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 

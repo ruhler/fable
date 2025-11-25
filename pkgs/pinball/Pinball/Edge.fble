@@ -8,7 +8,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Format = /Core/Char/Ascii/Show%.Format;
+% Format = /Core/Char/Ascii/Output%.Format;
 
 # Edge@ --
 #   Internal representation for a stationary edge.

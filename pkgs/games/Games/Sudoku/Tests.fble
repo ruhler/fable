@@ -18,8 +18,8 @@
 <@>% Return = /Core/Char/Output%.Return;
 
 % Str = /Std/Char/Ascii%.Str;
-% String = /Core/Char/Ascii/Show%.String;
-% StringE = /Core/Char/Ascii/Show%.StringE;
+% String = /Core/Char/Ascii/Output%.String;
+% StringE = /Core/Char/Ascii/Output%.StringE;
 
 @ Test@ = /Core/Test%.Test@;
 @ TestResult@ = /Core/Test%.TestResult@;

@@ -1,7 +1,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% String = /Core/Char/Ascii/Show%.String;
+% String = /Core/Char/Ascii/Output%.String;
 
 @ Position@ = /Games/TicTacToe/Board%.Position@;
 @ Status@ = /Games/TicTacToe/Board%.Status@;

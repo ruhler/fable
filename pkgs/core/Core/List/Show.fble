@@ -1,6 +1,6 @@
 
-% String = /Core/Char/Ascii/Show%.String;
-% Format = /Core/Char/Ascii/Show%.Format;
+% String = /Core/Char/Ascii/Output%.String;
+% Format = /Core/Char/Ascii/Output%.Format;
 
 <@>@ List@ = /Std/List%.List@;
 
