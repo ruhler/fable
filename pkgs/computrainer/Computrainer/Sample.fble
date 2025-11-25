@@ -2,53 +2,36 @@
 % Int = /Std/Int/Lit%.Int;
 
 <@>% Entries = /Computrainer/Grid%.Entries;
+% Rows = /Computrainer/Grid%.Rows;
 
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Cars@ = /Computrainer/Model%.Cars@;
 @ Model@ = /Computrainer/Model%.Model@;
-% Rail = /Computrainer/Model%.Rail;
-% Zero = /Computrainer/Model%.Zero;
-% One = /Computrainer/Model%.One;
-% Sink = /Computrainer/Model%.Sink;
-% Source = /Computrainer/Model%.Source;
-% Select = /Computrainer/Model%.Select;
-% Switch = /Computrainer/Model%.Switch;
 % Model = /Computrainer/Model%.Model;
 % C = /Computrainer/Model%.C;
-% Up = /Computrainer/Model%.Up;
-% Down = /Computrainer/Model%.Down;
-% Right = /Computrainer/Model%.Right ;
+% 0 = /Computrainer/Model%.0;
 
+% Gates = /Computrainer/Gates/Lit%.Gates;
 
-Gates@ Gates = Entries[
-    @(x: Int|3, y: Int|3, v: Rail.Right),
-    @(x: Int|4, y: Int|3, v: Rail.Right),
-    @(x: Int|5, y: Int|3, v: Rail.Up),
-    @(x: Int|5, y: Int|4, v: Rail.Up),
-    @(x: Int|5, y: Int|5, v: Rail.Up),
-    @(x: Int|5, y: Int|6, v: Rail.Up),
-    @(x: Int|5, y: Int|7, v: Rail.Up),
-    @(x: Int|5, y: Int|8, v: Rail.Up),
-    @(x: Int|5, y: Int|9, v: Rail.Right),
-    @(x: Int|6, y: Int|9, v: Rail.Right),
-    @(x: Int|7, y: Int|9, v: Rail.Right),
-    @(x: Int|8, y: Int|9, v: Rail.Right),
-    @(x: Int|9, y: Int|9, v: Rail.Down),
-    @(x: Int|9, y: Int|8, v: Rail.Down),
-    @(x: Int|9, y: Int|7, v: Zero.Down),
-    @(x: Int|9, y: Int|6, v: Rail.Down),
-    @(x: Int|9, y: Int|5, v: Rail.Left),
-    @(x: Int|8, y: Int|5, v: One.Left),
-    @(x: Int|7, y: Int|5, v: Rail.Left),
-    @(x: Int|6, y: Int|5, v: Rail.Left),
-    @(x: Int|10, y: Int|5, v: Sink),
-    @(x: Int|10, y: Int|6, v: Select),
-    @(x: Int|10, y: Int|7, v: Switch(Down, Up, Right)),
-    @(x: Int|1, y: Int|3, v: Source.Right)
+Gates@ Inverter = Rows(Int|1, Int|6)[
+  Gates|'     |     |     |R   >|R   >|R   >|R   >|S    |',
+  Gates|'     |     |     |R^   |C   >|0   >|R   >|WS1 0|R   >|.    |',
+  Gates|'R   >|R   >|R   >|D^v  |     |     |     |R   >|R   >|R   >|R   >|R   >|R   >|',
+  Gates|'     |     |     |R v  |     |     |     |R   >|R   >|R^   |',
+  Gates|'     |     |     |R v  |C   >|1   >|R   >|W0S 1|R   >|.    |',
+  Gates|'     |     |     |R   >|R   >|R   >|R   >|S    |'
 ];
 
+Gates@ Gates = Inverter;
+
 Cars@ Cars = Entries[
-    @(x: Int|3, y: Int|3, v: C)
+    # C gate initialization:
+    @(x: Int|5, y: Int|5, v: C),
+    @(x: Int|5, y: Int|2, v: C),
+
+    # The train to invert:
+    @(x: Int|1, y: Int|4, v: C),
+    @(x: Int|2, y: Int|4, v: 0)
 ];
 
 Model@ Sample = Model(Gates, Cars);

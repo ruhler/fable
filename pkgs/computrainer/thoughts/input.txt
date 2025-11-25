@@ -1,0 +1,109 @@
+Input
+=====
+To try out a simple inverter is going to take 50 gates. That's pretty tedious
+to write. I don't want to spell out all those gates. Is there any way I can
+come up with a compact text format for describing the gate layout?
+
+I wish I could have 1 character per gate that's fairly intuitive.
+
+For example, here's some pseudocode for an inverter:
+
+    # Inverter:
+    # 123456789ABCD
+    #6   >>>>S
+    #5   ^U0>W0.
+    #4>>>D   1>>>>>
+    #3   v   0>^
+    #2   vU1>W1.
+    #1   >>>>S
+
+I fear it's going to be hard encoding all the directions in a single
+character. But let's try and see if we can't come up with something.
+
+ Noop: ' '
+ Sink: '.'
+ Select: '?'
+ Rail: four directions needed: maybe: '<', '>', '^', 'v'?
+ Source: four directions needed: ???
+
+There are lots of unicode arrows. But, it's kind of sad I can't enter in
+directly the sprites I use in the game. Wouldn't that be convenient?
+
+The other option would be to just pick completely arbitrary letters. You can't
+figure out what's what from looking at it, but I could write models in a text
+editor and load/save from my model editor UI once that is in place.
+
+Switch is the most complex gate. I could say exactly 4 chars per each gate?
+
+The inverter would turn into something like:
+
+                [>>][>>][>>][>>][??]   
+                [^^][C>][1>][>>]W^>v[>>][..]
+    [>>][>>][>>]D^v]            [>>][>>][>>][>>][>>][>>]
+                [vv]            [>>][>>][^^]        
+                [vv][C>][1>][>>]Wv^>[>>][..]        
+                [>>][>>][>>][>>][??]                   
+It's nice with the delimeters, but the fact we drop the delimiters for
+anything that needs more than 2 chars is not nice. Also, hard to make sense of
+D^v.
+
+Another option might be use a 3x3 grid for each gate?
+
+            R-
+ 
+            -                   S
+            R  ...              W0
+                                1 
+            -
+   R- R- R- D
+            -
+                                                 
+            R-
+
+Yes. That's much more intuitive to read. It's a little spread out, but it's
+legible and easily supports all the different kinds of gates I want. It's kind
+of like using the sprites directly. That's okay maybe?
+
+Good. Then the next step, I think, is to write the text file version of my
+inverter gate. Settle on exact syntax. Implement the parser. Try it out. If we
+do this, then we can give the name of the file to the computrainer main
+program. No need to specify it in fble?
+
+I think I want a 1-off engine gate to be able to put single train constants in
+the model via gates. That way I don't need to specify cars as a separate
+input? Not sure. That could be tedious?
+
+Details:
+ Noop: space
+ Rail: 'R' in center, Single '-' to mark output direction.
+ Sink: '.' in center
+ Source: 'C' in center, Single '-' to mark output direction.
+ Zero: '0' in center, single '-' to mark output direction.
+ One: '1' in center, single '-' to mark output direction.
+ Select: '?' in center
+ Switch: 'W' in center, 'S', '0', '1' to mark directions of those.
+ Dup: 'D' in center, two '-' to mark output directions.
+
+Easy.
+
+Question: can I compress to 2x2? No, that's tricky. Dup doesn't work well for
+showing one up and one down, for example.
+
+---
+
+3x3 is a pain. It would be much easier if we could put a gate in a single
+line. Let's try 1x6: 'GUDLR|', for Gate, Up, Down, Left, Right, and '|'
+separator.
+
+Here we go:
+
+     |     |     |R   >|R   >|R   >|R   >|S    |   
+     |     |     |R^   |C   >|0   >|R   >|WS1 0|R   >|.    |   
+R   >|R   >|R   >|D^v  |     |     |     |R   >|R   >|R   >|R   >|R   >|R   >|
+     |     |     |R v  |     |     |     |R   >|R   >|R^   |                
+     |     |     |R v  |C   >|1   >|R   >|W0S 1|R   >|.    |                
+     |     |     |R   >|R   >|R   >|R   >|S    |                            
+                                                                           
+                                                                           
+I could even hack up a literal for this if I want. Just enumerate all possible
+gates (or the ones I want to use), and take a list of list of these.

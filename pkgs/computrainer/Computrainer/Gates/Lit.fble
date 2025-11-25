@@ -1,0 +1,59 @@
+
+<@>@ List@ = /Std/List%.List@;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+@ Gate@ = /Computrainer/Model%.Gate@;
+% Noop = /Computrainer/Model%.Noop;
+% Rail = /Computrainer/Model%.Rail;
+% Zero = /Computrainer/Model%.Zero;
+% One = /Computrainer/Model%.One;
+% Sink = /Computrainer/Model%.Sink;
+% Source = /Computrainer/Model%.Source;
+% Select = /Computrainer/Model%.Select;
+% Switch = /Computrainer/Model%.Switch;
+% Dup = /Computrainer/Model%.Dup;
+% Up = /Computrainer/Model%.Up;
+% Down = /Computrainer/Model%.Down;
+% Right = /Computrainer/Model%.Right;
+
+
+# TODO: Add more gates as needed.
+@ Lit@ = +(
+    Unit@ '     |',
+    Unit@ 'R^   |',
+    Unit@ 'R v  |',
+    Unit@ 'R  < |',
+    Unit@ 'R   >|',
+    Unit@ 'D^v  |',
+    Unit@ 'C   >|',
+    Unit@ '0   >|',
+    Unit@ '1   >|',
+    Unit@ 'WS1 0|',
+    Unit@ 'W0S 1|',
+    Unit@ 'S    |',
+    Unit@ '.    |'
+);
+
+(Lit@) { Gate@; } ToGate = (Lit@ l) {
+    l.?(
+      '     |': Noop,
+      'R^   |': Rail.Up,
+      'R v  |': Rail.Down,
+      'R  < |': Rail.Left,
+      'R   >|': Rail.Right,
+      'D^v  |': Dup(Up, Down),
+      'C   >|': Source.Right,
+      '0   >|': Zero.Right,
+      '1   >|': One.Right,
+      'WS1 0|': Switch(Up, Right, Down),
+      'W0S 1|': Switch(Down, Up, Right),
+      'S    |': Select,
+      '.    |': Sink);
+};
+
+(List@<Lit@>) { List@<Gate@>; } Gates = (List@<Lit@> xs) {
+    /Std/List%.Map(xs, ToGate);
+};
+
+@(Gates);

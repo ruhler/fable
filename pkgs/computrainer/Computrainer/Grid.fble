@@ -1,5 +1,8 @@
 
 @ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+
 % Ord = /Core/Int/Ord%.Ord;
 
 <@>@ List@ = /Std/List%.List@;
@@ -24,4 +27,23 @@ Entries = <@ T@>(List@<Entry@<T@>> xs) {
     Grid.Insert(Entries(xs.items.tail), Coord@(head.x, head.y), head.v);
 };
 
-@(Coord@, Grid@, Grid, Entries);
+# Helper for making grid literals.
+# You specify the coordinates of the first provided value, then a bunch of
+# subsequent values on the same row continuous to the right. It fills in the
+# grid for you.
+(Int@, Int@)<@ T@>(List@<T@>, Grid.Map@<T@>) { Grid.Map@<T@>; }
+Row = (Int@ x, Int@ y)<@ T@>(List@<T@> xs, Grid.Map@<T@> g) { 
+    xs.?(empty: g);
+    Row(Incr(x), y, xs.items.tail, Grid.Insert(g, Coord@(x, y), xs.items.head));
+};
+
+# Helper for making grid literals.
+# You specify the coordinates of the upper left most provided value, then
+# provide a bunch of subsequent (lower down) rows. It fills in the grid for you.
+(Int@, Int@)<@ T@>(List@<List@<T@>>) { Grid.Map@<T@>; }
+Rows = (Int@ x, Int@ y)<@ T@>(List@<List@<T@>> xs) { 
+    xs.?(empty: Grid.Empty<T@>);
+    Row(x, y, xs.items.head, Rows(x, Decr(y), xs.items.tail));
+};
+
+@(Coord@, Grid@, Grid, Entries, Rows);
