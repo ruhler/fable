@@ -13,16 +13,17 @@
 
 % Gates = /Computrainer/Gates/Lit%.Gates;
 
-Gates@ Inverter = Rows(Int|1, Int|6)[
-  Gates|'     |     |     |R   >|R   >|R   >|R   >|S    |',
-  Gates|'     |     |     |R^   |C   >|0   >|R   >|WS1 0|R   >|.    |',
-  Gates|'R   >|R   >|R   >|D^v  |     |     |     |R   >|R   >|R   >|R   >|R   >|R   >|',
+Gates@ Mvp1 = Rows(Int|1, Int|7)[
+  Gates|'R v  |R  < |R  < |R  < |R  < |R  < |R  < |R  < |R  < |R  < |R  < |R  < |R  < |',   
+  Gates|'R v  |     |     |R   >|R   >|R   >|R   >|S    |     |     |     |     |R^   |',   
+  Gates|'R v  |     |     |R^   |C   >|0   >|R   >|WS1 0|R   >|.    |     |     |R^   |',
+  Gates|'R   >|R   >|R   >|D^v  |     |     |     |R   >|R   >|R   >|R   >|R   >|R^   |',
   Gates|'     |     |     |R v  |     |     |     |R   >|R   >|R^   |',
   Gates|'     |     |     |R v  |C   >|1   >|R   >|W0S 1|R   >|.    |',
   Gates|'     |     |     |R   >|R   >|R   >|R   >|S    |'
 ];
 
-Gates@ Gates = Inverter;
+Gates@ Gates = Mvp1;
 
 Cars@ Cars = Entries[
     # C gate initialization:

@@ -1,6 +1,5 @@
 
 * Test that we can't push a car through a noop gate.
-* Implement mvp sample network
 * Rewrite model to advance gates rather than double push tag gates.
 * Design mvp v2 network.
 * Implement gates for mvp v2 network.
