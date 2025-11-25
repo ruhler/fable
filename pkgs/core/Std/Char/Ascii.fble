@@ -150,14 +150,4 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 #  @returns[String@] The string value.
 (List@<Ascii@>) { String@; } StrE = StrLit(ToChar, /Std/String/Escape%.Escape);
 
-# @func[Format] Format string with ascii string literal.
-#  See /Std/String/Format%.Format.
-(List@<Ascii@>, List@<String@>) { String@; }
-Format = StrLit(ToChar, /Std/String/Format%.Format);
-
-# @func[FormatE] Format string with ascii string literal.
-#  See /Std/String/FormatE%.Format.
-(List@<Ascii@>, List@<String@>) { String@; }
-FormatE = StrLit(ToChar, /Std/String/Format%.FormatE);
-
-@(Ascii@, Ascii, ToChar, Char, Str, StrE, Format, FormatE);
+@(Ascii@, Ascii, ToChar, Char, Str, StrE);

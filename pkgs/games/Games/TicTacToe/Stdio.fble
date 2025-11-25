@@ -3,7 +3,9 @@
 
 @ Char@ = /Std/Char%.Char@;
 % Char = /Std/Char/Ascii%.Char;
-% FormatE = /Std/Char/Ascii%.FormatE;
+% String = /Core/Char/Ascii/Show%.String;
+% Format = /Core/Char/Ascii/Show%.Format;
+% FormatE = /Core/Char/Ascii/Show%.FormatE;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Concat = /Std/List%.Concat;
@@ -17,9 +19,10 @@
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
+<@>@ Show@ = /Core/Show%.Show@;
+
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
-% StrE = /Std/Char/Ascii%.StrE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -35,35 +38,31 @@
 % Initial = /Games/TicTacToe/Game%.Initial;
 % Play = /Games/TicTacToe/Game%.Play;
 
-(Square@) { String@; } ShowSquare = (Square@ s) {
-  s.?(X: Str|X, O: Str|O, E: Str|_);
+Show@<Square@> ShowSquare = (Square@ s) {
+  s.?(X: String|X, O: String|O, E: String|_);
 };
 
-(Board@) { String@; } ShowBoard = (Board@ b) {
-  String@ _ = Str|' ';
-  Concat[
-    StrE|'  1 2 3\n',
-    Str|'A ', ShowSquare(b.ul), _, ShowSquare(b.uc), _, ShowSquare(b.ur), StrE|'\n',
-    Str|'B ', ShowSquare(b.ml), _, ShowSquare(b.mc), _, ShowSquare(b.mr), StrE|'\n',
-    Str|'C ', ShowSquare(b.ll), _, ShowSquare(b.lc), _, ShowSquare(b.lr), StrE|'\n'];
+Show@<Board@> ShowBoard = (Board@ b) {
+  FormatE|'  1 2 3\nA %s %s %s\nB %s %s %s\nC %s %s %s\n'[
+    ShowSquare(b.ul), ShowSquare(b.uc), ShowSquare(b.ur),
+    ShowSquare(b.ml), ShowSquare(b.mc), ShowSquare(b.mr),
+    ShowSquare(b.ll), ShowSquare(b.lc), ShowSquare(b.lr)
+  ];
 };
 
-(Player@) { String@; } ShowPlayer = (Player@ p) {
-  p.?(X: Str|X, O: Str|O);
+Show@<Player@> ShowPlayer = (Player@ p) {
+  p.?(X: String|X, O: String|O);
 };
 
-(GameStatus@) { String@; } ShowStatus = (GameStatus@ s) {
+Show@<GameStatus@> ShowStatus = (GameStatus@ s) {
   s.?(
-    playing: Concat[Str|'Player ', ShowPlayer(s.playing), Str|' move:'],
+    playing: Format|'Player %s move:'[ShowPlayer(s.playing)],
     ended: s.ended.?(
-      win: Concat[
-        Str|'GAME OVER: Player ',
-        ShowPlayer(s.ended.win),
-        Str|' wins.'],
-      draw: Str|'GAME OVER: Draw.'));
+      win: Format|'GAME OVER: Player %s wins.'[ShowPlayer(s.ended.win)],
+      draw: String|'GAME OVER: Draw.'));
 };
 
-(Game@) { String@; } ShowGame = (Game@ game) {
+Show@<Game@> ShowGame = (Game@ game) {
   FormatE|'%s\n%s\n'[
     ShowBoard(game.board),
     ShowStatus(game.status)];
@@ -115,7 +114,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
-    Unit@ _ <- m.do(O.PutStr(stdio.out, ShowGame(game)));
+    Unit@ _ <- m.do(O.Show(stdio.out, ShowGame(game)));
 
     String@ line <- m.do(I.GetLine(stdio.in));
     line.?(empty: m.return(Unit));

@@ -19,7 +19,6 @@
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 % StrE = /Std/Char/Ascii%.StrE;
-% Format = /Std/Char/Ascii%.Format;
 % Lines = /Std/String/Lines%.Lines;
 % SplitLines = /Std/String/Lines%.SplitLines;
 
@@ -47,12 +46,6 @@ Test@ Tests = TestSuite(Str|String, List[
   Test(Str|StrE_u, (Unit@ _) {
     String@ wnt = Str|'abc';
     String@ got = StrE|'a\u62;c';
-    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Format, (Unit@ _) {
-    String@ wnt = Str|'a: hello, b: there.';
-    String@ got = Format|'a: %s, b: %s.'[Str|'hello', Str|'there'];
     AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 

@@ -1083,3 +1083,37 @@ feedback:
   interleave with higher level things. ToString and O.Show functions work fine
   to lift it into higher level computation, which composes at that level.
 
+---
+
+Proposed improvements:
+* Rename ShowM@ to Output@.
+* Separate Output@ definition from Show@ definition.
+* Remove String@ methods better suited for construction via Output@.
+
+I'm thinking of an Output@ type specialized for outputting Char@ streams. But
+the type could meaningfully generalize to other kinds of output streams. The
+important point here is that Output@ is 'atomic' in the sense that it doesn't
+get interleaved with other IO operations. You write an entire file at once.
+You write an entire output.
+
+There's plenty more to think about here on the IO side of things, but let me
+focus instead right now on cleanup of String, Show and ShowM@.
+
+Proposal:
+* /Std/String/Lines% - keep as is, with Lines function.
+* /Std/String/Escape% - keep as is.
+* /Std/String/Format% - remove. Use output instead?
+* /Std/Char/Ascii%
+  - Str, StrE as before
+  - add String, StringE
+  - Replace Format, FormatE with Output@ variants.
+* /Std/Char/Output%
+   - Output@, Stream@, Return, Do, Put, String, Format (move to submodule?)
+   - Concat, Lines, Join (string join or Output@ join?)
+   - ToString
+* /Std/Show%
+   - Show@
+
+Cool. Makes sense. Question is, who, if anybody, still uses the old String@
+Format function? Let's get rid of that.
+
