@@ -1117,3 +1117,8 @@ Proposal:
 Cool. Makes sense. Question is, who, if anybody, still uses the old String@
 Format function? Let's get rid of that.
 
+---
+
+Cool. I think we are ready to transition Output@ and Show@ from /Core to /Std.
+Unless I want to implement Lines an Join first? Okay. Sure. Lines at least.
+

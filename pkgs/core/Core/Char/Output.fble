@@ -53,6 +53,23 @@ Concat = (List@<Output@> xs) {
   Concat(xs.items.tail);
 };
 
+(List@<Output@>) { Output@; }
+Lines = (List@<Output@> xs) {
+  xs.?(empty: Return);
+  Unit@ _ <- Do(xs.items.head);
+  Unit@ _ <- Do(Put(/Std/String/Lines%.Newline));
+  Lines(xs.items.tail);
+};
+
+(String@, List@<Output@>) { Output@; }
+Join = (String@ sep, List@<Output@> xs) {
+  xs.?(empty: Return);
+  xs.items.tail.?(empty: xs.items.head);
+  Unit@ _ <- Do(xs.items.head);
+  Unit@ _ <- Do(String(sep));
+  Join(sep, xs.items.tail);
+};
+
 Char@ '%%' = U|25;
 Char@ '%s' = U|73;
 
@@ -100,4 +117,6 @@ ToString = (Output@ show) {
   show(StringStream, Empty<Char@>);
 };
 
-@(Output@, Return, Do, Put, String, Format, Concat, ToString);
+@(Output@,
+  Return, Do, Put, String, Format, Concat, Lines, Join,
+  ToString);
