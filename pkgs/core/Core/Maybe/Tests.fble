@@ -13,7 +13,7 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 <@>@ Show@ = /Core/Show%.Show@;
-% ToString = /Core/Show%.ToString;
+% ToString = /Core/Char/Output%.ToString;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;

@@ -6,7 +6,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<@>@ ShowM@ = /Core/Show%.ShowM@;
+<@>@ Output@ = /Core/Char/Output%.Output@;
 
 @ String@ = /Std/String%.String@;
 
@@ -40,7 +40,7 @@
     PutChar(out, Ascii.nl);
   };
 
-  (OStream@, ShowM@) { M@<Unit@>; } Show = (OStream@ out, ShowM@ show) {
+  (OStream@, Output@) { M@<Unit@>; } Show = (OStream@ out, Output@ show) {
     show(@(
       return: m.return(Unit),
       do: (M@<Unit@> a, (Unit@) { M@<Unit@>; } f) { m.do(a, f); },
@@ -48,7 +48,7 @@
     ));
   };
 
-  (OStream@, ShowM@) { M@<Unit@>; } ShowLine = (OStream@ out, ShowM@ show) {
+  (OStream@, Output@) { M@<Unit@>; } ShowLine = (OStream@ out, Output@ show) {
     Unit@ _ <- m.do(Show(out, show));
     PutChar(out, Ascii.nl);
   };

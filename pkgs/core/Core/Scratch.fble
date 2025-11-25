@@ -19,25 +19,25 @@
   );
 };
 
-<@,<@>@>@ ShowM@ = <@ R@, <@>@ M@>(I@<M@>) { M@<R@>; };
+<@,<@>@>@ Output@ = <@ R@, <@>@ M@>(I@<M@>) { M@<R@>; };
 
-(Char@) { ShowM@<Unit@>; }
+(Char@) { Output@<Unit@>; }
 Put = (Char@ c)<<@>@ M@>(I@<M@> i) {
   i.put(c);
 };
 
-<@ A@>(A@) { ShowM@<A@>; }
+<@ A@>(A@) { Output@<A@>; }
 Return = <@ A@>(A@ x)<<@>@ M@>(I@<M@> i) {
   i.return(x);
 };
 
-<@ A@>(ShowM@<A@>)<@ B@>((A@) { ShowM@<B@>; }) { ShowM@<B@>; }
-Bind = <@ A@>(ShowM@<A@> ma)<@ B@>((A@) { ShowM@<B@>; } mb)<<@>@ M@>(I@<M@> i) {
+<@ A@>(Output@<A@>)<@ B@>((A@) { Output@<B@>; }) { Output@<B@>; }
+Bind = <@ A@>(Output@<A@> ma)<@ B@>((A@) { Output@<B@>; } mb)<<@>@ M@>(I@<M@> i) {
   A@ a <- i.bind(ma(i));
   mb(a, i);
 };
 
-(String@) { ShowM@<Unit@>; }
+(String@) { Output@<Unit@>; }
 PutStr = (String@ s) {
   s.?(empty: Return(Unit));
   Unit@ _ <- Bind(Put(s.items.head));

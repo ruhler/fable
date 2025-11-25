@@ -5,9 +5,9 @@
 <@>@ List@ = /Std/List%.List@;
 
 <@>@ Show@ = /Core/Show%.Show@;
-<@>@ ShowM@ = /Core/Show%.ShowM@;
-% Do = /Core/Show%.Do;
-<@>% Return = /Core/Show%.Return;
+<@>@ Output@ = /Core/Char/Output%.Output@;
+% Do = /Core/Char/Output%.Do;
+<@>% Return = /Core/Char/Output%.Return;
 
 % String = /Core/Char/Ascii/Show%.String;
 
@@ -18,7 +18,7 @@ Show@<Bit@> ShowBit = (Bit@ b) {
 };
 
 Show@<List@<Bit@>> ShowBits = (List@<Bit@> bits) {
-  /Std/List%.ForEach(bits, Return, (Bit@ bit, ShowM@ shown) {
+  /Std/List%.ForEach(bits, Return, (Bit@ bit, Output@ shown) {
     Unit@ _ <- Do(shown);
     ShowBit(bit);
   });

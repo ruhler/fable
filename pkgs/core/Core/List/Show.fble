@@ -5,7 +5,7 @@
 <@>@ List@ = /Std/List%.List@;
 
 <@>@ Show@ = /Core/Show%.Show@;
-% Do = /Core/Show%.Do;
+% Do = /Core/Char/Output%.Do;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

@@ -19,7 +19,7 @@ Bool@ False = /Std/Bool%.False;
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 % Lines = /Std/String/Lines%.Lines;
-% ToString = /Core/Show%.ToString;
+% ToString = /Core/Char/Output%.ToString;
 
 # Specify the output string.
 Char@ c = Char|A;

@@ -1,6 +1,6 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
-% Do = /Core/Show%.Do;
+% Do = /Core/Char/Output%.Do;
 
 % Format = /Core/Char/Ascii/Show%.Format;
 % String = /Core/Char/Ascii/Show%.String;

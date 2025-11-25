@@ -18,7 +18,7 @@
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
-<@>@ ShowM@ = /Core/Show%.ShowM@;
+<@>@ Output@ = /Core/Char/Output%.Output@;
 
 @ String@ = /Std/String%.String@;
 % Format = /Core/Char/Ascii/Show%.Format;
@@ -55,8 +55,8 @@ Int@ 2 = Int|2;
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
 
-  (List@<Ascii@>, List@<ShowM@>) { M@<Unit@>; }
-  FmtL = (List@<Ascii@> fmt, List@<ShowM@> args) {
+  (List@<Ascii@>, List@<Output@>) { M@<Unit@>; }
+  FmtL = (List@<Ascii@> fmt, List@<Output@> args) {
     O.ShowLine(stdio.out, Format(fmt, args));
   };
 

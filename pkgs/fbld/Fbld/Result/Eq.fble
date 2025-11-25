@@ -3,7 +3,7 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
-% ToString = /Core/Show%.ToString;
+% ToString = /Core/Char/Output%.ToString;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 

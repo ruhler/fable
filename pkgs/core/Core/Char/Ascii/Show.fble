@@ -7,22 +7,22 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<@>@ ShowM@ = /Core/Show%.ShowM@;
+<@>@ Output@ = /Core/Char/Output%.Output@;
 
-(List@<Ascii@>) { ShowM@; }
-String = StrLit(ToChar, /Core/Show%.String);
+(List@<Ascii@>) { Output@; }
+String = StrLit(ToChar, /Core/Char/Output%.String);
 
-(List@<Ascii@>) { ShowM@; }
+(List@<Ascii@>) { Output@; }
 StringE = (List@<Ascii@> str) {
-  /Core/Show%.String(StrE(str));
+  /Core/Char/Output%.String(StrE(str));
 };
 
-(List@<Ascii@>, List@<ShowM@>) { ShowM@; }
-Format = StrLit(ToChar, /Core/Show%.Format);
+(List@<Ascii@>, List@<Output@>) { Output@; }
+Format = StrLit(ToChar, /Core/Char/Output%.Format);
 
-(List@<Ascii@>, List@<ShowM@>) { ShowM@; }
-FormatE = (List@<Ascii@> str, List@<ShowM@> args) {
-  /Core/Show%.Format(StrE(str), args);
+(List@<Ascii@>, List@<Output@>) { Output@; }
+FormatE = (List@<Ascii@> str, List@<Output@> args) {
+  /Core/Char/Output%.Format(StrE(str), args);
 };
 
 @(String, StringE, Format, FormatE);

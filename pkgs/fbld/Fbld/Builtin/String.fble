@@ -39,7 +39,7 @@ Int@ 1 = /Std/Int%.1;
     command: {
       Error<Maybe@<Char@>>(markup.command.name.loc,
         Format|'expected plain text, but found command @%s'[
-          /Core/Show%.String(markup.command.name.text)]);
+          /Core/Char/Output%.String(markup.command.name.text)]);
     },
     sequence: HeadOf(markup.sequence.a));
 };
@@ -64,7 +64,7 @@ Impl@ Head = (Env@ env, Command@ cmd) {
     command: {
       Error<Markup@>(markup.command.name.loc,
         Format|'expected plain text, but found command @%s'[
-          /Core/Show%.String(markup.command.name.text)]);
+          /Core/Char/Output%.String(markup.command.name.text)]);
     },
     sequence: {
       Markup@ a <- r.do(TailOf(markup.sequence.a));

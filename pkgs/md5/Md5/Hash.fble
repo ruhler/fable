@@ -12,9 +12,9 @@
 <@>% ForEach = /Std/List%.ForEach;
 
 <@>@ Show@ = /Core/Show%.Show@;
-<@>@ ShowM@ = /Core/Show%.ShowM@;
-% Do = /Core/Show%.Do;
-<@>% Return = /Core/Show%.Return;
+<@>@ Output@ = /Core/Char/Output%.Output@;
+% Do = /Core/Char/Output%.Do;
+<@>% Return = /Core/Char/Output%.Return;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -52,8 +52,8 @@ Show@<Hex@> Hex = (Hex@ h) {
     C: String|c, D: String|d, E: String|e, F: String|f);
 };
 
-(List@<ShowM@>) { ShowM@; }
-Seq = (List@<ShowM@> xs) {
+(List@<Output@>) { Output@; }
+Seq = (List@<Output@> xs) {
   xs.?(empty: Return);
   Unit@ _ <- Do(xs.items.head);
   Seq(xs.items.tail);

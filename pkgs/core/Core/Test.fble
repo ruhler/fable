@@ -1,8 +1,8 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<@>@ ShowM@ = /Core/Show%.ShowM@;
-% ToString = /Core/Show%.ToString;
+<@>@ Output@ = /Core/Char/Output%.Output@;
+% ToString = /Core/Char/Output%.ToString;
 
 @ String@ = /Std/String%.String@;
 
@@ -12,7 +12,7 @@
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-@ TestResult@ = +(Unit@ pass, ShowM@ fail, Unit@ xfail);
+@ TestResult@ = +(Unit@ pass, Output@ fail, Unit@ xfail);
 @ TestCase@ = *(String@ name, (Unit@) { TestResult@; } test);
 @ TestSuite@ = *(String@ name, List@<Test@> tests),
 @ Test@ = +(TestCase@ case, TestSuite@ suite);
@@ -21,7 +21,7 @@
 TestResult@ Pass = TestResult@(pass: Unit);
 
 # A failing test result.
-(ShowM@) { TestResult@; } Fail = (ShowM@ msg) {
+(Output@) { TestResult@; } Fail = (Output@ msg) {
   TestResult@(fail: msg);
 };
 
@@ -62,7 +62,7 @@ ExpectFails = (TestResult@ result, String@ msg) {
   /Std/String/Eq%.Contains(failure, msg).?(true: ExpectedFail);
 
   Fail(Format|'Expected failure containing "%s", but failed with "%s"'
-        [/Core/Show%.String(msg), /Core/Show%.String(failure)]);
+        [/Core/Char/Output%.String(msg), /Core/Char/Output%.String(failure)]);
 };
 
 @(TestResult@, Test@, TestSuite@, TestCase@,

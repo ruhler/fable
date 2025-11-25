@@ -15,7 +15,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<@>@ ShowM@ = /Core/Show%.ShowM@;
+<@>@ Output@ = /Core/Char/Output%.Output@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
@@ -106,7 +106,7 @@ State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
 
-  (ShowM@) { M@<Unit@>; } PutS = (ShowM@ str) {
+  (Output@) { M@<Unit@>; } PutS = (Output@ str) {
     O.Show(stdio.out, str);
   };
 

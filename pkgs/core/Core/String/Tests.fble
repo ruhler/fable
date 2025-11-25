@@ -14,7 +14,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 
-% ToString = /Core/Show%.ToString;
+% ToString = /Core/Char/Output%.ToString;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;

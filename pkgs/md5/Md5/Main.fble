@@ -21,7 +21,7 @@
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
-<@>@ ShowM@ = /Core/Show%.ShowM@;
+<@>@ Output@ = /Core/Char/Output%.Output@;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
@@ -57,7 +57,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     };
 
     Hash@ hash <- m.do(/Md5/Md5%.Md5(m, in));
-    ShowM@ line = Format|'%s  %s'[/Md5/Hash%.Show(hash), /Core/Show%.String(filename)];
+    Output@ line = Format|'%s  %s'[/Md5/Hash%.Show(hash), /Core/Char/Output%.String(filename)];
     Unit@ _ <- m.do(O.ShowLine(stdio.out, line));
     m.return(True);
   };

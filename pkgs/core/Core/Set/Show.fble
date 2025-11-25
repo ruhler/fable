@@ -2,8 +2,8 @@
 <<@>@,@>@ Map@ = /Core/Map%.Map@;
 
 <@>@ Show@ = /Core/Show%.Show@;
-<@>@ ShowM@ = /Core/Show%.ShowM@;
-% Do = /Core/Show%.Do;
+<@>@ Output@ = /Core/Char/Output%.Output@;
+% Do = /Core/Char/Output%.Do;
 
 % Format = /Core/Char/Ascii/Show%.Format;
 % String = /Core/Char/Ascii/Show%.String;
@@ -23,7 +23,7 @@
 
   Show@<S.Set@> show = (S.Set@ s) {
     Unit@ _ <- Do(S.ForEach(s, String|'{ ',
-      (K@ x, ShowM@ shown) {
+      (K@ x, Output@ shown) {
         Unit@ _ <- Do(shown);
         Format|'%s; '[show_key(x)];
       }));

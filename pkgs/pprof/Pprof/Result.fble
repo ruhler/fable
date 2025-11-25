@@ -4,14 +4,14 @@
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
 <@>@ Show@ = /Core/Show%.Show@;
-<@>@ ShowM@ = /Core/Show%.ShowM@;
-% ToString = /Core/Show%.ToString;
+<@>@ Output@ = /Core/Char/Output%.Output@;
+% ToString = /Core/Char/Output%.ToString;
 
 % Format = /Core/Char/Ascii/Show%.Format;
 
 
 <@>@ Result@ = <@ A@> {
-  +(A@ ok, ShowM@ error);
+  +(A@ ok, Output@ error);
 };
 
 <@ A@>(A@) { Result@<A@>; }
@@ -19,8 +19,8 @@ Okay = <@ A@>(A@ x) {
   Result@(ok: x);
 };
 
-<@ A@>(ShowM@) { Result@<A@>; }
-Error = <@ A@>(ShowM@ msg) {
+<@ A@>(Output@) { Result@<A@>; }
+Error = <@ A@>(Output@ msg) {
   Result@<A@>(error: msg);
 };
 
