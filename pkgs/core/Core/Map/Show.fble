@@ -2,8 +2,8 @@
 <<@>@,@>@ Map@ = /Core/Map%.Map@;
 
 <@>@ Show@ = /Core/Show%.Show@;
-<@>@ Output@ = /Core/Char/Output%.Output@;
-% Do = /Core/Char/Output%.Do;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% Do = /Std/Char/Output%.Do;
 
 % Format = /Core/Char/Ascii/Output%.Format;
 % String = /Core/Char/Ascii/Output%.String;

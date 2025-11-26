@@ -18,7 +18,7 @@
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
-<@>@ Output@ = /Core/Char/Output%.Output@;
+<@>@ Output@ = /Std/Char/Output%.Output@;
 
 @ String@ = /Std/String%.String@;
 % Format = /Core/Char/Ascii/Output%.Format;

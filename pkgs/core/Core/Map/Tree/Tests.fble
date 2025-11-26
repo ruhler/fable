@@ -14,7 +14,7 @@
 % Greater = /Std/Cmp%.Greater;
 
 <@>@ Show@ = /Core/Show%.Show@;
-% Do = /Core/Char/Output%.Do;
+% Do = /Std/Char/Output%.Do;
 
 % Str = /Std/Char/Ascii%.Str;
 % String = /Core/Char/Ascii/Output%.String;

@@ -2,7 +2,7 @@
 <@>@ Show@ = /Core/Show%.Show@;
 @ String@ = /Std/String%.String@;
 % Format = /Core/Char/Ascii/Output%.Format;
-% String = /Core/Char/Output%.String;
+% String = /Std/Char/Output%.String;
 
 # Show --
 #   Implementation of Show@ for String@. See documentation of /Show%.Show@.

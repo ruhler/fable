@@ -1364,4 +1364,9 @@ a single big one. With files too, if we are writing output to a file instead
 of to the output user. That suggests atomic Output@, while convenient, is not
 well suited for writing files in general.
 
+---
+
+Another reason not to force files to be written all in one go:
+* If I have a game where I'm writing out a save file and I want to show
+  incremental progress on the save to the user.
 

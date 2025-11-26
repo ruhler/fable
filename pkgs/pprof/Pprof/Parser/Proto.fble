@@ -133,7 +133,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
     <@ A@>(String@) { PM@<A@>; }
     Fail = <@ A@>(String@ msg, S@ s) {
       m.return(Error<R@<A@>>(Format|'error:%s: %s'[
-          /Core/Int/Show%.Show(s), /Core/Char/Output%.String(msg)]));
+          /Core/Int/Show%.Show(s), /Std/Char/Output%.String(msg)]));
     };
 
     # Returns number of bytes read so far.

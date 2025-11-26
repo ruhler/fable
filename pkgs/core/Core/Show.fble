@@ -1,5 +1,5 @@
 
-<@>@ Output@ = /Core/Char/Output%.Output@;
+<@>@ Output@ = /Std/Char/Output%.Output@;
 
 # Show@ --
 #   Common facility for converting values to human readable strings. Primarily

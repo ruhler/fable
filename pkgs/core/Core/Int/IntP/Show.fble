@@ -7,8 +7,8 @@
 @ Int@ = /Std/Int%.Int@;
 
 <@>@ Show@ = /Core/Show%.Show@;
-% Do = /Core/Char/Output%.Do;
-<@>% Return = /Core/Char/Output%.Return;
+% Do = /Std/Char/Output%.Do;
+<@>% Return = /Std/Char/Output%.Return;
 
 % String = /Core/Char/Ascii/Output%.String;
 

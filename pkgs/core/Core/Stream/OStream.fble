@@ -6,7 +6,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<@>@ Output@ = /Core/Char/Output%.Output@;
+<@>@ Output@ = /Std/Char/Output%.Output@;
 
 @ String@ = /Std/String%.String@;
 

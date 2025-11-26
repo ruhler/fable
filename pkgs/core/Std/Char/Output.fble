@@ -1,3 +1,5 @@
+# @module[/Std/Char/Output%]
+#  Utilities for outputting characters.
 
 @ Char@ = /Std/Char%.Char@;
 % U = /Std/Char/Lit%.U;
@@ -11,34 +13,49 @@
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-# Stream@<S@> is an interface describing stream types S@ that you can 
-# output stuff to.
+# @struct[Stream@] Interface of stream types S@ that you can output to.
+#  @field[@][S@] The type that the interface applies to.
+#  @field[S@][return] An empty output.
+#  @field[(S@, (Unit@) { S@; }) { S@; })][do]
+#   Output one thing followed by another.
+#  @field[(Char@) { S@; }][put]
+#   Output a single character.
 <@>@ Stream@ = <@ S@> { *(
-  S@ return,                          # Show nothing.
-  (S@, (Unit@) { S@; }) { S@; } do,   # Show the first arg, followed by the second
-  (Char@) { S@; } put                 # Show a single character
+  S@ return,
+  (S@, (Unit@) { S@; }) { S@; } do,
+  (Char@) { S@; } put
 );};
 
-# Output@ is a computation that can output something to any stream you ask it to.
+# @type@[Output@] A computation that outputs characters to a stream.
 <@>@ Output@ = <@ S@>(Stream@<S@>) { S@; };
 
-# An output computation that outputs nothing.
+# @value[Return] A computation that outputs nothing.
+#  @type[Output@]
 Output@ Return = <@ S@>(Stream@<S@> s) {
   s.return;
 };
 
-# Output one thing after another.
+# @func[Do] Output one thing after another.
+#  @arg[Output@][ma] The first thing to output.
+#  @arg[(Unit@) { Output@; }][f] The second thing to output.
+#  @return[Output@]
+#   A computation that outputs the first thing, then calls the function f to
+#   get the second thing to output, then outputs the second thing.
 (Output@, (Unit@) { Output@; }) { Output@; }
 Do = (Output@ ma, (Unit@) { Output@; } f)<@ S@>(Stream@<S@> s) {
   s.do(ma(s), (Unit@ _) { f(Unit, s); });
 };
 
-# Output a character.
+# @func[Put] Output a single character.
+#  @arg[Char@][c] The character to output.
+#  @returns[Output@] A computation that outputs the character.
 (Char@) { Output@; } Put = (Char@ c)<@ S@>(Stream@<S@> s) {
   s.put(c);
 };
 
-# Output a string.
+# @func[String] Output a string.
+#  @arg[String@][str] The string to output.
+#  @returns[Output] A computation that outputs the string.
 (String@) { Output@; }
 String = (String@ str)<@ S@>(Stream@<S@> s) {
   str.?(empty: s.return);
@@ -46,6 +63,9 @@ String = (String@ str)<@ S@>(Stream@<S@> s) {
   String(str.items.tail, s);
 };
 
+# @func[Concat] Output a sequence of computations.
+#  @arg[List@<Output@>] The list of outputs to output.
+#  @returns[Output] A computation to output each give output in turn.
 (List@<Output@>) { Output@; }
 Concat = (List@<Output@> xs) {
   xs.?(empty: Return);
@@ -53,6 +73,11 @@ Concat = (List@<Output@> xs) {
   Concat(xs.items.tail);
 };
 
+# @func[Lines] Output a sequence of lines.
+#  @arg[List@<Output@>] A list of lines to output.
+#  @returns[Output]
+#   A computation to output each line in turn, adding a newline character
+#   after every one.
 (List@<Output@>) { Output@; }
 Lines = (List@<Output@> xs) {
   xs.?(empty: Return);
@@ -61,6 +86,10 @@ Lines = (List@<Output@> xs) {
   Lines(xs.items.tail);
 };
 
+# @func[Join] Output a sequence of outputs with separator in between.
+#  @arg[String@][sep] The separator to output between each given output.
+#  @arg[List@<Output@>][xs] The elements to output.
+#  @return[Output@] Outputs each element in turn, separated by @a[sep].
 (String@, List@<Output@>) { Output@; }
 Join = (String@ sep, List@<Output@> xs) {
   xs.?(empty: Return);
@@ -73,7 +102,19 @@ Join = (String@ sep, List@<Output@> xs) {
 Char@ '%%' = U|25;
 Char@ '%s' = U|73;
 
-# Formatted Output
+# @func[Format] Construct a formatted output.
+#  Provides printf like formatting, except the only supported format type is
+#  @l{%s}. More specifically, outputs the format string with @l{%%} replaced
+#  with @l{%} and @l{%s} replaced with the value of the next argument output.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Output@ out = Format|'a: %s, b: %s'[String|'hello', String|'there'];
+#
+#  @arg[String@][fmt] The format specifier
+#  @arg[List@<Output@>[args] Format args.
+#  @return[Output@] The formatted output.
 (String@, List@<Output@>) { Output@; }
 Format = (String@ fmt, List@<Output@> args)<@ S@>(Stream@<S@> s) {
   fmt.?(empty: s.return);
@@ -111,7 +152,9 @@ Stream@<StringStream@> StringStream = @(
   put: (Char@ c, String@ tail) { Items(c, tail); }
 );
 
-# Output to a String@.
+# @func[ToString] Output to a String@.
+#  @arg[Output@] The output to render.
+#  @returns[String@] A string with the output characters.
 (Output@) { String@; }
 ToString = (Output@ show) {
   show(StringStream, Empty<Char@>);

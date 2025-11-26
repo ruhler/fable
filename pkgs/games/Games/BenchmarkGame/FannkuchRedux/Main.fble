@@ -10,7 +10,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<@>@ Output@ = /Core/Char/Output%.Output@;
+<@>@ Output@ = /Std/Char/Output%.Output@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;

@@ -8,7 +8,7 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-<@>@ Output@ = /Core/Char/Output%.Output@;
+<@>@ Output@ = /Std/Char/Output%.Output@;
 
 % FormatE = /Core/Char/Ascii/Output%.FormatE;
 
@@ -34,7 +34,7 @@
 };
 
 <@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
-  Result@(/Core/Char/Output%.Return, False, Just(x));
+  Result@(/Std/Char/Output%.Return, False, Just(x));
 };
 
 # Indicate an error with location and error message.
@@ -46,7 +46,7 @@ Error = <@ T@>(Loc@ l, Output@ msg) {
 # Indicate an error with no error message.
 <@ T@> { Result@<T@>; }
 Fail = <@ T@> {
-  Result@(/Core/Char/Output%.Return, True, Nothing<T@>);
+  Result@(/Std/Char/Output%.Return, True, Nothing<T@>);
 };
 
 # Assuming the given result is an error, change its type.
@@ -71,7 +71,7 @@ Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
 
   Result@<B@> rb = f(ra.value.just);
   Output@ errors = {
-    Unit@ _ <- /Core/Char/Output%.Do(ra.errors);
+    Unit@ _ <- /Std/Char/Output%.Do(ra.errors);
     rb.errors;
   };
   Result@(errors, Or(ra.failed, rb.failed), rb.value);

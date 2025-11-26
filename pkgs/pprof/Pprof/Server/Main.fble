@@ -33,7 +33,7 @@
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
-<@>@ Output@ = /Core/Char/Output%.Output@;
+<@>@ Output@ = /Std/Char/Output%.Output@;
 
 % Split = /Std/String/Eq%.Split;
 
@@ -41,7 +41,7 @@
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
-% ToString = /Core/Char/Output%.ToString;
+% ToString = /Std/Char/Output%.ToString;
 
 @ String@ = /Std/String%.String@;
 % Lines = /Std/String/Lines%.Lines;
@@ -117,7 +117,7 @@ GetArgs = (List@<String@> args, Args@ default) {
 
   args.items.tail.?(empty: {
     default.@(error: Just(Format|'missing arg to option %s'[
-        /Core/Char/Output%.String(arg)]));
+        /Std/Char/Output%.String(arg)]));
   });
 
   String@ value = args.items.tail.items.head;
@@ -133,7 +133,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     });
 
     default.@(error: Just(Format|'unrecognized option %s'[
-        /Core/Char/Output%.String(arg)]));
+        /Std/Char/Output%.String(arg)]));
   };
 
   nargs.error.?(just: nargs);
@@ -167,7 +167,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       BlockId@ block = seq.items.head;
       Maybe@<Block@> mname = Blocks.Lookup(profile.blocks, block);
       Output@ name = { 
-        mname.?(just: /Core/Char/Output%.String(mname.just.name));
+        mname.?(just: /Std/Char/Output%.String(mname.just.name));
         Unit@ _ = /Core/Debug%.TraceLn(
           ToString(Format|'block %s not found'[/Core/Int/Show%.Show(block)]));
         Format|'??%s??'[/Core/Int/Show%.Show(block)];
@@ -242,12 +242,12 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   Server@<M@> s = ms.just;
 
   Unit@ _ <- m.do(O.ShowLine(stdio.out,
-      Format|'parsing %s...'[/Core/Char/Output%.String(args.file)]));
+      Format|'parsing %s...'[/Std/Char/Output%.String(args.file)]));
 
   Maybe@<IStream@<M@>> fin <- m.do(stdio.read(args.file, /Core/Stdio%.Binary));
   fin.?(nothing: {
     Unit@ _ <- m.do(O.ShowLine(stdio.err, Format|'unable to open ''%s'''[
-        /Core/Char/Output%.String(args.file)]));
+        /Std/Char/Output%.String(args.file)]));
     m.return(False);
   });
 
@@ -259,7 +259,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   
   Unit@ _ <- m.do(O.ShowLine(stdio.out,
     Format|'serving at http://%s:%s'[
-      /Core/Char/Output%.String(args.hostname),
+      /Std/Char/Output%.String(args.hostname),
       /Core/Int/Show%.Show(args.port)
   ]));
 

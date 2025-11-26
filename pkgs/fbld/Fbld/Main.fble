@@ -13,7 +13,7 @@
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
-<@>@ Output@ = /Core/Char/Output%.Output@;
+<@>@ Output@ = /Std/Char/Output%.Output@;
 % Format = /Core/Char/Ascii/Output%.Format;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
@@ -58,7 +58,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     });
 
     fin.?(nothing: {
-      Output@ msg = Format|'unable to open %s'[/Core/Char/Output%.String(filename)];
+      Output@ msg = Format|'unable to open %s'[/Std/Char/Output%.String(filename)];
       m.return(Error<List@<Text@>>(Unknown, msg));
     });
 

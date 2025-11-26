@@ -12,9 +12,9 @@
 <@>% ForEach = /Std/List%.ForEach;
 
 <@>@ Show@ = /Core/Show%.Show@;
-<@>@ Output@ = /Core/Char/Output%.Output@;
-% Do = /Core/Char/Output%.Do;
-<@>% Return = /Core/Char/Output%.Return;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% Do = /Std/Char/Output%.Do;
+<@>% Return = /Std/Char/Output%.Return;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

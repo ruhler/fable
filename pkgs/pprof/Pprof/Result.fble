@@ -4,8 +4,8 @@
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
 <@>@ Show@ = /Core/Show%.Show@;
-<@>@ Output@ = /Core/Char/Output%.Output@;
-% ToString = /Core/Char/Output%.ToString;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% ToString = /Std/Char/Output%.ToString;
 
 % Format = /Core/Char/Ascii/Output%.Format;
 

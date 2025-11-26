@@ -7,7 +7,7 @@
 % Int = /Std/Int/Lit%.Int;
 Int@ 1 = Int|1;
 
-<@>@ Output@ = /Core/Char/Output%.Output@;
+<@>@ Output@ = /Std/Char/Output%.Output@;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
@@ -32,7 +32,7 @@ Int@ 1 = Int|1;
 # Report an message with location information.
 (Loc@, Output@) { Output@; } Report = (Loc@ l, Output@ msg) {
   Format|'%s:%s:%s: %s'[
-    /Core/Char/Output%.String(l.file),
+    /Std/Char/Output%.String(l.file),
     /Core/Int/Show%.Show(l.line),
     /Core/Int/Show%.Show(l.col),
     msg];

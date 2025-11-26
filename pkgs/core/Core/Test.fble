@@ -1,8 +1,8 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<@>@ Output@ = /Core/Char/Output%.Output@;
-% ToString = /Core/Char/Output%.ToString;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% ToString = /Std/Char/Output%.ToString;
 
 @ String@ = /Std/String%.String@;
 
@@ -62,7 +62,7 @@ ExpectFails = (TestResult@ result, String@ msg) {
   /Std/String/Eq%.Contains(failure, msg).?(true: ExpectedFail);
 
   Fail(Format|'Expected failure containing "%s", but failed with "%s"'
-        [/Core/Char/Output%.String(msg), /Core/Char/Output%.String(failure)]);
+        [/Std/Char/Output%.String(msg), /Std/Char/Output%.String(failure)]);
 };
 
 @(TestResult@, Test@, TestSuite@, TestCase@,
