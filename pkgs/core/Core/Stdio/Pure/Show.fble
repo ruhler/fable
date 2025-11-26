@@ -3,7 +3,7 @@
 @ PureState@ = /Core/Stdio/Pure%.PureState@;
 @ MainResult@ = /Core/Stdio/Pure%.MainResult@;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 % Format = /Core/Char/Ascii/Output%.Format;
 

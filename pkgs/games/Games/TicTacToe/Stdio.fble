@@ -19,7 +19,7 @@
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;

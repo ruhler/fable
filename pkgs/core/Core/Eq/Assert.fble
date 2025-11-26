@@ -1,7 +1,7 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 % Format = /Core/Char/Ascii/Output%.Format;
 

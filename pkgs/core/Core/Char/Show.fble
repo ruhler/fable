@@ -1,7 +1,7 @@
 
 @ Char@ = /Std/Char%.Char@;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 % Put = /Std/Char/Output%.Put;
 
 # Show --

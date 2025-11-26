@@ -1122,3 +1122,8 @@ Format function? Let's get rid of that.
 Cool. I think we are ready to transition Output@ and Show@ from /Core to /Std.
 Unless I want to implement Lines an Join first? Okay. Sure. Lines at least.
 
+---
+
+Output@ and Show@ moved from /Core to /Std. I can start moving over
+Show implementations next.
+

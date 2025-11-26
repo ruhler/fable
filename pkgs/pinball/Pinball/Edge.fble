@@ -6,7 +6,7 @@
 % Magnitude = /Pinball/Vec%.Magnitude;
 % Normalize = /Pinball/Vec%.Normalize;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 % Format = /Core/Char/Ascii/Output%.Format;
 

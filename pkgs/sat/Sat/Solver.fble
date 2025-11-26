@@ -19,7 +19,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 

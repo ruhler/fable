@@ -13,7 +13,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 % String = /Core/Char/Ascii/Output%.String;
 

@@ -11,7 +11,7 @@
 @ Vec@ = /Pinball/Vec%.Vec@;
 % SubV = /Pinball/Vec%.SubV;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 % Format = /Core/Char/Ascii/Output%.Format;
 

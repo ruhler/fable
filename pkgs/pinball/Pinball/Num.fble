@@ -19,7 +19,7 @@
 @ IntLit@ = /Std/Int/Lit%.IntLit@;
 % IntI = /Std/Int/Lit%.Int;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 % Format = /Core/Char/Ascii/Output%.Format;
 

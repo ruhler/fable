@@ -2,7 +2,7 @@
 @ Linear@ = /Pinball/Quadratic%.Linear@;
 @ Quadratic@ = /Pinball/Quadratic%.Quadratic@;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 % Format = /Core/Char/Ascii/Output%.Format;
 

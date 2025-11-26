@@ -1,5 +1,5 @@
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 @ String@ = /Std/String%.String@;
 % Format = /Core/Char/Ascii/Output%.Format;
 % String = /Std/Char/Output%.String;

@@ -18,7 +18,7 @@
 @ Roots@ = /Pinball/Quadratic%.Roots@;
 % Roots = /Pinball/Quadratic%.Roots;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 % Str = /Std/Char/Ascii%.Str;
 % Format = /Core/Char/Ascii/Output%.Format;

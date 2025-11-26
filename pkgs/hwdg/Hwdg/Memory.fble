@@ -36,7 +36,7 @@ Memory@ Empty = Map.Empty<Data@>;
   /Core/Map/Eq%.Eq(Map, /Hwdg/Coord%.Eq, /Hwdg/Data%.Eq);
 };
 
-/Core/Show%.Show@<Memory@> Show = {
+/Std/Show%.Show@<Memory@> Show = {
   /Core/Map/Show%.Show(Map, /Hwdg/Coord%.Show, /Hwdg/Data%.Show);
 };
 

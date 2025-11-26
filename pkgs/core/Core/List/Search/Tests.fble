@@ -6,7 +6,7 @@
 <@>@ Eq@ = /Std/Eq%.Eq@;
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 % Str = /Std/Char/Ascii%.Str;
 % String = /Core/Char/Ascii/Output%.String;

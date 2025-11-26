@@ -17,7 +17,7 @@ Data@ 1 = Data@(1: Unit);
     1: b.?(0: False, 1: True));
 };
 
-/Core/Show%.Show@<Data@> Show = (Data@ x) {
+/Std/Show%.Show@<Data@> Show = (Data@ x) {
   x.?(0: String|0, 1: String|1);
 };
 

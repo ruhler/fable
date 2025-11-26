@@ -8,7 +8,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 @ Var@ = /SatGame/Var%.Var@;
 

@@ -1,7 +1,7 @@
 
 <<@>@,@>@ Map@ = /Core/Map%.Map@;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % Do = /Std/Char/Output%.Do;
 

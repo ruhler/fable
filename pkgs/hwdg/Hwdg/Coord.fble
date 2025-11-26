@@ -49,7 +49,7 @@ Cmp@<Coord@> Ord = {
   };
 };
 
-/Core/Show%.Show@<Coord@> Show = (Coord@ x) {
+/Std/Show%.Show@<Coord@> Show = (Coord@ x) {
   Format|'(%s, %s)'[/Core/Int/Show%.Show(x.x), /Core/Int/Show%.Show(x.y)];
 };
 

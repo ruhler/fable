@@ -1,7 +1,7 @@
 
 <<@>@,@>@ Map@ = /Core/Map%.Map@;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % Do = /Std/Char/Output%.Do;
 
@@ -12,7 +12,7 @@
 
 # Show --
 #   Implementation of Show@ for Set@<T@>. See documentation of
-#   /Core/Show%.Show@.
+#   /Std/Show%.Show@.
 #
 #   { }
 #   { a; }

@@ -8,7 +8,7 @@
 % Mul = /Std/Int%.Mul;
 % Int = /Std/Int/Lit%.Int;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
 @ String@ = /Std/String%.String@;
 % Format = /Core/Char/Ascii/Output%.Format;

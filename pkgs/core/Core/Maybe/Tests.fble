@@ -12,7 +12,7 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 % ToString = /Std/Char/Output%.ToString;
 
 @ String@ = /Std/String%.String@;
