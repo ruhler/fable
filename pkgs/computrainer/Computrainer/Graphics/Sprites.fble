@@ -1,92 +1,49 @@
 
 @ Int@ = /Std/Int%.Int@;
-% Int = /Std/Int/Lit%.Int;
-
-<@>@ List@ = /Std/List%.List@;
 
 @ Color@ = /App/Drawing%.Color@;
 @ Drawing@ = /App/Drawing%.Drawing@;
 % Drawings = /App/Drawing%.Drawings;
 % Blank = /App/Drawing%.Blank;
-% Rect = /App/Drawing%.Rect;
 
 @ Dir@ = /Computrainer/Model%.Dir@;
-@ Switch@ = /Computrainer/Model%.Switch@;
-@ Dup@ = /Computrainer/Model%.Dup@;
 @ Gate@ = /Computrainer/Model%.Gate@;
 @ Value@ = /Computrainer/Model%.Value@;
 
 % Colors = /Computrainer/Graphics/Colors%;
+% Shapes = /Computrainer/Graphics/Shapes%;
 
-@ Sprite@ = (Color@) { Drawing@; };
+Int@ W = Shapes.W;
 
-(List@<Sprite@>) { Sprite@; }
-Sprites = (List@<Sprite@> xs, Color@ c) {
-    Drawings(/Std/List%.Map(xs, (Sprite@ f) { f(c); }));
-};
-
-# Sample summary of sprites:
-#  .....
-#  SGGG.
-#  .G_GD
-#  SGGG.
-#  .....
-#
-#  . is padding
-#  G is gate
-#  D is direction
-#  S is select
-
-Int@ W = Int|5;   # Full width of square.
-
-Sprite@ GL = Rect(Int|1, Int|1, Int|1, Int|3);  # Gate Left
-Sprite@ GR = Rect(Int|3, Int|1, Int|1, Int|3);  # Gate Right
-Sprite@ GT = Rect(Int|1, Int|3, Int|3, Int|1);  # Gate Top
-Sprite@ GB = Rect(Int|1, Int|1, Int|3, Int|1);  # Gate Bottom
-Sprite@ Gate = Sprites[GL, GR, GT, GB];
-
-Sprite@ L = Rect(Int|0, Int|2, Int|1, Int|1);   # Left dir
-Sprite@ R = Rect(Int|4, Int|2, Int|1, Int|1);   # Right dir
-Sprite@ U = Rect(Int|2, Int|4, Int|1, Int|1);   # Up dir
-Sprite@ D = Rect(Int|2, Int|0, Int|1, Int|1);   # Down dir
-
-Sprite@ Left = Sprites[Gate, L];
-Sprite@ Right = Sprites[Gate, R];
-Sprite@ Up = Sprites[Gate, U];
-Sprite@ Down = Sprites[Gate, D];
-
-(Dir@) { Sprite@; } Dir = (Dir@ d) {
-    d.?(up: Up, down: Down, left: Left, right: Right);
-};
-
-Sprite@ Select = Gate;
-Sprite@ Sink = Gate;
-
-(Switch@) { Sprite@; } Switch = (Switch@ s) {
-    # TODO: show something special for select too.
-    Sprites[Dir(s.0), Dir(s.1)];
-};
-
-(Dup@) { Sprite@; } Dup = (Dup@ s) {
-    Sprites[Dir(s.a), Dir(s.b)];
+(Dir@, Color@) { Drawing@; }
+Dir = (Dir@ d, Color@ c) {
+    Shapes.Shapes[Shapes.Gate, Shapes.Dir(d)](c);
 };
 
 (Gate@) { Drawing@; }
 Gate = (Gate@ g) {
     g.?(noop: Blank,
         rail: Dir(g.rail, Colors.Gate),
-        sink: Sink(Colors.Gate),
+        sink: Shapes.Gate(Colors.Gate),
         source: Dir(g.source, Colors.C),
         zero: Dir(g.zero, Colors.0),
         one: Dir(g.one, Colors.1),
-        switch: Switch(g.switch, Colors.Gate),
-        select: Select(Colors.Gate),
-        dup: Dup(g.dup, Colors.Gate));
+        switch: Drawings[
+            Shapes.Gate(Colors.Gate),
+            Shapes.Sel(g.switch.s, Colors.Select),
+            Shapes.Dir(g.switch.0, Colors.0),
+            Shapes.Dir(g.switch.1, Colors.1)],
+        select: Shapes.Gate(Colors.Select),
+        dup: Shapes.Shapes[
+            Shapes.Gate,
+            Shapes.Dir(g.dup.a),
+            Shapes.Dir(g.dup.b)
+        ](Colors.Gate));
 };
 
 (Value@) { Drawing@; }
 Car = (Value@ v) {
-    Rect(Int|1, Int|1, Int|3, Int|3, Colors.Car(v));
+    Shapes.Car(Colors.Car(v));
 };
 
 @(W, Car, Gate);

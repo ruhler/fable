@@ -12,6 +12,7 @@ Color@ S = Color@(Int|24, Int|48, Int|89);
 Color@ L = Color@(Int|221, Int|110, Int|66);
 Color@ Background = Color@(Int|13, Int|31, Int|45);
 Color@ Gate = Color@(Int|201, Int|203, Int|207);
+Color@ Select = Color@(Int|22, Int|219, Int|101);
 
 (Value@) { Color@; }
 Car = (Value@ v) {
@@ -19,5 +20,5 @@ Car = (Value@ v) {
 };
 
 
-@(C, 0, 1, S, L, Background, Gate, Car);
+@(C, 0, 1, S, L, Background, Gate, Select, Car);
 
