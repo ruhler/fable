@@ -20,26 +20,17 @@
 % Colors = /Computrainer/Graphics/Colors%;
 
 % W = /Computrainer/Graphics/Sprites%.W;
-% Sprites = /Computrainer/Graphics/Sprites%.Sprites;
+% Sprites = /Computrainer/Graphics/Sprites%;
 
 
 (Coord@, Value@) { Drawing@; }
 DrawCar = (Coord@ c, Value@ v) {
-    Translate(Mul(c.x, W), Mul(c.y, W), Sprites.Car(Colors.Car(v)));
+    Translate(Mul(c.x, W), Mul(c.y, W), Sprites.Car(v));
 };
 
 (Int@, Int@, Gate@) { Drawing@; }
 DrawGate = (Int@ x, Int@ y, Gate@ g) {
-    Translate(Mul(x, W), Mul(y, W),
-        g.?(noop: Blank,
-            rail: Sprites.Dir(g.rail, Colors.Gate),
-            sink: Sprites.Sink(Colors.Gate),
-            source: Sprites.Dir(g.source, Colors.C),
-            zero: Sprites.Dir(g.zero, Colors.0),
-            one: Sprites.Dir(g.one, Colors.1),
-            switch: Sprites.Switch(g.switch, Colors.Gate),
-            select: Sprites.Select(Colors.Gate),
-            dup: Sprites.Dup(g.dup, Colors.Gate)));
+    Translate(Mul(x, W), Mul(y, W), Sprites.Gate(g));
 };
 
 (Int@, Int@, Model@) { Drawing@; }

@@ -7,11 +7,16 @@
 @ Color@ = /App/Drawing%.Color@;
 @ Drawing@ = /App/Drawing%.Drawing@;
 % Drawings = /App/Drawing%.Drawings;
+% Blank = /App/Drawing%.Blank;
 % Rect = /App/Drawing%.Rect;
 
 @ Dir@ = /Computrainer/Model%.Dir@;
 @ Switch@ = /Computrainer/Model%.Switch@;
 @ Dup@ = /Computrainer/Model%.Dup@;
+@ Gate@ = /Computrainer/Model%.Gate@;
+@ Value@ = /Computrainer/Model%.Value@;
+
+% Colors = /Computrainer/Graphics/Colors%;
 
 @ Sprite@ = (Color@) { Drawing@; };
 
@@ -33,8 +38,6 @@ Sprites = (List@<Sprite@> xs, Color@ c) {
 #  S is select
 
 Int@ W = Int|5;   # Full width of square.
-
-Sprite@ Car = Rect(Int|1, Int|1, Int|3, Int|3);
 
 Sprite@ GL = Rect(Int|1, Int|1, Int|1, Int|3);  # Gate Left
 Sprite@ GR = Rect(Int|3, Int|1, Int|1, Int|3);  # Gate Right
@@ -68,7 +71,23 @@ Sprite@ Sink = Gate;
     Sprites[Dir(s.a), Dir(s.b)];
 };
 
-% Sprites = @(Car, Dir, Select, Sink, Switch, Dup);
+(Gate@) { Drawing@; }
+Gate = (Gate@ g) {
+    g.?(noop: Blank,
+        rail: Dir(g.rail, Colors.Gate),
+        sink: Sink(Colors.Gate),
+        source: Dir(g.source, Colors.C),
+        zero: Dir(g.zero, Colors.0),
+        one: Dir(g.one, Colors.1),
+        switch: Switch(g.switch, Colors.Gate),
+        select: Select(Colors.Gate),
+        dup: Dup(g.dup, Colors.Gate));
+};
 
-@(Sprite@, W, Sprites);
+(Value@) { Drawing@; }
+Car = (Value@ v) {
+    Rect(Int|1, Int|1, Int|3, Int|3, Colors.Car(v));
+};
+
+@(W, Car, Gate);
 
