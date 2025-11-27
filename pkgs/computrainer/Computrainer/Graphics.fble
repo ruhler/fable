@@ -3,7 +3,6 @@
 % Mul = /Std/Int%.Mul;
 % Int = /Std/Int/Lit%.Int;
 
-@ Color@ = /App/Drawing%.Color@;
 @ Drawing@ = /App/Drawing%.Drawing@;
 % Drawings = /App/Drawing%.Drawings;
 % Blank = /App/Drawing%.Blank;
@@ -18,48 +17,34 @@
 @ Model@ = /Computrainer/Model%.Model@;
 @ Value@ = /Computrainer/Model%.Value@;
 
+% Colors = /Computrainer/Graphics/Colors%;
+
 % W = /Computrainer/Graphics/Sprites%.W;
 % Sprites = /Computrainer/Graphics/Sprites%.Sprites;
-
-% Color = @(
-    C: Color@(Int|189, Int|45, Int|135),
-    0: Color@(Int|254, Int|198, Int|1),
-    1: Color@(Int|33, Int|131, Int|128),
-    S: Color@(Int|24, Int|48, Int|89),
-    L: Color@(Int|221, Int|110, Int|66),
-    Background: Color@(Int|13, Int|31, Int|45),
-    Gate: Color@(Int|201, Int|203, Int|207)
-);
-
-
-(Value@) { Color@; }
-CarColor = (Value@ v) {
-    v.?(C: Color.C, 0: Color.0, 1: Color.1, S: Color.S, L: Color.L);
-};
 
 
 (Coord@, Value@) { Drawing@; }
 DrawCar = (Coord@ c, Value@ v) {
-    Translate(Mul(c.x, W), Mul(c.y, W), Sprites.Car(CarColor(v)));
+    Translate(Mul(c.x, W), Mul(c.y, W), Sprites.Car(Colors.Car(v)));
 };
 
 (Int@, Int@, Gate@) { Drawing@; }
 DrawGate = (Int@ x, Int@ y, Gate@ g) {
     Translate(Mul(x, W), Mul(y, W),
         g.?(noop: Blank,
-            rail: Sprites.Dir(g.rail, Color.Gate),
-            sink: Sprites.Sink(Color.Gate),
-            source: Sprites.Dir(g.source, Color.C),
-            zero: Sprites.Dir(g.zero, Color.0),
-            one: Sprites.Dir(g.one, Color.1),
-            switch: Sprites.Switch(g.switch, Color.Gate),
-            select: Sprites.Select(Color.Gate),
-            dup: Sprites.Dup(g.dup, Color.Gate)));
+            rail: Sprites.Dir(g.rail, Colors.Gate),
+            sink: Sprites.Sink(Colors.Gate),
+            source: Sprites.Dir(g.source, Colors.C),
+            zero: Sprites.Dir(g.zero, Colors.0),
+            one: Sprites.Dir(g.one, Colors.1),
+            switch: Sprites.Switch(g.switch, Colors.Gate),
+            select: Sprites.Select(Colors.Gate),
+            dup: Sprites.Dup(g.dup, Colors.Gate)));
 };
 
 (Int@, Int@, Model@) { Drawing@; }
 DrawModel = (Int@ width, Int@ height, Model@ m) {
-    Drawing@ clear = Rect(Int|0, Int|0, width, height, Color.Background);
+    Drawing@ clear = Rect(Int|0, Int|0, width, height, Colors.Background);
     Drawing@ cars = Grid.ForEach(m.s.cars, Blank, (Coord@ xy, Value@ v, Drawing@ d) {
         Over(d, DrawCar(xy, v));
     });

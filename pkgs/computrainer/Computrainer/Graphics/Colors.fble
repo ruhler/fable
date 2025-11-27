@@ -1,0 +1,23 @@
+
+% Int = /Std/Int/Lit%.Int;
+
+@ Color@ = /App/Drawing%.Color@;
+
+@ Value@ = /Computrainer/Model%.Value@;
+
+Color@ C = Color@(Int|189, Int|45, Int|135);
+Color@ 0 = Color@(Int|254, Int|198, Int|1);
+Color@ 1 = Color@(Int|33, Int|131, Int|128);
+Color@ S = Color@(Int|24, Int|48, Int|89);
+Color@ L = Color@(Int|221, Int|110, Int|66);
+Color@ Background = Color@(Int|13, Int|31, Int|45);
+Color@ Gate = Color@(Int|201, Int|203, Int|207);
+
+(Value@) { Color@; }
+Car = (Value@ v) {
+    v.?(C: C, 0: 0, 1: 1, S: S, L: L);
+};
+
+
+@(C, 0, 1, S, L, Background, Gate, Car);
+

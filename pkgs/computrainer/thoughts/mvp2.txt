@@ -1,0 +1,56 @@
+MVP2
+====
+From MVP1 we have basic gates and running of the model.
+
+MVP2 is about getting the gate editor UI into good enough state to be useful.
+
+Proposal: Develop the editor sufficiently enough to be useful for implementing
+a 4-bit adder, or a 4-bit counter.
+
+Brainstorm of things to include:
+* Fix graphics so you can tell what gate something is by looking at it
+ - Need to use color to distinguish between, e.g. 0 and 1 output of switch
+   gate.
+* Fix model to advance gates in addition to engines, so we don't have to worry
+  about extra space requirements outside of 0 and 1 gates.
+* Fundamental editing features
+ - Place any gate of my choice anywhere, easily.
+ - Remove gates. Modify existing gates: rotate, change type.
+ - Place/remove/edit cars on the map.
+ - Undo?
+* Pause / resume execution of the model.
+* Load and save models/cars to file.
+
+Don't worry about modularization yet. One flat model that I can edit and
+expand and save between sessions.
+
+Let's say you pass the name of a model file at startup, you have some way to
+explicitly 'save' to file. Or maybe it auto-saves when you close.
+
+Question: Should we support highlighting a rectangular region and copying it
+and pasting it somewhere else? How about yes if it turns out to be useful
+(which it almost certainly will).
+
+Sounds like a plan.
+
+---
+
+Step 1: Clean up how we do graphics.
+
+Today I have sprites separate from colors. That can't work in a world where I
+need to have an individual gate, like, switch, in multiplie different colors.
+Let's move colors in with sprites.
+
+Um... that suggests moving back to a single Graphics file? It's a different
+way of thinking about how to display things. Before I was thinking we could
+have text output, in which case you only get all or nothing for a color.
+
+How might I layer things?
+* Colors, by car, background, generic gate.
+* Shapes - gate box, car box, direction, selection
+* Gates: shapes + colors
+* Model rendering: tying things all together.
+
+Maybe do: Graphics/Colors, Graphics/Shapes, Graphics/Gates, Graphics.fble.
+
+Okay? Let's try that.

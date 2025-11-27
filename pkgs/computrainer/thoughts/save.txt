@@ -107,3 +107,11 @@ R   >|R   >|R   >|D^v  |     |     |     |R   >|R   >|R   >|R   >|R   >|R   >|
                                                                            
 I could even hack up a literal for this if I want. Just enumerate all possible
 gates (or the ones I want to use), and take a list of list of these.
+
+---
+
+Adjustment to make, in case we want to store cars as well: add an extra
+character to each gate at the end, before '|', that has an optional car value.
+
+I think it will be important to be able to save cars.
+
