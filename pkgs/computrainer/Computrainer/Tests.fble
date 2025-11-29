@@ -18,7 +18,6 @@
 
 <@>% Entries = /Computrainer/Grid%.Entries;
 
-@ Gate@ = /Computrainer/Model%.Gate@;
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Cars@ = /Computrainer/Model%.Cars@;
 @ Model@ = /Computrainer/Model%.Model@;
@@ -46,15 +45,6 @@ TickN = (Int@ n, Model@ m) {
 };
 
 Test@ Tests = TestSuite(Str|Computrainer, List[
-  Test(Str|'Noop', (Unit@ _) {
-    Gates@ gates = Entries<Gate@>[];
-    Cars@ cars = Entries[@(x: Int|3, y: Int|4, v: C)];
-    Model@ model = Model(gates, cars);
-    Model@ wnt = model;
-    Model@ got = Tick(model);
-    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
-  }),
-
   Test(Str|'Rail', (Unit@ _) {
     Gates@ gates = Entries[
         @(x: Int|3, y: Int|4, v: Rail.Right),

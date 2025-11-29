@@ -22,7 +22,7 @@ Dir = (Dir@ d, Color@ c) {
 
 (Gate@) { Drawing@; }
 Gate = (Gate@ g) {
-    g.?(noop: Blank,
+    g.?(none: Blank,
         rail: Dir(g.rail, Colors.Gate),
         sink: Shapes.Gate(Colors.Gate),
         source: Dir(g.source, Colors.C),

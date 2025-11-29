@@ -33,7 +33,7 @@ Dir@ Down = Dir@(down: Unit);
 @ Dup@ = *(Dir@ a, Dir@ b);
 
 @ Gate@ = +(
-    Unit@ noop,
+    Unit@ none,
     Dir@ rail,
     Unit@ sink,
     Dir@ source,
@@ -44,7 +44,7 @@ Dir@ Down = Dir@(down: Unit);
     Dup@ dup
 );
 
-Gate@ Noop = Gate@(noop: Unit);
+Gate@ None = Gate@(none: Unit);
 Gate@ Sink = Gate@(sink: Unit);
 Gate@ Select = Gate@(select: Unit);
 
@@ -216,7 +216,7 @@ GoGates = {
     
     (Coord@, Gate@, S@) { S@; }
     GoGate = (Coord@ c, Gate@ g, S@ s) {
-      g.?(noop: s,
+      g.?(none: s,
           rail: GoRail(c, s),
           sink: GoSink(c, s),
           source: GoSource(c, s),
@@ -338,7 +338,7 @@ GoEngines = (Gates@ gates) {
     # Try executing the gate at the given location for the given car.
     (Gate@, Coord@, Maybe@<Value@>, S@) { Maybe@<S@>; }
     GoGate = (Gate@ g, Coord@ c, Maybe@<Value@> mv, S@ s) {
-      g.?(noop: Just(s),
+      g.?(none: Just(s),
           rail: GoRail(g.rail, c, mv, s),
           sink: GoSink(c, mv, s),
           source: GoSource(g.source, c, mv, s),
@@ -410,6 +410,6 @@ Tick = (Model@ m) {
 };
 
 @(Model@, Switch@, Dup@, Gate@, Gates@, Cars@, Dir@, Value@, S@, Tick, Model,
-   Noop, Sink, Rail, Source, One, Zero, Switch, Select, Dup,
+   None, Sink, Rail, Source, One, Zero, Switch, Select, Dup,
    Left, Right, Up, Down,
    0, 1, C, L, S);

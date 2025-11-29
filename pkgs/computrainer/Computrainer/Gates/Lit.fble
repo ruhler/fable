@@ -4,7 +4,7 @@
 @ Unit@ = /Std/Unit%.Unit@;
 
 @ Gate@ = /Computrainer/Model%.Gate@;
-% Noop = /Computrainer/Model%.Noop;
+% None = /Computrainer/Model%.None;
 % Rail = /Computrainer/Model%.Rail;
 % Zero = /Computrainer/Model%.Zero;
 % One = /Computrainer/Model%.One;
@@ -37,7 +37,7 @@
 
 (Lit@) { Gate@; } ToGate = (Lit@ l) {
     l.?(
-      '     |': Noop,
+      '     |': None,
       'R^   |': Rail.Up,
       'R v  |': Rail.Down,
       'R  < |': Rail.Left,
