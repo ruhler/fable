@@ -1,5 +1,8 @@
 
+* Distinguish between 'empty' gate, which nobody can move onto, and the 'halt'
+  gate, which you can go onto, but then you just stay there.
+* Pick more black/whitish colors for zero and one, so it's more intuitive?
+  At least more intuitive to me?
+
 * Test that we can't push a car through a noop gate.
-* Rewrite model to advance gates rather than double push tag gates.
-* Design mvp v2 network.
-* Implement gates for mvp v2 network.
+* Finish mvp2 milestone.

@@ -54,3 +54,162 @@ How might I layer things?
 Maybe do: Graphics/Colors, Graphics/Shapes, Graphics/Gates, Graphics.fble.
 
 Okay? Let's try that.
+
+---
+
+How to sort out gate/engine motion?
+
+The main goal: avoid the need for a double push through 0 and 1 gates. Some
+gates should process themselves rather than need a car to instigate.
+
+I feel like there are two parts to a gate:
+1. Through path. If an engine tries to push through, what way does it go?
+2. Activation. What the gate does on its own.
+
+* noop - no through path ever. no activation.
+* rail - through path as directed, no activation.
+* sink - no through path ever. activation removes car on it (if any).
+* source - through path as directed. activation adds an engine if empty.
+* zero, one - through path as directed if passing. Activation adds car if waiting.
+* switch - through path if enabled. No activation.
+* select - no through path. Activation to sink cars?
+* dup - through paths as directed.
+
+Certainly I want zero/one gate to have an activation. It would be nice if
+source had an activation. How about the sinks? Can we say engines only move
+cars, they don't add or remove them? Activations only add or remove, they
+don't move?
+
+Can everything be described as conditional move, add, or remove?
+
+Order matters for processing? I worry about the conflict between sink and
+engine. Though I guess it doesn't matter: engine can't go through sink gate,
+so that's that. But it would be bad if we listed engines, then sink an engine
+on a switch gate, for example, then try to drive that engine? No. Doesn't seem
+like it matters.
+
+Anyway, if I were to have an order, what order would I have?
+1. Do remove activations in order. No conflicts.
+2. Do moves. Speculatively, sorted, to address potential conflicts.
+3. Do adds. No conflicts.
+
+We could potentially do (1) and (2) at the same time all in a single pass.
+That makes sense to me, because it should be isolated.
+
+Or, can we do a single traversal? No. Don't want to do a single traversal. We
+don't want to mix up movements with gate activations? Hmm... It should be okay
+if we ...
+
+I have gates and I have cars. Traverse the cars to find the engines. Traverse
+the gates to find activations / removals. Natural split. I just decide what
+goes first: gates or cars.
+
+The only difference should be latency of some operations. For example:
+
+Move car on to 1 gate... I don't think it matters. It's easy to change. Let's
+do gates first. Proposal is pretty easy then:
+1. iterate though all the gates, run any that are active.
+2. iterate through all the cars, collect all the engines, then try each engine
+one at a time.
+
+For (2), we want a generic result from a gate to say Maybe@<Dir@> to say what
+direction, if any, you push through if you push on the gate. The nice thing is
+determining the direction should be free of the recursive knot.
+
+Sounds like I have plenty to go on. Just dive in and make the switch over all
+at once.
+
+---
+
+It's not as clean as I'm hoping. Some gates change state when something is
+pushed through. Let's not try to clean it out yet. Just separate out the
+activation operations from the pass-through operations.
+
+---
+
+And apparently this doesn't fix the problem with tag gates? How do I want tag
+gates to work?
+
+It's a single gate, but with an output direction. There are two ways it could
+work:
+1. When you see a new train on the gate, add a tag car to the output as
+activation. Forward only after you've added.
+2. Any time you see a free space, add an output?
+
+I rather add the tag to the gate location directly. Only use the destination
+for the destination. Can we do that? Maybe I need to setbusy/idle to say:
+while it is 'idle', nothing can move to it. But we don't currently have a way
+to stop things moving to something. We only have a way to stop things moving
+off of something.
+
+This is a good question. It's similar to the question of what happens if you
+have a rail pointing to nothing? Conceptually, the car shouldn't go off the
+edge of the rail. Similarly, we shouldn't be allowed to go onto a tag gate if
+it is preparing a tag value to go on top.
+
+So let's try to make it work by putting the tag on the gate, and blocking
+anyone from landing on the gate until we've had a chance to do so. And let's
+make sure we don't allow cars to drive off of rails. Uh... how?
+
+Right now, GoGate means go from gate. Let's say it's anything. Say it is a
+rail. Then we first call 'GoAt' to see if we can move to the destination.
+Right now, if there's no gate or if there's no car, we go ahead. That's what I
+need to fix. The gates themselves need to choose if you can put a car there or
+not. Okay? It's no longer a question of whether the gate can push something
+out of the way. Though it may need to.
+
+Maybe rename 'GoAt' to 'GoTo'? Like, we want to go to this location. See
+what's there, which may be nothing. Ask if we are allowed to go there?
+
+But wait. How can this be a problem? Why doesn't tag gate add a tag value at
+the same time it forwards the caboose? Then there's no issue, right? That's
+the problem. If I insert the caboose there, we have no way of doing that
+successfully while stopping the advance of the car that's trying to go to that
+place in the first place. Which means we have to fail? Well, but, you would be
+the engine anyway. You would have to be. Move out the engine, place the
+caboose, do it successfully, done?
+
+It's tricky. I would like to sort out a reasonable way of thinking about gates
+and how they advance.
+
+---
+
+Engine ==> Gate => GoTo => Gate Accept.
+
+GoEngine - get the gate at that location, and GoGate it.
+GoGate - We want to push the car at the current gate through it
+* We have a car value.
+* If there's something in the way that I need to push out, 'GoAt' there.
+GoAt - Look up the gate. See if we are allowed to enter the gate.
+* We may not have any car there.
+
+Seems like maybe GoGate should take a Maybe@<Value@>? Nothing means there is
+no car there. We just want to check that we can proceed into that gate.
+
+Let's try that. Also, I want to ditch Noop gate.
+
+---
+
+Do we allow things to enter source gates? I certainly need things to be able
+to leave them. But if there's something there, it must be an engine, and we
+don't want to allow pushing through it. But that would have been detected...
+when? At what point do we prevent pushing through of engines? That must be
+GoAt.
+
+How does GoAt work then?
+1. Find the target gate. If none, don't allow it. Fail.
+2. Find the car value there. If engine, don't allow it.
+3. Call into GoGate with the value.
+
+See how that works.
+
+So then, do we allow things to be moved into Source?
+
+I don't have an option to allow things to go out of a gate (via engine push)
+but not into the gate. Let's not worry about that detail right now.
+
+---
+
+Why am I changing things again? Tag? Doesn't seem to matter. I need to look
+more closely at the implementation of Tag. Figure out how this is supposed to
+work.

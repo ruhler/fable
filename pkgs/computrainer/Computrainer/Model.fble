@@ -160,25 +160,100 @@ Model = (Gates@ gates, Cars@ cars) {
     Model@(gates, S@(cars, Grid.Empty<Unit@>));
 };
 
+# Run activation for a gate, if any.
+(Gates@, S@) { S@; }
+GoGates = {
+    (Coord@, S@) { S@; }
+    GoSelect = (Coord@ c, S@ s) {
+        # Sink car when busy until caboose.
+        IsIdle(c.x, c.y, s).?(true: s);
+        Maybe@<Value@> mv = Grid.Lookup(s.cars, c);
+        S@ ns = {
+            mv.?(nothing: s);
+            mv.just.?(C: ClearBusy(c.x, c.y, s));
+            s;
+        };
+        RemoveCar(c, ns);
+    };
+
+    (Coord@, S@) { S@; }
+    GoSink = (Coord@ c, S@ s) {
+        # There may not be a car here, but it's okay to do RemoveCar anyway, it
+        # just won't have any effect in that case.
+        RemoveCar(c, s);
+    };
+
+    (Coord@, S@) { S@; }
+    GoRail = (Coord@ _, S@ s) {
+        s;
+    };
+
+    (Coord@, S@) { S@; }
+    GoSource = (Coord@ c, S@ s) {
+        # Place an engine if there's nothing there already.
+        Maybe@<Value@> mv = Grid.Lookup(s.cars, c);
+        mv.?(just: s);
+        AddCar(c, C, s);
+    };
+
+    (Value@, Coord@, S@) { S@; }
+    GoTag = (Value@ tag, Coord@ c, S@ s) {
+        # If idle, place a tag value and go 'busy' waiting for a train.
+        IsBusy(c.x, c.y, s).?(true: s);
+        Grid.Lookup(s.cars, c).?(just: s);
+        AddCar(c, tag, SetBusy(c.x, c.y, s));
+    };
+
+    (Switch@, Coord@, S@) { S@; }
+    GoSwitch = (Switch@ _, Coord@ _, S@ s) {
+        s;
+    };
+
+    (Dup@, Coord@, S@) { S@; }
+    GoDup = (Dup@ _, Coord@ _, S@ s) {
+        s;
+    },
+    
+    (Coord@, Gate@, S@) { S@; }
+    GoGate = (Coord@ c, Gate@ g, S@ s) {
+      g.?(noop: s,
+          rail: GoRail(c, s),
+          sink: GoSink(c, s),
+          source: GoSource(c, s),
+          zero: GoTag(0, c, s),
+          one: GoTag(1, c, s),
+          switch: GoSwitch(g.switch, c, s),
+          select: GoSelect(c, s),
+          dup: GoDup(g.dup, c, s));
+    };
+
+    (Gates@ gates, S@ state) {
+        Grid.ForEach(gates, state, GoGate);
+    };
+};
+
 # Try advancing each of the engines in the list.
 (Gates@, S@, List@<Coord@>) { S@; }
 GoEngines = (Gates@ gates) {
-    (Coord@, Value@, S@) { Maybe@<S@>; }
-    GoSelect = (Coord@ c, Value@ v, S@ s) {
-        # Select gate blocks cars from advancing when idle, sinks cars when busy.
-        # The associated switch gate is responsible for triggering the busy state.
-        IsIdle(c.x, c.y, s).?(true: Nothing<S@>);
-        Just(RemoveCar(c, v.?(C: ClearBusy(c.x, c.y, s), : s)));
+    (Coord@, Maybe@<Value@>, S@) { Maybe@<S@>; }
+    GoSelect = (Coord@ _, Maybe@<Value@> mv, S@ s) {
+        # Cars can move into this gate, but not out of it.
+        mv.?(nothing: Just(s));
+        Nothing<S@>;
     };
 
-    (Coord@, Value@, S@) { Maybe@<S@>; }
-    GoSink = (Coord@ c, Value@ _, S@ s) {
-        Just(RemoveCar(c, s));
+    (Coord@, Maybe@<Value@>, S@) { Maybe@<S@>; }
+    GoSink = (Coord@ _, Maybe@<Value@> mv, S@ s) {
+        # Cars can move into this gate, but not out of it.
+        mv.?(nothing: Just(s));
+        Nothing<S@>;
     };
 
-    # Attempt to push a car through a rail.
-    (Dir@, Coord@, Value@, S@) { Maybe@<S@>; }
-    GoRail = (Dir@ d, Coord@ c, Value@ v, S@ s) {
+    (Dir@, Coord@, Maybe@<Value@>, S@) { Maybe@<S@>; }
+    GoRail = (Dir@ d, Coord@ c, Maybe@<Value@> mv, S@ s) {
+        mv.?(nothing: Just(s));
+        Value@ v = mv.just;
+
         # Make room in the output gate, then move the input there.
         Coord@ dest = Dest(c.x, c.y, d);
         Maybe@<S@> ms = GoAt(dest, s);
@@ -186,38 +261,31 @@ GoEngines = (Gates@ gates) {
         Just(MoveCar(c, dest, v, ms.just));
     },
 
-    (Dir@, Coord@, Value@, S@) { Maybe@<S@>; }
-    GoSource = (Dir@ d, Coord@ c, Value@ v, S@ s) {
-        # Push out to make room in the output gate, then put a new engine there.
+    (Dir@, Coord@, Maybe@<Value@>, S@) { Maybe@<S@>; }
+    GoSource = GoRail,
+
+    (Dir@, Coord@, Maybe@<Value@>, S@) { Maybe@<S@>; }
+    GoTag = (Dir@ d, Coord@ c, Maybe@<Value@> mv, S@ s) {
+        # Don't let anything enter if we are 'idle' waiting for the tag car to be placed.
+        IsIdle(c.x, c.y, s).?(true: Nothing<S@>);
+
+        mv.?(nothing: Just(s));
+        Value@ v = mv.just;
+
+        # Make room in the output gate, then move the input there.
         Coord@ dest = Dest(c.x, c.y, d);
         Maybe@<S@> ms = GoAt(dest, s);
         ms.?(nothing: Nothing<S@>);
-        Just(AddCar(dest, v, ms.just));
+
+        S@ ns = v.?(C: ClearBusy(c.x, c.y, ms.just), : ms.just);
+        Just(MoveCar(c, dest, v, ns));
     },
 
-    (Value@, Dir@, Coord@, Value@, S@) { Maybe@<S@>; }
-    GoTag = (Value@ tag, Dir@ d, Coord@ c, Value@ v, S@ s) {
-        # Tag: If idle, output a car with tag value. Otherwise forward the input as is.
+    (Switch@, Coord@, Maybe@<Value@>, S@) { Maybe@<S@>; }
+    GoSwitch = (Switch@ g, Coord@ c, Maybe@<Value@> mv, S@ s) {
+        mv.?(nothing: Just(s));
+        Value@ v = mv.just;
 
-        # We'll have to push anything on the output out of the way.
-        Coord@ dest = Dest(c.x, c.y, d);
-        Maybe@<S@> ms = GoAt(dest, s);
-        ms.?(nothing: Nothing<S@>);
-
-        IsBusy(c.x, c.y, ms.just).?(true: {
-            S@ ns = v.?(C: ClearBusy(c.x, c.y, ms.just), : ms.just);
-            Just(MoveCar(c, dest, v, ns));
-        });
-
-        # Place the tag car, then push it out of the way to forward the current car value.
-        # TODO: this is hacky. Process gates separately so the engine doesn't
-        # have to double push in this case.
-        S@ s = AddCar(dest, tag, ms.just);
-        GoTag(tag, d, c, v, SetBusy(c.x, c.y, s));
-    },
-
-    (Switch@, Coord@, Value@, S@) { Maybe@<S@>; }
-    GoSwitch = (Switch@ g, Coord@ c, Value@ v, S@ s) {
         # Switch: Forward input to the output selected by the car at the
         # associated select gate.
 
@@ -248,8 +316,11 @@ GoEngines = (Gates@ gates) {
         Just(MoveCar(c, target, v, ns));
     },
 
-    (Dup@, Coord@, Value@, S@) { Maybe@<S@>; }
-    GoDup = (Dup@ g, Coord@ c, Value@ v, S@ s) {
+    (Dup@, Coord@, Maybe@<Value@>, S@) { Maybe@<S@>; }
+    GoDup = (Dup@ g, Coord@ c, Maybe@<Value@> mv, S@ s) {
+        mv.?(nothing: Just(s));
+        Value@ v = mv.just;
+
         # Dup forwards input to both outputs.
         Coord@ a = Dest(c.x, c.y, g.a);
         Maybe@<S@> ms = GoAt(a, s);
@@ -265,17 +336,17 @@ GoEngines = (Gates@ gates) {
     },
     
     # Try executing the gate at the given location for the given car.
-    (Gate@, Coord@, Value@, S@) { Maybe@<S@>; }
-    GoGate = (Gate@ g, Coord@ c, Value@ v, S@ s) {
+    (Gate@, Coord@, Maybe@<Value@>, S@) { Maybe@<S@>; }
+    GoGate = (Gate@ g, Coord@ c, Maybe@<Value@> mv, S@ s) {
       g.?(noop: Just(s),
-          rail: GoRail(g.rail, c, v, s),
-          sink: GoSink(c, v, s),
-          source: GoSource(g.source, c, v, s),
-          zero: GoTag(0, g.zero, c, v, s),
-          one: GoTag(1, g.one, c, v, s),
-          switch: GoSwitch(g.switch, c, v, s),
-          select: GoSelect(c, v, s),
-          dup: GoDup(g.dup, c, v, s));
+          rail: GoRail(g.rail, c, mv, s),
+          sink: GoSink(c, mv, s),
+          source: GoSource(g.source, c, mv, s),
+          zero: GoTag(g.zero, c, mv, s),
+          one: GoTag(g.one, c, mv, s),
+          switch: GoSwitch(g.switch, c, mv, s),
+          select: GoSelect(c, mv, s),
+          dup: GoDup(g.dup, c, mv, s));
     },
 
     # Try advancing the car at the given location.
@@ -287,15 +358,22 @@ GoEngines = (Gates@ gates) {
     (Coord@, S@) { Maybe@<S@>; }
     GoAt = (Coord@ c, S@ s) {
         Maybe@<Gate@> mg = Grid.Lookup(gates, c);
-        mg.?(nothing: Just(s));  # no gate to go here.
+
+        # We can't go to or at an empty tile.
+        mg.?(nothing: Nothing<S@>);
         Gate@ g = mg.just;
 
         Maybe@<Value@> mv = Grid.Lookup(s.cars, c);
-        mv.?(nothing: Just(s));  # no car to go here.
-        Value@ v = mv.just;
+        Bool@ engine = {
+            mv.?(nothing: False);
+            mv.just.?(C: True);
+            False;
+        };
 
-        v.?(C: Nothing<S@>);     # only GoEngine can move engines.
-        GoGate(g, c, v, s);
+        # Only GoEngine can move engines.
+        engine.?(true: Nothing<S@>);
+
+        GoGate(g, c, mv, s);
     };
 
     # Try advancing the engine at the given location.
@@ -303,8 +381,8 @@ GoEngines = (Gates@ gates) {
     (Coord@, S@) { S@; }
     GoEngine = (Coord@ e, S@ s) {
         Maybe@<Gate@> mg = Grid.Lookup(gates, e);
-        Gate@ g = mg.?(just: mg.just, nothing: Noop);
-        Maybe@<S@> ms = GoGate(g, e, C, s);
+        mg.?(nothing: s);
+        Maybe@<S@> ms = GoGate(mg.just, e, Just(C), s);
         ms.?(just: ms.just, nothing: s);
     };
     
@@ -328,7 +406,7 @@ Tick = (Model@ m) {
         (Coord@ k, Value@ v, List@<Coord@> es) {
             v.?(C: Items(k, es), : es);
         });
-    m.@(s: GoEngines(m.gates, m.s, engines));
+    m.@(s: GoGates(m.gates, GoEngines(m.gates, m.s, engines)));
 };
 
 @(Model@, Switch@, Dup@, Gate@, Gates@, Cars@, Dir@, Value@, S@, Tick, Model,
