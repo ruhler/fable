@@ -1,8 +1,8 @@
 
-<@>@ Show@ = /Core/Show%.Show@;
+<@>@ Show@ = /Std/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
-% Format = /Std/Char/Ascii%.Format;
+% String = /Std/Char/Ascii/Output%.String;
+% Format = /Std/Char/Ascii/Output%.Format;
 
 @ Coord@ = /Computrainer/Grid%.Coord@;
 % Grid = /Computrainer/Grid%.Grid;
@@ -18,7 +18,7 @@ Show@<Coord@> Coord = (Coord@ x) {
 };
 
 Show@<Value@> Value = (Value@ v) {
-    v.?(C: Str|C, 0: Str|0, 1: Str|1, S: Str|S, L: Str|L);
+    v.?(C: String|C, 0: String|0, 1: String|1, S: String|S, L: String|L);
 };
 
 Show@<Cars@> Cars = /Core/Map/Show%.Show(Grid, Coord, Value);
@@ -29,7 +29,7 @@ Show@<S@> S = (S@ a) {
 };
 
 Show@<Gates@> Gates = (Gates@ _) {
-    Str|'TODO: Show Gates';
+    String|'TODO: Show Gates';
 };
 
 Show@<Model@> Model = (Model@ m) {
