@@ -103,10 +103,10 @@ Value@ L = Value@(L: Unit);
 @ S@ = *(Cars@ cars, Grid@<Unit@> busy);
 @ Model@ = *(Gates@ gates, S@ s);
 
-(Int@, Int@, Dir@) { Coord@; }
-Dest = (Int@ x, Int@ y, Dir@ d) {
-    Int@ nx = d.?(up: x, down: x, left: Decr(x), right: Incr(x));
-    Int@ ny = d.?(up: Incr(y), down: Decr(y), left: y, right: y);
+(Coord@, Dir@) { Coord@; }
+Dest = (Coord@ c, Dir@ d) {
+    Int@ nx = d.?(up: c.x, down: c.x, left: Decr(c.x), right: Incr(c.x));
+    Int@ ny = d.?(up: Incr(c.y), down: Decr(c.y), left: c.y, right: c.y);
     Coord@(nx, ny);
 };
 
@@ -134,25 +134,25 @@ DupCar = (Coord@ src, Coord@ dest1, Coord@ dest2, Value@ v, S@ s) {
 };
 
 # Check if the gate at the given location is active.
-(Int@, Int@, S@) { Bool@; }
-IsBusy = (Int@ x, Int@ y, S@ s) {
-    Grid.Lookup(s.busy, Coord@(x, y)).?(just: True, nothing: False);
+(Coord@, S@) { Bool@; }
+IsBusy = (Coord@ c, S@ s) {
+    Grid.Lookup(s.busy, c).?(just: True, nothing: False);
 };
 
 # Check if the gate at the given location is idle.
-(Int@, Int@, S@) { Bool@; }
-IsIdle = (Int@ x, Int@ y, S@ s) {
-    Not(IsBusy(x, y, s));
+(Coord@, S@) { Bool@; }
+IsIdle = (Coord@ c, S@ s) {
+    Not(IsBusy(c, s));
 };
 
-(Int@, Int@, S@) { S@; }
-ClearBusy = (Int@ x, Int@ y, S@ s) {
-    s.@(busy: Grid.Delete(s.busy, Coord@(x, y)));
+(Coord@, S@) { S@; }
+ClearBusy = (Coord@ c, S@ s) {
+    s.@(busy: Grid.Delete(s.busy, c));
 };
 
-(Int@, Int@, S@) { S@; }
-SetBusy = (Int@ x, Int@ y, S@ s) {
-    s.@(busy: Grid.Insert(s.busy, Coord@(x, y), Unit));
+(Coord@, S@) { S@; }
+SetBusy = (Coord@ c, S@ s) {
+    s.@(busy: Grid.Insert(s.busy, c, Unit));
 };
 
 (Gates@, Cars@) { Model@; }
@@ -166,11 +166,11 @@ GoGates = {
     (Coord@, S@) { S@; }
     GoSelect = (Coord@ c, S@ s) {
         # Sink car when busy until caboose.
-        IsIdle(c.x, c.y, s).?(true: s);
+        IsIdle(c, s).?(true: s);
         Maybe@<Value@> mv = Grid.Lookup(s.cars, c);
         S@ ns = {
             mv.?(nothing: s);
-            mv.just.?(C: ClearBusy(c.x, c.y, s));
+            mv.just.?(C: ClearBusy(c, s));
             s;
         };
         RemoveCar(c, ns);
@@ -199,9 +199,9 @@ GoGates = {
     (Value@, Coord@, S@) { S@; }
     GoTag = (Value@ tag, Coord@ c, S@ s) {
         # If idle, place a tag value and go 'busy' waiting for a train.
-        IsBusy(c.x, c.y, s).?(true: s);
+        IsBusy(c, s).?(true: s);
         Grid.Lookup(s.cars, c).?(just: s);
-        AddCar(c, tag, SetBusy(c.x, c.y, s));
+        AddCar(c, tag, SetBusy(c, s));
     };
 
     (Switch@, Coord@, S@) { S@; }
@@ -255,7 +255,7 @@ GoEngines = (Gates@ gates) {
         Value@ v = mv.just;
 
         # Make room in the output gate, then move the input there.
-        Coord@ dest = Dest(c.x, c.y, d);
+        Coord@ dest = Dest(c, d);
         Maybe@<S@> ms = GoAt(dest, s);
         ms.?(nothing: Nothing<S@>);
         Just(MoveCar(c, dest, v, ms.just));
@@ -267,17 +267,17 @@ GoEngines = (Gates@ gates) {
     (Dir@, Coord@, Maybe@<Value@>, S@) { Maybe@<S@>; }
     GoTag = (Dir@ d, Coord@ c, Maybe@<Value@> mv, S@ s) {
         # Don't let anything enter if we are 'idle' waiting for the tag car to be placed.
-        IsIdle(c.x, c.y, s).?(true: Nothing<S@>);
+        IsIdle(c, s).?(true: Nothing<S@>);
 
         mv.?(nothing: Just(s));
         Value@ v = mv.just;
 
         # Make room in the output gate, then move the input there.
-        Coord@ dest = Dest(c.x, c.y, d);
+        Coord@ dest = Dest(c, d);
         Maybe@<S@> ms = GoAt(dest, s);
         ms.?(nothing: Nothing<S@>);
 
-        S@ ns = v.?(C: ClearBusy(c.x, c.y, ms.just), : ms.just);
+        S@ ns = v.?(C: ClearBusy(c, ms.just), : ms.just);
         Just(MoveCar(c, dest, v, ns));
     },
 
@@ -290,8 +290,8 @@ GoEngines = (Gates@ gates) {
         # associated select gate.
 
         # The select gate has to be idle to proceed.
-        Coord@ select = Dest(c.x, c.y, g.s);
-        IsBusy(select.x, select.y, s).?(true: Nothing<S@>);
+        Coord@ select = Dest(c, g.s);
+        IsBusy(select, s).?(true: Nothing<S@>);
 
         # The select gate has to have a car to tell us which output to select.
         Maybe@<Value@> msv = Grid.Lookup(s.cars, select);
@@ -299,8 +299,8 @@ GoEngines = (Gates@ gates) {
 
         # The select gate's car must be 0 or 1 to tell us which output to select.
         Maybe@<Coord@> mout = msv.just.?(
-            0: Just(Dest(c.x, c.y, g.0)),
-            1: Just(Dest(c.x, c.y, g.1)),
+            0: Just(Dest(c, g.0)),
+            1: Just(Dest(c, g.1)),
             : Nothing<Coord@>);
         mout.?(nothing: Nothing<S@>);
 
@@ -310,7 +310,7 @@ GoEngines = (Gates@ gates) {
         ms.?(nothing: Nothing<S@>);
 
         # If we've reached the end of the input train, set the select gate draining.
-        S@ ns = v.?(C: SetBusy(select.x, select.y, ms.just), : ms.just);
+        S@ ns = v.?(C: SetBusy(select, ms.just), : ms.just);
 
         # Forward the car to the output.
         Just(MoveCar(c, target, v, ns));
@@ -322,12 +322,12 @@ GoEngines = (Gates@ gates) {
         Value@ v = mv.just;
 
         # Dup forwards input to both outputs.
-        Coord@ a = Dest(c.x, c.y, g.a);
+        Coord@ a = Dest(c, g.a);
         Maybe@<S@> ms = GoAt(a, s);
         ms.?(nothing: Nothing<S@>);
         S@ s = ms.just;
 
-        Coord@ b = Dest(c.x, c.y, g.b);
+        Coord@ b = Dest(c, g.b);
         Maybe@<S@> ms = GoAt(b, s);
         ms.?(nothing: Nothing<S@>);
         S@ s = ms.just;
