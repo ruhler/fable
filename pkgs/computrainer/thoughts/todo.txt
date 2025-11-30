@@ -3,6 +3,7 @@
 
 * figure out how to write tests for ui
 * add special case zoom all the way out option that shows 1 pixel per gate?
+* Show on screen whether the game is paused or running.
 
 * Implement model save to file.
 * Implement model read from file.

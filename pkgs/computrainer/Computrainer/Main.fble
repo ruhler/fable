@@ -1,5 +1,7 @@
 
+@ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
 
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;
@@ -46,7 +48,8 @@
     Model@ model,
     Int@ x, # tile x coordinate of tile in the center of the screen.
     Int@ y, # tile y coordinate of tile in the center of the screen.
-    Int@ scale
+    Int@ scale,
+    Bool@ paused
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
@@ -57,7 +60,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
         : FilterEvent);
   };
 
-  State@ initial = @(model: Sample, x: Int|0, y: Int|0, scale: Int|1);
+  State@ initial = @(model: Sample, x: Int|0, y: Int|0, scale: Int|1, paused: True);
 
   (State@) { M@<Unit@>; } StepUI = (State@ s) {
     # Map game coordinates into screen coordinates.
@@ -71,6 +74,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
 
     Event@ e <- m.do(FilterEvent);
     e.?(tick: {
+        s.paused.?(true: StepUI(s));
         Unit@ _ <- m.do(app.effect(Effect@(tick: Int|300)));
         StepUI(s.@(model: Tick(s.model)));
     });
@@ -82,7 +86,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
             j: StepUI(s.@(scale: Max(Shr(s.scale, Int|1), Int|1))),
             k: StepUI(s.@(scale: Shl(s.scale, Int|1))),
             s: StepUI(s.@(y: Decr(s.y))),
-            w: StepUI(s.@(y: Incr(s.y)))
+            w: StepUI(s.@(y: Incr(s.y))),
+            space: {
+              s.paused.?(false: StepUI(s.@(paused: True)));
+              Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
+              StepUI(s.@(paused: False));
+            }
         );
         m.return(Unit);
     });
@@ -90,7 +99,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
     m.return(Unit);
   };
 
-  Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
   Unit@ _ <- m.do(StepUI(initial));
   m.return(True);
 };
