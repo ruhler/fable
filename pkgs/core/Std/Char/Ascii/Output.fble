@@ -1,0 +1,73 @@
+# @module[/Std/Char/Ascii/Output%]
+#  Ascii string and formatting output.
+
+<@>% StrLit = /Std/Char/Lit%.StrLit;
+
+@ Ascii@ = /Std/Char/Ascii%.Ascii@;
+% ToChar = /Std/Char/Ascii%.ToChar;
+% StrE = /Std/Char/Ascii%.StrE;
+
+<@>@ List@ = /Std/List%.List@;
+
+<@>@ Output@ = /Std/Char/Output%.Output@;
+
+# @func[String] Output a string.
+#  @arg[List<Ascii@>][str] The string to output.
+#  @returns[Output@] The computation to output the string.
+(List@<Ascii@>) { Output@; }
+String = StrLit(ToChar, /Std/Char/Output%.String);
+
+# @func[String] Output a string with escape characters.
+#  Supports character sequences as in /Std/String/Escape%.Escape.
+#
+#  Example use:
+#
+#  @code[fble] @
+#   Output@ out = StringE|'hello\nworld\n';
+#
+#  @arg[List<Ascii@>][str] The string to output.
+#  @returns[Output@] The computation to output the string.
+(List@<Ascii@>) { Output@; }
+StringE = (List@<Ascii@> str) {
+  /Std/Char/Output%.String(StrE(str));
+};
+
+# @func[Format] Construct a formatted output.
+#  Provides printf like formatting, except the only supported format type is
+#  @l{%s}. More specifically, outputs the format string with @l{%%} replaced
+#  with @l{%} and @l{%s} replaced with the value of the next argument output.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Output@ out = Format|'a: %s, b: %s'[String|'hello', String|'there'];
+#
+#  @arg[List@<Ascii@>][fmt] The format specifier
+#  @arg[List@<Output@>[args] Format args.
+#  @return[Output@] The formatted output.
+(List@<Ascii@>, List@<Output@>) { Output@; }
+Format = StrLit(ToChar, /Std/Char/Output%.Format);
+
+# @func[FormatE] Construct a formatted output.
+#  Provides printf like formatting, except the only supported format type is
+#  @l{%s}. More specifically, outputs the format string with @l{%%} replaced
+#  with @l{%} and @l{%s} replaced with the value of the next argument output.
+#
+#  FormatE supports character sequences in the format string as in
+#  /Std/String/Escape%.Escape, which are evaluated before the format string is
+#  otherwise processed.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Output@ out = FormatE|'a: %s\nb: %s\n'[String|'hello', String|'there'];
+#
+#  @arg[List@<Ascii@>][fmt] The format specifier
+#  @arg[List@<Output@>[args] Format args.
+#  @return[Output@] The formatted output.
+(List@<Ascii@>, List@<Output@>) { Output@; }
+FormatE = (List@<Ascii@> str, List@<Output@> args) {
+  /Std/Char/Output%.Format(StrE(str), args);
+};
+
+@(String, StringE, Format, FormatE);

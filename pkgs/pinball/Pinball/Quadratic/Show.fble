@@ -4,7 +4,7 @@
 
 <@>@ Show@ = /Std/Show%.Show@;
 
-% Format = /Core/Char/Ascii/Output%.Format;
+% Format = /Std/Char/Ascii/Output%.Format;
 
 Show@<Linear@> ShowLinear = (Linear@ l) {
   Format|'Linear@(%s, %s)'[

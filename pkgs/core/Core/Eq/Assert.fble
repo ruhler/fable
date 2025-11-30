@@ -3,7 +3,7 @@
 
 <@>@ Show@ = /Std/Show%.Show@;
 
-% Format = /Core/Char/Ascii/Output%.Format;
+% Format = /Std/Char/Ascii/Output%.Format;
 
 @ TestResult@ = /Core/Test%.TestResult@;
 % Pass = /Core/Test%.Pass;

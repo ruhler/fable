@@ -5,7 +5,7 @@
 
 <@>@ Show@ = /Std/Show%.Show@;
 
-% Format = /Core/Char/Ascii/Output%.Format;
+% Format = /Std/Char/Ascii/Output%.Format;
 
 Show@<PureState@> PureState = (PureState@ a) {
   Format|'In: %s, Out: %s, Err: %s'[

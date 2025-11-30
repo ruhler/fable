@@ -12,7 +12,7 @@
 
 <@>@ Show@ = /Std/Show%.Show@;
 
-% Format = /Core/Char/Ascii/Output%.Format;
+% Format = /Std/Char/Ascii/Output%.Format;
 
 # Ball@ --
 #   pos - the position of the center of the ball.

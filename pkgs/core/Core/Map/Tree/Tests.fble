@@ -17,7 +17,7 @@
 % Do = /Std/Char/Output%.Do;
 
 % Str = /Std/Char/Ascii%.Str;
-% String = /Core/Char/Ascii/Output%.String;
+% String = /Std/Char/Ascii/Output%.String;
 
 @ Test@ = /Core/Test%.Test@;
 % TestSuite = /Core/Test%.TestSuite;

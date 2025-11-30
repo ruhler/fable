@@ -2,8 +2,8 @@
 <@>@ Show@ = /Std/Show%.Show@;
 % Do = /Std/Char/Output%.Do;
 
-% Format = /Core/Char/Ascii/Output%.Format;
-% String = /Core/Char/Ascii/Output%.String;
+% Format = /Std/Char/Ascii/Output%.Format;
+% String = /Std/Char/Ascii/Output%.String;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

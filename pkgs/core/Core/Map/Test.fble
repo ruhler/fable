@@ -17,7 +17,7 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 <@>@ Show@ = /Std/Show%.Show@;
-% Format = /Core/Char/Ascii/Output%.Format;
+% Format = /Std/Char/Ascii/Output%.Format;
 
 % Str = /Std/Char/Ascii%.Str;
 

@@ -6,7 +6,7 @@
 <@>@ Cmp@ = /Std/Cmp%.Cmp@;
 @ Compared@ = /Std/Cmp%.Compared@;
 
-% Format = /Core/Char/Ascii/Output%.Format;
+% Format = /Std/Char/Ascii/Output%.Format;
 
 # Coord@ --
 #   A coordinate identifying a location in the memory/design grid.

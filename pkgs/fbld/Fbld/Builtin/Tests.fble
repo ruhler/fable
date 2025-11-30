@@ -8,7 +8,7 @@
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
-% String = /Core/Char/Ascii/Output%.String;
+% String = /Std/Char/Ascii/Output%.String;
 % Lines = /Std/String/Lines%.Lines;
 
 @ Test@ = /Core/Test%.Test@;

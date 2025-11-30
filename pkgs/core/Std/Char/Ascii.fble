@@ -144,7 +144,7 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 #  Example use:
 #
 #  @code[fble] @
-#   String@ s = Str|'hello\nworld\n'
+#   String@ s = StrE|'hello\nworld\n';
 #
 #  @arg[List@<Ascii@>][str] The string literal.
 #  @returns[String@] The string value.

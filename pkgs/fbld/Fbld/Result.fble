@@ -10,7 +10,7 @@
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
 
-% FormatE = /Core/Char/Ascii/Output%.FormatE;
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

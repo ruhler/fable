@@ -21,7 +21,7 @@
 <@>@ Show@ = /Std/Show%.Show@;
 
 % Str = /Std/Char/Ascii%.Str;
-% Format = /Core/Char/Ascii/Output%.Format;
+% Format = /Std/Char/Ascii/Output%.Format;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;

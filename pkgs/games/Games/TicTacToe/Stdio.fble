@@ -3,9 +3,9 @@
 
 @ Char@ = /Std/Char%.Char@;
 % Char = /Std/Char/Ascii%.Char;
-% String = /Core/Char/Ascii/Output%.String;
-% Format = /Core/Char/Ascii/Output%.Format;
-% FormatE = /Core/Char/Ascii/Output%.FormatE;
+% String = /Std/Char/Ascii/Output%.String;
+% Format = /Std/Char/Ascii/Output%.Format;
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Concat = /Std/List%.Concat;

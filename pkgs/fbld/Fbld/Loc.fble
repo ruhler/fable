@@ -11,7 +11,7 @@ Int@ 1 = Int|1;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
-% Format = /Core/Char/Ascii/Output%.Format;
+% Format = /Std/Char/Ascii/Output%.Format;
 
 # Location information used for error messages.
 @ Loc@ = *(String@ file, Int@ line, Int@ col);

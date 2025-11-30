@@ -7,7 +7,7 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-% Format = /Core/Char/Ascii/Output%.Format;
+% Format = /Std/Char/Ascii/Output%.Format;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

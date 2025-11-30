@@ -9,7 +9,7 @@
 <@>@ Show@ = /Std/Show%.Show@;
 
 % Str = /Std/Char/Ascii%.Str;
-% String = /Core/Char/Ascii/Output%.String;
+% String = /Std/Char/Ascii/Output%.String;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
