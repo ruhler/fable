@@ -104,3 +104,69 @@ Let's start with zoom by keyboard. 2x zoom every time? Max zoom out to 1.
 Trouble: app only supports a very limited set of key events. How can I
 generalize it? How to encode ctrl-+ and ctrl--?
 
+Also, app doesn't support mouse wheel yet. I need to add that for proper zoom
+support.
+
+---
+
+Big next thing to make building networks practical: placing gates.
+
+Here's how I envision things:
+* We have a pallet of gate options, probably at the bottom of the screen.
+* You can always see exact pixel location of cursor.
+* When you click on a gate option, show a phantom gate under the cursor
+  aligned to the grid. You can still see exact pixel location of cursor.
+* Press 'R' to rotate the phantom gate. Press 'v' or 'h' to flip the phantom
+  gate. Press some other key to cycle through other config variations.
+* Mouse down to make phantom gate real.
+  - Let's say it replaces the gate beneath it, if any.
+  - You keep a phantom gate under the cursor.
+* Some way to show conflict when hovering phantom gate over an existing gate?
+* Press escape or equivalent key to drop the phantom gate.
+* If you drag and hold with the mouse down, any tile the mouse enters gets the
+  phantom gate applied to it.
+* You can click on an existing gate if you don't have a phantom under the
+  cursor. That selects the gate. Then clicking 'R', 'v', 'h', etc. will take
+  direct effect on that gate, without additional clicking required.
+* Press escape or equivalent key to deselect an existing selected gate.
+* Perhaps we assign key bindings to each kind of gate. Then if you press that
+  key, it adds a phantom to an otherwise empty cursor, changes the phantom on
+  a phantom cursor, or changes the placed gate on a selected cursor. Ideally
+  it keeps the same rotation direction as was already in place, if any.
+* Press delete key on a select gate to remove that gate. Cursor becomes empty.
+
+Basically we have three states for the cursor:
+* Empty
+* Phantom
+* Selected
+
+Sounds pretty complicated. But also fairly well defined behavior?
+
+Um... it's tricky to hold down the mouse button and move it with my trackpad.
+So we should also be able to move the board under the mouse while holding down
+the button to cause it to place things beneath it.
+
+Let's compare my proposal with what we can do in factorio:
+* Factorio marks a phantom as red if on top of an existing thing you can't
+  change.
+* Factorio selection of an object is useless. Instead you hover over the
+  object with an empty cursor, then you can apply the delete/rotate/etc.
+  commands on that object.
+* Holding down and dragging isn't actually as bad on my trackpad as I thought.
+
+Let's make that adjustment. No selection of an object, but you can highlight
+the object under the cursor and interact with it.
+
+What are the steps to make this useable?
+* Show mouse cursor somehow. Track its movements.
+* Draw pallete of gates and cars.
+* Be able to click on a gate/car from the pallete to move around a phantom.
+* escape/rotate/place phantom gate.
+* delete/rotate placed gate.
+* drag to place via mouse.
+* drag to place via map motion.
+
+How do I draw a phantom gate to distinguish it from a real gate? Maybe don't
+worry about that at first.
+
+Okay? Let's bring in the cursor.

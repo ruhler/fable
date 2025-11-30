@@ -46,8 +46,8 @@
 
 @ State@ = *(
     Model@ model,
-    Int@ x, # tile x coordinate of tile in the center of the screen.
-    Int@ y, # tile y coordinate of tile in the center of the screen.
+    Int@ map_x, # tile x coordinate of tile in the center of the screen.
+    Int@ map_y, # tile y coordinate of tile in the center of the screen.
     Int@ scale,
     Bool@ paused
 );
@@ -60,13 +60,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
         : FilterEvent);
   };
 
-  State@ initial = @(model: Sample, x: Int|0, y: Int|0, scale: Int|1, paused: True);
+  State@ initial = @(model: Sample, map_x: Int|0, map_y: Int|0, scale: Int|1, paused: True);
 
   (State@) { M@<Unit@>; } StepUI = (State@ s) {
     # Map game coordinates into screen coordinates.
     Point@ a = @(x: s.scale, y: Neg(s.scale));
-    Point@ b = @(x: Add(Shr(width, Int|1), Neg(Mul(W, Mul(s.scale, s.x)))),
-                 y: Add(Shr(height, Int|1), Mul(W, Mul(s.scale, s.y))));
+    Point@ b = @(x: Add(Shr(width, Int|1), Neg(Mul(W, Mul(s.scale, s.map_x)))),
+                 y: Add(Shr(height, Int|1), Mul(W, Mul(s.scale, s.map_y))));
 
     Drawing@ clear = Rect(Int|0, Int|0, width, height, Colors.Background);
     Drawing@ drawing = Affine(a, b, DrawModel(s.model));
@@ -81,12 +81,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
 
     e.?(key_down: {
         e.key_down.?(
-            a: StepUI(s.@(x: Decr(s.x))),
-            d: StepUI(s.@(x: Incr(s.x))),
+            a: StepUI(s.@(map_x: Decr(s.map_x))),
+            d: StepUI(s.@(map_x: Incr(s.map_x))),
             j: StepUI(s.@(scale: Max(Shr(s.scale, Int|1), Int|1))),
             k: StepUI(s.@(scale: Shl(s.scale, Int|1))),
-            s: StepUI(s.@(y: Decr(s.y))),
-            w: StepUI(s.@(y: Incr(s.y))),
+            s: StepUI(s.@(map_y: Decr(s.map_y))),
+            w: StepUI(s.@(map_y: Incr(s.map_y))),
             space: {
               s.paused.?(false: StepUI(s.@(paused: True)));
               Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
