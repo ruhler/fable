@@ -44,8 +44,8 @@
 
 @ State@ = *(
     Model@ model,
-    Int@ x, # tile x coordinate of lower left corner on screen.
-    Int@ y, # tile y coordinate of lower left corner on screen.
+    Int@ x, # tile x coordinate of tile in the center of the screen.
+    Int@ y, # tile y coordinate of tile in the center of the screen.
     Int@ scale
 );
 
@@ -62,8 +62,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   (State@) { M@<Unit@>; } StepUI = (State@ s) {
     # Map game coordinates into screen coordinates.
     Point@ a = @(x: s.scale, y: Neg(s.scale));
-    Point@ b = @(x: Neg(Mul(W, Mul(s.scale, s.x))),
-                 y: Add(height, Mul(W, Mul(s.scale, s.y))));
+    Point@ b = @(x: Add(Shr(width, Int|1), Neg(Mul(W, Mul(s.scale, s.x)))),
+                 y: Add(Shr(height, Int|1), Mul(W, Mul(s.scale, s.y))));
 
     Drawing@ clear = Rect(Int|0, Int|0, width, height, Colors.Background);
     Drawing@ drawing = Affine(a, b, DrawModel(s.model));

@@ -1,6 +1,8 @@
 
 * Change zoom control to ctrl + and ctrl -.
-* Zoom around current point, not around (0, 0).
+
+* figure out how to write tests for ui
+* add special case zoom all the way out option that shows 1 pixel per gate?
 
 * Implement model save to file.
 * Implement model read from file.
