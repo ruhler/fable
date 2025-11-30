@@ -9,6 +9,10 @@
 @ Dir@ = /Computrainer/Model%.Dir@;
 @ Gate@ = /Computrainer/Model%.Gate@;
 @ Value@ = /Computrainer/Model%.Value@;
+% Up = /Computrainer/Model%.Up;
+% Down = /Computrainer/Model%.Down;
+% Left = /Computrainer/Model%.Left;
+% Right = /Computrainer/Model%.Right;
 
 % Colors = /Computrainer/Graphics/Colors%;
 % Shapes = /Computrainer/Graphics/Shapes%;
@@ -33,7 +37,13 @@ Gate = (Gate@ g) {
             Shapes.Sel(g.switch.s, Colors.Gate),
             Shapes.Dir(g.switch.0, Colors.0),
             Shapes.Dir(g.switch.1, Colors.1)],
-        select: Shapes.Select(Colors.Gate),
+        select: Shapes.Shapes[
+            Shapes.Gate,
+            Shapes.Sel(Up),
+            Shapes.Sel(Down),
+            Shapes.Sel(Left),
+            Shapes.Sel(Right)
+        ](Colors.Gate),
         dup: Shapes.Shapes[
             Shapes.Gate,
             Shapes.Dir(g.dup.a),

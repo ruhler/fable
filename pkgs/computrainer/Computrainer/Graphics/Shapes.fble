@@ -41,11 +41,6 @@ Shape@ Gate = Shapes[
     Rect(Int|1, Int|1, Int|3, Int|1)
 ];
 
-Shape@ Select = Shapes[
-    Rect(Int|1, Int|3, Int|3, Int|1),
-    Rect(Int|1, Int|1, Int|3, Int|1)
-];
-
 Shape@ Left = Rect(Int|0, Int|2, Int|1, Int|1);
 Shape@ Right = Rect(Int|4, Int|2, Int|1, Int|1);
 Shape@ Up = Rect(Int|2, Int|4, Int|1, Int|1);
@@ -66,5 +61,5 @@ Shape@ Down = Rect(Int|2, Int|0, Int|1, Int|1);
     };
 };
 
-@(W, Shapes, Car, Gate, Dir, Select, Sel);
+@(W, Shapes, Car, Gate, Dir, Sel);
 
