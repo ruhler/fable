@@ -1,13 +1,11 @@
 
 @ Int@ = /Std/Int%.Int@;
 % Mul = /Std/Int%.Mul;
-% Int = /Std/Int/Lit%.Int;
 
 @ Drawing@ = /App/Drawing%.Drawing@;
 % Drawings = /App/Drawing%.Drawings;
 % Blank = /App/Drawing%.Blank;
 % Over = /App/Drawing%.Over;
-% Rect = /App/Drawing%.Rect;
 % Translate = /App/Drawing%.Translate;
 
 @ Coord@ = /Computrainer/Grid%.Coord@;
@@ -16,8 +14,6 @@
 @ Gate@ = /Computrainer/Model%.Gate@;
 @ Model@ = /Computrainer/Model%.Model@;
 @ Value@ = /Computrainer/Model%.Value@;
-
-% Colors = /Computrainer/Graphics/Colors%;
 
 % W = /Computrainer/Graphics/Sprites%.W;
 % Sprites = /Computrainer/Graphics/Sprites%;
@@ -33,9 +29,8 @@ DrawGate = (Int@ x, Int@ y, Gate@ g) {
     Translate(Mul(x, W), Mul(y, W), Sprites.Gate(g));
 };
 
-(Int@, Int@, Model@) { Drawing@; }
-DrawModel = (Int@ width, Int@ height, Model@ m) {
-    Drawing@ clear = Rect(Int|0, Int|0, width, height, Colors.Background);
+(Model@) { Drawing@; }
+DrawModel = (Model@ m) {
     Drawing@ cars = Grid.ForEach(m.s.cars, Blank, (Coord@ xy, Value@ v, Drawing@ d) {
         Over(d, DrawCar(xy, v));
     });
@@ -43,7 +38,7 @@ DrawModel = (Int@ width, Int@ height, Model@ m) {
         Over(d, DrawGate(xy.x, xy.y, g));
     });
 
-    Drawings[clear, gates, cars];
+    Drawings[gates, cars];
 };
 
 @(DrawModel);

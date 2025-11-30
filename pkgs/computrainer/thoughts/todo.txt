@@ -1,4 +1,7 @@
 
+* Change zoom control to ctrl + and ctrl -.
+* Zoom around current point, not around (0, 0).
+
 * Implement model save to file.
 * Implement model read from file.
 * Sketch out UI design.

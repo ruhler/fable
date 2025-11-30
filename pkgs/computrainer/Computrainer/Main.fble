@@ -2,7 +2,11 @@
 % True = /Std/Bool%.True;
 
 @ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
 % Neg = /Std/Int%.Neg;
+% Add = /Std/Int%.Add;
+% Mul = /Std/Int%.Mul;
 % Shr = /Std/Int%.Shr;
 % Shl = /Std/Int%.Shl;
 % Max = /Std/Int/Ord%.Max;
@@ -28,14 +32,20 @@
 @ Drawing@ = /App/Drawing%.Drawing@;
 @ Point@ = /App/Drawing%.Point@;
 % Affine = /App/Drawing%.Affine;
+% Drawings = /App/Drawing%.Drawings;
+% Rect = /App/Drawing%.Rect;
 
 @ Model@ = /Computrainer/Model%.Model@;
 % Tick = /Computrainer/Model%.Tick;
 % DrawModel = /Computrainer/Graphics%.DrawModel;
+% Colors = /Computrainer/Graphics/Colors%;
+% W = /Computrainer/Graphics/Sprites%.W;
 % Sample = /Computrainer/Sample%.Sample;
 
 @ State@ = *(
     Model@ model,
+    Int@ x, # tile x coordinate of lower left corner on screen.
+    Int@ y, # tile y coordinate of lower left corner on screen.
     Int@ scale
 );
 
@@ -47,31 +57,40 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
         : FilterEvent);
   };
 
-  State@ initial = @(model: Sample, scale: Int|1);
+  State@ initial = @(model: Sample, x: Int|0, y: Int|0, scale: Int|1);
 
   (State@) { M@<Unit@>; } StepUI = (State@ s) {
     # Map game coordinates into screen coordinates.
     Point@ a = @(x: s.scale, y: Neg(s.scale));
-    Point@ b = @(x: Int|0, y: height);
+    Point@ b = @(x: Neg(Mul(W, Mul(s.scale, s.x))),
+                 y: Add(height, Mul(W, Mul(s.scale, s.y))));
 
-    Drawing@ drawing = Affine(a, b, DrawModel(width, height, s.model));
+    Drawing@ clear = Rect(Int|0, Int|0, width, height, Colors.Background);
+    Drawing@ drawing = Affine(a, b, DrawModel(s.model));
+    Unit@ _ <- m.do(app.effect(Effect@(draw: Drawings[clear, drawing])));
 
-    Unit@ _ <- m.do(app.effect(Effect@(draw: drawing)));
-    Unit@ _ <- m.do(app.effect(Effect@(tick: Int|300)));
     Event@ e <- m.do(FilterEvent);
-
-    e.?(tick: StepUI(s.@(model: Tick(s.model))));
+    e.?(tick: {
+        Unit@ _ <- m.do(app.effect(Effect@(tick: Int|300)));
+        StepUI(s.@(model: Tick(s.model)));
+    });
 
     e.?(key_down: {
         e.key_down.?(
+            a: StepUI(s.@(x: Decr(s.x))),
+            d: StepUI(s.@(x: Incr(s.x))),
             j: StepUI(s.@(scale: Max(Shr(s.scale, Int|1), Int|1))),
-            k: StepUI(s.@(scale: Shl(s.scale, Int|1))));
+            k: StepUI(s.@(scale: Shl(s.scale, Int|1))),
+            s: StepUI(s.@(y: Decr(s.y))),
+            w: StepUI(s.@(y: Incr(s.y)))
+        );
         m.return(Unit);
     });
 
     m.return(Unit);
   };
 
+  Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
   Unit@ _ <- m.do(StepUI(initial));
   m.return(True);
 };
