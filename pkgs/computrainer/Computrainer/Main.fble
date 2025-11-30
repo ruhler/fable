@@ -3,6 +3,9 @@
 
 @ Int@ = /Std/Int%.Int@;
 % Neg = /Std/Int%.Neg;
+% Shr = /Std/Int%.Shr;
+% Shl = /Std/Int%.Shl;
+% Max = /Std/Int/Ord%.Max;
 
 % Int = /Std/Int/Lit%.Int;
 
@@ -31,30 +34,45 @@
 % DrawModel = /Computrainer/Graphics%.DrawModel;
 % Sample = /Computrainer/Sample%.Sample;
 
+@ State@ = *(
+    Model@ model,
+    Int@ scale
+);
+
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
   M@<Event@> FilterEvent = {
     Event@ e <- m.do(app.event);
     e.?(tick: m.return(e),
-        key_down: e.key_down.?(q: m.return(e), : FilterEvent),
+        key_down: m.return(e),
         : FilterEvent);
   };
 
-  # Map game coordinates into screen coordinates.
-  Int@ scale = Int|4;
-  Point@ a = @(x: scale, y: Neg(scale));
-  Point@ b = @(x: Int|0, y: height);
+  State@ initial = @(model: Sample, scale: Int|1);
 
-  (Model@) { M@<Unit@>; } StepUI = (Model@ model) {
-    Drawing@ drawing = Affine(a, b, DrawModel(width, height, model));
+  (State@) { M@<Unit@>; } StepUI = (State@ s) {
+    # Map game coordinates into screen coordinates.
+    Point@ a = @(x: s.scale, y: Neg(s.scale));
+    Point@ b = @(x: Int|0, y: height);
+
+    Drawing@ drawing = Affine(a, b, DrawModel(width, height, s.model));
 
     Unit@ _ <- m.do(app.effect(Effect@(draw: drawing)));
     Unit@ _ <- m.do(app.effect(Effect@(tick: Int|300)));
     Event@ e <- m.do(FilterEvent);
-    e.?(tick: StepUI(Tick(model)));
+
+    e.?(tick: StepUI(s.@(model: Tick(s.model))));
+
+    e.?(key_down: {
+        e.key_down.?(
+            j: StepUI(s.@(scale: Max(Shr(s.scale, Int|1), Int|1))),
+            k: StepUI(s.@(scale: Shl(s.scale, Int|1))));
+        m.return(Unit);
+    });
+
     m.return(Unit);
   };
 
-  Unit@ _ <- m.do(StepUI(Sample));
+  Unit@ _ <- m.do(StepUI(initial));
   m.return(True);
 };
 

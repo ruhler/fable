@@ -1,0 +1,106 @@
+UI
+==
+
+How to control things and interact with things?
+
+List of controls:
+* pause / resume simulation
+* zoom in / out
+* scroll left / right / up/ down
+* rotate gate.
+* change gate config / orientation.
+* select gates: different command for each kind of gate to select.
+* select car: different command for each kind of car to select.
+* quit
+* save
+* undo
+* delete gate
+* place gate
+* delete car
+* place car
+
+Is that a good enough exhaustive list for now? Let's say yes.
+
+Input methods:
+* keyboard only
+* keyboard + mouse
+* mouse only
+* touch screen only
+
+Ideally we could easily switch between all the different input methods, and
+there is some consistency between them. Touch screen is hardest. Maybe don't
+worry about that to start.
+
+I think keyboard + mouse idea is keyboard is the left hand, mouse is the right
+hand. So right hand keyboard and mouse should ideally cover the same
+operations.
+
+Typical mouse operations: zoom, select, place.
+
+A lot of the mouse only stuff I envision being a pallet of buttons you can
+click with the mouse to have the same effect a keyboard button would give you.
+
+Control Brainstorm:
+* pause / resume simulation
+  keyboard: space bar
+  mouse: click pause/play button.
+  touchscreen: touch pause/play button.
+* zoom in / out
+  keyboard: ctrl +, ctrl -
+  mouse: scroll wheel
+  touchscreen: pinch to zoom.
+* scroll left / right / up/ down
+  keyboard: asdw
+  mouse: click, hold, and drag.
+  touchscreen: point and drag.
+
+* select
+  keyboard: have a cursor to move with jklh?
+  mouse: click on tile.
+  touch screen: touch tile.
+  
+* rotate selected gate.
+  keyboard: select, then r
+  mouse: select, then context menu?
+  touchscreen: select, then context menu?
+
+* change gate config / orientation.
+  keyboard: select, then h/v/c for horizontal, vertical, or c to cycle through?
+  mouse: select, then context menu?
+  touchscreen: select, then context menu?
+
+* select gates: different command for each kind of gate to select.
+  keyboard: different key for each gate.
+  mouse: chose gate from pallete
+  touchscreen: chose gate from pallete.
+
+* select car: different command for each kind of car to select.
+  keyboard: different car for each gate.
+  mouse: chose car from pallete
+  touchscreen: chose car from pallete.
+
+* quit
+  keyboard: q
+  mouse: select quit button
+  touchscreen: select quit button
+
+* save
+  keyboard: s
+  mouse, touchscreen: select save button
+
+* undo
+  keyboard: u or ctrl-u? ctrl-r 
+  mouse
+
+* delete gate
+* place gate
+* delete car
+* place car
+
+---
+
+Let's start with zoom by keyboard. 2x zoom every time? Max zoom out to 1.
+
+Trouble: app only supports a very limited set of key events. How can I
+generalize it? How to encode ctrl-+ and ctrl--?
+
