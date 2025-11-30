@@ -1,8 +1,14 @@
 
+* Implement model save to file.
+* Implement model read from file.
+* Sketch out UI design.
+
 * Distinguish between 'empty' gate, which nobody can move onto, and the 'halt'
   gate, which you can go onto, but then you just stay there.
+ - Add a 'hold' gate? Then use it for test cases where we want trains to end
+   up.
+
 * Pick more black/whitish colors for zero and one, so it's more intuitive?
   At least more intuitive to me?
 
-* Test that we can't push a car through a noop gate.
 * Finish mvp2 milestone.

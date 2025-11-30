@@ -115,3 +115,7 @@ character to each gate at the end, before '|', that has an optional car value.
 
 I think it will be important to be able to save cars.
 
+---
+
+Some gates have states we want to save. We can do that with lower versus upper
+letter. Maybe capital by default, lower case if the busy bit is set. Easy.

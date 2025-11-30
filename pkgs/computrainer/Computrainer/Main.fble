@@ -48,7 +48,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
     Drawing@ drawing = Affine(a, b, DrawModel(width, height, model));
 
     Unit@ _ <- m.do(app.effect(Effect@(draw: drawing)));
-    Unit@ _ <- m.do(app.effect(Effect@(tick: Int|500)));
+    Unit@ _ <- m.do(app.effect(Effect@(tick: Int|300)));
     Event@ e <- m.do(FilterEvent);
     e.?(tick: StepUI(Tick(model)));
     m.return(Unit);

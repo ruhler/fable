@@ -30,10 +30,10 @@ Gate = (Gate@ g) {
         one: Dir(g.one, Colors.1),
         switch: Drawings[
             Shapes.Gate(Colors.Gate),
-            Shapes.Sel(g.switch.s, Colors.Select),
+            Shapes.Sel(g.switch.s, Colors.Gate),
             Shapes.Dir(g.switch.0, Colors.0),
             Shapes.Dir(g.switch.1, Colors.1)],
-        select: Shapes.Gate(Colors.Select),
+        select: Shapes.Select(Colors.Gate),
         dup: Shapes.Shapes[
             Shapes.Gate,
             Shapes.Dir(g.dup.a),
