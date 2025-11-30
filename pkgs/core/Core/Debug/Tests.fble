@@ -25,7 +25,7 @@ Test@ Tests = TestSuite(Str|Debug, List[
     # All we can really do is test that it doesn't crash. There's no way
     # to observe the traced output from within fble.
     Unit@ u = TraceLn(Str|'hello trace!');
-    AssertEquals(/Std/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, u);
+    AssertEquals(/Std/Unit/Eq%.Eq, /Std/Unit/Show%.Show, Unit, u);
   }),
 
   Test(Str|'Enable', (Unit@ _) {
@@ -35,7 +35,7 @@ Test@ Tests = TestSuite(Str|Debug, List[
       Unit@ _ <- Trace.TraceLn;
       StrE|'easy enable/disable trace message';
     };
-    AssertEquals(/Std/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, u);
+    AssertEquals(/Std/Unit/Eq%.Eq, /Std/Unit/Show%.Show, Unit, u);
   }),
 
   Test(Str|'Disable', (Unit@ _) {
@@ -46,7 +46,7 @@ Test@ Tests = TestSuite(Str|Debug, List[
       Unit@ _ <- Trace.TraceLn;
       StrE|'@FAILED';
     };
-    AssertEquals(/Std/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, u);
+    AssertEquals(/Std/Unit/Eq%.Eq, /Std/Unit/Show%.Show, Unit, u);
   })
 ]);
 

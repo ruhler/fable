@@ -35,21 +35,21 @@ Test@ Tests = TestSuite(Str|Show, List[
   Test(Str|'empty', (Unit@ _) {
     Map@<Bool@> map = Empty<Bool@>;
     String@ wnt = Str|'{ }';
-    String@ got = ToString(Show(/Core/Bool/Show%.Show, map));
+    String@ got = ToString(Show(/Std/Bool/Show%.Show, map));
     AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|'single', (Unit@ _) {
     Map@<Bool@> map = Insert(Empty<Bool@>, B, False);
     String@ wnt = Str|'{ 2 => False; }';
-    String@ got = ToString(Show(/Core/Bool/Show%.Show, map));
+    String@ got = ToString(Show(/Std/Bool/Show%.Show, map));
     AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|'multi', (Unit@ _) {
     Map@<Bool@> map = Insert(Insert(Empty<Bool@>, B, False), C, True);
     String@ wnt = Str|'{ 2 => False; 3 => True; }';
-    String@ got = ToString(Show(/Core/Bool/Show%.Show, map));
+    String@ got = ToString(Show(/Std/Bool/Show%.Show, map));
     AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })
 ]);

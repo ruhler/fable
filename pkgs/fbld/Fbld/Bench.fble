@@ -32,7 +32,7 @@ Test@ Bench = Test(Str|Fbld, (Unit@ _) {
   PureResult@<Bool@> result = Run(go, input);
   AssertEquals(
     /Std/Bool/Eq%.Eq,
-    /Core/Bool/Show%.Show,
+    /Std/Bool/Show%.Show,
     True, result.x);
 });
 

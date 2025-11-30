@@ -2,3 +2,24 @@ Stdlib Test
 ===========
 How to clean up the unit test API for use in standard library?
 
+The big things are:
+* Define test cases.
+* Define test suites.
+* Implement test runners.
+
+How do I feel about the current approach for defining tests?
+* TestResult@ as pass, fail, or xfail)
+* TestCase@ as name and function to compute a test result.
+* TestSuite@ as name and list of tests.
+* Test@ as either a test case or a test suite.
+
+Pass or fail makes sense. Organizing into suites makes sense. The funny bits
+are:
+1. Having to assign a test a name and look it up by that, rather than using,
+say, the name of the test function.
+2. Having to pass a function from (Unit@) rather than, say, a function to call
+a test?
+
+Let's compare to some existing test frameworks. Java and python are probably
+good candidates.
+

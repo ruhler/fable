@@ -59,7 +59,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
     PureResult@<Bool@> got = Run(Monad.return(True), inputs);
     AssertEquals(
       PureResultEq(/Std/Bool/Eq%.Eq),
-      PureResultShow(/Core/Bool/Show%.Show),
+      PureResultShow(/Std/Bool/Show%.Show),
       wnt, got);
   }),
 
@@ -93,7 +93,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
     PureResult@<Unit@> got = Run(PutStr(Stdio.out, Str|There), inputs);
     AssertEquals(
       PureResultEq(/Std/Unit/Eq%.Eq),
-      PureResultShow(/Core/Unit/Show%.Show),
+      PureResultShow(/Std/Unit/Show%.Show),
       wnt, got);
   }),
 
@@ -104,7 +104,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
     PureResult@<Unit@> got = Run(PutStr(Stdio.err, Str|There), inputs);
     AssertEquals(
       PureResultEq(/Std/Unit/Eq%.Eq),
-      PureResultShow(/Core/Unit/Show%.Show),
+      PureResultShow(/Std/Unit/Show%.Show),
       wnt, got);
   }),
 
@@ -122,7 +122,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
 
     AssertEquals(
       PureResultEq(/Std/Unit/Eq%.Eq),
-      PureResultShow(/Core/Unit/Show%.Show),
+      PureResultShow(/Std/Unit/Show%.Show),
       wnt, got);
   }),
 
@@ -140,7 +140,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
 
     AssertEquals(
       PureResultEq(/Std/Unit/Eq%.Eq),
-      PureResultShow(/Core/Unit/Show%.Show),
+      PureResultShow(/Std/Unit/Show%.Show),
       wnt, got);
   })
 ]);

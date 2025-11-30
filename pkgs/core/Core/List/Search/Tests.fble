@@ -47,14 +47,14 @@ Test@ Tests = TestSuite(Str|Search, List[
     List@<Elem@> l = EL|'BDBB';
     Bool@ wnt = True;
     Bool@ got = Any(l, (Elem@ e) { e.?(D: True, : False); });
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|AnyNot, (Unit@ _) {
     List@<Elem@> l = EL|'BDBB';
     Bool@ wnt = False;
     Bool@ got = Any(l, (Elem@ e) { e.?(C: True, : False); });
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|Search, (Unit@ _) {

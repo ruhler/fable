@@ -1,9 +1,13 @@
+# @module[/Std/Bool/Show%]
+#  The Show@ instance for Bool@.
 
 @ Bool@ = /Std/Bool%.Bool@;
 <@>@ Show@ = /Std/Show%.Show@;
 % String = /Std/Char/Ascii/Output%.String;
 
-# Show -- see documentation of /Show%.Show@.
+# @func[Show] Show a Bool@ value.
+#  @arg[Bool@][x] The value to show.
+#  @returns[Output@] Output that shows the value.
 Show@<Bool@> Show = (Bool@ x) {
   x.?(true: String|True, false: String|False);
 };

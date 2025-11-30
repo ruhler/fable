@@ -62,7 +62,7 @@ Benchmark = (Main@ app, Int@ n, Event@ quit, Unit@ _) {
   Stdio@<M@> stdio = /Core/Stdio/Stub%.Stdio<M@>(Monad);
   M@<Bool@> m = app<M@>(Monad, stdio, App@<M@>(Event, Effect), w, h, Empty<String@>);
   R@<Bool@> r = m(n);
-  AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, True, r.x);
+  AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, True, r.x);
 };
 
 @(Benchmark);

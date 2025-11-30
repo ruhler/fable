@@ -37,32 +37,32 @@ Test@ Tests = TestSuite(Str|Char, List[
   }),
 
   Test(Str|'IsLower', (Unit@ _) {
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show,
       True, IsLower(Char|e));
   }),
 
   Test(Str|'IsLower no', (Unit@ _) {
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show,
       False, IsLower(Char|E));
   }),
 
   Test(Str|'IsAlpha', (Unit@ _) {
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show,
       True, IsAlpha(Char|e));
   }),
 
   Test(Str|'IsAlpha no', (Unit@ _) {
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show,
       False, IsAlpha(Char|4));
   }),
 
   Test(Str|'IsAlnum', (Unit@ _) {
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show,
       True, IsAlNum(Char|e));
   }),
 
   Test(Str|'IsAlnum no', (Unit@ _) {
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show,
       False, IsAlNum(Char|' '));
   }),
 

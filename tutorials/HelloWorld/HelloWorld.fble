@@ -26,10 +26,10 @@ Char@ c = Char|A;
 Int@ x = Int|42;
 String@ output = Lines[
   Str|'hello, world',
-  Concat[Str|'A boolean: ', ToString(/Core/Bool/Show%.Show(True))],
+  Concat[Str|'A boolean: ', ToString(/Std/Bool/Show%.Show(True))],
   Concat[Str|'A character: ', ToString(/Core/Char/Show%.Show(c))],
   Concat[Str|'A list: ',
-    ToString(/Core/List/Show%.Show(/Core/Bool/Show%.Show)[True, False, False])],
+    ToString(/Core/List/Show%.Show(/Std/Bool/Show%.Show)[True, False, False])],
   Concat[Str|'An integer: ', ToString(/Core/Int/Show%.Show(x))]];
 
 # Call the helper function for a main function

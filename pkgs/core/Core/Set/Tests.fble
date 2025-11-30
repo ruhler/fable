@@ -87,35 +87,35 @@ Test@ Tests = TestSuite(Str|Set, List[
   Test(Str|'empty', (Unit@ _) {
     Bool@ wnt = False;
     Bool@ got = Contains(Empty, B);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'not found', (Unit@ _) {
     Set@ set = Insert(Empty, C);
     Bool@ wnt = False;
     Bool@ got = Contains(set, B);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'found', (Unit@ _) {
     Set@ set = Insert(Insert(Insert(Empty, A), B), C);
     Bool@ wnt = True;
     Bool@ got = Contains(set, B);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'replace', (Unit@ _) {
     Set@ set = Insert(Insert(Empty, B), B);
     Bool@ wnt = True;
     Bool@ got = Contains(set, B);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'delete', (Unit@ _) {
     Set@ set = Delete(Insert(Empty, B), B);
     Bool@ wnt = False;
     Bool@ got = Contains(set, B);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'foreach', (Unit@ _) {

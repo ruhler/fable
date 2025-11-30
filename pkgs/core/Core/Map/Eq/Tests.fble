@@ -37,7 +37,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: value mismatch', (Unit@ _) {
@@ -48,7 +48,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
 
     Bool@ wnt = False;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: different number of elements', (Unit@ _) {
@@ -58,7 +58,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
 
     Bool@ wnt = False;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: deleted to empty', (Unit@ _) {
@@ -67,7 +67,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: empty from deleted', (Unit@ _) {
@@ -76,7 +76,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: empty from deleted pair second', (Unit@ _) {
@@ -85,7 +85,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: empty from deleted pair first', (Unit@ _) {
@@ -94,7 +94,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: equal any order', (Unit@ _) {
@@ -105,7 +105,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   })
 ]);
 

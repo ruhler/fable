@@ -1,0 +1,15 @@
+# @module[/Std/Unit/Show%]
+#  The Show@ instance for Unit@.
+
+<@>@ Show@ = /Std/Show%.Show@;
+% String = /Std/Char/Ascii/Output%.String;
+@ Unit@ = /Std/Unit%.Unit@;
+
+# @func[Show] Show a Unit@ value.
+#  @arg[Unit@][x] The value to show.
+#  @returns[Output@] Output that shows the value.
+Show@<Unit@> Show = (Unit@ _) {
+  String|Unit;
+};
+
+@(Show);
