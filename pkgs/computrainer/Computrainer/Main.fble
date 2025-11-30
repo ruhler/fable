@@ -8,6 +8,7 @@
 % Decr = /Std/Int%.Decr;
 % Neg = /Std/Int%.Neg;
 % Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
 % Mul = /Std/Int%.Mul;
 % Shr = /Std/Int%.Shr;
 % Shl = /Std/Int%.Shl;
@@ -48,6 +49,8 @@
     Model@ model,
     Int@ map_x, # tile x coordinate of tile in the center of the screen.
     Int@ map_y, # tile y coordinate of tile in the center of the screen.
+    Int@ mouse_x, # pixel coordinates of the mouse.
+    Int@ mouse_y, # pixel coordinates of the mouse.
     Int@ scale,
     Bool@ paused
 );
@@ -57,10 +60,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
     Event@ e <- m.do(app.event);
     e.?(tick: m.return(e),
         key_down: m.return(e),
+        mouse_motion: m.return(e),
         : FilterEvent);
   };
 
-  State@ initial = @(model: Sample, map_x: Int|0, map_y: Int|0, scale: Int|1, paused: True);
+  State@ initial = @(model: Sample, map_x: Int|0, map_y: Int|0, mouse_x: Int|0, mouse_y: Int|0, scale: Int|1, paused: True);
 
   (State@) { M@<Unit@>; } StepUI = (State@ s) {
     # Map game coordinates into screen coordinates.
@@ -70,7 +74,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
 
     Drawing@ clear = Rect(Int|0, Int|0, width, height, Colors.Background);
     Drawing@ drawing = Affine(a, b, DrawModel(s.model));
-    Unit@ _ <- m.do(app.effect(Effect@(draw: Drawings[clear, drawing])));
+    Drawing@ mouse = Rect(Sub(s.mouse_x, Int|2), Sub(s.mouse_y, Int|2), Int|4, Int|4, Colors.Mouse);
+    Unit@ _ <- m.do(app.effect(Effect@(draw: Drawings[clear, drawing, mouse])));
 
     Event@ e <- m.do(FilterEvent);
     e.?(tick: {
@@ -94,6 +99,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
             }
         );
         m.return(Unit);
+    });
+
+    e.?(mouse_motion: {
+        Int@ mouse_x = e.mouse_motion.x;
+        Int@ mouse_y = e.mouse_motion.y;
+        StepUI(s.@(mouse_x, mouse_y));
     });
 
     m.return(Unit);
