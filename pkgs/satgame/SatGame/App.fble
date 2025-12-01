@@ -77,7 +77,7 @@ GetArgs = (List@<String@> args, Args@ default) {
   args.items.tail.?(empty: default);
 
   String@ arg = args.items.head;
-  Int@ value = /Core/Int/Show%.Read(args.items.tail.items.head);
+  Int@ value = /Core/Int/Read%.Read(args.items.tail.items.head);
 
   Args@ nargs = {
     /Std/String/Eq%.Eq(arg, Str|'--vars').?(true: {
@@ -129,7 +129,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     Int@ seed <- m.do({
       istream.?(nothing: m.return(Int|0));
       String@ text <- m.do(I.GetText(istream.just));
-      m.return(/Core/Int/Show%.Read(text));
+      m.return(/Core/Int/Read%.Read(text));
     });
 
     Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename, /Core/Stdio%.Text));

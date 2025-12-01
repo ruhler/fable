@@ -81,11 +81,11 @@ GetArgs = (List@<String@> args, Args@ default) {
     });
 
     ArgAnyOf[Str|'-p', Str|'--port'].?(true: {
-      default.@(port: /Core/Int/Show%.Read(value));
+      default.@(port: /Core/Int/Read%.Read(value));
     });
 
     ArgAnyOf[Str|'-n', Str|'--num-clients'].?(true: {
-      default.@(num_clients: /Core/Int/Show%.Read(value));
+      default.@(num_clients: /Core/Int/Read%.Read(value));
     });
 
     default.@(error: Concat[Str|'unrecognized option ', arg]);

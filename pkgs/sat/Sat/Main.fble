@@ -56,7 +56,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     /Std/String/Eq%.Eq(args.items.head, Str|'--debug').?(false: {
       GetDebugArg(args.items.tail);
     });
-    /Core/Int/Show%.Read(args.items.tail.items.head);
+    /Core/Int/Read%.Read(args.items.tail.items.head);
   };
 
   (List@<String@> args) {

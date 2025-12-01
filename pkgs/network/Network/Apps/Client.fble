@@ -77,7 +77,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     });
 
     ArgAnyOf[Str|'-p', Str|'--port'].?(true: {
-      default.@(port: /Core/Int/Show%.Read(value));
+      default.@(port: /Core/Int/Read%.Read(value));
     });
 
     ArgAnyOf[Str|'-m', Str|'--message'].?(true: {
@@ -85,7 +85,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     });
 
     ArgAnyOf[Str|'-n', Str|'--num-bytes'].?(true: {
-      default.@(num_bytes: /Core/Int/Show%.Read(value));
+      default.@(num_bytes: /Core/Int/Read%.Read(value));
     });
 
     default.@(error: Concat[Str|'unrecognized option ', arg]);

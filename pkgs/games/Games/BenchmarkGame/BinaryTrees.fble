@@ -61,7 +61,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   };
 
   (List@<String@> args) {
-    Int@ n = args.?(items: /Core/Int/Show%.Read(args.items.head), empty: 0);
+    Int@ n = args.?(items: /Core/Int/Read%.Read(args.items.head), empty: 0);
     Int@ max_depth = Gt(Add(2, MinDepth), n).?(
       true: Add(2, MinDepth),
       false: n);

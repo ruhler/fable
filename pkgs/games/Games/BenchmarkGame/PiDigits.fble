@@ -111,7 +111,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   };
 
   (List@<String@> args) {
-    Int@ n = /Core/Int/Show%.Read(args.items.head);
+    Int@ n = /Core/Int/Read%.Read(args.items.head);
     Int@ l = Int|10;
     (Int@, State@) { M@<Bool@>; } PiDigits = (Int@ i, State@ s) {
       Eq(i, n).?(true: m.return(True));

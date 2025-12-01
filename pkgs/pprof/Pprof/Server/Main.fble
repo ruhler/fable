@@ -129,7 +129,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     });
 
     ArgAnyOf[Str|'-p', Str|'--port'].?(true: {
-      default.@(port: /Core/Int/Show%.Read(value));
+      default.@(port: /Core/Int/Read%.Read(value));
     });
 
     default.@(error: Just(Format|'unrecognized option %s'[
@@ -357,7 +357,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
     /Std/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
       List@<String@> ids = Split(Drop(path, Int|5), Str|',');
-      SeqPage(ios.out, /Std/List%.Map(ids, /Core/Int/Show%.Read));
+      SeqPage(ios.out, /Std/List%.Map(ids, /Core/Int/Read%.Read));
     });
 
     O.PutStr(ios.out, Lines[

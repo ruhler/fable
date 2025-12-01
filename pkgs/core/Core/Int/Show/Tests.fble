@@ -18,7 +18,7 @@
 % Neg = /Std/Int%.Neg;
 % Int = /Std/Int/Lit%.Int;
 
-% Read = /Core/Int/Show%.Read;
+% Read = /Core/Int/Read%.Read;
 % Show = /Core/Int/Show%.Show;
 
 Test@ Tests = TestSuite(Str|Show, List[

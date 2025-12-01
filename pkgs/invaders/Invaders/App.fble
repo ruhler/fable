@@ -117,7 +117,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     istream.?(nothing: m.return(Int|0));
 
     String@ text <- m.do(I.GetText(istream.just));
-    m.return(/Core/Int/Show%.Read(text));
+    m.return(/Core/Int/Read%.Read(text));
   });
 
   # Set up the game.

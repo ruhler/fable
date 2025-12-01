@@ -1,15 +1,10 @@
 
-@ Char@ = /Std/Char%.Char@;
-% Char = /Std/Char/Ascii%.Char;
-
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % Do = /Std/Char/Output%.Do;
 <@>% Return = /Std/Char/Output%.Return;
 
 @ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
 % Neg = /Std/Int%.Neg;
-% Mul = /Std/Int%.Mul;
 % Eq = /Std/Int/Eq%.Eq;
 % Int = /Std/Int/Lit%.Int;
 % Sgn = /Std/Int/Sign%.Sgn;
@@ -19,40 +14,10 @@
 
 <@>@ Show@ = /Std/Show%.Show@;
 
-@ String@ = /Std/String%.String@;
 % Format = /Std/Char/Ascii/Output%.Format;
 % String = /Std/Char/Ascii/Output%.String;
 
 @ Unit@ = /Std/Unit%.Unit@;
-
-(String@) { Int@; } Read = {
-  (Char@) { Int@; } Digit = (Char@ c) {
-    /Std/Char/Eq%.Eq(Char|0, c).?(true: Int|0);
-    /Std/Char/Eq%.Eq(Char|1, c).?(true: Int|1);
-    /Std/Char/Eq%.Eq(Char|2, c).?(true: Int|2);
-    /Std/Char/Eq%.Eq(Char|3, c).?(true: Int|3);
-    /Std/Char/Eq%.Eq(Char|4, c).?(true: Int|4);
-    /Std/Char/Eq%.Eq(Char|5, c).?(true: Int|5);
-    /Std/Char/Eq%.Eq(Char|6, c).?(true: Int|6);
-    /Std/Char/Eq%.Eq(Char|7, c).?(true: Int|7);
-    /Std/Char/Eq%.Eq(Char|8, c).?(true: Int|8);
-    /Std/Char/Eq%.Eq(Char|9, c).?(true: Int|9);
-    Int|0;
-  };
-
-  (Int@, String@) { Int@; } ReadP = (Int@ x, String@ s) {
-    s.?(empty: x);
-    ReadP(Add(Mul(Int|10, x), Digit(s.items.head)), s.items.tail);
-  };
-  
-  (String@ s) {
-    s.?(empty: Int|0);
-    /Std/Char/Eq%.Eq(Char|'-', s.items.head).?(true: {
-      Neg(ReadP(Int|0, s.items.tail));
-    });
-    ReadP(Int|0, s);
-  };
-};
 
 # Show an int value in the range [0-9].
 Show@<Int@> Digit = (Int@ x) {
@@ -83,4 +48,4 @@ Show@<Int@> Show = (Int@ x) {
     '+': Positive(x));
 };
 
-@(Read, Show);
+@(Show);
