@@ -62,7 +62,7 @@ Test@ Tests = TestSuite(Str|Query, List[
   Test(Str|Total, (Unit@ _) {
     Int@ got = Total(Profile);
     Int@ wnt = Int|66;
-    AssertEquals(/Std/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
   }),
 
   Test(Str|Self, (Unit@ _) {

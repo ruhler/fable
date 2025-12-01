@@ -11,22 +11,22 @@
 @ Sample@ = /Pprof/Profile%.Sample@;
 @ Profile@ = /Pprof/Profile%.Profile@;
 
-Show@<BlockId@> BlockId = /Core/Int/Show%.Show;
+Show@<BlockId@> BlockId = /Std/Int/Show%.Show;
 
 Show@<Block@> Block = (Block@ x) {
   Format|'%s@%s:%s:%s'[
     /Std/Char/Output%.String(x.name),
     /Std/Char/Output%.String(x.file),
-    /Core/Int/Show%.Show(x.line),
-    /Core/Int/Show%.Show(x.column)];
+    /Std/Int/Show%.Show(x.line),
+    /Std/Int/Show%.Show(x.column)];
 };
 
 Show@<Blocks@> Blocks = /Core/Map/Show%.Show(
-  /Pprof/Profile%.Blocks, /Core/Int/Show%.Show, Block);
+  /Pprof/Profile%.Blocks, /Std/Int/Show%.Show, Block);
 
 Show@<Sequence@> Sequence = /Core/List/Show%.Show(BlockId);
 
-Show@<Metrics@> Metrics = /Core/List/Show%.Show(/Core/Int/Show%.Show);
+Show@<Metrics@> Metrics = /Core/List/Show%.Show(/Std/Int/Show%.Show);
 
 Show@<Sample@> Sample = (Sample@ x) {
   Format|'(%s, %s)'[Sequence(x.sequence), Metrics(x.values)];

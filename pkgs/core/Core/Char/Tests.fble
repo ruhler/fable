@@ -32,7 +32,7 @@ Test@ Tests = TestSuite(Str|Char, List[
   }),
 
   Test(Str|'Pos', (Unit@ _) {
-    AssertEquals(/Std/Int/Eq%.Eq, /Core/Int/Show%.Show,
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show,
       Int|65, Pos(Char|A));
   }),
 

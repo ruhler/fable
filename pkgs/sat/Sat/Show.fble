@@ -13,7 +13,7 @@
 @ Formula@ = /Sat/Dimacs%.Formula@;
 <@>@ Parse@ = /Sat/Dimacs%.Parse@;
 
-Show@<VarId@> ShowId = /Core/Int/Show%.Show;
+Show@<VarId@> ShowId = /Std/Int/Show%.Show;
 
 Show@<Var@> ShowVar = (Var@ v) {
   Format|'%s%s'[v.pos.?(true: String|'+', false: String|'-'), ShowId(v.id)];

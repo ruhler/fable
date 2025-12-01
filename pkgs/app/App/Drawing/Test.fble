@@ -47,7 +47,7 @@ Cmp@<Point@> OrdPoint = (Point@ a, Point@ b) {
 };
 
 Show@<Point@> ShowPoint = (Point@ x) {
-  Format|'(%s, %s)'[/Core/Int/Show%.Show(x.x), /Core/Int/Show%.Show(x.y)];
+  Format|'(%s, %s)'[/Std/Int/Show%.Show(x.x), /Std/Int/Show%.Show(x.y)];
 };
 
 (Color@, Color@) { Bool@; } EqColor = (Color@ a, Color@ b) {
@@ -60,9 +60,9 @@ Show@<Point@> ShowPoint = (Point@ x) {
 Show@<Color@> ShowColor = (Color@ c) {
   # TODO: Show color as hex string.
   Format|'(%s, %s, %s)'[
-    /Core/Int/Show%.Show(c.r),
-    /Core/Int/Show%.Show(c.g),
-    /Core/Int/Show%.Show(c.b)];
+    /Std/Int/Show%.Show(c.r),
+    /Std/Int/Show%.Show(c.g),
+    /Std/Int/Show%.Show(c.b)];
 };
 
 % Map = /Core/Map/Tree%.Map(OrdPoint);

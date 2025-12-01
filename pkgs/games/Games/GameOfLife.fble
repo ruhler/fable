@@ -42,7 +42,7 @@ Cmp@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
 };
 
 Show@<Coord@> ShowCoord = (Coord@ a) {
-  Format|'(%s, %s)'[/Core/Int/Show%.Show(a.row), /Core/Int/Show%.Show(a.col)];
+  Format|'(%s, %s)'[/Std/Int/Show%.Show(a.row), /Std/Int/Show%.Show(a.col)];
 };
 
 # The world is a set of Coord@ where there are live cells.

@@ -13,7 +13,7 @@
 % LeI = /Std/Int/Ord%.Le;
 % EqI = /Std/Int/Eq%.Eq;
 % AbsI = /Std/Int/Sign%.Abs;
-% ShowI = /Core/Int/Show%.Show;
+% ShowI = /Std/Int/Show%.Show;
 % SqrtI = /Std/Int/Sqrt%.Sqrt;
 
 @ IntLit@ = /Std/Int/Lit%.IntLit@;

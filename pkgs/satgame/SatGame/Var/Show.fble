@@ -25,7 +25,7 @@ Show@<Var@> Show = {
   
   (Var@ x) {
     Int@ i = Shifts(Int|0)[x.ul, x.uc, x.ur, x.ml, x.mc, x.mr, x.ll, x.lc, x.lr];
-    /Core/Int/Show%.Show(i);
+    /Std/Int/Show%.Show(i);
   };
 };
 

@@ -135,7 +135,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename, /Core/Stdio%.Text));
     Unit@ _ <- m.do({
       ostream.?(nothing: m.return(Unit));
-      O.Show(ostream.just, /Core/Int/Show%.Show(Incr(seed)));
+      O.Show(ostream.just, /Std/Int/Show%.Show(Incr(seed)));
     });
 
     m.return(seed);
@@ -218,7 +218,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   Unit@ _ <- m.do(O.ShowLine(stdio.out,
       Format|'Generating puzzle with params: %s (seed %s)'[
         /SatGame/Puzzle/Show%.Params(params),
-        /Core/Int/Show%.Show(args.seed)
+        /Std/Int/Show%.Show(args.seed)
   ]));
 
   Puzzle@ puzzle = PureLFSR.Run(Generate(params), args.seed);

@@ -1,3 +1,5 @@
+# @module[/Std/Int/Show%]
+#  The Show@ instance for Int@.
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % Do = /Std/Char/Output%.Do;
@@ -41,6 +43,9 @@ Show@<Int@> Positive = (Int@ x) {
   Digit(qr.r);
 };
 
+# @func[Show] Show an Int@ value.
+#  @arg[Int@][x] The value to show.
+#  @returns[Output@] Output that shows the value.
 Show@<Int@> Show = (Int@ x) {
   Sgn(x).?(
     '-': Format|'-%s'[Positive(Neg(x))],

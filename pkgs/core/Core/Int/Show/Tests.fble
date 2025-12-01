@@ -19,7 +19,7 @@
 % Int = /Std/Int/Lit%.Int;
 
 % Read = /Core/Int/Read%.Read;
-% Show = /Core/Int/Show%.Show;
+% Show = /Std/Int/Show%.Show;
 
 Test@ Tests = TestSuite(Str|Show, List[
   Test(Str|Read_Positive, (Unit@ _) {

@@ -83,7 +83,7 @@ F = (String@ name, (Unit@) { Bool@; } p) {
 (String@, Int@, (Unit@) { Int@; }) { Test@; }
 TEq = (String@ name, Int@ a, (Unit@) { Int@; } b) {
   Test(name, (Unit@ u) {
-    AssertEquals(/Std/Int/Eq%.Eq, /Core/Int/Show%.Show, a, b(u));
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, a, b(u));
   });
 };
 

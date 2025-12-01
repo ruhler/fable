@@ -308,7 +308,7 @@ RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
 @ Result@ = +(Assignment@ sat, Unit@ unsat);
 
 % Show = {
-  Show@<Id@> Id = /Core/Int/Show%.Show;
+  Show@<Id@> Id = /Std/Int/Show%.Show;
 
   Show@<Var@> Var = (Var@ v) {
     Format|'%s%s'[v.pos.?(true: String|'+', false: String|'-'), Id(v.id)];

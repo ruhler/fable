@@ -9,9 +9,9 @@
 
 Show@<PureState@> PureState = (PureState@ a) {
   Format|'In: %s, Out: %s, Err: %s'[
-    /Core/List/Show%.Show(/Core/Int/Show%.Show, a.in),
-    /Core/List/Show%.Show(/Core/Int/Show%.Show, a.out),
-    /Core/List/Show%.Show(/Core/Int/Show%.Show, a.err)];
+    /Core/List/Show%.Show(/Std/Int/Show%.Show, a.in),
+    /Core/List/Show%.Show(/Std/Int/Show%.Show, a.out),
+    /Core/List/Show%.Show(/Std/Int/Show%.Show, a.err)];
 };
 
 <@ A@>(Show@<A@>) { Show@<PureResult@<A@>>; }
@@ -22,9 +22,9 @@ PureResult = <@ A@>(Show@<A@> show, PureResult@<A@> a) {
 Show@<MainResult@> MainResult = (MainResult@ a) {
   Format|'Exit: %s, In: %s, Out: %s, Err: %s'[
     /Std/Bool/Show%.Show(a.exit),
-    /Core/List/Show%.Show(/Core/Int/Show%.Show, a.in),
-    /Core/List/Show%.Show(/Core/Int/Show%.Show, a.out),
-    /Core/List/Show%.Show(/Core/Int/Show%.Show, a.err)];
+    /Core/List/Show%.Show(/Std/Int/Show%.Show, a.in),
+    /Core/List/Show%.Show(/Std/Int/Show%.Show, a.out),
+    /Core/List/Show%.Show(/Std/Int/Show%.Show, a.err)];
 };
 
 @(PureState, PureResult, MainResult);

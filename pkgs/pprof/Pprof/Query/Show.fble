@@ -9,7 +9,7 @@
 Show@<Entry@> Entry = (Entry@ x) {
   Format|'%s: %s'[
     /Pprof/Profile/Show%.Sequence(x.seq),
-    /Core/Int/Show%.Show(x.value)
+    /Std/Int/Show%.Show(x.value)
   ];
 };
 

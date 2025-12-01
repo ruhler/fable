@@ -34,10 +34,10 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   (List@<String@> args) {
     Int@ n = args.?(items: /Core/Int/Read%.Read(args.items.head), empty: Int|7);
     Fannkuch@ result = FannkuchRedux(n);
-    Unit@ _ <- m.do(FmtL|'%s'[/Core/Int/Show%.Show(result.checksum)]);
+    Unit@ _ <- m.do(FmtL|'%s'[/Std/Int/Show%.Show(result.checksum)]);
     Unit@ _ <- m.do(FmtL|'Pfannkuchen(%s) = %s'[
-      /Core/Int/Show%.Show(n),
-      /Core/Int/Show%.Show(result.max_flips)]);
+      /Std/Int/Show%.Show(n),
+      /Std/Int/Show%.Show(result.max_flips)]);
     m.return(True);
   };
 };

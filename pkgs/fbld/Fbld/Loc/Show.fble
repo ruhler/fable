@@ -8,8 +8,8 @@
 Show@<Loc@> Show = (Loc@ x) {
   Format|'%s:%s:%s'[
     /Std/Char/Output%.String(x.file),
-    /Core/Int/Show%.Show(x.line),
-    /Core/Int/Show%.Show(x.col)];
+    /Std/Int/Show%.Show(x.line),
+    /Std/Int/Show%.Show(x.col)];
 };
 
 @(Show);

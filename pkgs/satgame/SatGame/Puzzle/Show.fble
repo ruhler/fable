@@ -37,9 +37,9 @@ Show@<Puzzle@> Puzzle = (Puzzle@ puzzle) {
 
 Show@<Params@> Params = (Params@ params) {
   Format|'Vars: %s, Clauses: %s, Vars Per Clause: %s'[
-    /Core/Int/Show%.Show(params.num_vars),
-    /Core/Int/Show%.Show(params.num_clauses),
-    /Core/Int/Show%.Show(params.num_literals_per_clause)
+    /Std/Int/Show%.Show(params.num_vars),
+    /Std/Int/Show%.Show(params.num_clauses),
+    /Std/Int/Show%.Show(params.num_literals_per_clause)
   ];
 };
 

@@ -4,6 +4,11 @@ Things to consider doing for the fble-0.6 release.
 
 * Print function names along with error location on stack trace?
 
+* Optimize /Std/Int/Show% implementation by pulling out int values to top
+  level rather than calling Int|* over and over?
+
+* Add function to show an integer base 16? Base 2? Base anything?
+
 * Change /Core/Stdio/StringO% to take Output@ instead of String@.
 * Rename ShowM@ to StringM@?
   And reduce overlap between String@ construction and StringM@ construction

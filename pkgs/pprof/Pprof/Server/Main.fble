@@ -145,10 +145,10 @@ Percent = (Int@ numerator, Int@ denominator) {
   Int@ s = Div(Mul(Int|10000, numerator), denominator).q;
   QR@ qr = Div(s, Int|100);
   Output@ fraction = {
-    Ge(Int|10, qr.r).?(true: /Core/Int/Show%.Show(qr.r));
-    Format|'0%s'[/Core/Int/Show%.Show(qr.r)];
+    Ge(Int|10, qr.r).?(true: /Std/Int/Show%.Show(qr.r));
+    Format|'0%s'[/Std/Int/Show%.Show(qr.r)];
   };
-  Format|'%s.%s%%'[/Core/Int/Show%.Show(qr.q), fraction];
+  Format|'%s.%s%%'[/Std/Int/Show%.Show(qr.q), fraction];
 };
 
 Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, List@<String@> argv) {
@@ -169,8 +169,8 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       Output@ name = { 
         mname.?(just: /Std/Char/Output%.String(mname.just.name));
         Unit@ _ = /Core/Debug%.TraceLn(
-          ToString(Format|'block %s not found'[/Core/Int/Show%.Show(block)]));
-        Format|'??%s??'[/Core/Int/Show%.Show(block)];
+          ToString(Format|'block %s not found'[/Std/Int/Show%.Show(block)]));
+        Format|'??%s??'[/Std/Int/Show%.Show(block)];
       };
       Unit@ _ <- m.do(O.Show(out, name));
       seq.items.tail.?(empty: m.return(Unit));
@@ -184,7 +184,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       seq.?(empty: m.return(Unit));
 
       BlockId@ block = seq.items.head;
-      Output@ name = /Core/Int/Show%.Show(block);
+      Output@ name = /Std/Int/Show%.Show(block);
       Unit@ _ <- m.do(O.Show(out, name));
       seq.items.tail.?(empty: m.return(Unit));
 
@@ -197,7 +197,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       Unit@ _ <- m.do(O.Show(out,
           Format|'<tr><td>%s</td><td>%s</td><td><a href="/seq/'[
             Percent(entry.value, total),
-            /Core/Int/Show%.Show(entry.value)]));
+            /Std/Int/Show%.Show(entry.value)]));
       Unit@ _ <- m.do(SeqBlocks(link(entry.seq)));
       Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
       Unit@ _ <- m.do(SeqNames(entry.seq));
@@ -260,7 +260,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   Unit@ _ <- m.do(O.ShowLine(stdio.out,
     Format|'serving at http://%s:%s'[
       /Std/Char/Output%.String(args.hostname),
-      /Core/Int/Show%.Show(args.port)
+      /Std/Int/Show%.Show(args.port)
   ]));
 
   Profile@ profile = parsed.ok;
@@ -270,8 +270,8 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     Int@ total = Total.Total(profile);
     Unit@ _ <- m.do(O.PutLine(out, Str|'<h1>Overview</h1>'));
     Unit@ _ <- m.do(O.PutLine(out, Concat[Str|'Profile: ', args.file, Str|'<br />']));
-    Unit@ _ <- m.do(O.ShowLine(out, Format|'Samples: %s<br />'[/Core/Int/Show%.Show(total)]));
-    O.ShowLine(out, Format|'Sequences: %s<br />'[/Core/Int/Show%.Show(Length(profile.samples))]);
+    Unit@ _ <- m.do(O.ShowLine(out, Format|'Samples: %s<br />'[/Std/Int/Show%.Show(total)]));
+    O.ShowLine(out, Format|'Sequences: %s<br />'[/Std/Int/Show%.Show(Length(profile.samples))]);
   };
 
   (OStream@<M@>) { M@<Unit@>; }

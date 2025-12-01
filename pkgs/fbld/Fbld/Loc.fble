@@ -33,8 +33,8 @@ Int@ 1 = Int|1;
 (Loc@, Output@) { Output@; } Report = (Loc@ l, Output@ msg) {
   Format|'%s:%s:%s: %s'[
     /Std/Char/Output%.String(l.file),
-    /Core/Int/Show%.Show(l.line),
-    /Core/Int/Show%.Show(l.col),
+    /Std/Int/Show%.Show(l.line),
+    /Std/Int/Show%.Show(l.col),
     msg];
 };
 
