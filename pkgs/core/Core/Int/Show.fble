@@ -2,17 +2,28 @@
 @ Char@ = /Std/Char%.Char@;
 % Char = /Std/Char/Ascii%.Char;
 
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% Do = /Std/Char/Output%.Do;
+<@>% Return = /Std/Char/Output%.Return;
+
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
 % Neg = /Std/Int%.Neg;
 % Mul = /Std/Int%.Mul;
+% Eq = /Std/Int/Eq%.Eq;
 % Int = /Std/Int/Lit%.Int;
+% Sgn = /Std/Int/Sign%.Sgn;
+
+@ QR@ = /Std/Int/Div%.QR@;
+% Div = /Std/Int/Div%.Div;
 
 <@>@ Show@ = /Std/Show%.Show@;
 
 @ String@ = /Std/String%.String@;
 % Format = /Std/Char/Ascii/Output%.Format;
 % String = /Std/Char/Ascii/Output%.String;
+
+@ Unit@ = /Std/Unit%.Unit@;
 
 (String@) { Int@; } Read = {
   (Char@) { Int@; } Digit = (Char@ c) {
@@ -43,11 +54,33 @@
   };
 };
 
+# Show an int value in the range [0-9].
+Show@<Int@> Digit = (Int@ x) {
+  Eq(x, Int|0).?(true: String|0);
+  Eq(x, Int|1).?(true: String|1);
+  Eq(x, Int|2).?(true: String|2);
+  Eq(x, Int|3).?(true: String|3);
+  Eq(x, Int|4).?(true: String|4);
+  Eq(x, Int|5).?(true: String|5);
+  Eq(x, Int|6).?(true: String|6);
+  Eq(x, Int|7).?(true: String|7);
+  Eq(x, Int|8).?(true: String|8);
+  Eq(x, Int|9).?(true: String|9);
+  /Std/Undef%.Undef.undef<Output@>;
+};
+
+# Show a positive integer.
+Show@<Int@> Positive = (Int@ x) {
+  QR@ qr = Div(x, Int|10);
+  Unit@ _ <- Do(qr.q.?(0: Return, : Positive(qr.q)));
+  Digit(qr.r);
+};
+
 Show@<Int@> Show = (Int@ x) {
-  x.?(
-    n: Format|'-%s'[/Core/Int/IntP/Show%.Show(x.n)],
-    0: String|0,
-    p: /Core/Int/IntP/Show%.Show(x.p));
+  Sgn(x).?(
+    '-': Format|'-%s'[Positive(Neg(x))],
+    '0': String|0,
+    '+': Positive(x));
 };
 
 @(Read, Show);

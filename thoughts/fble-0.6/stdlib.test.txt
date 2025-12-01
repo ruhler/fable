@@ -23,3 +23,414 @@ a test?
 Let's compare to some existing test frameworks. Java and python are probably
 good candidates.
 
+junit features:
+* Annotate a method with @Test to mark it as a test case.
+  - Reuses the name of the method as the test name.
+  - The method takes no arguments.
+* Other annotations supported:
+  - @ParameterizedTest, @RepeatedTest, @TestFactory, etc.
+  - All these things seem like things that normal functions could describe
+    just find for us.
+* Ability to annotate test as fast or slow.
+* A test suite is a class that contains test methods.
+* Option to give display names associated with tests.
+* Assertions:
+  - There are a bunch.
+  - assertEquals, fail, assertZero, assertThrows, assertDoesNotThrow,
+    assertTrue, assertFalse
+  - Including assertions for things like timeout.
+* Assumptions.
+  - Mark a test as aborted instead of failed.
+* Tests can be disabled or conditionally executed.
+* Tests run in a particular order (not the order listed).
+* And on and on.
+
+The junit approach seems excessively complicated. I have language features to
+support these kind of things. No need for special magic annotations and such.
+
+How do I feel about giving an explicit test name and Unit@ function for the
+test method?
+
+It hasn't been a big problem for me so far. But it would be much nicer if vim
+could jump write to the test that failed. If we could somehow magically get
+the file and line number of the test case, that would be amazing for practical
+use.
+
+My typical test case looks like:
+
+    Test(Str|Yes, (Unit@ _) {
+      Bool@ wnt = True;
+      Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'hello');
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    })
+
+Honestly? I think this is fine. Explicit name. Give it a function.
+You could also write this as:
+
+  {
+    Unit@ _ <- Test(Str|Yes);
+    Bool@ wnt = True;
+    Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'hello');
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }
+
+But that's not any more convenient. Is there any nicer way to force that the
+test code doesn't run until we are ready? Something like:
+
+ Test(Str|Yes, {
+   TC@ tc <- Test;
+   Bool@ wnt = True;
+   Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'hello');
+   tc.AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+ });
+
+No. That seems silly.
+
+Or change Assert to take functions to the arguments?
+
+Could we write test functions instead?
+
+Test@ Yes = (Unit@ _) {
+  Bool@ wnt = True;
+  Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'hello');
+  AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+};
+  
+But now we don't have a test name, and we have to put it in a separate list of
+tests:
+
+Test@ Tests = List[
+  No,
+  Yes,
+  ...
+];
+
+We could add magic syntax for putting an expression behind a (Unit@ _)
+function?
+
+    Test(Str|Yes, ${
+      Bool@ wnt = True;
+      Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'hello');
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    })
+
+That just feels needlessly obscure though.
+
+Really, this need to put everything behind (Unit@ _) is the most tedious part
+of writing tests. And coming up with names. You have to come up with names in
+junit too.
+
+Should I put tests into a monad? Would that help with anything?
+
+TestFunc@ = <<@>@ M@>(Monad@<M@>) { M@<TestResult@>; };
+
+But I don't think that really helps with anything? Unless it gives us a way to
+build up a sequence of tests in a single big block?
+
+Test@ tests = Suite(Str|'Eq', {
+  Unit@ _ <- Test(Str|'Yes');
+  Bool@ wnt = True;
+  Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'hello');
+  Unit@ _ <- AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+
+  Unit@ _ <- Test(Str|'No');
+  ...
+
+});
+
+No. That doesn't look right either. Maybe:
+
+Test@ tests = Suite(Str|'Eq', (TestRunner@ t) {
+  Unit@ _ <- t.test(Str|'Yes') {
+    Bool@ wnt = True;
+    Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'hello');
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  };
+
+  Unit@ _ <- t.test(Str|'No') {
+    ...
+  };
+
+  t.end;
+});
+
+Compared to:
+
+Test@ tests = Suite(Str|'Eq', List[
+  Test(Str|'Yes', (Unit@ _) {
+    Bool@ wnt = True;
+    Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'hello');
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'No', (Unit@ _) {
+    ...
+  })
+});
+
+Any way I can clean up integer tests? What I have now:
+
+Test@ Tests = TestSuite(Str|Int, List[
+  T(Str|Eq_0_0, (Unit@ _ ) { Eq(0, 0); }),
+  F(Str|Eq_0_1, (Unit@ _ ) { Eq(0, 1); }),
+  T(Str|Eq_4_4, (Unit@ _ ) { Eq(4, 4); }),
+  T(Str|Eq_5_5, (Unit@ _ ) { Eq(5, 5); }),
+  F(Str|Eq_4_5, (Unit@ _ ) { Eq(4, 5); }),
+  F(Str|Eq_5_m5, (Unit@ _) { Eq(5, Neg(5)); }),
+  T(Str|Eq_m1_m1, (Unit@ _) { Eq(Neg(5), Neg(5)); }),
+  ...
+
+What I would love to be able to write:
+
+Test@ Tests = TestSuite(Str|Int, List[
+  AssertTrue(Eq(0, 0)),
+  AssertFalse(Eq(0, 1)),
+  ...
+
+But that ends up doing the Eq eagerly. Now, performance isn't an issue here.
+But if there is a crash, I want to know what test is crashing. Hmm... Don't we
+get stack traces on crashes now though? So that shouldn't be an issue anymore,
+right?
+
+But we really want the crash as an output of the test, not interrupting all
+the different tests? That doesn't make a difference here. Putting behind a
+Unit@ doesn't help.
+
+In other words, the only thing putting behind (Unit@) helps with is if the
+test hangs or is really slow. Then we can see which test is hanging or very
+slow. It doesn't help with crashes. Uh... actually, if you have a bunch of
+tests, (Unit@) is really important to be able to watch test progress.
+Otherwise it will be entirely silent as it forms the list of tests and runs
+everything, then output the results all at once.
+
+What if instead of having a list of test results, we had a monad that we could
+put test failures into? We'll want to see the test name somewhere too. Hmm...
+
+  Bool@ wnt = True;
+  Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'hello');
+  Unit@ _ <- t.do(AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got));
+
+  Bool@ wnt = False;
+  Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'xello');
+  Unit@ _ <- t.do(AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got));
+
+How do we name the tests?
+
+  Test@ yes <- t.test(Str|'Yes'); # double naming, that's annoying.
+  Bool@ wnt = True;
+  Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'hello');
+  Unit@ _ <- yes(AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got));
+
+  Unit@ _ <- Test(Str|'Yes');
+  Bool@ wnt = False;
+  Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'xello');
+  AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+
+No. I think what I have now is fine in terms of syntax.
+
+The real big issues with my current approach are:
+* How to prevent a crash from interrupting subsequent tests.
+* It would be nice to point directly to file and line of a failing test.
+
+If we had a way to collect a crash, report it, and continue, that would give a
+nice way to point directly to the file and line of a failing test? It's in the
+stack trace somewhere?
+
+---
+
+I can imagine a world where we need language support for dealing with
+untrusted code. Untrusted code could crash, it could take too much wall time,
+too much cpu time, too much memory. Code under test is untested code. An OS
+will run app code, which is untrusted code. If we have some language feature
+to deal with untrusted code, that would be useful here.
+
+To be really useful, we would want some way to get access to the stack trace
+associated with the failing code. Maybe there is a timeout, cpu, or memory
+quota that results in a stack trace. Then we can run code and get the stack
+trace in case of failure. Then we could report that stack trace as part of the
+test failure.
+
+But I don't have such a feature today. Should I add one? What would it look
+like? Are there performance implications for supporting such a feature? How
+about obfuscation implications? Like, doesn't that give too much information
+about the untrusted code? You could enumerate the whole call hierarchy if you
+wanted.
+
+Or, we could say you get the call stack only if there is debug symbols. But
+that doesn't help for running a test suite with no debug symbols. Could we
+rely on that? Or maybe, for tests that fail without debug symbols, we just say
+the test crashed, and if you want to debug it, run it with debugging?
+
+In practice, having stack traces without having to rerun something under a
+debugger is hugely valuable.
+
+I have an Output@ type now. I could imagine a set of functions:
+
+  <@>@ Result@ = <@ T@> { +(T@ result, Output@ error); };
+  <@ A@, @ B@>((A@) { B@; }, A@) { Result@<B@>; } Try;
+  (Int@)<@ A@, @ B@>((A@) { B@; }, A@) { B@; } Timeout;
+
+Where Timeout takes a wall clock time, or a cpu time, or a memory use, it runs
+the function, but crashes if the function doesn't finish in time.
+
+These don't feel like deterministic functions though, do they? Should they be?
+Should it be done in some IO monad?
+
+Crashes should be deterministic. Resource usage not, but it could be if we do
+it on instruction counts and allocation counts maybe. As long as it isn't
+influenced by GC. Maybe timeout can be used with whatever deterministic
+profiler we have?
+
+Anyway, 'Try' function is all I would need to start for a test framework. Run
+each test under Try, catch the error message, go from there.
+
+But the error message is going to be a crash, not a user provided error
+message. Which means its use is a generalization, not a replacement, for my
+proposed approach. We shouldn't be relying on this for test.
+
+All of which leads me to:
+* For now, let's just stick with the current testing approach.
+* In the future, if need be, we can add support for a 'Try' function to make
+  testing a little more useful.
+
+Other questions for defining tests:
+* Should tests run in IO monad? No. I think definitely not. Generalize the
+  things you want to test so we can run them purely. It's just that super big
+  input test case where that doesn't work well, because we would need big pure
+  data.
+
+In summary, for defining tests:
+* Stick with what we have today.
+* We don't get nice error: messages that bring you right to the test case. Oh
+  well.
+* Buggy code under test brings down the entire test infra. Oh well.
+* You have to remember to put code under test behind a function. Oh well.
+
+It's too bad it doesn't compose well. Like, you can't compose buggy code with
+working code to get working code. As soon as something is buggy, you lose it
+all.
+
+Could we compromise? How about a 'Try' function that takes a default value and
+returns that? We could run all our tests under:
+
+  Try(Fail(Str|'crashed'), test.run, Unit);
+
+No need to worry about capturing stack traces. The user could go back and run
+it under a debugger... Ugh.
+
+Maybe put Try under a /Debug% module, have it output the stack trace in debug
+when it runs?
+
+I suppose today my unwinding implementation prints the crash to stderr as it
+unwinds. It doesn't collect it anywhere. Presumably that would need to change
+if we wanted something like 'Try' to be implemented for legitimate use cases.
+
+---
+
+Python unittest framework:
+* Inspired by junit
+* You define methods, prefixed with test_ that call assertions.
+* It has a test runner.
+* Nice and simple. I like that.
+* You can select specific tests to run.
+* Annotations for skipping tests.
+
+What would I need for fble test framework to be perfect?
+* Ability to catch and report exceptions as part of test by test runner
+  choice.
+* Automatic report of test error by test location in the source code.
+
+One thing that's tricky in fble is that arbitrary code can be run when loading
+a module. We need to be careful that the arbitrary code that runs when loading
+a module is trusted.
+
+If only we had exceptions? Exceptions would give us:
+* A way to return a user defined error message with the stack trace.
+* Official way to get file and line info.
+
+I worry in a vague way that there could be significant performance
+implications of having to keep around all the info needed for exceptions
+though. I really wish that info could be stripped from the executable.
+
+Sample error message we get today on crash:
+
+  ./pkgs/core/Std/List/Sort.fble:19:18: error: union field access undefined:
+  wrong tag
+  ./pkgs/core/Std/List/Sort.fble:33:32: error: callee aborted
+  ./pkgs/core/Std/List/Sort.fble:33:32: error: callee aborted
+  ./pkgs/core/Std/List/Sort.fble:33:32: error: callee aborted
+  ./pkgs/core/Std/List/Sort.fble:33:32: error: callee aborted
+  ./pkgs/core/Core/List/Tests.fble:102:24: error: callee aborted
+  ./pkgs/core/Core/Test/Run.fble:37:28: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+  ./pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+
+Notice we don't get any function names or field names. But we do get enough
+info to debug assuming you have access to the code. Except, the stack trace in
+monad is a bit annoying and probably not terribly useful.
+
+I would say:
+* Without the full stack trace, just knowing there was some crash isn't
+  terribly useful. We would have to use a debugger for that.
+* Wouldn't it be nice to show the test name in the error message?
+* The code that could crash is likely not to be the test code itself, so we
+  don't want to have to annotate it specially just to give useful info at test
+  time.
+
+It seems like a real shame if the best way to implement a unit test framework
+in fble is to run each test in its own process. That could give us exactly the
+info we want. That relies on OS support for handling untrusted code in a
+reasonable way. And on implementation details of the fble implementation for
+printing any stack trace at all.
+
+If we're okay with a test crash messing up all subsequent tests, how about
+being okay with a slow test messing up all subsequent tests, and then just
+print the test results directly rather than doing some incremental runner
+thing? The problem is, today I rely on the incremental test output and the
+stack traces to make a test failure actionable. I rely on this implicit
+implementation specific behavior of printing stack traces to make the unit
+test infrastructure useful. That seems like a bad plan.
+
+The compiler knows code locations. It could insert them automatically into the
+code with suitable language construct. The implementation knows how to unwind.
+It could do that in a supported way to get reasonable error messages. Right?
+
+How might a world look if I had those things?
+* No need for a test name, if we have the location to the test?
+ - But then, programmatic generation of tests becomes limited.
+
+Exceptions can be super slow as long as:
+* They really are exceptions to the rule. They should not be used for normal
+  control flow. Use in test frameworks is a stretch: that definitely counts as
+  'use for normal control flow' in my book, but maybe it's okay because we
+  don't expect it to be used for high performance code?
+* They don't cost anything when they aren't taken.
+
+What if we made exceptions optional, but well defined? Then we say you should
+run your tests with exceptions enabled, then you'll get useful info. But
+normally your code will run without exceptions enabled? Sounds risky. Sounds
+sketch. You don't want there to be a difference in behavior of your code with
+or without exceptions enabled.
+
+How far could we get with a default valued Try block? It doesn't collect stack
+traces, but maybe we provide a flag to the implementation to show stack traces
+anyway? I keep using custom names for test cases. What does this get me?
+* Weird behavior for reporting a stack trace that could be caught.
+* Still no direct path from error message to source code location of test.
+
+Random side question: the debug info has function names right? Why don't we
+print those along with the stack traces? I bet I could.
+
