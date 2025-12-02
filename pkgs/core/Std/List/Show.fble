@@ -1,0 +1,50 @@
+# @module[/Std/List/Show%]
+#  The Show@ instance for List@.
+
+% String = /Std/Char/Ascii/Output%.String;
+% Format = /Std/Char/Ascii/Output%.Format;
+
+<@>@ List@ = /Std/List%.List@;
+
+<@>@ Show@ = /Std/Show%.Show@;
+% Do = /Std/Char/Output%.Do;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+# Tail --
+#   Shows the tail part of a list.
+#
+# Type Parameters:
+#   T@ - The type of elements on the list.
+#
+# Arguments:
+#   show - How to show an element of the list.
+#   list - The list to show.
+#
+# Returns:
+#   A string representation of the tail of the list. For example, the list 
+#   [1, 2, 3] is shown as ", 1, 2, 3]"
+<@ T@>(Show@<T@>) { Show@<List@<T@>>; }
+Tail = <@ T@>(Show@<T@> show, List@<T@> list) {
+  list.?(empty: String|']');
+  Unit@ _ <- Do(Format|', %s'[show(list.items.head)]);
+  Tail(show, list.items.tail);
+};
+
+# @func[Show] Show a List@ value.
+#  For example:
+#
+#  @code[fble] @
+#   /Std/List/Show%.Show(/Std/Bool/Show%.Show, List[True, False, False]);
+#
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Show@<T@>][show] How to show an element of the list.
+#  @arg[List@<T@>][list] The list to show.
+#  @returns[Output@] Output that shows the contents of the list.
+<@ T@>(Show@<T@>) { Show@<List@<T@>>; }
+Show = <@ T@>(Show@<T@> show, List@<T@> list) {
+  list.?(empty: String|'[]');
+  Format|'[%s%s'[show(list.items.head), Tail(show, list.items.tail)];
+};
+
+@(Show);

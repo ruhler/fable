@@ -128,7 +128,7 @@ Test@ Tests = TestSuite(Str|Set, List[
     List@<Bit2@> got = ForEach(set, /Std/List%.Empty<Bit2@>, Items<Bit2@>);
     AssertEquals<List@<Bit2@>>(
       /Std/List/Eq%.Eq(EqBit2),
-      /Core/List/Show%.Show(ShowBit2),
+      /Std/List/Show%.Show(ShowBit2),
       wnt, got);
   }),
 

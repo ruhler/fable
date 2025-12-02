@@ -168,7 +168,7 @@ Test@ Tests = TestSuite(Str|Search, List[
     List@<List@<T@>> got = Split(list, sep);
     AssertEquals(
       /Std/List/Eq%.Eq(/Std/List/Eq%.Eq(eq)),
-      /Core/List/Show%.Show(/Core/List/Show%.Show(show)),
+      /Std/List/Show%.Show(/Std/List/Show%.Show(show)),
       want, got);
   })
 ]);

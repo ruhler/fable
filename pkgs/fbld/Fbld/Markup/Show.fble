@@ -13,7 +13,7 @@
 Show@<Command@> Command = (Command@ x) {
   Format|'%s%s'[
     /Fbld/Text/Show%.Show(x.name),
-    /Core/List/Show%.Show(Markup, x.args)
+    /Std/List/Show%.Show(Markup, x.args)
   ];
 },
 

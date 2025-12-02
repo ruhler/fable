@@ -65,6 +65,6 @@ Show@<Elem@> ElemShow = (Elem@ e) {
 };
 
 Eq@<List@<Elem@>> Eq = /Std/List/Eq%.Eq<Elem@>(ElemEq);
-Show@<List@<Elem@>> Show = /Core/List/Show%.Show<Elem@>(ElemShow);
+Show@<List@<Elem@>> Show = /Std/List/Show%.Show<Elem@>(ElemShow);
 
 @(Elem@, EL, Eq, Show, Elems, ElemCmp, ElemEq, ElemGe, ElemShow);

@@ -13,6 +13,6 @@ Show@<Entry@> Entry = (Entry@ x) {
   ];
 };
 
-Show@<Table@> Table = /Core/List/Show%.Show(Entry);
+Show@<Table@> Table = /Std/List/Show%.Show(Entry);
 
 @(Entry, Table);

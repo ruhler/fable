@@ -29,7 +29,7 @@ String@ output = Lines[
   Concat[Str|'A boolean: ', ToString(/Std/Bool/Show%.Show(True))],
   Concat[Str|'A character: ', ToString(/Core/Char/Show%.Show(c))],
   Concat[Str|'A list: ',
-    ToString(/Core/List/Show%.Show(/Std/Bool/Show%.Show)[True, False, False])],
+    ToString(/Std/List/Show%.Show(/Std/Bool/Show%.Show)[True, False, False])],
   Concat[Str|'An integer: ', ToString(/Std/Int/Show%.Show(x))]];
 
 # Call the helper function for a main function

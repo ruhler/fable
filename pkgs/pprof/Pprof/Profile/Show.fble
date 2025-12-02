@@ -24,9 +24,9 @@ Show@<Block@> Block = (Block@ x) {
 Show@<Blocks@> Blocks = /Core/Map/Show%.Show(
   /Pprof/Profile%.Blocks, /Std/Int/Show%.Show, Block);
 
-Show@<Sequence@> Sequence = /Core/List/Show%.Show(BlockId);
+Show@<Sequence@> Sequence = /Std/List/Show%.Show(BlockId);
 
-Show@<Metrics@> Metrics = /Core/List/Show%.Show(/Std/Int/Show%.Show);
+Show@<Metrics@> Metrics = /Std/List/Show%.Show(/Std/Int/Show%.Show);
 
 Show@<Sample@> Sample = (Sample@ x) {
   Format|'(%s, %s)'[Sequence(x.sequence), Metrics(x.values)];
@@ -34,9 +34,9 @@ Show@<Sample@> Sample = (Sample@ x) {
 
 Show@<Profile@> Profile = (Profile@ x) {
   Format|'(%s, %s, %s)'[
-    /Core/List/Show%.Show(/Core/String/Show%.Show, x.metrics),
+    /Std/List/Show%.Show(/Core/String/Show%.Show, x.metrics),
     Blocks(x.blocks),
-    /Core/List/Show%.Show(Sample, x.samples)
+    /Std/List/Show%.Show(Sample, x.samples)
   ];
 };
 

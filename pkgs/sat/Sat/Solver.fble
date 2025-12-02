@@ -314,7 +314,7 @@ RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
     Format|'%s%s'[v.pos.?(true: String|'+', false: String|'-'), Id(v.id)];
   };
 
-  Show@<Clause@> Clause = /Core/List/Show%.Show(Var);
+  Show@<Clause@> Clause = /Std/List/Show%.Show(Var);
 
   Show@<Why@> Why = (Why@ w) {
     w.?(pure: String|'pure');
@@ -325,7 +325,7 @@ RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
     Format|'Assign %s (%s)'[Var(op.var), Why(op.why)];
   };
 
-  Show@<List@<Assign@>> Todo = /Core/List/Show%.Show(Assign);
+  Show@<List@<Assign@>> Todo = /Std/List/Show%.Show(Assign);
 
   Show@<Conflict@> Conflict = (Conflict@ c) {
     Format|'Conflict %s, %s on %s'[Id(c.a), Id(c.b), Id(c.var)];

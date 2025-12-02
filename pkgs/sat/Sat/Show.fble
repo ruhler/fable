@@ -19,15 +19,15 @@ Show@<Var@> ShowVar = (Var@ v) {
   Format|'%s%s'[v.pos.?(true: String|'+', false: String|'-'), ShowId(v.id)];
 };
 
-Show@<Clause@> ShowClause = /Core/List/Show%.Show(ShowVar);
-Show@<Formula@> ShowFormula = /Core/List/Show%.Show(ShowClause);
+Show@<Clause@> ShowClause = /Std/List/Show%.Show(ShowVar);
+Show@<Formula@> ShowFormula = /Std/List/Show%.Show(ShowClause);
 
 Show@<Parse@<Formula@>> ShowParsedFormula = (Parse@<Formula@> x) {
   x.?(error: /Std/Char/Output%.String(x.error));
   ShowFormula(x.parsed);
 };
 
-Show@<Assignment@> ShowAssignment = /Core/List/Show%.Show(ShowVar);
+Show@<Assignment@> ShowAssignment = /Std/List/Show%.Show(ShowVar);
 
 Show@<Result@> ShowResult = (Result@ a) {
   a.?(unsat: String|'unsat');
