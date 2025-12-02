@@ -37,12 +37,15 @@
 % Affine = /App/Drawing%.Affine;
 % Drawings = /App/Drawing%.Drawings;
 % Rect = /App/Drawing%.Rect;
+% Translate = /App/Drawing%.Translate;
 
+% Model = /Computrainer/Model%;
 @ Model@ = /Computrainer/Model%.Model@;
 % Tick = /Computrainer/Model%.Tick;
 % DrawModel = /Computrainer/Graphics%.DrawModel;
 % Colors = /Computrainer/Graphics/Colors%;
 % W = /Computrainer/Graphics/Sprites%.W;
+% Sprites = /Computrainer/Graphics/Sprites%;
 % Sample = /Computrainer/Sample%.Sample;
 
 @ State@ = *(
@@ -56,6 +59,32 @@
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
+  Drawing@ Menu = {
+      Int@ scale = Int|8;
+      Int@ menu_height = Add(Mul(scale, W), Int|8);
+      Drawing@ background = Rect(Int|0, Sub(height, menu_height), width, menu_height, Colors.Background);
+      Drawing@ gates = Drawings[
+          Translate(Mul(Int|0, W), Int|0, Sprites.Gate(Model.Rail.Right)),
+          Translate(Mul(Int|1, W), Int|0, Sprites.Gate(Model.Dup(Model.Right, Model.Down))),
+          Translate(Mul(Int|2, W), Int|0, Sprites.Gate(Model.Sink)),
+          Translate(Mul(Int|3, W), Int|0, Sprites.Gate(Model.Source.Right)),
+          Translate(Mul(Int|4, W), Int|0, Sprites.Gate(Model.Zero.Right)),
+          Translate(Mul(Int|5, W), Int|0, Sprites.Gate(Model.One.Right)),
+          Translate(Mul(Int|6, W), Int|0, Sprites.Gate(Model.Switch(Model.Up, Model.Right, Model.Down))),
+          Translate(Mul(Int|7, W), Int|0, Sprites.Gate(Model.Select)),
+          Translate(Mul(Int|9, W), Int|0, Sprites.Car(Model.C)),
+          Translate(Mul(Int|10, W), Int|0, Sprites.Car(Model.0)),
+          Translate(Mul(Int|11, W), Int|0, Sprites.Car(Model.1)),
+          Translate(Mul(Int|12, W), Int|0, Sprites.Car(Model.L)),
+          Translate(Mul(Int|13, W), Int|0, Sprites.Car(Model.S))
+      ];
+
+      Point@ a = @(x: scale, y: Neg(scale));
+      Point@ b = @(x: Int|4, y: Sub(height, Int|4));
+
+      Drawings[background, Affine(a, b, gates)];
+  };
+
   M@<Event@> FilterEvent = {
     Event@ e <- m.do(app.event);
     e.?(tick: m.return(e),
@@ -75,7 +104,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
     Drawing@ clear = Rect(Int|0, Int|0, width, height, Colors.Background);
     Drawing@ drawing = Affine(a, b, DrawModel(s.model));
     Drawing@ mouse = Rect(Sub(s.mouse_x, Int|2), Sub(s.mouse_y, Int|2), Int|4, Int|4, Colors.Mouse);
-    Unit@ _ <- m.do(app.effect(Effect@(draw: Drawings[clear, drawing, mouse])));
+    Unit@ _ <- m.do(app.effect(Effect@(draw: Drawings[clear, drawing, Menu, mouse])));
 
     Event@ e <- m.do(FilterEvent);
     e.?(tick: {
