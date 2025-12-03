@@ -1127,3 +1127,24 @@ Unless I want to implement Lines an Join first? Okay. Sure. Lines at least.
 Output@ and Show@ moved from /Core to /Std. I can start moving over
 Show implementations next.
 
+---
+
+Next things to move over: Show for Char and String. But how do I want to show
+them?
+
+For example:  'a' or a? "hello" or hello or 'hello'?
+
+Do I want to properly escape things? Like, 'don''t do that!' Maybe I want to
+make it look like a literal? S|'don''t do that!', C|'.'?
+
+It's supposed to be human readable, so probably just go with whatever is most
+human readable? Uh... quotes if we need it, but not if we don't? Backslash
+escapes for \' and \\? I suppose we could have Show and ShowE implementations
+for showing things, so the caller can pick?
+
+How about: show Char as a single element string. Show string as having single
+quotes around it, and any internal single quote is shown double quoted. That
+way you at least have an unambiguous interpretation of the output of show, and
+you can see that something is a character or string consistently and easily.
+Yes, let's go with that. And let's test that.
+

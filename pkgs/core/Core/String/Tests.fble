@@ -174,8 +174,14 @@ Test@ Tests = TestSuite(Str|String, List[
   ]),
 
   Test(Str|Show, (Unit@ _) {
-    String@ wnt = Str|'"hello"';
+    String@ wnt = Str|'''hello''';
     String@ got = ToString(/Core/String/Show%.Show(Str|hello));
+    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Show_quote, (Unit@ _) {
+    String@ wnt = StrE|'\qdon\q\qt\q';
+    String@ got = ToString(/Core/String/Show%.Show(StrE|'don\qt'));
     AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 

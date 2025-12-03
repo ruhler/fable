@@ -38,6 +38,7 @@ U = (HexLit@ hex) {
 #   \n - newline
 #   \r - carriage return
 #   \t - tab
+#   \q - single quote
 #   \v - vertical tab
 #   \u[hex]+; - unicode character
 # 
@@ -54,6 +55,7 @@ Escape = {
   Char@ f = U|66; Char@ ff = U|0C;
   Char@ n = U|6E; Char@ nl = U|0A;
   Char@ r = U|72; Char@ cr = U|0D;
+  Char@ q = U|71; Char@ quote = U|27;
   Char@ t = U|74; Char@ tab = U|09;
   Char@ u = U|75; Char@ semi = U|3B;
   Char@ v = U|76; Char@ vt = U|0B;
@@ -114,6 +116,7 @@ Escape = {
         /Std/Char/Eq%.Eq(b, e).?(true: bs);
         /Std/Char/Eq%.Eq(f, e).?(true: ff);
         /Std/Char/Eq%.Eq(n, e).?(true: nl);
+        /Std/Char/Eq%.Eq(q, e).?(true: quote);
         /Std/Char/Eq%.Eq(r, e).?(true: cr);
         /Std/Char/Eq%.Eq(t, e).?(true: tab);
         /Std/Char/Eq%.Eq(v, e).?(true: vt);

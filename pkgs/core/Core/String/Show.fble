@@ -1,14 +1,34 @@
 
+@ Char@ = /Std/Char%.Char@;
+% U = /Std/Char/Lit%.U;
+
+% Do = /Std/Char/Output%.Do;
+<@>% Return = /Std/Char/Output%.Return;
+% String = /Std/Char/Output%.String;
+
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
+
 <@>@ Show@ = /Std/Show%.Show@;
 @ String@ = /Std/String%.String@;
-% Format = /Std/Char/Ascii/Output%.Format;
-% String = /Std/Char/Output%.String;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+Char@ single_quote = U|27;
+
+Show@<String@> Chars = (String@ s) {
+  s.?(empty: Return);
+  Unit@ _ <- Do({
+    Char@ c = s.items.head;
+    /Std/Char/Eq%.Eq(c, single_quote).?(true: String[single_quote, single_quote]);
+    String[c];
+  });
+  Chars(s.items.tail);
+};
 
 # Show --
 #   Implementation of Show@ for String@. See documentation of /Show%.Show@.
 Show@<String@> Show = (String@ s) {
-  # TODO: Better handling of the case where the string itself contains quotes.
-  Format|'"%s"'[String(s)];
+  FormatE|'\q%s\q'[Chars(s)];
 };
 
 @(Show);

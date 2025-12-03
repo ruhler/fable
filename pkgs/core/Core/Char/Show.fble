@@ -2,12 +2,11 @@
 @ Char@ = /Std/Char%.Char@;
 
 <@>@ Show@ = /Std/Show%.Show@;
-% Put = /Std/Char/Output%.Put;
 
 # Show --
 #   Implementation of Show@ for Char@. See documentation of /Show%.Show@.
 Show@<Char@> Show = (Char@ x) {
-  Put(x);
+  /Core/String/Show%.Show[x];
 };
 
 @(Show);
