@@ -12,7 +12,7 @@
 @ Gate@ = /Computrainer/Model%.Gate@;
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Model@ = /Computrainer/Model%.Model@;
-@ S@ = /Computrainer/Model%.S@;
+@ State@ = /Computrainer/Model%.State@;
 
 Eq@<Dir@> Dir = (Dir@ a, Dir@ b) {
     a.?(up: b.?(up: True, : False),
@@ -54,13 +54,13 @@ Eq@<Car@> Car = (Car@ a, Car@ b) {
 Eq@<Cars@> Cars = /Computrainer/Grid/Eq%.Eq(Car);
 
 # TODO: Check for states?
-Eq@<S@> S = (S@ a, S@ b) {
+Eq@<State@> State = (State@ a, State@ b) {
     Cars(a.cars, b.cars);
 };
 
 Eq@<Model@> Model = (Model@ a, Model@ b) {
     Gates(a.gates, b.gates).?(false: False);
-    S(a.s, b.s).?(false: False);
+    State(a.s, b.s).?(false: False);
     True;
 };
 

@@ -12,7 +12,7 @@
 
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Model@ = /Computrainer/Model%.Model@;
-@ S@ = /Computrainer/Model%.S@;
+@ State@ = /Computrainer/Model%.State@;
 
 Show@<Coord@> Coord = (Coord@ x) {
     Format|'(%s, %s)'[/Core/Int/Show%.Show(x.x), /Core/Int/Show%.Show(x.y)];
@@ -24,7 +24,7 @@ Show@<Car@> Value = (Car@ v) {
 
 Show@<Cars@> Cars = /Core/Map/Show%.Show(Grid, Coord, Value);
 
-Show@<S@> S = (S@ a) {
+Show@<State@> State = (State@ a) {
     # TODO: Show state?
     Cars(a.cars);
 };
@@ -34,7 +34,7 @@ Show@<Gates@> Gates = (Gates@ _) {
 };
 
 Show@<Model@> Model = (Model@ m) {
-    Format|'Model(%s, %s)'[Gates(m.gates), S(m.s)];
+    Format|'Model(%s, %s)'[Gates(m.gates), State(m.s)];
 };
 
 @(Model, Cars);
