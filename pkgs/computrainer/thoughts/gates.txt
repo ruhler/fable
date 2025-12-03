@@ -1,0 +1,145 @@
+Gates
+=====
+
+I want to change the set of gates. What we have today:
+* none, rail, sink, source, zero, one, switch, select, dup
+
+Motivations for the change:
+* switch + select is awkward and unintuitive.
+* I think we can streamline things more.
+
+Proposal:
+1. none - still needed, mostly for compact representations of models in text form.
+You can't move a car into the gate. It otherwise don't do anything.
+
+2. rail - basic movement. Like today. Passive. You push cars through to the
+output direction.
+
+3. sink - removal of cars. Like today. All it does is get rid of the car on
+top of it, if any.
+
+4. source - a common gate for source, zero, one, parameterized by car type.
+If empty, it populates the gate with the car. Has a direction like a rail to
+push cars through. No synchronization, so if you have two back to back
+trains, you won't get the source gate's car added in between the trains. Use a
+'gate' gate if that's what you need.
+
+5. dup - duplication. As today. Entirely passive. You can push car through,
+you have to push out both outputs.
+
+6. switch - single gate where front of car controls which way the train goes
+If the front is 0, go to the 0 out. Otherwise go to the 1 out. Synchronization
+of some kind is needed to keep track of when to reset the current output
+direction (after the end of the train has gone through).
+
+7. gate - synchronization primitive - gate opens when the other side clears,
+closes after one train gets through. Otherwise has a direction you can push
+through.
+
+8. split - peel a single car off the front of a train.
+The car goes to its output, the rest of the train goes through. Needs state to
+track when the car ends and when the next train starts.
+
+How to make the equivalent of today's zero or one gate: put a source zero or
+source one after a gate gate.
+
+How to make an equivalent switch/select:
+
+* Split the select input, the train output goes to a sink, the head goes to
+  the data input track just after a gate gate.
+* Send input data through the gate gate, it picks up the head from select, go
+  through the new switch gate, then split the output to drop the head into a
+  sink and output the rest of the train.
+
+Is there some general way to think of gates / synchronization? Some common
+things we have to support:
+* output direction(s)
+* creation/removal of cars
+* aligment on train edge.
+
+It feels like that alignment on train edge is the hard thing. How does it
+work? Any common general way to think about it?
+
+Gates that need the state bit:
+* 'gate', 'switch', 'split'
+
+Is there any way I can get rid of it, or reformulate it? It would be pretty
+awesome if we didn't need to track the state.
+
+gate:
+* starts down. goes up when output dir gets occupied. Goes back down after
+  caboose leaves.
+
+switch:
+* starts 'down'. goes up when first car arrives to assign location. Goes back
+  down after caboose leaves.
+
+split:
+* starts 'down'. goes up when first car is split up. Goes back down after
+  caboose leaves.
+
+In all cases, the gate starts blocking the train based on some local event.
+Then you push the rest of the train through, then goes back to the other
+state.
+
+  idle/waiting -> busy/processing -> caboose -> idle/waiting
+
+Let me rename 'gate' gate to 'wait' gate.
+
+Oh, and maybe I want a 'stop' gate that accepts things, just stops it. That
+would be good for testing.
+
+Okay? Shall I rewrite all the gates, redo mvp1 network, and hope for the best?
+
+I also need graphics for all these. Maybe worth thinking about that. The
+tricky things to distinguish are:
+* dup vs split vs switch
+* sink vs stop
+* wait vs rail
+
+Switch can be distinguished by colors on outputs.
+
+How to do split versus dup? Split needs a way to distinguish between short vs.
+long output. Seems like keep dup the same. Come up with a decent way to draw
+split. Let's brainstorm.
+
+This isn't too bad maybe:
+
+   ###
+   # ##
+   # #
+
+It's like rail, but missing a joint where the split comes off. Kind of feels
+right. Let's go with that.
+    
+sink vs stop?
+
+  ###  # #  ###
+  # #       ###
+  ###  # #  ###
+
+I think keep 'sync' as is. Have 'stop' be just the 4 corners. Like a box you
+are going to hold stuff in.
+
+wait versus rail:
+
+  ###    ###
+  # ##   ####
+  ###    ###
+
+Sounds reasonable enough to me. Let's do it.
+
+Can we implement gates abstractly, so we don't need to list them all in
+advance? What does a gate need?
+1. A drawing.
+2. A GoGate activation function: (Coord@, S@) { S@; }
+3. A GoGate engine push function: (Coord@, Maybe@<Value@>, S@) { Maybe@<S@>; }
+  But somehow that needs access to the recursive 'GoAt' function. Maybe we can
+  pass that as an argument?
+
+@ Push@ = ((Coord@, S@) { Maybe@<S@>; }, Coord@, Maybe@<Value@>, S@) { Maybe@<S@>; }
+
+That's not hard. Let's try this then? It's a little sad we need to tie
+drawings to gates. I'd like to keep that separate if possible. Which means
+having a gate enum. So never mind.
+

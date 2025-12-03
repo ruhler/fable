@@ -4,7 +4,7 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
-@ Dir@ = /Computrainer/Model%.Dir@;
+@ Dir@ = /Computrainer/Dir%.Dir@;
 @ Cars@ = /Computrainer/Model%.Cars@;
 @ Gate@ = /Computrainer/Model%.Gate@;
 @ Gates@ = /Computrainer/Model%.Gates@;

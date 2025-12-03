@@ -6,13 +6,14 @@
 % Drawings = /App/Drawing%.Drawings;
 % Blank = /App/Drawing%.Blank;
 
-@ Dir@ = /Computrainer/Model%.Dir@;
 @ Gate@ = /Computrainer/Model%.Gate@;
 @ Value@ = /Computrainer/Model%.Value@;
-% Up = /Computrainer/Model%.Up;
-% Down = /Computrainer/Model%.Down;
-% Left = /Computrainer/Model%.Left;
-% Right = /Computrainer/Model%.Right;
+
+@ Dir@ = /Computrainer/Dir%.Dir@;
+% Up = /Computrainer/Dir%.Up;
+% Down = /Computrainer/Dir%.Down;
+% Left = /Computrainer/Dir%.Left;
+% Right = /Computrainer/Dir%.Right;
 
 % Colors = /Computrainer/Graphics/Colors%;
 % Shapes = /Computrainer/Graphics/Shapes%;

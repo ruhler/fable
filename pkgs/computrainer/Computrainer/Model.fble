@@ -4,10 +4,6 @@
 % False = /Std/Bool%.False;
 % Not = /Std/Bool%.Not;
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
-
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
@@ -23,11 +19,9 @@
 <@>@ Grid@ = /Computrainer/Grid%.Grid@;
 % Grid = /Computrainer/Grid%.Grid;
 
-@ Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
-Dir@ Left = Dir@(left: Unit);
-Dir@ Right = Dir@(right: Unit);
-Dir@ Up = Dir@(up: Unit);
-Dir@ Down = Dir@(down: Unit);
+% Dir = /Computrainer/Dir%;
+@ Dir@ = Dir.Dir@;
+% Dest = Dir.Dest;
 
 @ Switch@ = *(Dir@ s, Dir@ 0, Dir@ 1);
 @ Dup@ = *(Dir@ a, Dir@ b);
@@ -49,31 +43,31 @@ Gate@ Sink = Gate@(sink: Unit);
 Gate@ Select = Gate@(select: Unit);
 
 % Rail = @(
-    Left: Gate@(rail: Left),
-    Right: Gate@(rail: Right),
-    Up: Gate@(rail: Up),
-    Down: Gate@(rail: Down)
+    Left: Gate@(rail: Dir.Left),
+    Right: Gate@(rail: Dir.Right),
+    Up: Gate@(rail: Dir.Up),
+    Down: Gate@(rail: Dir.Down)
 );
 
 % Source = @(
-    Left: Gate@(source: Left),
-    Right: Gate@(source: Right),
-    Up: Gate@(source: Up),
-    Down: Gate@(source: Down)
+    Left: Gate@(source: Dir.Left),
+    Right: Gate@(source: Dir.Right),
+    Up: Gate@(source: Dir.Up),
+    Down: Gate@(source: Dir.Down)
 );
 
 % Zero = @(
-    Left: Gate@(zero: Left),
-    Right: Gate@(zero: Right),
-    Up: Gate@(zero: Up),
-    Down: Gate@(zero: Down)
+    Left: Gate@(zero: Dir.Left),
+    Right: Gate@(zero: Dir.Right),
+    Up: Gate@(zero: Dir.Up),
+    Down: Gate@(zero: Dir.Down)
 );
 
 % One = @(
-    Left: Gate@(one: Left),
-    Right: Gate@(one: Right),
-    Up: Gate@(one: Up),
-    Down: Gate@(one: Down)
+    Left: Gate@(one: Dir.Left),
+    Right: Gate@(one: Dir.Right),
+    Up: Gate@(one: Dir.Up),
+    Down: Gate@(one: Dir.Down)
 );
 
 # Create a switch gate.
@@ -102,13 +96,6 @@ Value@ L = Value@(L: Unit);
 @ Cars@ = Grid@<Value@>;
 @ S@ = *(Cars@ cars, Grid@<Unit@> busy);
 @ Model@ = *(Gates@ gates, S@ s);
-
-(Coord@, Dir@) { Coord@; }
-Dest = (Coord@ c, Dir@ d) {
-    Int@ nx = d.?(up: c.x, down: c.x, left: Decr(c.x), right: Incr(c.x));
-    Int@ ny = d.?(up: Incr(c.y), down: Decr(c.y), left: c.y, right: c.y);
-    Coord@(nx, ny);
-};
 
 (Coord@, S@) { S@; }
 RemoveCar = (Coord@ c, S@ s) {
@@ -409,7 +396,6 @@ Tick = (Model@ m) {
     m.@(s: GoGates(m.gates, GoEngines(m.gates, m.s, engines)));
 };
 
-@(Model@, Switch@, Dup@, Gate@, Gates@, Cars@, Dir@, Value@, S@, Tick, Model,
+@(Model@, Switch@, Dup@, Gate@, Gates@, Cars@, Value@, S@, Tick, Model,
    None, Sink, Rail, Source, One, Zero, Switch, Select, Dup,
-   Left, Right, Up, Down,
    0, 1, C, L, S);

@@ -34,9 +34,9 @@
 % Select = /Computrainer/Model%.Select;
 % Switch = /Computrainer/Model%.Switch;
 % Dup = /Computrainer/Model%.Dup;
-% Up = /Computrainer/Model%.Up;
-% Down = /Computrainer/Model%.Down;
-% Right = /Computrainer/Model%.Right;
+% Up = /Computrainer/Dir%.Up;
+% Down = /Computrainer/Dir%.Down;
+% Right = /Computrainer/Dir%.Right;
 
 (Int@, Model@) { Model@; }
 TickN = (Int@ n, Model@ m) {

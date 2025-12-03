@@ -9,7 +9,7 @@
 % Drawings = /App/Drawing%.Drawings;
 % Rect = /App/Drawing%.Rect;
 
-@ Dir@ = /Computrainer/Model%.Dir@;
+@ Dir@ = /Computrainer/Dir%.Dir@;
 
 @ Shape@ = (Color@) { Drawing@; };
 

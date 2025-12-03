@@ -1,0 +1,25 @@
+
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+@ Coord@ = /Computrainer/Grid%.Coord@;
+
+@ Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
+
+Dir@ Left = Dir@(left: Unit);
+Dir@ Right = Dir@(right: Unit);
+Dir@ Up = Dir@(up: Unit);
+Dir@ Down = Dir@(down: Unit);
+
+(Coord@, Dir@) { Coord@; }
+Dest = (Coord@ c, Dir@ d) {
+    Int@ nx = d.?(up: c.x, down: c.x, left: Decr(c.x), right: Incr(c.x));
+    Int@ ny = d.?(up: Incr(c.y), down: Decr(c.y), left: c.y, right: c.y);
+    Coord@(nx, ny);
+};
+
+@(Dir@, Left, Down, Up, Right, Dest);
