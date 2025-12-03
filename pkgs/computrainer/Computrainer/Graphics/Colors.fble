@@ -3,24 +3,20 @@
 
 @ Color@ = /App/Drawing%.Color@;
 
-@ Value@ = /Computrainer/Model%.Value@;
+@ Car@ = /Computrainer/Model%.Car@;
 
 Color@ Background = Color@(Int|13, Int|31, Int|45);
 Color@ Gate = Color@(Int|201, Int|203, Int|207);
 Color@ 0 = Color@(Int|255, Int|159, Int|28);
 Color@ 1 = Color@(Int|14, Int|173, Int|105);
 Color@ C = Color@(Int|208, Int|0, Int|0);
-
-# TODO: Pick colors that look decent for these.
-Color@ S = Color@(Int|24, Int|48, Int|89);
-Color@ L = Color@(Int|221, Int|110, Int|66);
 Color@ Mouse = Color@(Int|255, Int|255, Int|255);
 
-(Value@) { Color@; }
-Car = (Value@ v) {
-    v.?(C: C, 0: 0, 1: 1, S: S, L: L);
+(Car@) { Color@; }
+Car = (Car@ v) {
+    v.?(C: C, 0: 0, 1: 1);
 };
 
 
-@(C, 0, 1, S, L, Background, Mouse, Gate, Car);
+@(C, 0, 1, Background, Mouse, Gate, Car);
 

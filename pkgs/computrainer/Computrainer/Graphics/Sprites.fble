@@ -7,7 +7,7 @@
 % Blank = /App/Drawing%.Blank;
 
 @ Gate@ = /Computrainer/Model%.Gate@;
-@ Value@ = /Computrainer/Model%.Value@;
+@ Car@ = /Computrainer/Model%.Car@;
 
 @ Dir@ = /Computrainer/Dir%.Dir@;
 % Up = /Computrainer/Dir%.Up;
@@ -52,8 +52,8 @@ Gate = (Gate@ g) {
         ](Colors.Gate));
 };
 
-(Value@) { Drawing@; }
-Car = (Value@ v) {
+(Car@) { Drawing@; }
+Car = (Car@ v) {
     Shapes.Car(Colors.Car(v));
 };
 

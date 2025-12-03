@@ -21,7 +21,7 @@
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Cars@ = /Computrainer/Model%.Cars@;
 @ Model@ = /Computrainer/Model%.Model@;
-@ Value@ = /Computrainer/Model%.Value@;
+@ Car@ = /Computrainer/Model%.Car@;
 % Model = /Computrainer/Model%.Model;
 % Tick = /Computrainer/Model%.Tick;
 % C = /Computrainer/Model%.C;
@@ -79,7 +79,7 @@ Test@ Tests = TestSuite(Str|Computrainer, List[
    Gates@ gates = Entries[
        @(x: Int|3, y: Int|4, v: Source.Right)
    ];
-   Cars@ cars = Entries<Value@>[];
+   Cars@ cars = Entries<Car@>[];
    Model@ model = Model(gates, cars);
    Model@ wnt = Model(gates, Entries[
        @(x: Int|3, y: Int|4, v: C)

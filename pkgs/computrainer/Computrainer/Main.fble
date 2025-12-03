@@ -75,9 +75,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
           Translate(Mul(Int|7, W), Int|0, Sprites.Gate(Model.Select)),
           Translate(Mul(Int|9, W), Int|0, Sprites.Car(Model.C)),
           Translate(Mul(Int|10, W), Int|0, Sprites.Car(Model.0)),
-          Translate(Mul(Int|11, W), Int|0, Sprites.Car(Model.1)),
-          Translate(Mul(Int|12, W), Int|0, Sprites.Car(Model.L)),
-          Translate(Mul(Int|13, W), Int|0, Sprites.Car(Model.S))
+          Translate(Mul(Int|11, W), Int|0, Sprites.Car(Model.1))
       ];
 
       Point@ a = @(x: scale, y: Neg(scale));
