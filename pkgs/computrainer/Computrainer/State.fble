@@ -1,0 +1,68 @@
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+% Not = /Std/Bool%.Not;
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+@ Coord@ = /Computrainer/Grid%.Coord@;
+<@>@ Grid@ = /Computrainer/Grid%.Grid@;
+% Grid = /Computrainer/Grid%.Grid;
+
+% Cars = /Computrainer/Car%;
+@ Car@ = Cars.Car@;
+@ Cars@ = Cars.Cars@;
+
+# State is made up of cars and the set of gates that are currently 'busy'.
+@ State@ = *(Cars@ cars, Grid@<Unit@> busy);
+
+(Coord@, State@) { State@; }
+RemoveCar = (Coord@ c, State@ s) {
+    s.@(cars: Grid.Delete(s.cars, c));
+};
+
+(Coord@, Car@, State@) { State@; }
+AddCar = (Coord@ c, Car@ v, State@ s) {
+    Cars@ cars = Grid.Insert(s.cars, c, v);
+    s.@(cars);
+};
+
+(Coord@, Coord@, Car@, State@) { State@; }
+MoveCar = (Coord@ src, Coord@ dest, Car@ v, State@ s) {
+    Cars@ removed = Grid.Delete(s.cars, src);
+    Cars@ cars = Grid.Insert(removed, dest, v);
+    s.@(cars);
+};
+
+(Coord@, Coord@, Coord@, Car@, State@) { State@; }
+DupCar = (Coord@ src, Coord@ dest1, Coord@ dest2, Car@ v, State@ s) {
+    AddCar(dest2, v, MoveCar(src, dest1, v, s));
+};
+
+# Check if the gate at the given location is active.
+(Coord@, State@) { Bool@; }
+IsBusy = (Coord@ c, State@ s) {
+    Grid.Lookup(s.busy, c).?(just: True, nothing: False);
+};
+
+# Check if the gate at the given location is idle.
+(Coord@, State@) { Bool@; }
+IsIdle = (Coord@ c, State@ s) {
+    Not(IsBusy(c, s));
+};
+
+(Coord@, State@) { State@; }
+ClearBusy = (Coord@ c, State@ s) {
+    s.@(busy: Grid.Delete(s.busy, c));
+};
+
+(Coord@, State@) { State@; }
+SetBusy = (Coord@ c, State@ s) {
+    s.@(busy: Grid.Insert(s.busy, c, Unit));
+};
+
+@(State@, 
+  RemoveCar, AddCar, MoveCar, DupCar,
+  IsBusy, IsIdle, ClearBusy, SetBusy);
