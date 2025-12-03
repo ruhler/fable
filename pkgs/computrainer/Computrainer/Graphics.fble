@@ -13,7 +13,7 @@
 
 @ Gate@ = /Computrainer/Model%.Gate@;
 @ Model@ = /Computrainer/Model%.Model@;
-@ Car@ = /Computrainer/Model%.Car@;
+@ Car@ = /Computrainer/Car%.Car@;
 
 % W = /Computrainer/Graphics/Sprites%.W;
 % Sprites = /Computrainer/Graphics/Sprites%;

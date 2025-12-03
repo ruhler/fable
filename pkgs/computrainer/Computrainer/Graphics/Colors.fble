@@ -3,7 +3,7 @@
 
 @ Color@ = /App/Drawing%.Color@;
 
-@ Car@ = /Computrainer/Model%.Car@;
+@ Car@ = /Computrainer/Car%.Car@;
 
 Color@ Background = Color@(Int|13, Int|31, Int|45);
 Color@ Gate = Color@(Int|201, Int|203, Int|207);

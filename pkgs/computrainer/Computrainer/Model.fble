@@ -23,6 +23,10 @@
 @ Dir@ = Dir.Dir@;
 % Dest = Dir.Dest;
 
+% Cars = /Computrainer/Car%;
+@ Car@ = Cars.Car@;
+@ Cars@ = Cars.Cars@;
+
 @ Switch@ = *(Dir@ s, Dir@ 0, Dir@ 1);
 @ Dup@ = *(Dir@ a, Dir@ b);
 
@@ -85,13 +89,6 @@ Dup = (Dir@ a, Dir@ b) {
 };
 
 @ Gates@ = Grid@<Gate@>;
-
-@ Car@ = +(Unit@ C, Unit@ 0, Unit@ 1);
-Car@ C = Car@(C: Unit);
-Car@ 0 = Car@(0: Unit);
-Car@ 1 = Car@(1: Unit);
-
-@ Cars@ = Grid@<Car@>;
 @ S@ = *(Cars@ cars, Grid@<Unit@> busy);
 @ Model@ = *(Gates@ gates, S@ s);
 
@@ -178,7 +175,7 @@ GoGates = {
         # Place an engine if there's nothing there already.
         Maybe@<Car@> mv = Grid.Lookup(s.cars, c);
         mv.?(just: s);
-        AddCar(c, C, s);
+        AddCar(c, Cars.C, s);
     };
 
     (Car@, Coord@, S@) { S@; }
@@ -205,8 +202,8 @@ GoGates = {
           rail: GoRail(c, s),
           sink: GoSink(c, s),
           source: GoSource(c, s),
-          zero: GoTag(0, c, s),
-          one: GoTag(1, c, s),
+          zero: GoTag(Cars.0, c, s),
+          one: GoTag(Cars.1, c, s),
           switch: GoSwitch(g.switch, c, s),
           select: GoSelect(c, s),
           dup: GoDup(g.dup, c, s));
@@ -367,7 +364,7 @@ GoEngines = (Gates@ gates) {
     GoEngine = (Coord@ e, S@ s) {
         Maybe@<Gate@> mg = Grid.Lookup(gates, e);
         mg.?(nothing: s);
-        Maybe@<S@> ms = GoGate(mg.just, e, Just(C), s);
+        Maybe@<S@> ms = GoGate(mg.just, e, Just(Cars.C), s);
         ms.?(just: ms.just, nothing: s);
     };
     
@@ -394,6 +391,5 @@ Tick = (Model@ m) {
     m.@(s: GoGates(m.gates, GoEngines(m.gates, m.s, engines)));
 };
 
-@(Model@, Switch@, Dup@, Gate@, Gates@, Cars@, Car@, S@, Tick, Model,
-   None, Sink, Rail, Source, One, Zero, Switch, Select, Dup,
-   0, 1, C);
+@(Model@, Switch@, Dup@, Gate@, Gates@, S@, Tick, Model,
+   None, Sink, Rail, Source, One, Zero, Switch, Select, Dup);

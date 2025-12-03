@@ -5,12 +5,14 @@
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
 @ Dir@ = /Computrainer/Dir%.Dir@;
-@ Cars@ = /Computrainer/Model%.Cars@;
+
+@ Car@ = /Computrainer/Car%.Car@;
+@ Cars@ = /Computrainer/Car%.Cars@;
+
 @ Gate@ = /Computrainer/Model%.Gate@;
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Model@ = /Computrainer/Model%.Model@;
 @ S@ = /Computrainer/Model%.S@;
-@ Car@ = /Computrainer/Model%.Car@;
 
 Eq@<Dir@> Dir = (Dir@ a, Dir@ b) {
     a.?(up: b.?(up: True, : False),

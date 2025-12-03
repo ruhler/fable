@@ -7,11 +7,12 @@
 @ Coord@ = /Computrainer/Grid%.Coord@;
 % Grid = /Computrainer/Grid%.Grid;
 
-@ Cars@ = /Computrainer/Model%.Cars@;
+@ Car@ = /Computrainer/Car%.Car@;
+@ Cars@ = /Computrainer/Car%.Cars@;
+
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Model@ = /Computrainer/Model%.Model@;
 @ S@ = /Computrainer/Model%.S@;
-@ Car@ = /Computrainer/Model%.Car@;
 
 Show@<Coord@> Coord = (Coord@ x) {
     Format|'(%s, %s)'[/Core/Int/Show%.Show(x.x), /Core/Int/Show%.Show(x.y)];

@@ -7,7 +7,7 @@
 % Blank = /App/Drawing%.Blank;
 
 @ Gate@ = /Computrainer/Model%.Gate@;
-@ Car@ = /Computrainer/Model%.Car@;
+@ Car@ = /Computrainer/Car%.Car@;
 
 @ Dir@ = /Computrainer/Dir%.Dir@;
 % Up = /Computrainer/Dir%.Up;

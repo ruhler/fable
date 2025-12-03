@@ -5,11 +5,10 @@
 % Rows = /Computrainer/Grid%.Rows;
 
 @ Gates@ = /Computrainer/Model%.Gates@;
-@ Cars@ = /Computrainer/Model%.Cars@;
+@ Cars@ = /Computrainer/Car%.Cars@;
 @ Model@ = /Computrainer/Model%.Model@;
 % Model = /Computrainer/Model%.Model;
-% C = /Computrainer/Model%.C;
-% 0 = /Computrainer/Model%.0;
+% Car = /Computrainer/Car%;
 
 % Gates = /Computrainer/Gates/Lit%.Gates;
 
@@ -27,12 +26,12 @@ Gates@ Gates = Mvp1;
 
 Cars@ Cars = Entries[
     # C gate initialization:
-    @(x: Int|5, y: Int|5, v: C),
-    @(x: Int|5, y: Int|2, v: C),
+    @(x: Int|5, y: Int|5, v: Car.C),
+    @(x: Int|5, y: Int|2, v: Car.C),
 
     # The train to invert:
-    @(x: Int|1, y: Int|4, v: C),
-    @(x: Int|2, y: Int|4, v: 0)
+    @(x: Int|1, y: Int|4, v: Car.C),
+    @(x: Int|2, y: Int|4, v: Car.0)
 ];
 
 Model@ Sample = Model(Gates, Cars);
