@@ -34,7 +34,7 @@ Show@<Sample@> Sample = (Sample@ x) {
 
 Show@<Profile@> Profile = (Profile@ x) {
   Format|'(%s, %s, %s)'[
-    /Std/List/Show%.Show(/Core/String/Show%.Show, x.metrics),
+    /Std/List/Show%.Show(/Std/String/Show%.Show, x.metrics),
     Blocks(x.blocks),
     /Std/List/Show%.Show(Sample, x.samples)
   ];

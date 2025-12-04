@@ -40,19 +40,19 @@ Test@ Tests = TestSuite(Str|String, List[
       Char|c, Char|'\',
       Char|d];
     String@ got = StrE|'a\nb\tc\\d';
-    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|StrE_u, (Unit@ _) {
     String@ wnt = Str|'abc';
     String@ got = StrE|'a\u62;c';
-    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Lines, (Unit@ _) {
     String@ wnt = StrE|'hello\nthere\n';
     String@ got = Lines[Str|'hello', Str|'there'];
-    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|SplitLines, (Unit@ _) {
@@ -60,7 +60,7 @@ Test@ Tests = TestSuite(Str|String, List[
     List@<String@> got = SplitLines(StrE|'hello\nthere\n');
     AssertEquals(
       /Std/List/Eq%.Eq(/Std/String/Eq%.Eq),
-      /Std/List/Show%.Show(/Core/String/Show%.Show),
+      /Std/List/Show%.Show(/Std/String/Show%.Show),
       wnt, got);
   }),
 
@@ -69,7 +69,7 @@ Test@ Tests = TestSuite(Str|String, List[
     List@<String@> got = SplitLines(Str|'');
     AssertEquals(
       /Std/List/Eq%.Eq(/Std/String/Eq%.Eq),
-      /Std/List/Show%.Show(/Core/String/Show%.Show),
+      /Std/List/Show%.Show(/Std/String/Show%.Show),
       wnt, got);
   }),
 
@@ -78,7 +78,7 @@ Test@ Tests = TestSuite(Str|String, List[
     List@<String@> got = SplitLines(Str|'hello');
     AssertEquals(
       /Std/List/Eq%.Eq(/Std/String/Eq%.Eq),
-      /Std/List/Show%.Show(/Core/String/Show%.Show),
+      /Std/List/Show%.Show(/Std/String/Show%.Show),
       wnt, got);
   }),
 
@@ -87,7 +87,7 @@ Test@ Tests = TestSuite(Str|String, List[
     List@<String@> got = SplitLines(StrE|'\n');
     AssertEquals(
       /Std/List/Eq%.Eq(/Std/String/Eq%.Eq),
-      /Std/List/Show%.Show(/Core/String/Show%.Show),
+      /Std/List/Show%.Show(/Std/String/Show%.Show),
       wnt, got);
   }),
 
@@ -175,14 +175,14 @@ Test@ Tests = TestSuite(Str|String, List[
 
   Test(Str|Show, (Unit@ _) {
     String@ wnt = Str|'''hello''';
-    String@ got = ToString(/Core/String/Show%.Show(Str|hello));
-    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    String@ got = ToString(/Std/String/Show%.Show(Str|hello));
+    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_quote, (Unit@ _) {
     String@ wnt = StrE|'\qdon\q\qt\q';
-    String@ got = ToString(/Core/String/Show%.Show(StrE|'don\qt'));
-    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    String@ got = ToString(/Std/String/Show%.Show(StrE|'don\qt'));
+    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Split, (Unit@ _) {
@@ -190,7 +190,7 @@ Test@ Tests = TestSuite(Str|String, List[
     List@<String@> got = Split(Str|'hello there how are you?', Str|' ');
     AssertEquals(
       /Std/List/Eq%.Eq(/Std/String/Eq%.Eq),
-      /Std/List/Show%.Show(/Core/String/Show%.Show),
+      /Std/List/Show%.Show(/Std/String/Show%.Show),
       wnt, got);
   }),
 
@@ -209,7 +209,7 @@ Test@ Tests = TestSuite(Str|String, List[
 
     String@ wnt = Str|'ab01c2';
     String@ got = S|'ab01c2';
-    AssertEquals(/Std/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   }),
 
   /Core/String/Map/Tests%.Tests

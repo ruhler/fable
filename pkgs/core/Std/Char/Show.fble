@@ -1,0 +1,15 @@
+# @module[/Std/Char/Show%]
+#  The Show@ instance for Char@.
+
+@ Char@ = /Std/Char%.Char@;
+
+<@>@ Show@ = /Std/Show%.Show@;
+
+# @func[Show] Show a Char@ value.
+#  @arg[Char@][x] The value to show.
+#  @returns[Output@] Output that shows the value.
+Show@<Char@> Show = (Char@ x) {
+  /Std/String/Show%.Show[x];
+};
+
+@(Show);

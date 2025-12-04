@@ -27,7 +27,7 @@
 
 Test@ Tests = TestSuite(Str|Char, List[
   Test(Str|'Char', (Unit@ _) {
-    AssertEquals(/Std/Char/Eq%.Eq, /Core/Char/Show%.Show,
+    AssertEquals(/Std/Char/Eq%.Eq, /Std/Char/Show%.Show,
       Char|A, Chr(Int|65));
   }),
 

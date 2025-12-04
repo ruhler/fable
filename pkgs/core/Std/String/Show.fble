@@ -1,3 +1,5 @@
+# @module[/Std/String/Show%]
+#  The Show@ instance for String@.
 
 @ Char@ = /Std/Char%.Char@;
 % U = /Std/Char/Lit%.U;
@@ -15,6 +17,7 @@
 
 Char@ single_quote = U|27;
 
+# Show the characters of a string value, without the surrounding quotes.
 Show@<String@> Chars = (String@ s) {
   s.?(empty: Return);
   Unit@ _ <- Do({
@@ -25,8 +28,9 @@ Show@<String@> Chars = (String@ s) {
   Chars(s.items.tail);
 };
 
-# Show --
-#   Implementation of Show@ for String@. See documentation of /Show%.Show@.
+# @func[Show] Show a String@ value.
+#  @arg[String@][x] The value to show.
+#  @returns[Output@] Output that shows the value.
 Show@<String@> Show = (String@ s) {
   FormatE|'\q%s\q'[Chars(s)];
 };

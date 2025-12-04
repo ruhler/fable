@@ -7,7 +7,7 @@
 % TestSuite = /Core/Test%.TestSuite;
 
 # Import to test compilation.
-% _ = /Core/Char/Show%;
+% _ = /Std/Char/Show%;
 % _ = /Core/Monad/IO%;
 % _ = /Core/Scratch%;
 
