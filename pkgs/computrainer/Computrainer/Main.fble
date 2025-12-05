@@ -39,9 +39,7 @@
 % Rect = /App/Drawing%.Rect;
 % Translate = /App/Drawing%.Translate;
 
-% Dir = /Computrainer/Dir%;
 % Car = /Computrainer/Car%;
-% Model = /Computrainer/Model%;
 @ Model@ = /Computrainer/Model%.Model@;
 % Tick = /Computrainer/Model%.Tick;
 % DrawModel = /Computrainer/Graphics%.DrawModel;
@@ -66,17 +64,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
       Int@ menu_height = Add(Mul(scale, W), Int|8);
       Drawing@ background = Rect(Int|0, Sub(height, menu_height), width, menu_height, Colors.Background);
       Drawing@ gates = Drawings[
-          Translate(Mul(Int|0, W), Int|0, Sprites.Gate(Model.Rail.Right)),
-          Translate(Mul(Int|1, W), Int|0, Sprites.Gate(Model.Dup(Dir.Right, Dir.Down))),
-          Translate(Mul(Int|2, W), Int|0, Sprites.Gate(Model.Sink)),
-          Translate(Mul(Int|3, W), Int|0, Sprites.Gate(Model.Source.Right)),
-          Translate(Mul(Int|4, W), Int|0, Sprites.Gate(Model.Zero.Right)),
-          Translate(Mul(Int|5, W), Int|0, Sprites.Gate(Model.One.Right)),
-          Translate(Mul(Int|6, W), Int|0, Sprites.Gate(Model.Switch(Dir.Up, Dir.Right, Dir.Down))),
-          Translate(Mul(Int|7, W), Int|0, Sprites.Gate(Model.Select)),
-          Translate(Mul(Int|9, W), Int|0, Sprites.Car(Car.C)),
-          Translate(Mul(Int|10, W), Int|0, Sprites.Car(Car.0)),
-          Translate(Mul(Int|11, W), Int|0, Sprites.Car(Car.1))
+          Translate(Mul(Int|0, W), Int|0, Sprites.Car(Car.C)),
+          Translate(Mul(Int|1, W), Int|0, Sprites.Car(Car.0)),
+          Translate(Mul(Int|2, W), Int|0, Sprites.Car(Car.1))
       ];
 
       Point@ a = @(x: scale, y: Neg(scale));

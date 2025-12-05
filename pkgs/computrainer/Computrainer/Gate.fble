@@ -1,0 +1,312 @@
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+@ Car@ = /Computrainer/Car%.Car@;
+
+@ Dir@ = /Computrainer/Dir%.Dir@;
+% Dest = /Computrainer/Dir%.Dest;
+
+@ Coord@ = /Computrainer/Grid%.Coord@;
+% Grid = /Computrainer/Grid%.Grid;
+
+@ State@ = /Computrainer/State%.State@;
+% AddCar = /Computrainer/State%.AddCar;
+% MoveCar = /Computrainer/State%.MoveCar;
+% RemoveCar = /Computrainer/State%.RemoveCar;
+% Routing = /Computrainer/State%.Routing;
+% SetRouting = /Computrainer/State%.SetRouting;
+% ClearRouting = /Computrainer/State%.ClearRouting;
+
+# A gate action: updates the state of the world for the gate at the given coordinates.
+@ Action@ = (Coord@, State@) { State@; };
+Action@ NoAction = (Coord@ _, State@ s) { s; };
+
+# What happens when you try to push a car into a gate.
+#  @arg[(Coord@, S@) { Maybe@<S@>; }][push]
+#   Function to call to attempt to push a car out of some adjacent location.
+#  @arg[Coord@][c] The coordinate of the gate.
+#  @arg[Maybe@<Car@>] The car at the gate to push through, if any.
+#  @arg[State@] The state to update.
+#  @returns[Maybe@<State@>]
+#   The new state after clearing space at the gate to push the car into. Or nothing
+#   if you can't push a car into the gate.
+@ PushAt@ = (Coord@, State@) { Maybe@<State@>; };
+@ Push@ = (PushAt@, Coord@, Maybe@<Car@>, State@) { Maybe@<State@>; };
+
+# Common push operation.
+(Dir@) { Push@; }
+PushTo = (Dir@ dir, PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
+    # We can push into this location any time.
+    mv.?(nothing: Just(s));
+    Car@ v = mv.just;
+
+    # Make room in the output gate, then move the input there.
+    Coord@ dest = Dest(c, dir);
+    Maybe@<State@> ms = push(dest, s);
+    ms.?(nothing: Nothing<State@>);
+
+    # Clear the routing state if we're pushing out the caboose.
+    State@ ns = v.?(C: ClearRouting(c, ms.just), : ms.just);
+    Just(MoveCar(c, dest, v, ns));
+};
+
+# Push only if routing is active.
+Push@
+PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
+    mv.?(nothing: Just(s));             # Cars can move onto empty spot.
+    Maybe@<Dir@> mr = Routing(c, s);       
+    mr.?(nothing: Nothing<State@>);     # Block for activation.
+    PushTo(mr.just, push, c, mv, s);    # Push out to target.
+};
+
+# Empty gate
+#
+#     
+#       
+#     
+#
+# * Does nothing. You can't move into it or out of it.
+# * Primarily as a place holder for specifying a row of consecutive gates.
+@ Empty@ = Unit@;
+% Empty = {
+    (Empty@) { Action@; } Action = (Empty@ _) { NoAction; };
+
+    (Empty@) { Push@; }
+    Push = (Empty@ _, PushAt@ _, Coord@ _, Maybe@<Car@> _, State@ _) {
+        Nothing<State@>;
+    };
+
+    @(Action, Push);
+};
+
+# Stop gate.
+#
+#  ###
+#  # #
+#  ###
+#
+# * Stops a train permanently.
+# * You can move into it, but then you'll stay there forever.
+@ Stop@ = Unit@;
+% Stop = {
+    (Stop@) { Action@; } Action = (Stop@ _) { NoAction; };
+
+    (Stop@) { Push@; }
+    Push = (Stop@ _, PushAt@ _, Coord@ _, Maybe@<Car@> mv, State@ s) {
+        mv.?(nothing: Just(s));
+        Nothing<State@>;
+    };
+
+    @(Action, Push);
+};
+
+# Move gate.
+#
+#  ###
+#  # ##
+#  ###
+#
+# * Cars get pushed out in the direction it points.
+@ Move@ = Dir@;
+% Move = {
+    (Move@) { Action@; } Action = (Move@ _) { NoAction; };
+    (Move@) { Push@; } Push = PushTo;
+    @(Action, Push);
+};
+
+# Source gate.
+#
+#  ###
+#  # ##
+#  ###
+#
+# * Creates a train car when empty.
+# * Cars get pushed out in the direction it points.
+@ Source@ = *(Car@ car, Dir@ dir);
+% Source = {
+    (Source@) { Action@; }
+    Action = (Source@ g, Coord@ c, State@ s) {
+        # Place a car if there's nothing there already.
+        Maybe@<Car@> mv = Grid.Lookup(s.cars, c);
+        mv.?(just: s);
+        AddCar(c, g.car, s);
+    };
+
+    (Source@) { Push@; } Push = (Source@ g) { PushTo(g.dir); };
+
+    @(Action, Push);
+};
+
+# Sink gate.
+#
+#  # #
+#     
+#  # #
+#
+# * Removes the car on the gate.
+# * Cars can go into it, but not get pushed out.
+@ Sink@ = Unit@;
+% Sink = {
+    (Sink@) { Action@; }
+    Action = (Sink@ _, Coord@ c, State@ s) {
+        # There may not be a car here, but it's okay to do RemoveCar anyway, it
+        # just won't have any effect in that case.
+        RemoveCar(c, s);
+    };
+
+    (Sink@) { Push@; }
+    Push = (Sink@ _, PushAt@ _, Coord@ _, Maybe@<Car@> mv, State@ s) {
+        # Cars can move into this gate, but not out of it.
+        mv.?(nothing: Just(s));
+        Nothing<State@>;
+    };
+
+    @(Action, Push);
+};
+
+# Dup gate.
+#
+#  ###
+# ## ##
+#  ###
+#
+# * Cars get pushed out in both the direction it points.
+@ Dup@ = *(Dir@ a, Dir@ b);
+% Dup = {
+    (Dup@) { Action@; } Action = (Dup@ _) { NoAction; };
+
+    (Dup@) { Push@; }
+    Push = (Dup@ g, PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
+        Maybe@<State@> ms = PushTo(g.a, push, c, mv, s);
+        ms.?(nothing: Nothing<State@>);
+
+        PushTo(g.b, push, c, mv, ms.just);
+    };
+
+    @(Action, Push);
+};
+
+# Wait gate.
+#
+#  ####
+#  # # 
+#  ###
+#
+# * Waits for the output to be occupied, then lets 1 train through.
+@ Wait@ = Dir@;
+% Wait = {
+    (Wait@) { Action@; } Action = (Wait@ g, Coord@ c, State@ s) {
+        Routing(c, s).?(just: s);                       # Block for routing to finish.
+        Grid.Lookup(s.cars, Dest(c, g)).?(nothing: s);  # Block for output to be occupied
+        SetRouting(c, s, g);                            # Route to output.
+    };
+
+    (Wait@) { Push@; } Push = (Wait@ _) { PushToRoute; };
+    
+    @(Action, Push);
+};
+
+# Split gate.
+#  # 
+#  ### 
+#  # ##
+#  ###
+#
+# * Splits the first car off the train one direction, then forwards the rest of
+#   the train on.
+# * Note: the first car gets dumped off without pushing stuff out of the way.
+#   The destination has to be empty. The head will sit there until some train
+#   comes along to pick it up.
+@ Split@ = *(Dir@ head, Dir@ tail);
+% Split = {
+    (Split@) { Action@; } Action = (Split@ g, Coord@ c, State@ s) {
+        Routing(c, s).?(just: s);                         # Block for routing to finish.
+        Maybe@<Car@> head = Grid.Lookup(s.cars, c);
+        head.?(nothing: s);                               # Block for head available.
+        Coord@ headTo = Dest(c, g.head);
+        Grid.Lookup(s.cars, headTo).?(just: s);           # Block for head out available.
+        State@ ns = MoveCar(c, headTo, head.just, s);     # Dump head off.
+        SetRouting(c, ns, g.tail);                         # Route tail to output.
+    };
+
+    (Split@) { Push@; } Push = (Split@ _) { PushToRoute; };
+
+    @(Action, Push);
+};
+
+# Switch gate.
+#   # 
+#  ### 
+#  # ##
+#  ###
+#
+# * Sends trains on depending on the value of the first car of the train.
+@ Switch@ = *(Dir@ 0, Dir@ 1);
+% Switch = {
+    (Switch@) { Action@; } Action = (Switch@ g, Coord@ c, State@ s) {
+        Routing(c, s).?(just: s);             # Block for routing to finish.
+
+        Maybe@<Car@> mv = Grid.Lookup(s.cars, c);
+        Grid.Lookup(s.cars, c).?(nothing: s); # Block for car to show up.
+        Car@ v = mv.just;
+
+        v.?(C: s,                             # Uh oh. Stuck on caboose.
+            0: SetRouting(c, s, g.0),         # Route out to 0.
+            1: SetRouting(c, s, g.1));        # Route out to 1.
+    };
+
+    (Switch@) { Push@; } Push = (Switch@ _) { PushToRoute; };
+
+    @(Action, Push);
+};
+
+@ Gate@ = +(
+    Empty@ empty,
+    Stop@ stop,
+    Move@ move,
+    Source@ source,
+    Sink@ sink,
+    Dup@ dup,
+    Wait@ wait,
+    Split@ split,
+    Switch@ switch
+);
+
+(Gate@) { Action@; } Action = (Gate@ g) {
+    g.?(empty: Empty.Action(g.empty),
+        stop: Stop.Action(g.stop),
+        move: Move.Action(g.move),
+        source: Source.Action(g.source),
+        sink: Sink.Action(g.sink),
+        dup: Dup.Action(g.dup),
+        wait: Wait.Action(g.wait),
+        split: Split.Action(g.split),
+        switch: Switch.Action(g.switch));
+};
+
+(Gate@) { Push@; } Push = (Gate@ g) {
+    g.?(empty: Empty.Push(g.empty),
+        stop: Stop.Push(g.stop),
+        move: Move.Push(g.move),
+        source: Source.Push(g.source),
+        sink: Sink.Push(g.sink),
+        dup: Dup.Push(g.dup),
+        wait: Wait.Push(g.wait),
+        split: Split.Push(g.split),
+        switch: Switch.Push(g.switch));
+};
+
+Gate@ Empty = Gate@(empty: Unit);
+(Dir@) { Gate@; } Move = (Dir@ d) { Gate@(move: d); };
+(Car@, Dir@) { Gate@; } Source = (Car@ car, Dir@ dir) { Gate@(source: @(car, dir)); };
+Gate@ Sink = Gate@(sink: Unit);
+(Dir@, Dir@) { Gate@; } Split = (Dir@ head, Dir@ tail) { Gate@(split: @(head, tail)); };
+(Dir@, Dir@) { Gate@; } Switch = (Dir@ 0, Dir@ 1) { Gate@(switch: @(0, 1)); };
+
+@(Gate@, Action, Push, Empty, Move, Source, Sink, Split, Switch);
+

@@ -22,20 +22,8 @@
 @ Car@ = Car.Car@;
 @ Cars@ = Car.Cars@;
 
-@ Gates@ = /Computrainer/Model%.Gates@;
 @ Model@ = /Computrainer/Model%.Model@;
-% Model = /Computrainer/Model%.Model;
 % Tick = /Computrainer/Model%.Tick;
-% Rail = /Computrainer/Model%.Rail;
-% Sink = /Computrainer/Model%.Sink;
-% Source = /Computrainer/Model%.Source;
-% Zero = /Computrainer/Model%.Zero;
-% Select = /Computrainer/Model%.Select;
-% Switch = /Computrainer/Model%.Switch;
-% Dup = /Computrainer/Model%.Dup;
-% Up = /Computrainer/Dir%.Up;
-% Down = /Computrainer/Dir%.Down;
-% Right = /Computrainer/Dir%.Right;
 
 (Int@, Model@) { Model@; }
 TickN = (Int@ n, Model@ m) {
@@ -43,160 +31,160 @@ TickN = (Int@ n, Model@ m) {
     TickN(Decr(n), Tick(m));
 };
 
-Test@ Tests = TestSuite(Str|Computrainer, List[
-  Test(Str|'Rail', (Unit@ _) {
-    Gates@ gates = Entries[
-        @(x: Int|3, y: Int|4, v: Rail.Right),
-        @(x: Int|4, y: Int|4, v: Rail.Right)
-    ];
-    Cars@ cars = Entries[
-        @(x: Int|3, y: Int|4, v: Car.C)
-    ];
-    Model@ model = Model(gates, cars);
-    Model@ wnt = Model(gates, Entries[@(x: Int|4, y: Int|4, v: Car.C)]);
-    Model@ got = Tick(model);
-    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
-  }),
-
-  Test(Str|'Sink', (Unit@ _) {
-    Gates@ gates = Entries[
-        @(x: Int|3, y: Int|4, v: Sink)
-    ];
-    Cars@ cars = Entries[
-        @(x: Int|3, y: Int|4, v: Car.C),
-        @(x: Int|4, y: Int|4, v: Car.0)
-    ];
-    Model@ model = Model(gates, cars);
-    Model@ wnt = Model(gates, Entries[
-        @(x: Int|4, y: Int|4, v: Car.0)
-    ]);
-    Model@ got = Tick(model);
-    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
-  }),
-
- Test(Str|'Source', (Unit@ _) {
-   Gates@ gates = Entries[
-       @(x: Int|3, y: Int|4, v: Source.Right)
-   ];
-   Cars@ cars = Entries<Car@>[];
-   Model@ model = Model(gates, cars);
-   Model@ wnt = Model(gates, Entries[
-       @(x: Int|3, y: Int|4, v: Car.C)
-   ]);
-   Model@ got = Tick(model);
-   AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
- }),
-
-  Test(Str|'Zero', (Unit@ _) {
-    Gates@ gates = Entries[
-        @(x: Int|3, y: Int|4, v: Rail.Right),
-        @(x: Int|4, y: Int|4, v: Rail.Right),
-        @(x: Int|5, y: Int|4, v: Zero.Right),
-        @(x: Int|6, y: Int|4, v: Rail.Right),
-        @(x: Int|7, y: Int|4, v: Rail.Right),
-        @(x: Int|8, y: Int|4, v: Rail.Right)
-    ];
-
-    Cars@ cars = Entries[
-        @(x: Int|3, y: Int|4, v: Car.C),
-        @(x: Int|4, y: Int|4, v: Car.C)
-    ];
-    Model@ model = Model(gates, cars);
-    Cars@ wnt = Entries[
-        @(x: Int|8, y: Int|4, v: Car.0),
-        @(x: Int|7, y: Int|4, v: Car.C),
-        @(x: Int|6, y: Int|4, v: Car.0),
-        @(x: Int|5, y: Int|4, v: Car.C)
-    ];
-    Cars@ got = TickN(Int|10, model).s.cars;
-    AssertEquals(/Computrainer/Model/Eq%.Cars, /Computrainer/Model/Show%.Cars, wnt, got);
-  }),
-
-  Test(Str|'Select_0', (Unit@ _) {
-    # >>>S
-    # >>>W0>
-    #    1>
-    Gates@ gates = Entries[
-        @(x: Int|3, y: Int|4, v: Rail.Right),
-        @(x: Int|4, y: Int|4, v: Rail.Right),
-        @(x: Int|5, y: Int|4, v: Rail.Right),
-        @(x: Int|6, y: Int|4, v: Select),
-
-        @(x: Int|3, y: Int|3, v: Rail.Right),
-        @(x: Int|4, y: Int|3, v: Rail.Right),
-        @(x: Int|5, y: Int|3, v: Rail.Right),
-        @(x: Int|6, y: Int|3, v: Switch(Up, Right, Down)),
-        @(x: Int|7, y: Int|3, v: Rail.Right),
-        @(x: Int|8, y: Int|3, v: Rail.Right),
-
-        @(x: Int|6, y: Int|2, v: Rail.Right),
-        @(x: Int|7, y: Int|2, v: Rail.Right)
-    ];
-
-    Cars@ cars = Entries[
-        @(x: Int|4, y: Int|4, v: Car.0),
-        @(x: Int|3, y: Int|4, v: Car.C),
-        @(x: Int|3, y: Int|3, v: Car.C)
-    ];
-    Model@ model = Model(gates, cars);
-    Cars@ wnt = Entries[
-        @(x: Int|8, y: Int|3, v: Car.C)
-    ];
-    Cars@ got = TickN(Int|10, model).s.cars;
-    AssertEquals(/Computrainer/Model/Eq%.Cars, /Computrainer/Model/Show%.Cars, wnt, got);
-  }),
-
-  Test(Str|'Select_1', (Unit@ _) {
-    # >>>S
-    # >>>W0>
-    #    1>
-    Gates@ gates = Entries[
-        @(x: Int|3, y: Int|4, v: Rail.Right),
-        @(x: Int|4, y: Int|4, v: Rail.Right),
-        @(x: Int|5, y: Int|4, v: Rail.Right),
-        @(x: Int|6, y: Int|4, v: Select),
-
-        @(x: Int|3, y: Int|3, v: Rail.Right),
-        @(x: Int|4, y: Int|3, v: Rail.Right),
-        @(x: Int|5, y: Int|3, v: Rail.Right),
-        @(x: Int|6, y: Int|3, v: Switch(Up, Right, Down)),
-        @(x: Int|7, y: Int|3, v: Rail.Right),
-        @(x: Int|8, y: Int|3, v: Rail.Right),
-
-        @(x: Int|6, y: Int|2, v: Rail.Right),
-        @(x: Int|7, y: Int|2, v: Rail.Right)
-    ];
-
-    Cars@ cars = Entries[
-        @(x: Int|4, y: Int|4, v: Car.1),
-        @(x: Int|3, y: Int|4, v: Car.C),
-        @(x: Int|3, y: Int|3, v: Car.C)
-    ];
-    Model@ model = Model(gates, cars);
-    Cars@ wnt = Entries[
-        @(x: Int|7, y: Int|2, v: Car.C)
-    ];
-    Cars@ got = TickN(Int|10, model).s.cars;
-    AssertEquals(/Computrainer/Model/Eq%.Cars, /Computrainer/Model/Show%.Cars, wnt, got);
-  }),
-
-  Test(Str|'Dup', (Unit@ _) {
-    Gates@ gates = Entries[
-        @(x: Int|3, y: Int|4, v: Dup(Right, Up)),
-        @(x: Int|3, y: Int|5, v: Rail.Up),
-        @(x: Int|4, y: Int|4, v: Rail.Right)
-    ];
-    Cars@ cars = Entries[
-        @(x: Int|3, y: Int|4, v: Car.C)
-    ];
-    Model@ model = Model(gates, cars);
-    Model@ wnt = Model(gates, Entries[
-        @(x: Int|4, y: Int|4, v: Car.C),
-        @(x: Int|3, y: Int|5, v: Car.C)
-    ]);
-    Model@ got = Tick(model);
-    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
-  })
+Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
+#  Test(Str|'Rail', (Unit@ _) {
+#    Gates@ gates = Entries[
+#        @(x: Int|3, y: Int|4, v: Rail.Right),
+#        @(x: Int|4, y: Int|4, v: Rail.Right)
+#    ];
+#    Cars@ cars = Entries[
+#        @(x: Int|3, y: Int|4, v: Car.C)
+#    ];
+#    Model@ model = Model(gates, cars);
+#    Model@ wnt = Model(gates, Entries[@(x: Int|4, y: Int|4, v: Car.C)]);
+#    Model@ got = Tick(model);
+#    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
+#  }),
+#
+#  Test(Str|'Sink', (Unit@ _) {
+#    Gates@ gates = Entries[
+#        @(x: Int|3, y: Int|4, v: Sink)
+#    ];
+#    Cars@ cars = Entries[
+#        @(x: Int|3, y: Int|4, v: Car.C),
+#        @(x: Int|4, y: Int|4, v: Car.0)
+#    ];
+#    Model@ model = Model(gates, cars);
+#    Model@ wnt = Model(gates, Entries[
+#        @(x: Int|4, y: Int|4, v: Car.0)
+#    ]);
+#    Model@ got = Tick(model);
+#    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
+#  }),
+#
+# Test(Str|'Source', (Unit@ _) {
+#   Gates@ gates = Entries[
+#       @(x: Int|3, y: Int|4, v: Source.Right)
+#   ];
+#   Cars@ cars = Entries<Car@>[];
+#   Model@ model = Model(gates, cars);
+#   Model@ wnt = Model(gates, Entries[
+#       @(x: Int|3, y: Int|4, v: Car.C)
+#   ]);
+#   Model@ got = Tick(model);
+#   AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
+# }),
+#
+#  Test(Str|'Zero', (Unit@ _) {
+#    Gates@ gates = Entries[
+#        @(x: Int|3, y: Int|4, v: Rail.Right),
+#        @(x: Int|4, y: Int|4, v: Rail.Right),
+#        @(x: Int|5, y: Int|4, v: Zero.Right),
+#        @(x: Int|6, y: Int|4, v: Rail.Right),
+#        @(x: Int|7, y: Int|4, v: Rail.Right),
+#        @(x: Int|8, y: Int|4, v: Rail.Right)
+#    ];
+#
+#    Cars@ cars = Entries[
+#        @(x: Int|3, y: Int|4, v: Car.C),
+#        @(x: Int|4, y: Int|4, v: Car.C)
+#    ];
+#    Model@ model = Model(gates, cars);
+#    Cars@ wnt = Entries[
+#        @(x: Int|8, y: Int|4, v: Car.0),
+#        @(x: Int|7, y: Int|4, v: Car.C),
+#        @(x: Int|6, y: Int|4, v: Car.0),
+#        @(x: Int|5, y: Int|4, v: Car.C)
+#    ];
+#    Cars@ got = TickN(Int|10, model).s.cars;
+#    AssertEquals(/Computrainer/Model/Eq%.Cars, /Computrainer/Model/Show%.Cars, wnt, got);
+#  }),
+#
+#  Test(Str|'Select_0', (Unit@ _) {
+#    # >>>S
+#    # >>>W0>
+#    #    1>
+#    Gates@ gates = Entries[
+#        @(x: Int|3, y: Int|4, v: Rail.Right),
+#        @(x: Int|4, y: Int|4, v: Rail.Right),
+#        @(x: Int|5, y: Int|4, v: Rail.Right),
+#        @(x: Int|6, y: Int|4, v: Select),
+#
+#        @(x: Int|3, y: Int|3, v: Rail.Right),
+#        @(x: Int|4, y: Int|3, v: Rail.Right),
+#        @(x: Int|5, y: Int|3, v: Rail.Right),
+#        @(x: Int|6, y: Int|3, v: Switch(Up, Right, Down)),
+#        @(x: Int|7, y: Int|3, v: Rail.Right),
+#        @(x: Int|8, y: Int|3, v: Rail.Right),
+#
+#        @(x: Int|6, y: Int|2, v: Rail.Right),
+#        @(x: Int|7, y: Int|2, v: Rail.Right)
+#    ];
+#
+#    Cars@ cars = Entries[
+#        @(x: Int|4, y: Int|4, v: Car.0),
+#        @(x: Int|3, y: Int|4, v: Car.C),
+#        @(x: Int|3, y: Int|3, v: Car.C)
+#    ];
+#    Model@ model = Model(gates, cars);
+#    Cars@ wnt = Entries[
+#        @(x: Int|8, y: Int|3, v: Car.C)
+#    ];
+#    Cars@ got = TickN(Int|10, model).s.cars;
+#    AssertEquals(/Computrainer/Model/Eq%.Cars, /Computrainer/Model/Show%.Cars, wnt, got);
+#  }),
+#
+#  Test(Str|'Select_1', (Unit@ _) {
+#    # >>>S
+#    # >>>W0>
+#    #    1>
+#    Gates@ gates = Entries[
+#        @(x: Int|3, y: Int|4, v: Rail.Right),
+#        @(x: Int|4, y: Int|4, v: Rail.Right),
+#        @(x: Int|5, y: Int|4, v: Rail.Right),
+#        @(x: Int|6, y: Int|4, v: Select),
+#
+#        @(x: Int|3, y: Int|3, v: Rail.Right),
+#        @(x: Int|4, y: Int|3, v: Rail.Right),
+#        @(x: Int|5, y: Int|3, v: Rail.Right),
+#        @(x: Int|6, y: Int|3, v: Switch(Up, Right, Down)),
+#        @(x: Int|7, y: Int|3, v: Rail.Right),
+#        @(x: Int|8, y: Int|3, v: Rail.Right),
+#
+#        @(x: Int|6, y: Int|2, v: Rail.Right),
+#        @(x: Int|7, y: Int|2, v: Rail.Right)
+#    ];
+#
+#    Cars@ cars = Entries[
+#        @(x: Int|4, y: Int|4, v: Car.1),
+#        @(x: Int|3, y: Int|4, v: Car.C),
+#        @(x: Int|3, y: Int|3, v: Car.C)
+#    ];
+#    Model@ model = Model(gates, cars);
+#    Cars@ wnt = Entries[
+#        @(x: Int|7, y: Int|2, v: Car.C)
+#    ];
+#    Cars@ got = TickN(Int|10, model).s.cars;
+#    AssertEquals(/Computrainer/Model/Eq%.Cars, /Computrainer/Model/Show%.Cars, wnt, got);
+#  }),
+#
+#  Test(Str|'Dup', (Unit@ _) {
+#    Gates@ gates = Entries[
+#        @(x: Int|3, y: Int|4, v: Dup(Right, Up)),
+#        @(x: Int|3, y: Int|5, v: Rail.Up),
+#        @(x: Int|4, y: Int|4, v: Rail.Right)
+#    ];
+#    Cars@ cars = Entries[
+#        @(x: Int|3, y: Int|4, v: Car.C)
+#    ];
+#    Model@ model = Model(gates, cars);
+#    Model@ wnt = Model(gates, Entries[
+#        @(x: Int|4, y: Int|4, v: Car.C),
+#        @(x: Int|3, y: Int|5, v: Car.C)
+#    ]);
+#    Model@ got = Tick(model);
+#    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
+#  })
 ]);
 
 /Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));

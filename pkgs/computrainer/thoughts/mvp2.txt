@@ -216,4 +216,24 @@ work.
 
 ---
 
+Note: no need for struct gates. With my latest set of gates, we can do
+everything without it.
+
+Specifically, struct was taking two trains, putting them on one track, then
+later separating the trains. We can easily do that by putting 0 or 1 header on
+each train, route them to the same track, then switch them off based on header
+on the other end. That's nice.
+
+---
+
+I'm redoing all of the gates. I have the new gate code in place, and updates
+to the model. What's next before I can compile and run something useful?
+
+Still needed:
+* Updated drawing.
+* Updated test cases.
+* Updated sample model.
+
+Shall I clear all the tests to start, clear the sample, start again from
+scratch?
 

@@ -3,53 +3,41 @@
 
 @ Unit@ = /Std/Unit%.Unit@;
 
-@ Gate@ = /Computrainer/Model%.Gate@;
-% None = /Computrainer/Model%.None;
-% Rail = /Computrainer/Model%.Rail;
-% Zero = /Computrainer/Model%.Zero;
-% One = /Computrainer/Model%.One;
-% Sink = /Computrainer/Model%.Sink;
-% Source = /Computrainer/Model%.Source;
-% Select = /Computrainer/Model%.Select;
-% Switch = /Computrainer/Model%.Switch;
-% Dup = /Computrainer/Model%.Dup;
-% Up = /Computrainer/Dir%.Up;
-% Down = /Computrainer/Dir%.Down;
-% Right = /Computrainer/Dir%.Right;
+% Car = /Computrainer/Car%;
+% Dir = /Computrainer/Dir%;
 
+% Gate = /Computrainer/Gate%;
+@ Gate@ = Gate.Gate@;
 
 # TODO: Add more gates as needed.
 @ Lit@ = +(
     Unit@ '     |',
-    Unit@ 'R^   |',
-    Unit@ 'R v  |',
-    Unit@ 'R  < |',
-    Unit@ 'R   >|',
-    Unit@ 'D^v  |',
-    Unit@ 'C   >|',
-    Unit@ '0   >|',
-    Unit@ '1   >|',
-    Unit@ 'WS1 0|',
-    Unit@ 'W0S 1|',
-    Unit@ 'S    |',
-    Unit@ '.    |'
+    Unit@ 'M^   |',
+    Unit@ 'M v  |',
+    Unit@ 'M  < |',
+    Unit@ 'M   >|',
+    Unit@ '0^   |',
+    Unit@ '1 v  |',
+    Unit@ 'SINK |',
+    Unit@ 'T H >|',
+    Unit@ 'TH  >|',
+    Unit@ 'X01  |'
 );
 
 (Lit@) { Gate@; } ToGate = (Lit@ l) {
     l.?(
-      '     |': None,
-      'R^   |': Rail.Up,
-      'R v  |': Rail.Down,
-      'R  < |': Rail.Left,
-      'R   >|': Rail.Right,
-      'D^v  |': Dup(Up, Down),
-      'C   >|': Source.Right,
-      '0   >|': Zero.Right,
-      '1   >|': One.Right,
-      'WS1 0|': Switch(Up, Right, Down),
-      'W0S 1|': Switch(Down, Up, Right),
-      'S    |': Select,
-      '.    |': Sink);
+       '     |': Gate.Empty,
+       'M^   |': Gate.Move(Dir.Up),
+       'M v  |': Gate.Move(Dir.Down),
+       'M  < |': Gate.Move(Dir.Left),
+       'M   >|': Gate.Move(Dir.Right),
+       '0^   |': Gate.Source(Car.0, Dir.Up),
+       '1 v  |': Gate.Source(Car.1, Dir.Down),
+       'SINK |': Gate.Sink,
+       'T H >|': Gate.Split(Dir.Down, Dir.Right),
+       'TH  >|': Gate.Split(Dir.Up, Dir.Right),
+       'X01  |': Gate.Switch(Dir.Up, Dir.Down)
+   );
 };
 
 (List@<Lit@>) { List@<Gate@>; } Gates = (List@<Lit@> xs) {

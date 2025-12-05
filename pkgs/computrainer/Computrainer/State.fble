@@ -1,22 +1,19 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% Not = /Std/Bool%.Not;
-
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ Coord@ = /Computrainer/Grid%.Coord@;
 <@>@ Grid@ = /Computrainer/Grid%.Grid@;
 % Grid = /Computrainer/Grid%.Grid;
 
+@ Dir@ = /Computrainer/Dir%.Dir@;
+
 % Cars = /Computrainer/Car%;
 @ Car@ = Cars.Car@;
 @ Cars@ = Cars.Cars@;
 
-# State is made up of cars and the set of gates that are currently 'busy'.
-@ State@ = *(Cars@ cars, Grid@<Unit@> busy);
+# State is made up of cars and the set of gates that are currently routing
+# trains through.
+@ State@ = *(Cars@ cars, Grid@<Dir@> routing);
 
 (Coord@, State@) { State@; }
 RemoveCar = (Coord@ c, State@ s) {
@@ -36,33 +33,22 @@ MoveCar = (Coord@ src, Coord@ dest, Car@ v, State@ s) {
     s.@(cars);
 };
 
-(Coord@, Coord@, Coord@, Car@, State@) { State@; }
-DupCar = (Coord@ src, Coord@ dest1, Coord@ dest2, Car@ v, State@ s) {
-    AddCar(dest2, v, MoveCar(src, dest1, v, s));
-};
-
-# Check if the gate at the given location is active.
-(Coord@, State@) { Bool@; }
-IsBusy = (Coord@ c, State@ s) {
-    Grid.Lookup(s.busy, c).?(just: True, nothing: False);
-};
-
-# Check if the gate at the given location is idle.
-(Coord@, State@) { Bool@; }
-IsIdle = (Coord@ c, State@ s) {
-    Not(IsBusy(c, s));
+# Check if the gate at the given location is currently routing a train through.
+(Coord@, State@) { Maybe@<Dir@>; }
+Routing = (Coord@ c, State@ s) {
+    Grid.Lookup(s.routing, c);
 };
 
 (Coord@, State@) { State@; }
-ClearBusy = (Coord@ c, State@ s) {
-    s.@(busy: Grid.Delete(s.busy, c));
+ClearRouting = (Coord@ c, State@ s) {
+    s.@(routing: Grid.Delete(s.routing, c));
 };
 
-(Coord@, State@) { State@; }
-SetBusy = (Coord@ c, State@ s) {
-    s.@(busy: Grid.Insert(s.busy, c, Unit));
+(Coord@, State@, Dir@) { State@; }
+SetRouting = (Coord@ c, State@ s, Dir@ d) {
+    s.@(routing: Grid.Insert(s.routing, c, d));
 };
 
 @(State@, 
-  RemoveCar, AddCar, MoveCar, DupCar,
-  IsBusy, IsIdle, ClearBusy, SetBusy);
+  RemoveCar, AddCar, MoveCar,
+  Routing, ClearRouting, SetRouting);

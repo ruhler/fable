@@ -1,55 +1,50 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-@ Color@ = /App/Drawing%.Color@;
 @ Drawing@ = /App/Drawing%.Drawing@;
 % Drawings = /App/Drawing%.Drawings;
 % Blank = /App/Drawing%.Blank;
 
-@ Gate@ = /Computrainer/Model%.Gate@;
+@ Gate@ = /Computrainer/Gate%.Gate@;
 @ Car@ = /Computrainer/Car%.Car@;
-
-@ Dir@ = /Computrainer/Dir%.Dir@;
-% Up = /Computrainer/Dir%.Up;
-% Down = /Computrainer/Dir%.Down;
-% Left = /Computrainer/Dir%.Left;
-% Right = /Computrainer/Dir%.Right;
 
 % Colors = /Computrainer/Graphics/Colors%;
 % Shapes = /Computrainer/Graphics/Shapes%;
 
 Int@ W = Shapes.W;
 
-(Dir@, Color@) { Drawing@; }
-Dir = (Dir@ d, Color@ c) {
-    Shapes.Shapes[Shapes.Gate, Shapes.Dir(d)](c);
-};
-
 (Gate@) { Drawing@; }
 Gate = (Gate@ g) {
-    g.?(none: Blank,
-        rail: Dir(g.rail, Colors.Gate),
-        sink: Shapes.Gate(Colors.Gate),
-        source: Dir(g.source, Colors.C),
-        zero: Dir(g.zero, Colors.0),
-        one: Dir(g.one, Colors.1),
-        switch: Drawings[
-            Shapes.Gate(Colors.Gate),
-            Shapes.Sel(g.switch.s, Colors.Gate),
-            Shapes.Dir(g.switch.0, Colors.0),
-            Shapes.Dir(g.switch.1, Colors.1)],
-        select: Shapes.Shapes[
+    g.?(empty: Blank,
+        stop: Shapes.Gate(Colors.Gate),
+        move: Shapes.Shapes[
             Shapes.Gate,
-            Shapes.Sel(Up),
-            Shapes.Sel(Down),
-            Shapes.Sel(Left),
-            Shapes.Sel(Right)
+            Shapes.Dir(g.move)
         ](Colors.Gate),
+        source: Shapes.Shapes[
+            Shapes.Gate,
+            Shapes.Dir(g.source.dir)
+        ](Colors.Car(g.source.car)),
+        sink: Shapes.Sink(Colors.Gate),
         dup: Shapes.Shapes[
             Shapes.Gate,
             Shapes.Dir(g.dup.a),
             Shapes.Dir(g.dup.b)
-        ](Colors.Gate));
+        ](Colors.Gate),
+        wait: Shapes.Shapes[
+            Shapes.Gate,
+            Shapes.Dir2(g.wait)
+        ](Colors.Gate),
+        split: Shapes.Shapes[
+            Shapes.Gate,
+            Shapes.Dir(g.split.tail),
+            Shapes.Dir2(g.split.head)
+        ](Colors.Gate),
+        switch: Drawings[
+            Shapes.Gate(Colors.Gate),
+            Shapes.Dir(g.switch.0, Colors.0),
+            Shapes.Dir(g.switch.1, Colors.1)
+        ]);
 };
 
 (Car@) { Drawing@; }

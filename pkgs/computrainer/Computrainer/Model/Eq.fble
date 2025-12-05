@@ -1,6 +1,7 @@
 
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
+% And = /Std/Bool%.And;
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
@@ -9,10 +10,10 @@
 @ Car@ = /Computrainer/Car%.Car@;
 @ Cars@ = /Computrainer/Car%.Cars@;
 
-@ Gate@ = /Computrainer/Model%.Gate@;
+@ Gate@ = /Computrainer/Gate%.Gate@;
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Model@ = /Computrainer/Model%.Model@;
-@ State@ = /Computrainer/Model%.State@;
+@ State@ = /Computrainer/State%.State@;
 
 Eq@<Dir@> Dir = (Dir@ a, Dir@ b) {
     a.?(up: b.?(up: True, : False),
@@ -21,35 +22,26 @@ Eq@<Dir@> Dir = (Dir@ a, Dir@ b) {
         right: b.?(right: True, : False));
 };
 
-Eq@<Gate@> Gate = (Gate@ a, Gate@ b) {
-    a.?(none: b.?(none: True, : False),
-        rail: b.?(rail: Dir(a.rail, b.rail), : False),
-        sink: b.?(sink: True, : False),
-        source: b.?(source: Dir(a.source, b.source), : False),
-        zero: b.?(zero: Dir(a.zero, b.zero), : False),
-        one: b.?(one: Dir(a.one, b.one), : False),
-        switch: b.?(switch: {
-            Dir(a.switch.s, b.switch.s).?(false: False);
-            Dir(a.switch.0, b.switch.0).?(false: False);
-            Dir(a.switch.1, b.switch.1).?(false: False);
-            True;
-            }, : False),
-        select: b.?(select: True, : False),
-        dup: b.?(dup: {
-            Dir(a.dup.a, b.dup.a).?(false: False);
-            Dir(a.dup.b, b.dup.b).?(false: False);
-            True;
-            }, : False));
-};
-
-Eq@<Gates@> Gates = /Computrainer/Grid/Eq%.Eq(Gate);
-
 Eq@<Car@> Car = (Car@ a, Car@ b) {
     a.?(
         C: b.?(C: True, : False),
         0: b.?(0: True, : False),
         1: b.?(1: True, : False));
 };
+
+Eq@<Gate@> Gate = (Gate@ a, Gate@ b) {
+    a.?(empty: b.?(empty: True, : False),
+        stop: b.?(stop: True, : False),
+        move: b.?(move: Dir(a.move, b.move), : False),
+        source: b.?(source: And(Dir(a.source.dir, b.source.dir), Car(a.source.car, b.source.car)), : False),
+        sink: b.?(sink: True, : False),
+        dup: b.?(dup: And(Dir(a.dup.a, b.dup.a), Dir(a.dup.b, b.dup.b)), : False),
+        wait: b.?(wait: Dir(a.wait, b.wait), : False),
+        split: b.?(split: And(Dir(a.split.head, b.split.head), Dir(a.split.tail, b.split.tail)), : False),
+        switch: b.?(switch: And(Dir(a.switch.0, b.switch.0), Dir(a.switch.1, b.switch.1)), : False));
+};
+
+Eq@<Gates@> Gates = /Computrainer/Grid/Eq%.Eq(Gate);
 
 Eq@<Cars@> Cars = /Computrainer/Grid/Eq%.Eq(Car);
 

@@ -12,7 +12,7 @@
 
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Model@ = /Computrainer/Model%.Model@;
-@ State@ = /Computrainer/Model%.State@;
+@ State@ = /Computrainer/State%.State@;
 
 Show@<Coord@> Coord = (Coord@ x) {
     Format|'(%s, %s)'[/Core/Int/Show%.Show(x.x), /Core/Int/Show%.Show(x.y)];

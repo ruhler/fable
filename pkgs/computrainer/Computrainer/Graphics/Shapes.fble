@@ -18,17 +18,19 @@ Shapes = (List@<Shape@> xs, Color@ c) {
     Drawings(/Std/List%.Map(xs, (Shape@ f) { f(c); }));
 };
 
-# Sample summary of sprites:
-#  .....
-#  SGGG.
-#  .G_GD
-#  SGGG.
-#  .....
+# Summary of sprites:
+#  .....  ..... .....
+#  .GGG.  .S.S. .CCC.
+#  .G_GD  ..... .CCC.
+#  .GGG.  .S.S. .CCC.
+#  ...W.  ..... .....
 #
 #  . is padding
 #  G is gate
 #  D is direction
-#  S is select
+#  S is sink
+#  W is wait
+#  C is Car.
 
 Int@ W = Int|5;   # Full width of square.
 
@@ -41,25 +43,28 @@ Shape@ Gate = Shapes[
     Rect(Int|1, Int|1, Int|3, Int|1)
 ];
 
-Shape@ Left = Rect(Int|0, Int|2, Int|1, Int|1);
-Shape@ Right = Rect(Int|4, Int|2, Int|1, Int|1);
-Shape@ Up = Rect(Int|2, Int|4, Int|1, Int|1);
-Shape@ Down = Rect(Int|2, Int|0, Int|1, Int|1);
+Shape@ Sink = Shapes[
+    Rect(Int|1, Int|1, Int|1, Int|1),
+    Rect(Int|3, Int|1, Int|1, Int|1),
+    Rect(Int|1, Int|3, Int|1, Int|1),
+    Rect(Int|3, Int|3, Int|1, Int|1)
+];
 
-(Dir@) { Shape@; } Dir = (Dir@ d) {
-    d.?(up: Up, down: Down, left: Left, right: Right);
+(Dir@) { Shape@; } Dir = {
+    Shape@ Left = Rect(Int|0, Int|2, Int|1, Int|1);
+    Shape@ Right = Rect(Int|4, Int|2, Int|1, Int|1);
+    Shape@ Up = Rect(Int|2, Int|4, Int|1, Int|1);
+    Shape@ Down = Rect(Int|2, Int|0, Int|1, Int|1);
+    (Dir@ d) { d.?(up: Up, down: Down, left: Left, right: Right); };
 };
 
-(Dir@) { Shape@; } Sel = {
-    Shape@ l = Shapes[Rect(Int|0, Int|1, Int|1, Int|1), Rect(Int|0, Int|3, Int|1, Int|1)];
-    Shape@ r = Shapes[Rect(Int|4, Int|1, Int|1, Int|1), Rect(Int|4, Int|3, Int|1, Int|1)];
-    Shape@ u = Shapes[Rect(Int|1, Int|4, Int|1, Int|1), Rect(Int|3, Int|4, Int|1, Int|1)];
-    Shape@ d = Shapes[Rect(Int|1, Int|0, Int|1, Int|1), Rect(Int|3, Int|0, Int|1, Int|1)];
-
-    (Dir@ dir) {
-        dir.?(up: u, down: d, left: l, right: r);
-    };
+(Dir@) { Shape@; } Dir2 = {
+    Shape@ Left = Rect(Int|0, Int|1, Int|1, Int|1);
+    Shape@ Right = Rect(Int|4, Int|3, Int|1, Int|1);
+    Shape@ Up = Rect(Int|1, Int|4, Int|1, Int|1);
+    Shape@ Down = Rect(Int|3, Int|0, Int|1, Int|1);
+    (Dir@ d) { d.?(up: Up, down: Down, left: Left, right: Right); };
 };
 
-@(W, Shapes, Car, Gate, Dir, Sel);
+@(W, Shapes, Car, Gate, Sink, Dir, Dir2);
 

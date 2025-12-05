@@ -12,26 +12,19 @@
 
 % Gates = /Computrainer/Gates/Lit%.Gates;
 
-Gates@ Mvp1 = Rows(Int|1, Int|7)[
-  Gates|'R v  |R  < |R  < |R  < |R  < |R  < |R  < |R  < |R  < |R  < |R  < |R  < |R  < |',   
-  Gates|'R v  |     |     |R   >|R   >|R   >|R   >|S    |     |     |     |     |R^   |',   
-  Gates|'R v  |     |     |R^   |C   >|0   >|R   >|WS1 0|R   >|.    |     |     |R^   |',
-  Gates|'R   >|R   >|R   >|D^v  |     |     |     |R   >|R   >|R   >|R   >|R   >|R^   |',
-  Gates|'     |     |     |R v  |     |     |     |R   >|R   >|R^   |',
-  Gates|'     |     |     |R v  |C   >|1   >|R   >|W0S 1|R   >|.    |',
-  Gates|'     |     |     |R   >|R   >|R   >|R   >|S    |'
+Gates@ Mvp1 = Rows(Int|1, Int|5)[
+  Gates|'M v  |M  < |M  < |M  < |M  < |M  < |M  < |M  < |',
+  Gates|'M v  |     |     |M   >|T H >|1 v  |     |M^   |',
+  Gates|'M   >|M   >|M   >|X01  |SINK |M   >|M   >|M^   |',
+  Gates|'     |     |     |M   >|TH  >|0^   |     |     |'
 ];
 
 Gates@ Gates = Mvp1;
 
 Cars@ Cars = Entries[
-    # C gate initialization:
-    @(x: Int|5, y: Int|5, v: Car.C),
-    @(x: Int|5, y: Int|2, v: Car.C),
-
     # The train to invert:
-    @(x: Int|1, y: Int|4, v: Car.C),
-    @(x: Int|2, y: Int|4, v: Car.0)
+    @(x: Int|1, y: Int|3, v: Car.C),
+    @(x: Int|2, y: Int|3, v: Car.0)
 ];
 
 Model@ Sample = Model(Gates, Cars);

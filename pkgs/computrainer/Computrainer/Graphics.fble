@@ -11,7 +11,7 @@
 @ Coord@ = /Computrainer/Grid%.Coord@;
 % Grid = /Computrainer/Grid%.Grid;
 
-@ Gate@ = /Computrainer/Model%.Gate@;
+@ Gate@ = /Computrainer/Gate%.Gate@;
 @ Model@ = /Computrainer/Model%.Model@;
 @ Car@ = /Computrainer/Car%.Car@;
 
