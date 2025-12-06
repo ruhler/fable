@@ -99,7 +99,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
     Event@ e <- m.do(FilterEvent);
     e.?(tick: {
         s.paused.?(true: StepUI(s));
-        Unit@ _ <- m.do(app.effect(Effect@(tick: Int|300)));
+        Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));
         StepUI(s.@(model: Tick(s.model)));
     });
 

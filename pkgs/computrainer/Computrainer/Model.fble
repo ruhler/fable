@@ -24,14 +24,17 @@
 
 % Gate = /Computrainer/Gate%;
 @ Gate@ = /Computrainer/Gate%.Gate@;
+
 @ State@ = /Computrainer/State%.State@;
+% State = /Computrainer/State%.State;
+% FlipPhase = /Computrainer/State%.FlipPhase;
 
 @ Gates@ = Grid@<Gate@>;
 @ Model@ = *(Gates@ gates, State@ s);
 
 (Gates@, Cars@) { Model@; }
 Model = (Gates@ gates, Cars@ cars) {
-    Model@(gates, State@(cars, Grid.Empty<Dir@>));
+    Model@(gates, State(cars));
 };
 
 # Run activation for a gate, if any.
@@ -93,14 +96,18 @@ GoEngines = (Gates@ gates) {
 # Advance the model by 1 unit of time.
 (Model@) { Model@; }
 Tick = (Model@ m) {
-    # Get the list of engines on the grid and try to move each on forward.
-    # TODO: Who knows what order the engines come back in. Maybe we want to
-    # make this more fair at some point.
-    List@<Coord@> engines = Grid.ForEach(m.s.cars, Empty<Coord@>,
-        (Coord@ k, Car@ v, List@<Coord@> es) {
-            v.?(C: Items(k, es), : es);
-        });
-    m.@(s: GoGates(m.gates, GoEngines(m.gates, m.s, engines)));
+    m.s.phase.?(engines: {
+        # Get the list of engines on the grid and try to move each on forward.
+        # TODO: Who knows what order the engines come back in. Maybe we want to
+        # make this more fair at some point.
+        List@<Coord@> engines = Grid.ForEach(m.s.cars, Empty<Coord@>,
+            (Coord@ k, Car@ v, List@<Coord@> es) {
+                v.?(C: Items(k, es), : es);
+            });
+        m.@(s: FlipPhase(GoEngines(m.gates, m.s, engines)));
+    });
+
+    m.@(s: FlipPhase(GoGates(m.gates, m.s)));
 };
 
 @(Model@, Gates@, Tick, Model);

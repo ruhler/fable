@@ -1,6 +1,4 @@
 
-* Alternate activation and motion instead of hiding intermediate state?
-
 * Test all the gates.
 * Pull Eq, Show for everything into appropriate submodules
   Instead of dumping it all in Model%.
