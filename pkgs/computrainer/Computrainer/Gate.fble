@@ -301,8 +301,9 @@ Gate@ Stop = Gate@(stop: Unit);
 (Car@, Dir@) { Gate@; } Source = (Car@ car, Dir@ dir) { Gate@(source: @(car, dir)); };
 Gate@ Sink = Gate@(sink: Unit);
 (Dir@, Dir@) { Gate@; } Dup = (Dir@ a, Dir@ b) { Gate@(dup: @(a, b)); };
+(Dir@) { Gate@; } Wait = (Dir@ dir) { Gate@(wait: dir); };
 (Dir@, Dir@) { Gate@; } Split = (Dir@ head, Dir@ tail) { Gate@(split: @(head, tail)); };
 (Dir@, Dir@) { Gate@; } Switch = (Dir@ 0, Dir@ 1) { Gate@(switch: @(0, 1)); };
 
-@(Gate@, Action, Push, Empty, Stop, Move, Source, Sink, Dup, Split, Switch);
+@(Gate@, Action, Push, Empty, Stop, Move, Source, Sink, Dup, Wait, Split, Switch);
 

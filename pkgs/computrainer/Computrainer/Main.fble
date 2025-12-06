@@ -40,12 +40,16 @@
 % Translate = /App/Drawing%.Translate;
 
 % Car = /Computrainer/Car%;
+% Dir = /Computrainer/Dir%;
+% Gate = /Computrainer/Gate%;
 @ Model@ = /Computrainer/Model%.Model@;
 % Tick = /Computrainer/Model%.Tick;
+
 % DrawModel = /Computrainer/Graphics%.DrawModel;
 % Colors = /Computrainer/Graphics/Colors%;
 % W = /Computrainer/Graphics/Sprites%.W;
 % Sprites = /Computrainer/Graphics/Sprites%;
+
 % Sample = /Computrainer/Sample%.Sample;
 
 @ State@ = *(
@@ -63,10 +67,26 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
       Int@ scale = Int|8;
       Int@ menu_height = Add(Mul(scale, W), Int|8);
       Drawing@ background = Rect(Int|0, Sub(height, menu_height), width, menu_height, Colors.Background);
+      (Int@, Drawing@) { Drawing@; } Tile = (Int@ col, Drawing@ d) {
+          Translate(Mul(col, W), Int|0, d);
+      };
+
       Drawing@ gates = Drawings[
-          Translate(Mul(Int|0, W), Int|0, Sprites.Car(Car.C)),
-          Translate(Mul(Int|1, W), Int|0, Sprites.Car(Car.0)),
-          Translate(Mul(Int|2, W), Int|0, Sprites.Car(Car.1))
+          Tile(Int|0, Sprites.Gate(Gate.Empty)),
+          Tile(Int|1, Sprites.Gate(Gate.Stop)),
+          Tile(Int|2, Sprites.Gate(Gate.Move(Dir.Right))),
+          Tile(Int|3, Sprites.Gate(Gate.Source(Car.C, Dir.Right))),
+          Tile(Int|4, Sprites.Gate(Gate.Source(Car.0, Dir.Right))),
+          Tile(Int|5, Sprites.Gate(Gate.Source(Car.1, Dir.Right))),
+          Tile(Int|6, Sprites.Gate(Gate.Sink)),
+          Tile(Int|7, Sprites.Gate(Gate.Dup(Dir.Right, Dir.Down))),
+          Tile(Int|8, Sprites.Gate(Gate.Wait(Dir.Right))),
+          Tile(Int|9, Sprites.Gate(Gate.Split(Dir.Down, Dir.Right))),
+          Tile(Int|10, Sprites.Gate(Gate.Switch(Dir.Right, Dir.Down))),
+
+          Tile(Int|12, Sprites.Car(Car.C)),
+          Tile(Int|13, Sprites.Car(Car.0)),
+          Tile(Int|14, Sprites.Car(Car.1))
       ];
 
       Point@ a = @(x: scale, y: Neg(scale));
