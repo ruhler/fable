@@ -38,11 +38,14 @@
 @ Drawing@ = /App/Drawing%.Drawing@;
 @ Point@ = /App/Drawing%.Point@;
 % Affine = /App/Drawing%.Affine;
+% Blank = /App/Drawing%.Blank;
 % Drawings = /App/Drawing%.Drawings;
 % Rect = /App/Drawing%.Rect;
 % Translate = /App/Drawing%.Translate;
 
 % Car = /Computrainer/Car%;
+@ Car@ = Car.Car@;
+
 % Dir = /Computrainer/Dir%;
 
 % Gate = /Computrainer/Gate%;
@@ -55,12 +58,17 @@
 @ Gates@ = /Computrainer/Model%.Gates@;
 % Tick = /Computrainer/Model%.Tick;
 
+% DrawCar = /Computrainer/Graphics%.DrawCar;
+% DrawGate = /Computrainer/Graphics%.DrawGate;
 % DrawModel = /Computrainer/Graphics%.DrawModel;
+
 % Colors = /Computrainer/Graphics/Colors%;
 % W = /Computrainer/Graphics/Sprites%.W;
 % Sprites = /Computrainer/Graphics/Sprites%;
 
 % Sample = /Computrainer/Sample%.Sample;
+
+@ Selected@ = +(Unit@ nothing, Gate@ gate, Car@ car);
 
 @ State@ = *(
     Model@ model,
@@ -68,6 +76,7 @@
     Int@ map_y, # tile y coordinate of tile in the center of the screen.
     Int@ mouse_x, # pixel coordinates of the mouse.
     Int@ mouse_y, # pixel coordinates of the mouse.
+    Selected@ selected, # currently selected gate/car for placement.
     Int@ scale,
     Bool@ paused
 );
@@ -113,7 +122,16 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
         : FilterEvent);
   };
 
-  State@ initial = @(model: Sample, map_x: Int|0, map_y: Int|0, mouse_x: Int|0, mouse_y: Int|0, scale: Int|1, paused: True);
+  State@ initial = @(
+      model: Sample,
+      map_x: Int|0,
+      map_y: Int|0,
+      mouse_x: Int|0,
+      mouse_y: Int|0,
+      selected: Selected@(gate: Gate.Move(Dir.Down)),
+      scale: Int|1,
+      paused: True
+  );
 
   Int@ CenterX = Shr(width, Int|1);
   Int@ CenterY = Shr(height, Int|1);
@@ -132,15 +150,22 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
                  y: Add(CenterY, Mul(W, Mul(s.scale, s.map_y))));
 
     Drawing@ clear = Rect(Int|0, Int|0, width, height, Colors.Background);
-    Drawing@ highlight = {
-        # Highlight the current mouse position's tile.
-        Coord@ tile = MouseTile(s);
-        Affine(a, b, Rect(Mul(tile.x, W), Mul(tile.y, W), W, W, Colors.Highlight));
-    };
+    Drawing@ map = Affine(a, b, {
+        Coord@ mouse_tile = MouseTile(s);
 
-    Drawing@ drawing = Affine(a, b, DrawModel(s.model));
+        Drawing@ highlight = Rect(Mul(mouse_tile.x, W), Mul(mouse_tile.y, W), W, W, Colors.Highlight);
+        Drawing@ model = DrawModel(s.model);
+        Drawing@ selected = s.selected.?(
+              nothing: Blank,
+              gate: Drawings[highlight, DrawGate(mouse_tile.x, mouse_tile.y, s.selected.gate)],
+              car: DrawCar(mouse_tile, s.selected.car)
+        );
+
+        Drawings[highlight, model, selected];
+    });
+
     Drawing@ mouse = Rect(Sub(s.mouse_x, Int|2), Sub(s.mouse_y, Int|2), Int|4, Int|4, Colors.Mouse);
-    Unit@ _ <- m.do(app.effect(Effect@(draw: Drawings[clear, highlight, drawing, Menu, mouse])));
+    Unit@ _ <- m.do(app.effect(Effect@(draw: Drawings[clear, map, Menu, mouse])));
 
     Event@ e <- m.do(FilterEvent);
     e.?(tick: {

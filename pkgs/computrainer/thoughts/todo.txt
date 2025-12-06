@@ -1,4 +1,14 @@
 
+* Change DrawGate to take Coord@ instead of a pair of Int@
+* Remove Draw prefix from DrawGate, DrawCar, DrawModel.
+  - Consider renaming Graphics% to Draw%.
+
+* Fix indentation in source files, which seems to have gotten funny.
+  And figure out why it got funny so that doesn't happen again.
+
+* Add 'R' command (capital, not lowercase) to rotate 2nd of two dirs
+  associated with a gate.
+
 * Pull Eq, Show for everything into appropriate submodules
   Instead of dumping it all in Model%.
 

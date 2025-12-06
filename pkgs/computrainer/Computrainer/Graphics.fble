@@ -41,4 +41,4 @@ DrawModel = (Model@ m) {
     Drawings[gates, cars];
 };
 
-@(DrawModel);
+@(DrawGate, DrawCar, DrawModel);
