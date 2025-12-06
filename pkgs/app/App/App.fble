@@ -17,7 +17,7 @@
 
 @ Key@ = +(
   Unit@ a, Unit@ d, Unit@ h, Unit@ j, Unit@ k, Unit@ l,
-  Unit@ q, Unit@ s, Unit@ w,
+  Unit@ q, Unit@ r, Unit@ s, Unit@ w,
   Unit@ left, Unit@ right, Unit@ up, Unit@ down,
   Unit@ space, Unit@ lshift, Unit@ rshift
 );

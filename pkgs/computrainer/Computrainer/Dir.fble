@@ -22,4 +22,9 @@ Dest = (Coord@ c, Dir@ d) {
     Coord@(nx, ny);
 };
 
-@(Dir@, Left, Down, Up, Right, Dest);
+(Dir@) { Dir@; }
+Rotate = (Dir@ d) {
+    d.?(up: Right, down: Left, left: Up, right: Down);
+};
+
+@(Dir@, Left, Down, Up, Right, Dest, Rotate);

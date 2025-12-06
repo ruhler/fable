@@ -19,6 +19,8 @@
 
 <@>@ List@ = /Std/List%.List@;
 
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
@@ -42,9 +44,15 @@
 
 % Car = /Computrainer/Car%;
 % Dir = /Computrainer/Dir%;
+
 % Gate = /Computrainer/Gate%;
+@ Gate@ = Gate.Gate@;
+
 @ Coord@ = /Computrainer/Grid%.Coord@;
+% Grid = /Computrainer/Grid%.Grid;
+
 @ Model@ = /Computrainer/Model%.Model@;
+@ Gates@ = /Computrainer/Model%.Gates@;
 % Tick = /Computrainer/Model%.Tick;
 
 % DrawModel = /Computrainer/Graphics%.DrawModel;
@@ -147,6 +155,14 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
             d: StepUI(s.@(map_x: Incr(s.map_x))),
             j: StepUI(s.@(scale: Max(Shr(s.scale, Int|1), Int|1))),
             k: StepUI(s.@(scale: Shl(s.scale, Int|1))),
+            r: {
+                # Rotate the gate at the mouse coordinates.
+                Coord@ tile = MouseTile(s);
+                Maybe@<Gate@> mg = Grid.Lookup(s.model.gates, tile);
+                mg.?(nothing: StepUI(s));
+                Gates@ gates = Grid.Insert(s.model.gates, tile, Gate.Rotate(mg.just));
+                StepUI(s.@(model: s.model.@(gates)));
+            },
             s: StepUI(s.@(map_y: Decr(s.map_y))),
             w: StepUI(s.@(map_y: Incr(s.map_y))),
             space: {

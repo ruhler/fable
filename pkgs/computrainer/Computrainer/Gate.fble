@@ -8,8 +8,9 @@
 
 @ Car@ = /Computrainer/Car%.Car@;
 
-@ Dir@ = /Computrainer/Dir%.Dir@;
-% Dest = /Computrainer/Dir%.Dest;
+% Dir = /Computrainer/Dir%;
+@ Dir@ = Dir.Dir@;
+% Dest = Dir.Dest;
 
 @ Coord@ = /Computrainer/Grid%.Coord@;
 % Grid = /Computrainer/Grid%.Grid;
@@ -305,5 +306,21 @@ Gate@ Sink = Gate@(sink: Unit);
 (Dir@, Dir@) { Gate@; } Split = (Dir@ head, Dir@ tail) { Gate@(split: @(head, tail)); };
 (Dir@, Dir@) { Gate@; } Switch = (Dir@ 0, Dir@ 1) { Gate@(switch: @(0, 1)); };
 
-@(Gate@, Action, Push, Empty, Stop, Move, Source, Sink, Dup, Wait, Split, Switch);
+(Gate@) { Gate@; }
+Rotate = (Gate@ g) {
+    g.?(empty: g,
+        stop: g,
+        move: Move(Dir.Rotate(g.move)),
+        source: Source(g.source.car, Dir.Rotate(g.source.dir)),
+        sink: g,
+        dup: Dup(Dir.Rotate(g.dup.a), Dir.Rotate(g.dup.b)),
+        wait: Wait(Dir.Rotate(g.wait)),
+        split: Split(Dir.Rotate(g.split.head), Dir.Rotate(g.split.tail)),
+        switch: Switch(Dir.Rotate(g.switch.0), Dir.Rotate(g.switch.1)));
+};
+
+@(Gate@, Action, Push,
+  Empty, Stop, Move, Source, Sink, Dup, Wait, Split, Switch,
+  Rotate
+);
 

@@ -225,15 +225,16 @@ static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
     case SDL_SCANCODE_K: k = 4; break;
     case SDL_SCANCODE_L: k = 5; break;
     case SDL_SCANCODE_Q: k = 6; break;
-    case SDL_SCANCODE_S: k = 7; break;
-    case SDL_SCANCODE_W: k = 8; break;
-    case SDL_SCANCODE_LEFT: k = 9; break;
-    case SDL_SCANCODE_RIGHT: k = 10; break;
-    case SDL_SCANCODE_UP: k = 11; break;
-    case SDL_SCANCODE_DOWN: k = 12; break;
-    case SDL_SCANCODE_SPACE: k = 13; break;
-    case SDL_SCANCODE_LSHIFT: k = 14; break;
-    case SDL_SCANCODE_RSHIFT: k = 15; break;
+    case SDL_SCANCODE_R: k = 7; break;
+    case SDL_SCANCODE_S: k = 8; break;
+    case SDL_SCANCODE_W: k = 9; break;
+    case SDL_SCANCODE_LEFT: k = 10; break;
+    case SDL_SCANCODE_RIGHT: k = 11; break;
+    case SDL_SCANCODE_UP: k = 12; break;
+    case SDL_SCANCODE_DOWN: k = 13; break;
+    case SDL_SCANCODE_SPACE: k = 14; break;
+    case SDL_SCANCODE_LSHIFT: k = 15; break;
+    case SDL_SCANCODE_RSHIFT: k = 16; break;
     default: break;
   }
 

@@ -2,6 +2,10 @@
 * Pull Eq, Show for everything into appropriate submodules
   Instead of dumping it all in Model%.
 
+* Highlight by making the gate/car brighter rather than selecting the
+  background?
+ - So that we don't highlight empty tiles?
+
 * Change zoom control to ctrl + and ctrl -.
 
 * figure out how to write tests for ui
