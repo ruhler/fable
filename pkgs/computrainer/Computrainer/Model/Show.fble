@@ -37,4 +37,4 @@ Show@<Model@> Model = (Model@ m) {
     Format|'Model(%s, %s)'[Gates(m.gates), State(m.s)];
 };
 
-@(Model, Cars);
+@(Coord, Model, Cars);
