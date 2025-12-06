@@ -15,9 +15,6 @@
 <@>@ Grid@ = /Computrainer/Grid%.Grid@;
 % Grid = /Computrainer/Grid%.Grid;
 
-% Dir = /Computrainer/Dir%;
-@ Dir@ = Dir.Dir@;
-
 % Cars = /Computrainer/Car%;
 @ Car@ = Cars.Car@;
 @ Cars@ = Cars.Cars@;

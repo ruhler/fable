@@ -296,11 +296,13 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 };
 
 Gate@ Empty = Gate@(empty: Unit);
+Gate@ Stop = Gate@(stop: Unit);
 (Dir@) { Gate@; } Move = (Dir@ d) { Gate@(move: d); };
 (Car@, Dir@) { Gate@; } Source = (Car@ car, Dir@ dir) { Gate@(source: @(car, dir)); };
 Gate@ Sink = Gate@(sink: Unit);
+(Dir@, Dir@) { Gate@; } Dup = (Dir@ a, Dir@ b) { Gate@(dup: @(a, b)); };
 (Dir@, Dir@) { Gate@; } Split = (Dir@ head, Dir@ tail) { Gate@(split: @(head, tail)); };
 (Dir@, Dir@) { Gate@; } Switch = (Dir@ 0, Dir@ 1) { Gate@(switch: @(0, 1)); };
 
-@(Gate@, Action, Push, Empty, Move, Source, Sink, Split, Switch);
+@(Gate@, Action, Push, Empty, Stop, Move, Source, Sink, Dup, Split, Switch);
 
