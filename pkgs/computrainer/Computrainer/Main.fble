@@ -182,15 +182,15 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
     Drawing@ map = Affine(a, b, {
         Coord@ mouse_tile = MouseTile(s);
 
-        Drawing@ highlight = Rect(Mul(mouse_tile.x, W), Mul(mouse_tile.y, W), W, W, Colors.Highlight);
+        Drawing@ background = Rect(Mul(mouse_tile.x, W), Mul(mouse_tile.y, W), W, W, Colors.Background);
         Drawing@ model = DrawModel(s.model);
         Drawing@ selected = s.selected.?(
               nothing: Blank,
-              gate: Drawings[highlight, DrawGate(mouse_tile.x, mouse_tile.y, s.selected.gate)],
+              gate: Drawings[background, DrawGate(mouse_tile.x, mouse_tile.y, s.selected.gate)],
               car: DrawCar(mouse_tile, s.selected.car)
         );
 
-        Drawings[highlight, model, selected];
+        Drawings[model, selected];
     });
 
     Drawing@ mouse = Rect(Sub(s.mouse_x, Int|2), Sub(s.mouse_y, Int|2), Int|4, Int|4, Colors.Mouse);

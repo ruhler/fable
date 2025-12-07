@@ -6,7 +6,6 @@
 @ Car@ = /Computrainer/Car%.Car@;
 
 Color@ Background = Color@(Int|13, Int|31, Int|45);
-Color@ Highlight = Color@(Int|14, Int|105, Int|173);
 Color@ Gate = Color@(Int|201, Int|203, Int|207);
 Color@ 0 = Color@(Int|255, Int|159, Int|28);
 Color@ 1 = Color@(Int|14, Int|173, Int|105);
@@ -19,5 +18,5 @@ Car = (Car@ v) {
 };
 
 
-@(C, 0, 1, Background, Highlight, Mouse, Gate, Car);
+@(C, 0, 1, Background, Mouse, Gate, Car);
 

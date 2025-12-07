@@ -22,9 +22,8 @@
 * Pull Eq, Show for everything into appropriate submodules
   Instead of dumping it all in Model%.
 
-* Highlight by making the gate/car brighter rather than selecting the
-  background?
- - So that we don't highlight empty tiles?
+* Highlight that gates are rotatble by making the gate brighter when the mouse
+  is over it?
 
 * Change zoom control to ctrl + and ctrl -.
 
