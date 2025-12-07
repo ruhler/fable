@@ -234,6 +234,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
     });
 
     e.?(mouse_down: {
+        e.mouse_down.button.?(right: StepUI(s.@(selected: Selected@(nothing: Unit))));
+
         InMenu(Coord@(s.mouse_x, s.mouse_y)).?(true: {
             Int@ col = MenuCol(s.mouse_x);
             /Std/Int/Sign%.IsNegative(col).?(true: StepUI(s));

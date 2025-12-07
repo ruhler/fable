@@ -1,5 +1,4 @@
 
-* Add a way to deselect.
 * Add option to select cars from the menu too
  - including an 'erase' car option.
 * Clean up menu code.
