@@ -18,6 +18,9 @@
 % Int = /Std/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Get = /Std/List/Index%.Get;
+<@>% Length = /Std/List/Index%.Length;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -82,36 +85,61 @@
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
+  Int@ MenuScale = Int|8;
+  Int@ MenuHeight = Add(Mul(MenuScale, W), Int|8);
+
+  # Returns true if the given screen coordinates are in the menu region.
+  (Coord@) { Bool@; } InMenu = (Coord@ c) {
+      /Std/Int/Ord%.Gt(c.y, Sub(height, MenuHeight));
+  };
+
+  List@<Gate@> MenuGates = List[
+      Gate.Empty,
+      Gate.Stop,
+      Gate.Move(Dir.Right),
+      Gate.Source(Car.C, Dir.Right),
+      Gate.Source(Car.0, Dir.Right),
+      Gate.Source(Car.1, Dir.Right),
+      Gate.Sink,
+      Gate.Dup(Dir.Right, Dir.Down),
+      Gate.Wait(Dir.Right),
+      Gate.Split(Dir.Down, Dir.Right),
+      Gate.Switch(Dir.Right, Dir.Down)
+  ];
+
   Drawing@ Menu = {
-      Int@ scale = Int|8;
-      Int@ menu_height = Add(Mul(scale, W), Int|8);
-      Drawing@ background = Rect(Int|0, Sub(height, menu_height), width, menu_height, Colors.Background);
+      Drawing@ background = Rect(Int|0, Sub(height, MenuHeight), width, MenuHeight, Colors.Background);
       (Int@, Drawing@) { Drawing@; } Tile = (Int@ col, Drawing@ d) {
           Translate(Mul(col, W), Int|0, d);
       };
 
       Drawing@ gates = Drawings[
-          Tile(Int|0, Sprites.Gate(Gate.Empty)),
-          Tile(Int|1, Sprites.Gate(Gate.Stop)),
-          Tile(Int|2, Sprites.Gate(Gate.Move(Dir.Right))),
-          Tile(Int|3, Sprites.Gate(Gate.Source(Car.C, Dir.Right))),
-          Tile(Int|4, Sprites.Gate(Gate.Source(Car.0, Dir.Right))),
-          Tile(Int|5, Sprites.Gate(Gate.Source(Car.1, Dir.Right))),
-          Tile(Int|6, Sprites.Gate(Gate.Sink)),
-          Tile(Int|7, Sprites.Gate(Gate.Dup(Dir.Right, Dir.Down))),
-          Tile(Int|8, Sprites.Gate(Gate.Wait(Dir.Right))),
-          Tile(Int|9, Sprites.Gate(Gate.Split(Dir.Down, Dir.Right))),
-          Tile(Int|10, Sprites.Gate(Gate.Switch(Dir.Right, Dir.Down))),
+          Tile(Int|0, Sprites.Gate(Get(MenuGates, Int|0))),
+          Tile(Int|1, Sprites.Gate(Get(MenuGates, Int|1))),
+          Tile(Int|2, Sprites.Gate(Get(MenuGates, Int|2))),
+          Tile(Int|3, Sprites.Gate(Get(MenuGates, Int|3))),
+          Tile(Int|4, Sprites.Gate(Get(MenuGates, Int|4))),
+          Tile(Int|5, Sprites.Gate(Get(MenuGates, Int|5))),
+          Tile(Int|6, Sprites.Gate(Get(MenuGates, Int|6))),
+          Tile(Int|7, Sprites.Gate(Get(MenuGates, Int|7))),
+          Tile(Int|8, Sprites.Gate(Get(MenuGates, Int|8))),
+          Tile(Int|9, Sprites.Gate(Get(MenuGates, Int|9))),
+          Tile(Int|10, Sprites.Gate(Get(MenuGates, Int|10))),
 
           Tile(Int|12, Sprites.Car(Car.C)),
           Tile(Int|13, Sprites.Car(Car.0)),
           Tile(Int|14, Sprites.Car(Car.1))
       ];
 
-      Point@ a = @(x: scale, y: Neg(scale));
+      Point@ a = @(x: MenuScale, y: Neg(MenuScale));
       Point@ b = @(x: Int|4, y: Sub(height, Int|4));
 
       Drawings[background, Affine(a, b, gates)];
+  };
+
+  # Gets the menu column number referenced by the given screen x coordinates.
+  (Int@) { Int@; } MenuCol = (Int@ x) {
+      Quot(Sub(x, Int|4), Mul(W, MenuScale));
   };
 
   M@<Event@> FilterEvent = {
@@ -129,7 +157,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
       map_y: Int|0,
       mouse_x: Int|0,
       mouse_y: Int|0,
-      selected: Selected@(gate: Gate.Move(Dir.Down)),
+      selected: Selected@(nothing: Unit),
       scale: Int|1,
       paused: True
   );
@@ -205,18 +233,29 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
         StepUI(s);
     });
 
-    e.?(mouse_down: StepUI(s.selected.?(
-        nothing: s,
-        gate: {
-            Coord@ tile = MouseTile(s);
-            s.@(model: s.model.@(gates: Grid.Insert(s.model.gates, tile, s.selected.gate)));
-        },
-        car: {
-            Coord@ tile = MouseTile(s);
-            s.@(model: s.model.@(
-                s: s.model.s.@(
-                cars: Grid.Insert(s.model.s.cars, tile, s.selected.car))));
-        })));
+    e.?(mouse_down: {
+        InMenu(Coord@(s.mouse_x, s.mouse_y)).?(true: {
+            Int@ col = MenuCol(s.mouse_x);
+            /Std/Int/Sign%.IsNegative(col).?(true: StepUI(s));
+            /Std/Int/Ord%.Lt(col, Length(MenuGates)).?(false: StepUI(s));
+            StepUI(s.@(selected: Selected@(gate: Get(MenuGates, col))));
+
+            # TODO: add support for selecting cars too.
+        });
+
+        StepUI(s.selected.?(
+            nothing: s,
+            gate: {
+                Coord@ tile = MouseTile(s);
+                s.@(model: s.model.@(gates: Grid.Insert(s.model.gates, tile, s.selected.gate)));
+            },
+            car: {
+                Coord@ tile = MouseTile(s);
+                s.@(model: s.model.@(
+                    s: s.model.s.@(
+                    cars: Grid.Insert(s.model.s.cars, tile, s.selected.car))));
+            }));
+    });
 
     e.?(mouse_motion: {
         Int@ mouse_x = e.mouse_motion.x;
