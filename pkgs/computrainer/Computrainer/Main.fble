@@ -26,9 +26,11 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
 @ String@ = /Std/String%.String@;
+% Str = /Std/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -84,7 +86,7 @@
     Bool@ paused
 );
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
   Int@ MenuScale = Int|8;
   Int@ MenuHeight = Add(Mul(MenuScale, W), Int|8);
 
@@ -172,7 +174,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
       @(x, y);
   };
 
-  (State@) { M@<Unit@>; } StepUI = (State@ s) {
+  (State@) { M@<State@>; } StepUI = (State@ s) {
     # Map game coordinates into screen coordinates.
     Point@ a = @(x: s.scale, y: Neg(s.scale));
     Point@ b = @(x: Add(CenterX, Neg(Mul(W, Mul(s.scale, s.map_x)))),
@@ -209,7 +211,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
             d: StepUI(s.@(map_x: Incr(s.map_x))),
             j: StepUI(s.@(scale: Max(Shr(s.scale, Int|1), Int|1))),
             k: StepUI(s.@(scale: Shl(s.scale, Int|1))),
-            q: m.return(Unit),
+            q: m.return(s),
             r: StepUI(s.selected.?(
                     nothing: {
                         # Rotate the gate at the mouse coordinates.
@@ -265,10 +267,19 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
         StepUI(s.@(mouse_x, mouse_y));
     });
 
-    m.return(Unit);
+    m.return(s);
   };
 
-  Unit@ _ <- m.do(StepUI(initial));
+  State@ final <- m.do(StepUI(initial));
+
+  # Save the final model.
+  # TODO: pick a better file name? Only save this when explicitly requested?
+  % O = /Core/Stream/OStream%(m);
+  Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(Str|'save.model', /Core/Stdio%.Text));
+  ostream.?(nothing: m.return(True));
+  Unit@ _ <- m.do(O.Show(ostream.just, /Computrainer/Model/Save%.Model(final.model)));
+  Unit@ _ <- m.do(O.Close(ostream.just));
+
   m.return(True);
 };
 

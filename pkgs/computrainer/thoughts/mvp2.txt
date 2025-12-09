@@ -237,3 +237,15 @@ Still needed:
 Shall I clear all the tests to start, clear the sample, start again from
 scratch?
 
+---
+
+Okay! I have enough UI now that I should be able to make some more complex
+models. What are the next steps?
+
+* Add support for r2 rotation: rotating the 2nd direction of a gate.
+* Add support for save/restore.
+* Design and implement my 4-bit adder.
+
+Uh... how do I design my 4-bit adder? I feel like I need pen and paper. I
+don't know how to think about it otherwise. Well, let's think about it on pen
+and paper and go from there.

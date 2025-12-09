@@ -1,0 +1,90 @@
+
+<@>@ Output@ = /Std/Char/Output%.Output@;
+<@>% Return = /Std/Char/Output%.Return;
+% Concat = /Std/Char/Output%.Concat;
+% Format = /Std/Char/Ascii/Output%.Format;
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
+% String = /Std/Char/Ascii/Output%.String;
+
+@ Car@ = /Computrainer/Car%.Car@;
+@ Cars@ = /Computrainer/Car%.Cars@;
+@ Dir@ = /Computrainer/Dir%.Dir@;
+@ Coord@ = /Computrainer/Grid%.Coord@;
+<@>@ Grid@ = /Computrainer/Grid%.Grid@;
+% Grid = /Computrainer/Grid%.Grid;
+@ Gate@ = /Computrainer/Gate%.Gate@;
+@ Gates@ = /Computrainer/Model%.Gates@;
+@ Model@ = /Computrainer/Model%.Model@;
+@ Phase@ = /Computrainer/State%.Phase@;
+
+(Car@) { Output@; }
+Car = (Car@ c) {
+    c.?(C: String|C, 0: String|0, 1: String|1);
+};
+
+(Dir@) { Output@; }
+Dir = (Dir@ d) {
+    d.?(up: String|up, down: String|down, left: String|left, right: String|right);
+};
+
+(Gates@) { Output@; }
+Gates = (Gates@ gates) {
+    Grid.ForEach(gates, Return, (Coord@ c, Gate@ g, Output@ out) {
+        Output@ head = Format|'gate %s %s '[
+            /Core/Int/Show%.Show(c.x),
+            /Core/Int/Show%.Show(c.y)
+        ];
+        Output@ body = g.?(
+            empty: String|'empty',
+            stop: String|'stop',
+            move: Format|'move %s'[Dir(g.move)],
+            source: Format|'source %s %s'[Car(g.source.car), Dir(g.source.dir)],
+            sink: String|'sink',
+            dup: Format|'dup %s %s'[Dir(g.dup.a), Dir(g.dup.b)],
+            wait: Format|'wait %s'[Dir(g.wait)],
+            split: Format|'split %s %s'[Dir(g.split.head), Dir(g.split.tail)],
+            switch: Format|'switch %s %s'[Dir(g.switch.0), Dir(g.switch.1)]
+        );
+        FormatE|'%s%s%s\n'[out, head, body];
+    });
+};
+
+(Cars@) { Output@; }
+Cars = (Cars@ cars) {
+    Grid.ForEach(cars, Return, (Coord@ c, Car@ car, Output@ out) {
+        FormatE|'%scar %s %s %s\n'[
+            out,
+            /Core/Int/Show%.Show(c.x),
+            /Core/Int/Show%.Show(c.y),
+            Car(car)];
+        });
+};
+
+(Grid@<Dir@>) { Output@; }
+Routing = (Grid@<Dir@> routing) {
+    Grid.ForEach(routing, Return, (Coord@ c, Dir@ dir, Output@ out) {
+        FormatE|'%srouting %s %s %s\n'[
+            out,
+            /Core/Int/Show%.Show(c.x),
+            /Core/Int/Show%.Show(c.y),
+            Dir(dir)];
+        });
+};
+
+(Phase@) { Output@; }
+Phase = (Phase@ phase) {
+    FormatE|'phase %s\n'[phase.?(
+        engines: String|engines,
+        gates: String|gates)];
+};
+
+(Model@) { Output@; }
+Model = (Model@ model) {
+    Concat[
+        Gates(model.gates),
+        Cars(model.s.cars),
+        Routing(model.s.routing),
+        Phase(model.s.phase)];
+};
+
+@(Model);

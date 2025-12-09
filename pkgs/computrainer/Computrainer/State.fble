@@ -66,7 +66,7 @@ SetRouting = (Coord@ c, State@ s, Dir@ d) {
     s.@(routing: Grid.Insert(s.routing, c, d));
 };
 
-@(State@, State,
+@(Phase@, State@, State,
   FlipPhase,
   RemoveCar, AddCar, MoveCar,
   Routing, ClearRouting, SetRouting);
