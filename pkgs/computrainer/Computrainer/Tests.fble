@@ -10,6 +10,9 @@
 
 % Str = /Std/Char/Ascii%.Str;
 
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% ToString = /Std/Char/Output%.ToString;
+
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
@@ -273,6 +276,15 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
         @(x: Int|4, y: Int|0, v: Car.1)
     ]);
     Model@ got = Ticks(model);
+    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
+  }),
+
+  Test(Str|'Load Save', (Unit@ _) {
+    Model@ model = Ticks(/Computrainer/Sample%.Sample);
+    Output@ saved = /Computrainer/Model/Save%.Model(model);
+    Model@ loaded = /Computrainer/Model/Load%.Model(ToString(saved));
+    Model@ wnt = model;
+    Model@ got = loaded;
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   })
 ]);

@@ -1,0 +1,139 @@
+
+@ Bool@ = /Std/Bool%.Bool@;
+
+@ Ascii@ = /Std/Char/Ascii%.Ascii@;
+% Str = /Std/Char/Ascii%.Str;
+
+% IsSpace = /Core/Char/Type%.IsSpace;
+
+@ Int@ = /Std/Int%.Int@;
+% Int = /Std/Int/Lit%.Int;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Get = /Std/List/Index%.Get;
+<@>% Split = /Std/List/Search%.Split;
+
+@ String@ = /Std/String%.String@;
+% SplitLines = /Std/String/Lines%.SplitLines;
+
+% Unit = /Std/Unit%.Unit;
+
+% Car = /Computrainer/Car%;
+@ Car@ = Car.Car@;
+
+% Dir = /Computrainer/Dir%;
+@ Dir@ = Dir.Dir@;
+
+@ Coord@ = /Computrainer/Grid%.Coord@;
+% Grid = /Computrainer/Grid%.Grid;
+
+% Gate = /Computrainer/Gate%;
+@ Gate@ = Gate.Gate@;
+
+@ Phase@ = /Computrainer/State%.Phase@;
+@ Model@ = /Computrainer/Model%.Model@;
+
+Int@ 0 = Int|0;
+Int@ 1 = Int|1;
+Int@ 2 = Int|2;
+Int@ 3 = Int|3;
+Int@ 4 = Int|4;
+
+(List@<Ascii@>, String@) { Bool@; }
+StrIs = (List@<Ascii@> want, String@ str) {
+    /Std/String/Eq%.Eq(Str(want), str);
+};
+
+(List@<String@>, Model@) { Model@; }
+Phase = (List@<String@> args, Model@ m) {
+    String@ value = args.items.head;
+    Phase@ phase = {
+        StrIs|'engines'(value).?(true: Phase@(engines: Unit));
+        StrIs|'gates'(value).?(true: Phase@(gates: Unit));
+        /Std/Undef%.Undef.undef<Phase@>;
+    };
+    m.@(s: m.s.@(phase));
+};
+
+(String@) { Car@; }
+ReadCar = (String@ v) {
+    StrIs|'C'(v).?(true: Car.C);
+    StrIs|'0'(v).?(true: Car.0);
+    StrIs|'1'(v).?(true: Car.1);
+    /Std/Undef%.Undef.undef<Car@>;
+};
+
+(List@<String@>, Model@) { Model@; }
+AddCar = (List@<String@> args, Model@ m) {
+    String@ x = Get(args, 0);
+    String@ y = Get(args, 1);
+    String@ v = Get(args, 2);
+
+    Coord@ coord = @(x: /Core/Int/Show%.Read(x), y: /Core/Int/Show%.Read(y));
+    Car@ car = ReadCar(v);
+    m.@(s: m.s.@(cars: Grid.Insert(m.s.cars, coord, car)));
+};
+
+(String@) { Dir@; }
+ReadDir = (String@ v) {
+    StrIs|'up'(v).?(true: Dir.Up);
+    StrIs|'down'(v).?(true: Dir.Down);
+    StrIs|'left'(v).?(true: Dir.Left);
+    StrIs|'right'(v).?(true: Dir.Right);
+    /Std/Undef%.Undef.undef<Dir@>;
+};
+
+(List@<String@>, Model@) { Model@; }
+AddGate = (List@<String@> args, Model@ m) {
+    String@ x = Get(args, 0);
+    String@ y = Get(args, 1);
+    String@ g = Get(args, 2);
+
+    Coord@ coord = @(x: /Core/Int/Show%.Read(x), y: /Core/Int/Show%.Read(y));
+    Gate@ gate = {
+        StrIs|'empty'(g).?(true: Gate.Empty);
+        StrIs|'stop'(g).?(true: Gate.Stop);
+        StrIs|'move'(g).?(true: Gate.Move(ReadDir(Get(args, 3))));
+        StrIs|'source'(g).?(true: Gate.Source(ReadCar(Get(args, 3)), ReadDir(Get(args, 4))));
+        StrIs|'sink'(g).?(true: Gate.Sink);
+        StrIs|'dup'(g).?(true: Gate.Dup(ReadDir(Get(args, 3)), ReadDir(Get(args, 4))));
+        StrIs|'wait'(g).?(true: Gate.Wait(ReadDir(Get(args, 3))));
+        StrIs|'split'(g).?(true: Gate.Split(ReadDir(Get(args, 3)), ReadDir(Get(args, 4))));
+        StrIs|'switch'(g).?(true: Gate.Switch(ReadDir(Get(args, 3)), ReadDir(Get(args, 4))));
+        /Std/Undef%.Undef.undef<Gate@>;
+    };
+    m.@(gates: Grid.Insert(m.gates, coord, gate));
+};
+
+(List@<String@>, Model@) { Model@; }
+Routing = (List@<String@> args, Model@ m) {
+    String@ x = Get(args, 0);
+    String@ y = Get(args, 1);
+    String@ d = Get(args, 2);
+    Coord@ coord = @(x: /Core/Int/Show%.Read(x), y: /Core/Int/Show%.Read(y));
+    Dir@ dir = ReadDir(d);
+    m.@(s: m.s.@(routing: Grid.Insert(m.s.routing, coord, dir)));
+};
+
+(String@, Model@) { Model@; }
+DoLine = (String@ line, Model@ m) {
+    List@<String@> args = Split(line, IsSpace);
+    args.?(empty: m);
+
+    String@ head = args.items.head;
+    List@<String@> tail = args.items.tail;
+
+    StrIs|'gate'(head).?(true: AddGate(tail, m));
+    StrIs|'car'(head).?(true: AddCar(tail, m));
+    StrIs|'phase'(head).?(true: Phase(tail, m));
+    StrIs|'routing'(head).?(true: Routing(tail, m));
+    m;
+};
+
+(String@) { Model@; }
+Model = (String@ lines) {
+    Model@ empty = /Computrainer/Model%.Model(Grid.Empty<Gate@>, Grid.Empty<Car@>);
+    /Std/List%.ForEach(SplitLines(lines), empty, DoLine);
+};
+
+@(Model);
