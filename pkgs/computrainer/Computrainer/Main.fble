@@ -26,6 +26,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
@@ -61,6 +62,7 @@
 
 @ Model@ = /Computrainer/Model%.Model@;
 @ Gates@ = /Computrainer/Model%.Gates@;
+% Model = /Computrainer/Model%.Model;
 % Tick = /Computrainer/Model%.Tick;
 
 % DrawCar = /Computrainer/Graphics%.DrawCar;
@@ -70,8 +72,6 @@
 % Colors = /Computrainer/Graphics/Colors%;
 % W = /Computrainer/Graphics/Sprites%.W;
 % Sprites = /Computrainer/Graphics/Sprites%;
-
-% Sample = /Computrainer/Sample%.Sample;
 
 @ Selected@ = +(Unit@ nothing, Gate@ gate, Car@ car);
 
@@ -86,7 +86,7 @@
     Bool@ paused
 );
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
   Int@ MenuScale = Int|8;
   Int@ MenuHeight = Add(Mul(MenuScale, W), Int|8);
 
@@ -152,17 +152,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
         mouse_motion: m.return(e),
         : FilterEvent);
   };
-
-  State@ initial = @(
-      model: Sample,
-      map_x: Int|0,
-      map_y: Int|0,
-      mouse_x: Int|0,
-      mouse_y: Int|0,
-      selected: Selected@(nothing: Unit),
-      scale: Int|1,
-      paused: True
-  );
 
   Int@ CenterX = Shr(width, Int|1);
   Int@ CenterY = Shr(height, Int|1);
@@ -270,12 +259,29 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     m.return(s);
   };
 
+  String@ file = args.?(items: args.items.head, empty: Str|'model.ct');
+  Maybe@<IStream@<M@>> istream <- m.do(stdio.read(file, /Core/Stdio%.Text));
+  Model@ model <- m.do({
+      istream.?(nothing: m.return(Model(Grid.Empty<Gate@>, Grid.Empty<Car@>)));
+      String@ text <- m.do(/Core/Stream/IStream%(m).GetText(istream.just));
+      m.return(/Computrainer/Model/Load%.Model(text));
+  });
+
+  State@ initial = @(
+      model: model,
+      map_x: Int|0,
+      map_y: Int|0,
+      mouse_x: Int|0,
+      mouse_y: Int|0,
+      selected: Selected@(nothing: Unit),
+      scale: Int|1,
+      paused: True
+  );
+
   State@ final <- m.do(StepUI(initial));
 
-  # Save the final model.
-  # TODO: pick a better file name? Only save this when explicitly requested?
   % O = /Core/Stream/OStream%(m);
-  Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(Str|'save.model', /Core/Stdio%.Text));
+  Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(file, /Core/Stdio%.Text));
   ostream.?(nothing: m.return(True));
   Unit@ _ <- m.do(O.Show(ostream.just, /Computrainer/Model/Save%.Model(final.model)));
   Unit@ _ <- m.do(O.Close(ostream.just));
