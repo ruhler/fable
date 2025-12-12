@@ -5,7 +5,7 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
-@ Dir@ = /Computrainer/Dir%.Dir@;
+% Dir = /Computrainer/Dir/Eq%.Eq;
 
 @ Car@ = /Computrainer/Car%.Car@;
 @ Cars@ = /Computrainer/Car%.Cars@;
@@ -14,13 +14,6 @@
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Model@ = /Computrainer/Model%.Model@;
 @ State@ = /Computrainer/State%.State@;
-
-Eq@<Dir@> Dir = (Dir@ a, Dir@ b) {
-    a.?(up: b.?(up: True, : False),
-        down: b.?(down: True, : False),
-        left: b.?(left: True, : False),
-        right: b.?(right: True, : False));
-};
 
 Eq@<Car@> Car = (Car@ a, Car@ b) {
     a.?(

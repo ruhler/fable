@@ -200,6 +200,18 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
             d: StepUI(s.@(map_x: Incr(s.map_x))),
             j: StepUI(s.@(scale: Max(Shr(s.scale, Int|1), Int|1))),
             k: StepUI(s.@(scale: Shl(s.scale, Int|1))),
+            l: StepUI(s.selected.?(
+                    nothing: {
+                        # Rotate2 the gate at the mouse coordinates.
+                        Coord@ tile = MouseTile(s);
+                        Maybe@<Gate@> mg = Grid.Lookup(s.model.gates, tile);
+                        mg.?(nothing: s);
+                        Gates@ gates = Grid.Insert(s.model.gates, tile, Gate.Rotate(mg.just));
+                        s.@(model: s.model.@(gates));
+                    },
+                    gate: s.@(selected: Selected@(gate: Gate.Rotate2(s.selected.gate))),
+                    car: s
+                )),
             q: m.return(s),
             r: StepUI(s.selected.?(
                     nothing: {

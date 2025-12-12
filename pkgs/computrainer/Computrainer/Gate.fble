@@ -319,8 +319,26 @@ Rotate = (Gate@ g) {
         switch: Switch(Dir.Rotate(g.switch.0), Dir.Rotate(g.switch.1)));
 };
 
+# Rotates just the second direction associated with each gate.
+(Gate@) { Gate@; }
+Rotate2 = (Gate@ g) {
+    Dir@ first = g.?(dup: g.dup.a, split: g.split.head, switch: g.switch.0, : Dir.Up);
+    Dir@ second = g.?(dup: g.dup.b, split: g.split.tail, switch: g.switch.1, : Dir.Right);
+    Dir@ nsecond = Dir.Rotate(second);
+
+    # Rotate again if it's overlapping the first position.
+    Dir@ second = /Computrainer/Dir/Eq%.Eq(nsecond, first).?(
+        true: Dir.Rotate(nsecond), false: nsecond);
+
+
+    g.?(dup: Dup(first, second),
+        split: Split(first, second),
+        switch: Switch(first, second),
+        : g);
+};
+
 @(Gate@, Action, Push,
   Empty, Stop, Move, Source, Sink, Dup, Wait, Split, Switch,
-  Rotate
+  Rotate, Rotate2
 );
 

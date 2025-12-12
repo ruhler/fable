@@ -1,4 +1,6 @@
 
+* Change rotate2 key to capital R.
+
 * Add option to select cars from the menu too
  - including an 'erase' car option.
 * Clean up menu code.
@@ -15,9 +17,6 @@
 
 * Fix indentation in source files, which seems to have gotten funny.
   And figure out why it got funny so that doesn't happen again.
-
-* Add 'R' command (capital, not lowercase) to rotate 2nd of two dirs
-  associated with a gate.
 
 * Pull Eq, Show for everything into appropriate submodules
   Instead of dumping it all in Model%.
