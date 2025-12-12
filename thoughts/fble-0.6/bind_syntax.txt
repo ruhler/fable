@@ -1,0 +1,53 @@
+Bind Syntax
+===========
+Originally motivated from thoughts/fble-0.6/stdlib.test.txt, though doesn't
+really solve anything there.
+
+Goal: Provide a nicer syntax for the special case of Unit@ _ <- ...
+
+Proposal:
+
+Instead of:
+
+    stmt = type, name, {',', type, name}, '<-', expr, ';', stmt                 
+
+Switch to:
+
+    stmt = $ type, name, {',', type, name}, '=', expr, ';', stmt                 
+
+And add the special case of
+
+    stmt = $ expr, ';', stmt                 
+
+Which is sugar for type *() with no name? With '_' as the name? Got to be
+careful there. We shouldn't clobber '_' if the user wants to use it for
+something.
+
+---
+
+Variation: support zero argument functions?
+
+No. That doesn't do what I want. I wouldn't be able to reuse 'Do' function for
+Unit@. I really want it to be (Unit@) specifically here.
+
+Without the syntactic sugar, the change in syntax could be nice regardless? It
+feels a little less pointy and highlights that a bind operation is going on
+from the start.
+
+  Char@ head <- Do(Get);
+  String@ tail <- Do(Raw);
+  Unit@ _ <- Do(PutLine(Str('blah')));
+  Return(Items(head, tail));
+
+  $ Char@ head = Do(Get);
+  Foo@ x = ...;
+  $ String@ tail = Do(Raw);
+  $ Unit@ _ = Do(PutLine(Str('blah')));
+  Return(Items(head, tail));
+
+Let me experiment with that simple change in syntax to start. See how it
+feels. We can think more about special casing Unit@ _ after.
+
+---
+
+No. Doesn't feel good. The $ messes up the indent levels.

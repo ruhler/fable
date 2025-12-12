@@ -37,15 +37,15 @@
           TestResult@ tr = test.case.test(Unit);
           tr.?(
             pass: {
-              Unit@ _ <- m.do(PutLine(out, Str|'@PASSED'));
+              Unit@ _ <- m.do(PutLine(out, Str|'@PASS'));
               m.return(passing);
             },
             fail: {
-              Unit@ _ <- m.do(O.Show(out, FormatE|'@FAILED: %s\n'[tr.fail]));
+              Unit@ _ <- m.do(O.Show(out, FormatE|'@FAIL: %s\n'[tr.fail]));
               m.return(False);
             },
             xfail: {
-              Unit@ _ <- m.do(PutLine(out, Str|'@XFAILED'));
+              Unit@ _ <- m.do(PutLine(out, Str|'@EXPECTED_FAIL'));
               m.return(passing);
             });
         },

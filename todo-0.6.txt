@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Use format strings for test/tests.tcl summary output
+  So that columns are all aligned nicely.
+
 * Add test for StrE with \q escape.
 
 * Print function names along with error location on stack trace?
@@ -141,6 +144,9 @@ Things to consider doing for the fble-0.6 release.
 * Fble Language Features
  - Add support for mutable data structures?
  - Add some way to catch or recover from errors at runtime?
+   Vital for composition.
+   See thoughts/fble-0.6/stdlib.test.txt and thoughts/fble-0.6/exceptions.txt
+   for discussion.
  - Some way to implement a web server that can handle multiple requests
    concurrently?
  - Think seriously about compatibility as the language and libraries evolve.

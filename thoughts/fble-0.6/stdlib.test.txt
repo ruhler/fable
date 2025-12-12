@@ -434,3 +434,467 @@ anyway? I keep using custom names for test cases. What does this get me?
 Random side question: the debug info has function names right? Why don't we
 print those along with the stack traces? I bet I could.
 
+---
+
+Two ideas to explore:
+* Embedding locations from the compiler: thoughts/fble-0.6/locations.txt
+* Exception handling: thoughts/fble-0.6/exceptions.txt
+
+Those ideas haven't quite born fruit yet.
+
+Anyway, in terms of completeness, seems like I should expand the set of
+assertions:
+* Pass, Fail, AssertTrue, AssertFalse, AssertEquals
+* Skip, ExpectFail
+
+Hmm... how to make progress here?
+
+Let's review.
+
+* I have an API today where test names are explicit, bodies are behind a
+  (Unit@) { ... } function, and if a test crashes, the whole test runner
+  crashes.
+* It might be nice if test name was inferred. But that's less valuable in case
+  of anonymous tests. Like, no benefit of TestFoo = (...) { ... } over
+  Test(Str|Foo, (...) { ... }) aside from slight syntactic overhead.
+* It would be nice to get an error pointing directly to the test in question.
+  Perhaps via a special |^ kind of literal, whose semantics, implementation,
+  justification, and generalizability are unclear at the moment.
+* It would be nice not to have the syntactic overhead of (Unit@ _ ) { ... }
+  everywhere.
+* It would be nice if one test crashing doesn't prevent other tests from
+  running.
+* It would be nice when a test fails for any reason to get a stack trace of
+  the test failure, which we can pragmatically capture and report in whatever
+  format the test runner thinks is best.
+
+All these things that would be nice are hard and slightly weird. Let's start
+thinking outside the box. Because lots of little un-nice things add up to a
+not nice experience. I would love to have a nice experience for unit testing.
+
+Idea: how about don't put test bodies behind (Unit@ _). A Test@ becomes a test
+result. The test runner doesn't run the test code, it just prints out the
+results.
+* No need for (Unit@ _ ) {...} everywhere, which is nice.
+* We get the same end result as we already do today, practically speaking. The
+  list of test results with a crash when one of them crashes.
+* But: a crash will prevent us from seeing any test results, not just the
+  tests that come after the failure.
+* But: a hang will prevent us from seeing any test results, not just the tests
+  that come after the hang.
+* But: we'll have no idea from a hang which test failed.
+* But: if tests are slow to all run, we get no indication of progress.
+
+Funny that the 'but' parts all feel only partial solved using (Unit@ _) { ...  }.
+
+What if a Test@ is just a generic monad with some API? Like, API to say:
+starting a test. API to say: this test failed.
+
+  Unit@ _ <- Do(Test(Str|'Foo'));
+  # Logic for test goes here.
+  Unit@ _ <- Do(Assert(...));
+
+  Unit@ _ <- Do(Test(Str|'Bar'));
+  # Logic for test goes here.
+  Unit@ _ <- Do(Assert(...));
+
+But that doesn't give clear hierarchy to test names or separation between
+tests? And doesn't actually save much on syntax?
+
+What if our test runner isn't a normal program runner? What if it is a special
+runner. You give a list of modules or some such. It introspects into the
+profile blocks to find test functions. Or even just the output type, somehow?
+Like, say the output is a struct whose named fields have type Test@. Then we
+run the tests one at a time with a special runner that can run each in its own
+context, catch the test failures, catch and report the exceptions, give error
+locations for things?
+
+  Test@ Foo = (Unit@) {
+     ...
+  };
+
+  Test@ Bar = (Unit@) { 
+    ...
+  };
+
+  @(Foo, Bar);
+
+We still need to put it behind (Unit@). They still need to be functions, not
+values. Or, we can have a helper?
+
+  Test@ Foo = {
+    Unit@ <- AssertEquals(Int|2);
+    Add(Int|1, Int|1);
+  };
+
+In this case, the assert function takes (Unit@) { ... } as an argument. It can
+forward that to the output.
+
+Interesting idea. We would have to list tests explicitly in the return value
+of the module. Hmm...
+
+---
+
+Let's imagine I had a nice syntax for function values that take an unused
+Unit@ value. Instead of (*() _) { ... }, for example, say I write ${ ... }.
+And let's say I have a nice way syntax for that in bind. Like maybe:
+
+  $ Do(PutLine(Str|'hello'));
+  m.return(...)
+
+I claim that makes the purely syntactic concern of specifying tests behind a
+function go away. I claim there is no way to get away from clearly specifying
+what code is under what test. So, solve the syntactic concern with syntactic
+sugar.
+
+Let's explore new bind syntax while we are at it?
+
+I have code like this:
+
+    Unit@ _ <- m.do(SeqBlocks(link(entry.seq)));
+    Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
+    Unit@ _ <- m.do(SeqNames(entry.seq));
+    O.PutLine(out, Str|'</a></td></tr>');
+
+Is it nicer as:
+
+    $ m.do(SeqBlocks(link(entry.seq)));
+    $ m.do(O.PutStr(out, Str|'">'));
+    $ m.do(SeqNames(entry.seq));
+    O.PutLine(out, Str|'</a></td></tr>');
+
+Yes.
+
+I have code like this:
+
+  Bool@ end <- Do(Try_(BlankToEnd));
+  end.?(true: Return(Str|''));
+
+  Char@ head <- Do(Get);
+  String@ tail <- Do(Raw);
+  Return(Items(head, tail));
+
+Any way to reuse the $ here to make it look nice too?
+
+  $ Bool@ end <- Do(Try_(BlankToEnd));
+  end.?(true: Return(Str|''));
+
+  $ Char@ head <- Do(Get);
+  $ String@ tail <- Do(Raw);
+  Return(Items(head, tail));
+
+  $ Bool@ end = Do(Try_(BlankToEnd));
+  end.?(true: Return(Str|''));
+
+  $ Char@ head = Do(Get);
+  $ String@ tail = Do(Raw);
+  Return(Items(head, tail));
+
+  $ Bool@ end: Do(Try_(BlankToEnd));
+  end.?(true: Return(Str|''));
+
+  $ Char@ head: Do(Get);
+  $ String@ tail: Do(Raw);
+  Return(Items(head, tail));
+
+I'm too used to the <- syntax for do right now. Anything else looks funny to
+me.
+
+    <- m.do(SeqBlocks(link(entry.seq)));
+    <- m.do(O.PutStr(out, Str|'">'));
+    <- m.do(SeqNames(entry.seq));
+    O.PutLine(out, Str|'</a></td></tr>');
+
+  Bool@ end $= Do(Try_(BlankToEnd));
+  end.?(true: Return(Str|''));
+
+  Char@ head $= Do(Get);
+  String@ tail $= Do(Raw);
+  Return(Items(head, tail));
+
+  A@ a, B@ b <- Do(Pair);
+  ...
+
+  $ A@ a, B@ b: Do(Pair);
+  ...
+
+  A@ a, B@ b $ Do(Pair);
+  ...
+
+  $ A@ a, B@ b = Do(Pair);
+  ...
+
+  Bool@ end $ Do(Try_(BlankToEnd));
+  end.?(true: Return(Str|''));
+
+  Char@ head $ Do(Get);
+  String@ tail $ Do(Raw);
+  Return(Items(head, tail));
+
+  $ Bool@ end <- Do(Try_(BlankToEnd));
+  end.?(true: Return(Str|''));
+
+  $ Char@ head <- Do(Get);
+  $ String@ tail <- Do(Raw);
+  $ Do(PutLine(Str('blah')));
+  Return(Items(head, tail));
+
+I bet I could get used to this:
+
+  $ Bool@ end = Do(Try_(BlankToEnd));
+  end.?(true: Return(Str|''));
+
+  $ Char@ head = Do(Get);
+  $ String@ tail = Do(Raw);
+  Return(Items(head, tail));
+
+It's the most direct and obvious way to have $ consistently at the beginning.
+I bet it doesn't even conflict with ${...} as an expression?
+
+All of which is to say, instead of:
+
+  Test(Str|'Foo', (Unit@ _) {
+    AssertEquals(a, b);
+  }),
+
+  Test(Str|'Bar', (Unit@ _) {
+    AssertEquals(a, b);
+  }),
+
+We could start to write:
+
+  Test(Str|'Foo', ${
+    AssertEquals(a, b);
+  }),
+
+  Test(Str|'Bar', ${
+    AssertEquals(a, b);
+  }),
+
+Or we could start to write:
+
+  { $ Test(Str|'Foo');
+    AssertEquals(a, b);
+  },
+
+  { $ Test(Str|'Bar');
+    AssertEquals(a, b);
+  },
+
+  {
+    $ Test(Str|'Foo');
+    AssertEquals(a, b);
+  },
+
+  {
+    $ Test(Str|'Bar');
+    AssertEquals(a, b);
+  },
+
+Honestly, the middle one looks best to me. With ${...} as the argument. It's
+quite nice.
+
+What if I try changing the bind syntax (unrelated to testing) first. Then
+try...
+
+How often do we use (Unit@ _)? It's > 99% just for tests and benchmarks. Seems
+suspicious to add syntactic sugar just for that. On the other hand, putting
+something behind a function block feels pretty fundamental from a behavior
+point of view.
+
+${...} could be sugar instead for:
+  <@ T@>(T@ _) { ... }
+
+And presumably we can internally avoid having to pick '_' as the name, or any
+name at all. I could do an empty name "" perhaps. Then Test would have to take
+the generic form to satisfying typing, because we wouldn't do type inference
+to figure this out. Oddly feels vaguely more robust this way.
+
+---
+
+Having a special test runner makes sense. We do the same kind of thing for
+Stdio@, App@, etc: You give a value of specific type (Test@ in this case), the
+test runner is a C program that knows how to interpret it. The C program will
+be capable of catching exceptions: FbleApply returns NULL in that case.
+
+As a happy side effect of printing stack traces to stderr on test failure,
+we'll have them as part of the test output. We just can't manipulate them
+programmatically.
+
+So, benefits of this approach:
+* It makes sense conceptually.
+* It let's us catch crashes in test runs.
+* It let's us see stack traces.
+
+Downsides:
+* We don't have control over how stack traces are printed.
+* We could also write a pure test runner (like today). Which approach should
+  we invest in? Because it doesn't seem like we can easily share.
+
+To do everything in fble, we need access to stack traces in fble. But what is
+a stack trace even? If you have obfuscation, or your strip symbols. We want to
+be able to completely strip symbols to avoid excess code size. We could report
+instruction pointers, make whoever has the symbols recover the stack trace
+after, but then we can't print something pretty to the user.
+
+The only way we can write an in-fble test runner that can print pretty stack
+traces to the user is to specify stack traces as part of the language
+definition somewhere and require it to be supported.
+
+---
+
+Stepping back again, in the hopes it can provide insight as to how to move
+forward here. The main challenges with the test framework at the moment:
+* Tediousness of (Unit@ _) { ... } syntax.
+  - Could be solved with ${ ... }, but that seems maybe hacky.
+* If a test crashes, it prevents other tests from running.
+  - Could be solved from C with custom test runner. Feels clunky.
+  - Could be solved with 'try' feature to language.
+  - Could be solved with builtin try function?
+  - But note: we never solve the issue of test infra itself crashing.
+  - Maybe there's a way to dynamically load test lists to catch issues of test
+    list generation crashing.
+* Programmatic access to debug info
+  - Requires we make debugging part of the fble spec somehow.
+* Assuming I implement the test runner in fble, I need to sort out the
+  standard apis for stream outputs, which is more work to do (I need to do it
+  eventually).
+
+Some other things to keep in mind:
+* The user has to annotate which code is part of running which test somehow.
+  There's no getting around that. If there's a crash, we need to assign it to
+  a particular test, or the test infra. Use of (Unit@ _) { ... } is the best
+  way to do that in the API.
+* Non-programmatic access to debug info, like seeing it as stderr from the
+  test implementation, is not useful in general. I already have that as a
+  hacky solution.
+* Explicit embedding of __FILE__ and __LINE__, and maybe __MODULE__ could be
+  very convenient for producing error messages. It is not a complete solution
+  to programmatic access to debug info.
+* Explicitly named tests makes perfect sense. There is no advantage to
+  inferring the name from variable declarations. Except maybe a slight
+  syntactic one that you should be able to use literals to solve, otherwise
+  literals aren't doing their jobs.
+
+---
+
+I think I've spent enough time stuck here. I know we want (Unit@ _) { ...} of
+one syntax or another to describe what code belongs to a specific test. I know
+we want explicit names of tests. The only open question from that point of
+view is if we want automatic file:line support. Let's not bother. Use the
+existing test api, port it to /Std, and revisit in the future. If I'm bored, I
+can try writing a custom runner for that test API.
+
+Let me not worry about IO for this phase of things. I can migrate the test
+runner separately after we've figured that out.
+
+Proposed API:
+
+/Std/Test%:
+* TestResult@, TestCase@, TestSuite@, Test@
+* Test, TestSuite
+* Pass, Fail, Skip?, XFail, XFails
+
+/Std/Bool/Assert%:
+* AssertTrue, AssertFalse
+
+/Std/Eq/Assert%:
+* AssertEquals, AssertNotEquals
+
+Open questions:
+* What's standard terminology for expected failure?
+  Python uses 'expectedFailure'
+  Try a python test, see what it outputs.
+  Look into dejagnu too, see what they output.
+* Nuance difference between XFail (returns xfail) and XFails (tests it fails
+  with the right message).
+* Terminology for Skip/Ignore/Disable?
+* Should we have assertGt, assertLt, etc? in /Std/Ord/Assert%?
+  Probably yes.
+* How about list assertions for search like things?
+* Python tracks 'unexepctedSuccesses' separately. Should we do that too?
+
+Features to think more about:
+* Timeout support?
+* Assumptions as a way to conditionally skip tests?
+
+---
+
+DejaGnu outputs PASS, XPASS, FAIL, XFAIL
+
+Meaning:
+* PASS - the test passed as desired and expected
+* FAIL - the test failed, contrary to what was desired and expected
+* XPASS - ???
+* XFAIL - ???
+
+Interesting. dejagnu has a test output protocol very similar to what we use
+for testing fble. How about standardizing on the dejagnu format?
+
+Test output starts with tabs, then has:
+* NOTE: <text>
+* WARNING: possible problem running the test.
+* ERROR - problem running the test.
+* PASSED: <name>
+* FAILED: <name>
+* XPASSED: <name> - test was expected to fail, but succeeded.
+* XFAILED: <name> - test failed, as expected.
+* UNTESTED: <name> - test hasn't been implemented yet.
+* UNRESOLVED: <name>  - human intervention required to interpret result.
+* UNSUPPORTED: <name>  - testing environment doesn't support the use case.
+
+I guess some of this is based on posix?
+
+Our test runner can behave like runtest. Look specifically at the unit testing
+section of DejaGnu for what I want to support.
+
+Specifically it reserves for test output purposes:
+  \n\t[][[:upper:]]*:
+
+Cool. I should give it a try. If it works for me, switch over my testing
+framework to this protocol.
+
+---
+
+Playing around with dejagnu:
+* It's a separate package dependency.
+* The C library is super simple: pass, fail, xpass, xfail, etc. totals().
+  It just formats to the output protocol.
+* runtest is not worth the effort. Way too complicated to set up.
+
+Oh well. So I guess it's a simple matter of changing the output to match
+dejagnu unit test output, with nothing else to reuse or verify I've done so
+correctly.
+
+On second thought, dejagnu protocol doesn't give me a way to recognize a
+failed test by absence of a test result in test output. Since it seems I'm not
+gaining anything practical by switching to dejagnu, and I am losing some
+functionality, let's just stick with what we have.
+
+If I like, I can borrow the terminology for xpassed and untested. Or I can
+borrow the simple output totals format. It looks like xpassed is c++ version
+only of dejagnu, not the c version.
+
+Output format is something like:
+
+Totals:
+        #passed:                2
+        #real failed:           2
+
+Honestly, it looks very broken. xfail(...) doesn't mark as xfail. xpass is
+considered passed. The real takeaway from the summary is I should make xfail
+and xpass more explicit: "expected failures", "unexpected passes".
+
+---
+
+I'm phasing out use of 'xfail', because it's not obvious what it means.
+Switching to 'expected_fail' instead. 'xpass' makes no sense to me: instead
+use 'fail', because an expected failing test isn't failing as expected.
+
+I should probably add 'skip' as an option, and add that to reporting.
+
+Now test API that makes sense:
+
+* Pass, Fail, Skip, ExpectFail
+* no need to provide an empty ExpectedFailure @TestResult value. Just expose
+  the ExpectFail function to convert from an existing TestResult@.

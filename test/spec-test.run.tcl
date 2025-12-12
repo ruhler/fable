@@ -59,17 +59,17 @@ proc expect_error { type loc args } {
   }
 
   if {$status == 0} {
-    puts "@FAILED"
+    puts "@FAIL"
     error "Expected $type error, but no error encountered."
   }
 
   if {$status != $es} {
-    puts "@FAILED"
+    puts "@FAIL"
     error "Expected $type error, but got:\n$output"
   }
 
   if {-1 == [string first ":$::loc: error" $output]} {
-    puts "@FAILED"
+    puts "@FAIL"
     error "Expected error at $::loc, but got:\n$output"
   }
 }
@@ -84,7 +84,7 @@ proc expect_warning { loc args } {
   set output [execv {*}$args 2>@1]
 
   if {-1 == [string first ":$::loc: warning" $output]} {
-    puts "@FAILED"
+    puts "@FAIL"
     error "Expected warning at $::loc, but got:\n$output"
   }
 }
@@ -106,10 +106,10 @@ set type "???"
 set loc ""
 set fin [open "$path" "r"]
 set test_line 1
-set passed "@PASSED"
+set passed "@PASS"
 while {[gets $fin line] >= 0} {
   if {[string first "@@fble-test@@ xfail" $line] != -1} {
-    set passed "@XFAILED"
+    set passed "@EXPECTED_FAIL"
     continue
   }
 
@@ -239,7 +239,7 @@ proc dispatch {} {
     }
 
     default {
-      puts "@FAILED"
+      puts "@FAIL"
       error "Unsupported @@fble-test@@ type: '$::type'"
     }
   }

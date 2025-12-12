@@ -1,0 +1,166 @@
+Exceptions
+==========
+The question comes up a bunch. May as well put down some thoughts on it.
+
+Latest place this came up was with test infra: we want a way to wrap untrusted
+test code so we can recover if a test case crashes without crashing the whole
+program. Exceptions would be a natural way to do that.
+
+Goal of exceptions performance wise:
+* It's okay for there to be a runtime cost when an exception is triggered.
+* I really don't want there to be general slowdown in code when an exception
+  isn't triggered, just in case someone might (never) trigger an exception.
+
+A big question is what information you get out of an exception:
+* A single bit, thrown or not?
+* Standardized exception error code? E.g. struct access, undefined access,
+  etc.
+* A stack trace of some sort.
+* Custom user data types.
+
+I claim custom user data types don't make much sense here. It only makes sense
+if the user is throwing the exception themself, not runtime generated. But in
+that case, you can use monadic syntax to clearly specify data types and make
+everything work.
+
+If we rely on exceptions, we have to now define the behavior at time of
+exception, which means for a test framework, for example, we can no longer
+rely on implicit undefined behavior of the fble implementation to print the
+stack on failure. That makes things hard. It means we have to define stack
+traces to make practical use of them when catching exceptions.
+
+I claim it's not easy to guard against all untrusted code. Sure you can guard
+against a function call. But how about loading a module? Presumably if you
+don't trust the function call, you don't trust module loading code that loads
+that function in the first place. It seems like exceptions should be tied to
+dynamic module loading somehow.
+
+For the test framework case, this makes things pretty awkward. In general we
+should put a try block around the code loading a module to test. That code is
+just as likely to crash and mess everything up as the test function itself.
+
+All of which is to say, I feel like, at this point in time, exceptions won't
+really satisfy the needs of what I want for a test framework. Maybe they would
+in a world where we dynamically load all modules under test. But we don't live
+in that world yet.
+
+---
+
+Imagine we live in a dream world where I don't have to care about what makes
+sense. How would exceptions look there?
+
+You can throw explicitly, a value of any type.
+
+You can catch a target type, you get access to the value and a bunch of
+debugging info. But let's say the target type can be polymorphic, and we'll
+magically allow you to catch any value that matches the structure of the type.
+Including, for example A@.
+
+The debug info you get includes a stack trace, with modules, functions, files,
+lines.
+
+There is some builtin type thrown by the builtin runtime errors.
+
+For example, syntax could be something like...
+
+  Error@<Foo@> <- Try(...);
+  ...
+
+Hmm... what we need is:
+ * A not yet evaluated expression to evaluate, of type T@.
+ * A type of error to catch. Call it E@.
+ * A return type R@.
+ * A function from Error@<E@> to R@ to call in case of error.
+ * A function from T@ to R@ to call in case of success.
+
+We can simplify by saying T@ and R@ are the same, and on success return the
+successful value.
+
+In an ideal world, we can nest calls nicely to catch different kinds of
+errors. We want to nest into T@, so feels like the body should perhaps be the
+expression to evaluate?
+
+But this seems similar to a case statement, right? On error you call into the
+: block. Otherwise you fall through. Except I don't want to have to
+re-evaluate the expression on every thing you try.
+
+It's a little awkward to have a block of code to execute, and different blocks
+for every error you care about. Maybe:
+
+  {...}.??(
+    A@ a: { ... },
+    B@ b: { ... },
+    ...
+  );
+
+For errors A@, B@. Where the variable a becomes an object that you can extract
+debug info from. Something of type Error@<A@>.
+
+Or, to be more explicit:
+
+  {...}.??(
+    Error@<A@> a: { ... },
+    Error@<B@> b: { ... },
+    <@ T@> { Error@<C@<T@>>; } c: { ... },
+    ...
+  );
+
+The way it works is:
+* Evaluate the initial expression.
+* On success, return the value of that initial expression, you're done.
+* On error, go top down in the error branches
+* Match the first one that matches the thrown exception, evaluate that body
+  with the exception in scope.
+* All bodies must have the same type as the initial expression.
+* Return the matching body. You're done.
+
+Now timeout can be a separate thing. Some function Timeout where you give an
+expression and a timeout. It returns the result of that expression, or throws
+a timeout error that you can catch using the try block.
+
+To simplify, no need for multiple branches, because we can as easily chain
+them:
+
+  {...}.??(
+    Error@<A@> a: { ... }
+  ).??(
+    Error@<B@> b: { ... }
+  ).??(
+    <@ T@> { Error@<C@<T@>>; } c: { ... }
+  )...;
+
+We can get rid of Error@ if we make the debug info part of builtin, and
+provide a way to ask for a stack trace? Though it feels maybe better to add
+one frame at a time from where you are from. Because it would be bad if the
+same function returned different things (via try/catch) based on where it is
+called. So debug info should only tell you about what you are calling, not
+where you are calling from.
+
+Type inference semantics could be used. You are passing a polymorphic
+function. It is invoked with a concrete value, only if it can infer the proper
+type is the function actually invoked, otherwise the error is propagated.
+
+Now then, what's bad about this?
+* Means we have to capture type info at runtime, do type checking at run time.
+* Means we have to define debugging info.
+* Provides two separate ways in the language to deal with errors.
+ - One explicitly typed, the other magically typed.
+
+Any chance there is a way we could phrase this as a statically typed thing?
+
+Like, what if we explicitly annotated everything with the kind of errors it
+could encounter? Everything gets the default errors, because those can happen
+in pure code...
+
+Well, there's your answer. Have a single catch type, don't allow explicit
+throws, people can use monads for custom error types. The rest is only for
+capturing runtime errors.
+ 
+  Error@ e <- Try({...});
+  ...
+
+The error e tells you stack trace between where you are catching and where you
+are trying and maybe an error code. And maybe you can rethrow an error to add
+to the stack trace and let someone else try to capture it? But how would you
+decide to catch it or not? Based on the stack trace?
+

@@ -1148,3 +1148,7 @@ way you at least have an unambiguous interpretation of the output of show, and
 you can see that something is a character or string consistently and easily.
 Yes, let's go with that. And let's test that.
 
+---
+
+Show and Char are moved over. That's all the Shows for now. Let's call this
+done.

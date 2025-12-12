@@ -1,0 +1,65 @@
+Locations
+=========
+The idea is, for unit testing framework, it would be really useful if we could
+embed __FILE__, __LINE__, __COL__, etc. equivalents into fble code. That way I
+could define test cases that reference those and output an error message which
+jumps straight to a failing test, just like a compile error would.
+
+The compiler is uniquely suited for this kind of thing, because it knows the
+location at any point in the program.
+
+Possible things we could want:
+* __FILE__, __LINE__, __COL__, __MODULE__, __FUNCTION__
+
+Or, more generally, the profile block info?
+
+Possible syntax: apply it as a literal using |^
+
+For example:
+
+  Test|^((Unit@ _) { ... });
+
+Where the first argument of Test is a List@<Ascii@>. We could equivalently
+call Test using Test|'my test'(...);
+
+We want the syntax to be really small, because you have to use it anywhere you
+want this info. You can't hide it behind a function call. We don't have macro
+support that would allow you to do that.
+
+We could write library helper functions: File|^, Line|^, Col|^, etc. which
+extract the relevant parts from whatever |^ includes.
+
+It is slightly awkward asking what literal character set we can be confident
+|^ falls within.
+
+Review of existing __FILE__ like things:
+* __FILE__, __LINE__, __DATE__, __TIME__, __STDC__, and a few other such
+  things.
+
+Notice: no __COL__.
+
+Seems nice to have these kinds of things. But feels awkward to try and squeeze
+it all into a single literal. At least __DATE_, __TIME__, __STDC__, etc. stay
+the same during a compilation. It's __FILE__ and __LINE__ that change
+depending on where you are in the code.
+
+Might also be nice to have something equivalent to buildstamp macro? But I can
+manage that a different way.
+
+What if we have separate things for FILE and LINE? I don't know, like -: and
+:-?
+
+Test|-:|:-(...)
+
+That's a bit verbose.
+
+Test|%F:L(...)
+
+Test|^(...)
+
+---
+
+Practically speaking with have block names in compile.c, but we handle literal
+expressions in typecheck.c. So this may be more difficult to implement than
+you might think. At least if we want to include block names rather than just
+module and location code.

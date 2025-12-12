@@ -4,9 +4,9 @@
 #
 # Test results are read from stdin using the following protocol:
 # * @[<name>] identifies a test.
-# * @PASSED says the previously named test passed.
-# * @FAILED says the previously named test failed.
-# * @XFAILED says the previously named test failed as expected.
+# * @PASS says the previously named test passed.
+# * @FAIL says the previously named test failed.
+# * @EXPECTED_FAIL says the previously named test failed as expected.
 # * Output for a test is everything between @[...] and the next test.
 # * If there is no status between @[...] and the next test, the test is
 #   considered as failing.
@@ -18,24 +18,24 @@
 # tests run, passed, failed, etc. Exit status is 0 if all tests pass, non-zero
 # otherwise.
 
-set ::passed 0
-set ::xfailed 0
-set ::failed 0
+set ::pass 0
+set ::fail 0
+set ::expected_fail 0
 
 # process --
 #   Given a string with the contents of a test, including test name and
 #   status, process it.
 proc process { test } {
   if {[regexp {@\[(.*)\]} $test _ name]} {
-    if {[string first "@FAILED" $test] != -1} {
-      incr ::failed
+    if {[string first "@FAIL" $test] != -1} {
+      incr ::fail
       puts "$test\n"
-    } elseif {[string first "@XFAILED" $test] != -1} {
-      incr ::xfailed
-    } elseif {[string first "@PASSED" $test] != -1} {
-      incr ::passed
+    } elseif {[string first "@EXPECTED_FAIL" $test] != -1} {
+      incr ::expected_fail
+    } elseif {[string first "@PASS" $test] != -1} {
+      incr ::pass
     } else {
-      incr ::failed
+      incr ::fail
       puts "$test\n"
     }
   }
@@ -51,9 +51,28 @@ while {[gets stdin line] >= 0} {
 }
 process [join $lines "\n"]
 
-set total [expr $::passed + $::xfailed + $::failed]
-puts "Test Summary: $::passed passed, $::xfailed xfailed, $::failed failed, $total total"
+set total [expr $::pass + $::expected_fail + $::fail]
+puts -nonewline "Test Summary:"
+if {$::fail == 0} {
+  puts " PASS"
+} else {
+  puts " FAIL"
+}
 
-if {$::failed != 0} {
+if {$::pass > 0} {
+  puts "  passed:              $::pass"
+}
+
+if {$::expected_fail > 0} {
+  puts "  expected failures:   $::expected_fail"
+}
+
+if {$::fail > 0} {
+  puts "**unexpected failures: $::fail**"
+}
+
+puts "  total:                 $total"
+
+if {$::fail != 0} {
   exit 1
 }
