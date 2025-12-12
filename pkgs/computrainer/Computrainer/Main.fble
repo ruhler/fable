@@ -286,7 +286,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       mouse_x: Int|0,
       mouse_y: Int|0,
       selected: Selected@(nothing: Unit),
-      scale: Int|1,
+      scale: MenuScale,
       paused: True
   );
 
