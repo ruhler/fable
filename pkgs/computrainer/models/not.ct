@@ -1,0 +1,20 @@
+gate -9 0 move right
+gate -8 0 move right
+gate -7 0 move right
+gate -6 0 move right
+gate -5 -1 move right
+gate -5 0 switch down up
+gate -5 1 move right
+gate -4 -1 split up right
+gate -4 0 sink
+gate -4 1 split down right
+gate -3 -1 source 1 up
+gate -3 0 move right
+gate -3 1 source 0 down
+gate -2 0 move right
+gate -1 0 move right
+gate 0 0 move right
+gate 1 0 stop
+car -3 -1 1
+car -3 1 0
+phase engines

@@ -23,8 +23,7 @@ Eq@<Car@> Car = (Car@ a, Car@ b) {
 };
 
 Eq@<Gate@> Gate = (Gate@ a, Gate@ b) {
-    a.?(empty: b.?(empty: True, : False),
-        stop: b.?(stop: True, : False),
+    a.?(stop: b.?(stop: True, : False),
         move: b.?(move: Dir(a.move, b.move), : False),
         source: b.?(source: And(Dir(a.source.dir, b.source.dir), Car(a.source.car, b.source.car)), : False),
         sink: b.?(sink: True, : False),

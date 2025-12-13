@@ -65,26 +65,6 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
     PushTo(mr.just, push, c, mv, s);    # Push out to target.
 };
 
-# Empty gate
-#
-#     
-#       
-#     
-#
-# * Does nothing. You can't move into it or out of it.
-# * Primarily as a place holder for specifying a row of consecutive gates.
-@ Empty@ = Unit@;
-% Empty = {
-    (Empty@) { Action@; } Action = (Empty@ _) { NoAction; };
-
-    (Empty@) { Push@; }
-    Push = (Empty@ _, PushAt@ _, Coord@ _, Maybe@<Car@> _, State@ _) {
-        Nothing<State@>;
-    };
-
-    @(Action, Push);
-};
-
 # Stop gate.
 #
 #  ###
@@ -261,7 +241,6 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 };
 
 @ Gate@ = +(
-    Empty@ empty,
     Stop@ stop,
     Move@ move,
     Source@ source,
@@ -273,8 +252,7 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 );
 
 (Gate@) { Action@; } Action = (Gate@ g) {
-    g.?(empty: Empty.Action(g.empty),
-        stop: Stop.Action(g.stop),
+    g.?(stop: Stop.Action(g.stop),
         move: Move.Action(g.move),
         source: Source.Action(g.source),
         sink: Sink.Action(g.sink),
@@ -285,8 +263,7 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 };
 
 (Gate@) { Push@; } Push = (Gate@ g) {
-    g.?(empty: Empty.Push(g.empty),
-        stop: Stop.Push(g.stop),
+    g.?(stop: Stop.Push(g.stop),
         move: Move.Push(g.move),
         source: Source.Push(g.source),
         sink: Sink.Push(g.sink),
@@ -296,7 +273,6 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
         switch: Switch.Push(g.switch));
 };
 
-Gate@ Empty = Gate@(empty: Unit);
 Gate@ Stop = Gate@(stop: Unit);
 (Dir@) { Gate@; } Move = (Dir@ d) { Gate@(move: d); };
 (Car@, Dir@) { Gate@; } Source = (Car@ car, Dir@ dir) { Gate@(source: @(car, dir)); };
@@ -308,8 +284,7 @@ Gate@ Sink = Gate@(sink: Unit);
 
 (Gate@) { Gate@; }
 Rotate = (Gate@ g) {
-    g.?(empty: g,
-        stop: g,
+    g.?(stop: g,
         move: Move(Dir.Rotate(g.move)),
         source: Source(g.source.car, Dir.Rotate(g.source.dir)),
         sink: g,
@@ -338,7 +313,7 @@ Rotate2 = (Gate@ g) {
 };
 
 @(Gate@, Action, Push,
-  Empty, Stop, Move, Source, Sink, Dup, Wait, Split, Switch,
+  Stop, Move, Source, Sink, Dup, Wait, Split, Switch,
   Rotate, Rotate2
 );
 

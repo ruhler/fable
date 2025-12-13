@@ -35,7 +35,6 @@ Gates = (Gates@ gates) {
             /Core/Int/Show%.Show(c.y)
         ];
         Output@ body = g.?(
-            empty: String|'empty',
             stop: String|'stop',
             move: Format|'move %s'[Dir(g.move)],
             source: Format|'source %s %s'[Car(g.source.car), Dir(g.source.dir)],

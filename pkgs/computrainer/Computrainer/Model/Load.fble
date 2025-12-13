@@ -91,7 +91,6 @@ AddGate = (List@<String@> args, Model@ m) {
 
     Coord@ coord = @(x: /Core/Int/Show%.Read(x), y: /Core/Int/Show%.Read(y));
     Gate@ gate = {
-        StrIs|'empty'(g).?(true: Gate.Empty);
         StrIs|'stop'(g).?(true: Gate.Stop);
         StrIs|'move'(g).?(true: Gate.Move(ReadDir(Get(args, 3))));
         StrIs|'source'(g).?(true: Gate.Source(ReadCar(Get(args, 3)), ReadDir(Get(args, 4))));

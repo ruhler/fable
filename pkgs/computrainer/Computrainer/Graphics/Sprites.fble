@@ -3,7 +3,6 @@
 
 @ Drawing@ = /App/Drawing%.Drawing@;
 % Drawings = /App/Drawing%.Drawings;
-% Blank = /App/Drawing%.Blank;
 
 @ Gate@ = /Computrainer/Gate%.Gate@;
 @ Car@ = /Computrainer/Car%.Car@;
@@ -15,8 +14,7 @@ Int@ W = Shapes.W;
 
 (Gate@) { Drawing@; }
 Gate = (Gate@ g) {
-    g.?(empty: Blank,
-        stop: Shapes.Gate(Colors.Gate),
+    g.?(stop: Shapes.Gate(Colors.Gate),
         move: Shapes.Shapes[
             Shapes.Gate,
             Shapes.Dir(g.move)

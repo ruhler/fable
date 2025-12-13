@@ -1,4 +1,8 @@
 
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
 <@>@ List@ = /Std/List%.List@;
 
 @ Unit@ = /Std/Unit%.Unit@;
@@ -24,23 +28,23 @@
     Unit@ 'X01  |'
 );
 
-(Lit@) { Gate@; } ToGate = (Lit@ l) {
+(Lit@) { Maybe@<Gate@>; } ToGate = (Lit@ l) {
     l.?(
-       '     |': Gate.Empty,
-       'M^   |': Gate.Move(Dir.Up),
-       'M v  |': Gate.Move(Dir.Down),
-       'M  < |': Gate.Move(Dir.Left),
-       'M   >|': Gate.Move(Dir.Right),
-       '0^   |': Gate.Source(Car.0, Dir.Up),
-       '1 v  |': Gate.Source(Car.1, Dir.Down),
-       'SINK |': Gate.Sink,
-       'T H >|': Gate.Split(Dir.Down, Dir.Right),
-       'TH  >|': Gate.Split(Dir.Up, Dir.Right),
-       'X01  |': Gate.Switch(Dir.Up, Dir.Down)
+       '     |': Nothing<Gate@>,
+       'M^   |': Just(Gate.Move(Dir.Up)),
+       'M v  |': Just(Gate.Move(Dir.Down)),
+       'M  < |': Just(Gate.Move(Dir.Left)),
+       'M   >|': Just(Gate.Move(Dir.Right)),
+       '0^   |': Just(Gate.Source(Car.0, Dir.Up)),
+       '1 v  |': Just(Gate.Source(Car.1, Dir.Down)),
+       'SINK |': Just(Gate.Sink),
+       'T H >|': Just(Gate.Split(Dir.Down, Dir.Right)),
+       'TH  >|': Just(Gate.Split(Dir.Up, Dir.Right)),
+       'X01  |': Just(Gate.Switch(Dir.Up, Dir.Down))
    );
 };
 
-(List@<Lit@>) { List@<Gate@>; } Gates = (List@<Lit@> xs) {
+(List@<Lit@>) { List@<Maybe@<Gate@>>; } Gates = (List@<Lit@> xs) {
     /Std/List%.Map(xs, ToGate);
 };
 

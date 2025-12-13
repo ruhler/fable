@@ -5,6 +5,8 @@
 
 % Ord = /Core/Int/Ord%.Ord;
 
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
 <@>@ List@ = /Std/List%.List@;
 
 @ Coord@ = *(Int@ x, Int@ y);
@@ -31,17 +33,20 @@ Entries = <@ T@>(List@<Entry@<T@>> xs) {
 # You specify the coordinates of the first provided value, then a bunch of
 # subsequent values on the same row continuous to the right. It fills in the
 # grid for you.
-(Int@, Int@)<@ T@>(List@<T@>, Grid.Map@<T@>) { Grid.Map@<T@>; }
-Row = (Int@ x, Int@ y)<@ T@>(List@<T@> xs, Grid.Map@<T@> g) { 
+(Int@, Int@)<@ T@>(List@<Maybe@<T@>>, Grid.Map@<T@>) { Grid.Map@<T@>; }
+Row = (Int@ x, Int@ y)<@ T@>(List@<Maybe@<T@>> xs, Grid.Map@<T@> g) { 
     xs.?(empty: g);
-    Row(Incr(x), y, xs.items.tail, Grid.Insert(g, Coord@(x, y), xs.items.head));
+    Grid.Map@<T@> inserted = xs.items.head.?(
+        just: Grid.Insert(g, Coord@(x, y), xs.items.head.just),
+        nothing: g);
+    Row(Incr(x), y, xs.items.tail, inserted);
 };
 
 # Helper for making grid literals.
 # You specify the coordinates of the upper left most provided value, then
 # provide a bunch of subsequent (lower down) rows. It fills in the grid for you.
-(Int@, Int@)<@ T@>(List@<List@<T@>>) { Grid.Map@<T@>; }
-Rows = (Int@ x, Int@ y)<@ T@>(List@<List@<T@>> xs) { 
+(Int@, Int@)<@ T@>(List@<List@<Maybe@<T@>>>) { Grid.Map@<T@>; }
+Rows = (Int@ x, Int@ y)<@ T@>(List@<List@<Maybe@<T@>>> xs) { 
     xs.?(empty: Grid.Empty<T@>);
     Row(x, y, xs.items.head, Rows(x, Decr(y), xs.items.tail));
 };
