@@ -74,7 +74,12 @@
 % W = /Computrainer/Graphics/Sprites%.W;
 % Sprites = /Computrainer/Graphics/Sprites%;
 
-@ Selected@ = +(Unit@ nothing, Gate@ gate, Car@ car);
+@ Selected@ = +(
+    Unit@ nothing,
+    Gate@ gate,
+    Unit@ anticar,
+    Car@ car
+);
 
 (Gate@) { Selected@; }
 SelectGate = (Gate@ g) {
@@ -120,6 +125,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       SelectGate(Gate.Wait(Dir.Right)),
       SelectGate(Gate.Split(Dir.Down, Dir.Right)),
       SelectGate(Gate.Switch(Dir.Right, Dir.Down)),
+      Selected@(anticar: Unit),
       SelectCar(Car.C),
       SelectCar(Car.0),
       SelectCar(Car.1)
@@ -128,6 +134,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   (Selected@) { Drawing@; }
   DrawMenuTile = (Selected@ s) {
       s.?(gate: Sprites.Gate(s.gate));
+      s.?(anticar: Blank);
       s.?(car: Sprites.Car(s.car));
       Blank;
   };
@@ -193,6 +200,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
         Drawing@ selected = s.selected.?(
               nothing: Blank,
               gate: Drawings[background, DrawGate(mouse_tile.x, mouse_tile.y, s.selected.gate)],
+              anticar: {
+                Maybe@<Gate@> mgate = Grid.Lookup(s.model.gates, @(x: mouse_tile.x, y: mouse_tile.y));
+                Gate@ gate = mgate.?(just: mgate.just, nothing: Gate.Empty);
+                Drawings[background, DrawGate(mouse_tile.x, mouse_tile.y, gate)];
+              },
               car: DrawCar(mouse_tile, s.selected.car)
         );
 
@@ -233,6 +245,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
                         s.@(model: s.model.@(gates));
                     },
                     gate: s.@(selected: Selected@(gate: rotate(s.selected.gate))),
+                    anticar: s,
                     car: s
                 ); }),
             s: StepUI(s.@(map_y: Decr(s.map_y))),
@@ -270,6 +283,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
             gate: {
                 Coord@ tile = MouseTile(s);
                 s.@(model: s.model.@(gates: Grid.Insert(s.model.gates, tile, s.selected.gate)));
+            },
+            anticar: {
+                Coord@ tile = MouseTile(s);
+                s.@(model: s.model.@(
+                    s: s.model.s.@(
+                    cars: Grid.Delete(s.model.s.cars, tile))));
             },
             car: {
                 Coord@ tile = MouseTile(s);

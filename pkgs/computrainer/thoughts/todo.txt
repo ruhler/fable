@@ -1,14 +1,8 @@
 
-* Add option to select cars from the menu too
- - including an 'erase' car option.
-
 * Clean up menu code.
 
 * Figure out how to write tests for ui
   Really. Honestly. Do it now!
-
-* Click on menu to select gate or car.
-* Add key or right mouse click option to deselect.
 
 * Change DrawGate to take Coord@ instead of a pair of Int@
 * Remove Draw prefix from DrawGate, DrawCar, DrawModel.
@@ -27,13 +21,6 @@
 
 * add special case zoom all the way out option that shows 1 pixel per gate?
 * Show on screen whether the game is paused or running.
-
-* Implement model save to file.
-* Implement model read from file.
-* Sketch out UI design.
-
-* Pick more black/whitish colors for zero and one, so it's more intuitive?
-  At least more intuitive to me?
 
 * Finish mvp2 milestone.
 
