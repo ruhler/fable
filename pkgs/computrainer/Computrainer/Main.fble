@@ -46,6 +46,7 @@
 % Affine = /App/Drawing%.Affine;
 % Blank = /App/Drawing%.Blank;
 % Drawings = /App/Drawing%.Drawings;
+% Over = /App/Drawing%.Over;
 % Rect = /App/Drawing%.Rect;
 % Translate = /App/Drawing%.Translate;
 
@@ -75,6 +76,16 @@
 
 @ Selected@ = +(Unit@ nothing, Gate@ gate, Car@ car);
 
+(Gate@) { Selected@; }
+SelectGate = (Gate@ g) {
+    Selected@(gate: g);
+};
+
+(Car@) { Selected@; }
+SelectCar = (Car@ c) {
+    Selected@(car: c);
+};
+
 @ State@ = *(
     Model@ model,
     Int@ map_x, # tile x coordinate of tile in the center of the screen.
@@ -97,19 +108,29 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       /Std/Int/Ord%.Gt(c.y, Sub(height, MenuHeight));
   };
 
-  List@<Gate@> MenuGates = List[
-      Gate.Empty,
-      Gate.Stop,
-      Gate.Move(Dir.Right),
-      Gate.Source(Car.C, Dir.Right),
-      Gate.Source(Car.0, Dir.Right),
-      Gate.Source(Car.1, Dir.Right),
-      Gate.Sink,
-      Gate.Dup(Dir.Right, Dir.Down),
-      Gate.Wait(Dir.Right),
-      Gate.Split(Dir.Down, Dir.Right),
-      Gate.Switch(Dir.Right, Dir.Down)
+  List@<Selected@> MenuTiles = List[
+      SelectGate(Gate.Empty),
+      SelectGate(Gate.Stop),
+      SelectGate(Gate.Move(Dir.Right)),
+      SelectGate(Gate.Source(Car.C, Dir.Right)),
+      SelectGate(Gate.Source(Car.0, Dir.Right)),
+      SelectGate(Gate.Source(Car.1, Dir.Right)),
+      SelectGate(Gate.Sink),
+      SelectGate(Gate.Dup(Dir.Right, Dir.Down)),
+      SelectGate(Gate.Wait(Dir.Right)),
+      SelectGate(Gate.Split(Dir.Down, Dir.Right)),
+      SelectGate(Gate.Switch(Dir.Right, Dir.Down)),
+      SelectCar(Car.C),
+      SelectCar(Car.0),
+      SelectCar(Car.1)
   ];
+
+  (Selected@) { Drawing@; }
+  DrawMenuTile = (Selected@ s) {
+      s.?(gate: Sprites.Gate(s.gate));
+      s.?(car: Sprites.Car(s.car));
+      Blank;
+  };
 
   Drawing@ Menu = {
       Drawing@ background = Rect(Int|0, Sub(height, MenuHeight), width, MenuHeight, Colors.Background);
@@ -117,28 +138,19 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
           Translate(Mul(col, W), Int|0, d);
       };
 
-      Drawing@ gates = Drawings[
-          Tile(Int|0, Sprites.Gate(Get(MenuGates, Int|0))),
-          Tile(Int|1, Sprites.Gate(Get(MenuGates, Int|1))),
-          Tile(Int|2, Sprites.Gate(Get(MenuGates, Int|2))),
-          Tile(Int|3, Sprites.Gate(Get(MenuGates, Int|3))),
-          Tile(Int|4, Sprites.Gate(Get(MenuGates, Int|4))),
-          Tile(Int|5, Sprites.Gate(Get(MenuGates, Int|5))),
-          Tile(Int|6, Sprites.Gate(Get(MenuGates, Int|6))),
-          Tile(Int|7, Sprites.Gate(Get(MenuGates, Int|7))),
-          Tile(Int|8, Sprites.Gate(Get(MenuGates, Int|8))),
-          Tile(Int|9, Sprites.Gate(Get(MenuGates, Int|9))),
-          Tile(Int|10, Sprites.Gate(Get(MenuGates, Int|10))),
+      (Int@, List@<Selected@>) { Drawing@; }
+      DrawTiles = (Int@ col, List@<Selected@> tile) {
+          tile.?(empty: Blank);
+          Over(Tile(col, DrawMenuTile(tile.items.head)),
+              DrawTiles(Incr(col), tile.items.tail));
+      };
 
-          Tile(Int|12, Sprites.Car(Car.C)),
-          Tile(Int|13, Sprites.Car(Car.0)),
-          Tile(Int|14, Sprites.Car(Car.1))
-      ];
+      Drawing@ tiles = DrawTiles(Int|0, MenuTiles);
 
       Point@ a = @(x: MenuScale, y: Neg(MenuScale));
       Point@ b = @(x: Int|4, y: Sub(height, Int|4));
 
-      Drawings[background, Affine(a, b, gates)];
+      Drawings[background, Affine(a, b, tiles)];
   };
 
   # Gets the menu column number referenced by the given screen x coordinates.
@@ -249,10 +261,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
         InMenu(Coord@(s.mouse_x, s.mouse_y)).?(true: {
             Int@ col = MenuCol(s.mouse_x);
             /Std/Int/Sign%.IsNegative(col).?(true: StepUI(s));
-            /Std/Int/Ord%.Lt(col, Length(MenuGates)).?(false: StepUI(s));
-            StepUI(s.@(selected: Selected@(gate: Get(MenuGates, col))));
-
-            # TODO: add support for selecting cars too.
+            /Std/Int/Ord%.Lt(col, Length(MenuTiles)).?(false: StepUI(s));
+            StepUI(s.@(selected: Get(MenuTiles, col)));
         });
 
         StepUI(s.selected.?(
