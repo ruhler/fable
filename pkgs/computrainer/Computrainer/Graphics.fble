@@ -1,5 +1,4 @@
 
-@ Int@ = /Std/Int%.Int@;
 % Mul = /Std/Int%.Mul;
 
 @ Drawing@ = /App/Drawing%.Drawing@;
@@ -24,9 +23,9 @@ DrawCar = (Coord@ c, Car@ v) {
     Translate(Mul(c.x, W), Mul(c.y, W), Sprites.Car(v));
 };
 
-(Int@, Int@, Gate@) { Drawing@; }
-DrawGate = (Int@ x, Int@ y, Gate@ g) {
-    Translate(Mul(x, W), Mul(y, W), Sprites.Gate(g));
+(Coord@, Gate@) { Drawing@; }
+DrawGate = (Coord@ c, Gate@ g) {
+    Translate(Mul(c.x, W), Mul(c.y, W), Sprites.Gate(g));
 };
 
 (Model@) { Drawing@; }
@@ -35,7 +34,7 @@ DrawModel = (Model@ m) {
         Over(d, DrawCar(xy, v));
     });
     Drawing@ gates = Grid.ForEach(m.gates, Blank, (Coord@ xy, Gate@ g, Drawing@ d) {
-        Over(d, DrawGate(xy.x, xy.y, g));
+        Over(d, DrawGate(xy, g));
     });
 
     Drawings[gates, cars];

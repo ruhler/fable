@@ -199,11 +199,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
         Drawing@ model = DrawModel(s.model);
         Drawing@ selected = s.selected.?(
               nothing: Blank,
-              gate: Drawings[background, DrawGate(mouse_tile.x, mouse_tile.y, s.selected.gate)],
+              gate: Drawings[background, DrawGate(mouse_tile, s.selected.gate)],
               anticar: {
-                Maybe@<Gate@> mgate = Grid.Lookup(s.model.gates, @(x: mouse_tile.x, y: mouse_tile.y));
+                Maybe@<Gate@> mgate = Grid.Lookup(s.model.gates, mouse_tile);
                 Gate@ gate = mgate.?(just: mgate.just, nothing: Gate.Empty);
-                Drawings[background, DrawGate(mouse_tile.x, mouse_tile.y, gate)];
+                Drawings[background, DrawGate(mouse_tile, gate)];
               },
               car: DrawCar(mouse_tile, s.selected.car)
         );

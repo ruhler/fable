@@ -4,7 +4,6 @@
 * Figure out how to write tests for ui
   Really. Honestly. Do it now!
 
-* Change DrawGate to take Coord@ instead of a pair of Int@
 * Remove Draw prefix from DrawGate, DrawCar, DrawModel.
   - Consider renaming Graphics% to Draw%.
 
