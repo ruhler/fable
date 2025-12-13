@@ -69,6 +69,29 @@ ApplyTo = <@ A@>(A@ x)<@ B@>((A@) { B@; } f) {
   f(x);
 };
 
+# @func[DoApply] Function application with bind syntax.
+#  For example:
+#
+#  @code[fble] @
+#   Unit@ _ := DoApply(ExpectFails(Str|'!='));
+#   AssertEquals(eq, show, expected, actual);
+#
+#  Which has the same effect as the following, but allows you to add and
+#  remove the call to @l{ExpectFails} without touching the rest of the code.
+#
+#  @code[fble] @
+#   ExpectFails(Str|'!=', AssertEquals(eq, show, expected, actual));
+#
+#  @arg[@][A@] The argument type.
+#  @arg[@][B@] The return type.
+#  @arg[(A@) { B@; }][f] The function to apply.
+#  @arg[(Unit@) { A@; }][x] A deferred computation of the argument to apply to.
+#  @returns[B@] The result of applying the function to the computed argument.
+<@ A@, @ B@>((A@) { B@; }, (Unit@) { A@; }) { B@; }
+DoApply = <@ A@, @ B@>((A@) { B@; } f, (Unit@) { A@; } x) {
+  f(x(Unit));
+};
+
 # @func[Fix] Fixed point operator
 #  @arg[@][A@] The argument type.
 #  @arg[(A@) { A@; }][f] The function to get the fixed point of.
@@ -93,27 +116,4 @@ On = <@ B@, @ C@>((B@, B@) { C@; } bin)<@ A@>((A@) { B@; } f, A@ a, A@ b) {
   bin(f(a), f(b));
 };
 
-# @func[With] Function application with bind syntax.
-#  For example:
-#
-#  @code[fble] @
-#   Unit@ _ := With(ExpectFails(Str|'!='));
-#   AssertEquals(eq, show, expected, actual);
-#
-#  Which has the same effect as the following, but allows you to add and
-#  remove the call to @l{ExpectFails} without touching the rest of the code.
-#
-#  @code[fble] @
-#   ExpectFails(Str|'!=', AssertEquals(eq, show, expected, actual));
-#
-#  @arg[@][A@] The argument type.
-#  @arg[@][B@] The return type.
-#  @arg[(A@) { B@; }][f] The function to apply.
-#  @arg[(Unit@) { A@; }][x] A deferred computation of the argument to apply to.
-#  @returns[B@] The result of applying the function to the computed argument.
-<@ A@, @ B@>((A@) { B@; }, (Unit@) { A@; }) { B@; }
-With = <@ A@, @ B@>((A@) { B@; } f, (Unit@) { A@; } x) {
-  f(x(Unit));
-};
-
-@(Id, Const, Compose, Flip, Apply, ApplyTo, Fix, On, With);
+@(Id, Const, Compose, Flip, Apply, ApplyTo, DoApply, Fix, On);

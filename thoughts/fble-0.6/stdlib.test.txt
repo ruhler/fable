@@ -1131,3 +1131,16 @@ Let's put With in /Std/Func%, and have ExpectFails do what it ought to:
 TestResult@ to TestResult@.
 
 Which means a digression to standard function libraries.
+
+---
+
+For With... what if we renamed it 'Do'? Is that meaningful? Is it
+generalizable?
+
+I have a function from A to B. You pass something of type ...
+
+Yeah, it's not quite right. It would be fine if you pass something of type C
+to A, and then we get back a function of type C to B. But I don't want to have
+to apply that last Unit value manually.
+
+Maybe rename 'With' to DoApply? Sounds a little more special case?
