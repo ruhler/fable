@@ -19,9 +19,9 @@
 % r = /Fbld/Result%.Monad;
 
 Impl@ Error = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(Int|1, cmd));
-  Markup@ arg <- r.do(/Fbld/Eval%.Eval(env, Get(cmd.args, Int|0)));
-  String@ msg <- r.do(/Fbld/Markup%.ToString(arg));
+  Unit@ _ := r.do(AssertArgCount(Int|1, cmd));
+  Markup@ arg := r.do(/Fbld/Eval%.Eval(env, Get(cmd.args, Int|0)));
+  String@ msg := r.do(/Fbld/Markup%.ToString(arg));
   /Fbld/Result%.Error<Markup@>(cmd.name.loc, /Std/Char/Output%.String(msg));
 };
 

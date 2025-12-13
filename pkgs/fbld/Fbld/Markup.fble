@@ -71,7 +71,7 @@ ToString_ = (Markup@ m, String@ s) {
         ]);
     },
     sequence: {
-      String@ tail <- r.do(ToString_(m.sequence.b, s));
+      String@ tail := r.do(ToString_(m.sequence.b, s));
       ToString_(m.sequence.a, tail);
     });
 };

@@ -48,11 +48,11 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   (List@<String@>) { M@<Result@<List@<Text@>>>; }
   ReadInputs = (List@<String@> filenames) {
     filenames.?(empty: m.return(Ok(Empty<Text@>)));
-    Result@<List@<Text@>> tail <- m.do(ReadInputs(filenames.items.tail));
+    Result@<List@<Text@>> tail := m.do(ReadInputs(filenames.items.tail));
     tail.failed.?(true: m.return(tail));
 
     String@ filename = filenames.items.head;
-    Maybe@<IStream@<M@>> fin <- m.do({
+    Maybe@<IStream@<M@>> fin := m.do({
       /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
       stdio.read(filename, /Core/Stdio%.Text);
     });
@@ -62,30 +62,30 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
       m.return(Error<List@<Text@>>(Unknown, msg));
     });
 
-    String@ contents <- m.do(I.GetText(fin.just));
+    String@ contents := m.do(I.GetText(fin.just));
     Text@ text = Text(Start(filename), contents);
     m.return(Ok(Items(text, tail.value.just)));
   };
 
   (List@<String@> args) {
-    Result@<List@<Text@>> inputs <- m.do(ReadInputs(args));
+    Result@<List@<Text@>> inputs := m.do(ReadInputs(args));
     inputs.failed.?(true: {
-      Unit@ _ <- m.do(O.Show(stdio.err, ShowErrors(inputs)));
+      Unit@ _ := m.do(O.Show(stdio.err, ShowErrors(inputs)));
       m.return(False);
     });
 
     Result@<String@> result = {
-      Markup@ parsed <- r.do(/Fbld/Parse%.Parse(inputs.value.just));
-      Markup@ evaled <- r.do(/Fbld/Eval%.Eval(/Fbld/Builtin%.Env, parsed));
+      Markup@ parsed := r.do(/Fbld/Parse%.Parse(inputs.value.just));
+      Markup@ evaled := r.do(/Fbld/Eval%.Eval(/Fbld/Builtin%.Env, parsed));
       /Fbld/Markup%.ToString(evaled);
     };
 
     result.failed.?(true: {
-      Unit@ _ <- m.do(O.Show(stdio.err, ShowErrors(result)));
+      Unit@ _ := m.do(O.Show(stdio.err, ShowErrors(result)));
       m.return(False);
     });
 
-    Unit@ _ <- m.do(O.PutStr(stdio.out, result.value.just));
+    Unit@ _ := m.do(O.PutStr(stdio.out, result.value.just));
     m.return(True);
   };
 };

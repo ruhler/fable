@@ -41,13 +41,13 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
   (List@<String@>) { M@<List@<String@>>; }
   PrependReversedLines = (List@<String@> lines) {
-    String@ next <- m.do(I.GetLine(stdio.in));
+    String@ next := m.do(I.GetLine(stdio.in));
     next.?(empty: m.return(lines));
     PrependReversedLines(Items(next, lines));
   };
 
   M@<List@<String@>> GetLines = {
-    List@<String@> reversed <- m.do(PrependReversedLines(Empty<String@>));
+    List@<String@> reversed := m.do(PrependReversedLines(Empty<String@>));
     m.return(Reverse(reversed));
   };
 
@@ -61,21 +61,21 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
   (List@<String@> args) {
     Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-      Unit@ _ <- m.do(O.PutStr(stdio.out, /Sat/Usage%));
+      Unit@ _ := m.do(O.PutStr(stdio.out, /Sat/Usage%));
       m.return(True);
     });
 
-    List@<String@> lines <- m.do(GetLines);
+    List@<String@> lines := m.do(GetLines);
     Parse@<Formula@> parsed = ParseLines(lines);
     parsed.?(error: {
-      Unit@ _ <- m.do(O.PutStr(stdio.err, parsed.error));
+      Unit@ _ := m.do(O.PutStr(stdio.err, parsed.error));
       m.return(False);
     });
 
     Int@ debug = GetDebugArg(args);
     Solver@ solver = AddClauses(NewSolver, parsed.parsed); 
-    Result@ result <- m.do(Solve(m, Debug(m, debug, stdio.out), solver));
-    Unit@ _ <- m.do(O.ShowLine(stdio.out, ShowResult(result)));
+    Result@ result := m.do(Solve(m, Debug(m, debug, stdio.out), solver));
+    Unit@ _ := m.do(O.ShowLine(stdio.out, ShowResult(result)));
     m.return(True);
   };
 };

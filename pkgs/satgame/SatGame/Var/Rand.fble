@@ -49,15 +49,15 @@ IsCanonical = (Var@ v) {
 # Generate a random variable.
 <<@>@ M@>(Monad@<M@>, Random@<M@>) { M@<Var@>; }
 Var = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand) {
-  Bool@ ul <- m.do(rand.bool);
-  Bool@ uc <- m.do(rand.bool);
-  Bool@ ur <- m.do(rand.bool);
-  Bool@ ml <- m.do(rand.bool);
-  Bool@ mc <- m.do(rand.bool);
-  Bool@ mr <- m.do(rand.bool);
-  Bool@ ll <- m.do(rand.bool);
-  Bool@ lc <- m.do(rand.bool);
-  Bool@ lr <- m.do(rand.bool);
+  Bool@ ul := m.do(rand.bool);
+  Bool@ uc := m.do(rand.bool);
+  Bool@ ur := m.do(rand.bool);
+  Bool@ ml := m.do(rand.bool);
+  Bool@ mc := m.do(rand.bool);
+  Bool@ mr := m.do(rand.bool);
+  Bool@ ll := m.do(rand.bool);
+  Bool@ lc := m.do(rand.bool);
+  Bool@ lr := m.do(rand.bool);
   Var@ var = @(ul, uc, ur, ml, mc, mr, ll, lc, lr);
   IsCanonical(var).?(true: m.return(var));
   Var(m, rand);
@@ -66,7 +66,7 @@ Var = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand) {
 # Generates a random variable distinct from the given list of variables.
 <<@>@ M@>(Monad@<M@>, Random@<M@>, List@<Var@>) { M@<Var@>; }
 DistinctVar = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand, List@<Var@> vars) {
-  Var@ x <- m.do(Var(m, rand));
+  Var@ x := m.do(Var(m, rand));
   Any(vars, /SatGame/Var/Eq%.Eq(x)).?(false: m.return(x));
   DistinctVar(m, rand, vars);
 };
@@ -75,8 +75,8 @@ DistinctVar = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand, List@<Var@> vars) {
 <<@>@ M@>(Monad@<M@>, Random@<M@>, Int@) { M@<List@<Var@>>; }
 Vars = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand, Int@ n) {
   IsZero(n).?(true: m.return(Empty<Var@>));
-  List@<Var@> tail <- m.do(Vars(m, rand, Decr(n)));
-  Var@ head <- m.do(DistinctVar(m, rand, tail));
+  List@<Var@> tail := m.do(Vars(m, rand, Decr(n)));
+  Var@ head := m.do(DistinctVar(m, rand, tail));
   m.return(Items(head, tail));
 };
 

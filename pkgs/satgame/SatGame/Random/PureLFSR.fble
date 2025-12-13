@@ -31,9 +31,9 @@
 % Monad = State.Monad;
 
 M@<Bool@> RandBool = {
-  LFSR@ lfsr <- Monad.do(State.Get);
+  LFSR@ lfsr := Monad.do(State.Get);
   Shifted@<Bit@> shifted = /Core/LFSR%.Shift(lfsr);
-  Unit@ _ <- Monad.do(State.Set(shifted.lfsr));
+  Unit@ _ := Monad.do(State.Set(shifted.lfsr));
   Monad.return(shifted.output.?(0: False, 1: True));
 };
 

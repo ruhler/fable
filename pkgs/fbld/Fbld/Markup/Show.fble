@@ -23,7 +23,7 @@ Show@<Markup@> Markup = (Markup@ m) {
     plain: /Fbld/Text/Show%.Show(m.plain),
     command: Command(m.command),
     sequence: {
-      Unit@ _ <- Do(Markup(m.sequence.a));
+      Unit@ _ := Do(Markup(m.sequence.a));
       Markup(m.sequence.b);
     });
 

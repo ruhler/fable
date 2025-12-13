@@ -530,7 +530,7 @@ stmt:
       undef_expr->body = $4;
       $$ = &undef_expr->_base;
     }
-  | tagged_type_p '<' '-' expr ';' stmt {
+  | tagged_type_p ':' '=' expr ';' stmt {
       FbleExpr* expr = $6;
       for (size_t i = 0; i < $1.size; ++i) {
         FbleFuncValueExpr* func_value_expr = FbleAlloc(FbleFuncValueExpr);

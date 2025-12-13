@@ -66,7 +66,7 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
     @ S@ = List@<List@<Int@>>;
     % P = /Core/Monad/State%<S@>;
     (List@<Int@>) { P.State@<Unit@>; } F = (List@<Int@> l) {
-      S@ s <- P.Monad.do(P.Get);
+      S@ s := P.Monad.do(P.Get);
       P.Set(Append(s, List[l]));
     };
 

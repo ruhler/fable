@@ -391,7 +391,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
 
   # Process todos until no more remain or unsat.
   (Solver@) { M@<Solver@>; } Simplify = (Solver@ s) {
-    Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
+    Unit@ _ := m.do(debug(Int|4, (OStream@<M@> dbg) {
       O.ShowLine(dbg, Format|'Simplify: %s'[Show.Clauses(s.clauses)]);
     }));
 
@@ -399,7 +399,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
     s.todo.?(empty: m.return(s));
 
     # Check for conflicts in the todo list.
-    Unit@ _ <- m.do(debug(Int|1, (OStream@<M@> dbg) {
+    Unit@ _ := m.do(debug(Int|1, (OStream@<M@> dbg) {
       O.ShowLine(dbg, Format|'Todo: %s'[Show.Todo(s.todo)]);
     }));
 
@@ -407,7 +407,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
     conflict.?(just: {
       # Add the conflict and note that we are done here.
       ClauseId@ id = s.clause_id;
-      Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
+      Unit@ _ := m.do(debug(Int|3, (OStream@<M@> dbg) {
         O.ShowLine(dbg, Format|'%s: %s'[Show.Id(id), Show.Conflict(conflict.just)]);
       }));
       Solver@ rs = s.@(
@@ -419,7 +419,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
 
     # Apply the next assignment in the todo list.
     Assign@ assign = s.todo.items.head;
-    Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
+    Unit@ _ := m.do(debug(Int|3, (OStream@<M@> dbg) {
       O.ShowLine(dbg, Show.Assign(assign));
     }));
     Solver@ ns = s.@(todo: s.todo.items.tail);
@@ -427,7 +427,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
 
     # If the assignment succeeded, but further simplification failed, apply
     # what we learned to before the assignment and simplify again.
-    Solver@ ss <- m.do(Simplify(result));
+    Solver@ ss := m.do(Simplify(result));
     ss.unsat.?(false: m.return(ss));
     Simplify(ApplyLearnedClauses(s, ss));
   };
@@ -448,11 +448,11 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
 
   # Sat solver with conflict driven clause learning.
   (Solver@) { M@<SearchResult@>; } Search = (Solver@ s) {
-    Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
+    Unit@ _ := m.do(debug(Int|4, (OStream@<M@> dbg) {
       O.ShowLine(dbg, Format|'Search: %s'[Show.Clauses(s.clauses)]);
     }));
 
-    Solver@ ss <- m.do(Simplify(s));
+    Solver@ ss := m.do(Simplify(s));
     Solver@ s = ss;
     s.unsat.?(true: m.return(Unsat(s)));
 
@@ -461,12 +461,12 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
     VarId@ var = mvar.just;
 
     Var@ vattempt = Var@(var, True);
-    Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
+    Unit@ _ := m.do(debug(Int|4, (OStream@<M@> dbg) {
       O.ShowLine(dbg, Format|'Try: '[Show.Var(vattempt)]);
     }));
     Solver@ attempt = Assign(vattempt, s);
       
-    SearchResult@ attempted <- m.do(Search(attempt));
+    SearchResult@ attempted := m.do(Search(attempt));
     attempted.?(unsat: {
       # Add conflict clauses for all conflicts encountered in our attempted
       # search
@@ -480,7 +480,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
   };
 
   (Solver@ s) {
-    SearchResult@ result <- m.do(Search(s));
+    SearchResult@ result := m.do(Search(s));
     m.return(result.?(
       sat: Result@(sat: result.sat),
       unsat: Result@(unsat: Unit)));

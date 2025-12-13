@@ -39,7 +39,7 @@ Show@<Int@> Digit = (Int@ x) {
 # Show a positive integer.
 Show@<Int@> Positive = (Int@ x) {
   QR@ qr = Div(x, Int|10);
-  Unit@ _ <- Do(qr.q.?(0: Return, : Positive(qr.q)));
+  Unit@ _ := Do(qr.q.?(0: Return, : Positive(qr.q)));
   Digit(qr.r);
 };
 

@@ -119,21 +119,21 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   % O = /Core/Stream/OStream%(m);
 
   # Read and update the default seed value.
-  Int@ seed <- m.do({
-    Maybe@<String@> home <- m.do(stdio.getenv(Str|HOME));
+  Int@ seed := m.do({
+    Maybe@<String@> home := m.do(stdio.getenv(Str|HOME));
     home.?(nothing: m.return(Int|0));
 
     String@ filename = Concat[home.just, Str|'/.fble-satgame'];
-    Maybe@<IStream@<M@>> istream <- m.do(stdio.read(filename, /Core/Stdio%.Text));
+    Maybe@<IStream@<M@>> istream := m.do(stdio.read(filename, /Core/Stdio%.Text));
 
-    Int@ seed <- m.do({
+    Int@ seed := m.do({
       istream.?(nothing: m.return(Int|0));
-      String@ text <- m.do(I.GetText(istream.just));
+      String@ text := m.do(I.GetText(istream.just));
       m.return(/Core/Int/Read%.Read(text));
     });
 
-    Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename, /Core/Stdio%.Text));
-    Unit@ _ <- m.do({
+    Maybe@<OStream@<M@>> ostream := m.do(stdio.write(filename, /Core/Stdio%.Text));
+    Unit@ _ := m.do({
       ostream.?(nothing: m.return(Unit));
       O.Show(ostream.just, /Std/Int/Show%.Show(Incr(seed)));
     });
@@ -175,7 +175,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   };
 
   (State@) { M@<Unit@>; } EventLoop = (State@ state) {
-    Event@ e <- m.do(app.event);
+    Event@ e := m.do(app.event);
     e.?(
       tick: EventLoop(state),
       key_down: m.return(Unit),
@@ -192,7 +192,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
         Game@ ngame = Toggle(toggle, ti.just.group, ti.just.tile, state.game);
         Drawing@ board = /SatGame/Game/Draw%.Draw(layout, ngame);
         State@ nstate = state.@(game: ngame, board: board);
-        Unit@ _ <- m.do(Draw(nstate));
+        Unit@ _ := m.do(Draw(nstate));
         EventLoop(nstate);
       },
       mouse_up: EventLoop(state),
@@ -202,7 +202,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
           height: e.resize.height,
           transform: Fit(e.resize.width, e.resize.height)
         );
-        Unit@ _ <- m.do(Draw(nstate));
+        Unit@ _ := m.do(Draw(nstate));
         EventLoop(nstate);
       },
       mouse_motion: {
@@ -210,19 +210,19 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
           mouse_x: e.mouse_motion.x,
           mouse_y: e.mouse_motion.y
         );
-        Unit@ _ <- m.do(Draw(ns));
+        Unit@ _ := m.do(Draw(ns));
         EventLoop(ns);
       });
   };
 
-  Unit@ _ <- m.do(O.ShowLine(stdio.out,
+  Unit@ _ := m.do(O.ShowLine(stdio.out,
       Format|'Generating puzzle with params: %s (seed %s)'[
         /SatGame/Puzzle/Show%.Params(params),
         /Std/Int/Show%.Show(args.seed)
   ]));
 
   Puzzle@ puzzle = PureLFSR.Run(Generate(params), args.seed);
-  Unit@ _ <- m.do(O.ShowLine(stdio.out, /SatGame/Puzzle/Show%.Puzzle(puzzle)));
+  Unit@ _ := m.do(O.ShowLine(stdio.out, /SatGame/Puzzle/Show%.Puzzle(puzzle)));
 
   Game@ game = /SatGame/Game%.Game(puzzle);
 
@@ -236,8 +236,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     transform: Fit(width, height)
   );
 
-  Unit@ _ <- m.do(Draw(state));
-  Unit@ _ <- m.do(EventLoop(state));
+  Unit@ _ := m.do(Draw(state));
+  Unit@ _ := m.do(EventLoop(state));
   m.return(True);
 };
 

@@ -20,12 +20,12 @@ RandInt = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand, Int@ max) {
   # a random integer in some range [0, x] where x >= max.
   (Int@, Int@) { M@<Int@>; } f = (Int@ u, Int@ v) {
     Ge(u, max).?(true: m.return(v));
-    Bool@ incr <- m.do(rand.bool);
+    Bool@ incr := m.do(rand.bool);
     Int@ b = incr.?(true: Int|1, false: Int|0);
     f(Mul(Int|2, u), Add(Mul(Int|2, v), b));
   };
 
-  Int@ x <- m.do(f(Int|1, Int|0));
+  Int@ x := m.do(f(Int|1, Int|0));
   Lt(x, max).?(true: m.return(x));
   RandInt(m, rand, max);
 };

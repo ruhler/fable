@@ -33,14 +33,14 @@ Return = <@ A@>(A@ x)<<@>@ M@>(I@<M@> i) {
 
 <@ A@>(Output@<A@>)<@ B@>((A@) { Output@<B@>; }) { Output@<B@>; }
 Bind = <@ A@>(Output@<A@> ma)<@ B@>((A@) { Output@<B@>; } mb)<<@>@ M@>(I@<M@> i) {
-  A@ a <- i.bind(ma(i));
+  A@ a := i.bind(ma(i));
   mb(a, i);
 };
 
 (String@) { Output@<Unit@>; }
 PutStr = (String@ s) {
   s.?(empty: Return(Unit));
-  Unit@ _ <- Bind(Put(s.items.head));
+  Unit@ _ := Bind(Put(s.items.head));
   PutStr(s.items.tail);
 };
 

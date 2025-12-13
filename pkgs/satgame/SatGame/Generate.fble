@@ -52,8 +52,8 @@
     TooFewVars.undef<M@<Puzzle@>>;
   });
 
-  Map@ vars <- m.do({
-    List@<Var@> list <- m.do(/SatGame/Var/Rand%.Vars(m, rand, params.num_vars));
+  Map@ vars := m.do({
+    List@<Var@> list := m.do(/SatGame/Var/Rand%.Vars(m, rand, params.num_vars));
     @ S@ = *(Int@ i, Map@ map);
     Map@ map = /Std/List%.ForEach(list, S@(Int|0, Empty),
       (Var@ vid, S@ s) {
@@ -63,13 +63,13 @@
   });
 
   (Int@) { M@<Var@>; } RandVar = (Int@ max) {
-    Int@ index <- m.do(RandInt(max));
+    Int@ index := m.do(RandInt(max));
     m.return(Lookup(vars, index).just);
   };
 
   (Int@) { M@<Literal@>; } RandLiteral = (Int@ max) {
-    Bool@ pos <- m.do(rand.bool);
-    Var@ var <- m.do(RandVar(max));
+    Bool@ pos := m.do(rand.bool);
+    Var@ var := m.do(RandVar(max));
     m.return(Literal@(var, pos));
   };
 
@@ -87,30 +87,30 @@
     (Int@, Clause@) { M@<Clause@>; } AddLiterals = (Int@ n, Clause@ c) {
       IsZero(n).?(true: m.return(c));
 
-      Literal@ literal <- m.do(RandLiteral(max));
+      Literal@ literal := m.do(RandLiteral(max));
       ContainsVar(c, literal.var).?(true: AddLiterals(n, c));
       AddLiterals(Decr(n), Items(literal, c));
     };
 
-    Clause@ clause <- m.do(AddLiterals(Decr(params.num_literals_per_clause), List[v]));
+    Clause@ clause := m.do(AddLiterals(Decr(params.num_literals_per_clause), List[v]));
     Shuffle(clause);
   };
     
   Int@ num_free_vars = Sub(params.num_vars, params.num_literals_per_clause);
   Int@ clauses_per_variable = Div(Decr(Add(params.num_clauses, num_free_vars)), num_free_vars).q;
 
-  Puzzle@ puzzle <- m.do(/Core/Iter%.For(
+  Puzzle@ puzzle := m.do(/Core/Iter%.For(
     Range(params.num_literals_per_clause, params.num_vars), m.return(/Std/List%.Empty<Clause@>),
     (Int@ i, M@<Puzzle@> mp) {
-      Bool@ pos <- m.do(rand.bool);
+      Bool@ pos := m.do(rand.bool);
       Literal@ var = Literal@(Lookup(vars, i).just, pos);
       /Core/Iter%.For(CountUpTo(clauses_per_variable), mp,
         (Int@ _, M@<Puzzle@> mp) {
-          Puzzle@ tail <- m.do(mp);
-          Clause@ clause <- m.do(GenClause(params, i, var));
+          Puzzle@ tail := m.do(mp);
+          Clause@ clause := m.do(GenClause(params, i, var));
           m.return(Items(clause, tail));
         });
     }));
-  Puzzle@ shuffled <- m.do(Shuffle(puzzle));
+  Puzzle@ shuffled := m.do(Shuffle(puzzle));
   m.return(Take(shuffled, params.num_clauses));
 };

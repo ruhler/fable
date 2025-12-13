@@ -205,7 +205,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   % O = /Core/Stream/OStream%(m);
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ <- m.do(O.PutStr(stdio.out, /Pinball/Usage%));
+    Unit@ _ := m.do(O.PutStr(stdio.out, /Pinball/Usage%));
     m.return(True);
   });
 
@@ -222,11 +222,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   (M@<Unit@>, World@) { M@<Unit@>; }
   Run = (M@<Unit@> tick, World@ world) {
-    Event@ e <- m.do(GetInput);
+    Event@ e := m.do(GetInput);
 
     e.?(tick: {
-      Unit@ _ <- m.do(tick);
-      Unit@ _ <- m.do(Output(world));
+      Unit@ _ := m.do(tick);
+      Unit@ _ := m.do(Output(world));
       Run(tick, Tick(world));
     });
 
@@ -258,8 +258,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   Int@ frame_period = Floor(Int|16);
   M@<Unit@> tick = app.effect(Effect@(tick: frame_period));
 
-  Unit@ _ <- m.do(app.effect(Effect@(tick: Floor(0))));
-  Unit@ _ <- m.do(Run(tick, Initial)); 
+  Unit@ _ := m.do(app.effect(Effect@(tick: Floor(0))));
+  Unit@ _ := m.do(Run(tick, Initial)); 
   m.return(True);
 };
 

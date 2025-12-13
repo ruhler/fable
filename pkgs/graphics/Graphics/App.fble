@@ -130,7 +130,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   % O = /Core/Stream/OStream%(m);
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ <- m.do(O.PutStr(stdio.out, /Graphics/Usage%));
+    Unit@ _ := m.do(O.PutStr(stdio.out, /Graphics/Usage%));
     m.return(True);
   });
 
@@ -150,11 +150,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   (M@<Unit@>, State@) { M@<Unit@>; }
   Run = (M@<Unit@> tick, State@ state) {
-    Event@ e <- m.do(In);
+    Event@ e := m.do(In);
 
     e.?(tick: {
-      Unit@ _ <- m.do(tick);
-      Unit@ _ <- m.do(Out(state));
+      Unit@ _ := m.do(tick);
+      Unit@ _ := m.do(Out(state));
       Run(tick, state);
     });
 
@@ -181,8 +181,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   Int@ frame_period = Int|16;
   M@<Unit@> tick = app.effect(Effect@(tick: frame_period));
 
-  Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
-  Unit@ _ <- m.do(Run(tick, Initial)); 
+  Unit@ _ := m.do(app.effect(Effect@(tick: Int|0)));
+  Unit@ _ := m.do(Run(tick, Initial)); 
   m.return(True);
 };
 

@@ -29,14 +29,14 @@
   # Outputs a string to the given output stream.
   (OStream@, String@) { M@<Unit@>; } PutStr = (OStream@ out, String@ str) {
     str.?(empty: m.return(Unit));
-    Unit@ _ <- m.do(PutChar(out, str.items.head));
+    Unit@ _ := m.do(PutChar(out, str.items.head));
     PutStr(out, str.items.tail);
   };
 
   # Outputs a line to the given output stream.
   # This is like PutStr, except it adds a newline to the output.
   (OStream@, String@) { M@<Unit@>; } PutLine = (OStream@ out, String@ str) {
-    Unit@ _ <- m.do(PutStr(out, str));
+    Unit@ _ := m.do(PutStr(out, str));
     PutChar(out, Ascii.nl);
   };
 
@@ -49,7 +49,7 @@
   };
 
   (OStream@, Output@) { M@<Unit@>; } ShowLine = (OStream@ out, Output@ show) {
-    Unit@ _ <- m.do(Show(out, show));
+    Unit@ _ := m.do(Show(out, show));
     PutChar(out, Ascii.nl);
   };
 

@@ -20,9 +20,9 @@
 Monad@<Pure@> Monad = State.Monad;
 
 Pure@<Maybe@<Int@>> In = {
-  List@<Int@> s <- Monad.do(State.Get);
+  List@<Int@> s := Monad.do(State.Get);
   s.?(empty: Monad.return(Nothing<Int@>));
-  Unit@ _ <- Monad.do(State.Set(s.items.tail));
+  Unit@ _ := Monad.do(State.Set(s.items.tail));
   Monad.return(Just(s.items.head));
 };
 

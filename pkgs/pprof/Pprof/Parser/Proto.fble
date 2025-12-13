@@ -122,7 +122,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
 
   <@ A@>(PM@<A@>)<@ B@>((A@) { PM@<B@>; }) { PM@<B@>; }
   Do = <@ A@>(PM@<A@> ma)<@ B@>((A@) { PM@<B@>; } f, S@ s) {
-    Result@<R@<A@>> r <- m.do(ma(s));
+    Result@<R@<A@>> r := m.do(ma(s));
     r.?(error: m.return(Error<R@<B@>>(r.error)));
     f(r.ok.x, r.ok.s);
   };
@@ -144,14 +144,14 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
     # Gets a byte from the input stream.
     # Returns Nothing if we reach end of input.
     PM@<Maybe@<Int@>> MaybeGet = (S@ s) {
-      Maybe@<Int@> mbyte <- m.do(in);
+      Maybe@<Int@> mbyte := m.do(in);
       Return(mbyte, mbyte.?(just: Incr(s), nothing: s));
     };
 
     # Gets a byte from the input stream.
     # Fails if we reach end of input.
     PM@<Int@> Get = {
-      Maybe@<Int@> mbyte <- Do(MaybeGet);
+      Maybe@<Int@> mbyte := Do(MaybeGet);
       mbyte.?(nothing: Fail<Int@>(Str|'unexpected end of input'));
       Return(mbyte.just);
     };
@@ -159,15 +159,15 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
     # Gets N bytes from the input stream.
     (Int@) { PM@<List@<Int@>>; } GetN = (Int@ n) {
       IsZero(n).?(true: Return(Empty<Int@>));
-      Int@ head <- Do(Get);
-      List@<Int@> tail <- Do(GetN(Decr(n)));
+      Int@ head := Do(Get);
+      List@<Int@> tail := Do(GetN(Decr(n)));
       Return(Items(head, tail));
     };
 
     (Int@) { PM@<Unit@>; }
     SkipN = (Int@ n) {
       IsZero(n).?(true: Return(Unit));
-      Int@ _ <- Do(Get);
+      Int@ _ := Do(Get);
       SkipN(Decr(n));
     };
 
@@ -181,8 +181,8 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
     String = (Int@ n) {
       IsZero(n).?(true: Return(Str|''));
 
-      Int@ byte <- Do(Get);
-      String@ tail <- Do(String(Decr(n)));
+      Int@ byte := Do(Get);
+      String@ tail := Do(String(Decr(n)));
       Return(Items(/Std/Char%.Char(byte), tail));
     };
 
@@ -190,13 +190,13 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
     (Int@) { PM@<Int@>; }
     FinishVarInt = (Int@ byte) {
       Lt(byte, 128).?(true: Return(byte));
-      Int@ tail <- Do(VarInt);
+      Int@ tail := Do(VarInt);
       Return(Add(Sub(byte, 128), Mul(128, tail)));
     },
 
     # Parse a VarInt.
     PM@<Int@> VarInt = {
-      Int@ byte <- Do(Get);
+      Int@ byte := Do(Get);
       FinishVarInt(byte);
     };
 
@@ -204,42 +204,42 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
     Ints = (Int@ length) {
       IsZero(length).?(true: Return(Empty<Int@>));
 
-      Int@ int_start <- Do(BytesRead);
-      Int@ int <- Do(VarInt);
-      Int@ int_end <- Do(BytesRead);
+      Int@ int_start := Do(BytesRead);
+      Int@ int := Do(VarInt);
+      Int@ int_end := Do(BytesRead);
       Int@ int_length = Sub(int_end, int_start);
       Gt(int_length, length).?(true: {
         Fail<List@<Int@>>(Str|'length exceeded on packed int read');
       });
 
-      List@<Int@> tail <- Do(Ints(Sub(length, int_length)));
+      List@<Int@> tail := Do(Ints(Sub(length, int_length)));
       Return(Items(int, tail));
     };
 
     # Parse a Record, given the first byte read.
     (Int@) { PM@<Record@>; }
     FinishRecord = (Int@ byte) {
-      Int@ tag <- Do(FinishVarInt(byte));
+      Int@ tag := Do(FinishVarInt(byte));
       QR@ qr = Div(tag, 8);
       FieldId@ field = qr.q;
       Int@ wire_type = qr.r;
 
-      Payload@ payload <- Do({
+      Payload@ payload := Do({
         Eq(wire_type, Int|0).?(true: {
           # VARINT
-          Int@ int <- Do(VarInt);
+          Int@ int := Do(VarInt);
           Return(Payload@(int: int));
         });
 
         Eq(wire_type, Int|1).?(true: {
           # I64
-          List@<Int@> bytes <- Do(GetN(8));
+          List@<Int@> bytes := Do(GetN(8));
           Return(Payload@(bytes: bytes));
         });
 
         Eq(wire_type, Int|2).?(true: {
           # LEN
-          Int@ length <- Do(VarInt);
+          Int@ length := Do(VarInt);
           Return(Payload@(length: length));
         });
 
@@ -248,7 +248,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
 
         Eq(wire_type, Int|5).?(true: {
           # I32
-          List@<Int@> bytes <- Do(GetN(4));
+          List@<Int@> bytes := Do(GetN(4));
           Return(Payload@(bytes: bytes));
         });
 
@@ -260,7 +260,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
 
     # Parse a Record, given the first byte read.
     PM@<Record@> Record = {
-      Int@ byte <- Do(Get);
+      Int@ byte := Do(Get);
       FinishRecord(byte);
     };
 
@@ -270,10 +270,10 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
     Message = <@ A@>(A@ default, (Record@, A@) { PM@<A@>; } field, Int@ length) {
       IsZero(length).?(true: Return(default));
 
-      Int@ record_start <- Do(BytesRead);
-      Record@ record <- Do(Record);
-      A@ updated <- Do(field(record, default));
-      Int@ record_end <- Do(BytesRead);
+      Int@ record_start := Do(BytesRead);
+      Record@ record := Do(Record);
+      A@ updated := Do(field(record, default));
+      Int@ record_end := Do(BytesRead);
       Int@ record_length = Sub(record_end, record_start);
 
       Gt(record_length, length).?(true: {
@@ -286,17 +286,17 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
     # Parse records from a message until reaching the end of the input.
     <@ A@>(A@, (Record@, A@) { PM@<A@>; }) { PM@<A@>; }
     Proto = <@ A@>(A@ default, (Record@, A@) { PM@<A@>; } field) {
-      Maybe@<Int@> mbyte <- Do(MaybeGet);
+      Maybe@<Int@> mbyte := Do(MaybeGet);
       mbyte.?(nothing: Return(default));
-      Record@ record <- Do(FinishRecord(mbyte.just));
-      A@ updated <- Do(field(record, default));
+      Record@ record := Do(FinishRecord(mbyte.just));
+      A@ updated := Do(field(record, default));
       Proto(updated, field);
     };
 
     @(Fail, Skip, String, Ints, Message, Proto);
   };
 
-  Result@<R@<A@>> result <- m.do(parser<PM@>(proto, Monad, 0));
+  Result@<R@<A@>> result := m.do(parser<PM@>(proto, Monad, 0));
   m.return(/Pprof/Result%.Apply((R@<A@> x) { x.x; }, result));
 };
 

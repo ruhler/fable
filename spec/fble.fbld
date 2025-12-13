@@ -1012,10 +1012,10 @@
     Expr: bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
   
    @ConcreteSyntax @
-    stmt = type, name, {',', type, name}, '<-', expr, ';', stmt                 
+    stmt = type, name, {',', type, name}, ':=', expr, ';', stmt                 
   
    @Example @
-    Int@ x <- Map(l); f(x, y)
+    Int@ x := Map(l); f(x, y)
   
    Bind is syntactic sugar for calling a function with an anonymous function
    as its argument. It is equivalent to:
@@ -1026,7 +1026,7 @@
    For example, the expression:
   
    @code[fble] @
-    Int@ x <- Map(l);
+    Int@ x := Map(l);
     f(x, y)
   
    Desugars to:
@@ -1038,7 +1038,7 @@
    argument function. For exmaple:
 
    @code[fble] @
-    Int@ x, Bool@ y <- Map(l);
+    Int@ x, Bool@ y := Map(l);
     f(x, y)
   
    Desugars to:
@@ -1083,8 +1083,8 @@
       m.?(just: f(x.just), nothing: Nothing);
     };
     
-    X@ a <- Maybe(f(x));
-    X@ b <- Maybe(g(x));
+    X@ a := Maybe(f(x));
+    X@ b := Maybe(g(x));
     h(b);
   
    Which more clearly separates the glue logic from the meat of the program.
@@ -1587,7 +1587,7 @@
      | expr, '.?(', name, ':', expr,                   (* union_select *)
                 {',', name, ':', expr} ')', ';', stmt
      | type, name,                                     (* bind *)
-       {',', type, name}, '<-', expr, ';', stmt                 
+       {',', type, name}, ':=', expr, ';', stmt                 
      ;
     
     module = stmt                                      (* module_value *)

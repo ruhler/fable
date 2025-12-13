@@ -27,10 +27,10 @@ Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
 
   (I.IStream@) { M@<Unit@>; } cat = (I.IStream@ input) {
-    String@ line <- m.do(I.GetLine(input));
+    String@ line := m.do(I.GetLine(input));
     line.?(empty: m.return(Unit));
 
-    Unit@ _ <- m.do(O.PutStr(stdio.out, line));
+    Unit@ _ := m.do(O.PutStr(stdio.out, line));
     cat(input);
   };
 
@@ -38,18 +38,18 @@ Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     inputs.?(empty: m.return(True));
     String@ filename = inputs.items.head;
 
-    Maybe@<I.IStream@> istream <- m.do({
+    Maybe@<I.IStream@> istream := m.do({
       /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
       stdio.read(filename, /Core/Stdio%.Text);
     });
 
     istream.?(nothing: {
       String@ msg = Concat[Str|'fble-cat: Unable to open ', filename];
-      Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
+      Unit@ _ := m.do(O.PutLine(stdio.err, msg));
       m.return(False);
     });
 
-    Unit@ _ <- m.do(cat(istream.just));
+    Unit@ _ := m.do(cat(istream.just));
     cats(inputs.items.tail);
   };
 

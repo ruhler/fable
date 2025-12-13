@@ -72,7 +72,7 @@ ProfileFromParsed = (ProtoProfile@ parsed) {
   List@<String@> metrics = Metrics(parsed.strings, parsed.sample_types)[];
   Blocks@ blocks = Blocks(parsed); 
   List@<Sample@> samples = {
-    Sample@ s <- /Std/List%.Map(Reverse(parsed.samples));
+    Sample@ s := /Std/List%.Map(Reverse(parsed.samples));
     List@<Int@> values = Reverse(s.values);
     s.@(values);
   };
@@ -82,7 +82,7 @@ ProfileFromParsed = (ProtoProfile@ parsed) {
 
 <<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<Result@<Profile@>>; }
 Parse = <<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
-  Result@<ProtoProfile@> parsed <- m.do(Run(ProfileParser, in, m));
+  Result@<ProtoProfile@> parsed := m.do(Run(ProfileParser, in, m));
   m.return(/Pprof/Result%.Apply(ProfileFromParsed, parsed));
 };
 

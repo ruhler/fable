@@ -100,27 +100,27 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
   (IStream@<M@>, OStream@<M@>) { M@<Unit@>; }
   ForwardAll = (IStream@<M@> in, OStream@<M@> out) {
-    Maybe@<Int@> mb <- m.do(in);
+    Maybe@<Int@> mb := m.do(in);
     mb.?(nothing: O.Close(out));
-    Unit@ _ <- m.do(out(mb.just));
+    Unit@ _ := m.do(out(mb.just));
     ForwardAll(in, out);
   };
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Unit@ _ <- m.do(O.PutStr(stdio.out, /Network/Apps/Echo/Usage%));
+    Unit@ _ := m.do(O.PutStr(stdio.out, /Network/Apps/Echo/Usage%));
     m.return(True);
   });
 
   args.error.?(items: {
-    Unit@ _ <- m.do(O.PutStr(stdio.err, args.error));
-    Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
+    Unit@ _ := m.do(O.PutStr(stdio.err, args.error));
+    Unit@ _ := m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
     m.return(False);
   });
 
-  Maybe@<Server@<M@>> ms <- m.do(sockets.server(args.hostname, args.port));
+  Maybe@<Server@<M@>> ms := m.do(sockets.server(args.hostname, args.port));
   ms.?(nothing: {
-    Unit@ _ <- m.do(O.PutLine(stdio.err, Str|'unable to serve'));
+    Unit@ _ := m.do(O.PutLine(stdio.err, Str|'unable to serve'));
     m.return(False);
   });
 
@@ -130,12 +130,12 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     IsZero(n).?(true: m.return(Unit));
     Int@ nn = /Std/Int/Ord%.Gt(n, Int|0).?(true: Decr(n), false: n);
 
-    IOStream@<M@> ios <- m.do(s);
-    Unit@ _ <- m.do(ForwardAll(ios.in, ios.out));
+    IOStream@<M@> ios := m.do(s);
+    Unit@ _ := m.do(ForwardAll(ios.in, ios.out));
     Serve(nn);
   };
 
-  Unit@ _ <- m.do(Serve(args.num_clients));
+  Unit@ _ := m.do(Serve(args.num_clients));
   m.return(True);
 };
 

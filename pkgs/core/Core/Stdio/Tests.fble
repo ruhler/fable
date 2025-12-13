@@ -115,8 +115,8 @@ Test@ Tests = TestSuite(Str|Stdio, List[
       PureState@(inputs, Bytes|AB, Empty<Int@>), Unit);
 
     PureResult@<Unit@> got = Run({
-      Unit@ _ <- Monad.do(PutStr(Stdio.out, Str|A));
-      Unit@ _ <- Monad.do(PutStr(Stdio.out, Str|B));
+      Unit@ _ := Monad.do(PutStr(Stdio.out, Str|A));
+      Unit@ _ := Monad.do(PutStr(Stdio.out, Str|B));
       Monad.return(Unit);
     }, inputs);
 
@@ -133,8 +133,8 @@ Test@ Tests = TestSuite(Str|Stdio, List[
       PureState@(inputs, Empty<Int@>, Bytes|AB), Unit);
 
     PureResult@<Unit@> got = Run({
-      Unit@ _ <- Monad.do(PutStr(Stdio.err, Str|A));
-      Unit@ _ <- Monad.do(PutStr(Stdio.err, Str|B));
+      Unit@ _ := Monad.do(PutStr(Stdio.err, Str|A));
+      Unit@ _ := Monad.do(PutStr(Stdio.err, Str|B));
       Monad.return(Unit);
     }, inputs);
 

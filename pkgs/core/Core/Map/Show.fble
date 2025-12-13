@@ -12,9 +12,9 @@
 
 <<@>@ M@, @ K@>(Map@<M@, K@>, Show@<K@>)<@ V@>(Show@<V@>) { Show@<M@<V@>>; }
 Show = <<@>@ M@, @ K@>(Map@<M@, K@> m, Show@<K@> show_key)<@ V@>(Show@<V@> show_value, M@<V@> map) {
-  Unit@ _ <- Do(m.ForEach(map, String|'{ ',
+  Unit@ _ := Do(m.ForEach(map, String|'{ ',
     (K@ k, V@ v, Output@ shown) {
-      Unit@ _ <- Do(shown);
+      Unit@ _ := Do(shown);
       Format|'%s => %s; '[show_key(k), show_value(v)];
     }));
   String|'}';

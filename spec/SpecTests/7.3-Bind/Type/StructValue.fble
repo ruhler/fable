@@ -8,7 +8,7 @@ Bool@ False = Bool@(false: Unit@());
 
 Foo@ x = {
   # You can't use a struct type as the bind function.
-  Bool@ x <- Foo@;
+  Bool@ x := Foo@;
   x.?(true: False, false: True);
 };
 x.f(True).false;

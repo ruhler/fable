@@ -54,11 +54,11 @@ Flip = (Int@ n, List@<Int@> pre, List@<Int@> l) {
 <<@>@ M@>(Monad@<M@>, List@<Int@>, (List@<Int@>) { M@<Unit@>; }) { M@<Unit@>; }
 Permutes = <<@>@ M@>(Monad@<M@> m, List@<Int@> l, (List@<Int@>) { M@<Unit@>; } f) {
   l.items.tail.?(empty: f(l));
-  List@<Int@> _ <- m.do(ForEach(l, m.return(l),
+  List@<Int@> _ := m.do(ForEach(l, m.return(l),
       (Int@ _, M@<List@<Int@>> ml) {
-        List@<Int@> rotated <- m.do(ml);
+        List@<Int@> rotated := m.do(ml);
         Int@ head = rotated.items.head;
-        Unit@ _ <- m.do(Permutes(m, rotated.items.tail, (List@<Int@> permuted) {
+        Unit@ _ := m.do(Permutes(m, rotated.items.tail, (List@<Int@> permuted) {
           f(Append(permuted, List[head]));
         }));
         m.return(RotateRight(rotated));
@@ -75,7 +75,7 @@ Permutes = <<@>@ M@>(Monad@<M@> m, List@<Int@> l, (List@<Int@>) { M@<Unit@>; } f
 % P = /Core/Monad/State%<Fannkuch@>;
 
 (List@<Int@>) { P.State@<Unit@>;  } DoPermutation = (List@<Int@> l) {
-  Fannkuch@ s <- P.Monad.do(P.Get);
+  Fannkuch@ s := P.Monad.do(P.Get);
   Int@ flips = Flips(Int|0, l);
   Fannkuch@ ns = s.even.?(
     true: Fannkuch@(False, Add(s.checksum, flips), Max(s.max_flips, flips)),

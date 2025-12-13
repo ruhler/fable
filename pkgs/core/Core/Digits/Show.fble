@@ -19,7 +19,7 @@ Show@<Bit@> ShowBit = (Bit@ b) {
 
 Show@<List@<Bit@>> ShowBits = (List@<Bit@> bits) {
   /Std/List%.ForEach(bits, Return, (Bit@ bit, Output@ shown) {
-    Unit@ _ <- Do(shown);
+    Unit@ _ := Do(shown);
     ShowBit(bit);
   });
 };

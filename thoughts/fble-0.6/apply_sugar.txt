@@ -1,0 +1,623 @@
+Function Application Sugar
+==========================
+
+Motivation: I want a nice way to annotate a test as an expected failure.
+
+Let's say I have a test case:
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    AssertEquals(eq, show, wnt, got);
+  }
+
+Now it starts failing, and I don't want to fix it. It would be great if I
+could add a single line to the start of the test:
+
+  Test(Str|'MyTest', (Unit@ _) {
+    ExpectFails(Str|'!=') $
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    AssertEquals(eq, show, wnt, got);
+  }
+
+That line is a function that takes a value. The following statement is the
+value to provide to that function.
+
+We've seen places where this kind of way to avoid indentation as a syntactic
+sugar is really useful:
+* fbld @@ syntax
+* case statement syntax
+* monadic bind syntax
+
+How about something for function application too?
+
+We can even think about generalizing bind syntax somehow. Maybe figure out a
+way to make it work with no-argument bind?
+
+Straw proposal to get thoughts going:
+
+  <expr> $ <stmt>
+
+Is desugared to: <expr>(<stmt>)
+
+Now here's where things get a little tricky. Do we evaluate the 'body' before
+calling the function? As proposed above, yes. Works great for ExpectFails.
+Does not work great for a 'Do' replacement. And is also kind of weird: I
+expect code to flow top to bottom when executing statements. To flip it around
+is weird.
+
+Let's say we just had some magic syntax for Unit@ _ <- ... ; ... syntax. We
+could make ExpectFails work if it took the test to run as a function:
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Unit@ _ <- ExpectFails(Str|'!=');
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    AssertEquals(eq, show, wnt, got);
+  }
+
+ExpectFails takes a function, runs it, adjusts the result. Why doesn't
+ExpectFails return a function from Unit@ to result then? Why doesn't everyone?
+
+What do I want post sugaring? Like, for real?
+* Test needs to take a function, to properly label what code is considered to
+  be under test.
+* ExpectFails ... should really be a test result modifier, right? Not a test?
+
+Current uses of ExpectFails:
+
+    /Core/Test%.ExpectFails(/App/Drawing/Test%.AssertEquals(wnt, got), Str|'');
+
+    /Core/Test%.ExpectFails(
+      /Core/Test%.ExpectFails(
+        /Core/Eq/Assert%.AssertEquals(
+          /Core/Maybe/Eq%.Eq(EqColor),
+          /Core/Maybe/Show%.Show(ShowColor),
+          wnt, got), Str|'Nothing'), Str|'');
+
+    /Core/Test%.ExpectFails(
+      AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got),
+      Str|'!= Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)');
+
+It's not pretty the way I'm currently writing it, that's for sure. Certainly 
+it seems we should put the expected error message in front. Also would be
+really nice if we could comment out a single line to enable/disable the
+application.
+
+How often do we write things of the form:
+
+   Foo(... {
+     ...
+   });
+
+As the last thing in a statement block. Because make no mistake, this syntax
+bottoms out the statement block. Nothing should follow.
+
+Well, even if it's not bottoming out, we could write:
+
+   Result@ result = {
+     Foo(...);
+     ...
+   };
+
+Feels like we have three variations:
+
+1. General function bind:
+  A@ a, B@ b, ... <- Foo;
+  <body>
+
+2. Special function bind:
+  Unit@ _ <- Foo;
+  <body>
+
+3. Straight up application:
+  Foo;$
+  <arg>
+
+Any easy way to turn application around? No. We need the Foo expression to not
+have any access to variables declared for <arg>.
+
+This might be nice for debug prints too. Imagine TraceLn was a -> a. Then
+instead of:
+
+  Unit@ _ = TraceLn(...);
+  <body>
+
+We could write:
+
+  TraceLn(...);$
+  <body>
+
+I think it's very important to distinguish when things run. The difference
+between:
+
+  X@ x = foo();
+  (Unit@ _) { x; }
+
+And:
+
+  (Unit@ _) {
+    X@ x = foo();
+    x;
+  }
+
+Those are two very different things that the programmer should have full
+explicit control over.
+
+Note that union select statement currently uses "expr ';' stmt" syntax.
+
+Here's an idea. What if we had a helper function.
+
+  ExpectFails is (String@, TestResult@) -> TestResult@.
+
+Let's say we have something called Apply:
+  
+  Apply is ((A@) { B@; }, (Unit@) { A@; }) { B@; }
+
+It's apply, but adding a Unit@ in there to turn ExpectFails into a bind
+suitable function:
+
+  Unit@ _ <- Apply(ExpectFails(Str|'!='));
+  ...
+
+It's weird. The Unit@ makes it weird. But it's also weird to have to add the
+Unit@ to leverage the nice function bind syntax. Why not generalize the nice
+function bind syntax so we don't need to introduce Unit@ in this case?
+
+Brainstorm...
+
+  Do(Get);$
+  (A@ a) { 
+    ...
+  }
+
+  Do(Get) -> A@ a;
+  ...
+
+Now that's interesting. Opposite direction as let expression though.
+ 
+  Do(Get) -> Unit@ _;
+  Do(Print);;
+
+  Do(A); Do(B); Do(C);
+ 
+ vs.  Do(A, Do(B, Do(C)))
+ vs.  Do(A, (Unit@ _) { Do(B, (Unit@ _ { Do(C); })); })
+  
+Feels like we should just let it be explicit right? With the syntax, somehow?
+
+I suppose bind syntax you don't know when the function is called. Except that
+it's after we know the function you are passing it to.
+
+  Do(A);
+  Do(B);
+  Do(C);
+
+  Do(A) $
+  Do(B) $
+  Do(C);
+
+  Do(A);$
+  Do(B);$
+  Do(C);
+
+  Do(A);_
+  Do(B);_
+  Do(C);
+
+  Unit@ _ <- Do(A);$
+  
+  Unit@ _ <- Do(A)$
+
+  Unit@ _ <- Do(A)!
+
+  Unit@ _ < Do(A):
+
+  Do(A):
+  Do(B):
+  Do(C);
+
+  Unit@ _ <- Do(A);
+  <- Do(A);
+  $ Do(A);
+  < Do(A);
+  > Do(A);
+
+  _ <- Do(A);
+
+  Do(A);
+
+I think, ideally, we start Do(A) at the first column of the current indent
+level. That suggests we need something around the ';' that says if we want to
+directly apply to what follows or we want to wrap what follows in a (Unit@ _)
+or forall A@ _ function and then apply it. Also, careful if the expression is
+a union select, because that will conflict with our current union select
+syntax.
+
+ Do(A,);
+
+ Do(,);
+ 
+ Do(A;
+ Do(;
+
+  Do(A)();
+  Do(B)();
+  Do(C);
+
+  Do(A, Unit@ _);
+
+Oh. Now that's pretty interesting. Here we are mixing normal function apply
+syntax: passing of args, with function definition syntax: passing of type and
+arg name. And we can special case empty arg syntax () to say direct
+application.
+
+  So, instead of:
+
+  Int@ x <- Do(Get);
+  Unit@ _ <- Do(PutLine(x));
+  Return(f(x));
+
+We have:
+
+  Do(Get, Int@ x);
+  Do(PutLine(x), Unit@ _);
+  Return(f(x));
+
+What's nice about this syntax:
+* No need for ' <- '. Saves 4 characters on bind that way.
+
+It's harder for me to see the variable definition though. Like,
+
+  Int@ x <- ...;
+  ...
+
+Is how I think of things abstractly. Not
+
+  ... Int@ x);
+  ...
+
+And it doesn't really make Unit@ _ <- better.
+
+  Do(Get) -> Int@ x;
+  Do(PutLine(x)) -> Unit@ _;
+  Return(f(x));
+
+  Do(Get, (Int@ x) {
+    Do(PutLine(x, (Unit@ _) {
+      Return(f(x));
+    }));
+  });
+
+  Int@ x := Do(Get);
+  Unit@ _ := Do(PutLine(x));
+  Return(f(x));
+
+Three parts to the syntax:
+  args: Int@ x
+  call: Do(Get)
+  body: what follows.
+
+We want to make args optional some how. We want to make it clear that body is
+blocked sequentially behind the call? Even though it isn't necessarily...
+
+The semicolon tells us of the sequential dependency, right?
+
+  Int@ x = :Do(Get);
+  :Do(PutLine(x));
+  Return(f(x));
+
+Random digression: can we use bind syntax to allow reassigning to a variable?
+
+Instead of:
+
+  S@ ns = foo(s);
+  S@ s = ns;
+
+We could have, maybe:
+
+  S@ s <- Assign(foo(s));
+
+Where in this case, Assign is?
+
+  <@ A@>(A@, (A@, B@)) { B@; }
+
+Basically flipped application. Maybe call it a 'Let' function?
+
+  S@ s <- Let(foo(s));
+
+It's different in practice though. One of them allocates a function, the other
+is all within a single function block.
+
+So I would say, bind syntax is good at saying that everything on the right
+hand side of <- happens before what's on the left. Compared to let syntax,
+where the right hand side is allowed to refer to what's on the left.
+
+How hard would it be to make no arg bind just work?
+
+  <call>;
+  <body>
+
+Converted to:
+
+  <call>((Unit@ _) { <body>; });
+
+Then, add a helper function to call and apply immediately?
+
+  ApplyTo(ExpectFails(Str|'!='));
+  ...
+
+Just need to figure out a nicer name for ApplyTo. Do the weird unit thing. And
+also need to remove the conflict between this and case expression.
+
+  Do(Print(Str|...),);
+
+  Apply(ExpectFails(Str|'!='),);
+
+  Do(Print(Str|...)); $
+
+  Apply(ExpectFails(Str|'!=')); $
+
+  Do(Get); $ Int@ x;
+  Do(PutLine(x)); $
+  Return(f(x));
+
+  Int@ x <- Do(Get);
+  $ <- Do(PutLine(x));
+  Return(f(x));
+
+  Int@ x := Do(Get);$
+  Do(PutLine(x));$
+  Return(f(x));
+
+  Int@ x := Do(Get);;
+  Do(PutLine(x));;
+  Return(f(x));
+
+  Int@ x := Do(Get);-
+  Do(PutLine(x));-
+  Return(f(x));
+
+  Int@ x := Do(Get);.
+  Do(PutLine(x));.
+  Return(f(x));
+
+  Int@ x := Do(Get);.
+  Do(PutLine(x));.
+  Return(f(x));
+
+  Int@ x := Do(Get);
+  : Do(PutLine(x))
+  Return(f(x));
+
+  Int@ x <- Do(Get):
+  Do(PutLine(x)):
+  Return(f(x));
+
+  Int@ x := Do(Get);
+  Do(PutLine(x));
+  Return(f(x));
+
+If we sort out union select, there's no ambiguity, right? The trouble is if we
+have a union select that returns a function we want to bind. That's the
+current conflict.
+
+  list.?(empty: ...);
+  m.?(just: Do1, nothing: Do2);
+  ...
+
+  list.?(empty: ..., :);
+
+On the other hand, I always feel slightly bad performance wise using select
+statement, as much as it is awesome for syntax.
+
+We could say .? has precedence. In case of conflict, you can always use the Id
+function:
+
+  Id(list.?(empty: ...));
+
+In other words:
+  <expr> ';' <stmt>
+
+Behaves as follows:
+* if <expr> is a union select expression, <stmt> gets inserted as a default.
+* if <expr> is any other expression, it gets applied to (Unit@ _ ) { <stmt> }.
+
+Now of course I start to think of tricky things like, what if union select
+expression returns a function that takes the default value? Or we have a magic
+way to make it? Then we can reuse the bind syntax. 
+
+So, for example:
+
+  list.?(empty: ..., :);
+
+Desugars to:
+  
+  ((Unit@ _) { X@; } default) {
+     list.?(empty: ..., default());
+  }
+
+Examples:
+
+Join = <@ T@>(List@<List@<T@>> lists, List@<T@> separator) {
+  lists.?(empty: Empty<T@>, :);
+  lists.items.tail.?(empty: lists.items.head, :);
+  Concat[lists.items.head, separator, Join(lists.items.tail, separator)];
+};
+
+No. I don't want to mess up case select. Are we okay living with the conflict
+that is what to do if the expression is an application? Any other clever
+syntax I could use to distinguish? Is my hacky work around okay? You could
+also do:
+
+  { list.?(empty:...); };
+  ...
+
+Maybe? No. That's not syntactically different.
+
+I'm really tempted to try with my hacky approach and see how it feels. And
+consider using := instead of <-, which feels a little cleaner, easier on the
+eyes.
+
+Back to my original motivation:
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    AssertEquals(eq, show, wnt, got);
+  }
+
+==>
+
+  Test(Str|'MyTest', (Unit@ _) {
+    To(ExpectFails(Str|'...')); 
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    AssertEquals(eq, show, wnt, got);
+  }
+
+We could also start to write:
+
+  {
+    Test(Str|'MyTest');
+    To(ExpectFails(Str|'...'));
+    ...
+  }
+
+I don't like that as much. We could also change ExpectFails to take Unit@ so
+it can be used with this magic syntax:
+
+  Test(Str|'MyTest', (Unit@ _) {
+    ExpectFails(Str|'...'); 
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    AssertEquals(eq, show, wnt, got);
+  }
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    ExpectFails(Str|'...'); 
+    AssertEquals(eq, show, wnt, got);
+  }
+
+I don't know. That doesn't feel right. I want to see the connection between
+ExpectFails and what follows.
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    ExpectFails(Str|'...') >>;
+    AssertEquals(eq, show, wnt, got);
+  }
+
+  Int@ x := Do(Get);
+  Do(PutLine(x)) >>;
+  Return(f(x));
+
+  Int@ x <- Do(Get);
+  Do(PutLine(x)) ->;
+  Return(f(x));
+
+  Int@ x << Do(Get);
+  Do(PutLine(x)) >>;
+  Return(f(x));
+
+  Int@ x := Do(Get);
+  Do(PutLine(x)) >>;
+  Return(f(x));
+
+  Int@ x := Do(Get);
+  Do(PutLine(x));;
+  Return(f(x));
+
+  Int@ x := Do(Get);
+  Do(PutLine(x));:
+  Return(f(x));
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    ExpectFails(Str|'...');:
+    AssertEquals(eq, show, wnt, got);
+  }
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    ExpectFails(Str|'...'):
+    AssertEquals(eq, show, wnt, got);
+  }
+
+  Int@ x := Do(Get);
+  Do(PutLine(x)):
+  Return(f(x));
+
+Okay, here's a proposal:
+
+  <expr> : <stmt>
+
+'colon' versus 'semicolon'. The name suggests both are related. They are the
+same key on the keyboard. The ':' looks like it's suggesting what follows
+really follows. We can use := for bind to reuse that same ':' syntax. No need
+for hacks with union select.
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    Apply(ExpectFails(Str|'...')):
+    AssertEquals(eq, show, wnt, got);
+  }
+
+The only weird thing is that extra (Unit@ _) function being passed around.
+
+'colon introduces additional information after a complete thought'. Sounds
+like a reasonable application here.
+
+Yeah... that sounds like a reasonable use of colon to me. Hopefully we don't
+have syntax conflicts with something else, but I'm pretty sure all other uses
+of colons are within parentheses and following labels.
+
+I'm really tempted to give this a try.
+
+What are the concerns at this point:
+* Cases like ExpectFails, where I'm artificially introducing an (Unit@)
+  function for what ought to be abstract syntactically a direct function
+  application.
+
+Maybe have two options? Single colon, double colon?
+
+    ExpectFails(Str|'...'):
+    <arg>
+
+    Do(...)::
+    <body>
+
+
+  Int@ x := Do(Get);
+  Do(PutLine(x))::
+  Return(f(x));
+
+Hmm... Not as nice.
+
+This is an important question. How do I want to use ':' syntax? To help with
+ExpectFails, normal function application. Or to help with Unit@ _ <- bind?
+
+And should we use the : on the := case too?
+
+  Int@ x := Do(Get):
+  Do(PutLine(x)):
+  Return(f(x));
+
+This is already doable today:
+
+  Unit@ _ <- Apply(ExpectFails(Str|'...));
+
+Which makes me feel like no need to add additional syntax. Not if it's only
+for a pretty rare case.
+
+Maybe worth switching to ':=' though?
+
+Honestly, I like it. With my current syntax highlighting, the ':' part of ':='
+pops out nicely.

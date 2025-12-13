@@ -258,35 +258,35 @@ Round@ Round4 = RoundX(II, S.6, S.10, S.15, S.21, T4, (Block@ b) {
 <<@>@ M@>(Monad@<M@> m, M@<Maybe@<T@>> get) {
   # Gets the next word from a pre-padded input
   M@<Maybe@<Bit32@>> GetWord = {
-    Maybe@<Bit8@> a <- m.do(get);
+    Maybe@<Bit8@> a := m.do(get);
     a.?(nothing: m.return(Nothing<Bit32@>));
 
-    Maybe@<Bit8@> b <- m.do(get);
-    Maybe@<Bit8@> c <- m.do(get);
-    Maybe@<Bit8@> d <- m.do(get);
+    Maybe@<Bit8@> b := m.do(get);
+    Maybe@<Bit8@> c := m.do(get);
+    Maybe@<Bit8@> d := m.do(get);
     m.return(Just(Bit32@(Bit16@(d.just, c.just), Bit16@(b.just, a.just))));
   };
 
   # Gets the next block from a pre-padded input
   M@<Maybe@<Block@>> GetBlock = {
-    Maybe@<Bit32@> 0 <- m.do(GetWord);
+    Maybe@<Bit32@> 0 := m.do(GetWord);
     0.?(nothing: m.return(Nothing<Block@>));
 
-    Maybe@<Bit32@> 1 <- m.do(GetWord);
-    Maybe@<Bit32@> 2 <- m.do(GetWord);
-    Maybe@<Bit32@> 3 <- m.do(GetWord);
-    Maybe@<Bit32@> 4 <- m.do(GetWord);
-    Maybe@<Bit32@> 5 <- m.do(GetWord);
-    Maybe@<Bit32@> 6 <- m.do(GetWord);
-    Maybe@<Bit32@> 7 <- m.do(GetWord);
-    Maybe@<Bit32@> 8 <- m.do(GetWord);
-    Maybe@<Bit32@> 9 <- m.do(GetWord);
-    Maybe@<Bit32@> 10 <- m.do(GetWord);
-    Maybe@<Bit32@> 11 <- m.do(GetWord);
-    Maybe@<Bit32@> 12 <- m.do(GetWord);
-    Maybe@<Bit32@> 13 <- m.do(GetWord);
-    Maybe@<Bit32@> 14 <- m.do(GetWord);
-    Maybe@<Bit32@> 15 <- m.do(GetWord);
+    Maybe@<Bit32@> 1 := m.do(GetWord);
+    Maybe@<Bit32@> 2 := m.do(GetWord);
+    Maybe@<Bit32@> 3 := m.do(GetWord);
+    Maybe@<Bit32@> 4 := m.do(GetWord);
+    Maybe@<Bit32@> 5 := m.do(GetWord);
+    Maybe@<Bit32@> 6 := m.do(GetWord);
+    Maybe@<Bit32@> 7 := m.do(GetWord);
+    Maybe@<Bit32@> 8 := m.do(GetWord);
+    Maybe@<Bit32@> 9 := m.do(GetWord);
+    Maybe@<Bit32@> 10 := m.do(GetWord);
+    Maybe@<Bit32@> 11 := m.do(GetWord);
+    Maybe@<Bit32@> 12 := m.do(GetWord);
+    Maybe@<Bit32@> 13 := m.do(GetWord);
+    Maybe@<Bit32@> 14 := m.do(GetWord);
+    Maybe@<Bit32@> 15 := m.do(GetWord);
     m.return(Just(
       Block@(
         0.just, 1.just, 2.just, 3.just,
@@ -297,14 +297,14 @@ Round@ Round4 = RoundX(II, S.6, S.10, S.15, S.21, T4, (Block@ b) {
   };
 
   (ABCD@) { M@<ABCD@>; } Rounds = (ABCD@ abcd) {
-    Maybe@<Block@> block <- m.do(GetBlock);
+    Maybe@<Block@> block := m.do(GetBlock);
     block.?(nothing: m.return(abcd));
     Rounds(DoBlock(abcd, block.just));
   };
 
   # Computes the MD5 checksum of a pre-padded sequence of bytes.
   M@<Hash@> Md5 = {
-    ABCD@ md5 <- m.do(Rounds(ABCD0));
+    ABCD@ md5 := m.do(Rounds(ABCD0));
     m.return(HexFromABCD(md5));
   };
 

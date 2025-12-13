@@ -37,7 +37,7 @@
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
   M@<Event@> FilterEvent = {
-    Event@ e <- m.do(app.event);
+    Event@ e := m.do(app.event);
     e.?(tick: m.return(e),
         key_down: e.key_down.?(q: m.return(e), : FilterEvent),
         mouse_down: m.return(e),
@@ -64,9 +64,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
 
     Drawing@ drawing = Drawings[clear, box, cursor];
 
-    Unit@ _ <- m.do(app.effect(Effect@(draw: drawing)));
-    Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));
-    Event@ e <- m.do(FilterEvent);
+    Unit@ _ := m.do(app.effect(Effect@(draw: drawing)));
+    Unit@ _ := m.do(app.effect(Effect@(tick: Int|200)));
+    Event@ e := m.do(FilterEvent);
     e.?(
       tick: StepUI(s),
       mouse_down: StepUI(State@(s.mouse_x, s.mouse_y, Color.Red)),
@@ -75,7 +75,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
       : m.return(Unit));
   };
 
-  Unit@ _ <- m.do(StepUI(State@(Int|0, Int|0, Color.Green)));
+  Unit@ _ := m.do(StepUI(State@(Int|0, Int|0, Color.Green)));
   m.return(True);
 };
 

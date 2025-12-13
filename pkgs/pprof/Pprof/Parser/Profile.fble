@@ -76,14 +76,14 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
       IntFor(record.payload, Str|'ValueType.type');
     });
 
-    Unit@ _ <- m.do(p.Skip(record.payload));
+    Unit@ _ := m.do(p.Skip(record.payload));
     m.return(type);
   };
 
   (Profile@, Payload@) { M@<Profile@>; }
   SampleTypeField = (Profile@ profile, Payload@ payload) {
-    Int@ length <- m.do(LengthFor(payload, Str|'sample_type'));
-    StringId@ type <- m.do(p.Message(0, SampleTypeFields, length));
+    Int@ length := m.do(LengthFor(payload, Str|'sample_type'));
+    StringId@ type := m.do(p.Message(0, SampleTypeFields, length));
     List@<StringId@> sample_types = Items(type, profile.sample_types);
     m.return(profile.@(sample_types));
   };
@@ -91,38 +91,38 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   (Record@, Location@) { M@<Location@>; }
   LineFields = (Record@ record, Location@ location) {
     /Std/Int/Eq%.Eq(record.field, Int|1).?(true: {
-      Int@ func_id <- m.do(IntFor(record.payload, Str|'Line.function_id'));
+      Int@ func_id := m.do(IntFor(record.payload, Str|'Line.function_id'));
       m.return(location.@(func_id));
     });
 
     /Std/Int/Eq%.Eq(record.field, Int|2).?(true: {
-      Int@ line <- m.do(IntFor(record.payload, Str|'Line.line'));
+      Int@ line := m.do(IntFor(record.payload, Str|'Line.line'));
       m.return(location.@(line));
     });
 
     /Std/Int/Eq%.Eq(record.field, Int|3).?(true: {
-      Int@ col <- m.do(IntFor(record.payload, Str|'Line.column'));
+      Int@ col := m.do(IntFor(record.payload, Str|'Line.column'));
       m.return(location.@(col));
     });
 
 
-    Unit@ _ <- m.do(p.Skip(record.payload));
+    Unit@ _ := m.do(p.Skip(record.payload));
     m.return(location);
   };
 
   (Record@, Location@) { M@<Location@>; }
   LocationFields = (Record@ record, Location@ location) {
     /Std/Int/Eq%.Eq(record.field, Int|1).?(true: {
-      Int@ id <- m.do(IntFor(record.payload, Str|'Location.id'));
+      Int@ id := m.do(IntFor(record.payload, Str|'Location.id'));
       m.return(location.@(id));
     });
 
     /Std/Int/Eq%.Eq(record.field, Int|4).?(true: {
-      Int@ length <- m.do(LengthFor(record.payload, Str|'Location.line'));
+      Int@ length := m.do(LengthFor(record.payload, Str|'Location.line'));
       p.Message(location, LineFields, length);
     });
 
-    Unit@ _ <- m.do(p.Skip(record.payload));
+    Unit@ _ := m.do(p.Skip(record.payload));
     m.return(location);
   };
 
@@ -134,8 +134,8 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
         m.return(sample.@(sequence));
       });
 
-      Int@ length <- m.do(LengthFor(record.payload, Str|'Location.id'));
-      List@<Int@> locs <- m.do(p.Ints(length));
+      Int@ length := m.do(LengthFor(record.payload, Str|'Location.id'));
+      List@<Int@> locs := m.do(p.Ints(length));
       Sequence@ sequence = Append(Reverse(locs), sample.sequence);
       m.return(sample.@(sequence));
     });
@@ -146,28 +146,28 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
         m.return(sample.@(values));
       });
 
-      Int@ length <- m.do(LengthFor(record.payload, Str|'Location.id'));
-      List@<Int@> locs <- m.do(p.Ints(length));
+      Int@ length := m.do(LengthFor(record.payload, Str|'Location.id'));
+      List@<Int@> locs := m.do(p.Ints(length));
       Sequence@ values = Append(Reverse(locs), sample.values);
       m.return(sample.@(values));
     });
 
-    Unit@ _ <- m.do(p.Skip(record.payload));
+    Unit@ _ := m.do(p.Skip(record.payload));
     m.return(sample);
   };
 
   (Profile@, Payload@) { M@<Profile@>; }
   SampleField = (Profile@ profile, Payload@ payload) {
-    Int@ length <- m.do(LengthFor(payload, Str|'sample'));
-    Sample@ sample <- m.do(p.Message(Sample@(Empty<Int@>, Empty<Int@>), SampleFields, length));
+    Int@ length := m.do(LengthFor(payload, Str|'sample'));
+    Sample@ sample := m.do(p.Message(Sample@(Empty<Int@>, Empty<Int@>), SampleFields, length));
     List@<Sample@> samples = Items(sample, profile.samples);
     m.return(profile.@(samples));
   };
 
   (Profile@, Payload@) { M@<Profile@>; }
   LocationField = (Profile@ profile, Payload@ payload) {
-    Int@ length <- m.do(LengthFor(payload, Str|'location'));
-    Location@ location <- m.do(p.Message(Location@(0, 0, 0, 0), LocationFields, length));
+    Int@ length := m.do(LengthFor(payload, Str|'location'));
+    Location@ location := m.do(p.Message(Location@(0, 0, 0, 0), LocationFields, length));
     Map.Map@<Location@> locations = Map.Insert(profile.locations, location.id, location);
     m.return(profile.@(locations));
   };
@@ -175,36 +175,36 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   (Record@, Function@) { M@<Function@>; }
   FunctionFields = (Record@ record, Function@ function) {
     /Std/Int/Eq%.Eq(record.field, Int|1).?(true: {
-      Int@ id <- m.do(IntFor(record.payload, Str|'Function.id'));
+      Int@ id := m.do(IntFor(record.payload, Str|'Function.id'));
       m.return(function.@(id));
     });
 
     /Std/Int/Eq%.Eq(record.field, Int|2).?(true: {
-      Int@ name <- m.do(IntFor(record.payload, Str|'Function.name'));
+      Int@ name := m.do(IntFor(record.payload, Str|'Function.name'));
       m.return(function.@(name));
     });
 
     /Std/Int/Eq%.Eq(record.field, Int|4).?(true: {
-      Int@ file <- m.do(IntFor(record.payload, Str|'Function.filename'));
+      Int@ file := m.do(IntFor(record.payload, Str|'Function.filename'));
       m.return(function.@(file));
     });
 
-    Unit@ _ <- m.do(p.Skip(record.payload));
+    Unit@ _ := m.do(p.Skip(record.payload));
     m.return(function);
   };
 
   (Profile@, Payload@) { M@<Profile@>; }
   FunctionField = (Profile@ profile, Payload@ payload) {
-    Int@ length <- m.do(LengthFor(payload, Str|'function'));
-    Function@ function <- m.do(p.Message(Function@(0, 0, 0), FunctionFields, length));
+    Int@ length := m.do(LengthFor(payload, Str|'function'));
+    Function@ function := m.do(p.Message(Function@(0, 0, 0), FunctionFields, length));
     Map.Map@<Function@> functions = Map.Insert(profile.functions, function.id, function);
     m.return(profile.@(functions));
   };
 
   (Profile@, Payload@) { M@<Profile@>; }
   StringField = (Profile@ profile, Payload@ payload) {
-    Int@ length <- m.do(LengthFor(payload, Str|'string_table'));
-    String@ str <- m.do(p.String(length));
+    Int@ length := m.do(LengthFor(payload, Str|'string_table'));
+    String@ str := m.do(p.String(length));
     Map.Map@<String@> strings = Map.Insert(profile.strings,
       profile.next_string_id, str);
     Int@ next_string_id = Incr(profile.next_string_id);
@@ -221,7 +221,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
     /Std/Int/Eq%.Eq(field, Int|5).?(true: FunctionField(profile, payload));
     /Std/Int/Eq%.Eq(field, Int|6).?(true: StringField(profile, payload));
 
-    Unit@ _ <- m.do(p.Skip(payload));
+    Unit@ _ := m.do(p.Skip(payload));
     m.return(profile);
   };
 

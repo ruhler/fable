@@ -84,9 +84,9 @@
 Monad@<M@> Monad = State.Monad;
 
 M@<Maybe@<Bit8@>> Get = {
-  List@<Bit8@> bytes <- Monad.do(State.Get);
+  List@<Bit8@> bytes := Monad.do(State.Get);
   bytes.?(empty: Monad.return(Nothing<Bit8@>));
-  Unit@ _ <- Monad.do(State.Set(bytes.items.tail));
+  Unit@ _ := Monad.do(State.Set(bytes.items.tail));
   Monad.return(Just(bytes.items.head));
 };
 

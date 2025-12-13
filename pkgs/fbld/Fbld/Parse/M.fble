@@ -145,8 +145,8 @@ Run = <@ T@>(M@<T@> m, List@<Text@> input) {
 # appropriate. Fails if there are no more characters in the input stream.
 # Takes account of the current indent level.
 M@<CharL@> GetL = {
-  CharL@ cl <- Do(GetL_);
-  Int@ indent <- Do(GetIndent);
+  CharL@ cl := Do(GetL_);
+  Int@ indent := Do(GetIndent);
 
   /Std/Int/Ord%.Le(cl.l.col, indent).?(true: {
     IsNewline(cl.c).?(true: Return(cl));
@@ -159,21 +159,21 @@ M@<CharL@> GetL = {
 
 # Returns the location of the next input character.
 M@<Loc@> Loc = {
-  Maybe@<CharL@> mc <- Do(Test(GetL));
+  Maybe@<CharL@> mc := Do(Test(GetL));
   Return(mc.?(just: mc.just.l, nothing: Unknown));
 };
 
 # Gets the next character in the input stream, advancing the parser state as
 # appropriate. Fails if there are no more characters in the input stream.
 M@<Char@> Get = {
-  CharL@ cl <- Do(GetL);
+  CharL@ cl := Do(GetL);
   Return(cl.c);
 };
 
 # Same as Try, but discards the result of a successful match.
 <@ T@>(M@<T@>) { M@<Bool@>; }
 Try_ = <@ T@>(M@<T@> mx) {
-  Maybe@<T@> r <- Do(Try(mx));
+  Maybe@<T@> r := Do(Try(mx));
   Return(r.?(just: True, nothing: False));
 };
 
@@ -181,7 +181,7 @@ Try_ = <@ T@>(M@<T@> mx) {
 # pass. Fails if both parsers fails.
 (M@<Unit@>, M@<Unit@>) { M@<Unit@>; }
 Or = (M@<Unit@> ma, M@<Unit@> mb) {
-  Bool@ a <- Do(Try_(ma));
+  Bool@ a := Do(Try_(ma));
   a.?(true: Return(Unit));
   mb;
 };
@@ -190,14 +190,14 @@ Or = (M@<Unit@> ma, M@<Unit@> mb) {
 # input, and ignoring the result of parsing.
 <@ T@>(M@<T@>) { M@<Bool@>; }
 Test_ = <@ T@>(M@<T@> mx) {
-  Maybe@<T@> r <- Do(Test(mx));
+  Maybe@<T@> r := Do(Test(mx));
   Return(r.?(just: True, nothing: False));
 };
 
 # Parse end of input. Fails if we have not reached the end of the input.
 M@<Unit@> EndOfInput = {
-  Loc@ l <- Do(Loc);
-  Maybe@<Char@> mc <- Do(Test(Get));
+  Loc@ l := Do(Loc);
+  Maybe@<Char@> mc := Do(Test(Get));
   mc.?(nothing: Return(Unit));
   Error<Unit@>(l, Str|'expected end of input');
 };
@@ -207,7 +207,7 @@ M@<Unit@> EndOfInput = {
 (String@) { M@<Unit@>; }
 String = (String@ s) {
   s.?(empty: Return(Unit));
-  CharL@ c <- Do(GetL);
+  CharL@ c := Do(GetL);
   /Std/Char/Eq%.Eq(s.items.head, c.c).?(
     true: String(s.items.tail),
     false: {

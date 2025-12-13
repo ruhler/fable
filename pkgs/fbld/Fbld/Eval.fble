@@ -41,8 +41,8 @@ Eval = (Env@ env, Markup@ markup) {
       impl.just(env, cmd);
     },
     sequence: {
-      Markup@ a <- r.do(Try(Eval(env, markup.sequence.a), Empty));
-      Markup@ b <- r.do(Try(Eval(env, markup.sequence.b), Empty));
+      Markup@ a := r.do(Try(Eval(env, markup.sequence.a), Empty));
+      Markup@ b := r.do(Try(Eval(env, markup.sequence.b), Empty));
       r.return(Append(a, b));
     });
 };
@@ -50,8 +50,8 @@ Eval = (Env@ env, Markup@ markup) {
 (Env@, List@<Markup@>) { Result@<List@<Markup@>>; }
 Evals = (Env@ env, List@<Markup@> markups) {
   markups.?(empty: r.return(markups));
-  Markup@ head <- r.do(Eval(env, markups.items.head));
-  List@<Markup@> tail <- r.do(Evals(env, markups.items.tail));
+  Markup@ head := r.do(Eval(env, markups.items.head));
+  List@<Markup@> tail := r.do(Evals(env, markups.items.tail));
   r.return(Items(head, tail));
 };
 

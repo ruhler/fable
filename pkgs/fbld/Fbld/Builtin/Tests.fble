@@ -33,8 +33,8 @@
 
 (List@<String@>) { Result@<String@>; } Run = (List@<String@> lines) {
   String@ text = Lines(lines);
-  Markup@ parsed <- r.do(/Fbld/Parse%.Parse(List[Text(Start(Str|'foo.fbld'), text)]));
-  Markup@ evaled <- r.do(/Fbld/Eval%.Eval(/Fbld/Builtin%.Env, parsed));
+  Markup@ parsed := r.do(/Fbld/Parse%.Parse(List[Text(Start(Str|'foo.fbld'), text)]));
+  Markup@ evaled := r.do(/Fbld/Eval%.Eval(/Fbld/Builtin%.Env, parsed));
   ToString(evaled);
 };
 

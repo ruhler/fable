@@ -55,12 +55,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   % O = /Core/Stream/OStream%(m);
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ <- m.do(O.PutStr(stdio.out, /Invaders/Usage%));
+    Unit@ _ := m.do(O.PutStr(stdio.out, /Invaders/Usage%));
     m.return(True);
   });
 
   M@<Input@> GetInput = {
-    Event@ e <- m.do(app.event);
+    Event@ e := m.do(app.event);
     e.?(
         tick: m.return(Input@(tick: Unit)),
         key_down: e.key_down.?(
@@ -90,12 +90,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   # Returns the high score after playing the game.
   (M@<Unit@>, Game@) { M@<Int@>; }
   Run = (M@<Unit@> tick, Game@ game) {
-    Input@ i <- m.do(GetInput);
+    Input@ i := m.do(GetInput);
     i.?(
        tick: {
-         Unit@ _ <- m.do(tick);
+         Unit@ _ := m.do(tick);
          Game@ ngame = Game.Tick(game);
-         Unit@ _ <- m.do(Draw(ngame));
+         Unit@ _ := m.do(Draw(ngame));
          Run(tick, ngame);
        },
        quit: m.return(Max(game.score, game.high_score)),
@@ -108,42 +108,42 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   # Read High Score
   % I = /Core/Stream/IStream%(m);
-  Int@ high_score <- m.do({
-    Maybe@<String@> home <- m.do(stdio.getenv(Str|HOME));
+  Int@ high_score := m.do({
+    Maybe@<String@> home := m.do(stdio.getenv(Str|HOME));
     home.?(nothing: m.return(Int|0));
 
     String@ filename = Append(home.just, Str|'/.fble-invaders');
-    Maybe@<IStream@<M@>> istream <- m.do(stdio.read(filename, /Core/Stdio%.Text));
+    Maybe@<IStream@<M@>> istream := m.do(stdio.read(filename, /Core/Stdio%.Text));
     istream.?(nothing: m.return(Int|0));
 
-    String@ text <- m.do(I.GetText(istream.just));
+    String@ text := m.do(I.GetText(istream.just));
     m.return(/Core/Int/Read%.Read(text));
   });
 
   # Set up the game.
   Game@ game = Game.Initial(high_score);
-  Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
+  Unit@ _ := m.do(app.effect(Effect@(tick: Int|0)));
 
   # Check for --test mode, where we draw something to the screen and exit
   # right away.
   Any(args, /Std/String/Eq%.Eq(Str|'--test')).?(true: {
-    Unit@ _ <- m.do(Draw(game));
+    Unit@ _ := m.do(Draw(game));
     m.return(True); 
   });
 
   # Play the game
-  Int@ new_high_score <- m.do(Run(tick, game));
+  Int@ new_high_score := m.do(Run(tick, game));
 
   # Save high score.
-  Unit@ _ <- m.do({
-    Maybe@<String@> home <- m.do(stdio.getenv(Str|HOME));
+  Unit@ _ := m.do({
+    Maybe@<String@> home := m.do(stdio.getenv(Str|HOME));
     home.?(nothing: m.return(Unit));
 
     String@ filename = Append(home.just, Str|'/.fble-invaders');
-    Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename, /Core/Stdio%.Text));
+    Maybe@<OStream@<M@>> ostream := m.do(stdio.write(filename, /Core/Stdio%.Text));
     ostream.?(nothing: m.return(Unit));
 
-    Unit@ _ <- m.do(O.Show(ostream.just, /Std/Int/Show%.Show(new_high_score)));
+    Unit@ _ := m.do(O.Show(ostream.just, /Std/Int/Show%.Show(new_high_score)));
     O.Close(ostream.just);
   });
 

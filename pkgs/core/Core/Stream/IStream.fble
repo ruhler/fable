@@ -29,7 +29,7 @@
   # Gets the next character from the given input stream.
   # Gets the next char from stdin, or Nothing in case of end of file.
   (IStream@) { M@<Maybe@<Char@>>; } GetChar = (IStream@ in) {
-    Maybe@<Int@> byte <- m.do(in);
+    Maybe@<Int@> byte := m.do(in);
     byte.?(nothing: m.return(Nothing<Char@>));
     # TODO: Handle unicode characters.
     m.return(Just(/Std/Char%.Char(byte.just)));
@@ -38,18 +38,18 @@
   # Gets everything up to and including the next newline character from stdin.
   # Returns an empty list in case of end of input.
   (IStream@) { M@<String@>; } GetLine = (IStream@ in) {
-    Maybe@<Char@> c <- m.do(GetChar(in));
+    Maybe@<Char@> c := m.do(GetChar(in));
     c.?(nothing: m.return(Str|''));
     IsNewline(c.just).?(true: m.return(List[c.just]));
 
-    String@ tail <- m.do(GetLine(in));
+    String@ tail := m.do(GetLine(in));
     m.return(Items(c.just, tail));
   };
 
   # Gets all the rest of the input stream.
   (IStream@) { M@<String@>; } GetText = (IStream@ in) {
     (String@) { M@<String@>; } get = (String@ rchrs) {
-      Maybe@<Char@> c <- m.do(GetChar(in));
+      Maybe@<Char@> c := m.do(GetChar(in));
       c.?(nothing: m.return(Reverse(rchrs)));
       get(Items(c.just, rchrs));
     };

@@ -101,7 +101,7 @@ World@ acorn = World(List<Coord@>[
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
 
   M@<Input@> GetInput = {
-    Event@ e <- m.do(app.event);
+    Event@ e := m.do(app.event);
     e.?(tick: m.return(Input@(step: Unit)),
         key_down: e.key_down.?(q: m.return(Input@(quit: Unit)), : GetInput),
         resize: m.return(Input@(resize: e.resize)),
@@ -111,9 +111,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   (Effect@) { M@<Unit@>; } Output = app.effect;
 
   (State@) { M@<Unit@>; } StepUI = (State@ s) {
-    Unit@ _ <- m.do(Output(Effect@(draw: Affine(s.a, s.b, DrawWorld(s.w)))));
-    Unit@ _ <- m.do(Output(Effect@(tick: Int|200)));
-    Input@ x <- m.do(GetInput);
+    Unit@ _ := m.do(Output(Effect@(draw: Affine(s.a, s.b, DrawWorld(s.w)))));
+    Unit@ _ := m.do(Output(Effect@(tick: Int|200)));
+    Input@ x := m.do(GetInput);
     x.?(quit: m.return(Unit),
         step: IsZero(s.n).?(
                 true: m.return(Unit),
@@ -129,10 +129,10 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   Point@ a = @(x: Div(width, Width).q, y: Div(height, Height).q);
   Point@ b = @(x: Div(width, 2).q, y: Div(height, 2).q);
   State@ s = State@(Int|200, a, b, acorn);
-  Unit@ _ <- m.do(StepUI(s));
+  Unit@ _ := m.do(StepUI(s));
 
   M@<Bool@> WaitForKeyPress = {
-    Event@ e <- m.do(app.event);
+    Event@ e := m.do(app.event);
     e.?(key_down: m.return(True), : WaitForKeyPress);
   };
   WaitForKeyPress;

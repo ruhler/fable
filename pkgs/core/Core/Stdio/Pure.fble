@@ -42,9 +42,9 @@
 Monad@<Pure@> Monad = State.Monad;
 
 Pure@<Maybe@<Int@>> In = {
-  PureState@ s <- Monad.do(State.Get);
+  PureState@ s := Monad.do(State.Get);
   s.in.?(empty: Monad.return(Nothing<Int@>));
-  Unit@ _ <- Monad.do(State.Set(PureState@(s.in.items.tail, s.out, s.err)));
+  Unit@ _ := Monad.do(State.Set(PureState@(s.in.items.tail, s.out, s.err)));
   Monad.return(Just(s.in.items.head));
 };
 
@@ -55,13 +55,13 @@ Pure@<Maybe@<Int@>> In = {
 };
 
 (Int@) { Pure@<Unit@>; } Out = (Int@ b) {
-  PureState@ s <- Monad.do(State.Get);
+  PureState@ s := Monad.do(State.Get);
   Closed(s.out).?(true: Monad.return(Unit));
   State.Set(PureState@(s.in, Items(b, s.out), s.err));
 };
 
 (Int@) { Pure@<Unit@>; } Err = (Int@ b) {
-  PureState@ s <- Monad.do(State.Get);
+  PureState@ s := Monad.do(State.Get);
   Closed(s.err).?(true: Monad.return(Unit));
   State.Set(PureState@(s.in, s.out, Items(b, s.err)));
 };

@@ -987,3 +987,57 @@ That's pretty nice. Let's adapt that.
 
 That looks nice to me. We give overall pass fail, we say how many non-pass
 there were, and we say 'of xx tests' in the end. Cool.
+
+---
+
+Thinking about 'ExpectFailure' function, it would be super convenient if we
+could write this as taking the second argument as an expression on the
+following line. Is that a general syntax that's worth having?
+
+If I find a decent marker for it, it would be something like:
+
+  ExpectFailure(String|'Failed') $
+  ...
+
+So:
+
+stmt := <expr> $ stmt
+
+Which desugars to:
+   <expr>(<stmt>)
+
+Except, I want to make sure there is a newline after the $, right?
+No. That's not required.
+  
+Anywhere else this is useful?
+
+I'm thinking about the no-arg bind case.
+   
+   Do(PutStr(Str|'hello')) $
+   ...
+
+But the difference here is it's not applying to a function, it's applying to a
+value.
+
+We could maybe generalize bind syntax slightly to support this?
+
+  Unit@ _ <- Do(PutStr...) $
+  ...
+
+And it's not lazy. Like, the following bit gets evaluated before the first
+line, which is weird and unexpected.
+
+  Foo({
+    ...
+  })
+
+Is the other alternative, but not that introduces nesting. We saw huge
+benefits of getting rid of nesting for bind syntax and case select. Maybe this
+is another such opportunity?
+
+  Test(Str|'foo') $
+  ...
+
+But questions about whether it should be eager or lazy, a zero-arg function or
+a single arg function. It's like the @@ fbld syntax, which is pretty nice.
+

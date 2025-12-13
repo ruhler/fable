@@ -13,7 +13,7 @@ Bool@ false = Bool@(false: Unit@());
 # Use function bind syntax to apply an anonymous function to both elements
 # of a pair.
 Pair@ p = {
-  Bool@ b <- Map(Pair@(true, false));
+  Bool@ b := Map(Pair@(true, false));
   b.?(true: false, false: true);
 };
 

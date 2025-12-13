@@ -47,7 +47,7 @@ TraceLnDisabled = ((Unit@) { String@; } _f) {
 # Sample use:
 #   % Trace = /Core/Debug%.Enable(True);
 #   ...
-#   Unit@ _ <- Trace;
+#   Unit@ _ := Trace;
 #   Str|'There is something you should know...';
 % Enable = (Bool@ enable) {
   enable.?(

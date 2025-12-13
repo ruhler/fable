@@ -34,31 +34,31 @@ Bit64@ 08_64 = H64|08;
   PadZ = (Bit64@ msglen, Bit64@ length) {
     Bool@ end = IsZero(And(3f_64, Add(08_64, length)));
     end.?(false: {
-      Unit@ _ <- Put(H8|0);
+      Unit@ _ := Put(H8|0);
       PadZ(msglen, Inc(length));
     });
 
     Bit64@ bits = Shl1(Shl1(Shl1(msglen)));
-    Unit@ _ <- Put(bits.lo.lo.lo);
-    Unit@ _ <- Put(bits.lo.lo.hi);
-    Unit@ _ <- Put(bits.lo.hi.lo);
-    Unit@ _ <- Put(bits.lo.hi.hi);
-    Unit@ _ <- Put(bits.hi.lo.lo);
-    Unit@ _ <- Put(bits.hi.lo.hi);
-    Unit@ _ <- Put(bits.hi.hi.lo);
-    Unit@ _ <- Put(bits.hi.hi.hi);
+    Unit@ _ := Put(bits.lo.lo.lo);
+    Unit@ _ := Put(bits.lo.lo.hi);
+    Unit@ _ := Put(bits.lo.hi.lo);
+    Unit@ _ := Put(bits.lo.hi.hi);
+    Unit@ _ := Put(bits.hi.lo.lo);
+    Unit@ _ := Put(bits.hi.lo.hi);
+    Unit@ _ := Put(bits.hi.hi.lo);
+    Unit@ _ := Put(bits.hi.hi.hi);
     m.return(End);
   };
 
   # Note: length is in units of bytes
   (Bit64@) { M@<Stream@>; } Pad = (Bit64@ length) {
-    Maybe@<Bit8@> x <- m.do(get);
+    Maybe@<Bit8@> x := m.do(get);
     x.?(nothing: {
-      Unit@ _ <- Put(H8|80);
+      Unit@ _ := Put(H8|80);
       PadZ(length, Inc(length));
     });
 
-    Unit@ _ <- Put(x.just);
+    Unit@ _ := Put(x.just);
     Pad(Inc(length));
   };
 

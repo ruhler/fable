@@ -103,34 +103,34 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     IsZero(n).?(true: m.return(Unit));
     Int@ nn = /Std/Int/Ord%.Gt(n, Int|0).?(true: Decr(n), false: n);
 
-    Maybe@<Int@> mb <- m.do(in);
+    Maybe@<Int@> mb := m.do(in);
     mb.?(nothing: m.return(Unit));
-    Unit@ _ <- m.do(out(mb.just));
+    Unit@ _ := m.do(out(mb.just));
     ForwardN(nn, in, out);
   };
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Unit@ _ <- m.do(O.PutStr(stdio.out, /Network/Apps/Echo/Usage%));
+    Unit@ _ := m.do(O.PutStr(stdio.out, /Network/Apps/Echo/Usage%));
     m.return(True);
   });
 
   args.error.?(items: {
-    Unit@ _ <- m.do(O.PutStr(stdio.err, args.error));
-    Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
+    Unit@ _ := m.do(O.PutStr(stdio.err, args.error));
+    Unit@ _ := m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
     m.return(False);
   });
 
-  Maybe@<IOStream@<M@>> mios <- m.do(sockets.client(args.hostname, args.port));
+  Maybe@<IOStream@<M@>> mios := m.do(sockets.client(args.hostname, args.port));
   mios.?(nothing: {
-    Unit@ _ <- m.do(O.PutLine(stdio.err, Str|'unable to connect'));
+    Unit@ _ := m.do(O.PutLine(stdio.err, Str|'unable to connect'));
     m.return(False);
   });
 
   IOStream@<M@> ios = mios.just;
 
-  Unit@ _ <- m.do(O.PutStr(ios.out, args.message));
-  Unit@ _ <- m.do(ForwardN(args.num_bytes, ios.in, stdio.out));
+  Unit@ _ := m.do(O.PutStr(ios.out, args.message));
+  Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, stdio.out));
   m.return(True);
 };
 

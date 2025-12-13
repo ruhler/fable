@@ -68,7 +68,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     Int@ stretch_depth = Add(1, max_depth);
 
     Int@ check = Check(Tree(stretch_depth));
-    Unit@ _ <- m.do(FmtL|'stretch tree of depth %s	 check: %s'[
+    Unit@ _ := m.do(FmtL|'stretch tree of depth %s	 check: %s'[
       /Std/Int/Show%.Show(stretch_depth),
       /Std/Int/Show%.Show(check)]);
 
@@ -85,14 +85,14 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
       };
 
       Int@ check = ForIter(0, 1);
-      Unit@ _ <- m.do(FmtL|'%s	 trees of depth %s	 check: %s'[
+      Unit@ _ := m.do(FmtL|'%s	 trees of depth %s	 check: %s'[
         /Std/Int/Show%.Show(iterations),
         /Std/Int/Show%.Show(depth),
         /Std/Int/Show%.Show(check)]);
       ForDepth(Add(2, depth));
     };
-    Unit@ _ <- m.do(ForDepth(MinDepth));
-    Unit@ _ <- m.do(FmtL|'long lived tree of depth %s	 check: %s'[
+    Unit@ _ := m.do(ForDepth(MinDepth));
+    Unit@ _ := m.do(FmtL|'long lived tree of depth %s	 check: %s'[
       /Std/Int/Show%.Show(max_depth),
       /Std/Int/Show%.Show(Check(long_lived))]);
     m.return(True);

@@ -27,7 +27,7 @@ Do = (M@ ma)((Unit@) { M@; } f)(Unit@ s) {
   S@ s = S(n);
   s.?(Z: Return(Unit));
 
-  Unit@ _ <- Do(input);
+  Unit@ _ := Do(input);
   Eat(s.S, input);
 };
 

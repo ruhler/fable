@@ -27,7 +27,7 @@
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 Tail = <@ T@>(Show@<T@> show, List@<T@> list) {
   list.?(empty: String|']');
-  Unit@ _ <- Do(Format|', %s'[show(list.items.head)]);
+  Unit@ _ := Do(Format|', %s'[show(list.items.head)]);
   Tail(show, list.items.tail);
 };
 

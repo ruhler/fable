@@ -22,9 +22,9 @@
   % S = /Core/Set%.Set(m);
 
   Show@<S.Set@> show = (S.Set@ s) {
-    Unit@ _ <- Do(S.ForEach(s, String|'{ ',
+    Unit@ _ := Do(S.ForEach(s, String|'{ ',
       (K@ x, Output@ shown) {
-        Unit@ _ <- Do(shown);
+        Unit@ _ := Do(shown);
         Format|'%s; '[show_key(x)];
       }));
     String|'}';

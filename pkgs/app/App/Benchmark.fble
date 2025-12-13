@@ -49,9 +49,9 @@ Benchmark = (Main@ app, Int@ n, Event@ quit, Unit@ _) {
   Int@ h = Int|480;
 
   M@<Event@> Event = {
-    Int@ n <- Monad.do(State.Get);
+    Int@ n := Monad.do(State.Get);
     IsNegative(n).?(true: Monad.return(quit));
-    Unit@ _ <- Monad.do(State.Set(Decr(n)));
+    Unit@ _ := Monad.do(State.Set(Decr(n)));
     Monad.return(Event@(tick: Unit));
   };
 

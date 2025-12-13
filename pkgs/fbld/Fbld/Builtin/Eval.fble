@@ -17,8 +17,8 @@
 % r = /Fbld/Result%.Monad;
 
 Impl@ Eval = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(Int|1, cmd));
-  Markup@ arg <- r.do(/Fbld/Eval%.Eval(env, Get(cmd.args, Int|0)));
+  Unit@ _ := r.do(AssertArgCount(Int|1, cmd));
+  Markup@ arg := r.do(/Fbld/Eval%.Eval(env, Get(cmd.args, Int|0)));
   /Fbld/Eval%.Eval(env, arg);
 };
 

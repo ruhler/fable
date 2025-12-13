@@ -261,7 +261,7 @@ State@ InitialState = {
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
   M@<Input@> GetInput = {
-    Event@ e <- m.do(app.event);
+    Event@ e := m.do(app.event);
     e.?(
       tick: m.return(Input@(tick: Unit)),
       key_down: e.key_down.?(
@@ -287,7 +287,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   };
 
   (State@) { M@<Unit@>; } Snake = (State@ s) {
-    Input@ x <- m.do(GetInput);
+    Input@ x := m.do(GetInput);
     x.?(
       dir: Snake(State@(x.dir, s.food, s.rand, s.snake, s.speed)),
       quit: m.return(Unit),
@@ -298,8 +298,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
         mr.?(
           dead: m.return(Unit),
           state: {
-             Unit@ _ <- m.do(Output(Effect@(draw: Draw(ns))));
-             Unit@ _ <- m.do(Output(Effect@(tick: ns.speed)));
+             Unit@ _ := m.do(Output(Effect@(draw: Draw(ns))));
+             Unit@ _ := m.do(Output(Effect@(tick: ns.speed)));
              Snake(mr.state);
           });
       });
@@ -307,13 +307,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
 
   State@ s = InitialState;
   
-  Unit@ _ <- m.do(Output(Effect@(draw: Rect(0, 0, Incr(MaxCol), Incr(MaxRow), Color.Blue))));
-  Unit@ _ <- m.do(Output(Effect@(draw: Draw(s))));
-  Unit@ _ <- m.do(app.effect(Effect@(tick: Int|16)));
-  Unit@ _ <- m.do(Snake(s));
+  Unit@ _ := m.do(Output(Effect@(draw: Rect(0, 0, Incr(MaxCol), Incr(MaxRow), Color.Blue))));
+  Unit@ _ := m.do(Output(Effect@(draw: Draw(s))));
+  Unit@ _ := m.do(app.effect(Effect@(tick: Int|16)));
+  Unit@ _ := m.do(Snake(s));
 
   M@<Bool@> WaitForKeyPress = {
-    Event@ e <- m.do(app.event);
+    Event@ e := m.do(app.event);
     e.?(key_down: m.return(True), : WaitForKeyPress);
   };
   WaitForKeyPress;

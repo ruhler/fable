@@ -33,10 +33,10 @@
   };
 
   IO@<Bool@> MCat = {
-    Maybe@<Int@> byte <- m.do(Stdin);
+    Maybe@<Int@> byte := m.do(Stdin);
     byte.?(nothing: m.return(True));
     Char@ char = /Std/Char%.Char(byte.just);
-    Unit@ _ <- m.do(stdout_(/Std/Char%.Pos(char)));
+    Unit@ _ := m.do(stdout_(/Std/Char%.Pos(char)));
     MCat;
   };
 

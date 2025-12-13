@@ -34,10 +34,10 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ _widt
   Point@ b = @(x: Int|0, y: Int|480);
 
   Drawing@ screenshot = Screenshot;
-  Unit@ _ <- m.do(app.effect(Effect@(draw: Affine(a, b, screenshot))));
+  Unit@ _ := m.do(app.effect(Effect@(draw: Affine(a, b, screenshot))));
 
   M@<Bool@> WaitForKeyPress = {
-    Event@ e <- m.do(app.event);
+    Event@ e := m.do(app.event);
     e.?(key_down: m.return(True), : WaitForKeyPress);
   };
   WaitForKeyPress;

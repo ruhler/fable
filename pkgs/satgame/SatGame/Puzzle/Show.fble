@@ -23,15 +23,15 @@ Show@<Literal@> Literal = (Literal@ literal) {
 
 Show@<Clause@> Clause = (Clause@ clause) {
   clause.?(empty: Return);
-  Unit@ _ <- Do(Literal(clause.items.head));
+  Unit@ _ := Do(Literal(clause.items.head));
   clause.items.tail.?(empty: Return);
-  Unit@ _ <- Do(String|' ');
+  Unit@ _ := Do(String|' ');
   Clause(clause.items.tail);
 };
 
 Show@<Puzzle@> Puzzle = (Puzzle@ puzzle) {
   puzzle.?(empty: Return);
-  Unit@ _ <- Do(FormatE|'%s\n'[Clause(puzzle.items.head)]);
+  Unit@ _ := Do(FormatE|'%s\n'[Clause(puzzle.items.head)]);
   Puzzle(puzzle.items.tail);
 };
 

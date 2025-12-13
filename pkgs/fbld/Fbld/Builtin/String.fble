@@ -45,9 +45,9 @@ Int@ 1 = /Std/Int%.1;
 };
 
 Impl@ Head = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(1, cmd));
-  Markup@ arg <- r.do(Eval(env, Get(cmd.args, 0)));
-  Maybe@<Char@> mc <- r.do(HeadOf(arg));
+  Unit@ _ := r.do(AssertArgCount(1, cmd));
+  Markup@ arg := r.do(Eval(env, Get(cmd.args, 0)));
+  Maybe@<Char@> mc := r.do(HeadOf(arg));
   mc.?(nothing: r.return(arg));
 
   # TODO: What to use for the location of the result?
@@ -67,14 +67,14 @@ Impl@ Head = (Env@ env, Command@ cmd) {
           /Std/Char/Output%.String(markup.command.name.text)]);
     },
     sequence: {
-      Markup@ a <- r.do(TailOf(markup.sequence.a));
+      Markup@ a := r.do(TailOf(markup.sequence.a));
       r.return(Append(a, markup.sequence.b));
     });
 };
 
 Impl@ Tail = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(1, cmd));
-  Markup@ arg <- r.do(Eval(env, Get(cmd.args, 0)));
+  Unit@ _ := r.do(AssertArgCount(1, cmd));
+  Markup@ arg := r.do(Eval(env, Get(cmd.args, 0)));
   TailOf(arg);
 };
 

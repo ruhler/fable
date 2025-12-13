@@ -114,14 +114,14 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
-    Unit@ _ <- m.do(O.Show(stdio.out, ShowGame(game)));
+    Unit@ _ := m.do(O.Show(stdio.out, ShowGame(game)));
 
-    String@ line <- m.do(I.GetLine(stdio.in));
+    String@ line := m.do(I.GetLine(stdio.in));
     line.?(empty: m.return(Unit));
 
     Maybe@<Input@> mi = ParseInput(line);
     mi.?(nothing: {
-      Unit@ _ <- m.do(O.PutLine(stdio.out, Concat[
+      Unit@ _ := m.do(O.PutLine(stdio.out, Concat[
         Str|'invalid input: ',
         Str|'expected {A,B,C}{1,2,3}, P, Q, or R']));
       TicTacToe(game);
@@ -133,7 +133,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   };
 
   (List@<String@> _args) {
-    Unit@ _ <- m.do(TicTacToe(Initial));
+    Unit@ _ := m.do(TicTacToe(Initial));
     m.return(True);
   };
 };

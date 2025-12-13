@@ -32,7 +32,7 @@ Test@ Tests = TestSuite(Str|Debug, List[
     # Test syntax for easy enable/disable of tracing.
     % Trace = /Core/Debug%.Enable(True);
     Unit@ u = {
-      Unit@ _ <- Trace.TraceLn;
+      Unit@ _ := Trace.TraceLn;
       StrE|'easy enable/disable trace message';
     };
     AssertEquals(/Std/Unit/Eq%.Eq, /Std/Unit/Show%.Show, Unit, u);
@@ -43,7 +43,7 @@ Test@ Tests = TestSuite(Str|Debug, List[
     # this should at least test we aren't printing that out.
     % Trace = /Core/Debug%.Enable(False);
     Unit@ u = {
-      Unit@ _ <- Trace.TraceLn;
+      Unit@ _ := Trace.TraceLn;
       StrE|'@FAILED';
     };
     AssertEquals(/Std/Unit/Eq%.Eq, /Std/Unit/Show%.Show, Unit, u);

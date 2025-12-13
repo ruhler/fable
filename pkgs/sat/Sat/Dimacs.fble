@@ -84,7 +84,7 @@ ParseM@<Maybe@<String@>> GetLine = (ParseState@ state) {
 
   Var@ v = Var@(Abs(x), /Std/Int/Ord%.Gt(x, Int|0));
 
-  Clause@ tail <- Do(ParseVars(words.items.tail));
+  Clause@ tail := Do(ParseVars(words.items.tail));
   Return(Items(v, tail));
 };
 
@@ -93,11 +93,11 @@ ParseM@<Maybe@<String@>> GetLine = (ParseState@ state) {
 };
 
 ParseM@<Unit@> ParseClauses = {
-  Maybe@<String@> line <- Do(GetLine);
+  Maybe@<String@> line := Do(GetLine);
   line.?(nothing: Return(Unit));
 
-  Clause@ clause <- Do(ParseClause(line.just));
-  Unit@ _ <- Do(AddClause(clause));
+  Clause@ clause := Do(ParseClause(line.just));
+  Unit@ _ := Do(AddClause(clause));
   ParseClauses;
 };
 
@@ -127,7 +127,7 @@ ParseM@<Unit@> ParseClauses = {
 # Parse from the starting state of a file, where there are still comment
 # lines.
 ParseM@<Unit@> ParseFromStart = {
-  Maybe@<String@> line <- Do(GetLine);
+  Maybe@<String@> line := Do(GetLine);
   line.?(nothing: Error<Unit@>(Str|'no clauses found'));
 
   line.just.?(empty: Error<Unit@>(Str|'empty line'));

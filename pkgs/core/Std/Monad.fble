@@ -16,9 +16,9 @@
 #
 #  @code[fble] @ 
 #   Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
-#    Char@ c <- m.do(stdio.GetChar);
+#    Char@ c := m.do(stdio.GetChar);
 #    Int@ ascii = ToAscii(c);
-#    Unit@ _ <- m.do(stdio.PutString(Show(ascii));
+#    Unit@ _ := m.do(stdio.PutString(Show(ascii));
 #    m.return(True)
 <<@>@>@ Monad@ = <<@>@ M@> {
   *(

@@ -58,7 +58,7 @@ Cmp@<Bit2@> OrdBit2 = (Bit2@ a, Bit2@ b) {
 };
 
 Show@<Bit2@> ShowBit2 = (Bit2@ x) {
-  Unit@ _ <- Do(ShowBit1(x.h));
+  Unit@ _ := Do(ShowBit1(x.h));
   ShowBit1(x.l);
 };
 

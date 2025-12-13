@@ -55,7 +55,7 @@ Show@<Hex@> Hex = (Hex@ h) {
 (List@<Output@>) { Output@; }
 Seq = (List@<Output@> xs) {
   xs.?(empty: Return);
-  Unit@ _ <- Do(xs.items.head);
+  Unit@ _ := Do(xs.items.head);
   Seq(xs.items.tail);
 };
 

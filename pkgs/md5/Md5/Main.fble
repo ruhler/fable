@@ -40,38 +40,38 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
 
   (String@) { M@<Bool@>; } md5 = (String@ filename) {
-    Maybe@<IStream@<M@>> istream <- m.do({
+    Maybe@<IStream@<M@>> istream := m.do({
       /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
       stdio.read(filename, /Core/Stdio%.Binary);
     });
 
     istream.?(nothing: {
       String@ msg = Concat[Str|'fble-md5: Unable to open ', filename];
-      Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
+      Unit@ _ := m.do(O.PutLine(stdio.err, msg));
       m.return(False);
     });
 
     M@<Maybe@<Bit8@>> in = {
-      Maybe@<Int@> b <- m.do(istream.just);
+      Maybe@<Int@> b := m.do(istream.just);
       m.return(b.?(just: Just(ToBits(b.just)), nothing: Nothing<Bit8@>));
     };
 
-    Hash@ hash <- m.do(/Md5/Md5%.Md5(m, in));
+    Hash@ hash := m.do(/Md5/Md5%.Md5(m, in));
     Output@ line = Format|'%s  %s'[/Md5/Hash%.Show(hash), /Std/Char/Output%.String(filename)];
-    Unit@ _ <- m.do(O.ShowLine(stdio.out, line));
+    Unit@ _ := m.do(O.ShowLine(stdio.out, line));
     m.return(True);
   };
 
   (Bool@, List@<String@>) { M@<Bool@>; }
   md5s = (Bool@ all_pass, List@<String@> files) {
     files.?(empty: m.return(all_pass));
-    Bool@ pass <- m.do(md5(files.items.head));
+    Bool@ pass := m.do(md5(files.items.head));
     md5s(And(all_pass, pass), files.items.tail);
   };
 
   (List@<String@> args) {
     Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-      Unit@ _ <- m.do(O.PutStr(stdio.out, /Md5/Usage%));
+      Unit@ _ := m.do(O.PutStr(stdio.out, /Md5/Usage%));
       m.return(True);
     });
 

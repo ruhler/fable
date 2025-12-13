@@ -39,25 +39,25 @@ Int@ 4 = Int|4;
 
 (Markup@, Markup@) { Result@<Bool@>; }
 Equals = (Markup@ a, Markup@ b) {
-  Maybe@<Char@> ac <- r.do(HeadOf(a));
-  Maybe@<Char@> bc <- r.do(HeadOf(b));
+  Maybe@<Char@> ac := r.do(HeadOf(a));
+  Maybe@<Char@> bc := r.do(HeadOf(b));
 
   EqMaybeChar(ac, bc).?(false: {
     r.return(False);
   });
   ac.?(nothing: r.return(True));
 
-  Markup@ at <- r.do(TailOf(a));
-  Markup@ bt <- r.do(TailOf(b));
+  Markup@ at := r.do(TailOf(a));
+  Markup@ bt := r.do(TailOf(b));
   Equals(at, bt);
 };
 
 Impl@ IfEq = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(4, cmd));
+  Unit@ _ := r.do(AssertArgCount(4, cmd));
 
-  Markup@ a <- r.do(Eval(env, Get(cmd.args, 0)));
-  Markup@ b <- r.do(Eval(env, Get(cmd.args, 1)));
-  Bool@ eq <- r.do(Equals(a, b));
+  Markup@ a := r.do(Eval(env, Get(cmd.args, 0)));
+  Markup@ b := r.do(Eval(env, Get(cmd.args, 1)));
+  Bool@ eq := r.do(Equals(a, b));
   Markup@ body = eq.?(
     true: Get(cmd.args, 2),
     false: Get(cmd.args, 3));
@@ -66,11 +66,11 @@ Impl@ IfEq = (Env@ env, Command@ cmd) {
 };
 
 Impl@ IfNEq = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(4, cmd));
+  Unit@ _ := r.do(AssertArgCount(4, cmd));
 
-  Markup@ a <- r.do(Eval(env, Get(cmd.args, 0)));
-  Markup@ b <- r.do(Eval(env, Get(cmd.args, 1)));
-  Bool@ eq <- r.do(Equals(a, b));
+  Markup@ a := r.do(Eval(env, Get(cmd.args, 0)));
+  Markup@ b := r.do(Eval(env, Get(cmd.args, 1)));
+  Bool@ eq := r.do(Equals(a, b));
   Markup@ body = eq.?(
     true: Get(cmd.args, 3),
     false: Get(cmd.args, 2));

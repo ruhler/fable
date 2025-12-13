@@ -76,11 +76,11 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _) {
 
   # Gets a line from stdin, discarding the final newline if any.
   M@<String@> GetLine = {
-    Maybe@<Char@> c <- m.do(I.GetChar(stdio.in));
+    Maybe@<Char@> c := m.do(I.GetChar(stdio.in));
     c.?(nothing: m.return(Str|''));
     IsNewline(c.just).?(true: m.return(Str|''));
 
-    String@ tail <- m.do(GetLine);
+    String@ tail := m.do(GetLine);
     m.return(Items(c.just, tail));
   };
 
@@ -89,17 +89,17 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _) {
     codes.?(empty: O.PutChar(stdio.out, Ascii.nl));
 
     IsZero(n).?(true: {
-      Unit@ _ <- m.do(O.PutChar(stdio.out, Ascii.nl));
+      Unit@ _ := m.do(O.PutChar(stdio.out, Ascii.nl));
       PrintCodes(Int|60, codes);
     });
 
-    Unit@ _ <- m.do(O.PutChar(stdio.out, codes.items.head));
+    Unit@ _ := m.do(O.PutChar(stdio.out, codes.items.head));
     PrintCodes(Sub(n, Int|1), codes.items.tail);
   };
 
   # Prints a sequence to stdout.
   (Seq@) { M@<Unit@>; } PrintSeq = (Seq@ s) {
-    Unit@ _ <- m.do(O.PutLine(stdio.out, s.header));
+    Unit@ _ := m.do(O.PutLine(stdio.out, s.header));
     PrintCodes(Int|60, s.codes);
   };
 
@@ -111,11 +111,11 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _) {
   # Reads in reversed sequences from stdin and processes it.
   # partial is the current reversed sequence built up so far.
   (Seq@) { M@<Unit@>; } GenSeqs = (Seq@ partial) {
-    String@ line <- m.do(GetLine);
+    String@ line := m.do(GetLine);
     line.?(empty: DoSeq(partial));
 
     /Std/Char/Eq%.Eq(line.items.head, Char|'>').?(true: {
-      Unit@ _ <- m.do(partial.codes.?(
+      Unit@ _ := m.do(partial.codes.?(
         items: DoSeq(partial),
         empty: m.return(Unit)));
       GenSeqs(Seq@(line, Str|''));
@@ -124,7 +124,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _) {
     GenSeqs(Seq@(partial.header, Append(Reverse(line), partial.codes)));
   };
 
-  Unit@ _ <- m.do(GenSeqs(Seq@(Str|'', Str|'')));
+  Unit@ _ := m.do(GenSeqs(Seq@(Str|'', Str|'')));
   m.return(True);
 };
 

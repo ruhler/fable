@@ -71,7 +71,7 @@ Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
 
   Result@<B@> rb = f(ra.value.just);
   Output@ errors = {
-    Unit@ _ <- /Std/Char/Output%.Do(ra.errors);
+    Unit@ _ := /Std/Char/Output%.Do(ra.errors);
     rb.errors;
   };
   Result@(errors, Or(ra.failed, rb.failed), rb.value);

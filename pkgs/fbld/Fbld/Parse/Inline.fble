@@ -53,18 +53,18 @@
 # Parses a sequence of zero or more name characters from the start of the
 # string.
 M@<String@> Name = {
-  Maybe@<Char@> mc <- Do(Test(Get));
+  Maybe@<Char@> mc := Do(Test(Get));
   mc.?(nothing: Return(Str|''));
   IsNameChar(mc.just).?(false: Return(Str|''));
 
-  Char@ _ <- Do(Get);
-  String@ tail <- Do(Name);
+  Char@ _ := Do(Get);
+  String@ tail := Do(Name);
   Return(Items(mc.just, tail));
 };
 
 # Parses raw text up to and including '}' for literal args.
 (Int@) { M@<String@>; } Literal = (Int@ nest) {
-  Char@ head <- Do(Get);
+  Char@ head := Do(Get);
   Int@ nnest = {
     /Std/Char/Eq%.Eq(Char|'{', head).?(true: Incr(nest));
     /Std/Char/Eq%.Eq(Char|'}', head).?(true: Decr(nest));
@@ -72,7 +72,7 @@ M@<String@> Name = {
   };
   IsZero(nnest).?(true: Return(Str|''));
 
-  String@ tail <- Do(Literal(nnest));
+  String@ tail := Do(Literal(nnest));
   Return(Items(head, tail));
 };
 
@@ -81,25 +81,25 @@ M@<String@> Name = {
 # Parses a sequence of zero or more inline args.
 M@<List@<Markup@>> Args = {
   # RegularArg: [ ... ]
-  Bool@ regular <- Do(Try_(String(Str|'[')));
+  Bool@ regular := Do(Try_(String(Str|'[')));
   regular.?(true: {
     M@<Unit@> end = {
-      CharL@ cl <- Do(GetL);
+      CharL@ cl := Do(GetL);
       /Std/Char/Eq%.Eq(Char|']', cl.c).?(true: Return(Unit));
       Error<Unit@>(cl.l, Str|'Expected '']''');
     };
-    Markup@ head <- Do(Inline(end));
-    List@<Markup@> tail <- Do(Args);
+    Markup@ head := Do(Inline(end));
+    List@<Markup@> tail := Do(Args);
     Return(Items(head, tail));
   });
 
   # LiteralArg: { ... }
-  Bool@ literal <- Do(Try_(String(Str|'{')));
+  Bool@ literal := Do(Try_(String(Str|'{')));
   literal.?(true: {
-    Loc@ l <- Do(Loc);
-    String@ text <- Do(Literal(Int|1));
+    Loc@ l := Do(Loc);
+    String@ text := Do(Literal(Int|1));
     Markup@ head = Plain(l, text);
-    List@<Markup@> tail <- Do(Args);
+    List@<Markup@> tail := Do(Args);
     Return(Items(head, tail));
   });
 
@@ -108,32 +108,32 @@ M@<List@<Markup@>> Args = {
 
 # Parses an inline command, starting just after the '@' character.
 M@<Markup@> Command = {
-  Loc@ l <- Do(Loc);
-  String@ name <- Do(Name);
+  Loc@ l := Do(Loc);
+  String@ name := Do(Name);
   name.?(empty: {
     Error<Markup@>(l, Str|'missing command name');
   });
 
-  List@<Markup@> args <- Do(Args);
+  List@<Markup@> args := Do(Args);
   Return(/Fbld/Markup%.Command(l, name, args));
 },
 
 # Helper function for Inline. Returns parsed markup as plain text followed by
 # the rest of the markup.
 (M@<Unit@>) { M@<Markup_@>; } Inline_ = (M@<Unit@> end) {
-  Bool@ done <- Do(Try_(end));
+  Bool@ done := Do(Try_(end));
   done.?(true: Return(@(plain: Str|'', markup: Empty)));
 
-  Char@ c <- Do(Get);
+  Char@ c := Do(Get);
   /Std/Char/Eq%.Eq(c, Char|'@').?(true: {
-    Markup@ command <- Do(Command);
-    Markup@ tail <- Do(Inline(end));
+    Markup@ command := Do(Command);
+    Markup@ tail := Do(Inline(end));
     Return(@(plain: Str|'', markup: Append(command, tail)));
   });
 
-  Char@ h <- Do({
+  Char@ h := Do({
     /Std/Char/Eq%.Eq(Char|'\', c).?(true: {
-      CharL@ e <- Do(GetL);
+      CharL@ e := Do(GetL);
       /Std/Char/Eq%.Eq(e.c, Char|'@').?(true: Return(Char|'@'));
       /Std/Char/Eq%.Eq(e.c, Char|'[').?(true: Return(Char|'['));
       /Std/Char/Eq%.Eq(e.c, Char|'\').?(true: Return(Char|'\'));
@@ -143,7 +143,7 @@ M@<Markup@> Command = {
     });
     Return(c);
   });
-  Markup_@ tail <- Do(Inline_(end));
+  Markup_@ tail := Do(Inline_(end));
   Return(@(plain: Items(h, tail.plain), markup: tail.markup));
 },
 
@@ -151,8 +151,8 @@ M@<Markup@> Command = {
 #
 # @arg[end] - Something that parses the end of the inline text.
 (M@<Unit@>) { M@<Markup@>; } Inline = (M@<Unit@> end) {
-  Loc@ l <- Do(Loc);
-  Markup_@ result <- Do(Inline_(end));
+  Loc@ l := Do(Loc);
+  Markup_@ result := Do(Inline_(end));
   result.plain.?(empty: Return(result.markup));
   Return(Append(Plain(l, result.plain), result.markup));
 };

@@ -59,7 +59,7 @@ Do = (Output@ ma, (Unit@) { Output@; } f)<@ S@>(Stream@<S@> s) {
 (String@) { Output@; }
 String = (String@ str)<@ S@>(Stream@<S@> s) {
   str.?(empty: s.return);
-  Unit@ _ <- s.do(s.put(str.items.head));
+  Unit@ _ := s.do(s.put(str.items.head));
   String(str.items.tail, s);
 };
 
@@ -69,7 +69,7 @@ String = (String@ str)<@ S@>(Stream@<S@> s) {
 (List@<Output@>) { Output@; }
 Concat = (List@<Output@> xs) {
   xs.?(empty: Return);
-  Unit@ _ <- Do(xs.items.head);
+  Unit@ _ := Do(xs.items.head);
   Concat(xs.items.tail);
 };
 
@@ -81,8 +81,8 @@ Concat = (List@<Output@> xs) {
 (List@<Output@>) { Output@; }
 Lines = (List@<Output@> xs) {
   xs.?(empty: Return);
-  Unit@ _ <- Do(xs.items.head);
-  Unit@ _ <- Do(Put(/Std/String/Lines%.Newline));
+  Unit@ _ := Do(xs.items.head);
+  Unit@ _ := Do(Put(/Std/String/Lines%.Newline));
   Lines(xs.items.tail);
 };
 
@@ -94,8 +94,8 @@ Lines = (List@<Output@> xs) {
 Join = (String@ sep, List@<Output@> xs) {
   xs.?(empty: Return);
   xs.items.tail.?(empty: xs.items.head);
-  Unit@ _ <- Do(xs.items.head);
-  Unit@ _ <- Do(String(sep));
+  Unit@ _ := Do(xs.items.head);
+  Unit@ _ := Do(String(sep));
   Join(sep, xs.items.tail);
 };
 
@@ -124,19 +124,19 @@ Format = (String@ fmt, List@<Output@> args)<@ S@>(Stream@<S@> s) {
     Char@ e = fmt.items.tail.items.head;
 
     /Std/Char/Eq%.Eq('%%', e).?(true: {
-      Unit@ _ <- s.do(s.put(c));
+      Unit@ _ := s.do(s.put(c));
       Format(fmt.items.tail.items.tail, args, s);
     });
 
     /Std/Char/Eq%.Eq('%s', e).?(true: {
-      Unit@ _ <- s.do(args.items.head(s));
+      Unit@ _ := s.do(args.items.head(s));
       Format(fmt.items.tail.items.tail, args.items.tail, s);
     });
 
     /Std/Undef%.Undef.undef<S@>;
   });
 
-  Unit@ _ <- s.do(s.put(c));
+  Unit@ _ := s.do(s.put(c));
   Format(fmt.items.tail, args, s);
 };
 
