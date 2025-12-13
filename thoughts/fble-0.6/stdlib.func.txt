@@ -1,0 +1,89 @@
+Function Library
+================
+
+Motivation is to have a 'With' function:
+
+  <@ A@, @ B@>((A@) { B@; }, (Unit@) { A@; }) { B@; } With;
+
+Specifically to allow you to use bind syntax for application, specifically for
+use in ExpectFails in the unit testing framework. For example:
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    Unit@ _ := With(ExpectFails(Str|'...'));
+    AssertEquals(eq, show, wnt, got));
+  }
+
+But there are other common utilities perhaps worth having in the standard
+library for functions. 'Id', 'Apply', Flip, those kinds of things come to
+mind.
+
+Let's see some samples.
+
+Haskell:
+* id, const, ., flip, $, &, fix, on, applyWhen
+
+What would I call them?
+* Id, Const, Compose, Flip, Apply, ??,
+* 
+
+Interesting that 'Apply' is the same as 'Id'. Still seems worth having.
+
+What to do with '&'? That's application, with args flipped.
+
+ (A@, (A@) { B@; }) { B@; }
+
+Sample use case?
+
+  ???(Int|5, Incr)
+
+Maybe 'on'? No. That means something else in haskell.
+
+  ApplyTo(Int|5, Incr).
+
+Yeah, I like that. You apply a function. You apply it to a value. You apply to
+a value a function.
+
+How about 'fix'? Can you do anything meaningful with that?
+
+<@ A@>((A@) { A@; }) { A@; }
+Fix = ((A@) { A@;} f) {
+  A@ a = f(a);
+  a;
+};
+
+Okay, yeah. That's implementable. Can I think of any use cases?
+
+We could make a circular list I suppose?
+
+  A@ x <- Fix;
+  Items(0, x);
+
+Fine. Why not? Doesn't cost much to have.
+
+'On': example from Haskell:
+
+  sortBy (compare `on` length)
+
+Seems reasonable. It's applying a binary function to some view of the
+arguments.
+
+Does the name make sense in fble syntax?
+
+  On(Compare, Length)
+
+Not really? It does more with 'Lt' in my mind:
+
+  Sort(On(Lt, Length));
+
+Sure. Let's keep it.
+
+ApplyWhen also makes sense, but maybe should belong to a different module
+because it depends on Bool@. It applies a function in some condition,
+otherwise doesn't apply the function.
+
+Proposal:
+* Id, Cons, Compose, Flip, Apply, ApplyTo, Fix, On, With
+
+Let's do it.

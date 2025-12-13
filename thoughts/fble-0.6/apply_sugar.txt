@@ -621,3 +621,44 @@ Maybe worth switching to ':=' though?
 
 Honestly, I like it. With my current syntax highlighting, the ':' part of ':='
 pops out nicely.
+
+---
+
+Let me think a little more about : separator for (Unit@ _) magic.
+
+I certainly use Unit@ _ := enough to justify syntactic sugar. Way more than
+ExpectFails straight application use case.
+
+  Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
+    Unit@ _ := m.do(O.PutStr(stdio.out, /Invaders/Usage%));
+    m.return(True);
+  });
+
+  Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
+    m.do(O.PutStr(stdio.out, /Invaders/Usage%)):
+    m.return(True);
+  });
+
+Let's be honest, it's almost 100% just for use with 'do' function. Can I pick
+a name for 'do' that goes better with the ':' syntax?
+
+  Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
+    m.after(O.PutStr(stdio.out, /Invaders/Usage%)):
+    m.return(True);
+  });
+
+No. I shouldn't change 'do' name. That's still good, I think.
+
+It looks awkward to me. ':' looks like it's missing something here:
+
+         m.do(tick):
+         Game@ ngame = Game.Tick(game);
+         m.do(Draw(ngame)):
+         Run(tick, ngame);
+
+Honestly, I want semicolon for this magic syntax case.
+* 2 semicolons seems silly. Why isn't 1 enough?
+
+No. I'm not ready to make sugar here:
+* It makes it too easy to allocate functions without realizing it.
+* Conflict with union select statement.

@@ -1,0 +1,119 @@
+# @module[/Std/Func%]
+#  Utilities for working with functions.
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+# @func[Id] The identity function.
+#  @arg[@][A@] The argument type.
+#  @arg[A@][x] The argument.
+#  @returns[A@] The argument as is.
+<@ A@>(A@) { A@; }
+Id = <@ A@>(A@ x) {
+  x;
+};
+
+# @func[Const] The constant function.
+#  @arg[@][A@] The argument type.
+#  @arg[A@][value] The value to return.
+#  @returns[(A@) { A@; }]
+#   A function that ignores its argument and returns the constant @a{value};
+<@ A@>(A@, A@) { A@; }
+Const = <@ A@>(A@ value, A@ _) {
+  value;
+};
+
+# @func[Compose] Function composition.
+#  @arg[@][B@] The intermediate type.
+#  @arg[@][C@] The return type.
+#  @arg[(B@) { C@; }][f] The outer function.
+#  @arg[@][A@] The input type.
+#  @arg[(A@) { B@; }][g] The inner function.
+#  @returns[C@] A function that calls g then f.
+<@ B@, @ C@>((B@) { C@; })<@ A@>((A@) { B@; }, A@) { C@; }
+Compose = <@ B@, @ C@>((B@) { C@; } f)<@ A@>((A@) { B@; } g, A@ x) {
+  f(g(x));
+};
+
+# @func[Flip] Reverse function arguments.
+#  @arg[@][A@] The first argument type.
+#  @arg[@][B@] The second argument type.
+#  @arg[@][C@] The return type.
+#  @arg[(A@, B@) { C@; }][f] The function to flip.
+#  @returns[(B@, A@) { C@; }]
+#   The function @l{f} with the order of its arguments reversed.
+<@ A@, @ B@, @ C@>((A@, B@) { C@; }, B@, A@) { C@; }
+Flip = <@ A@, @ B@, @ C@>((A@, B@) { C@; } f, B@ y, A@ x) {
+  f(x, y);
+};
+
+# @func[Apply] Apply a function to a value.
+#  @arg[@][A@] The argument type.
+#  @arg[@][B@] The return type.
+#  @arg[(A@) { B@; }][f] The function to apply.
+#  @arg[A@][x] The value to apply it to.
+#  @returns[B@] The result of apply the function to the argument.
+<@ A@, @ B@>((A@) { B@; }, A@) { B@; }
+Apply = <@ A@, @ B@>((A@) { B@; } f, A@ x) {
+  f(x);
+};
+
+# @func[ApplyTo] Apply to a value a function.
+#  @arg[@][A@] The argument type.
+#  @arg[A@][x] The value to apply the function to.
+#  @arg[@][B@] The return type.
+#  @arg[(A@) { B@; }][f] The function to apply.
+#  @returns[B@] The result of apply the function to the argument.
+<@ A@>(A@)<@ B@>((A@) { B@; }) { B@; }
+ApplyTo = <@ A@>(A@ x)<@ B@>((A@) { B@; } f) {
+  f(x);
+};
+
+# @func[Fix] Fixed point operator
+#  @arg[@][A@] The argument type.
+#  @arg[(A@) { A@; }][f] The function to get the fixed point of.
+#  @returns[A@]
+#   The result of applying the function recursively to its own result.
+<@ A@>((A@) { A@; }) { A@; }
+Fix = <@ A@>((A@) { A@; } f) {
+  A@ x = f(x);
+  x;
+};
+
+# @func[On] Apply a binary function on transformed arguments.
+#  @arg[@][B@] The binary function's argument type.
+#  @arg[@][C@] The return type.
+#  @arg[@][(B@, B@) { C@; }][bin] The binary function.
+#  @arg[@][A@] The actual argument type.
+#  @arg[(A@) { B@; }][f] The input transform function.
+#  @returns[(A@, A@) { C@; }]
+#   The binary function with input transform applied first.
+<@ B@, @ C@>((B@, B@) { C@; })<@ A@>((A@) { B@; }, A@, A@) { C@; }
+On = <@ B@, @ C@>((B@, B@) { C@; } bin)<@ A@>((A@) { B@; } f, A@ a, A@ b) {
+  bin(f(a), f(b));
+};
+
+# @func[With] Function application with bind syntax.
+#  For example:
+#
+#  @code[fble] @
+#   Unit@ _ := With(ExpectFails(Str|'!='));
+#   AssertEquals(eq, show, expected, actual);
+#
+#  Which has the same effect as the following, but allows you to add and
+#  remove the call to @l{ExpectFails} without touching the rest of the code.
+#
+#  @code[fble] @
+#   ExpectFails(Str|'!=', AssertEquals(eq, show, expected, actual));
+#
+#  @arg[@][A@] The argument type.
+#  @arg[@][B@] The return type.
+#  @arg[(A@) { B@; }][f] The function to apply.
+#  @arg[(Unit@) { A@; }][x] A deferred computation of the argument to apply to.
+#  @returns[B@] The result of applying the function to the computed argument.
+<@ A@, @ B@>((A@) { B@; }, (Unit@) { A@; }) { B@; }
+With = <@ A@, @ B@>((A@) { B@; } f, (Unit@) { A@; } x) {
+  f(x(Unit));
+};
+
+@(Id, Const, Compose, Flip, Apply, ApplyTo, Fix, On, With);

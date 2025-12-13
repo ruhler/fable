@@ -1041,3 +1041,93 @@ is another such opportunity?
 But questions about whether it should be eager or lazy, a zero-arg function or
 a single arg function. It's like the @@ fbld syntax, which is pretty nice.
 
+---
+
+See thoughts/fble-0.6/apply_sugar.txt for thoughts on nicer syntax here.
+Seems like I'm erring on not adding new sugar for this case, but reusing bind
+syntax. What does that mean for us here?
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    ExpectFails(Str|'...'), AssertEquals(eq, show, wnt, got));
+  }
+
+Or:
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    Unit@ _ := ExpectFails(Str|'...');
+    AssertEquals(eq, show, wnt, got));
+  }
+
+Or:
+ 
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    Unit@ _ := Apply(ExpectFails(Str|'...'));
+    AssertEquals(eq, show, wnt, got));
+  }
+
+(1) and (3) are probably fine. Does 'Apply' make sense for that name, and
+where should I define it? And should I make a helper functions around it?
+
+  <@ A@, @ B@>((A@) { B@; }, (Unit@) { A@; }) { B@; }
+
+That's a funny function. It's not straight application. Don't call it
+'Apply'.
+
+I suppose the other option for syntax magic was
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    ExpectFails(Str|'...'):
+    AssertEquals(eq, show, wnt, got));
+  }
+
+Can I think of any other decent use case for that magic syntax though?
+
+No. Bind is very common to want to go to the end of the current block.
+Application normally doesn't want to do that, and it makes sense in those
+cases to introduce the extra {} nesting.
+
+Again, vote is to keep just the bind syntax, not add anything else.
+
+Can I have two function names for ExpectFails, one the raw one, the other for
+bind syntax specifically? What would I call which?
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    Unit@ _ := ExpectFails(Str|'...');
+    AssertEquals(eq, show, wnt, got));
+  }
+
+One option would be to have a helper type for (Unit@) { TestResult@; }. Say
+whatever we pass to Test is good enough to pass to ExpectFails. But then, why
+wouldn't ExpectFails return such a test function?
+
+  (String@, TestResult@) { TestResult@; }
+
+  (String@, (Unit@) { TestResult@; }) { TestResult@; }
+
+  <@ A@, @ B@>((A@) { B@; }, (Unit@) { A@; }) { B@; } With;
+
+  Test(Str|'MyTest', (Unit@ _) {
+    Foo@ wnt = ...;
+    Foo@ got = ...;
+    Unit@ _ := With(ExpectFails(Str|'...'));
+    AssertEquals(eq, show, wnt, got));
+  }
+
+Yeah. Let's say 'With' for now. But where should 'With' live? /Std/Func%,
+along with Id, Apply, and so on? Seems reasonable. Or exported from Test%
+itself?
+
+Let's put With in /Std/Func%, and have ExpectFails do what it ought to:
+TestResult@ to TestResult@.
+
+Which means a digression to standard function libraries.
