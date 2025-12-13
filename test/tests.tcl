@@ -6,6 +6,7 @@
 # * @[<name>] identifies a test.
 # * @PASS says the previously named test passed.
 # * @FAIL says the previously named test failed.
+# * @SKIP says the previously named test was skipped.
 # * @EXPECTED_FAIL says the previously named test failed as expected.
 # * Output for a test is everything between @[...] and the next test.
 # * If there is no status between @[...] and the next test, the test is
@@ -20,6 +21,7 @@
 
 set ::pass 0
 set ::fail 0
+set ::skip 0
 set ::expected_fail 0
 
 # process --
@@ -34,6 +36,8 @@ proc process { test } {
       incr ::expected_fail
     } elseif {[string first "@PASS" $test] != -1} {
       incr ::pass
+    } elseif {[string first "@SKIP" $test] != -1} {
+      incr ::skip
     } else {
       incr ::fail
       puts "$test\n"
@@ -51,27 +55,24 @@ while {[gets stdin line] >= 0} {
 }
 process [join $lines "\n"]
 
-set total [expr $::pass + $::expected_fail + $::fail]
+set total [expr $::pass + $::expected_fail + $::fail + $::skip]
+
 puts -nonewline "Test Summary:"
 if {$::fail == 0} {
-  puts " PASS"
+  puts -nonewline " OK"
 } else {
-  puts " FAIL"
+  puts -nonewline " FAIL"
 }
 
-if {$::pass > 0} {
-  puts "  passed:              $::pass"
-}
+if {[expr $::expected_fail + $::fail + $::skip] > 0} {
+  set details [list]
+  if {$::fail > 0} { lappend details "failures=$::failures" }
+  if {$::expected_fail > 0} { lappend details "expected failures=$::expected_fail" }
+  if {$::skip > 0} { lappend details "skipped=$::skip" }
 
-if {$::expected_fail > 0} {
-  puts "  expected failures:   $::expected_fail"
+  puts -nonewline " ([join $details ,])"
 }
-
-if {$::fail > 0} {
-  puts "**unexpected failures: $::fail**"
-}
-
-puts "  total:                 $total"
+puts " of $::total tests"
 
 if {$::fail != 0} {
   exit 1

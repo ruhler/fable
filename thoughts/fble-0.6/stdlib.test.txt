@@ -898,3 +898,92 @@ Now test API that makes sense:
 * Pass, Fail, Skip, ExpectFail
 * no need to provide an empty ExpectedFailure @TestResult value. Just expose
   the ExpectFail function to convert from an existing TestResult@.
+
+---
+
+What summary output do I want? Let's explore:
+
+  Test Summary: FAIL
+    passed:    14
+    expected failures:  2
+  **unexpected failures: 3**
+    total:    19
+
+  Test Summary: FAIL
+    14 passed
+     2 expected failures
+     3 unexpected failures
+    19 total
+
+  Test Summary: FAIL
+    14 passed
+     2 expected failures
+     3 *** unexpected failures ***
+    19 total
+
+  Test Summary: FAIL
+        14 passed
+         2 expected failures
+    ***  3 unexpected failures ***
+        19 total
+
+  Test Summary: FAIL
+    PASS: 14
+    EXPECTED_FAIL: 2
+    FAIL: 3
+    TOTAL: 19
+
+  Test Summary: FAIL
+    14 PASS
+     2 EXPECTED_FAIL
+     3 FAIL
+    19 TOTAL
+
+  Test Summary: 14 PASS, 2 EXPECTED_FAIL, 3 FAIL, 19 TOTAL
+
+  Test Summary: 14 PASS, 2 EXPECTED_FAIL, **3 FAIL**, 19 TOTAL
+
+  Test Summary: 14 pass, 2 expected_fail, **3 fail**, 19 total
+
+  Test Summary: 16 PASS (2 EXPECTED_FAIL), 3 FAIL, 19 TOTAL
+
+  Test Summary: 14 passed, 2 failed as expected, 3 failed unexpectedly, 19 total
+
+  Test Summary:
+    14 passed,
+     2 failed as expected
+     3 failed unexpectedly
+    19 total
+
+What do some other frameworks output, like junit and python? Because I don't
+like the dejagnu unit test output:
+
+  Totals:
+          #passed:                2
+          #real failed:           2
+  
+Python unittest:
+
+  Ran 4 tests in 0.007s
+
+  FAILED (failures=1, skipped=1, expected failures=1)
+
+Otherwise it just prints something like:
+
+  Ran 4 tests in 0.005s
+
+  OK (skipped=1, expected failures=1)
+
+That's pretty nice. Let's adapt that.
+
+  Test Results: FAILED (passed=14, failures=3, expected failures=3, total=19)
+  Test Results: OK (passed=14, expected failures=3, total=19)
+
+  Test Results: FAILED (failures=3, expected failures=3)
+  Test Results: OK (passed=14, expected failures=3)
+
+  Test Summary: FAILED (failures=3, expected failures=3) of 19 tests
+  Test Summary: OK (expected failures=3) of 19 tests
+
+That looks nice to me. We give overall pass fail, we say how many non-pass
+there were, and we say 'of xx tests' in the end. Cool.
