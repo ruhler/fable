@@ -1,8 +1,7 @@
 
-* Change rotate2 key to capital R.
-
 * Add option to select cars from the menu too
  - including an 'erase' car option.
+
 * Clean up menu code.
 
 * Figure out how to write tests for ui

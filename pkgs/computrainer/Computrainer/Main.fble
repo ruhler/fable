@@ -82,6 +82,8 @@
     Int@ mouse_x, # pixel coordinates of the mouse.
     Int@ mouse_y, # pixel coordinates of the mouse.
     Selected@ selected, # currently selected gate/car for placement.
+    Bool@ lshift,  # if lshift key is currently down
+    Bool@ rshift,  # if rshift key is currently down
     Int@ scale,
     Bool@ paused
 );
@@ -148,6 +150,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     Event@ e <- m.do(app.event);
     e.?(tick: m.return(e),
         key_down: m.return(e),
+        key_up: m.return(e),
         mouse_down: m.return(e),
         mouse_motion: m.return(e),
         : FilterEvent);
@@ -200,39 +203,43 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
             d: StepUI(s.@(map_x: Incr(s.map_x))),
             j: StepUI(s.@(scale: Max(Shr(s.scale, Int|1), Int|1))),
             k: StepUI(s.@(scale: Shl(s.scale, Int|1))),
-            l: StepUI(s.selected.?(
-                    nothing: {
-                        # Rotate2 the gate at the mouse coordinates.
-                        Coord@ tile = MouseTile(s);
-                        Maybe@<Gate@> mg = Grid.Lookup(s.model.gates, tile);
-                        mg.?(nothing: s);
-                        Gates@ gates = Grid.Insert(s.model.gates, tile, Gate.Rotate(mg.just));
-                        s.@(model: s.model.@(gates));
-                    },
-                    gate: s.@(selected: Selected@(gate: Gate.Rotate2(s.selected.gate))),
-                    car: s
-                )),
             q: m.return(s),
-            r: StepUI(s.selected.?(
+            r: StepUI({
+                (Gate@) { Gate@; } rotate = {
+                    s.lshift.?(true: Gate.Rotate2);
+                    s.rshift.?(true: Gate.Rotate2);
+                    Gate.Rotate;
+                };
+
+                s.selected.?(
                     nothing: {
                         # Rotate the gate at the mouse coordinates.
                         Coord@ tile = MouseTile(s);
                         Maybe@<Gate@> mg = Grid.Lookup(s.model.gates, tile);
                         mg.?(nothing: s);
-                        Gates@ gates = Grid.Insert(s.model.gates, tile, Gate.Rotate(mg.just));
+                        Gates@ gates = Grid.Insert(s.model.gates, tile, rotate(mg.just));
                         s.@(model: s.model.@(gates));
                     },
-                    gate: s.@(selected: Selected@(gate: Gate.Rotate(s.selected.gate))),
+                    gate: s.@(selected: Selected@(gate: rotate(s.selected.gate))),
                     car: s
-                )),
+                ); }),
             s: StepUI(s.@(map_y: Decr(s.map_y))),
             w: StepUI(s.@(map_y: Incr(s.map_y))),
             space: {
               s.paused.?(false: StepUI(s.@(paused: True)));
               Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
               StepUI(s.@(paused: False));
-            }
+            },
+            lshift: StepUI(s.@(lshift: True)),
+            rshift: StepUI(s.@(rshift: True))
         );
+        StepUI(s);
+    });
+
+    e.?(key_up: {
+        e.key_up.?(
+            lshift: StepUI(s.@(lshift: False)),
+            rshift: StepUI(s.@(rshift: False)));
         StepUI(s);
     });
 
@@ -286,6 +293,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       mouse_x: Int|0,
       mouse_y: Int|0,
       selected: Selected@(nothing: Unit),
+      lshift: False,
+      rshift: False,
       scale: MenuScale,
       paused: True
   );
