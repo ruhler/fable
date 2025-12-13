@@ -25,8 +25,20 @@ TestResult@ Pass = TestResult@(pass: Unit);
   TestResult@(fail: msg);
 };
 
-# An expected failing test result.
-TestResult@ ExpectedFail = TestResult@(xfail: Unit);
+# ExpectFails --
+#   Change the test result to expected failure if the given test result is
+#   failing and msg is contained somewhere in the failure message.
+(String@, TestResult@) { TestResult@; }
+ExpectFails = (String@ msg, TestResult@ result) {
+  result.?(pass: Fail(String|'Expected failure, but test passed'));
+  result.?(xfail: Fail(String|'Expected failure, but was expected_fail'));
+
+  String@ failure = ToString(result.fail);
+  /Std/String/Eq%.Contains(failure, msg).?(true: TestResult@(xfail: Unit));
+
+  Fail(Format|'Expected failure containing "%s", but failed with "%s"'
+        [/Std/Char/Output%.String(msg), /Std/Char/Output%.String(failure)]);
+};
 
 # Test --
 #   Creates an individual test.
@@ -50,21 +62,5 @@ TestSuite = (String@ name, List@<Test@> tests) {
   Test@(suite: TestSuite@(name, tests));
 };
 
-# ExpectFails --
-#   Change the test result to expected failure if the given test result is
-#   failing and msg is contained somewhere in the failure message.
-(TestResult@, String@) { TestResult@; }
-ExpectFails = (TestResult@ result, String@ msg) {
-  result.?(pass: Fail(String|'Expected failure, but test passed'));
-  result.?(xfail: Fail(String|'Expected failure, but was xfail'));
-
-  String@ failure = ToString(result.fail);
-  /Std/String/Eq%.Contains(failure, msg).?(true: ExpectedFail);
-
-  Fail(Format|'Expected failure containing "%s", but failed with "%s"'
-        [/Std/Char/Output%.String(msg), /Std/Char/Output%.String(failure)]);
-};
-
 @(TestResult@, Test@, TestSuite@, TestCase@,
-  Pass, Fail, ExpectedFail,
-  ExpectFails, Test, TestSuite);
+  Pass, Fail, ExpectFails, Test, TestSuite);

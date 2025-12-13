@@ -23,7 +23,7 @@
 % TestSuite = /Core/Test%.TestSuite;
 % Pass = /Core/Test%.Pass;
 % Fail = /Core/Test%.Fail;
-% ExpectedFail = /Core/Test%.ExpectedFail;
+% ExpectFails = /Core/Test%.ExpectFails;
 
 % Run = /Core/Test/Stdio%.Run;
 
@@ -32,7 +32,10 @@
 
 Test@ pass = Test(Str|pass, (Unit@ _) { Pass; });
 Test@ fail = Test(Str|fail, (Unit@ _) { Fail(String|Failed); });
-Test@ xfail = Test(Str|xfail, (Unit@ _) { ExpectedFail; });
+
+Test@ xfail = Test(Str|xfail, (Unit@ _) {
+  ExpectFails(Str|Failed, Fail(String|Failed));
+});
 
 Test@ Tests = TestSuite(Str|'Test', List[
   Test(Str|'RunTest.pass_passes', (Unit@ _) {
@@ -63,8 +66,8 @@ Test@ Tests = TestSuite(Str|'Test', List[
     Test@ suite = TestSuite(Str|'Suite', List[
       Test(Str|a, (Unit@ _) { Pass; }),
       Test(Str|b, (Unit@ _) { Pass; }),
-      Test(Str|c, (Unit@ _) { ExpectedFail; }),
-      Test(Str|c, (Unit@ _) { Pass; })]);
+      Test(Str|c, (Unit@ _) { ExpectFails(Str|Failed, Fail(String|Failed)); }),
+      Test(Str|d, (Unit@ _) { Pass; })]);
 
     MainResult@ result = RunMain(Run(suite), Empty<String@>, Empty<Int@>);
 
@@ -77,8 +80,8 @@ Test@ Tests = TestSuite(Str|'Test', List[
     Test@ suite = TestSuite(Str|'Suite', List[
       Test(Str|a, (Unit@ _) { Pass; }),
       Test(Str|b, (Unit@ _) { Fail(String|Oops); }),
-      Test(Str|c, (Unit@ _) { ExpectedFail; }),
-      Test(Str|c, (Unit@ _) { Pass; })]);
+      Test(Str|c, (Unit@ _) { ExpectFails(Str|Failed, Fail(String|Failed)); }),
+      Test(Str|d, (Unit@ _) { Pass; })]);
 
     MainResult@ result = RunMain(Run(suite), Empty<String@>, Empty<Int@>);
 

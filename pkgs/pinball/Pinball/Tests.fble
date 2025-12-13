@@ -4,6 +4,8 @@
 <@>% List = /Std/List%.List;
 <@>% Empty = /Std/List%.Empty;
 
+<@,@>% With = /Std/Func%.With;
+
 @ Num@ = /Pinball/Num%.Num@;
 % Neg = /Pinball/Num%.Neg;
 % Int = /Pinball/Num%.Int;
@@ -28,6 +30,7 @@
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
+% ExpectFails = /Core/Test%.ExpectFails;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -254,9 +257,8 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     Ball@ got = end.ball;
 
     # TODO: Test fails due to loss of precision. How should we handle this?
-    /Core/Test%.ExpectFails(
-      AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got),
-      Str|'!= Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)');
+    Unit@ _ := With(ExpectFails(Str|'!= Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)'));
+    AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
 
   Test(Str|'Non-centered Paddle Ball Collision', (Unit@ _) {
