@@ -143,3 +143,13 @@ That's not hard. Let's try this then? It's a little sad we need to tie
 drawings to gates. I'd like to keep that separate if possible. Which means
 having a gate enum. So never mind.
 
+---
+
+Trouble with the Wait gate: it's getting re-activated by the last car that
+goes through it, which isn't what I want.
+
+How about lets only activate it for non-caboose cars? Maybe a little hacky,
+but solves the problem. Otherwise I don't know how it could work. I suppose we
+wait for both it and the output gate to be empty before activating. But
+activating for non-caboose cars seems just as easy?
+

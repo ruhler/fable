@@ -178,13 +178,16 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 #  # # 
 #  ###
 #
-# * Waits for the output to be occupied, then lets 1 train through.
+# * Waits for the output to be occupied by a non-caboose car, then lets 1 train
+#   through.
 @ Wait@ = Dir@;
 % Wait = {
     (Wait@) { Action@; } Action = (Wait@ g, Coord@ c, State@ s) {
-        Routing(c, s).?(just: s);                       # Block for routing to finish.
-        Grid.Lookup(s.cars, Dest(c, g)).?(nothing: s);  # Block for output to be occupied
-        SetRouting(c, s, g);                            # Route to output.
+        Routing(c, s).?(just: s);      # Block for routing to finish.
+        Maybe@<Car@> mcar = Grid.Lookup(s.cars, Dest(c, g));
+        mcar.?(nothing: s);            # Block for output to be occupied
+        mcar.just.?(C: s);             # A C car in output doesn't count.
+        SetRouting(c, s, g);           # Route to output.
     };
 
     (Wait@) { Push@; } Push = (Wait@ _) { PushToRoute; };

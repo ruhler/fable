@@ -195,6 +195,46 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
+  Test(Str|'Wait_forever', (Unit@ _) {
+    # Engine goes to the wait gait and waits forevery.
+    Gates@ gates = Entries[
+        @(x: Int|3, y: Int|3, v: Gate.Move(Dir.Right)),
+        @(x: Int|4, y: Int|3, v: Gate.Move(Dir.Right)),
+        @(x: Int|5, y: Int|3, v: Gate.Wait(Dir.Right)),
+        @(x: Int|6, y: Int|3, v: Gate.Move(Dir.Right)),
+        @(x: Int|7, y: Int|3, v: Gate.Stop)
+    ];
+    Cars@ cars = Entries[
+        @(x: Int|3, y: Int|3, v: Car.C)
+    ];
+    Model@ model = Model(gates, cars);
+    Model@ wnt = Model(gates, Entries[@(x: Int|5, y: Int|3, v: Car.C)]);
+    Model@ got = Ticks(model);
+    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
+  }),
+
+  Test(Str|'Wait_one', (Unit@ _) {
+    Gates@ gates = Entries[
+        @(x: Int|4, y: Int|3, v: Gate.Source(Car.C, Dir.Right)),
+        @(x: Int|5, y: Int|3, v: Gate.Wait(Dir.Right)),
+        @(x: Int|6, y: Int|3, v: Gate.Move(Dir.Right)),
+        @(x: Int|7, y: Int|3, v: Gate.Move(Dir.Right)),
+        @(x: Int|8, y: Int|3, v: Gate.Stop)
+    ];
+    Cars@ cars = Entries[
+        @(x: Int|6, y: Int|3, v: Car.0)
+    ];
+    Model@ model = Model(gates, cars);
+    Model@ wnt = Model(gates, Entries[
+        @(x: Int|4, y: Int|3, v: Car.C),
+        @(x: Int|5, y: Int|3, v: Car.C),
+        @(x: Int|7, y: Int|3, v: Car.C),
+        @(x: Int|8, y: Int|3, v: Car.0)
+    ]);
+    Model@ got = Ticks(model);
+    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
+  }),
+
   Test(Str|'Split', (Unit@ _) {
     Gates@ gates = Entries[
         @(x: Int|1, y: Int|3, v: Gate.Move(Dir.Right)),
