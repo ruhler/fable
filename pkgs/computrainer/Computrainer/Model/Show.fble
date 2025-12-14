@@ -15,7 +15,7 @@
 @ State@ = /Computrainer/State%.State@;
 
 Show@<Coord@> Coord = (Coord@ x) {
-    Format|'(%s, %s)'[/Core/Int/Show%.Show(x.x), /Core/Int/Show%.Show(x.y)];
+    Format|'(%s, %s)'[/Std/Int/Show%.Show(x.x), /Std/Int/Show%.Show(x.y)];
 };
 
 Show@<Car@> Value = (Car@ v) {

@@ -31,8 +31,8 @@ Dir = (Dir@ d) {
 Gates = (Gates@ gates) {
     Grid.ForEach(gates, Return, (Coord@ c, Gate@ g, Output@ out) {
         Output@ head = Format|'gate %s %s '[
-            /Core/Int/Show%.Show(c.x),
-            /Core/Int/Show%.Show(c.y)
+            /Std/Int/Show%.Show(c.x),
+            /Std/Int/Show%.Show(c.y)
         ];
         Output@ body = g.?(
             stop: String|'stop',
@@ -53,8 +53,8 @@ Cars = (Cars@ cars) {
     Grid.ForEach(cars, Return, (Coord@ c, Car@ car, Output@ out) {
         FormatE|'%scar %s %s %s\n'[
             out,
-            /Core/Int/Show%.Show(c.x),
-            /Core/Int/Show%.Show(c.y),
+            /Std/Int/Show%.Show(c.x),
+            /Std/Int/Show%.Show(c.y),
             Car(car)];
         });
 };
@@ -64,8 +64,8 @@ Routing = (Grid@<Dir@> routing) {
     Grid.ForEach(routing, Return, (Coord@ c, Dir@ dir, Output@ out) {
         FormatE|'%srouting %s %s %s\n'[
             out,
-            /Core/Int/Show%.Show(c.x),
-            /Core/Int/Show%.Show(c.y),
+            /Std/Int/Show%.Show(c.x),
+            /Std/Int/Show%.Show(c.y),
             Dir(dir)];
         });
 };

@@ -168,7 +168,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   };
 
   M@<Event@> FilterEvent = {
-    Event@ e <- m.do(app.event);
+    Event@ e := m.do(app.event);
     e.?(tick: m.return(e),
         key_down: m.return(e),
         key_up: m.return(e),
@@ -217,12 +217,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     });
 
     Drawing@ mouse = Rect(Sub(s.mouse_x, Int|2), Sub(s.mouse_y, Int|2), Int|4, Int|4, Colors.Mouse);
-    Unit@ _ <- m.do(app.effect(Effect@(draw: Drawings[clear, map, Menu, mouse])));
+    Unit@ _ := m.do(app.effect(Effect@(draw: Drawings[clear, map, Menu, mouse])));
 
-    Event@ e <- m.do(FilterEvent);
+    Event@ e := m.do(FilterEvent);
     e.?(tick: {
         s.paused.?(true: StepUI(s));
-        Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));
+        Unit@ _ := m.do(app.effect(Effect@(tick: Int|200)));
         StepUI(s.@(model: Tick(s.model)));
     });
 
@@ -258,7 +258,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
             w: StepUI(s.@(map_y: Incr(s.map_y))),
             space: {
               s.paused.?(false: StepUI(s.@(paused: True)));
-              Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
+              Unit@ _ := m.do(app.effect(Effect@(tick: Int|0)));
               StepUI(s.@(paused: False));
             },
             lshift: StepUI(s.@(lshift: True)),
@@ -315,10 +315,10 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   };
 
   String@ file = args.?(items: args.items.head, empty: Str|'model.ct');
-  Maybe@<IStream@<M@>> istream <- m.do(stdio.read(file, /Core/Stdio%.Text));
-  Model@ model <- m.do({
+  Maybe@<IStream@<M@>> istream := m.do(stdio.read(file, /Core/Stdio%.Text));
+  Model@ model := m.do({
       istream.?(nothing: m.return(Model(Grid.Empty<Gate@>, Grid.Empty<Car@>)));
-      String@ text <- m.do(/Core/Stream/IStream%(m).GetText(istream.just));
+      String@ text := m.do(/Core/Stream/IStream%(m).GetText(istream.just));
       m.return(/Computrainer/Model/Load%.Model(text));
   });
 
@@ -335,13 +335,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       paused: True
   );
 
-  State@ final <- m.do(StepUI(initial));
+  State@ final := m.do(StepUI(initial));
 
   % O = /Core/Stream/OStream%(m);
-  Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(file, /Core/Stdio%.Text));
+  Maybe@<OStream@<M@>> ostream := m.do(stdio.write(file, /Core/Stdio%.Text));
   ostream.?(nothing: m.return(True));
-  Unit@ _ <- m.do(O.Show(ostream.just, /Computrainer/Model/Save%.Model(final.model)));
-  Unit@ _ <- m.do(O.Close(ostream.just));
+  Unit@ _ := m.do(O.Show(ostream.just, /Computrainer/Model/Save%.Model(final.model)));
+  Unit@ _ := m.do(O.Close(ostream.just));
 
   m.return(True);
 };
