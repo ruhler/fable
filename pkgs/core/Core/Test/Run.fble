@@ -44,8 +44,12 @@
               Unit@ _ := m.do(O.Show(out, FormatE|'@FAIL: %s\n'[tr.fail]));
               m.return(False);
             },
-            xfail: {
+            expected_fail: {
               Unit@ _ := m.do(PutLine(out, Str|'@EXPECTED_FAIL'));
+              m.return(passing);
+            },
+            skip: {
+              Unit@ _ := m.do(PutLine(out, Str|'@SKIP'));
               m.return(passing);
             });
         },

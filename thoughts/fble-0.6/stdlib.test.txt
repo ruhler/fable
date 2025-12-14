@@ -1144,3 +1144,49 @@ to A, and then we get back a function of type C to B. But I don't want to have
 to apply that last Unit value manually.
 
 Maybe rename 'With' to DoApply? Sounds a little more special case?
+
+---
+
+Should I add Skip? I should, right? Yes.
+
+But what should it do? It should avoid running the test, right? Otherwise the
+test could be crashing something. Then how do I implement it?
+
+Unit@ _ := Skip;
+
+This one actually wants a lazy function.
+
+---
+
+Which brings me back to the question... should ExpectFails just take (Unit@)
+directly, instead of having to use DoApply?
+
+  Test(Str|'foo', (Unit@ _) {
+   ...
+  })
+
+  Test(Str|'foo', ExpectFails(Str|'xxx', (Unit@ _) {
+    ...
+  }))
+
+  Test(Str|'foo', (Unit@ _) {
+    Unit@ _ := ExpectFails(Str|'...');
+    ...
+  })
+
+The only thing I can't do that way is:
+
+  ExpectFails(Str|'...', Assert(...));
+
+  ExpectFails(Str|'...', (Unit@ _) { Assert(...); });
+  { Unit@ _ := ExpectFails(Str|'...'); Assert(...); };
+
+How about: ExpectedFail for the TestResult@ value and ExpectFails for the
+Unit@ helper?
+
+Skip versus DoSkip?
+Skipped versus Skip?
+
+But we use Fail and Pass. Skip should be along those lines.
+
+
