@@ -1,7 +1,4 @@
 
-* Bug in wait gate?
-  It doesn't seem to be working properly for my and implementation.
-
 * Clean up menu code.
 
 * Figure out how to write tests for ui

@@ -1,0 +1,35 @@
+gate -7 1 move right
+gate -7 2 move right
+gate -6 1 move right
+gate -6 2 move right
+gate -5 -3 sink
+gate -5 -2 sink
+gate -5 1 wait right
+gate -5 2 move right
+gate -4 -3 split left right
+gate -4 -2 split left down
+gate -4 -1 switch right down
+gate -4 0 move down
+gate -4 1 move down
+gate -4 2 split down right
+gate -3 -3 move right
+gate -3 -2 sink
+gate -3 -1 split down right
+gate -3 2 sink
+gate -2 -3 move right
+gate -2 -2 split left down
+gate -2 -1 switch right down
+gate -1 -3 source 1 right
+gate -1 -2 sink
+gate -1 -1 split down right
+gate 0 -3 move right
+gate 0 -2 source 0 down
+gate 0 -1 move down
+gate 1 -3 move right
+gate 2 -3 move right
+gate 3 -3 move right
+gate 4 -3 move right
+gate 5 -3 sink
+car -1 -3 1
+car 0 -2 0
+phase gates

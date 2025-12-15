@@ -249,3 +249,14 @@ models. What are the next steps?
 Uh... how do I design my 4-bit adder? I feel like I need pen and paper. I
 don't know how to think about it otherwise. Well, let's think about it on pen
 and paper and go from there.
+
+---
+
+I have and, or, not implemented. For binary gates like this, the approach
+seems to be: get the bits onto the same train, then use them to route through
+to select either 0 or 1 as the output. Seems pretty straight forward.
+
+What's next on the way to 4-bit adder? It doesn't help that I don't have
+modularity. I can't easily reuse the and, or, not gates that I implemented.
+
+How about Incr, for an arbitrary length train? Or is that too advanced?
