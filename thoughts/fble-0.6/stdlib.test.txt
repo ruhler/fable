@@ -1189,4 +1189,157 @@ Skipped versus Skip?
 
 But we use Fail and Pass. Skip should be along those lines.
 
+---
 
+I'm not totally satisfied with the current Test API. Specifically to do with
+ExpectedFail and Skip. Concerns:
+
+* Should ExpectedFail build the (Unit@ _) { ... }, assuming its intended to be
+  used with bind syntax?
+* Should Skip take an explanation message?
+* Should Skip take a boolean condition?
+
+There's a general question: should we be providing building blocks for
+composition, pre-composed user friendly functions, or a combination of both?
+
+Let's review Skip in other frameworks:
+
+Python unittest:
+* Maybe you want to skip a TestSuite, not just a test case?
+* Skip takes a message.
+  SkipIf takes a bool and a message.
+  SkipUnless takes a different bool and a message.
+  skipTest takes a message, underlying building block.
+
+Junit:
+* Disabled annotation, with variants like DisabledOnOs
+  It takes an optional string message.
+
+Based on that: yes, Skip should take a message. If for no other reason than to
+document to the user. In verbose mode, python unittest outputs the explanation
+for why it was skipped.
+
+Options for Skip:
+A (Output@) { TestResult@; };
+  Returns a raw skip result, with explanation.
+B (Output@, TestResult@) { TestResult@; }
+  Doesn't make sense. Changes an existing test result to skipped, but if we
+  have the existing test result, it wasn't actually skipped.
+C (Output@, (Unit@) { TestResult@; }) { TestResult@; }
+  Skips the test, doesn't run it at all, returns a skipped result.
+D (Output@, Bool@, (Unit@) { TestResult@; }) { TestResult@; }
+  Conditionally either skips or runs a test function.
+E (Output@, Test@) { Test@; }
+  Change a test to skipped.
+F (Output@, Bool@, Test@) { Test@; }
+
+
+(A) is useful for composition. I think we should have it regardless.
+(B) makes no sense. Get rid of that.
+(D), (F) are conditional variations... do those make sense?
+(E) has advantage over (C) that it can skip entire test suites.
+(C) has advantage over (E) that it works more nicely with bind syntax.
+
+Does conditional skipping make sense? When would I ever skip a test?
+* Skip a test that compiles but crashes the device, or hangs, or is slow. You
+  need to skip to avoid interfering with other tests. No boolean required.
+* What conditions would we condition on for skip?
+  - If we end up in a version specific, platform specific world. Maybe you can
+    ask for the version of a library and only run a test based on the
+    condition of the version. That makes sense to me.
+
+So seems like a condition does make sense.
+
+Can we get the condition by composition instead of providing a top level
+SkipIf or SkipUnless? ApplyWhen seems to work here directly, if I implement
+it. That would look like... instead of:
+
+  Unit@ _ := Skip(String|'test not supported');
+
+You could do:
+
+  Unit@ _ := 
+
+...
+
+It doesn't quite work on that level. But
+
+  SkipTest(String|'test not supported', foo);
+
+==>
+
+  ApplyWhen(notsupported, SkipTest(... foo))
+
+Doesn't nest as well. Just add SkipIf and SkipUnless variants, okay?
+
+---
+
+Could have a futures library, and reuse 'Skip' from that? That could give us
+some convenient reusable functions in a different name space.
+
+<@>@ Future@ = <@ A@> { (Unit@) { A@; }; };
+
+<@ A@>(A@) { Future@<A@>; } Return = <@ A@>(A@ x, Unit@ _) { x; };
+
+Do = ((Unit@) { A@; } ma, (A@) { Future@<B@>; } f) { ... }
+ - When you run it, it runs ma, then calls f, then runs the result.
+ - Seems a shame to have f return indirection? Like, futures work just as well
+   as:
+
+Do = ((Unit@) { A@; } ma, (A@) { B@; } f) { ... }
+ - Maybe we want to rename this Map or app or something.
+
+Skip: You give a future and default value.
+
+No, I don't see this kind of thing helping too much.
+
+Result: Pass, Fail, ExpectFail, Skip
+Code: Skip, ExpectFail
+Test: Skip
+
+Result - the raw test result.
+Code - the code that produces the test result when run.
+Test - the named test case or test suite.
+
+They are three different things. It makes sense to do things at different
+levels. I would love the same name 'Skip' in every case. I don't like the name
+'Code' for the namespace. What if I come up with a decent name for 'Code',
+then export: Code.Skip, Test.Skip, Result.Skip?
+
+---
+
+We could abuse union select for Skip:
+
+Instead of:
+
+   Unit@ _ := Skip|'...';
+
+Write:
+
+   True.?(true: Skip|'...'); 
+
+Or:
+
+   MyCondition.?(true: Skip|'...');
+
+That's not too bad. Let's use reuse an underlying Skip building block. Feels a
+little hacky, like we are somehow abusing union select notation.
+
+---
+
+Concrete proposal:
+* Implement $ and $$ syntax proposed in thoughts/fble-0.6/apply_sugar.txt
+* Skip - Produces a raw TestResult@.
+* SkipTest - Given a Test@, returns a Test@ that is skipped.
+* ExpectFail - Goes TestResult@ to TestResult@.
+
+And here is how to use them:
+A. <condition>.?(true: Skip|...), to skip inline in the test.
+B. SkipTest $ Test(...), or SkipTest $ /...%.Tests, 
+C. ExpectFail(...) $$ ...
+
+---
+
+The '$' syntax feels pretty good with ExpectFail. Let's switch to Skip and
+SkipTest and go from there. Optionally add SkipTestIf and SkipTestUnless
+functions.

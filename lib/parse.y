@@ -93,7 +93,7 @@ while (0)
 %type <kind> tkind nkind kind
 %type <kinds> tkind_p
 %type <tagged_kinds> tagged_kind_p
-%type <expr> expr block stmt
+%type <expr> expr aexpr block stmt
 %type <exprs> expr_p expr_s
 %type <tagged_type> tagged_type
 %type <tagged_types> tagged_type_p tagged_type_s
@@ -308,7 +308,7 @@ tagged_kind_p:
  ;
 
 expr:
-   '@' '<' expr '>' {
+   '@' '<' aexpr '>' {
      FbleTypeofExpr* typeof = FbleAlloc(FbleTypeofExpr);
      typeof->_base.tag = FBLE_TYPEOF_EXPR;
      typeof->_base.loc = FbleCopyLoc(@$);
@@ -395,7 +395,7 @@ expr:
       union_type->fields = $3;
       $$ = &union_type->_base;
    }
- | expr '(' name ':' expr ')' {
+ | expr '(' name ':' aexpr ')' {
       FbleUnionValueExpr* union_value_expr = FbleAlloc(FbleUnionValueExpr);
       union_value_expr->_base.tag = FBLE_UNION_VALUE_EXPR;
       union_value_expr->_base.loc = FbleCopyLoc(@$);
@@ -413,7 +413,7 @@ expr:
       select_expr->default_ = NULL;
       $$ = &select_expr->_base;
    }
- | expr '.' '?' '(' tagged_expr_p ',' ':' expr ')' {
+ | expr '.' '?' '(' tagged_expr_p ',' ':' aexpr ')' {
       FbleUnionSelectExpr* select_expr = FbleAlloc(FbleUnionSelectExpr);
       select_expr->_base.tag = FBLE_UNION_SELECT_EXPR;
       select_expr->_base.loc = FbleCopyLoc(@$);
@@ -434,7 +434,7 @@ expr:
       }
       FbleFreeVector($3);
    }
- | expr '.' '%' '(' expr ')' {
+ | expr '.' '%' '(' aexpr ')' {
      FblePrivateExpr* private_expr = FbleAlloc(FblePrivateExpr);
      private_expr->_base.tag = FBLE_PRIVATE_EXPR;
      private_expr->_base.loc = FbleCopyLoc(@$);
@@ -461,6 +461,20 @@ expr:
    }
  | block {
       $$ = $1;
+   }
+ ;
+
+aexpr:
+   expr { $$ = $1; }
+ | expr '$' aexpr {
+      FbleApplyExpr* apply_expr = FbleAlloc(FbleApplyExpr);
+      apply_expr->_base.tag = FBLE_MISC_APPLY_EXPR;
+      apply_expr->_base.loc = FbleCopyLoc(@$);
+      apply_expr->misc = $1;
+      FbleInitVector(apply_expr->args);
+      FbleAppendToVector(apply_expr->args, $3);
+      apply_expr->bind = false;
+      $$ = &apply_expr->_base;
    }
  ;
 
@@ -530,7 +544,7 @@ stmt:
       undef_expr->body = $4;
       $$ = &undef_expr->_base;
     }
-  | tagged_type_p ':' '=' expr ';' stmt {
+  | tagged_type_p ':' '=' aexpr ';' stmt {
       FbleExpr* expr = $6;
       for (size_t i = 0; i < $1.size; ++i) {
         FbleFuncValueExpr* func_value_expr = FbleAlloc(FbleFuncValueExpr);
@@ -551,6 +565,16 @@ stmt:
       FbleAppendToVector(apply_expr->args, expr);
       $$ = &apply_expr->_base;
     }
+  | expr '$' stmt {
+      FbleApplyExpr* apply_expr = FbleAlloc(FbleApplyExpr);
+      apply_expr->_base.tag = FBLE_MISC_APPLY_EXPR;
+      apply_expr->_base.loc = FbleCopyLoc(@$);
+      apply_expr->misc = $1;
+      FbleInitVector(apply_expr->args);
+      FbleAppendToVector(apply_expr->args, $3);
+      apply_expr->bind = false;
+      $$ = &apply_expr->_base;
+   }
   | expr ';' stmt {
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)$1;
       if (select_expr->_base.tag != FBLE_UNION_SELECT_EXPR
@@ -566,12 +590,13 @@ stmt:
     }
   ;
 
+
 expr_p:
-   expr {
+   aexpr {
      FbleInitVector($$);
      FbleAppendToVector($$, $1);
    }
- | expr_p ',' expr {
+ | expr_p ',' aexpr {
      $$ = $1;
      FbleAppendToVector($$, $3);
    }
@@ -619,7 +644,7 @@ implicit_tagged_expr:
       var_expr->var = FbleCopyName($1);
       $$.expr = &var_expr->_base;
     }
-  | name ':' expr {
+  | name ':' aexpr {
       $$.name = $1;
       $$.expr = $3;
     }
@@ -642,7 +667,7 @@ implicit_tagged_expr_s:
   ;
 
 tagged_expr:
-    name ':' expr {
+    name ':' aexpr {
       $$.name = $1;
       $$.expr = $3;
     }
@@ -660,7 +685,7 @@ tagged_expr_p:
   ;
 
 let_binding_p: 
-  expr name '=' expr {
+  expr name '=' aexpr {
       FbleInitVector($$);
       FbleBinding* binding = FbleExtendVector($$);
       binding->kind = NULL;
@@ -668,7 +693,7 @@ let_binding_p:
       binding->name = $2;
       binding->expr = $4;
     }
-  | kind name '=' expr {
+  | kind name '=' aexpr {
       FbleInitVector($$);
       FbleBinding* binding = FbleExtendVector($$);
       binding->kind = $1;
@@ -676,7 +701,7 @@ let_binding_p:
       binding->name = $2;
       binding->expr = $4;
     }
-  | let_binding_p ',' expr name '=' expr {
+  | let_binding_p ',' expr name '=' aexpr {
       $$ = $1;
       FbleBinding* binding = FbleExtendVector($$);
       binding->kind = NULL;
@@ -684,7 +709,7 @@ let_binding_p:
       binding->name = $4;
       binding->expr = $6;
     }
-  | let_binding_p ',' kind name '=' expr {
+  | let_binding_p ',' kind name '=' aexpr {
       $$ = $1;
       FbleBinding* binding = FbleExtendVector($$);
       binding->kind = $3;

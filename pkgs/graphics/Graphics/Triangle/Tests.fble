@@ -293,7 +293,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     Drawn@ got = Draw(drawing);
       
     # TODO: Debug this test failure.
-    Unit@ _ := /Std/Func%.DoApply(/Core/Test%.ExpectFails(Str|''));
+    /Core/Test%.ExpectFails(Str|'') $
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
@@ -315,8 +315,8 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     Maybe@<Color@> wnt = Just(Color.Green);
       
     # TODO: debug this test passing.
-    Unit@ _ := /Std/Func%.DoApply(/Core/Test%.ExpectFails(Str|''));
-    Unit@ _ := /Std/Func%.DoApply(/Core/Test%.ExpectFails(Str|'Nothing'));
+    /Core/Test%.ExpectFails(Str|'') $
+    /Core/Test%.ExpectFails(Str|'Nothing') $
     /Core/Eq/Assert%.AssertEquals(
       /Core/Maybe/Eq%.Eq(EqColor),
       /Core/Maybe/Show%.Show(ShowColor), wnt, got);

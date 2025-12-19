@@ -2,10 +2,10 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Use format strings for test/tests.tcl summary output
-  So that columns are all aligned nicely.
-
 * Add test for StrE with \q escape.
+* Add tests for foo $ bar syntaxes.
+  - right associativity
+  - works in expr and stmt context
 
 * Print function names along with error location on stack trace?
 

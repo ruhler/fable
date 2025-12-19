@@ -664,11 +664,14 @@
   
    @ConcreteSyntax @
     expr = expr, '(', expr, {',', expr}, ')'
+    expr = expr, '$', expr
+    stmt = expr, '$', stmt
   
    @Example @
     foo(x)
     foo(x)(y)
     foo(x, y)
+    foo $ x
   
    The application expression is used to apply a function to an argument.
    The supplied argument must match the type specified for the function. The
@@ -683,6 +686,21 @@
    @code[fble] @
     foo(x)(y)
     foo(x, y)
+
+   An alternative syntax is provided to apply a function to a single
+   argument without the need for parenthesis, which may be more convenient
+   syntactically in some cases:
+
+   @code[fble] @
+    foo $ x
+
+   This syntax can be used in expression or statement contexts, with the @l{$}
+   operator acting as a right-associative operator, such that the following
+   two expressions are equivalent:
+
+   @code[fble] @
+    foo $ x $ y
+    foo(x(y))
   
    Runtime is O(log(M)) plus the runtime of func, the runtime of the
    argument, and the runtime of the body, where M is the number of variables
@@ -1559,6 +1577,7 @@
                [',', ':', expr], ')'   
     
      | expr, '(', expr, {',', expr}, ')'               (* func_apply *)
+     | expr, '$', expr                                 (* func_apply *)
     
      | expr, '<', type, {',', type}, '>'               (* poly_apply *)
     
@@ -1584,6 +1603,7 @@
      | spec, name, '=', expr,                          (* let *)
        {',', spec, name, '=', expr}, ';', stmt       
      | stmt = type, name, ';', stmt                    (* undef *)
+     | expr, '$', stmt                                 (* func_apply *)
      | expr, '.?(', name, ':', expr,                   (* union_select *)
                 {',', name, ':', expr} ')', ';', stmt
      | type, name,                                     (* bind *)

@@ -662,3 +662,126 @@ Honestly, I want semicolon for this magic syntax case.
 No. I'm not ready to make sugar here:
 * It makes it too easy to allocate functions without realizing it.
 * Conflict with union select statement.
+
+---
+
+On the topic of bind with (M@<A@>, (Unit@) { M@<B@> })
+versus bind (M@<A@>, M@<B@>):
+
+They are two different things. In the first case, the body of the function
+isn't computed until explicitly asked for in the Do function. In the second
+case, there is no body, the value is computed before the Do function is
+called. For some kinds of M@ maybe that doesn't matter because it's free to
+compute a function allocation, but other kinds makes a big difference. We
+should not pretend we are doing one when we are doing the other. In other
+words: don't make a special syntax for Unit@ _ := style binding. Be explicit
+about that.
+
+General thoughts on syntactic sugar:
+
+The main goal is to take something that requires nesting and turn it into a
+straight list. For example, instead of: { ... { ... { ... { ... }}}}, we
+switch to: { ...; ... ; ...; ...; }. Instead of (..., (..., (..., (...)))), we
+could switch to (..., ..., ..., ...), or something like that. That's what
+gives us the syntactic wins.
+
+Current use: function bind, case select.
+
+You could imagine doing it for function application, in an expression or
+statement context. For example:
+
+  <expr> $ <expr>
+
+Could be sugar for:
+
+  <expr>(<expr>)
+
+And <expr> $$ <stmt> could be sugar for <expr>({<stmt>}).
+
+I don't know how useful those would be in practice. We know of a couple
+possible uses:
+
+  SkipTest(Str|'not good to run this test') $
+  Test(Str|'mytest', (Unit@ _) { ...
+  }),
+
+  SkipTest(Str|'nor this test suite') $
+  /Foo/Tests%.Tests,
+
+  ExpectFails(Str|'!=') $$
+  Foo@ wnt = ...
+  ...
+
+  Do_(Put(Str|'hello')) $$
+  Foo@ _ := Do(...);
+
+This could be useful in general. It could help with a special case Do, but not
+reusing the existing Do. We need a different Do. Maybe 'Seq' is a better name,
+but that doesn't read quite right to me.
+
+What do you think? Should I add support for this function application syntax,
+see how it goes?
+
+  a $ b $ c $ d
+
+Same as:
+
+  a(b(c(d)))
+
+Rather than:
+
+  a(b)(c)(d)
+
+---
+
+The '$' syntax and '$$' syntax seems like it will help with Tests. Let's
+implement them, see how useful or confusing they are in practice.
+
+I expect a shift-reduce conflict in the parser for this, for a $ b $ c. It
+should be able to handle it just fine though, right? I want: a $ (b $ c).
+
+Any way I can make the conflict go away? There must be, right? Like:
+
+expr2 = expr | expr $ expr2?
+
+And have everything else operate on expr directly instead of expr2?
+
+What should I call expr versus expr2?
+
+expr for a, b, c.
+aexpr for <expr> $ <expr>?
+
+---
+
+I'm still getting a conflict with $$ somehow.
+
+When you see the first '$', we don't know if we should shift it because we are
+in the process of parsing an expression, or reduce it because we are about to
+switch to a statement. If I use something other than '$' for the syntax, this
+goes away.
+
+  Foo;$ 
+  Foo $$
+
+Or don't allow a $ b $$, instead do it as a $$ b $$. Sure? Reasonable? No
+loss? Just... annoying to have to remember?
+
+Or, if you are in the stmt context already: a $?
+
+Hmm... annoying. Tricky. Can I figure out a cleaner way? Or a better syntax
+for this?
+
+  ExpectFails(Str|'...');$ 
+
+  ExpectFails(Str|'...') $$ 
+
+  ExpectFails(Str|'...') $
+  X@ x := ...;
+
+Do same thing as aexpr/expr for astmt/stmt?
+
+---
+
+Okay, it's not bad. I can use '$' for expressions and statements. Let's go
+with that, see how it feels.
+
