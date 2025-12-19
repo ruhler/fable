@@ -14,8 +14,8 @@
 % Str = /Std/Char/Ascii%.Str;
 % FormatE = /Std/Char/Ascii/Output%.FormatE;
 
-@ Test@ = /Core/Test%.Test@;
-@ TestResult@ = /Core/Test%.TestResult@;
+@ Test@ = /Std/Test%.Test@;
+@ TestResult@ = /Std/Test%.TestResult@;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

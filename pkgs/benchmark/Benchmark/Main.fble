@@ -1,8 +1,8 @@
 
 <@>% List = /Std/List%.List;
 
-@ Test@ = /Core/Test%.Test@;
-% TestSuite = /Core/Test%.TestSuite;
+@ Test@ = /Std/Test%.Test@;
+% TestSuite = /Std/Test%.TestSuite;
 
 % Str = /Std/Char/Ascii%.Str;
 

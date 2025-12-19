@@ -13,9 +13,9 @@
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % ToString = /Std/Char/Output%.ToString;
 
-@ Test@ = /Core/Test%.Test@;
-% Test = /Core/Test%.Test;
-% TestSuite = /Core/Test%.TestSuite;
+@ Test@ = /Std/Test%.Test@;
+% Test = /Std/Test%.Test;
+% TestSuite = /Std/Test%.TestSuite;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

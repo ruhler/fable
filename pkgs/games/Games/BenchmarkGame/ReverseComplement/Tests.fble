@@ -2,7 +2,7 @@
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Core/Test%.Test@;
+@ Test@ = /Std/Test%.Test@;
 
 % Test = /Games/BenchmarkGame/Test%.Test;
 

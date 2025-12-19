@@ -1,5 +1,5 @@
 
-@ Test@ = /Core/Test%.Test@;
+@ Test@ = /Std/Test%.Test@;
 
 @ Int@ = /Std/Int%.Int@;
 % Neg = /Std/Int%.Neg;

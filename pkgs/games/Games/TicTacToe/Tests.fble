@@ -5,10 +5,10 @@
 
 % Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Core/Test%.Test@;
-% TestSuite = /Core/Test%.TestSuite;
-% Test = /Core/Test%.Test;
-% Pass = /Core/Test%.Pass;
+@ Test@ = /Std/Test%.Test@;
+% TestSuite = /Std/Test%.TestSuite;
+% Test = /Std/Test%.Test;
+% Pass = /Std/Test%.Pass;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

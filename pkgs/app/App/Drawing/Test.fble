@@ -27,7 +27,7 @@
 
 % Format = /Std/Char/Ascii/Output%.Format;
 
-@ TestResult@ = /Core/Test%.TestResult@;
+@ TestResult@ = /Std/Test%.TestResult@;
 
 (Point@, Point@) { Bool@; } EqPoint = (Point@ a, Point@ b) {
   Eq(a.x, b.x).?(false: False);

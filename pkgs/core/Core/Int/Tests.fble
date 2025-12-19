@@ -13,11 +13,11 @@
 % Str = /Std/Char/Ascii%.Str;
 % String = /Std/Char/Ascii/Output%.String;
 
-@ Test@ = /Core/Test%.Test@;
-% Test = /Core/Test%.Test;
-% TestSuite = /Core/Test%.TestSuite;
-% Pass = /Core/Test%.Pass;
-% Fail = /Core/Test%.Fail;
+@ Test@ = /Std/Test%.Test@;
+% Test = /Std/Test%.Test;
+% TestSuite = /Std/Test%.TestSuite;
+% Pass = /Std/Test%.Pass;
+% Fail = /Std/Test%.Fail;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

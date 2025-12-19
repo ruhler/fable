@@ -6,9 +6,9 @@
 
 % Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Core/Test%.Test@;
-% Test = /Core/Test%.Test;
-% TestSuite = /Core/Test%.TestSuite;
+@ Test@ = /Std/Test%.Test@;
+% Test = /Std/Test%.Test;
+% TestSuite = /Std/Test%.TestSuite;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

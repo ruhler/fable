@@ -18,12 +18,12 @@
 
 % String = /Std/Char/Ascii/Output%.String;
 
-@ Test@ = /Core/Test%.Test@;
-% Test = /Core/Test%.Test;
-% TestSuite = /Core/Test%.TestSuite;
-% Pass = /Core/Test%.Pass;
-% Fail = /Core/Test%.Fail;
-% ExpectFails = /Core/Test%.ExpectFails;
+@ Test@ = /Std/Test%.Test@;
+% Test = /Std/Test%.Test;
+% TestSuite = /Std/Test%.TestSuite;
+% Pass = /Std/Test%.Pass;
+% Fail = /Std/Test%.Fail;
+% ExpectFails = /Std/Test%.ExpectFails;
 
 % Run = /Core/Test/Stdio%.Run;
 

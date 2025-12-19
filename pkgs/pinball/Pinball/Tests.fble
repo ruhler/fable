@@ -25,10 +25,10 @@
 
 % Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Core/Test%.Test@;
-% Test = /Core/Test%.Test;
-% TestSuite = /Core/Test%.TestSuite;
-% ExpectFails = /Core/Test%.ExpectFails;
+@ Test@ = /Std/Test%.Test@;
+% Test = /Std/Test%.Test;
+% TestSuite = /Std/Test%.TestSuite;
+% ExpectFails = /Std/Test%.ExpectFails;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

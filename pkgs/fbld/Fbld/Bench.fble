@@ -17,8 +17,8 @@
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Core/Test%.Test@;
-% Test = /Core/Test%.Test;
+@ Test@ = /Std/Test%.Test@;
+% Test = /Std/Test%.Test;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

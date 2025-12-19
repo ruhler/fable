@@ -33,9 +33,9 @@
 
 % Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Core/Test%.Test@;
-% Test = /Core/Test%.Test;
-% TestSuite = /Core/Test%.TestSuite;
+@ Test@ = /Std/Test%.Test@;
+% Test = /Std/Test%.Test;
+% TestSuite = /Std/Test%.TestSuite;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -293,7 +293,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     Drawn@ got = Draw(drawing);
       
     # TODO: Debug this test failure.
-    /Core/Test%.ExpectFails(Str|'') $
+    /Std/Test%.ExpectFails(Str|'') $
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
@@ -315,8 +315,8 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     Maybe@<Color@> wnt = Just(Color.Green);
       
     # TODO: debug this test passing.
-    /Core/Test%.ExpectFails(Str|'') $
-    /Core/Test%.ExpectFails(Str|'Nothing') $
+    /Std/Test%.ExpectFails(Str|'') $
+    /Std/Test%.ExpectFails(Str|'Nothing') $
     /Core/Eq/Assert%.AssertEquals(
       /Core/Maybe/Eq%.Eq(EqColor),
       /Core/Maybe/Show%.Show(ShowColor), wnt, got);

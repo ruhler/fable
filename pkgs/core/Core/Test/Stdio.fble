@@ -9,7 +9,7 @@
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Core/Test%.Test@;
+@ Test@ = /Std/Test%.Test@;
 
 # Run --
 #   Create a Stdio@ program to run a set of tests.

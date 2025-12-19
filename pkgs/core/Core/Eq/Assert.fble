@@ -5,9 +5,9 @@
 
 % Format = /Std/Char/Ascii/Output%.Format;
 
-@ TestResult@ = /Core/Test%.TestResult@;
-% Pass = /Core/Test%.Pass;
-% Fail = /Core/Test%.Fail;
+@ TestResult@ = /Std/Test%.TestResult@;
+% Pass = /Std/Test%.Pass;
+% Fail = /Std/Test%.Fail;
 
 <@ T@>(Eq@<T@>, Show@<T@>, T@, T@) { TestResult@; }
 AssertEquals = <@ T@>(Eq@<T@> eq, Show@<T@> show, T@ a, T@ b) {

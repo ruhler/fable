@@ -21,11 +21,11 @@
 % String = /Std/Char/Ascii/Output%.String;
 % StringE = /Std/Char/Ascii/Output%.StringE;
 
-@ Test@ = /Core/Test%.Test@;
-@ TestResult@ = /Core/Test%.TestResult@;
-% Test = /Core/Test%.Test;
-% TestSuite = /Core/Test%.TestSuite;
-% Pass = /Core/Test%.Pass;
+@ Test@ = /Std/Test%.Test@;
+@ TestResult@ = /Std/Test%.TestResult@;
+% Test = /Std/Test%.Test;
+% TestSuite = /Std/Test%.TestSuite;
+% Pass = /Std/Test%.Pass;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

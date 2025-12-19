@@ -1,5 +1,5 @@
 
-@ Test@ = /Core/Test%.Test@;
+@ Test@ = /Std/Test%.Test@;
 
 @ Char@ = /Std/Char%.Char@;
 % Char = /Std/Char/Ascii%.Char;

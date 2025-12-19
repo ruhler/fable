@@ -15,10 +15,10 @@
 % String = /Std/Char/Ascii/Output%.String;
 % Lines = /Std/String/Lines%.Lines;
 
-@ Test@ = /Core/Test%.Test@;
-@ TestResult@ = /Core/Test%.TestResult@;
-% Test = /Core/Test%.Test;
-% TestSuite = /Core/Test%.TestSuite;
+@ Test@ = /Std/Test%.Test@;
+@ TestResult@ = /Std/Test%.TestResult@;
+% Test = /Std/Test%.Test;
+% TestSuite = /Std/Test%.TestSuite;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

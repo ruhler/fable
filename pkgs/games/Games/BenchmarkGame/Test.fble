@@ -16,7 +16,7 @@
 
 @ String@ = /Std/String%.String@;
 
-@ Test@ = /Core/Test%.Test@;
+@ Test@ = /Std/Test%.Test@;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -25,7 +25,7 @@ Test = (String@ name, Main@ game, String@ n, String@ input, String@ expected) {
   List@<Int@> input_bytes = /Std/List%.Map(input, /Std/Char%.Pos);
   List@<Int@> expected_bytes = /Std/List%.Map(expected, /Std/Char%.Pos);
 
-  /Core/Test%.Test(name, (Unit@ _) {
+  /Std/Test%.Test(name, (Unit@ _) {
     MainResult@ want = @(
       exit: True,
       in: Empty<Int@>,

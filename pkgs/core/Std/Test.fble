@@ -1,0 +1,133 @@
+# @module[/Std/Test%]
+#  Unit test framework.
+
+@ Bool@ = /Std/Bool%.Bool@;
+
+<@>@ List@ = /Std/List%.List@;
+
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% ToString = /Std/Char/Output%.ToString;
+
+@ String@ = /Std/String%.String@;
+
+% String = /Std/Char/Ascii/Output%.String;
+% Format = /Std/Char/Ascii/Output%.Format;
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+# @union[TestResult@] The result of running a test.
+#  @field[Unit@][pass] The test passed.
+#  @field[Output@][fail] The test failed with given error message.
+#  @field[Unit@][expected_fail] The test was expected to fail and it did.
+#  @field[Output@][skip] The test was skipped, with explanation as to why.
+@ TestResult@ = +(Unit@ pass, Output@ fail, Unit@ expected_fail, Output@ skip);
+
+# @struct[TestCase@] A test case.
+#  @field[String@][name] The name of the test.
+#  @field[(Unit@) { TestResult@; }][test] The test code to run.
+@ TestCase@ = *(String@ name, (Unit@) { TestResult@; } test);
+
+# @struct[TestSuite@] A test suite.
+#  @field[String@][name] The name of the test suite.
+#  @field[List@<Test@>][tests] The tests in the test suite.
+@ TestSuite@ = *(String@ name, List@<Test@> tests),
+
+# @union[Test@] A test.
+#  @field[TestCase@][case] An individual test case.
+#  @field[TestSuite@][suite] A suite of tests.
+@ Test@ = +(TestCase@ case, TestSuite@ suite);
+
+# @value[Pass] A passing test result.
+#  @type[TestResult@];
+TestResult@ Pass = TestResult@(pass: Unit);
+
+# @func[Fail] A failing test result.
+#  @arg[Output@][msg] Test failure message.
+#  @returns[TestResult@] A failing test result.
+(Output@) { TestResult@; } Fail = (Output@ msg) {
+  TestResult@(fail: msg);
+};
+
+# @func[ExpectFails] Check a test result for an expected failure.
+#  Changes the test result to expected failure if the given test result is
+#  failing and msg is contained somewhere in the failure message.
+#
+#  @arg[String@][msg] Substring expected to be found in the error message.
+#  @arg[TestResult@][result] The result that is expected to be failing.
+#  @returns[TestResult@] The result of checking for the expected failure.
+(String@, TestResult@) { TestResult@; }
+ExpectFails = (String@ msg, TestResult@ result) {
+  result.?(pass: Fail(String|'Expected failure, but test passed'));
+  result.?(expected_fail: Fail(String|'Expected failure, but was expected_fail'));
+  result.?(skip: Fail(String|'Expected failure, but was skip'));
+
+  String@ failure = ToString(result.fail);
+  /Std/String/Eq%.Contains(failure, msg).?(true: TestResult@(expected_fail: Unit));
+
+  Fail(Format|'Expected failure containing "%s", but failed with "%s"'
+        [/Std/Char/Output%.String(msg), /Std/Char/Output%.String(failure)]);
+};
+
+# @func[Skip] A skipped test result.
+#  @arg[Output@][msg] Explanation for why the test was skipped.
+#  @returns[TestResult@] A skipped test result.
+(Output@) { TestResult@; }
+Skip = (Output@ msg) {
+  TestResult@(skip: msg);
+};
+
+# @func[Test] Creates an individual test.
+#  @arg[String@][name] The name of the test.
+#  @arg[(Unit@) { TestResult@; }][test]
+#   A function that returns the result of the test.
+#  @returns[Test@] The constructed test.
+(String@, (Unit@) { TestResult@; }) { Test@; }
+Test = (String@ name, (Unit@) { TestResult@; } test) {
+  Test@(case: TestCase@(name, test));
+};
+
+# @func[TestSuite] Creates a suite of tests.
+#  @arg[String@][name] The name of the test suite.
+#  @arg[List@<Test@>][tests] The list of tests in the test suite.
+#  @returns[Test@] The constructed test suite.
+(String@, List@<Test@>) { Test@; }
+TestSuite = (String@ name, List@<Test@> tests) {
+  Test@(suite: TestSuite@(name, tests));
+};
+
+# @func[SkipTest] Skips a test
+#  @arg[Output@][msg] Explanation for why the test is skipped.
+#  @arg[Test@][test] The test to skip.
+#  @returns[Test@] A skipped test.
+(Output@, Test@) { Test@; }
+SkipTest = (Output@ msg, Test@ test) {
+  test.?(case: Test(test.case.name, (Unit@ _) { Skip(msg); }));
+  TestSuite(test.suite.name, /Std/List%.Map(test.suite.tests, SkipTest(msg)));
+};
+
+# @func[SkipTestIf] Conditionally skips a test.
+#  @arg[Bool@][if] Skip the test if this condition holds.
+#  @arg[Output@][msg] Explanation for why the test is skipped.
+#  @arg[Test@][test] The test to skip.
+#  @returns[Test@] A skipped test.
+(Bool@, Output@, Test@) { Test@; }
+SkipTestIf = (Bool@ if, Output@ msg) {
+  if.?(true: SkipTest(msg), false: /Std/Func%.Id<Test@>);
+};
+
+# @func[SkipTestUnless] Conditionally skips a test.
+#  @arg[Bool@][unless] Skip the test unless this condition holds.
+#  @arg[Output@][msg] Explanation for why the test is skipped.
+#  @arg[Test@][test] The test to skip.
+#  @returns[Test@] A skipped test.
+(Bool@, Output@, Test@) { Test@; }
+SkipTestUnless = (Bool@ unless, Output@ msg) {
+  unless.?(true: /Std/Func%.Id<Test@>, false: SkipTest(msg));
+};
+
+@(TestResult@, Test@, TestSuite@, TestCase@,
+  Pass, Fail, ExpectFails, Skip,
+  Test, TestSuite,
+  SkipTest, SkipTestIf, SkipTestUnless
+);
