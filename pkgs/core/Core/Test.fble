@@ -1,4 +1,6 @@
 
+@ Bool@ = /Std/Bool%.Bool@;
+
 <@>@ List@ = /Std/List%.List@;
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
@@ -12,7 +14,7 @@
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-@ TestResult@ = +(Unit@ pass, Output@ fail, Unit@ expected_fail, Unit@ skip);
+@ TestResult@ = +(Unit@ pass, Output@ fail, Unit@ expected_fail, Output@ skip);
 @ TestCase@ = *(String@ name, (Unit@) { TestResult@; } test);
 @ TestSuite@ = *(String@ name, List@<Test@> tests),
 @ Test@ = +(TestCase@ case, TestSuite@ suite);
@@ -42,10 +44,10 @@ ExpectFails = (String@ msg, TestResult@ result) {
 };
 
 # Skip --
-#   Skip execution of a test function.
-((Unit@) { TestResult@; }) { TestResult@; }
-Skip = ((Unit@) { TestResult@; } _) {
-  TestResult@(skip: Unit);
+#   A skipped test result.
+(Output@) { TestResult@; }
+Skip = (Output@ msg) {
+  TestResult@(skip: msg);
 };
 
 # Test --
@@ -70,5 +72,24 @@ TestSuite = (String@ name, List@<Test@> tests) {
   Test@(suite: TestSuite@(name, tests));
 };
 
+(Output@, Test@) { Test@; }
+SkipTest = (Output@ msg, Test@ test) {
+  test.?(case: Test(test.case.name, (Unit@ _) { Skip(msg); }));
+  TestSuite(test.suite.name, /Std/List%.Map(test.suite.tests, SkipTest(msg)));
+};
+
+(Bool@, Output@, Test@) { Test@; }
+SkipTestIf = (Bool@ if, Output@ msg) {
+  if.?(true: SkipTest(msg), false: /Std/Func%.Id<Test@>);
+};
+
+(Bool@, Output@, Test@) { Test@; }
+SkipTestUnless = (Bool@ unless, Output@ msg) {
+  unless.?(true: /Std/Func%.Id<Test@>, false: SkipTest(msg));
+};
+
 @(TestResult@, Test@, TestSuite@, TestCase@,
-  Pass, Fail, ExpectFails, Skip, Test, TestSuite);
+  Pass, Fail, ExpectFails, Skip,
+  Test, TestSuite,
+  SkipTest, SkipTestIf, SkipTestUnless
+);

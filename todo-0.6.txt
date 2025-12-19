@@ -7,6 +7,8 @@ Things to consider doing for the fble-0.6 release.
   - right associativity
   - works in expr and stmt context
 
+* Update tutorials for new bind and function application syntax.
+
 * Print function names along with error location on stack trace?
 
 * Optimize /Std/Int/Show% implementation by pulling out int values to top

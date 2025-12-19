@@ -87,3 +87,10 @@ Proposal:
 * Id, Cons, Compose, Flip, Apply, ApplyTo, Fix, On, With
 
 Let's do it.
+
+---
+
+ApplyIf, ApplyUnless. Arguably useful, but depend on Bool@. Should they live
+in /Std/Func%? /Std/Func/Bool%? /Std/Bool/Func%? /Std/Func/If%?
+
+Or not at all yet?
