@@ -13,7 +13,6 @@
 
 Test@ Tests = TestSuite(Str|Core, List[
   /Std/Tests%.Tests,
-  /Core/Bool/Tests%.Tests,
   /Core/Char/Tests%.Tests,
   /Core/CRC/Tests%.Tests,
   /Core/Digits/Tests%.Tests,

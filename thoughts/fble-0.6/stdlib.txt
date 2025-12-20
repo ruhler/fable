@@ -396,3 +396,18 @@ We have Char and String in place now. I want to get to Test. I need show for
 that, for sure. But I also maybe need Stdio for that? Maybe Show and Stdio are
 related?
 
+---
+
+Checking in on where we are:
+
+* Test cases are being ported over. It's just grunt work for now for those.
+
+That leaves:
+* Random, IO, Map, Ord instances, Char types, Stdio, Maybe
+* Fifo, Iter
+* CRC?
+
+Priority has to go to Stdio, to be able to implement the test runner and apps
+in general. Some of the left over is straight forward. Hopefully some of it we
+can get rid of. We're closing in now though.
+

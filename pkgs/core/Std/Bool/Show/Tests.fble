@@ -1,0 +1,29 @@
+
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+
+% AssertOutput = OnAscii $ /Std/Char/Output/Assert%.AssertOutput;
+
+<@>% List = /Std/List%.List;
+
+@ Test@ = /Std/Test%.Test@;
+% Test = OnAscii $ /Std/Test%.Test;
+% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+# @value[Tests] Test suite for /Std/Bool/Show%.
+#  @type[Test@]
+Test@ Tests = TestSuite|'Show' $ List[
+  Test|'True' $ (Unit@ _) {
+    AssertOutput|'True' $ /Std/Bool/Show%.Show(True);
+  },
+
+  Test|'False' $ (Unit@ _) {
+    AssertOutput|'False' $ /Std/Bool/Show%.Show(False);
+  }
+];
+
+@(Tests);

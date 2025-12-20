@@ -1,0 +1,38 @@
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+% Eq = /Std/Bool/Eq%.Eq;
+
+@ Ascii@ = /Std/Char/Ascii%.Ascii@;
+<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+
+@ Test@ = /Std/Test%.Test@;
+% Test = OnAscii $ /Std/Test%.Test;
+% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+(List@<Ascii@>, (Bool@, Bool@) { Bool@; }, Bool@, Bool@, Bool@) { Test@; }
+Binary = (List@<Ascii@> name, (Bool@, Bool@) { Bool@; } f, Bool@ a, Bool@ b, Bool@ z) {
+  Test(name, (Unit@ _) {
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, z, f(a, b));
+  });
+};
+
+# @value[Tests] Test suite for /Std/Bool%
+#  @type[Test@]
+Test@ Tests = TestSuite|Eq $ List[
+  Binary|FF(Eq, False, False, True),
+  Binary|FT(Eq, False, True, False),
+  Binary|TF(Eq, True, False, False),
+  Binary|TT(Eq, True, True, True)
+];
+
+@(Tests);

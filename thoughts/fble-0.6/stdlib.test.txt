@@ -1359,3 +1359,13 @@ Seems reasonable?
 During the transition, have /Core/Tests include /Std/Tests. Eventually
 /Core/Tests should become empty, switch over to /Std/Tests.
 
+---
+
+Crazy idea: what if we had a /Debug%.StackTrace function that prints the stack
+trace to stderr, and we call that in /Std/Test%.Fail? Then I get stack traces
+on test failures, right?
+
+It's very much a hack, because we lose control of when things get printed, and
+we'll get stack traces for ExpectFails which is wrong. Oh well. It was an
+idea.
+
