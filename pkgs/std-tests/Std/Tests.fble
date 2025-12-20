@@ -13,4 +13,4 @@ Test@ Tests = TestSuite(Str|Std, List[
   /Std/Unit/Tests%.Tests
 ]);
 
-@(Tests);
+/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));

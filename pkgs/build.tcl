@@ -2,6 +2,7 @@ namespace eval "pkgs" {
   set pkgs {
     std
     core
+    std-tests
     app
     network
     fbld
