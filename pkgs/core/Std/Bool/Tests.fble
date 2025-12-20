@@ -8,6 +8,7 @@
 
 @ Ascii@ = /Std/Char/Ascii%.Ascii@;
 <@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+% String = /Std/Char/Ascii/Output%.String;
 
 <@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
@@ -17,6 +18,8 @@
 @ Test@ = /Std/Test%.Test@;
 % Test = OnAscii $ /Std/Test%.Test;
 % TestSuite = OnAscii $ /Std/Test%.TestSuite;
+% Pass = /Std/Test%.Pass;
+% Fail = /Std/Test%.Fail;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -37,6 +40,14 @@ Binary = (List@<Ascii@> name, (Bool@, Bool@) { Bool@; } f, Bool@ a, Bool@ b, Boo
 # @value[Tests] Test suite for /Std/Bool%
 #  @type[Test@]
 Test@ Tests = TestSuite|Bool $ List[
+  Test|True $ (Unit@ _) {
+    True.?(true: Pass, false: Fail(String|'True is false'));
+  },
+
+  Test|False $ (Unit@ _) {
+    False.?(true: Fail(String|'False is true'), false: Pass);
+  },
+
   TestSuite|Not $ List[
     Unary|T(Not, True, False),
     Unary|F(Not, False, True)

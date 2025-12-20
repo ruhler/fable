@@ -2,6 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Move /Std/**/Tests.fble to separate std-tests package.
+
 * Add test for StrE with \q escape.
 * Add tests for foo $ bar syntaxes.
   - right associativity
