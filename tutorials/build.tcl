@@ -45,19 +45,19 @@ namespace eval "tutorials" {
 
   # HelloWorld tests
   run_stdio $::b/tutorials/HelloWorld.tr.out \
-    "-I $::s/pkgs/core -I $::s/tutorials/HelloWorld -m /HelloWorld%"
+    "-I $::s/pkgs/std -I $::s/pkgs/core -I $::s/tutorials/HelloWorld -m /HelloWorld%"
   test $::b/tutorials/HelloWorld.tr $::b/tutorials/HelloWorld.tr.out \
     "cat $::b/tutorials/HelloWorld.tr.out"
 
   # Basics tests
   run_stdio $::b/tutorials/Basics.tr.out \
-    "-I $::s/pkgs/core -I $::s/tutorials/Basics -m /Basics%"
+    "-I $::s/pkgs/std -I $::s/pkgs/core -I $::s/tutorials/Basics -m /Basics%"
   test $::b/tutorials/Basics.tr $::b/tutorials/Basics.tr.out \
     "cat $::b/tutorials/Basics.tr.out"
 
   # Modules tests
   run_stdio $::b/tutorials/Modules.tr.out \
-    "-I $::s/pkgs/core -I $::s/pkgs/core -I $::s/tutorials/Modules -m /Main%"
+    "-I $::s/pkgs/std -I $::s/pkgs/core -I $::s/tutorials/Modules -m /Main%"
   test $::b/tutorials/Modules.tr $::b/tutorials/Modules.tr.out \
     "cat $::b/tutorials/Modules.tr.out"
 }

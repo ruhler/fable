@@ -1,8 +1,8 @@
 namespace eval "pkgs/games" {
-  pkg games [list core app] "" ""
+  pkg games [list std core app] "" ""
 
   # /Games/Tests% interpreted
-  set cflags "-I $::s/pkgs/games -I $::s/pkgs/app -I $::s/pkgs/core"
+  set cflags "-I $::s/pkgs/games -I $::s/pkgs/app -I $::s/pkgs/std -I $::s/pkgs/core"
   run_stdio_tests $::b/pkgs/games/Games/tests.tr "$cflags -m /Games/Tests%" ""
 
   # /Games/Tests% compiled

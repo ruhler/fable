@@ -10,7 +10,7 @@ namespace eval "pkgs/core" {
       "-I $::s/include -I $::s/pkgs/core -I $::b/pkgs/core" \
       $::b/pkgs/core/fble-stdio.usage.h
   }
-  pkg core [list] "" $objs
+  pkg core [list std] "" $objs
 
   # Check doc comments
   foreach {x} [build_glob $::s/pkgs/core -tails "*.h" "*.c"] {
@@ -21,10 +21,10 @@ namespace eval "pkgs/core" {
   fbld_man_usage $::b/pkgs/core/fble-stdio.1 $::s/pkgs/core/fble-stdio.fbld
   install $::b/pkgs/core/fble-stdio.1 $::config::mandir/man1/fble-stdio.1
   obj $::b/pkgs/core/fble-stdio.o $::s/pkgs/core/fble-stdio.c \
-    "-I $::s/include -I $::s/pkgs/core"
+    "-I $::s/include -I $::s/pkgs/std -I $::s/pkgs/core"
   bin $::b/pkgs/core/fble-stdio \
     "$::b/pkgs/core/fble-stdio.o" \
-    "$::b/pkgs/core/libfble-core$::lext $::b/lib/libfble$::lext" ""
+    "$::b/pkgs/core/libfble-core$::lext $::b/pkgs/std/libfble-std$::lext $::b/lib/libfble$::lext" ""
   install $::b/pkgs/core/fble-stdio $::config::bindir/fble-stdio
 
   # Build an fble-stdio compiled binary.
@@ -41,7 +41,7 @@ namespace eval "pkgs/core" {
     foreach lib [lreverse $libs] {
       append nlibs " $::b/pkgs/$lib/libfble-$lib$::lext"
     }
-    append nlibs " $::b/pkgs/core/libfble-core$::lext $::b/lib/libfble$::lext"
+    append nlibs " $::b/pkgs/core/libfble-core$::lext $::b/pkgs/std/libfble-std$::lext $::b/lib/libfble$::lext"
 
     fblemain $target.o $::b/bin/fble-compile "--main FbleStdioMain -m $path"
     bin $target $objs $nlibs $lflags
@@ -65,14 +65,14 @@ namespace eval "pkgs/core" {
 
   # /Core/Stdio/Cat% interpreted test.
   run_stdio $::b/pkgs/core/Core/Stdio/fble-cat.out \
-    "-I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.fbld"
+    "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.fbld"
   test $::b/pkgs/core/Core/Stdio/fble-cat.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld" \
     "diff -Z $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld"
 
   # /Core/Stdio/Cat% interpreted test 2.
   run_stdio $::b/pkgs/core/Core/Stdio/fble-cat.2.out \
-    "-I $::s/pkgs/core -m /Core/Stdio/Cat% -- $::s/README.fbld"
+    "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Stdio/Cat% -- $::s/README.fbld"
   test $::b/pkgs/core/Core/Stdio/fble-cat.2.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.2.out" \
     "diff -Z $::b/pkgs/core/Core/Stdio/fble-cat.2.out $::s/README.fbld"
@@ -97,7 +97,7 @@ namespace eval "pkgs/core" {
 
   # /Core/Stdio/HelloWorld% interpreted test.
   run_stdio $::b/pkgs/core/Core/Stdio/fble-stdio.out \
-    "-I $::s/pkgs/core -m /Core/Stdio/HelloWorld%"
+    "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Stdio/HelloWorld%"
   test $::b/pkgs/core/Core/Stdio/fble-stdio.tr $::b/pkgs/core/Core/Stdio/fble-stdio.out \
     "grep hello $::b/pkgs/core/Core/Stdio/fble-stdio.out"
 
@@ -110,7 +110,7 @@ namespace eval "pkgs/core" {
     "grep hello $::b/pkgs/core/Core/Stdio/fble-stdio-test.out"
 
   # Core/Tests interpreted
-  run_stdio_tests $::b/pkgs/core/Core/tests.tr "-I $::s/pkgs/core -m /Core/Tests%" ""
+  run_stdio_tests $::b/pkgs/core/Core/tests.tr "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Tests%" ""
 
   # Core/Tests compiled
   stdio $::b/pkgs/core/Core/core-tests "/Core/Tests%" "" ""

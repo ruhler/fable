@@ -1,10 +1,10 @@
 namespace eval "pkgs/pinball" {
   fbld_help_fble_usage $::b/pkgs/pinball/Pinball/Usage.fble $::s/pkgs/pinball/fble-pinball.fbld
 
-  pkg pinball [list core app] $::b/pkgs/pinball/Pinball/Usage.fble ""
+  pkg pinball [list std core app] $::b/pkgs/pinball/Pinball/Usage.fble ""
 
   # /Pinball/Tests% interpreted
-  set cflags "-I $::s/pkgs/core -I $::s/pkgs/app -I $::s/pkgs/pinball -I $::b/pkgs/pinball"
+  set cflags "-I $::s/pkgs/std -I $::s/pkgs/core -I $::s/pkgs/app -I $::s/pkgs/pinball -I $::b/pkgs/pinball"
   run_stdio_tests $::b/pkgs/pinball/tests-interpreted.tr "$cflags -m /Pinball/Tests%" \
     $::b/pkgs/pinball/Pinball/Usage.fble
 

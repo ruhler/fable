@@ -1,5 +1,6 @@
 namespace eval "pkgs" {
   set pkgs {
+    std
     core
     app
     network
