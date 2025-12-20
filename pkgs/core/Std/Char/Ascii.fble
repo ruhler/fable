@@ -138,6 +138,13 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 #  @returns[String@] The string value.
 (List@<Ascii@>) { String@; } Str = /Std/Char/Lit%.Str(ToChar);
 
+# @func[OnAscii] Convert a string function to an ascii string function.
+#  @arg[@][A@] The return type of the function.
+#  @arg[(String@) { A@; }][func] The string function to convert.
+#  @returns[(List@<Ascii@>) { A@; }]
+#   The converted function that takes an ascii string argument instead.
+<@ A@>((String@) { A@; }, List@<Ascii@>) { A@; } OnAscii = StrLit(ToChar);
+
 # @func[Str] An ascii string literal supporting character escape sequences.
 #  Supports character sequences as in /Std/String/Escape%.Escape.
 #
@@ -148,6 +155,6 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 #
 #  @arg[List@<Ascii@>][str] The string literal.
 #  @returns[String@] The string value.
-(List@<Ascii@>) { String@; } StrE = StrLit(ToChar, /Std/String/Escape%.Escape);
+(List@<Ascii@>) { String@; } StrE = OnAscii(/Std/String/Escape%.Escape);
 
-@(Ascii@, Ascii, ToChar, Char, Str, StrE);
+@(Ascii@, Ascii, ToChar, Char, Str, StrE, OnAscii);

@@ -1,15 +1,16 @@
 
-% Str = /Std/Char/Ascii%.Str;
+<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
 
 <@>% List = /Std/List%.List;
 
 @ Test@ = /Std/Test%.Test@;
-% TestSuite = /Std/Test%.TestSuite;
+% TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 # @value[Tests] Test suite for /Std/Unit%
 #  @type[Test@]
-Test@ Tests = TestSuite(Str|Unit, List[
-  /Std/Unit/Eq/Tests%.Tests
-]);
+Test@ Tests = TestSuite|Unit $ List[
+  /Std/Unit/Eq/Tests%.Tests,
+  /Std/Unit/Show/Tests%.Tests
+];
 
 @(Tests);

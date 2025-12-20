@@ -1,0 +1,25 @@
+# @module[/Std/Char/Output/Assert%]
+#  Test assertions related to Output@.
+
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% ToString = /Std/Char/Output%.ToString;
+
+@ String@ = /Std/String%.String@;
+
+@ TestResult@ = /Std/Test%.TestResult@;
+
+# @func[AssertOutput] Assert an output has the expected value.
+#  @arg[String@][expected] The expected output.
+#  @arg[Output@][output] The actual output.
+#  @returns[TestResult@]
+#   A passing test result if the output matches what's expected. A failing
+#   test result otherwise.
+(String@, Output@) { TestResult@; }
+AssertOutput = (String@ expected, Output@ output) {
+  AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show,
+    expected, ToString(output));
+};
+
+@(AssertOutput);

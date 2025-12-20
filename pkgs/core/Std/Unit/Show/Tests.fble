@@ -1,0 +1,18 @@
+
+<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+
+% AssertOutput = OnAscii(/Std/Char/Output/Assert%.AssertOutput);
+
+@ Test@ = /Std/Test%.Test@;
+% Test = OnAscii(/Std/Test%.Test);
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+# @value[Tests] Test suite for /Std/Unit/Show%.
+#  @type[Test@]
+Test@ Tests = Test|'Show' $ (Unit@ _) {
+  AssertOutput|'Unit' $ /Std/Unit/Show%.Show(Unit);
+};
+
+@(Tests);
