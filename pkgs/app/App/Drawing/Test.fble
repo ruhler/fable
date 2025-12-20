@@ -136,7 +136,7 @@ Draw_ = {
 
 (Drawn@, Drawn@) { TestResult@; }
 AssertEquals = (Drawn@ expected, Drawn@ actual) {
-  /Core/Eq/Assert%.AssertEquals(EqDrawn, ShowDrawn, expected, actual);
+  /Std/Eq/Assert%.AssertEquals(EqDrawn, ShowDrawn, expected, actual);
 };
 
 @(Drawn@, Pixel@,

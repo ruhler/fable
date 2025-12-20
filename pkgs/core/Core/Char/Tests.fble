@@ -11,7 +11,7 @@
 % IsAlpha = /Core/Char/Type%.IsAlpha;
 % IsLower = /Core/Char/Type%.IsLower;
 
-<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 % Int = /Std/Int/Lit%.Int;
 

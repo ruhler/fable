@@ -8,7 +8,7 @@
 % BitStr = /Core/Digits/String%.BitStr;
 % HexToBits = /Core/Digits/String%.HexToBits;
 
-<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;

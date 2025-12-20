@@ -5,7 +5,7 @@
 @ Hex@ = /Core/Digits%.Hex@;
 % HexStr = /Core/Digits/String%.HexStr;
 
-<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;

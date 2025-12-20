@@ -5,7 +5,7 @@
 @ Ascii@ = /Std/Char/Ascii%.Ascii@;
 % ToChar = /Std/Char/Ascii%.ToChar;
 
-<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 @ Int@ = /Std/Int%.Int@;
 

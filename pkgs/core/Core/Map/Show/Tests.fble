@@ -3,7 +3,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 @ Int@ = /Std/Int%.Int@;
 % Int = /Std/Int/Lit%.Int;

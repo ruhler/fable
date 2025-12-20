@@ -2,7 +2,7 @@
 @ Bool@ = /Std/Bool%.Bool@;
 % Not = /Std/Bool%.Not;
 
-<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 % Ord = /Std/Cmp%;
 @ Compared@ = Ord.Compared@;

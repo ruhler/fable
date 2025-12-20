@@ -3,8 +3,8 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
-<@>% AssertNotEquals = /Core/Eq/Assert%.AssertNotEquals;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+<@>% AssertNotEquals = /Std/Eq/Assert%.AssertNotEquals;
 
 % Str = /Std/Char/Ascii%.Str;
 

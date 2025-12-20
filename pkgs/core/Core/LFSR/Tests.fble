@@ -2,7 +2,7 @@
 @ Bit@ = /Core/Digits%.Bit@;
 % BitStr = /Core/Digits/String%.BitStr;
 
-<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 @ Int@ = /Std/Int%.Int@;
 % Sub = /Std/Int%.Sub;

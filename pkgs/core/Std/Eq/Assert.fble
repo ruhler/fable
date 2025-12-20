@@ -1,0 +1,45 @@
+# @module[/Std/Eq/Assert%]
+#  Equality based test assertions.
+
+<@>@ Eq@ = /Std/Eq%.Eq@;
+
+<@>@ Show@ = /Std/Show%.Show@;
+
+% Format = /Std/Char/Ascii/Output%.Format;
+
+@ TestResult@ = /Std/Test%.TestResult@;
+% Pass = /Std/Test%.Pass;
+% Fail = /Std/Test%.Fail;
+
+# @func[AssertEquals] Assert two values are equal.
+#  @arg[@][T@] The type of value to compare.
+#  @arg[Eq@<T@>][eq] Eq@ instance for values to test for equality.
+#  @arg[Show@<T@>][show] Show@ instance for values for error messages.
+#  @arg[T@][expected] The expected value.
+#  @arg[T@][actual] The actual value.
+#  @returns[TestResult@]
+#   A passing test result if the two values are equal. A failing test result
+#   otherwise.
+<@ T@>(Eq@<T@>, Show@<T@>, T@, T@) { TestResult@; }
+AssertEquals = <@ T@>(Eq@<T@> eq, Show@<T@> show, T@ expected, T@ actual) {
+  eq(expected, actual).?(true: Pass);
+  Fail(Format|'Expected %s, but got %s'[show(expected), show(actual)]);
+};
+
+# @func[AssertNotEquals] Assert two values are different.
+#  @arg[@][T@] The type of value to compare.
+#  @arg[Eq@<T@>][eq] Eq@ instance for values to test for equality.
+#  @arg[Show@<T@>][show] Show@ instance for values for error messages.
+#  @arg[T@][unexpected] The unxpected value.
+#  @arg[T@][actual] The actual value.
+#  @returns[TestResult@]
+#   A passing test result if the two values are unequal. A failing test result
+#   otherwise.
+<@ T@>(Eq@<T@>, Show@<T@>, T@, T@) { TestResult@; }
+AssertNotEquals = <@ T@>(Eq@<T@> eq, Show@<T@> show, T@ unexpected, T@ actual) {
+  eq(unexpected, actual).?(false: Pass);
+  Fail(Format|'Expected something other than %s, but got %s'[
+    show(unexpected), show(actual)]);
+};
+
+@(AssertEquals, AssertNotEquals);

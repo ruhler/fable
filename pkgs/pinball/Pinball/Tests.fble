@@ -1,5 +1,5 @@
 
-<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 <@>% List = /Std/List%.List;
 <@>% Empty = /Std/List%.Empty;
@@ -255,7 +255,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     Ball@ got = end.ball;
 
     # TODO: Test fails due to loss of precision. How should we handle this?
-    ExpectFails(Str|'!= Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)') $
+    ExpectFails(Str|', but got Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)') $
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
 

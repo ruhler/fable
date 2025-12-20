@@ -3,7 +3,7 @@
 % And = /Std/Bool%.And;
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
-<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 % Int = /Std/Int/Lit%.Int;
 

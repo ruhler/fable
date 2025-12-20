@@ -9,7 +9,7 @@
 % Char = /Std/Char/Ascii%.Char;
 % Ascii = /Std/Char/Ascii%.Ascii;
 
-<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
