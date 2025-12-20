@@ -1,0 +1,15 @@
+
+% Str = /Std/Char/Ascii%.Str;
+
+<@>% List = /Std/List%.List;
+
+@ Test@ = /Std/Test%.Test@;
+% TestSuite = /Std/Test%.TestSuite;
+
+# @value[Tests] Test suite for /Std/Unit%
+#  @type[Test@]
+Test@ Tests = TestSuite(Str|Unit, List[
+  /Std/Unit/Eq/Tests%.Tests
+]);
+
+@(Tests);

@@ -1,0 +1,28 @@
+# @module[/Std/Bool/Assert%]
+#  Boolean test assertions.
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+@ TestResult@ = /Std/Test%.TestResult@;
+
+# @func[AssertTrue] Assert a value is True.
+#  @arg[Bool@][value] The value to check.
+#  @returns[TestResult@]
+#   A passing test result if the value is true. A failing test result
+#   otherwise.
+(Bool@) { TestResult@; }
+AssertTrue = AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, True);
+
+# @func[AssertFalse] Assert a value is False.
+#  @arg[Bool@][value] The value to check.
+#  @returns[TestResult@]
+#   A passing test result if the value is false. A failing test result
+#   otherwise.
+(Bool@) { TestResult@; }
+AssertFalse = AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, False);
+
+@(AssertTrue, AssertFalse);

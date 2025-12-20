@@ -1,0 +1,18 @@
+
+% AssertTrue = /Std/Bool/Assert%.AssertTrue;
+
+% Str = /Std/Char/Ascii%.Str;
+
+@ Test@ = /Std/Test%.Test@;
+% Test = /Std/Test%.Test;
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+# @value[Tests] Test suite for /Std/Unit/Eq%.
+#  @type[Test@]
+Test@ Tests = Test(Str|'Eq', (Unit@ _) {
+  AssertTrue(/Std/Unit/Eq%.Eq(Unit, Unit));
+});
+
+@(Tests);

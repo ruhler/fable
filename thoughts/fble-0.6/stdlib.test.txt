@@ -1343,3 +1343,19 @@ C. ExpectFail(...) $$ ...
 The '$' syntax feels pretty good with ExpectFail. Let's switch to Skip and
 SkipTest and go from there. Optionally add SkipTestIf and SkipTestUnless
 functions.
+
+---
+
+Time to start moving tests over to /Std. I want to clean them up a bit in the
+process. What are my general guidelines?
+
+* Tests for /Std/Foo live in /Std/Foo/Tests.
+* Tests for /Std/Foo/Bar live in /Std/Foo/Bar/Tests.
+* /Std/Foo/Tests includes submodule tests.
+* /Std/Tests includes all top level /std tests.
+
+Seems reasonable?
+
+During the transition, have /Core/Tests include /Std/Tests. Eventually
+/Core/Tests should become empty, switch over to /Std/Tests.
+
