@@ -3,9 +3,6 @@
 
 <@>% List = /Std/List%.List;
 
-% ToString = /Std/Char/Output%.ToString;
-
-@ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 
 @ Test@ = /Std/Test%.Test@;
@@ -44,30 +41,6 @@ Test@ Tests = TestSuite(Str|Show, List[
     Int@ wnt = Int|0;
     Int@ got = Read(Str|'');
     AssertEquals(/Std/Int/Eq%.Eq, Show, wnt, got);
-  }),
-
-  Test(Str|Show_Positive, (Unit@ _) {
-    String@ wnt = Str|'10325487960';
-    String@ got = ToString(Show(Int|10325487960));
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Show_Zero, (Unit@ _) {
-    String@ wnt = Str|'0';
-    String@ got = ToString(Show(Int|0));
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Show_Negative, (Unit@ _) {
-    String@ wnt = Str|'-42';
-    String@ got = ToString(Show(Neg(Int|42)));
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Show_AllDigits, (Unit@ _) {
-    String@ wnt = Str|'1234567890';
-    String@ got = ToString(Show(Int|1234567890));
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   })
 ]);
 

@@ -29,8 +29,6 @@
 % Mod = /Std/Int/Div%.Mod;
 % Sqrt = /Std/Int/Sqrt%.Sqrt;
 
-% Eq = /Std/Int/Eq%.Eq;
-% Ne = /Std/Int/Eq%.Ne;
 % Lt = /Std/Int/Ord%.Lt;
 % Le = /Std/Int/Ord%.Le;
 % Gt = /Std/Int/Ord%.Gt;
@@ -84,22 +82,6 @@ TOrd = (String@ name, Compared@ a, (Unit@) { Compared@; } b) {
 };
 
 Test@ Tests = TestSuite(Str|Int, List[
-  T(Str|Eq_0_0, (Unit@ _ ) { Eq(0, 0); }),
-  F(Str|Eq_0_1, (Unit@ _ ) { Eq(0, 1); }),
-  T(Str|Eq_4_4, (Unit@ _ ) { Eq(4, 4); }),
-  T(Str|Eq_5_5, (Unit@ _ ) { Eq(5, 5); }),
-  F(Str|Eq_4_5, (Unit@ _ ) { Eq(4, 5); }),
-  F(Str|Eq_5_m5, (Unit@ _) { Eq(5, Neg(5)); }),
-  T(Str|Eq_m1_m1, (Unit@ _) { Eq(Neg(5), Neg(5)); }),
-
-  F(Str|Ne_0_0, (Unit@ _ ) { Ne(0, 0); }),
-  T(Str|Ne_0_1, (Unit@ _ ) { Ne(0, 1); }),
-  F(Str|Ne_4_4, (Unit@ _ ) { Ne(4, 4); }),
-  F(Str|Ne_5_5, (Unit@ _ ) { Ne(5, 5); }),
-  T(Str|Ne_4_5, (Unit@ _ ) { Ne(4, 5); }),
-  T(Str|Ne_5_m5, (Unit@ _) { Ne(5, Neg(5)); }),
-  F(Str|Ne_m1_m1, (Unit@ _) { Ne(Neg(5), Neg(5)); }),
-
   T(Str|IsZero_0, (Unit@ _) { IsZero(0); }),
   F(Str|IsZero_3, (Unit@ _) { IsZero(3); }),
 
@@ -217,8 +199,8 @@ Test@ Tests = TestSuite(Str|Int, List[
   TEq(Str|Int, Int|151, (Unit@ _) { Int|151; }),
   TEq(Str|Hex, Int|151, (Unit@ _) { Hex|00_97; }),
 
-  /Core/Int/Show/Tests%.Tests,
-  /Core/Int/Map/Tests%.Tests
+  /Core/Int/Map/Tests%.Tests,
+  /Core/Int/Show/Tests%.Tests
 ]);
 
 @(Tests);

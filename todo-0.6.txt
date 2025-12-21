@@ -3,7 +3,7 @@ Fble 0.6 TODO
 Things to consider doing for the fble-0.6 release.
 
 * Add test for StrE with \q escape.
-* Add tests for foo $ bar syntaxes.
+* Add spec tests for foo $ bar syntaxes.
   - right associativity
   - works in expr and stmt context
 
@@ -17,10 +17,7 @@ Things to consider doing for the fble-0.6 release.
 * Add function to show an integer base 16? Base 2? Base anything?
 
 * Change /Core/Stdio/StringO% to take Output@ instead of String@.
-* Rename ShowM@ to StringM@?
-  And reduce overlap between String@ construction and StringM@ construction
-  functions? e.g. Join, Lines, Concat.
-* Change /Core/Debug%.TraceLn function to take ShowM@ instead of String@?
+* Change /Core/Debug%.TraceLn function to take Output@ instead of String@?
 * Double check if I should be able to write:
    @ ShowM@ = /Core/Show%.ShowM@, when ShowM@ has kind <@>@.
   Seems like I can't, but I thought I made it so I could.
@@ -84,7 +81,6 @@ Things to consider doing for the fble-0.6 release.
   or not.
   And add spec tests for that case.
 
-* Separate out /Std into a different package from /Core.
 * Rename /Core/Unit% to /Std/Unit% in tutorials, if there are any references.
 
 * Revamp the standard library.
