@@ -139,6 +139,8 @@ Int@ 1 = P(IntP.1);
 };
 
 # @func[Exp2] Base-2 exponentiation. 2^a
+#  Behavior is undefined if @a[a] is negative.
+#
 #  @arg[Int@][a] The operand.
 #  @returns[Int@] Two to the power of @a[a].
 (Int@) { Int@; } Exp2 = (Int@ a) {
@@ -147,6 +149,8 @@ Int@ 1 = P(IntP.1);
 };
 
 # @func[Exp] Exponentiation. a^b
+#  Behavior is undefeind if @a[b] is negative.
+#
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Int@] The first operand raised to the power of the second operand.

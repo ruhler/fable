@@ -23,16 +23,6 @@
 
 @ Int@ = /Std/Int%.Int@;
 % Neg = /Std/Int%.Neg;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Mul = /Std/Int%.Mul;
-% Mul2 = /Std/Int%.Mul2;
-% Exp2 = /Std/Int%.Exp2;
-% Exp = /Std/Int%.Exp;
-% Shl = /Std/Int%.Shl;
-% Shr = /Std/Int%.Shr;
 
 % Div = /Std/Int/Div%.Div;
 % Quot = /Std/Int/Div%.Quot;
@@ -64,7 +54,6 @@ Int@ 4 = Int|4;
 Int@ 5 = Int|5;
 Int@ 6 = Int|6;
 Int@ 7 = Int|7;
-Int@ 8 = Int|8;
 
 (String@, (Unit@) { Bool@; }) { Test@; }
 T = (String@ name, (Unit@) { Bool@; } p) {
@@ -176,15 +165,6 @@ Test@ Tests = TestSuite(Str|Int, List[
   T(Str|Ge_m5_0, (Unit@ _) { Not(Ge(Neg(5), 0)); }),
   T(Str|Ge_m5_1, (Unit@ _) { Not(Ge(Neg(5), 1)); }),
 
-  TEq(Str|Incr_3, 4, (Unit@ _) { Incr(3); }),
-  TEq(Str|Decr_3, 2, (Unit@ _) { Decr(3); }),
-  TEq(Str|Add_2_3, 5, (Unit@ _) { Add(2, 3); }),
-  TEq(Str|Add_3_m5, Neg(2), (Unit@ _) { Add(3, Neg(5)); }),
-  TEq(Str|Sub_5_3, 2, (Unit@ _) { Sub(5, 3); }),
-  TEq(Str|Sub_3_5, Neg(2), (Unit@ _) { Sub(3, 5); }),
-  TEq(Str|Neg_m2, 2, (Unit@ _) { Neg(Neg(2)); }),
-  TEq(Str|Neg_0, 0, (Unit@ _) { Neg(0); }),
-
   TEq(Str|Min_0_5, Int|0, (Unit@ _) { Min(0, 5); }),
   TEq(Str|Min_3_0, Int|0, (Unit@ _) { Min(3, 0); }),
   TEq(Str|Max_0_5, Int|5, (Unit@ _) { Max(0, 5); }),
@@ -193,17 +173,6 @@ Test@ Tests = TestSuite(Str|Int, List[
   TEq(Str|Abs_0, Int|0, (Unit@ _) { Abs(0); }),
   TEq(Str|Abs_3, Int|3, (Unit@ _) { Abs(3); }),
   TEq(Str|Abs_m3, Int|3, (Unit@ _) { Abs(Neg(3)); }),
-
-  TEq(Str|Mul_3_5, Int|15, (Unit@ _) { Mul(3, 5); }),
-  TEq(Str|Mul_m3_5, Neg(Int|15), (Unit@ _) { Mul(Neg(3), 5); }),
-  TEq(Str|Mul_3_m5, Neg(Int|15), (Unit@ _) { Mul(3, Neg(5)); }),
-  TEq(Str|Mul_m3_m5, Int|15, (Unit@ _) { Mul(Neg(3), Neg(5)); }),
-  TEq(Str|Mul_0_5, Int|0, (Unit@ _) { Mul(0, 5); }),
-  TEq(Str|Mul_3_0, Int|0, (Unit@ _) { Mul(3, 0); }),
-
-  TEq(Str|Mul2_3, Int|6, (Unit@ _) { Mul2(3); }),
-  TEq(Str|Mul2_0, Int|0, (Unit@ _) { Mul2(0); }),
-  TEq(Str|Mul2_m3, Neg(Int|6), (Unit@ _) { Mul2(Neg(3)); }),
 
   TEq(Str|DivQ_11_4, Int|2, (Unit@ _) { Div(Int|11, Int|4).q; }),
   TEq(Str|DivR_11_4, Int|3, (Unit@ _) { Div(Int|11, Int|4).r; }),
@@ -230,21 +199,6 @@ Test@ Tests = TestSuite(Str|Int, List[
   TEq(Str|Sqrt_29_r, Int|4, (Unit@ _) { Sqrt(Int|29).r; }),
   TEq(Str|Sqrt_12345_q, Int|111, (Unit@ _) { Sqrt(Int|12345).q; }),
   TEq(Str|Sqrt_12345_r, Int|24, (Unit@ _) { Sqrt(Int|12345).r; }),
-
-  TEq(Str|Exp2_0, Int|1, (Unit@ _) { Exp2(0); }),
-  TEq(Str|Exp2_8, Int|256, (Unit@ _) { Exp2(8); }),
-  TEq(Str|Exp2_7, Int|128, (Unit@ _) { Exp2(7); }),
-
-  TEq(Str|Exp_3_4, Int|81, (Unit@ _) { Exp(3, 4); }),
-  TEq(Str|Exp_0_0, Int|1, (Unit@ _) { Exp(0, 0); }),
-
-  TEq(Str|Shl_3_4, Int|48, (Unit@ _) { Shl(3, 4); }),
-  TEq(Str|Shl_0_4, Int|0, (Unit@ _) { Shl(0, 4); }),
-  TEq(Str|Shl_m3_4, Neg(Int|48), (Unit@ _) { Shl(Neg(3), 4); }),
-
-  TEq(Str|Shr_48_4, Int|3, (Unit@ _) { Shr(Int|48, 4); }),
-  TEq(Str|Shr_0_4, Int|0, (Unit@ _) { Shr(0, 4); }),
-  TEq(Str|Shr_m48_4, Neg(Int|3), (Unit@ _) { Shr(Neg(Int|48), 4); }),
 
   TOrd(Str|Ord_3_5, Ord.Less, (Unit@ _) { IOrd(3, 5); }),
   TOrd(Str|Ord_5_3, Ord.Greater, (Unit@ _) { IOrd(5, 3); }),

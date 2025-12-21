@@ -1,0 +1,140 @@
+
+@ Ascii@ = /Std/Char/Ascii%.Ascii@;
+<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+% Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
+% Neg = /Std/Int%.Neg;
+% Mul = /Std/Int%.Mul;
+% Mul2 = /Std/Int%.Mul2;
+% Exp = /Std/Int%.Exp;
+% Exp2 = /Std/Int%.Exp2;
+% Shl = /Std/Int%.Shl;
+% Shr = /Std/Int%.Shr;
+% Int = /Std/Int/Lit%.Int;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+
+@ Test@ = /Std/Test%.Test@;
+% Test = OnAscii $ /Std/Test%.Test;
+% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+(List@<Ascii@>, (Int@) { Int@; }, Int@, Int@) { Test@; }
+Unary = (List@<Ascii@> name, (Int@) { Int@; } f, Int@ a, Int@ z) {
+  Test(name, (Unit@ _) {
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, z, f(a));
+  });
+};
+
+(List@<Ascii@>, (Int@, Int@) { Int@; }, Int@, Int@, Int@) { Test@; }
+Binary = (List@<Ascii@> name, (Int@, Int@) { Int@; } f, Int@ a, Int@ b, Int@ z) {
+  Test(name, (Unit@ _) {
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, z, f(a, b));
+  });
+};
+
+Test@ Tests = TestSuite|Int $ List[
+  TestSuite|Incr $ List[
+    Unary|N(Incr, Neg(Int|8), Neg(Int|7)),
+    Unary|'-1'(Incr, Neg(Int|1), Int|0),
+    Unary|0(Incr, Int|0, Int|1),
+    Unary|P(Incr, Int|2315, Int|2316)
+  ],
+
+  TestSuite|Decr $ List[
+    Unary|N(Decr, Neg(Int|8), Neg(Int|9)),
+    Unary|0(Decr, Int|0, Neg(Int|1)),
+    Unary|1(Decr, Int|1, Int|0),
+    Unary|P(Decr, Int|2315, Int|2314)
+  ],
+
+  TestSuite|Add $ List[
+    Binary|PP(Add, Int|133, Int|456, Int|589),
+    Binary|0P(Add, Int|0, Int|456, Int|456),
+    Binary|P0(Add, Int|456, Int|0, Int|456),
+    Binary|00(Add, Int|0, Int|0, Int|0),
+    Binary|0N(Add, Int|0, Neg(Int|456), Neg(Int|456)),
+    Binary|N0(Add, Neg(Int|456), Int|0, Neg(Int|456)),
+    Binary|NN(Add, Neg(Int|133), Neg(Int|456), Neg(Int|589)),
+    Binary|NP(Add, Neg(Int|133), Int|456, Int|323)
+  ],
+
+  TestSuite|Sub $ List[
+    Binary|PP(Sub, Int|133, Int|456, Neg(Int|323)),
+    Binary|0P(Sub, Int|0, Int|456, Neg(Int|456)),
+    Binary|P0(Sub, Int|456, Int|0, Int|456),
+    Binary|00(Sub, Int|0, Int|0, Int|0),
+    Binary|0N(Sub, Int|0, Neg(Int|456), Int|456),
+    Binary|N0(Sub, Neg(Int|456), Int|0, Neg(Int|456)),
+    Binary|NN(Sub, Neg(Int|133), Neg(Int|456), Int|323),
+    Binary|NP(Sub, Neg(Int|133), Int|456, Neg(Int|589))
+  ],
+
+  TestSuite|Neg $ List[
+    Unary|N(Neg, Neg(Int|4), Int|4),
+    Unary|0(Neg, Int|0, Int|0),
+    Unary|P(Neg, Int|3, Neg(Int|3))
+  ],
+
+  TestSuite|Mul $ List[
+    Binary|PP(Mul, Int|133, Int|456, Int|60648),
+    Binary|0P(Mul, Int|0, Int|456, Int|0),
+    Binary|P0(Mul, Int|456, Int|0, Int|0),
+    Binary|00(Mul, Int|0, Int|0, Int|0),
+    Binary|0N(Mul, Int|0, Neg(Int|456), Int|0),
+    Binary|N0(Mul, Neg(Int|456), Int|0, Int|0),
+    Binary|NN(Mul, Neg(Int|133), Neg(Int|456), Int|60648),
+    Binary|NP(Mul, Neg(Int|133), Int|456, Neg(Int|60648))
+  ],
+
+  TestSuite|Mul2 $ List[
+    Unary|N(Mul2, Neg(Int|7), Neg(Int|14)),
+    Unary|0(Mul2, Int|0, Int|0),
+    Unary|1(Mul2, Int|1, Int|2),
+    Unary|P(Mul2, Int|2315, Int|4630)
+  ],
+
+  TestSuite|Exp $ List[
+    Binary|PP(Exp, Int|3, Int|4, Int|81),
+    Binary|0P(Exp, Int|0, Int|3, Int|0),
+    Binary|P0(Exp, Int|5, Int|0, Int|1),
+    Binary|00(Exp, Int|0, Int|0, Int|1),
+    Binary|N0(Exp, Neg(Int|3), Int|0, Int|1),
+    Binary|NO(Exp, Neg(Int|3), Int|5, Neg(Int|243)),
+    Binary|NE(Exp, Neg(Int|3), Int|4, Int|81)
+  ],
+
+  TestSuite|Exp2 $ List[
+    Unary|0(Exp2, Int|0, Int|1),
+    Unary|1(Exp2, Int|1, Int|2),
+    Unary|P(Exp2, Int|5, Int|32)
+  ],
+
+  TestSuite|Shl $ List[
+    Binary|PP(Shl, Int|81, Int|4, Int|1296),
+    Binary|0P(Shl, Int|0, Int|3, Int|0),
+    Binary|P0(Shl, Int|5, Int|0, Int|5),
+    Binary|00(Shl, Int|0, Int|0, Int|0),
+    Binary|N0(Shl, Neg(Int|3), Int|0, Neg(Int|3)),
+    Binary|NP(Shl, Neg(Int|3), Int|3, Neg(Int|24))
+  ],
+
+  TestSuite|Shr $ List[
+    Binary|PP(Shr, Int|1298, Int|4, Int|81),
+    Binary|0P(Shr, Int|0, Int|3, Int|0),
+    Binary|P0(Shr, Int|5, Int|0, Int|5),
+    Binary|00(Shr, Int|0, Int|0, Int|0),
+    Binary|N0(Shr, Neg(Int|1298), Int|0, Neg(Int|1298)),
+    Binary|NP(Shr, Neg(Int|1298), Int|4, Neg(Int|81))
+  ]
+];
+
+@(Tests);
