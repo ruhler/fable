@@ -153,3 +153,17 @@ but solves the problem. Otherwise I don't know how it could work. I suppose we
 wait for both it and the output gate to be empty before activating. But
 activating for non-caboose cars seems just as easy?
 
+---
+
+What do you think about having split gate forward caboose always to the
+output, rather than redirecting? Because it's weird that the caboose would go
+to the split off output and then drive itself. If caboose kept going forward,
+that would give a way to easily implement an up-to-N reverse network.
+
+More generally, if we're going to support computation on arbitrary length
+trains, we need a good way to detect how long the train is. Meaning a way to
+separate zero length trains from non-zero length trains. Or, in other words,
+'switch' should have 3 possibly overlapping directions. Actually, 'Rail' could
+be a special case of 'switch' where all three directions point the same way?
+
+If we had a 3-way switch, could we do the reverse up to N network as easily?
