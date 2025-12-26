@@ -263,6 +263,31 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
+  Test(Str|'Split_C', (Unit@ _) {
+    # C train goes straight through, without having anything split off.
+    Gates@ gates = Entries[
+        @(x: Int|1, y: Int|3, v: Gate.Move(Dir.Right)),
+        @(x: Int|2, y: Int|3, v: Gate.Move(Dir.Right)),
+        @(x: Int|3, y: Int|3, v: Gate.Move(Dir.Right)),
+        @(x: Int|4, y: Int|3, v: Gate.Split(Dir.Up, Dir.Down)),
+        @(x: Int|4, y: Int|2, v: Gate.Move(Dir.Down)),
+        @(x: Int|4, y: Int|1, v: Gate.Move(Dir.Down)),
+        @(x: Int|4, y: Int|0, v: Gate.Stop),
+        @(x: Int|4, y: Int|4, v: Gate.Move(Dir.Up)),
+        @(x: Int|4, y: Int|5, v: Gate.Move(Dir.Up)),
+        @(x: Int|4, y: Int|6, v: Gate.Stop)
+    ];
+    Cars@ cars = Entries[
+        @(x: Int|1, y: Int|3, v: Car.C)
+    ];
+    Model@ model = Model(gates, cars);
+    Model@ wnt = Model(gates, Entries[
+        @(x: Int|4, y: Int|0, v: Car.C)
+    ]);
+    Model@ got = Ticks(model);
+    AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
+  }),
+
   Test(Str|'Switch 0', (Unit@ _) {
     Gates@ gates = Entries[
         @(x: Int|1, y: Int|3, v: Gate.Move(Dir.Right)),

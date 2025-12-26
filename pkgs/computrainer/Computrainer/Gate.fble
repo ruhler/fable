@@ -202,16 +202,18 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 #  ###
 #
 # * Splits the first car off the train one direction, then forwards the rest of
-#   the train on.
+#   the train on. A train with just a caboose is forwarded on without splitting
+#   anything off.
 @ Split@ = *(Dir@ head, Dir@ tail);
 % Split = {
     (Split@) { Action@; } Action = (Split@ _) { NoAction; };
 
     (Split@) { Push@; }
     Push = (Split@ g, PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
-        mv.?(nothing: Just(s));                                # Cars can move onto empty spot
+        mv.?(nothing: Just(s));                                # Cars can move onto empty spot.
         Routing(c, s).?(just: PushToRoute(push, c, mv, s));    # Route tail to output.
-        PushTo(g.head, push, c, mv, SetRouting(c, s, g.tail)); # Push head, route to tail
+        mv.just.?(C: Just(SetRouting(c, s, g.tail)));          # Route empty train to output.
+        PushTo(g.head, push, c, mv, SetRouting(c, s, g.tail)); # Push head, route to tail.
     };
 
     @(Action, Push);

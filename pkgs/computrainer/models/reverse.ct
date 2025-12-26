@@ -1,0 +1,43 @@
+gate -8 1 move right
+gate -7 1 move right
+gate -6 1 move right
+gate -5 1 move right
+gate -4 1 move right
+gate -3 -1 move up
+gate -3 0 move right
+gate -3 1 split down right
+gate -2 -1 move left
+gate -2 0 move right
+gate -2 1 split down right
+gate -1 -1 move left
+gate -1 0 move right
+gate -1 1 split down right
+gate 0 -1 move left
+gate 0 0 move right
+gate 0 1 split down right
+gate 1 -1 move left
+gate 1 0 move right
+gate 1 1 split down right
+gate 2 -1 move left
+gate 2 0 move right
+gate 2 1 move right
+gate 3 -1 move left
+gate 3 0 move right
+gate 3 1 move right
+gate 4 -1 move left
+gate 4 0 move right
+gate 4 1 move right
+gate 5 -1 move left
+gate 5 0 move right
+gate 5 1 move right
+gate 6 -1 move left
+gate 6 0 stop
+gate 6 1 move right
+gate 7 -1 move left
+gate 7 0 move down
+gate 7 1 move down
+car 3 0 C
+car 4 0 1
+car 5 0 0
+car 6 0 0
+phase gates

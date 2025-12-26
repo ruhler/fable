@@ -167,3 +167,19 @@ separate zero length trains from non-zero length trains. Or, in other words,
 be a special case of 'switch' where all three directions point the same way?
 
 If we had a 3-way switch, could we do the reverse up to N network as easily?
+
+---
+
+Proposed gate adjustements:
+
+1. Change 'switch' to take a car and two dirs. The directions are the
+direction to send trains starting with the car, and the direction for all
+other trains.
+
+I think this is simpler than having 3 outputs. It's easy enough to put two
+next to each other if you really want three outputs. We can call this a
+'filter' gate.
+
+2. Change split to forward empty train to default output rather than split off
+an empty train. I think it makes more sense.
+
