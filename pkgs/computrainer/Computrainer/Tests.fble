@@ -288,12 +288,12 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Switch 0', (Unit@ _) {
+  Test(Str|'Filter Match', (Unit@ _) {
     Gates@ gates = Entries[
         @(x: Int|1, y: Int|3, v: Gate.Move(Dir.Right)),
         @(x: Int|2, y: Int|3, v: Gate.Move(Dir.Right)),
         @(x: Int|3, y: Int|3, v: Gate.Move(Dir.Right)),
-        @(x: Int|4, y: Int|3, v: Gate.Switch(Dir.Up, Dir.Down)),
+        @(x: Int|4, y: Int|3, v: Gate.Filter(Car.0, Dir.Up, Dir.Down)),
         @(x: Int|4, y: Int|2, v: Gate.Move(Dir.Down)),
         @(x: Int|4, y: Int|1, v: Gate.Move(Dir.Down)),
         @(x: Int|4, y: Int|0, v: Gate.Stop),
@@ -316,12 +316,12 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Switch 1', (Unit@ _) {
+  Test(Str|'Filter Default', (Unit@ _) {
     Gates@ gates = Entries[
         @(x: Int|1, y: Int|3, v: Gate.Move(Dir.Right)),
         @(x: Int|2, y: Int|3, v: Gate.Move(Dir.Right)),
         @(x: Int|3, y: Int|3, v: Gate.Move(Dir.Right)),
-        @(x: Int|4, y: Int|3, v: Gate.Switch(Dir.Up, Dir.Down)),
+        @(x: Int|4, y: Int|3, v: Gate.Filter(Car.0, Dir.Up, Dir.Down)),
         @(x: Int|4, y: Int|2, v: Gate.Move(Dir.Down)),
         @(x: Int|4, y: Int|1, v: Gate.Move(Dir.Down)),
         @(x: Int|4, y: Int|0, v: Gate.Stop),

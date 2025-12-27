@@ -38,6 +38,7 @@ Int@ 1 = Int|1;
 Int@ 2 = Int|2;
 Int@ 3 = Int|3;
 Int@ 4 = Int|4;
+Int@ 5 = Int|5;
 
 (List@<Ascii@>, String@) { Bool@; }
 StrIs = (List@<Ascii@> want, String@ str) {
@@ -98,7 +99,8 @@ AddGate = (List@<String@> args, Model@ m) {
         StrIs|'dup'(g).?(true: Gate.Dup(ReadDir(Get(args, 3)), ReadDir(Get(args, 4))));
         StrIs|'wait'(g).?(true: Gate.Wait(ReadDir(Get(args, 3))));
         StrIs|'split'(g).?(true: Gate.Split(ReadDir(Get(args, 3)), ReadDir(Get(args, 4))));
-        StrIs|'switch'(g).?(true: Gate.Switch(ReadDir(Get(args, 3)), ReadDir(Get(args, 4))));
+        StrIs|'switch'(g).?(true: Gate.Filter(Car.0, ReadDir(Get(args, 3)), ReadDir(Get(args, 4))));
+        StrIs|'filter'(g).?(true: Gate.Filter(ReadCar(Get(args, 3)), ReadDir(Get(args, 4)), ReadDir(Get(args, 5))));
         /Std/Undef%.Undef.undef<Gate@>;
     };
     m.@(gates: Grid.Insert(m.gates, coord, gate));

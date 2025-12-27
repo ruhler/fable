@@ -3,7 +3,7 @@ gate -8 0 move right
 gate -7 0 move right
 gate -6 0 move right
 gate -5 -1 move right
-gate -5 0 switch down up
+gate -5 0 filter 0 down up
 gate -5 1 move right
 gate -4 -1 split up right
 gate -4 0 sink
@@ -17,4 +17,6 @@ gate 0 0 move right
 gate 1 0 stop
 car -3 -1 1
 car -3 1 0
+car 0 0 C
+car 1 0 0
 phase engines

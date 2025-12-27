@@ -1,4 +1,9 @@
 
+* Add Rotate3 to select car color for source and filter.
+  Reduce down to 1 menu tile each for source and filter.
+
+* Add support for resizing the window.
+
 * Clean up menu code.
 
 * Figure out how to write tests for ui

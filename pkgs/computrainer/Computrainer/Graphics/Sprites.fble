@@ -38,10 +38,10 @@ Gate = (Gate@ g) {
             Shapes.Dir(g.split.tail),
             Shapes.Dir2(g.split.head)
         ](Colors.Gate),
-        switch: Drawings[
+        filter: Drawings[
             Shapes.Gate(Colors.Gate),
-            Shapes.Dir(g.switch.0, Colors.0),
-            Shapes.Dir(g.switch.1, Colors.1)
+            Shapes.Dir(g.filter.match, Colors.Car(g.filter.car)),
+            Shapes.Dir(g.filter.default, Colors.Gate)
         ]);
 };
 

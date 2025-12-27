@@ -40,7 +40,7 @@
        'SINK |': Just(Gate.Sink),
        'T H >|': Just(Gate.Split(Dir.Down, Dir.Right)),
        'TH  >|': Just(Gate.Split(Dir.Up, Dir.Right)),
-       'X01  |': Just(Gate.Switch(Dir.Up, Dir.Down))
+       'X01  |': Just(Gate.Filter(Car.0, Dir.Up, Dir.Down))
    );
 };
 

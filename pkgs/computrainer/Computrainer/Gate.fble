@@ -219,28 +219,26 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
     @(Action, Push);
 };
 
-# Switch gate.
+# Filter gate.
 #   # 
 #  ### 
 #  # ##
 #  ###
 #
-# * Sends trains on depending on the value of the first car of the train.
-@ Switch@ = *(Dir@ 0, Dir@ 1);
-% Switch = {
-    (Switch@) { Action@; } Action = (Switch@ g, Coord@ c, State@ s) {
+# * Trains starting with a target car are redirected to a different direction.
+@ Filter@ = *(Car@ car, Dir@ match, Dir@ default);
+% Filter = {
+    (Filter@) { Action@; } Action = (Filter@ g, Coord@ c, State@ s) {
         Routing(c, s).?(just: s);             # Block for routing to finish.
 
         Maybe@<Car@> mv = Grid.Lookup(s.cars, c);
         Grid.Lookup(s.cars, c).?(nothing: s); # Block for car to show up.
         Car@ v = mv.just;
-
-        v.?(C: s,                             # Uh oh. Stuck on caboose.
-            0: SetRouting(c, s, g.0),         # Route out to 0.
-            1: SetRouting(c, s, g.1));        # Route out to 1.
+        /Computrainer/Car/Eq%.Car(v, g.car).?(true: SetRouting(c, s, g.match));
+        SetRouting(c, s, g.default);
     };
 
-    (Switch@) { Push@; } Push = (Switch@ _) { PushToRoute; };
+    (Filter@) { Push@; } Push = (Filter@ _) { PushToRoute; };
 
     @(Action, Push);
 };
@@ -253,7 +251,7 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
     Dup@ dup,
     Wait@ wait,
     Split@ split,
-    Switch@ switch
+    Filter@ filter
 );
 
 (Gate@) { Action@; } Action = (Gate@ g) {
@@ -264,7 +262,7 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
         dup: Dup.Action(g.dup),
         wait: Wait.Action(g.wait),
         split: Split.Action(g.split),
-        switch: Switch.Action(g.switch));
+        filter: Filter.Action(g.filter));
 };
 
 (Gate@) { Push@; } Push = (Gate@ g) {
@@ -275,7 +273,7 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
         dup: Dup.Push(g.dup),
         wait: Wait.Push(g.wait),
         split: Split.Push(g.split),
-        switch: Switch.Push(g.switch));
+        filter: Filter.Push(g.filter));
 };
 
 Gate@ Stop = Gate@(stop: Unit);
@@ -285,7 +283,9 @@ Gate@ Sink = Gate@(sink: Unit);
 (Dir@, Dir@) { Gate@; } Dup = (Dir@ a, Dir@ b) { Gate@(dup: @(a, b)); };
 (Dir@) { Gate@; } Wait = (Dir@ dir) { Gate@(wait: dir); };
 (Dir@, Dir@) { Gate@; } Split = (Dir@ head, Dir@ tail) { Gate@(split: @(head, tail)); };
-(Dir@, Dir@) { Gate@; } Switch = (Dir@ 0, Dir@ 1) { Gate@(switch: @(0, 1)); };
+(Car@, Dir@, Dir@) { Gate@; } Filter = (Car@ car, Dir@ match, Dir@ default) {
+    Gate@(filter: @(car, match, default));
+};
 
 (Gate@) { Gate@; }
 Rotate = (Gate@ g) {
@@ -296,14 +296,14 @@ Rotate = (Gate@ g) {
         dup: Dup(Dir.Rotate(g.dup.a), Dir.Rotate(g.dup.b)),
         wait: Wait(Dir.Rotate(g.wait)),
         split: Split(Dir.Rotate(g.split.head), Dir.Rotate(g.split.tail)),
-        switch: Switch(Dir.Rotate(g.switch.0), Dir.Rotate(g.switch.1)));
+        filter: Filter(g.filter.car, Dir.Rotate(g.filter.match), Dir.Rotate(g.filter.default)));
 };
 
 # Rotates just the second direction associated with each gate.
 (Gate@) { Gate@; }
 Rotate2 = (Gate@ g) {
-    Dir@ first = g.?(dup: g.dup.a, split: g.split.tail, switch: g.switch.0, : Dir.Up);
-    Dir@ second = g.?(dup: g.dup.b, split: g.split.head, switch: g.switch.1, : Dir.Right);
+    Dir@ first = g.?(dup: g.dup.a, split: g.split.tail, filter: g.filter.default, : Dir.Up);
+    Dir@ second = g.?(dup: g.dup.b, split: g.split.head, filter: g.filter.match, : Dir.Right);
     Dir@ nsecond = Dir.Rotate(second);
 
     # Rotate again if it's overlapping the first position.
@@ -313,12 +313,12 @@ Rotate2 = (Gate@ g) {
 
     g.?(dup: Dup(first, second),
         split: Split(second, first),
-        switch: Switch(first, second),
+        filter: Filter(g.filter.car, second, first),
         : g);
 };
 
 @(Gate@, Action, Push,
-  Stop, Move, Source, Sink, Dup, Wait, Split, Switch,
+  Stop, Move, Source, Sink, Dup, Wait, Split, Filter,
   Rotate, Rotate2
 );
 

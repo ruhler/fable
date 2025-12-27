@@ -7,20 +7,13 @@
 
 % Dir = /Computrainer/Dir/Eq%.Eq;
 
-@ Car@ = /Computrainer/Car%.Car@;
-@ Cars@ = /Computrainer/Car%.Cars@;
+% Car = /Computrainer/Car/Eq%.Car;
+% Cars = /Computrainer/Car/Eq%.Cars;
 
 @ Gate@ = /Computrainer/Gate%.Gate@;
 @ Gates@ = /Computrainer/Model%.Gates@;
 @ Model@ = /Computrainer/Model%.Model@;
 @ State@ = /Computrainer/State%.State@;
-
-Eq@<Car@> Car = (Car@ a, Car@ b) {
-    a.?(
-        C: b.?(C: True, : False),
-        0: b.?(0: True, : False),
-        1: b.?(1: True, : False));
-};
 
 Eq@<Gate@> Gate = (Gate@ a, Gate@ b) {
     a.?(stop: b.?(stop: True, : False),
@@ -30,12 +23,16 @@ Eq@<Gate@> Gate = (Gate@ a, Gate@ b) {
         dup: b.?(dup: And(Dir(a.dup.a, b.dup.a), Dir(a.dup.b, b.dup.b)), : False),
         wait: b.?(wait: Dir(a.wait, b.wait), : False),
         split: b.?(split: And(Dir(a.split.head, b.split.head), Dir(a.split.tail, b.split.tail)), : False),
-        switch: b.?(switch: And(Dir(a.switch.0, b.switch.0), Dir(a.switch.1, b.switch.1)), : False));
+        filter: b.?(filter: {
+            Car(a.filter.car, b.filter.car).?(false: False);
+            Dir(a.filter.match, b.filter.match).?(false: False);
+            Dir(a.filter.default, b.filter.default).?(false: False);
+            True;
+            }, : False));
 };
 
 Eq@<Gates@> Gates = /Computrainer/Grid/Eq%.Eq(Gate);
 
-Eq@<Cars@> Cars = /Computrainer/Grid/Eq%.Eq(Car);
 
 # TODO: Check for states?
 Eq@<State@> State = (State@ a, State@ b) {
@@ -48,4 +45,4 @@ Eq@<Model@> Model = (Model@ a, Model@ b) {
     True;
 };
 
-@(Model, Cars);
+@(Model);
