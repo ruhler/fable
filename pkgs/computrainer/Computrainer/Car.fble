@@ -11,4 +11,9 @@ Car@ 1 = Car@(1: Unit);
 
 @ Cars@ = Grid@<Car@>;
 
-@(Car@, Cars@, 0, 1, C);
+(Car@) { Car@; }
+Rotate = (Car@ c) {
+    c.?(C: 0, 0: 1, 1: C);
+};
+
+@(Car@, Cars@, 0, 1, C, Rotate);

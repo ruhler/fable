@@ -6,7 +6,8 @@
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-@ Car@ = /Computrainer/Car%.Car@;
+% Car = /Computrainer/Car%;
+@ Car@ = Car.Car@;
 
 % Dir = /Computrainer/Dir%;
 @ Dir@ = Dir.Dir@;
@@ -317,8 +318,16 @@ Rotate2 = (Gate@ g) {
         : g);
 };
 
+# Rotates through available car choices for a gate.
+(Gate@) { Gate@; }
+RotateCar = (Gate@ g) {
+    g.?(source: Source(Car.Rotate(g.source.car), g.source.dir));
+    g.?(filter: Filter(Car.Rotate(g.filter.car), g.filter.match, g.filter.default));
+    g;
+};
+
 @(Gate@, Action, Push,
   Stop, Move, Source, Sink, Dup, Wait, Split, Filter,
-  Rotate, Rotate2
+  Rotate, Rotate2, RotateCar
 );
 

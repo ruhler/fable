@@ -1,6 +1,5 @@
 
-* Add Rotate3 to select car color for source and filter.
-  Reduce down to 1 menu tile each for source and filter.
+* Use ctrl-r or 'c' for RotateCar instead of left vs right shift.
 
 * Add support for resizing the window.
 
