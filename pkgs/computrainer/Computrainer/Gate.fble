@@ -302,8 +302,8 @@ Rotate = (Gate@ g) {
 # Rotates just the second direction associated with each gate.
 (Gate@) { Gate@; }
 Rotate2 = (Gate@ g) {
-    Dir@ first = g.?(dup: g.dup.a, split: g.split.head, switch: g.switch.0, : Dir.Up);
-    Dir@ second = g.?(dup: g.dup.b, split: g.split.tail, switch: g.switch.1, : Dir.Right);
+    Dir@ first = g.?(dup: g.dup.a, split: g.split.tail, switch: g.switch.0, : Dir.Up);
+    Dir@ second = g.?(dup: g.dup.b, split: g.split.head, switch: g.switch.1, : Dir.Right);
     Dir@ nsecond = Dir.Rotate(second);
 
     # Rotate again if it's overlapping the first position.
@@ -312,7 +312,7 @@ Rotate2 = (Gate@ g) {
 
 
     g.?(dup: Dup(first, second),
-        split: Split(first, second),
+        split: Split(second, first),
         switch: Switch(first, second),
         : g);
 };
