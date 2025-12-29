@@ -1,0 +1,6 @@
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+@ Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
+
+@(Dir@);

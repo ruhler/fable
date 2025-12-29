@@ -1,0 +1,14 @@
+
+<@>@ List@ = /Std/List%.List@;
+
+@ Dir@ = /Cbtg/Dir%.Dir@;
+@ Bag@ = /Cbtg/Good%.Bag@;
+
+@ Car@ = *(Bag@ max, Bag@ contents);
+
+@ Train@ = *(
+    List@<Car@> cars,   # List of non-engine cars in order.
+    List@<Dir@> links   # Pointers to next cars in the train.
+);
+
+@(Car@, Train@);

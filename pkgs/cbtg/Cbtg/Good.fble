@@ -1,0 +1,14 @@
+
+@ Good@ = +(
+    Unit@ labor,
+    Unit@ leisure,
+    Unit@ item
+);
+
+@ Bag@ = *(
+    Int@ labor,
+    Int@ leisure,
+    Int@ item
+);
+
+@(Good@, Bag@);

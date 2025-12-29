@@ -1,0 +1,65 @@
+City Builder Train Game
+=======================
+You build a train network to serve the supply and demand needs of a growing
+city. Optimize your routes to grow the city as big as you can.
+
+The UI should be simple. The automation natural. Quality of life as good as we
+can make it, via simplicity. Train routes are encoded directly in the track. A
+train just follows the route and goes where it ends up.
+
+Prefer simplicity over realistic. It's okay to be contrived or not realistic
+in terms of supply and demand. Try to expose just the pure essence of what
+makes it fun with as little complexity as possible.
+
+2D square grid. Entities on the grid:
+* Rail - guides trains to where they ought to go. 1x1
+* Trains - engines and cars of various types for moving various kinds of
+  different cargo. 1x1
+* Factories - provide demand/supply of various kinds. MxN
+
+Accounting:
+* Each unit of rail and train has an associated expense.
+* Each factory pays a certain amount for sustained demand/supply in the last X
+  period of time. For example: if you supply 5 items per minute, you get paid
+  500. If you supply 10 items per minute, you get paid 700.
+
+Factory payouts are updated every period of time, say. Not necessarily all at
+once. But at any point in time, there's a well defined revenue associated with
+every factory.
+
+You can buy more rail and cars as long as you have enough revenue from all
+your factories to pay for all your rail/cars. If you start to lose revenue,
+you can no longer buy new stuff.
+
+At any time you can sell any of your rail/cars. At any time you can move or
+unplace/replace any of your rail/cars.
+
+Factories will appear on the map randomly, and be upgraded randomly depending
+on how well you serve their supply and demand. If you don't meet a factory's
+supply and demand, it becomes more likely to go out of business and
+disappear, thus making room for something else. Maybe you can manually trash a
+factory to build over it, thus losing any revenue from the factory, but we'll
+need some mechanism to avoid abusing that to wait until the specific factory
+you want shows up in its place?
+
+Sample MVP1:
+
+Cars: Engine, Passenger, Cargo
+ - Engine needed at front of a train to drive it.
+ - Passenger car carries passengers.
+ - Cargo car carries goods.
+
+Rails: Move, Stop
+ - Move moves the train in the given direction.
+ - Stop causes the train to stop and load/unload cars based on what the cars
+   are next to. Once loading/unloading is done, the train proceeds again in
+   the given direction.
+
+Goods: Refreshed Passenger, Tired Passenger, Good
+
+Factory: House, Factory, Export
+ - House turns a tired passenger into a refreshed passenger. It starts with 1
+   refreshed passenger. Max occupancy of 1.
+ - Factory turns a refreshed passenger into a tired passenger and a good.
+ - Export takes away goods from trains.
+

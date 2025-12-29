@@ -1,0 +1,6 @@
+
+@ Dir@ = /Cbtg/Dir%.Dir@;
+
+@ Rail@ = +(Dir@ go, Dir@ stop);
+
+@(Rail@);

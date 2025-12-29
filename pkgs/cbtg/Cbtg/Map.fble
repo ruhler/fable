@@ -1,0 +1,8 @@
+
+@ Map@ = *(
+    CoordMap@<Train@> trains,
+    CoordMap@<Rail@> rails,
+    CoordMap@<Factory@> factories
+);
+
+@(Map@);

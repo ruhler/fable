@@ -1,0 +1,134 @@
+MVP 1
+=====
+
+Cars: Engine, Passenger, Cargo
+ - Engine needed at front of a train to drive it.
+ - Passenger car carries passengers.
+ - Cargo car carries goods.
+
+Rails: Move, Stop
+ - Move moves the train in the given direction.
+ - Stop causes the train to stop and load/unload cars based on what the cars
+   are next to. Once loading/unloading is done, the train proceeds again in
+   the given direction.
+
+Goods: Refreshed Passenger, Tired Passenger, Good
+
+Factory: House, Factory, Export
+ - House turns a tired passenger into a refreshed passenger. It starts with 1
+   refreshed passenger. Max occupancy of 1.
+ - Factory turns a refreshed passenger into a tired passenger and a good.
+ - Export takes away goods from trains.
+
+Let's start with computrainer inspired graphics. Except I'll presumably need a
+way to display how much income and cost you have. Maybe as normalized
+rectangular bars instead of numbers?
+
+Move:
+
+  ###
+  # ##
+  ###
+
+Stop:
+
+  # #
+     #
+  # #
+
+Cars, in various colors:
+  
+  ###
+  ###
+  ###
+
+Factory, in various other colors and spanning multiple cells:
+
+ #####
+ #####
+ #####
+ #####
+ #####
+
+Other differences from computrainer to keep in mind:
+* We need to keep track of how much inventory you have.
+* We should display somewhere total revenue and expenses.
+* We need some way to display status of a factory, car.
+* Trains are pulled by engines, not pushed.
+
+There's a lot here to get started on. This is a plenty complicated MVP.
+
+Game state:
+* Placed rails.
+* Unplaced rails.
+* Trains - Location, sequence and contents of cars.
+* Factories - Location, supply/demand, average supply/demand rates.
+
+Let's measure time in units of ticks. Perhaps keep track of a running average
+of supply/demand rate over the last ... 100 ticks?
+
+How to approach this? Maybe start by sketching the code for various
+components.
+
+I have trains, I have rails. How do we model factories? What are the actions
+we want?
+
+Trains can move and change their contents. What happens to a factory?
+
+A factory has a capacity of goods and a collection of goods in the warehouse.
+
+Let's focus on MVP1 factories and figure out the rates.
+
+House: Takes some number of time for a person to go from leisure back to
+labor. Max capacity of 1 labor and 1 leisure. Can only convert leisure if
+there is space for labor?
+
+Factory: Would be nice to have multiple works allowed at once. Let's say... 3
+workers per factory max? After some number of time, 1 labor turns into 1
+leisure and 1 item. But it's time from when that labor arrives. So we maybe
+want to track, for each unit of labor, how long it has been there?
+
+Maybe for each tick, we see how many of each item is in the warehouse, and we
+count that towards contribution of a pending thing? So we have a max capacity,
+a current capacity, and a list for progress?
+
+Or, maybe we have an intermediate good, or a future good? As soon as we have
+enough inputs for a good, form a future good, freeing up space to put more
+things. The future good counts down as long as needed, then turns into an
+actual good, assuming there is space?
+
+Probably we need to keep inputs and outputs separate, to make sure trains
+don't move things the wrong direction.
+
+We also need to keep track of how many items were loaded and unloaded from a
+factory in some given reasonable span of time. So probably a list of
+load/unload times that, when they get old enough, we forget about them.
+
+How about this for a factory:
+* You have as of yet unused inputs in a warehouse somewhere.
+* You have completed outputs in a warehouse somewhere.
+* You have some number of in process production goods.
+
+Behavior is:
+* If an in process good is complete and there is output space, move the good
+  to the output.
+* If there is space in the process queue and inputs are available, move the
+  inputs to in process.
+
+An item stays in process for a given number of ticks.
+
+Max capacity for a factory is: all the inputs plus all the outputs plus
+everything that's in process.
+
+For this MVP, let's assume factories are square, so we don't have to keep
+track of orientation. House can be 1x1. Let's say factory and export are both
+3x3. Or we can play with sizes. Just keep them square.
+
+I have a sketch of basic data structures now. Review of things needed to get
+started:
+* Graphics for drawing a map.
+* A menu with controls for editing the map.
+* The state transition function for everything.
+* A main app.
+
+Doesn't sound too bad actually.
