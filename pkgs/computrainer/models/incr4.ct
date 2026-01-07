@@ -1,0 +1,85 @@
+gate -15 -3 move right
+gate -14 -3 move right
+gate -13 -3 move right
+gate -12 -3 move right
+gate -11 -3 move right
+gate -10 -3 move right
+gate -9 -3 move right
+gate -9 1 sink
+gate -8 -3 filter 0 up right
+gate -8 -2 move up
+gate -8 -1 move up
+gate -8 0 move up
+gate -8 1 split left right
+gate -7 -4 sink
+gate -7 -3 split down right
+gate -7 0 sink
+gate -7 1 move right
+gate -6 -3 filter 0 up right
+gate -6 -2 move up
+gate -6 -1 move up
+gate -6 0 split left right
+gate -6 1 move right
+gate -5 -4 sink
+gate -5 -3 split down right
+gate -5 -1 sink
+gate -5 0 move right
+gate -5 1 move right
+gate -4 -3 filter 0 up right
+gate -4 -2 move up
+gate -4 -1 split left right
+gate -4 0 move right
+gate -4 1 move right
+gate -3 -4 sink
+gate -3 -3 split down right
+gate -3 -2 sink
+gate -3 -1 move right
+gate -3 0 move right
+gate -3 1 move right
+gate -2 -3 filter 0 up right
+gate -2 -2 split left right
+gate -2 -1 move right
+gate -2 0 move right
+gate -2 1 move right
+gate -1 -4 sink
+gate -1 -3 split down right
+gate -1 -2 move right
+gate -1 -1 move right
+gate -1 0 move right
+gate -1 1 move right
+gate 0 -3 move right
+gate 0 -2 move right
+gate 0 -1 move right
+gate 0 0 move right
+gate 0 1 move right
+gate 1 -3 move right
+gate 1 -2 source 1 right
+gate 1 -1 source 1 right
+gate 1 0 source 1 right
+gate 1 1 source 1 right
+gate 2 -3 source 0 up
+gate 2 -2 source 0 up
+gate 2 -1 source 0 up
+gate 2 0 source 0 up
+gate 2 1 move up
+gate 2 2 move up
+gate 2 3 move up
+gate 2 4 move right
+gate 3 4 move right
+gate 4 4 move right
+gate 5 4 move right
+gate 6 4 move right
+gate 7 4 move right
+gate 8 4 move right
+gate 9 4 move right
+gate 10 4 move right
+gate 11 4 sink
+car 1 -2 1
+car 1 -1 1
+car 1 0 1
+car 1 1 1
+car 2 -3 0
+car 2 -2 0
+car 2 -1 0
+car 2 0 0
+phase engines

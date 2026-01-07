@@ -1,0 +1,66 @@
+
+@ Model@ = *(
+    Grid.Map@<Train@> trains,
+    Grid.Map@<Rail@> rails,
+
+    # List of factories referenced by origin (lower left) coordinate.
+    Grid.Map@<Factory@> factories 
+);
+
+# Returns the origin coordinates of the factory overlapping with the given
+# coordinates, if any.
+(Model@, Coord@) { Maybe@<Coord@>; }
+FindFactory = (Model@ m, Coord@ c) {
+    # TODO: Something more efficient than linear search. At the very least,
+    # avoid having to traverse all the factories if we find a matching one
+    # right away.
+    Grid.ForEach(m.factories, Nothing<Coord@>, (Coord@ fc, Factory@ f, Maybe@<Factory@> b) {
+        b.?(just: b);
+        Lt(c.x, fc.x).?(true: Nothing<Coord@>);
+        Lt(c.y, fc.y).?(true: Nothing<Coord@>);
+        Ge(c.x, Add(fc.x, Size(f.type))).?(true: Nothing<Coord@>);
+        Ge(c.y, Add(fc.y, Size(f.type))).?(true: Nothing<Coord@>);
+        Just(fc);
+    });
+};
+
+# Returns the list of origin coordinates for factories that overlap with any of
+# the given coordinates.
+# We typically assume you'll never pass multiple coordinates that match the
+# same factory. In that case, duplicate factories will be returned.
+(Model@, List@<Coord@>) { List@<Coord@>; }
+FindFactories = (Model@ m, Coord@ cs) {
+    /Std/List%.ForEach(cs, Empty<Coord@>, (Coord@ c, List@<Coord@> fs) {
+        Maybe@ mfc = FindFactory(m, c);
+        mfc.?(nothing: fs);
+        Items(mfc.just, fs);
+    });
+};
+
+# Get a factory.
+#  The coord can refer to any of the coordinates occupied by the factory.
+(Model@, Coord@) { Maybe@<Factory@>; }
+GetFactory = (Model@ m, Coord@ c) {
+    Maybe@<Coord@> mc = FindFactory(m, c);
+    mc.?(nothing: Nothing<Factory@>);
+    Grid.Lookup(m.factories, mc.just);
+};
+
+# Set the contents of a factory.
+#   The coord can refer to any of the coordinates occupied by the factory.
+#   The factory must already exist, otherwise this has no effect.
+(Model@, Coord@, Factory@) { Model@; }
+SetFactory = (Model@ m, Coord@ c, Factory@ f) {
+    Maybe@<Coord@> mc = FindFactory(m, c);
+    mc.?(nothing: m);
+    m.@(factories: Grid.Insert(m.factories, mc.just, f));
+};
+
+# Add a new factory.
+(Model@, Coord@, Factory@) { Model@; }
+AddFactory = (Model@ m, Coord@ c, Factory@ f) {
+    # TODO: Make sure this doesn't overlap with an existing factory?
+    m.@(factories: Grid.Insert(m.factories, c, f));
+};
+
+@(Model@, FindFactory, GetFactory, SetFactory, AddFactory);

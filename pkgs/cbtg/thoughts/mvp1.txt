@@ -132,3 +132,91 @@ started:
 * A main app.
 
 Doesn't sound too bad actually.
+
+---
+
+How to 'tick' a model:
+* For each train
+ - If it is at a stop, for each car load/unload as able.
+ - Otherwise, or if no loading/unloading was done:
+ - Move the train based on the direction of the rail, assuming the target of
+   the direction is unoccupied rail.
+* For each factory
+ - Move inputs to processes.
+ - Update process timestamps.
+ - Move processes to outputs.
+ - Update metrics.
+
+How do we want to order these operations? In theory it would be modeling
+things happening concurrently. Points of conflict:
+* A train moves into where another train is leaving.
+* A train loads/unloads to a factory input/output that is consumed/produced.
+* Factory internal conflicts on inputs to processes to outputs.
+* Multiple trains loading/unloading from the same factory.
+* Multiple trains trying to move into the same space.
+
+These conflicts are real, and I suspect there are cases where they have a
+fairly significant impact on performance. For MVP1 it doesn't matter. Some
+possible approaches for resolving conflicts:
+* Pick an order for trains and factories to be processed.
+ - Random, or arbitrary, or clearly prescribed.
+
+Let's not worry too much for now. Pick an arbitrary order: trains in whatever
+order we have them listed, then factories in whatever order we have them
+listed.
+
+To advance a train, we want (Train@, Model@) { Model@; }
+
+To advance a train, we need to update that train and the factories in a model.
+To advance a factory, we just need to update that individual factory.
+
+The most tedious part is loading/unloading from a train car. When we see a
+train is at a stop, we iterate through each of its cars. For each car, we look
+at the spaces around it. We need to find the list of all adjacent factories.
+
+Ignoring ordering for now, go through each factory, in order: transfer 1 good
+from the train car to the factory, if possible. Let's say, for mvp1, we have
+max transfer of 1 good of each type per car for each tick.
+
+Which means I need:
+* Train -> car coordinate
+* Car coordinate -> adjacent coordinates
+* Adjacent coordinate -> factory contents and reference
+
+I need a way to identify a factory. Options:
+* Give each factory a unique id.
+* Refer to the factory by its origin coordinates.
+
+Simplest approach to start is use a factory's coordinates as its id.
+
+* Train -> car coordinate
+ - Straight forward. Following the directions from the train coordinates, car
+   by car.
+
+* Car coordinate -> adjacent coordinates
+ - We can generate all 4 easily enough. 2 will presumably be track.
+
+* Adjacent coordinate -> factory coordinate
+ - Depends on the size of the factory. Or, I can maintain a separate map, from
+   coordinate to factory coordinate. Aka, from coordinate to factory id.
+
+Any advantage to using a coordinate instead of a unique id to identify a
+factory? With a unique id, we look up id of a factory by coordinate. We look
+up contents of a factory by its unique id. We modify contents by its unique
+id. I don't see any advantage to using a coordinate.
+
+Well, it's slightly awkward to have separate map from FactoryId to Factory and
+map from Coord to FactoryId. If we use Coord as the id, we could have a single
+map from origin coord to Factory. To test if a factory is at a given
+coordinate, we need to check for factories in adjacent coordinates, depending
+on factory type:
+
+  ## ## .# #. .
+  #. .# ## ##
+
+Or... just iterate over all the factories and see if any overlap with the
+coordinate. That's simpler to start.
+
+Actually, we could say you can identify a factory by any coordinate that
+overlaps with the factory?
+

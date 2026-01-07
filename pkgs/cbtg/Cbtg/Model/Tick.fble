@@ -1,0 +1,14 @@
+
+# Returns the list of coordinates immediately adjacent to the given coordinate.
+(Coord@) { List@<Coord@>; }
+Adjacent = (Coord@ c) {
+    List[Dest(c, Dir.Up), Dest(c, Dir.Down), Dest(c, Dir.Left), Dest(c, Dir.Right)];
+};
+
+
+(Model@) { Model@; }
+Model = (Model@ m) {
+    
+};
+
+@(Model);

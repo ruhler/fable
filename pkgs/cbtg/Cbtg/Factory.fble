@@ -1,6 +1,13 @@
 
 @ Type@ = +(Unit@ house, Unit@ factory, Unit@ export);
 
+# Returns the length of one of the square sides of the factory.
+(Type@) { Int@; }
+Size = (Type@ type) {
+    type.?(house: Int|1, factory: Int|2, export: Int|2);
+};
+
+
 @ TBag@ = *(Bag@ bag, Int@ time);
 
 @ Metrics@ = *(
@@ -17,4 +24,4 @@
     Metrics@ metrics
 );
 
-@(Type@, Metrics@, Factory@);
+@(Type@, Metrics@, Factory@, Size);

@@ -3,4 +3,21 @@
 
 @ Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
 
-@(Dir@);
+Dir@ Left = Dir@(left: Unit);
+Dir@ Right = Dir@(right: Unit);
+Dir@ Up = Dir@(up: Unit);
+Dir@ Down = Dir@(down: Unit);
+
+(Coord@, Dir@) { Coord@; }
+Dest = (Coord@ c, Dir@ d) {
+    Int@ nx = d.?(up: c.x, down: c.x, left: Decr(c.x), right: Incr(c.x));
+    Int@ ny = d.?(up: Incr(c.y), down: Decr(c.y), left: c.y, right: c.y);
+    Coord@(nx, ny);
+};
+
+(Dir@) { Dir@; }
+Rotate = (Dir@ d) {
+    d.?(up: Right, down: Left, left: Up, right: Down);
+};
+
+@(Dir@, Left, Down, Up, Right, Dest, Rotate);
