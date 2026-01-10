@@ -1,6 +1,5 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
 @ Char@ = /Std/Char%.Char@;
@@ -13,6 +12,9 @@
 
 @ World@ = /Core/Monad/IO%.World@;
 % m = /Core/Monad/IO%.Monad;
+
+@ Exit@ = /Core/Stdio%.Exit@;
+% Success = /Core/Stdio%.Success;
 
 % Stdin = /Core/Stdio/IO/Builtin%.Stdin;
 % Stdout = /Core/Stdio/IO/Builtin%.Stdout;
@@ -32,17 +34,17 @@
     Stdout(s, w);
   };
 
-  IO@<Bool@> MCat = {
+  IO@<Exit@> MCat = {
     Maybe@<Int@> byte := m.do(Stdin);
-    byte.?(nothing: m.return(True));
+    byte.?(nothing: m.return(Success));
     Char@ char = /Std/Char%.Char(byte.just);
     Unit@ _ := m.do(stdout_(/Std/Char%.Pos(char)));
     MCat;
   };
 
-  (World@) { R@<Bool@>; } Cat = (World@ w) {
+  (World@) { R@<Exit@>; } Cat = (World@ w) {
     R@<Maybe@<Int@>> byte = Stdin(w);
-    byte.x.?(nothing: R@(w, True));
+    byte.x.?(nothing: R@(w, Success));
 
     Char@ char = /Std/Char%.Char(byte.x.just);
     R@<Unit@> out = Stdout(/Std/Char%.Pos(char), byte.s);

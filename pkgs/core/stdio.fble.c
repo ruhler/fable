@@ -426,7 +426,7 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
     return FblePopFrame(heap, NULL);
   }
 
-  // result has type R@<Bool@>, which is *(s, x)
+  // result has type R@<Int@>, which is *(s, x)
   FbleValue* value = FbleStructValueField(result, RESULT_FIELDC, 1);
   return FblePopFrame(heap, value);
 }
@@ -448,9 +448,11 @@ FbleStdioMainStatus FbleStdioMainAppStatus(FbleValue* status)
     return FbleStdioMainOtherStatus(FBLE_MAIN_RUNTIME_ERROR);
   }
 
-  // TODO: Switch to returning Int@ instead of Bool@, then clamp as
-  // appropriate.
-  return (FbleUnionValueTag(status, BOOL_TAGWIDTH) == 0) ? 0 : 1;
+  int app_status = FbleIntValueAccess(status);
+  if (app_status < 0 || app_status >= 112) {
+    app_status = 112;
+  }
+  return app_status;
 }
 
 // FbleStdioMain -- See documentation in stdio.fble.h

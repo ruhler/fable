@@ -1,6 +1,4 @@
 
-% True = /Std/Bool%.True;
-
 @ Ascii@ = /Std/Char/Ascii%.Ascii@;
 
 @ Int@ = /Std/Int%.Int@;
@@ -14,6 +12,7 @@
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+% Success = /Core/Stdio%.Success;
 
 @ String@ = /Std/String%.String@;
 % Format = /Std/Char/Ascii/Output%.Format;
@@ -38,7 +37,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     Unit@ _ := m.do(FmtL|'Pfannkuchen(%s) = %s'[
       /Std/Int/Show%.Show(n),
       /Std/Int/Show%.Show(result.max_flips)]);
-    m.return(True);
+    m.return(Success);
   };
 };
 

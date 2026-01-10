@@ -1,6 +1,4 @@
 
-% True = /Std/Bool%.True;
-
 <@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 @ Int@ = /Std/Int%.Int@;
@@ -10,6 +8,8 @@
 <@>% Empty = /Std/List%.Empty;
 
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+
+% Success = /Core/Stdio%.Success;
 
 @ MainResult@ = /Core/Stdio/Pure%.MainResult@;
 % RunMain = /Core/Stdio/Pure%.RunMain;
@@ -27,7 +27,7 @@ Test = (String@ name, Main@ game, String@ n, String@ input, String@ expected) {
 
   /Std/Test%.Test(name, (Unit@ _) {
     MainResult@ want = @(
-      exit: True,
+      exit: Success,
       in: Empty<Int@>,
       out: expected_bytes,
       err: Empty<Int@>

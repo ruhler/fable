@@ -17,6 +17,7 @@
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+@ Exit@ = /Core/Stdio%.Exit@;
 @ Mode@ = /Core/Stdio%.Mode@;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
@@ -103,12 +104,12 @@ Run = <@ A@>(Pure@<A@> m, List@<Int@> in) {
 };
 
 # @struct[MainResult@] Result of running a pure Main@ program.
-#  @field[Bool@][exit] The exit status.
+#  @field[Exit@][exit] The exit status.
 #  @field[List@<Int@>][in] The remaining unconsumed input bytes.
 #  @field[List@<Int@>][out] Bytes output to stdout.
 #  @field[List@<Int@>][err] Bytes output to stderr.
 @ MainResult@ = *(
-  Bool@ exit,
+  Exit@ exit,
   List@<Int@> in,
   List@<Int@> out,
   List@<Int@> err
@@ -116,7 +117,7 @@ Run = <@ A@>(Pure@<A@> m, List@<Int@> in) {
 
 (Main@, List@<String@>, List@<Int@>) { MainResult@; }
 RunMain = (Main@ main, List@<String@> args, List@<Int@> in) {
-  PureResult@<Bool@> got = Run(main<Pure@>(Stdio, Monad, args), in);
+  PureResult@<Exit@> got = Run(main<Pure@>(Stdio, Monad, args), in);
   @(exit: got.x, in: got.s.in, out: got.s.out, err: got.s.err);
 };
 

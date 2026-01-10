@@ -29,6 +29,7 @@
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+% Success = /Core/Stdio%.Success;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
@@ -339,11 +340,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   % O = /Core/Stream/OStream%(m);
   Maybe@<OStream@<M@>> ostream := m.do(stdio.write(file, /Core/Stdio%.Text));
-  ostream.?(nothing: m.return(True));
+  ostream.?(nothing: m.return(Success));
   Unit@ _ := m.do(O.Show(ostream.just, /Computrainer/Model/Save%.Model(final.model)));
   Unit@ _ := m.do(O.Close(ostream.just));
 
-  m.return(True);
+  m.return(Success);
 };
 
 /App/IO%.Run(Main);

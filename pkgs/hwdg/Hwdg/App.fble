@@ -23,6 +23,7 @@ Int@ 2 = Int|2;
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+% Success = /Core/Stdio%.Success;
 
 @ String@ = /Std/String%.String@;
 
@@ -158,16 +159,17 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
           false: StepUI(Decr(n), design, Step(design, cells))));
   };
 
-  M@<Bool@> WaitForKeyPress = {
+  M@<Unit@> WaitForKeyPress = {
     Event@ e := m.do(app.event);
-    e.?(key_down: m.return(True), : WaitForKeyPress);
+    e.?(key_down: m.return(Unit), : WaitForKeyPress);
   };
 
   Unit@ _ := m.do(Output(Effect@(draw: Draw(Design, Cells))));
-  Bool@ _ := m.do(WaitForKeyPress);
+  Unit@ _ := m.do(WaitForKeyPress);
   Unit@ _ := m.do(StepUI(Int|2000, Design, Cells));
+  Unit@ _ := m.do(WaitForKeyPress);
 
-  WaitForKeyPress;
+  m.return(Success);
 };
 
 /App/IO%.Run(Main);

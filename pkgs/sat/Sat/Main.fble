@@ -1,7 +1,4 @@
 
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-
 @ Int@ = /Std/Int%.Int@;
 % Int = /Std/Int/Lit%.Int;
 
@@ -15,6 +12,8 @@
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+% Success = /Core/Stdio%.Success;
+% Failure = /Core/Stdio%.Failure;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
@@ -62,21 +61,21 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   (List@<String@> args) {
     Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
       Unit@ _ := m.do(O.PutStr(stdio.out, /Sat/Usage%));
-      m.return(True);
+      m.return(Success);
     });
 
     List@<String@> lines := m.do(GetLines);
     Parse@<Formula@> parsed = ParseLines(lines);
     parsed.?(error: {
       Unit@ _ := m.do(O.PutStr(stdio.err, parsed.error));
-      m.return(False);
+      m.return(Failure);
     });
 
     Int@ debug = GetDebugArg(args);
     Solver@ solver = AddClauses(NewSolver, parsed.parsed); 
     Result@ result := m.do(Solve(m, Debug(m, debug, stdio.out), solver));
     Unit@ _ := m.do(O.ShowLine(stdio.out, ShowResult(result)));
-    m.return(True);
+    m.return(Success);
   };
 };
 

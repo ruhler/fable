@@ -1,6 +1,4 @@
 
-% True = /Std/Bool%.True;
-
 @ Char@ = /Std/Char%.Char@;
 % Char = /Std/Char/Ascii%.Char;
 % String = /Std/Char/Ascii/Output%.String;
@@ -18,6 +16,7 @@
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+% Success = /Core/Stdio%.Success;
 
 <@>@ Show@ = /Std/Show%.Show@;
 
@@ -134,7 +133,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
   (List@<String@> _args) {
     Unit@ _ := m.do(TicTacToe(Initial));
-    m.return(True);
+    m.return(Success);
   };
 };
 

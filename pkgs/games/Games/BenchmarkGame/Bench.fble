@@ -1,7 +1,4 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-
 <@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 <@>% List = /Std/List%.List;
@@ -11,6 +8,8 @@
 <@>% Run = /Core/Monad/Pure%.Run;
 
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+@ Exit@ = /Core/Stdio%.Exit@;
+% Success = /Core/Stdio%.Success;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
@@ -26,8 +25,8 @@
 
 (Main@, String@, Unit@) { TestResult@; }
 RunBench = (Main@ game, String@ n, Unit@ _) {
-  Bool@ got = Run(game<Pure@>(Stdio, Monad, List[n]));
-  AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, True, got);
+  Exit@ got = Run(game<Pure@>(Stdio, Monad, List[n]));
+  AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, Success, got);
 };
 
 # Benchmark for the benchmark games that takes about 1 minute to run.

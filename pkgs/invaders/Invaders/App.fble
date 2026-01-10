@@ -1,6 +1,4 @@
 
-% True = /Std/Bool%.True;
-
 @ Int@ = /Std/Int%.Int@;
 % 0 = /Std/Int%.0;
 % Neg = /Std/Int%.Neg;
@@ -13,8 +11,12 @@
 <@>% Any = /Std/List/Search%.Any;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+% Success = /Core/Stdio%.Success;
+
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
@@ -56,7 +58,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ := m.do(O.PutStr(stdio.out, /Invaders/Usage%));
-    m.return(True);
+    m.return(Success);
   });
 
   M@<Input@> GetInput = {
@@ -128,7 +130,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   # right away.
   Any(args, /Std/String/Eq%.Eq(Str|'--test')).?(true: {
     Unit@ _ := m.do(Draw(game));
-    m.return(True); 
+    m.return(Success); 
   });
 
   # Play the game
@@ -147,7 +149,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     O.Close(ostream.just);
   });
 
-  m.return(True);
+  m.return(Success);
 };
 
 Main;

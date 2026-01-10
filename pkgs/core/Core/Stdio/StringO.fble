@@ -1,13 +1,11 @@
 
-
-% True = /Std/Bool%.True;
-
 <@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+% Success = /Core/Stdio%.Success;
 
 @ String@ = /Std/String%.String@;
 
@@ -19,7 +17,7 @@
   <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {
     % O = /Core/Stream/OStream%(m);
     Unit@ _ := m.do(O.PutLine(stdio.out, str));
-    m.return(True);
+    m.return(Success);
   };
 };
 

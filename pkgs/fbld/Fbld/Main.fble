@@ -1,7 +1,4 @@
 
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
@@ -12,6 +9,8 @@
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+% Success = /Core/Stdio%.Success;
+% Failure = /Core/Stdio%.Failure;
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % Format = /Std/Char/Ascii/Output%.Format;
@@ -71,7 +70,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     Result@<List@<Text@>> inputs := m.do(ReadInputs(args));
     inputs.failed.?(true: {
       Unit@ _ := m.do(O.Show(stdio.err, ShowErrors(inputs)));
-      m.return(False);
+      m.return(Failure);
     });
 
     Result@<String@> result = {
@@ -82,11 +81,11 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
     result.failed.?(true: {
       Unit@ _ := m.do(O.Show(stdio.err, ShowErrors(result)));
-      m.return(False);
+      m.return(Failure);
     });
 
     Unit@ _ := m.do(O.PutStr(stdio.out, result.value.just));
-    m.return(True);
+    m.return(Success);
   };
 };
 

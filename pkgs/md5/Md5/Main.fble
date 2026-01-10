@@ -18,6 +18,8 @@
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+% Success = /Core/Stdio%.Success;
+% Failure = /Core/Stdio%.Failure;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
@@ -72,10 +74,11 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   (List@<String@> args) {
     Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
       Unit@ _ := m.do(O.PutStr(stdio.out, /Md5/Usage%));
-      m.return(True);
+      m.return(Success);
     });
 
-    md5s(True, args.?(empty: List[Str|'-'], : args));
+    Bool@ pass := m.do(md5s(True, args.?(empty: List[Str|'-'], : args)));
+    m.return(pass.?(true: Success, false: Failure));
   };
 };
 

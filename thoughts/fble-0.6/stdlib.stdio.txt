@@ -850,3 +850,20 @@ This is a bit messy. Let's sort things out:
 
 Perhaps I should add helper functions for converting to standard exit status?
 And have a common point of sharing? Probably yeah.
+
+---
+
+While changing exit status over from Bool@ to Int@, I think it would be useful
+to define 'Success' somewhere. Maybe Failure too as 1. Just to reduce
+instances of magic numbers.
+
+In that case, what do you think about defining an Exit@ type?
+
+I do like use of 'Success' and 'Failure' rather than 'True' and 'False'. It's
+a little weird using Int equality for Exit@ comparison though. At what point
+should the synonym be part of the interface as opposed to treating Exit@ as an
+abstract type?
+
+Anyway, the switch over is done for exit status. I like the use of Success and
+Failure in code. I like the proposed standardization of exit status and
+interpretation. Cool.

@@ -26,6 +26,8 @@
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+% Success = /Core/Stdio%.Success;
+% Failure = /Core/Stdio%.Failure;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
@@ -109,19 +111,19 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
     Unit@ _ := m.do(O.PutStr(stdio.out, /Network/Apps/Echo/Usage%));
-    m.return(True);
+    m.return(Success);
   });
 
   args.error.?(items: {
     Unit@ _ := m.do(O.PutStr(stdio.err, args.error));
     Unit@ _ := m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
-    m.return(False);
+    m.return(Failure);
   });
 
   Maybe@<Server@<M@>> ms := m.do(sockets.server(args.hostname, args.port));
   ms.?(nothing: {
     Unit@ _ := m.do(O.PutLine(stdio.err, Str|'unable to serve'));
-    m.return(False);
+    m.return(Failure);
   });
 
   Server@<M@> s = ms.just;
@@ -136,7 +138,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   };
 
   Unit@ _ := m.do(Serve(args.num_clients));
-  m.return(True);
+  m.return(Success);
 };
 
 /Network/Sockets/IO%.Run(Main);

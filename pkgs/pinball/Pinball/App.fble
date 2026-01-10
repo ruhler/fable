@@ -1,6 +1,4 @@
 
-% True = /Std/Bool%.True;
-
 @ Int@ = /Std/Int%.Int@;
 
 <@>@ List@ = /Std/List%.List@;
@@ -9,6 +7,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+% Success = /Core/Stdio%.Success;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
@@ -206,7 +205,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ := m.do(O.PutStr(stdio.out, /Pinball/Usage%));
-    m.return(True);
+    m.return(Success);
   });
 
   M@<Event@> GetInput = app.event;
@@ -260,7 +259,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   Unit@ _ := m.do(app.effect(Effect@(tick: Floor(0))));
   Unit@ _ := m.do(Run(tick, Initial)); 
-  m.return(True);
+  m.return(Success);
 };
 
 Main;

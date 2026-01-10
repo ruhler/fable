@@ -1,7 +1,4 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-
 % Neg = /Std/Int%.Neg;
 
 @ Int@ = /Std/Int%.Int@;
@@ -12,10 +9,12 @@
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+% Success = /Core/Stdio%.Success;
 
 @ String@ = /Std/String%.String@;
 
 @ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
 
 <<@>@>@ App@ = /App/App%.App@;
 <<@>@>@ Main@ = /App/App%.Main@;
@@ -36,11 +35,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ _widt
   Drawing@ screenshot = Screenshot;
   Unit@ _ := m.do(app.effect(Effect@(draw: Affine(a, b, screenshot))));
 
-  M@<Bool@> WaitForKeyPress = {
+  M@<Unit@> WaitForKeyPress = {
     Event@ e := m.do(app.event);
-    e.?(key_down: m.return(True), : WaitForKeyPress);
+    e.?(key_down: m.return(Unit), : WaitForKeyPress);
   };
-  WaitForKeyPress;
+  Unit@ _ := m.do(WaitForKeyPress);
+
+  m.return(Success);
 };
 
 Main;

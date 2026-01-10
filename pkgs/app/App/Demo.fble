@@ -1,6 +1,4 @@
 
-% True = /Std/Bool%.True;
-
 @ Int@ = /Std/Int%.Int@;
 % Sub = /Std/Int%.Sub;
 
@@ -11,6 +9,7 @@
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+% Success = /Core/Stdio%.Success;
 
 @ String@ = /Std/String%.String@;
 
@@ -76,7 +75,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   };
 
   Unit@ _ := m.do(StepUI(State@(Int|0, Int|0, Color.Green)));
-  m.return(True);
+  m.return(Success);
 };
 
 /App/IO%.Run(Main);

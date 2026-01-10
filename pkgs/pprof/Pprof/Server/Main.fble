@@ -30,6 +30,9 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
+% Success = /Core/Stdio%.Success;
+% Failure = /Core/Stdio%.Failure;
+
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
@@ -218,25 +221,25 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
     Unit@ _ := m.do(O.PutStr(stdio.out, /Pprof/Usage%));
-    m.return(True);
+    m.return(Success);
   });
 
   args.file.?(empty: {
     Unit@ _ := m.do(O.PutStr(stdio.err, StrE|'missing input file'));
     Unit@ _ := m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
-    m.return(False);
+    m.return(Failure);
   });
 
   args.error.?(just: {
     Unit@ _ := m.do(O.Show(stdio.err, args.error.just));
     Unit@ _ := m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
-    m.return(False);
+    m.return(Failure);
   });
 
   Maybe@<Server@<M@>> ms := m.do(sockets.server(args.hostname, args.port));
   ms.?(nothing: {
     Unit@ _ := m.do(O.PutLine(stdio.err, Str|'unable to serve'));
-    m.return(False);
+    m.return(Failure);
   });
 
   Server@<M@> s = ms.just;
@@ -248,13 +251,13 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   fin.?(nothing: {
     Unit@ _ := m.do(O.ShowLine(stdio.err, Format|'unable to open ''%s'''[
         /Std/Char/Output%.String(args.file)]));
-    m.return(False);
+    m.return(Failure);
   });
 
   Result@<Profile@> parsed := m.do(Parse(fin.just, m));
   parsed.?(error: {
     Unit@ _ := m.do(O.ShowLine(stdio.err, Format|'error: %s'[parsed.error]));
-    m.return(False);
+    m.return(Failure);
   });
   
   Unit@ _ := m.do(O.ShowLine(stdio.out,
@@ -376,10 +379,10 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     Unit@ _ := m.do(SelfPage(stdio.out));
     Unit@ _ := m.do(SeqsPage(stdio.out));
 
-    profile.samples.?(empty: m.return(True));
+    profile.samples.?(empty: m.return(Success));
     Sequence@ seq = List[Last(profile.samples.items.head.sequence)];
     Unit@ _ := m.do(SeqPage(stdio.out, seq));
-    m.return(True);
+    m.return(Success);
   });
 
   M@<Unit@> Serve = {
@@ -390,7 +393,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   };
 
   Unit@ _ := m.do(Serve);
-  m.return(True);
+  m.return(Success);
 };
 
 /Network/Sockets/IO%.Run(Main);

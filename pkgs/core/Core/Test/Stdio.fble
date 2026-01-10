@@ -1,10 +1,14 @@
 
+@ Bool@ = /Std/Bool%.Bool@;
+
 <@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+% Success = /Core/Stdio%.Success;
+% Failure = /Core/Stdio%.Failure;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
@@ -28,7 +32,8 @@
     args.items.tail.items.head;
   };
 
-  Runners.RunTests(prefix, tests);
+  Bool@ passed := m.do(Runners.RunTests(prefix, tests));
+  m.return(passed.?(true: Success, false: Failure));
 };
 
 @(Run);

@@ -21,6 +21,8 @@
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+% Success = /Core/Stdio%.Success;
+% Failure = /Core/Stdio%.Failure;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
@@ -112,26 +114,26 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
     Unit@ _ := m.do(O.PutStr(stdio.out, /Network/Apps/Echo/Usage%));
-    m.return(True);
+    m.return(Success);
   });
 
   args.error.?(items: {
     Unit@ _ := m.do(O.PutStr(stdio.err, args.error));
     Unit@ _ := m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
-    m.return(False);
+    m.return(Failure);
   });
 
   Maybe@<IOStream@<M@>> mios := m.do(sockets.client(args.hostname, args.port));
   mios.?(nothing: {
     Unit@ _ := m.do(O.PutLine(stdio.err, Str|'unable to connect'));
-    m.return(False);
+    m.return(Failure);
   });
 
   IOStream@<M@> ios = mios.just;
 
   Unit@ _ := m.do(O.PutStr(ios.out, args.message));
   Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, stdio.out));
-  m.return(True);
+  m.return(Success);
 };
 
 /Network/Sockets/IO%.Run(Main);

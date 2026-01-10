@@ -21,7 +21,7 @@ PureResult = <@ A@>(Show@<A@> show, PureResult@<A@> a) {
 
 Show@<MainResult@> MainResult = (MainResult@ a) {
   Format|'Exit: %s, In: %s, Out: %s, Err: %s'[
-    /Std/Bool/Show%.Show(a.exit),
+    /Std/Int/Show%.Show(a.exit),
     /Std/List/Show%.Show(/Std/Int/Show%.Show, a.in),
     /Std/List/Show%.Show(/Std/Int/Show%.Show, a.out),
     /Std/List/Show%.Show(/Std/Int/Show%.Show, a.err)];

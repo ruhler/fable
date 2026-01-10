@@ -599,7 +599,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     return FbleStdioMainOtherStatus(FBLE_MAIN_RUNTIME_ERROR);
   }
 
-  // computation has type IO@<Bool@>, which is (World@) { R@<Bool@>; }
+  // computation has type IO@<Int@>, which is (World@) { R@<Int@>; }
   FbleValue* world = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleApply(heap, computation, 1, &world, profile);
 
@@ -612,7 +612,9 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     }
   }
 
-  int exit_status = FbleStdioMainAppStatus(result);
+  // result has type R@<Int@>, which is *(s, x)
+  FbleValue* value = FbleStructValueField(result, RESULT_FIELDC, 1);
+  int exit_status = FbleStdioMainAppStatus(value);
 
   FbleFreeValueHeap(heap);
 

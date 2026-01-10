@@ -1,4 +1,3 @@
-@ Bool@ = /Std/Bool%.Bool@;
 
 @ Int@ = /Std/Int%.Int@;
 
@@ -36,7 +35,7 @@ Stdio@<IO@> StdioIO = @(
   getenv: (String@ s, World@ w) { Builtin.GetEnv(s, w); }
 );
 
-@ Main@ = (List@<String@>) { IO@<Bool@>; };
+@ Main@ = (List@<String@>) { IO@<Int@>; };
 
 # RunIO --
 #   A top-level IO implementation for running a Stdio IO Main@ program.

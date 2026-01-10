@@ -1,8 +1,4 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 <@>% Concat = /Std/List%.Concat;
@@ -14,6 +10,9 @@
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+@ Exit@ = /Core/Stdio%.Exit@;
+% Success = /Core/Stdio%.Success;
+% Failure = /Core/Stdio%.Failure;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
@@ -34,8 +33,8 @@ Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     cat(input);
   };
 
-  (List@<String@>) { M@<Bool@>; } cats = (List@<String@> inputs) {
-    inputs.?(empty: m.return(True));
+  (List@<String@>) { M@<Exit@>; } cats = (List@<String@> inputs) {
+    inputs.?(empty: m.return(Success));
     String@ filename = inputs.items.head;
 
     Maybe@<I.IStream@> istream := m.do({
@@ -46,7 +45,7 @@ Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     istream.?(nothing: {
       String@ msg = Concat[Str|'fble-cat: Unable to open ', filename];
       Unit@ _ := m.do(O.PutLine(stdio.err, msg));
-      m.return(False);
+      m.return(Failure);
     });
 
     Unit@ _ := m.do(cat(istream.just));

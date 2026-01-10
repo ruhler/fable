@@ -1,6 +1,4 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
 % And = /Std/Bool%.And;
 
 @ Int@ = /Std/Int%.Int@;
@@ -22,6 +20,7 @@
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+% Success = /Core/Stdio%.Success;
 
 @ String@ = /Std/String%.String@;
 
@@ -131,11 +130,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   State@ s = State@(Int|200, a, b, acorn);
   Unit@ _ := m.do(StepUI(s));
 
-  M@<Bool@> WaitForKeyPress = {
+  M@<Unit@> WaitForKeyPress = {
     Event@ e := m.do(app.event);
-    e.?(key_down: m.return(True), : WaitForKeyPress);
+    e.?(key_down: m.return(Unit), : WaitForKeyPress);
   };
-  WaitForKeyPress;
+  Unit@ _ := m.do(WaitForKeyPress);
+
+  m.return(Success);
 };
 
 Main;

@@ -1,5 +1,5 @@
 
-% True = /Std/Bool%.True;
+% Success = /Core/Stdio%.Success;
 
 @ CRC@ = /Core/CRC%.CRC@;
 % Feed = /Core/CRC%.Feed;
@@ -41,7 +41,7 @@ Main@ Debug = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     CRC@ crc = CRC@(poly, init);
     CRC@ _result := m.do(DFeeds(crc, HexToBits|31323334353637383900000000));
 
-    m.return(True);
+    m.return(Success);
   };
 };
 

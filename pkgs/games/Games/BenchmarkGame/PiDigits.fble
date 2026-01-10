@@ -1,6 +1,5 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
 
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
@@ -19,6 +18,8 @@
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+@ Exit@ = /Core/Stdio%.Exit@;
+% Success = /Core/Stdio%.Success;
 
 @ String@ = /Std/String%.String@;
 % StringE = /Std/Char/Ascii/Output%.StringE;
@@ -113,8 +114,8 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   (List@<String@> args) {
     Int@ n = /Core/Int/Read%.Read(args.items.head);
     Int@ l = Int|10;
-    (Int@, State@) { M@<Bool@>; } PiDigits = (Int@ i, State@ s) {
-      Eq(i, n).?(true: m.return(True));
+    (Int@, State@) { M@<Exit@>; } PiDigits = (Int@ i, State@ s) {
+      Eq(i, n).?(true: m.return(Success));
 
       StreamResult@ r = Stream(s);
       Unit@ _ := m.do(PutS(/Std/Int/Show%.Show(r.output)));

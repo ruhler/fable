@@ -1,6 +1,4 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-
 @ Drawing@ = /App/Drawing%.Drawing@;
 
 @ Int@ = /Std/Int%.Int@;
@@ -10,6 +8,7 @@
 <@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+@ Exit@ = /Core/Stdio%.Exit@;
 
 @ String@ = /Std/String%.String@;
 
@@ -86,10 +85,9 @@
 #   args - The list of arguments to the application.
 #
 # Results:
-#   True if the program ran successfully and should exit zero. False if the
-#   program failed and should exit non-zero.
+#   The /Core/Stdio.Exit@ status of the program.
 <<@>@>@ Main@ = <<@>@ M@>(
   Monad@<M@>, Stdio@<M@>,
-  App@<M@>, Int@, Int@, List@<String@>) { M@<Bool@>; };
+  App@<M@>, Int@, Int@, List@<String@>) { M@<Exit@>; };
 
 @(App@, Main@, Key@, Resize@, Event@, Effect@);

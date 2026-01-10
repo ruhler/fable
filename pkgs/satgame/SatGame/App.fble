@@ -1,6 +1,4 @@
 
-% True = /Std/Bool%.True;
-
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;
 % Sub = /Std/Int%.Sub;
@@ -16,7 +14,10 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+% Success = /Core/Stdio%.Success;
+
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
@@ -238,7 +239,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   Unit@ _ := m.do(Draw(state));
   Unit@ _ := m.do(EventLoop(state));
-  m.return(True);
+  m.return(Success);
 };
 
 Main;

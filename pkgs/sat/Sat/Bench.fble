@@ -1,12 +1,12 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-
 <@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 @ Int@ = /Std/Int%.Int@;
 
 <@>@ List@ = /Std/List%.List@;
+
+@ Exit@ = /Core/Stdio%.Exit@;
+% Success = /Core/Stdio%.Success;
 
 <@>@ Pure@ = /Core/Stdio/Pure%.Pure@;
 <@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
@@ -28,12 +28,12 @@
 
 Test@ Bench = Test(Str|Sat, (Unit@ _) {
   List@<Int@> input = Bytes(/Sat/Bench/Input%);
-  Pure@<Bool@> go = /Sat/Main%.Main<Pure@>(Stdio, Monad)[];
-  PureResult@<Bool@> result = Run(go, input);
+  Pure@<Exit@> go = /Sat/Main%.Main<Pure@>(Stdio, Monad)[];
+  PureResult@<Exit@> result = Run(go, input);
   AssertEquals(
-    /Std/Bool/Eq%.Eq,
-    /Std/Bool/Show%.Show,
-    True, result.x);
+    /Std/Int/Eq%.Eq,
+    /Std/Int/Show%.Show,
+    Success, result.x);
 });
 
 @(Bench);

@@ -1,6 +1,4 @@
 
-% True = /Std/Bool%.True;
-
 @ Ascii@ = /Std/Char/Ascii%.Ascii@;
 
 @ Int@ = /Std/Int%.Int@;
@@ -17,6 +15,7 @@
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+% Success = /Core/Stdio%.Success;
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
 
@@ -95,7 +94,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     Unit@ _ := m.do(FmtL|'long lived tree of depth %s	 check: %s'[
       /Std/Int/Show%.Show(max_depth),
       /Std/Int/Show%.Show(Check(long_lived))]);
-    m.return(True);
+    m.return(Success);
   };
 };
 
