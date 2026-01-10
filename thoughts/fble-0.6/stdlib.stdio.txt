@@ -1,0 +1,852 @@
+Stdlib Stdio
+============
+
+Goal: design the part of the standard library necessary for interacting with
+other programs via c99 stdio like standard.
+
+Relevant features of C99 stdio to consider supporting:
+* signals - for handling signals sent from other programs
+  register signal handler
+  send signal
+  abort
+* File IO:
+  - stderr, stdin, stdout
+  - reading, writing, appending, seeking
+  - binary, text
+  - files, streams
+* File operations: remove, rename, temp files
+* atexit, exit, 
+* getenv, setenv
+* system command
+* main, args, exit
+
+In summary: signals, files/streams, env, main, exit
+
+Should we support all those things? Can we do without some?
+
+What I know today:
+* I need files to save things like high scores and models for games.
+* I need streams to do input and output.
+* I need env to find the user's home directory.
+* I probably want exit to be able to return error status.
+* I definitely need command line arguments.
+
+The limitations I currently have:
+* No support for signals.
+* Exit code is 'True' or 'False', rather than a number.
+* I haven't implemented setenv yet.
+
+Can signals do anything useful for tests? Like, fail could raise a signal, and
+we could have a way to catch the signal, and that gives us our 'try'
+implementation?
+
+---
+
+Consider two different API layers:
+1. Raw access to underlying C calls.
+2. Natural way to express API in fble.
+
+Even if we provide raw access, it still makes sense to provide and promote an
+fble specific API. On the flip side, it's potentially bad from a performance
+point of view to layer (2) on raw access in fble, which then goes to C. We may
+get better performance by batching calls from (2) into higher level calls on
+the C side.
+
+Partly it's a question of how much of the C99 standard API we want to support
+in the fble standard library.
+
+---
+
+Thought on signals: it doesn't make sense to interrupt a pure function based
+on signal. Not in a way that can modify the results.
+
+It could make sense to interrupt an IO operation, or to invoke a side effect
+during a pure computation that is only visible at IO level. Like, imagine we
+take note of a signal and check for it the next time you are in the Do
+function for the IO monad.
+
+An example practical use of a signal would be to allow ctrl-c to interrupt a
+potentially long running (background?) computation. The computation would have
+to be interruptible though, which means it can't all be pure.
+
+---
+
+What if we passed 'Env' as another argument, then you could interact with it
+purely? And also return 'Env' as a modified return?
+
+---
+
+One thing that is making this challenging is having to come up with the entire
+set of IO interfaces all in one go. It's not very modular. Better would be if
+we could come up with individual interfaces for signal, env, file, etc. and
+compose them together. That way we could work on providing and defining and
+refining the individual interfaces separately.
+
+I sort of, but not completely, did this with networking. I layer sockets API
+on top of the main stdio API. But that isn't quite compatible. If I layer App
+API on top of main stdio API the same way, that's well and good, but how to we
+write an app that uses sockets? Linear stacking of APIs like this doesn't
+extend well. We want arbitrary combinations.
+
+Admittedly, there is something fundamentally different about String args, exit
+code, and App height and width. While file IO, env, networking can all be done
+as side effecting operations, the way I've set up input arguments, exit
+code, app height and width isn't. But perhaps could be?
+
+Consider the env API for example. We can have getenv/setenv side effecting
+operations. Or we could pass a Map from String to String as input and return a
+Map from String to String as output from your main function. Passing as input
+and return as output fits much better with functional behavior, but it gets us
+back to a world where we need to encode every possible interface in the type
+of the main function, which does not compose well.
+
+You could imagine instead of passing command line arguments and returning an
+exit code that we do those all through side effects. Have a GetArgs function
+that knows how to pull the arguments out of thin air. Have an Exit function
+that specifies a non-default exit code. Then our top level runner could just
+be 'IO'.
+
+There is precedent for that kind of thing. It's like saying a main function
+runs in a state monad that has access to command line arguments as part of the
+state, and you can pull it out of that state if you want it. Or ignore it
+entirely if you don't. From that point of view, we can make the API separate
+from the implementation.
+
+But there is a fundamental difference between an API where we pass Env@ as an
+argument up front versus accessing it via GetEnv and SetEnv. If we pass it up
+front, we have to populate it completely every time we run a program, even if
+we never use it. There's a potentially significant performance cost we could
+avoid if we instead access a small part of it via GetEnv/SetEnv functions. The
+filesystem is a more extreme case. Theoretically, but not practically, we
+could load the entire filesystem into a tree, pass it as an argument to the
+program, return a modified filesystem.
+
+Anyway, the point I wanted to get to was, we still want to use generic
+interfaces for the APIs: for all M with Monad@<M@>, FooI@<M@> is the
+interface. For actual IO, we provide a FooI@<IO@> interface, and our top level
+runner works in IO@. Now we can compose side effecting interfaces arbitrarily
+like:
+
+  AI@<IO@> a = ...;
+  BI@<IO@> b = ...;
+  CI@<IO@> c = ...;
+  Run(main<IO>(a, b, c));
+
+It's important to me that we can run tests in a pure environment. We should be
+able to provide pure modeling of these IO computations. This is where we run
+into trouble today. Most models will be state monadic computations. But it's
+really tedious to compose multiple different state monads together.
+
+It would be something like the following, but I don't know how to implement
+it:
+
+  AI@<ASM@> a = ...;
+  BI@<BSM@> b = ...;
+  CI@<CSM@> c = ...;
+  Run(main<Compose@<ASM@, BSM@, CSM@>>(Lift(a), Lift(b), Lift(c)));
+
+If we had an ST like monad, however, then it would be easy to compose these.
+We just need a way to create a pointer to some object and store the pointer
+internally. Then we can as easily do:
+
+  AI@<ST@> a := ...;
+  BI@<ST@> b := ...;
+  CI@<ST@> c := ...;
+  Run(main<ST@>(a, b, c));
+
+What is this ST@ thing? It's just another interface. The key thing we can do
+is allocate a pointer to a value that we can read and write:
+
+  Read@<A@> = M@<A@>;
+  Write@<A@> = (A@) { M@<Unit@>; };
+  New@ = (A@) { M@<*(Read@ read, Write @write); };
+
+Read, Write, and New all depend on generic monadic type M@. I can provide a
+builtin pure ST runner function that prevents us from returning pointers using
+a type like:
+
+  <@ A@>(<<@>@ M@>(ST@<M@>, Monad@<M@>) { A@; }) { A@; } Run;
+
+Note that A@ cannot depend in any way on M@, so you can't leak any allocated
+Write@ or New@ instances associated with whatever specific M@ we use in the
+internal implementation of Run.
+
+ST@ is kind of like saying we do everything in terms of memory. Similar to how
+processes said we do everything in terms of get/put. Side effects as memory
+mapped IO. But generic monads work great to describe arbitrary side effects,
+and they let you describe more complicated side effects as atomic things,
+which is nicer than expressing everything in terms of get/put read/write.
+
+Why not just add pointers to fble, and skip the need for ST@? Because if we
+can do pointer operations in pure function evaluation, then we would need to
+define clear order of operations for evaluating arguments to a function or
+recursive let bindings. We have to over constrain everything. If we use monads
+to specify the sequencing, you can express just the constraints you need in
+the code directly. But as soon as you start to use monad for these
+constraints, you have exactly ST@.
+
+Where does this leave us?
+* Continue to discuss explicit args, exit versus args, exit via side effects.
+* Continue to use generic monad for describing individual IO interfaces.
+* Provide IO and ST instances for each of the IO interfaces.
+* Provide a builtin runner for ST that can run it as a pure computation.
+  - This can't be implemented as pure fble code, but should be easy to
+    implement as a builtin function. To do as pure fble code, we need some way
+    to erase and recover types. I don't know how to do that in general without
+    tracking types at runtime, but we can do it easily enough with static type
+    checking with a builtin ST interface.
+* Provide a builtin runner for IO that can run as applications.
+* Continue to discuss the details of what/which individual IO interfaces I
+  want to provide as part of the standard library.
+
+Remember also that the exposed runner interface can be different from the
+advertised generic app interface. I expect a single or very few fixed low
+level IO interfaces implemented as things like stdio.c, app.c. I expect a few
+standardized collections of generic interfaces for people to use, but also the
+ability to implement a customized generic interface by composition of IO/ST
+interface instances for each of the IO interfaces as needed.
+
+Maybe a good next question is: what should be the fixed low level interface?
+* stdio.c, app.c? Can we come up with a single one that works everywhere?
+
+In other words, how reasonable would it be to have:
+* List@<String@> args accessible via a GetArgs interface?
+* Return Int@ exit code via an Exit interface?
+* Set up app width, height, event/effect interfaces via side effects?
+
+String args and exit code seem doable, but also maybe not necessary if we want
+to say our low level interface aligns with C99 main programs.
+
+The app interface could be done as a layer over SDL. Something like:
+* App function that creates an app and returns width, height, event/effect
+  ports and, I suppose, closes whatever existing app is running.
+
+Maybe it's more a question of how much of the code we want to have in C and
+how much in fble? As much as possible in fble is more flexible for writing
+fble code, but also adds a layer of complexity we could avoid, and provides a
+nice layer of abstraction between different platforms.
+
+---
+
+It worries me slightly that things like 'Signal' and 'Exit' are not pure state
+interfaces. They interrupt the flow of control. That suggests ST@ may only
+work for interfaces that can be modeled as impacting state.
+
+Anyway, let's look through C99 again, and see what it suggests:
+* abort - signals API
+* atexit - not sure if/why we need this? Maybe signal handling related? 
+* exit - not quite signals API. Hmm...
+* getenv - easy? Depends if we have setenv too. If just getenv, it can be a
+  pure function?
+
+Sigh. It's not any easier the second time around.
+
+---
+
+In light of the observation that signals couldn't be purely modeled as ST@,
+let's take a closer look at monad composition. Maybe it's not so bad as I made
+out.
+
+The idea is, you start with some monad, and you modify it to support
+additional side effecting operations. Let's say I've stacked and composed a
+bunch of stuff, for stdio, for files. Again, this is for pure modeling
+purposes. Now consider I want to add two more: getenv, and signals.
+
+I want an interface like:
+
+  <<@>@>@ GetEnv@ = <<@>@ M@> { *(
+    ... N@,                 # Output monad type.
+    Monad@<N@> m,           # Output monad instance.
+    GetEnvI@<N@> getenv     # Instance of GetEnv for that output monad.
+  ); };
+
+  <<@>@ M@>(Monad@<M@>) { GetEnv@<M@>; };
+
+And similarly:
+
+  <<@>@ M@>(Monad@<M@>) { Signals@<M@>; };
+
+Now I should be able to compose, given M@, Monad@<M@>:
+  
+   GetEnv@<M@> getenv = ...(m);
+   Signals@<getenv.M@> signals = ...(getenv.m);
+   main<signals.M@>(...)
+
+Here's the problem. The getenv interface is on getenv.M@, not signals.M@.
+
+I kind of doubt we could come up with a general way to take any Foo@<M@> and
+lift it to a Foo@<getenv.M@>. How might that work? I think details are needed
+to better understand.
+
+  G.M@ = <<@>@ M@, @ A@> {
+    (Env@) { M@<A@>; }
+  };
+
+  G.Do mx f = \env ->
+    Do(mx(env), f)(env);
+
+  G.Return x = \env -> Return(x)
+    
+  G.Lift mx = \env -> mx
+    
+Okay, so I can easily lift something of type M@<A@>. How about something of
+type M@<A@> -> M@<B@>? I want to lift it to G.M@<A@> -> G.M@<B>:
+
+  lift f = \gmx env -> G.Return(f (gmx(env)))
+
+Perhaps we could define a Lift@<A@> interface that let's you lift something
+for any type A@. Then provide the instance of Lift@<A@> for all the relevant
+interfaces. But this really feels needlessly complicated. Surely there is some
+pattern we could auto-derive things for?
+
+Like, all structs, all unions, all functions get lifted the same way. So can
+we write code that's generic to the structure of the type and ignores the
+field names, etc? That would be useful for equals implementation too. And ord,
+and stuff like that.
+
+---
+
+Coming back to what to do in practice:
+* List@<String@> args for command line args.
+  Easy. I see no reason not to do this.
+* Return Int@ for exit status?
+
+Today I return Bool@ for exit status: pass or fail.
+
+C99 suggests you can return 0 or EXIT_SUCCESS for successful termination,
+EXIT_FAILURE for unsuccessful termination, otherwise it is implementation
+defined.
+
+Assuming C99 is attempting to return success vs. failure, it makes sense to
+return a bool, rather than a more general Int@ that is interpreted in an
+implementation defined way.
+
+But I feel like, in practice, we can and do write C programs that return
+different non-zero exit status. I certainly do. Who defines that? libc? bash?
+
+Bash says exit status is exit status, or 128 + n for signal n. That suggests
+no more than 128 exit status values are interpreted. The man page I have for
+exit says the least significant byte is returned to the parent.
+
+sysexits.h uses a collection from 64 to 78 to mean different things.
+
+Maybe a broader interpretation of exit is provided in POSIX.1-2001? Looks like
+POSIX defines wait, which has something to say about exit status.
+
+I'm implementing stdio main in C, and I'm trying to stick with C99. That means
+the only thing I can legitimately do is return success or failure. And in
+theory I'm doing it wrong today by picking arbitrary numbers for exit status.
+I should use 0 or EXIT_SUCCESS or EXIT_FAILURE and nothing else.
+
+It sounds like, if I'm after portability, I should return success or failure,
+and nothing more. I could return Int@ and let the platform do whatever it
+wants with it, and leave that up to the programmer. But then in theory I would
+need to provide EXIT_FAILURE, otherwise they wouldn't have a way to portably
+indicate failure.
+
+Seems like python sys.exit chose the approach of: zero for success, non-zero for
+failure, but you better know what platform you are on to make sure you pick
+something reasonable. There doesn't seem to be a well established convention
+beyond 0 vs. non-zero. How useful is it in practice to distinguish between
+them? When would someone depend on the exit status?
+
+I depend on the exit status for fble spec tests:
+
+  switch $type {
+    compile { set es 2 }
+    runtime { set es 3 }
+    default { error "unsupported error type: $type" }
+  }
+
+Right? Except I don't see it documented anywhere? Oh, yeah, FbleMainStatus.
+
+It seems like what I should do is come up with a philosophy for how to think
+of IO and integration with unix/posix/other existing platforms. Use that
+philosophy to guide my decision making.
+
+---
+
+There are a bunch of different standards that allow you to write programs to
+take full advantage of whatever platform you are on. The more we support, the
+more you can write programs to do different things. But not all features are
+supported on all platforms. If we support some feature on one platform but not
+another, your program will work only on that one platform.
+
+Potential philosophies:
+* Pure fble-ness. Pretend nothing else exists today.
+ - Not practical. You couldn't write anything useful.
+* Lowest common denominator.
+ - Portable, but maybe not practical if it can't do stuff like sockets that we
+   want in practice.
+* Pick existing standards.
+ - We could support one or more existing standards.
+ - The developer picks what they want.
+ - It's up to the developer to be as portable or as capable for a specific
+   platform as they want.
+* fbleisms versus standardisms.
+ - file IO is a good example. An fbleism would be M@<Output@>. A standardism
+   would be more like writing to an Int@ representing the int file descriptor.
+
+My feeling is we support specific standards on an as-need basis. Try to
+support everything that standard supports (?). But also provide a suggested
+'fble' standard, which is a more portable subset of things I think most people
+want to do with fble.
+
+Undefined behavior is an interesting issue. Like exit code for C99. You have
+0, EXIT_SUCCESS, EXIT_FAILURE as defined behavior, and any other non-zero as
+undefined behavior. If you know what platform you are running on, as a
+programmer you could make some assumptions about that undefined behavior. So,
+should my C99 interface be only the defined behavior, or allow and preserve
+the undefined behavior too? Or, should I say, implementation-defined behavior?
+
+Seems like a lot of the IO is related to posix shell:
+* You can invoke a command.
+* You pass command line arguments.
+* You have an environment you can modify when you invoke the command.
+* You have redirection of files, with stdout, stderr, stdin
+
+dash man page claims it's based on POSIX 1003.2 and 1003.2a.
+
+Another consideration: think about the C API for sockets compared to the tcl
+API. TCL is so much simpler and nicer. Who would want to use the C API? From
+that point of view, maybe it's better for me to pick simpler APIs and
+encourage fble users to adopt those, rather than try to provide complete
+capabilities via existing API standards?
+
+That almost suggests I shouldn't think in terms of C99, posix, or that like.
+Think in terms of what's more natural to me as a programmer and the common
+things I want to be able to do, expose those, and implement them via C99 or
+other. Better not to inherit all the complexities of all these standards. And
+I cringe to think about supporting pthreads, for example, in fble.
+
+I suppose what really matters for IO is just the input/output? You could say
+pthreads is an internal implementation detail? Though there may be some
+non-determinism / concurrency that you can express with pthreads you couldn't
+express otherwise? Or things with signals and such?
+
+Fble is about functions. The most natural way to write my program is as a
+direct function that takes the types I care about and returns the types I care
+about.
+
+I need a compatibility layer to interface with, e.g. a posix shell. Generalize
+inputs to strings + env. Generalize outputs to... strings/files? Introduce a
+way to interact with streams/file IO.
+
+I wonder if it's worth coming up with some crazy way of generalizing things
+instead of thinking in terms of C programs?
+
+Either way, we want something that can be generalized: any specifically typed
+program can be represented as this single common type, which is the type that
+interfaces with the rest of the world. Try to get into the fble-isms as soon
+as possible, and only go back out at the last moment.
+
+Something like:
+* Input: string for small things, stream/file of char or byte for large things.
+* Output: string for small things, stream/file of char or byte for large things.
+* Status code for success/failure?
+* Interaction: streams for interaction (via sockets, files, or otherwise?)
+
+On the other hand, we could think of the user interacting with a posix
+program, and the stdio interface is really about providing a way to convert
+between that posix interface and a raw fble function.
+
+If we had an Android app, we could think about a different conversion layer.
+
+I wonder if IO shouldn't be part of Std. At least, not things like files, env,
+stdout, stderr, etc. That's all pretty specific to ... command line linux
+programs. Very different than for Android apps, Windows apps, etc. Why not
+have a separate compatibility layer / package for that kind of thing?
+
+Which brings us back to the question of what standard to use, and that C99
+seems to be a pretty reasonable standard to work with to start. But just look
+at the input/output related features of the standard, not internal things.
+
+---
+Things I definitely want in some form or other:
+* command line arguments, exit status, stdin, stdout, stderr, file IO, env
+  access
+
+Things that are less obvious to me:
+* signals, abort, exit, atexit
+* full filesystem manipulation
+* system command
+
+Let's think about the less obvious ones. Maybe I can rule those out, at least
+for the first iteration.
+
+Thoughts on 'exit':
+* As in, explicit call to exit rather than by returning from the top level
+  program.
+* It changes control flow. If we wanted, we could have a monad to describe
+  this control flow.
+* Seems rather un-modular to me. To allow any function to terminate the
+  program. Regardless, we would want a monad to describe the functionality. If
+  we had such a monad, we could just use a monad to propagate it.
+* Which suggests it's fine to just return exit status code from the top level
+  function. No need to also support an IO side effect for exiting. Good.
+
+Thoughts on 'atexit':
+* That would be part of an Exit@ monad if we had one. As with 'exit', we can
+  implement it as part of running the Exit@ monad. No need for something
+  special built in.
+
+Thoughts on signals:
+* Reminder of what it contains:
+ - A set of standard defined signals: SIGSEGV, SIGINT, etc.
+ - The ability to raise a signal explicitly.
+ - The option to handle a signal - on top of the stack, then return to
+   whatever code was interrupted.
+* From the point of view of interacting with the outside world, I see two
+  things:
+ - Being able to respond to a signal sent to the program from outside.
+ - Being able to return a 'signal n' exit status.
+* It doesn't make sense to me to interrupt pure code for handling signals.
+* The alternative would be to have a monad that checks for signals as part of
+  'Do'. I could imagine having such a thing. It could interrupt control flow,
+  so couldn't be done as ST monad.
+* Seems like it's mostly a question of whether we care enough to support
+  signals. Maybe this is a good thing to slate for 'future work'. So long as I
+  have a decent way to add additional IO capabilities in the future.
+
+Maybe let's think a little more about a decent way to add additional IO
+capabilities in the future. That way I could focus for now on an MVP style
+capabilities, and leave the door open for future support for more esoteric
+things for people who want or need those.
+
+---
+
+The nicest way to add additional IO from a user perspective is to add new
+modules that we can reference, preferably without changing the top level type
+of the program. Any new app would refer to the interface from the new module
+in its main function. Any existing old app would not have to change at all.
+That's the goal.
+
+---
+
+ST monad feels sketch to me. The fact that you can't implement it in pure
+fble. That it does some magic to be able to cast values to any time. That it
+allows a function to secretly record information you pass to it. That it
+allows two different functions to secretly communicate and hence have a
+potentially extremely complex state machine. That it basically says: You can
+do anything you want to the ST state. Or, rather: you can have an arbitrarily
+complicated ST state without me knowing about it?
+
+I'm on the fence. The alternative would be a state monad or state transformer
+monad. How is that any better? Yeah, the state has to be explicit. But in
+practice you are just going to copy and share out whatever abstract type the
+function wants you to. Better not to have to mention that type if you can't do
+anything about it. More modular to be able to change the internals of the
+state without the caller having to know about it.
+
+It comes down a bit to the question of what should be part of the interface of
+a function and what should be part of the internal details. Is internal ST
+state part of the interface?
+
+In terms of input/output, read only variables like we have today are like a
+kind of input? ST would allow you to interact with other entities, using true
+input/output. As a caller, you can't tell when two functions are otherwise
+communicating behind your back. That sounds scary. Except if you constructed
+the two functions, you could tell. You could at least prevent them by not
+letting them have access to the same pointer.
+
+For the record, to make state transformer monad work better for composition,
+rather than try to do (M@, Monad, IfcA) ==> (M@*, Monad*, IfcA*, IfcB), we should say
+you are given the final monad instance and the way to interact with it and you
+provide your interface there: (M@, Monad, StateT@<S@>) ==> (IfcB). It's
+the callers job to give you an implementation of StateT@<S@> for whatever
+state you need internally to model things.
+
+Composition would then look something like:
+
+  % M = State<*(SA@ a, SB@ b, ...)>;
+  M@ = M.M@;
+  Monad = M.Monad;
+  IfcA = MkIfcA(M, Monad, (S@ s) { s.a; }, (S@ s, A@ a) { s.@(a); });
+  IfcB = MkIfcB(M, Monad, (S@ s) { s.b; }, (S@ s, B@ b) { s.@(b); });
+  ...
+  M.Run(main<M@>(Monad, IfcA, IfcB, ...));
+
+I could standardize how I define things so it's pretty cookie cutter boiler
+plate to compose together. No need for ST monad.
+
+---
+
+Here's what I propose for a general philosophy:
+
+POSIX, C99, etc. provide ways of composing functionality together. Fble too. I
+am happy with using fble for internal composition. Thus, an fble program
+should be built on fble based composition.
+
+But I want fble programs to be useful in POSIX / C99 environments too. I want
+to be able to make an fble program a component that composes with other POSIX
+/ C99 things.
+
+That's different from saying I want an fble program to support construction
+via POSIX/C99 composition. The fble program is a leaf node in the composition.
+
+So what I'm interested in is a way to export an fble program in a POSIX/C99
+usable wrapper.
+
+For example, consider the environment. I claim there's no reason to support
+setenv inside of fble. Because fble doesn't support fork internally (use fble
+composition, not posix composition internally), and setenv would only effect
+the fble process, not the outside world. Nobody would see the results of
+setenv except for fble itself. But if you want to pass around that kind of
+thing internally in fble, use fble mechanisms to do so, not the external ones.
+
+Let this be our guide.
+
+Hopefully this means I don't need to support every little different thing in
+fble. Use tighter, more well defined interfaces than C99 and POSIX define.
+And I definitely don't need to use the same details as those standards define.
+For example, no need to give access to Int@ file descriptors and require that
+open allocates the smallest available file descriptor next.
+
+---
+
+It sounds like POSIX is trying to be compatible with C99. In some cases it is
+more specific about behavior. For example, for exit status, C99 says 0,
+EXIT_SUCCESS, EXIT_FAILURE, otherwise implementation defined. POSIX says
+EXIT_SUCCESS is 0, EXIT_FAILURE is between 1 and 125, the least significant
+bits of status are available via wait, and the full bits of status are
+available via waitid.
+
+Looks like POSIX standard is available online:
+* pubs.opengroup.org/onlinepubs/9799919799.2024edition/mindex.html
+
+Which downloads and extracts as susv5-html.
+
+So what do I want for fble standard IO? C99? Posix? Some fble-ized version of
+it?
+
+I want something standard for fble programmers to be using. For example, if
+you are writing an app, you should use the same I/O as if you are writing a
+command line program. Don't have 2 or 3 different standards. Pick one. Make it
+work well with fble. Don't tie it explicitly to C99 or POSIX, but make it so
+we can implement it in C99 or POSIX so that we can use fble programs in those
+environments.
+
+Okay? Philosophy is clear? C99 and POSIX standards are clear? Let's step back
+then, go back to the beginning, re-examine things in this light. Figure out
+what makes sense to support and what not, and what APIs I want fble
+programmers to use.
+
+---
+
+1. Command line arguments.
+
+Easy. Pass a list of strings, like we do. Done. Can easily be modeled in pure
+fble.
+
+2. Exit status.
+
+C99: 0, EXIT_SUCCESS, or EXIT_FAILURE.
+Posix: EXIT_SUCCESS = 0, EXIT_FAILURE in [1,125], others accessible various ways.
+
+Proposal: Switch to Int@, use the posix interpretation. No need to define
+EXIT_SUCCESS or EXIT_FAILURE, but I can if I want.
+
+That feels more consistent with what I would expect to be able to write, and
+avoids frustration for people who just want to distinguish between a couple
+different error codes, like I do for fble-test.
+
+Implementation is straight forward. We already have a dependency in Int@ via
+String@, so no extra cost there in terms of complexity.
+
+Can easily be modeled in pure fble.
+
+3. Environment.
+
+I'd like to think of it as read only. If we do that, than we should be able to
+get away with a pure function: (String@) { Maybe@<String@>; }.
+
+We can distinguish between empty value and unset, right? Yes. Thus the need
+for the maybe. We can call this function 'env'.
+
+Can easily be modeled in pure fble.
+
+The concern with making this a pure function is what happens if some non-pure
+code runs and decides to call setenv, and then we get the wrong value? We
+could read the entire environment at process startup, but that may be unduly
+expensive, particularly if most programs read little or none of the
+environment.
+
+python reads the environment up front and saves a copy. Maybe we should do the
+same to be on the safe side? Or... be ambiguous, don't worry about it to
+start, fix any 'bugs' in the implementation later on if someone starts mucking
+with the environment.
+
+Note: we could in theory provide GetEnv as a pure function that's builtin.
+That feels wrong to me. Because its value depends on the environment you run
+in. Better to pass it as an argument. Also, that way we can test it by
+providing alternate values.
+
+Okay? Good. Let's settle on that.
+
+4. stdin, stdout, stderr.
+
+---
+
+Trouble with updating exit code from Bool@ to Int@:
+* FbleStdioMain function can generate its own errors. How to distinguish
+  between these and user returned errors? We're talking things like compile
+  error, runtime error, usage error, other error.
+
+Now this is a real conundrum. If on the one hand I want to fble program to
+be able to determine its exit code, but on the other hand, I have legitimate
+fble-stdio specific error codes. What do I do?
+
+The easiest way out is what I have now: Success or Failure for fble programs
+only. Use the rest of the posix space of exit status for fble-stdio things.
+
+What do other interpreters, like python do?
+
+Python
+* I don't see anything in the docs, but if I give bad args, I see exit status
+  of, e.g., 2.
+* Python does define a bunch of standard os exit statuses. I wonder if that's
+  sysexits.h? OK, USAGE, DATAERR, NOINPUT... Yeah. That's exactly sysexits.h.
+
+tcl: I don't see anything specific.
+
+Java at least says explicitly it will return 0 or non-zero, but the
+application could also return whatever it wants to.
+
+Seems to me like nobody has a good story about this. Anything I can do?
+* Pick high value exit status for things returned by fble-stdio to reduce
+  chance of potential overlap with what the app returns? That seems to be what
+  posix does with shell: 126, 127, and possibly 128+ are all used for other
+  things.
+
+Let's face it, seems like exit status was a bad idea from the start, besides 0
+and 1.
+
+If I want to be posix reasonable and distinguishable from other standard
+things, I should pick something between 1 and 125 for all my error codes. If I
+want to minimize chance of interfering with the application, I should pick
+higher numbers. But doesn't it seem likely others would think the same? What
+if you want to implement your own shell like application, and that itself can
+have errors?
+
+I think it's safe to say the goal of exit codes are:
+1. success vs failure, for use in pipelines.
+2. application specific meaning of failure status.
+
+The problem is, in the case of (2), we have many layers of application: shell
+invokes interpreter invokes program. They can only have 1 exit status at the
+top level. How can you distinguish between things?
+
+The only way to make use of different non-zero exit statuses is to know
+exactly what you're running and exactly what you expect it to return. It's
+pretty common, it seems, for programs to return different exit status for
+different failures. I know I make use of that for fble tests, for example.
+
+So there are two approaches I can take:
+1. The pass/fail approach
+ - Well defined. Can be well defined on platforms outside of posix.
+   Practically useful. Leaves space for well defined fble-stdio exit codes in
+   a posix environment.
+2. The Int approach.
+ - There's always going to be some platform or environment where you can't
+   distinguish your exit codes. But we/you can arrange to make that less
+   likely.
+
+I guess it's a question of how important it is to allow a program to specify
+different failure codes? I feel like there's a clear urge to be able to do so,
+but practical uses are much fewer. You can use stderr for more details.
+
+I suppose there's another option:
+3. The Int approach, but interpreted as pass/fail?
+
+For a specific application, I feel like I can rely on the exit status. The
+problem in this case is more one of composition. It's possible we won't be
+able to compose things into an application that can clearly disambiguate
+between different status results. As long as everyone clearly specifies how
+they handle exit status, then things are well defined, if possibly ambiguous.
+Then our goal should be reduce the chance of ambiguity.
+
+The trouble is, if an application can return any exit status, there is no way
+to eliminate the chance of ambiguity. There is no way to have any meaningful
+exit status from fble-stdio that isn't app specific, because it could be the
+app returned that exit status. The only option to allow for meaningful exit
+status from fble-stdio beyond what the app returned is to limit the range of
+exit status the app can return.
+
+Okay, so we use a similar approach as others have:
+* You can return any Int@ you like.
+* 0 is guaranteed to be EXIT_SUCCESS.
+* non-zero is guaranteed to be EXIT_FAILURE.
+* We can distinguish between 0 or more, but not an unbounded number of
+  non-zero exit status codes. We'll use modulo of some kind to give what info
+  we can.
+* Now I can pick fble-stdio exit codes with large enough number to define the
+  range of exit codes an app can return when running with fble-stdio.
+
+Here's a question for you: 
+* Does bash treat exit status of 256 as success or failure?
+
+It treats it as success. That makes things harder unfortunately. I don't like
+it. What I want is:
+
+ 0 ==> 0
+ x ==> (x-1)%N + 1, where N is number of legal exit codes.
+
+For example, if we have N = 4, exit results are:
+
+ 0: 0
+ 1: 1
+ 2: 2
+ 3: 3
+ 4: 4
+ 5: 1
+ 6: 2
+ ...
+
+But that's not a pure bitmask. So you need to be careful if interpreting
+things that way.
+
+An alternative option could be to clamp: any exit status greater than X is set
+to N. You have full visibility in the supported range. Put your most important
+cases there. You don't have access to things outside that range. That sounds
+better to me, to be honest. It doesn't work as well for something like fsck,
+which can literally return 256 different exit status codes in theory.
+
+Okay, so here's a proposal:
+* Exit status is Int@. 0 for success. Nonzero for error. Application specific
+  interpretation of error status codes.
+* fble-stdio or other interpreters will have a maximum number of supported
+  application error codes, starting at 1. For maximum portability, keep your
+  error codes as small as possible.
+
+That can be the approach I use in fble. Why this is good:
+* If all you care about is pass/fail, it works great. In theory it can work
+  totally portably, because every platform supports at least success/failure.
+* If you care about more, you can say what you care about most, and make use
+  of it on platforms that support it.
+
+Okay? Sound good? Sounds reasonable? Sounds like a plan? Good. Let's do it.
+
+Steps:
+* Change stdio return type from Bool@ to Int@
+* Document interpretation of Int@ exit status.
+* Change FbleMainStatus to use higher values for non-app exit status. Let's
+  say... 96, 97, 98, 99? Or, 'c', 'r', 'u', 'o' converted to ascii? That's
+  kind of fun, and around the same range: 99 to 117? Or, maybe better, allow
+  96 user defined exit status codes, then go 97, 98, 99, 100, or 'c', 'r',
+  'u', 'o' if you prefer.
+
+Cool. Wish me luck. 
+
+---
+
+This is a bit messy. Let's sort things out:
+* Use 112 instead of 96 for the base.
+* FbleMainStatus - unrelated to stdio. Just running programs in general.
+  Status codes 0 through 1, say? As defined. It's only use is to understand
+  how FbleMain failed, if it did. Nothing else.
+ - Today I'm abusing it for a lot of other things I shouldn't be.
+* FbleStdioMain returns [0, 111], 112, 112+FbleMainStatus.
+* FbleAppMain returns [0, 111], 112, 112+FbleMainStatus.
+
+Perhaps I should add helper functions for converting to standard exit status?
+And have a common point of sharing? Probably yeah.

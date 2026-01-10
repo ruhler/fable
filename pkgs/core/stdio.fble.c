@@ -6,6 +6,7 @@
 
 #include "stdio.fble.h"
 
+#include <assert.h>     // for assert
 #include <stdio.h>      // for FILE, fprintf, fflush, fgetc
 #include <stdlib.h>     // for free
 #include <string.h>     // for strcmp
@@ -430,8 +431,30 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   return FblePopFrame(heap, value);
 }
 
+// FbleStdioMainStatus -- See documentation in stdio.fble.h
+FbleStdioMainStatus FbleStdioMainOtherStatus(FbleMainStatus status)
+{
+  assert(FBLE_MAIN_SUCCESS == 0);
+  if (status == FBLE_MAIN_SUCCESS) {
+    return 0;
+  }
+  return 112 + status;
+}
+
+// FbleStdioMainAppStatus -- See documentation in stdio.fble.h
+FbleStdioMainStatus FbleStdioMainAppStatus(FbleValue* status)
+{
+  if (status == NULL) {
+    return FbleStdioMainOtherStatus(FBLE_MAIN_RUNTIME_ERROR);
+  }
+
+  // TODO: Switch to returning Int@ instead of Bool@, then clamp as
+  // appropriate.
+  return (FbleUnionValueTag(status, BOOL_TAGWIDTH) == 0) ? 0 : 1;
+}
+
 // FbleStdioMain -- See documentation in stdio.fble.h
-int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
+FbleStdioMainStatus FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 {
   // To ease debugging of FbleStdioMain programs, cause the following useful
   // functions to be linked in:
@@ -475,7 +498,7 @@ int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   if (stdio == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return status;
+    return FbleStdioMainOtherStatus(status);
   }
 
   FbleValueV stdio_args;
@@ -488,10 +511,7 @@ int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 
   FbleFreeVector(stdio_args);
 
-  FbleMainStatus result = FBLE_MAIN_OTHER_ERROR;
-  if (value != NULL) {
-    result = (FbleUnionValueTag(value, BOOL_TAGWIDTH) == 0) ? FBLE_MAIN_SUCCESS : FBLE_MAIN_FAILURE;
-  }
+  int result = FbleStdioMainAppStatus(value);
 
   FbleFreeValueHeap(heap);
 

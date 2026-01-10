@@ -496,7 +496,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   if (func == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return status;
+    return FbleStdioMainOtherStatus(status);
   }
 
   if (app_args.driver != NULL) {
@@ -515,7 +515,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return FBLE_MAIN_OTHER_ERROR;
+    return FbleStdioMainOtherStatus(FBLE_MAIN_OTHER_ERROR);
   }
 
   SDL_Window* window = SDL_CreateWindow(
@@ -596,7 +596,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     FbleFreeProfile(profile);
     SDL_DestroyWindow(window);
     SDL_Quit();
-    return FBLE_MAIN_RUNTIME_ERROR;
+    return FbleStdioMainOtherStatus(FBLE_MAIN_RUNTIME_ERROR);
   }
 
   // computation has type IO@<Bool@>, which is (World@) { R@<Bool@>; }
@@ -612,10 +612,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     }
   }
 
-  FbleMainStatus exit_status = FBLE_MAIN_OTHER_ERROR;
-  if (result != NULL) {
-    exit_status = (FbleUnionValueTag(FbleStructValueField(result, RESULT_FIELDC, 1), BOOL_TAGWIDTH) == 0) ? FBLE_MAIN_SUCCESS : FBLE_MAIN_FAILURE;
-  }
+  int exit_status = FbleStdioMainAppStatus(result);
 
   FbleFreeValueHeap(heap);
 

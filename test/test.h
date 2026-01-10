@@ -15,8 +15,7 @@
  *   The preload module to run, or NULL to determine the module based on
  *   command line options.
  *
- *  @returns[int]
- *   0 on success, 1 on error, 2 on usage error.
+ *  @returns[FbleMainStatus] Exit status from running the module.
  *
  *  @sideeffects
  *   Prints an error to stderr and exits the program in the case of error.

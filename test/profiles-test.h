@@ -15,8 +15,7 @@
  *   The preloaded module to run, or NULL to determine the module based on
  *   command line options.
  *
- *  @returns[int]
- *   0 for pass, 1 for fail, 2 for usage error.
+ *  @returns[FbleMainStatus] Status of running the program.
  *
  *  @sideeffects
  *   @i Outputs a profile to stdout for debug purposes.

@@ -1,0 +1,26 @@
+Generics
+========
+Can we add something to fble that makes it easy to write code that is generic
+in the structure of a type, rather than the type itself?
+
+For example, we have unions and structs. I can describe a generic
+implementation of Eq@<A@> based solely on the structure of a type.
+
+   Eq@<Struct> = (Struct a, Struct b) {
+     Eq0(a.0, b.0).?(false: False);
+     Eq1(a.1, b.1).?(false: False);
+     ...
+     True;
+   }
+
+   Eq@<Union> = (Union a, Union b) {
+     a.?(0: b.?(0: Eq0(a.0, b.0), : False));
+     a.?(1: b.?(1: Eq1(a.1, b.1), : False));
+     ...
+     False;
+   };
+
+Eq is the example in this case. The motivation for starting this discussion
+thread was stdlib.stdio.txt, asking if we can provide a generic implementation
+of Lift for monad composition.
+

@@ -87,7 +87,7 @@ static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, si
 }
 
 // FbleMemTestMain -- see documentation in mem-test.h.
-int FbleMemTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
+FbleMainStatus FbleMemTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 {
   Args args = { .growth = false, .debug = false };
 

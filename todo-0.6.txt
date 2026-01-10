@@ -2,6 +2,10 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Standardize IO
+ - Return Int@ instead of Bool@ from Stdio Main@.
+ - Change getenv function to a pure env function.
+
 * Add test for StrE with \q escape.
 * Add spec tests for foo $ bar syntaxes.
   - right associativity
