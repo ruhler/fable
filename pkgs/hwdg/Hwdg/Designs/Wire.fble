@@ -1,15 +1,18 @@
 
 @ Addr@ = /Hwdg/Addr%.Addr@;
+
 @ Design@ = /Hwdg/Design%.Design@;
+% Designs = /Hwdg/Design%.Designs;
+% Rule = /Hwdg/Design%.Rule;
 
 <@>@ Build@ = /Hwdg/Build%.Build@;
+<@>% Return = /Hwdg/Build%.Return;
 
-(Addr@, Addr@, Addr@, Addr@, Addr@) { Build@<Design@>; }
-Wire = (Addr@ reset, Addr@ in, Addr@ in_ready, Addr@ out, Addr@ out_ready) {
-    Return $ Rules[
-        Rule[reset]|1[in_ready, out_ready]|00,
-        Rule[in, in_ready, out_ready]|010[out, out_ready]|01, # 0 ==> 0
-        Rule[in, in_ready, out_ready]|110[out, out_ready]|11  # 1 ==> 1
+(Addr@, Addr@, Addr@, Addr@) { Build@<Design@>; }
+Wire = (Addr@ in, Addr@ in_ready, Addr@ out, Addr@ out_ready) {
+    Return $ Designs[
+        Rule[in, in_ready, out_ready]|010[out, out_ready, in_ready]|010, # 0 ==> 0
+        Rule[in, in_ready, out_ready]|110[out, out_ready, in_ready]|110  # 1 ==> 1
     ];
 };
 

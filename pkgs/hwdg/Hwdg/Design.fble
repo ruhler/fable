@@ -1,7 +1,16 @@
 
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
 <@>@ List@ = /Std/List%.List@;
 
+@ Addr@ = /Hwdg/Addr%.Addr@;
+@ Data@ = /Hwdg/Data%.Data@;
+
 @ Memory@ = /Hwdg/Memory%.Memory@;
+% Memory = /Hwdg/Memory%.Memory;
+% Empty = /Hwdg/Memory%.Empty;
 % Contains = /Hwdg/Memory%.Contains;
 % Disjoint = /Hwdg/Memory%.Disjoint;
 % Override = /Hwdg/Memory%.Override;
@@ -12,29 +21,6 @@
 
 # A design is a hierarchical composition of rules.
 @ Design@ = +(Rule@ rule, List@<Design@> designs);
-
-(Design@, Memory@, Memory@) { Memory@; }
-Schedule = (Design@ design, Memory@ memory, Memory@ applied) {
-    design.?(rule: {
-        Rule@ rule = design.rule;
-        Bool@ apply = {
-            Disjoint(rule.input, applied).?(false: False);
-            Disjoint(rule.output, applied).?(false: False);
-            Contains(memory, rule.input).?(false: False);
-            True;
-        };
-        apply.?(true: Override(applied, module.rule.output), false: applied);
-        },
-    });
-};
-
-# Apply a design to a memory in a single step.
-# This selects some subset of enabled non-conflicting rules to execute to
-# update the memory.
-(Design@, Memory@) { Memory@; }
-Apply = (Design@ design, Memory@ memory) {
-    Override(memory, Schedule(design, memory, Empty));
-};
 
 # Helper for constructing a design which is a single rule. For example:
 #   Rule[a, b, c]|001[d, e][11];
@@ -47,7 +33,36 @@ Rule = (List@<Addr@> in_addrs, List@<Data@> in_data, List@<Addr@> out_addrs,
 # Construct a design from a list of designs.
 (List@<Design@>) { Design@; }
 Designs = (List@<Design@> designs) {
-    Design@(designs);
+    Design@(designs: designs);
+};
+
+(Design@, Memory@, Memory@) { Memory@; }
+Schedule = (Design@ design, Memory@ memory, Memory@ applied) {
+    design.?(
+      rule: {
+        Rule@ rule = design.rule;
+        Bool@ apply = {
+            Disjoint(rule.input, applied).?(false: False);
+            Disjoint(rule.output, applied).?(false: False);
+            Contains(memory, rule.input).?(false: False);
+            True;
+        };
+        apply.?(true: Override(applied, rule.output), false: applied);
+      },
+      designs: {
+        design.designs.?(empty: applied);
+        Design@ head = design.designs.items.head;
+        Design@ tail = Designs(design.designs.items.tail);
+        Schedule(tail, memory, Schedule(head, memory, applied));
+      });
+};
+
+# Apply a design to a memory in a single step.
+# This selects some subset of enabled non-conflicting rules to execute to
+# update the memory.
+(Design@, Memory@) { Memory@; }
+Apply = (Design@ design, Memory@ memory) {
+    Override(memory, Schedule(design, memory, Empty));
 };
 
 @(Design@, Apply, Rule, Designs);

@@ -11,4 +11,9 @@ namespace eval "pkgs/hwdg" {
   stdio $::b/pkgs/hwdg/Hwdg/hwdg-tests "/Hwdg/Tests%" "app hwdg" "-Wl,--allow-shlib-undefined"
   testsuite $::b/pkgs/hwdg/Hwdg/hwdg-tests.tr $::b/pkgs/hwdg/Hwdg/hwdg-tests \
     "$::b/pkgs/hwdg/Hwdg/hwdg-tests --prefix Compiled."
+
+  if $::config::enable_fble_app {
+    app $::b/pkgs/hwdg/hwdg-bin "/Hwdg/App%" "hwdg"
+    install $::b/pkgs/hwdg/hwdg-bin $::config::bindir/hwdg
+  }
 }

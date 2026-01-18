@@ -1,4 +1,12 @@
 
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+<@>@ List@ = /Std/List%.List@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
 @ Addr@ = /Hwdg/Addr%.Addr@;
 @ Data@ = /Hwdg/Data%.Data@;
 
@@ -41,6 +49,11 @@ Contains = (Memory@ a, Memory@ b) {
     });
 };
 
+(Memory@)<@ B@>(B@, (Addr@, Data@, B@) { B@; }) { B@; }
+ForEach = (Memory@ m)<@ B@>(B@ b, (Addr@, Data@, B@) { B@; } f) {
+    Map.ForEach(m, b, f);
+};
+
 # Memory literal. For example:
 #    Memory[a, b, c]|'001';
 # The number of addresses must match the number of data.
@@ -51,4 +64,4 @@ Memory = (List@<Addr@> addrs, List@<Data@> data) {
     Map.Insert(tail, addrs.items.head, data.items.head);
 };
 
-@(Memory@, Empty, Memory, Override, Disjoint, Contains);
+@(Memory@, Empty, Memory, Override, Disjoint, Contains, ForEach);

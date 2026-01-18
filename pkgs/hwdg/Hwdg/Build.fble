@@ -1,37 +1,52 @@
 
+% Incr = /Std/Int%.Incr;
 % Int = /Std/Int/Lit%.Int;
+% Lt = /Std/Int/Ord%.Lt;
 
 @ Addr@ = /Hwdg/Addr%.Addr@;
+@ Data@ = /Hwdg/Data%.Data@;
 
-@ S@ = Addr@;
+@ Memory@ = /Hwdg/Memory%.Memory@;
+% Memory = /Hwdg/Memory%.Memory;
+% Empty = /Hwdg/Memory%.Empty;
+% Override = /Hwdg/Memory%.Override;
+
+@ S@ = *(Addr@ next, Memory@ init);
 <@>@ R@ = <@ A@> { *(S@ s, A@ x); };
 <@>@ Build@ = <@ A@>(S@) { R@<A@>; };
 
-Addr@ Zero = Addr@(Int|0, Int|0);
-
-# Produce a sequence of unique addresses starting from zero.
-(Addr@) { Addr@; }
-Incr = (Addr@ a) {
-    /Std/Int/Ord%.Lt(a.y, a.x).?(true: {
-        a.@(y: /Std/Int%.Incr(a.y));
-    });
-    Addr@(/Std/Int%.Incr(a.x), Int|0);
-};
-
 <@ A@>(A@) { Build@<A@>; }
-Return = <@ A@>(A@ x, Addr@ a) {
-    R@(a, x);
+Return = <@ A@>(A@ x, S@ s) {
+    R@(s, x);
 };
 
-# Allocates an unused address.
-Build@<Addr@> Addr = (Addr@ a) {
-    R@(Incr(Addr), a);
+<@ A@>(Build@<A@>)<@ B@>((A@) { Build@<B@>; }) { Build@<B@>; }
+Do = <@ A@>(Build@<A@> ma)<@ B@>((A@) { Build@<B@>; } f, S@ s) {
+    R@<A@> r = ma(s);
+    f(r.x, r.s);
+};
+
+# Allocates an unused address, given the initial value to place at that address.
+(Data@) { Build@<Addr@>; }
+Addr = (Data@ d, S@ s) {
+    Addr@ this = s.next;
+    Addr@ next = {
+        Lt(this.y, this.x).?(true: {
+            this.@(y: Incr(this.y));
+            });
+        Addr@(Incr(this.x), Int|0);
+    };
+    Memory@ init = Override(s.init, Memory[this][d]);
+    R@(@(next, init), this);
 };
 
 # Run the builder.
-<@ A@>(Build@<A@>) { A@; }
+# Returns the initial state for memory and the computed value.
+<@ A@>(Build@<A@>) { *(Memory@ memory, A@ x); }
 Run = <@ A@>(Build@<A@> m) {
-    m(Zero).x;
+    S@ init = @(next: Addr@(Int|0, Int|0), init: Empty);
+    R@<A@> r = m(init);
+    @(memory: r.s.init, x: r.x);
 };
 
-@(Build@, Return, Addr, Run);
+@(Build@, Do, Return, Addr, Run);
