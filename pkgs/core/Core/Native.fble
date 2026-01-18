@@ -1,0 +1,6 @@
+
+# Native@ --
+#   Interface for monads that support arbitrary side effects via native code.
+<<@>@>@ Native@ = <<@>@ M@> { *().%(@/Core/Native%); };
+
+@(Native@);

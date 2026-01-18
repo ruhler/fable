@@ -1683,7 +1683,7 @@ static FbleValue* Eval(ValueHeap* heap, FbleValue* func, size_t argc, FbleValue*
   return result;
 }
 
-// See documentation in fble-value.h
+// See documentation in fble-function.h
 FbleValue* FbleCall(FbleValueHeap* heap_, FbleProfileThread* profile, FbleValue* function, size_t argc, FbleValue** args)
 {
   ValueHeap* heap = (ValueHeap*)heap_;

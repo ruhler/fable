@@ -1,0 +1,36 @@
+
+@ Int@ = /Std/Int%.Int@;
+% Int = /Std/Int/Lit%.Int;
+
+<@>@ List@ = /Std/List%.List@;
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
+<<@>@>@ Native@ = /Core/Native%.Native@;
+
+@ String@ = /Std/String%.String@;
+
+# Program exit status.
+#  0 for success, non-zero for application specific failure status. Not all
+#  platforms support the same range of failure status codes. If a platform
+#  supports N different failure status codes, it should use N-1 of those for
+#  application exit status 1 through N-1, and 1 of those for all other
+#  non-zero application exit codes. In practice this means you should use
+#  smaller positive values for exit codes you want to distinguish between.
+@ Exit@ = Int@;
+
+# Exit status success.
+Exit@ Success = Int|0;
+
+# Exit status failure.
+Exit@ Failure = Int|1;
+  
+# Main@ function for a command line interface.
+#  @arg[<@>@][M@] Abstract monadic type M@ for computation.
+#  @arg[Native@<M@>][native] Interface for executing native code.
+#  @arg[Monad@<M@>][m] The Monad@ instance for M@.
+#  @arg[List@<String@>][args] The command line arguments.
+#  @returns[M@<Exit@>] The application exit status.
+<<@>@>@ Main@ = <<@>@ M@>(Native@<M@>, Monad@<M@>, List@<String@>) { M@<Exit@>; };
+
+@(Exit@, Main@, Success, Failure);

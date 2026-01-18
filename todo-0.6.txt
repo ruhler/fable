@@ -173,3 +173,5 @@ Things to consider doing for the fble-0.6 release.
  - That works on all backends.
  - That supports single step through code.
  - That supports field access.
+
+* Add language support for a proper FFI?

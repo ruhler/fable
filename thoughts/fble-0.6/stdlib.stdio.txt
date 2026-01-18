@@ -867,3 +867,780 @@ abstract type?
 Anyway, the switch over is done for exit status. I like the use of Success and
 Failure in code. I like the proposed standardization of exit status and
 interpretation. Cool.
+
+---
+
+Concern with my approach for getenv: can we really pretend the environment
+doesn't change during runtime? For example, what if you change the working
+directory. Does PWD change?
+
+Some stats on my computer:
+* 45 environment variables
+* 421 bytes worth of environment variable names.
+* 3080 bytes worth of environment variable values.
+
+On python: os.environ['PWD'] does not change after os.chdir
+On tcl: array get ::env 'PWD' does not change after cd
+On C: PWD doesn't change after chdir in the environment either.
+
+PWD must be a shell special thing.
+
+So maybe I don't need to be so afraid?
+
+It looks like C99 doesn't even have a setenv/putenv function. Interesting.
+environ is part of posix, not C99. I'm sort of using posix for fble-stdio,
+based on the interpretation of exit status.
+
+Implementation options:
+* Pure call to C99 getenv on demand.
+* IO call to C99 getenv on demand.
+* Cache results of C99 getenv to avoid changes during runtime.
+* POSIX environ based copy of everything at startup.
+
+Here's a crazy idea. The fble-stdio run function could take two arguments: a
+list of environment variables to read and the Main@ function. It could read
+the environment from that list at startup, then pass a pure function for the
+environment. The benefits being:
+* We only read what you ask for at startup (so... no conditional env var
+  queries?)
+* It's well defined and intuitive when we query the environment variables.
+* No need to iterate over everything or do a bunch of work if no environment
+  variables are read.
+
+The implementation could use an IO based getenv internally.
+
+The downsides are:
+* No way to iterate through list of all env vars - fine. You can't do that in
+  C99 either, and it sounds like an abuse to me.
+* You have to know all the environment variables you want to look for up
+  front. Tricky, in case the variable to read is based on a command line
+  argument or file IO or another environment variable's value.
+
+I feel like it's a common case to read a config file that refers to an
+environment variable that you don't know about at program startup.
+
+Proposal:
+* Assume, don't enforce, that environment does not change at runtime.
+* Provide a pure getenv function, implemented via direct call to C99 getenv.
+* If the assumption doesn't hold well in the future and that causes problems,
+  we can change the implementation to make a copy of environ at startup and
+  use the copy.
+
+---
+
+Do you ever imagine adding a setenv interface to fble? If so, then getenv
+needs to be able to observe the results of setenv. Then we need to do it via
+the monad. If not, then getenv should conceptually read the env at startup and
+not change again; it's only a performance concern to implement it that way.
+
+Why I don't want setenv: the general philosophy. I'm not going to be forking
+from within fble, so nobody would see the modified value except callers of
+getenv. But in that case, they ought to just use fble code to pass that
+information, not abuse getenv/setenv as a back door IO channel (they could
+use files for that if they wanted I suppose...).
+
+Why I might want setenv: ??? Even if we want to fork something, we could ask
+people to pass an explicit env to use at fork time.
+
+Review of posix getenv/setenv/putenv/environ with an eye towards what changes
+and what stays the same if you stick to those interfaces:
+* extern char** environ
+  You can completely replace environ by updating the char** it points to.
+* Behavior is undefined if the application modifies the pointers to which
+  environ points. Not sure how to interpret that precisely:
+  a. environ[3] = "mynewvalue"  ?  pointer is modified?
+  b. environ[3][4] = 'a';       ?  contents pointed to is modified?
+  The language sounds most like (a) is not allowed?
+* The app isn't allowed to modify the string pointed to by the result of
+  getenv unless it has replaced environ or used putenv.
+* getenv is supposed to return one of the pointers in environ.
+* Only setenv, unsetenv, putenv are supposed to be used to modify what environ
+  points to. Or point to a different environ. That suggests again option (a)
+  from above.
+* Sounds like putenv is the only legal way to be able to modify the contents
+  of an environment value without changing out the pointer.
+* Worst case I could always iterate over env, make a copy of everything it
+  points to. The real question is, can I just copy the pointers, or I have to
+  copy the byte contents of the entries as well?
+* Sounds like setenv changes what environ[x] points to, rather than the
+  contents of the existing environ[x].
+* Not clear what unsetenv can do. It can remove a pointer. Can it free the
+  underlying memory too?
+* After calling putenv, you are allowed to modify the contents of the string
+  and that has the side effect of changing the environment. But at least
+  putenv is supposed to keep the string value around as long as anyone might
+  refer to it.
+* The environment list is limited by ARG_MAX?
+
+In short... sounds like it's risky to just copy pointers for the following
+reasons:
+* If they were initialized via putenv, the contents could change at any time.
+  Thus avoiding any potential benefits of the copy.
+* If unsetenv is called, the pointer might be freed.
+
+Seems like the spec is geared towards making it reasonable to implement
+setenv/getenv/unsetenv rather than making it easy to copy.
+
+I don't know. Review of considerations:
+* C99 only has getenv.
+* Performance overheads of upfront full copy.
+* Would we ever want setenv?
+* What makes sense from an application point of view as opposed to
+  implementation point of view?
+
+Options:
+A. (String@) { M@<Maybe@<String@>>; }
+ - Can use getenv directly. C99 works fine.
+ - No performance overheads. No upfront copy.
+ - If we want setenv some day, it works fine.
+ - Whether this makes sense or not from app view depends on how we deal with
+   streams and files.
+ - Still trivial to model as pure: (String@ x) { m.return(Lookup(env, x)); }
+B. (String@) { Maybe@<String@>; }
+ - Can't make a safe upfront copy in C99.
+ - Performance overheads of upfront full copy.
+ - Doesn't work if we want to add setenv later.
+
+When you put it like that, (A) seems better in every way. Let's stick with
+that. That's what I'm using now anyway.
+
+Cool. That sounds like the right approach.
+
+Next up, the hard stuff:
+* streams, files, etc.
+
+Hm... Taking a step back. Using the reader approach for env means potentially
+any M@<...> operation could change the environment? Not for subsequent
+operations though. Just for child operations, right? And I'm not providing any
+way to do it. I guess you still have to trust somebody else isn't given the
+ability to do so.
+
+Anyway, let's think about streams and files.
+
+stdin, stdout, stderr. Output stream is (Output@) { M@<Unit@>; } for character
+streams. Which is what we're using in these cases? Input stream is
+M@<Maybe@<Char@>> for character streams, which is what we are using for stdin,
+stdout, and stderr?
+
+---
+
+Taking a step back. Command line args, exit status, environment, stdio, file
+system... that's all very C99/posix specific. Think about Android for example.
+There's no concept of command line args or exit status. Standard streams
+aren't really used.
+
+Why does it make sense to bias my standard io so much towards C99/posix?
+
+How about we take a step back and consider the fundamentals of what's going on
+here. Something to do with side effects, multi-tasking, shared external state,
+task creation and removal.
+
+fble has functions. We can describe side effects with the use of monadic
+programming. It's a good way of describing side effects. It feels natural and
+sort of composable. In a single threaded environment like fble, every 'side
+effect' and composition of side effects is atomic. Nothing else is going to
+change the world externally while you are running, because you're the only
+thing that is running.
+
+As soon as we interact with the outside world or some other thread of
+execution, we lose that atomicity. The only way to do useful things is to
+change state outside of yourself that something else can observe. It takes you
+time to make those changes. You don't want the outside world to see the
+intermediate effects. You want it to appear as if you had an instantaneous
+effect.
+
+My gut tells me this might be a reasonable multithreading approach: you have
+full control of atomicity of side effects. Ignore the practicalities for now.
+
+Okay, fine idea. But where does that lead us?
+* Cooperative multithreading?
+* Server that can handle multiple requests concurrently?
+* Blocking vs. non-blocking behavior?
+* Interacting with external state, e.g. files?
+* Persisting state across instances. Meaning of private/public in that
+  context?
+
+---
+
+Here's how I imagine multi-threaded processes might look in fble:
+* We have shared state, which a process can read/write via atomic
+  transactions.
+* A process can allocate new shared state.
+* A process can create another process.
+* A process can block on a function of shared state.
+* A process can interrupt/signal another process.
+* Processes don't return values, though that can be modeled easily enough via
+  shared state.
+* A process continues to run until it completes, or until there is no longer
+  any way the process can impact the top level shared state. So, something
+  like: if a process has a reference to the top level shared state, the
+  process stays alive. If the process has a reference to shared state that is
+  also referred to by an alive process, the process is alive. Otherwise the
+  process gets garbage collected.
+* Conceptually a process is something you launch that will interact with a
+  given shared state over time until it is done. I picture hanging a sloth on
+  a tree. The tree is the shared state. The sloth does whatever it's going to
+  do.
+
+There doesn't seem to be a notion of persistent state here. That has to be
+outside somehow, because we can't have things running when the computer is
+off, even though we can persist state.
+
+I'm not providing all the details of the APIs for processes. I'm not claiming
+the high level idea is practically implementable. But I think, best of best
+world, this is the kind of thing we could expect.
+
+Then the question is: is this useful? Is it something useful to add to fble?
+Is it something we could already model in fble? Does it shed any light on how
+we should treat the standard IO interface in fble?
+
+It seems possible that posix does not provide the mechanisms and guarantees we
+need to support this proposed fble model. For example, no standard posix way
+of doing transactions across multiple different files on the system.
+
+I don't think this tells me much about how to access a filesystem. That's an
+API for ways to manipulate a specific type of shared state. There is nothing
+inherent or fundamental about it. stdin, stdout, stderr are specific ways of
+interacting with other processes, but again, nothing inherent or fundamental
+about it.
+
+It almost seems like what we need for interacting with the outside world is
+something analogous to how we generalize all types into strings. Generalize
+all state into ??? A hierarchy of files?
+
+---
+
+Claims:
+
+1. It's not really fair or fundamental to bias the standard IO interface
+towards C99/posix. That would be an arbitrary choice, not a derived choice.
+
+2. For fble-stdio implementation, which adapts fble to a C99/posix
+environment, it doesn't make sense to explicitly distinguish between a c99
+version and a posix version and something more general. It should support
+whatever you can write using C code builtins in the platform, and the user can
+decide at the fble level which of those are safe to use given their
+portability requirements.
+
+3. It's important to write your code in a generic Monad@<M@> monad with side
+effecting interfaces passed in, rather than write code directly in an IO@
+monad:
+ - For testing purposes, so you can reuse the code in a pure test environment.
+ - So that the caller can modify the interfaces accessible to the child, for
+   more fine grained control. For example, add a wrapper around the file open
+   interface to make sure you can only see a subset of the files visible to
+   IO@ in general.
+
+In terms of IO vs ST vs side effects vs processes, the interesting question, I
+think, is about what state is considered internal hidden state versus what
+state is explicitly part of the interface. When working with a generic
+Monad@<M@>, the interface is clear: it's whatever you are given to do with M.
+But when going to implement a specific M@, we need some notion of state.
+
+Consider a few alternatives:
+1. IO monad, you can do anything to the world you want.
+2. ST monad, you can allocate and reuse otherwise internal state.
+3. state transformer monad: the internal state becomes explicit with Monad@<M@>.
+4. Process: the internal state is stored as internal state of a concurrently
+running thread/process.
+
+There's some question or issue or connecting thing, or underlying issue or
+something about those that can be unified and clarified and settled on. I feel
+it.
+
+New idea for how to bridge the gap between an 'open' IO monad and a closed
+Monad@<M@> with explicit interfaces: instead of making IO the monadic type M@,
+make IO an interface that allows you to create interfaces for builtin things.
+
+Now the top level runner can become something like (ignoring args and exit
+status for the moment):
+  
+ <<@>@ M@>(IO@<M> io, Monad@<M@> m) { M@<Unit@>; }
+
+Where we provide IO implementations of interfaces such as:
+
+  <<@>@> M@>(IO@<M@>, Monad@<M@>) { GetEnv@<M@>; }
+  MkGetEnv = ...
+
+The important part here is that everything is still using M@, not IO@, and it
+takes extra effort to pass that IO@<M@> around everywhere. So rather than it
+being easier to use IO@ than <<@>@ M@>, it now becomes harder. That should
+encourage use of more precise generic interfaces. Uh, maybe there's a better
+name for it than IO@ if we go down this route.
+
+The top level runner would then look something like:
+
+  Run $ (IO@<M@> io, Monad@<M@> m) {
+    GetEnv@<M@> getenv <- m.do(MkGetEnv(io));
+    Sockets@<M@> sockets <- m.do(MkSockets(io));
+    main(getenv, sockets);
+  };
+
+There's nothing to say whether the user implements this adaptor logic
+separately from their main code or not, except, if they want to test their
+main code in a pure context, they ought to do it separately.
+
+I think this gives us all the building blocks we need to come up with an
+approach that I will be happy with. I just need to understand the IO vs ST vs
+state monad vs process thing better, particularly with a mind for how to
+export MkGetEnv instances that we can use in the pure testing environment.
+
+---
+
+I wish we had something part of the fble language that let us type erase and
+unerase. The interface is simple. You go from A@ to *@, then from *@ to
+Maybe@<A@> or equivalent if the *@ matches your target A@.
+
+That would allow us to implement ST monad in pure fble. It gives us even more
+flexibility, because we can pick our own data structures. We could implement a
+process monad.
+
+Conceptually what I want is, instead of using a union type, which is an
+explicit, closed set of possible fields, I want an open union type which you
+can stuff anything into and out of. Conceptually easy syntax wise too. Could
+be something like:
+
+   +() is the type
+   +()(type: value) to construct. e.g.  +()(Bool@: True);
+   x.<Bool@> to access - runtime error if wrong tag/type.
+   x.?(type: ...) to switch.
+
+This kind of thing is not an uncommon language feature. Think of
+java.lang.Object, instanceof and cast in Java for example.
+
+The trouble is, I can't think of a reasonable way to implement it given how we
+currently deal with polymorphism.
+
+In theory poly apply could pass the actual type value, and we could track and
+construct at runtime the actual type value and we store the type with the
+value in our open union, and to access it you do a type equality check at
+runtime. Painful, very. Especially to add overhead to everything for what is
+sure to be a very rarely used feature.
+
+I've tried to think of all sorts of workarounds, easy or hard. Polymorphism
+always gets in the way in the end. Also, as soon as we have this ability, it's
+possible to hide away types, so we can't do a forall s. ST s ... kind of trick
+anymore to ensure some data doesn't get returned by a function.
+
+To get a better idea of the issue with polymorphism:
+
+  <@>@ Nothing@ = <@ T@> { Maybe@<T@>(nothing: Unit); };
+
+At runtime, Nothing@<Bool@>, Nothing@<List@<Int@>>, Nothing@<String@>,
+Nothing@, are all the same FbleValue* instance. That value is compatible
+between all these types, but the types themselves are not compatible. So even
+if we had some way to create a unique key object at runtime for locking and
+unlocking values, we can't guarantee the safety of those type conversion.
+
+The only way to safely hide the type of an object is to track the type
+dynamically. Otherwise you couldn't combine and swap different instances of
+untyped values. Tracking types dynamically at runtime feels expensive. I can't
+think of any hacks based on unique ids or other things that are guaranteed to
+be associated with a unique type to simplify the implementation because of
+polymorphism.
+
+---
+
+Consider 4 alternative approaches to implementing "pure" versions of the IO
+interfaces.
+
+1. Using state transform like monads.
+You pass a State@<FooInternal@, M@> interface MkPureFoo, it uses that to model
+via state internally.
+
+This can be done today. Essentially it means we are explicitly listing all the
+internal states of things in the types statically. No language changes
+required, I suspect it's tedious, and it feels unfortunate that we need to
+expose internal state to the caller when the caller doesn't care anything
+about that state.
+
+2. Dynamic types.
+Add a language feature for dynamic types. Essentially a new kind of open union
+value keyed on types. Requires runtime support for tracking and comparing
+types.
+
+You pass a State@<Erased@, M@> interface to MkPureFoo, or some such. It uses
+that to allocate and store its own erased state.
+
+Once you have dynamic types, you can do all sorts of cool stuff: a better ST
+monad, modeling of processes deterministically internally, maybe dynamic
+loading of modules? Fun stuff like that.
+
+3. ST monad
+Add a builtin for ST monad, where an object can allocate references of a
+particular type, share those references, and then read/write those references.
+
+This is not as general as dynamic types: nobody gets to see the unerased
+value, no control over data structures for mapping reference to value, you
+can't copy/fork the state of references. I'm not convinced it can be done
+entirely in a type safe way if we want to allow people to run ST as pure
+functions, for fear references leak from one run to another. All the downsides
+(and upsides) of having pointers in the language.
+
+4. Process monad.
+Add a builtin monad or feature for supporting concurrency. As part of that,
+include the ability to allocate shared state. Feels like a more general, more
+sane version of ST monad. Except, the right way to do processes will not allow
+you to run them as pure functions, because of the possibility of different
+interleavings changing the results. If only we had dynamic types, we could
+model and 'run' process monads as pure deterministic functions, though in
+practice we would need cooperative multithreading and have some other
+limitations like not being able to interrupt a pure function.
+
+Of these 4, (1) is already supported, (2) makes sense to add as a language
+feature, I claim (3) and (4) make more sense to add as a library using
+builtins. Because we can already describe perfectly well an function that
+makes use of the kinds of side effects we need for (3) and (4). We just don't
+have a way of implementing those side effects inside fble.
+
+I'm tempted to try all of the above, though it will be a lot of work and a bit
+of a digression from cleaning up the standard library. Regardless of which
+approach I chose, it doesn't matter for picking what APIs I want to add to the
+standard library. It only matters for the pure implementation. The only place
+I'm using the pure implementation will be for tests, where I can afford to be
+a little weird.
+
+Okay? Let's shelve this discussion for the time being. Go with approach (1)
+for now, because that's already supported. Get a better feel for how painful
+it is. Consider (2) or others for a subsequent release. Get back to the still
+hard question of what standard interfaces we should provide for making things
+like shell programs.
+
+Let's summarize where I am there in terms of strategy.
+
+1. High level types of programs we want to compose upwards:
+* A command line program: you give string args, it runs and returns an exit
+  code. It has access to files and input and output and such.
+* A graphical application: you have a window, you can draw to it and get input
+  events.
+* An ncurses like terminal application: you have a terminal window you can
+  draw to and get input events.
+
+2. Platform builtins utilities.
+These are implementations of world side effecting things that you can (may be
+able to) do on the underlying platform you are running on.
+* Read/write to stdin, stdout, stderr
+* Read/write to files.
+* Access the environment.
+* Make sockets.
+* Modify directories.
+* and on and on.
+
+3. Strategy for high level program
+* Provide an fble-foo.c implementation of a top level command/application that
+  runs in the system you want to use it on. fble-stdio, fble-app, fble-curses,
+  or some such.
+* Each of these expects a specific type for the main program to run, providing
+  any arguments required by the driver, and an IO@<M@> interface to enable
+  access to any builtins. You give it something that works for all M@ with
+  that interface, it will run it with a specific instance of M@ appropriate
+  for the application.
+
+4. Strategy for platform builtins.
+* Provide a Foo@<M@> interface describing the API.
+* Provide an IO@<M@> -> Foo@<M@> function to provide an implementation of
+  the interface using builtins.
+* Provide a State@<S@, M@> -> Foo@<M@> function to provide an implementation
+  of the interface using pure state, or whatever other features of a pure M@
+  you would need to model the behavior.
+
+5. Composing everything together:
+* User provides a main function that works for all M@, with required IO
+  interfaces supplied. For example:
+    
+    <<@>@ M@>(Foo@<M@> foo, Bar@<M@> bar, Monad@<M@> m, List@<String@> args) {
+      M@<Int@>
+    } Main;
+* User wraps that in a custom driver function for IO or pure as desired:
+    IOWrapper = <<@>@ M@>(IO@<M@> io, Monad@<M@> m, List@<String@> args) {
+      Foo@<M@> foo := m.do(MkFoo(io));
+      Bar@<M@> bar := m.do(MkBar(io));
+      Main(foo, bar, m, args);
+    };
+    PureWrapper = ... tedious, details to work out as needed.
+* We pass that as an argument to a standard generic runner associated with
+  the high level type of program you are trying to run:
+    /Std/Stdio/IO/Run%.Run(IOWrapper);
+
+I only support two kinds of top level programs today:
+1. stdio - intended to be a command line program
+2. app - intended to be a graphical application
+
+I make use of the following builtin interfaces:
+* stdio - stdin, stdout, stderr
+* files - read, write
+* environment - getenv
+* sockets - client, server
+* debug - trace (but this is slightly different, because it violates pureness)
+
+The builtin interfaces can and should be designed to compose well together.
+For example, 'read' can open a stream with the same type that stdin has, so
+you can reuse all the standard utilities for working with streams.
+
+For this first pass, maybe I'm okay just supporting those immediate
+interfaces. Though to be consistent, I should really try to make them more
+comprehensive.
+
+Let's think more on names of things that I have today. First, stdio versus
+app.
+
+stdio - takes a list of command line arguments, returns an exit status.
+Supports standard input output streams. This is a command line program. It
+works with the shell.
+
+app - takes a window that you can draw to, and get inputs. Also supports stdio
+interface.
+
+What does 'stdio' mean from a C99 or posix point of view?
+
+C99:
+* stdin, stdout, stderr
+* file access: rename, remove, tmpfile, fopen, fclose
+* Says nothing about command line args or exit status.
+* Says nothing about directory access. Nothing about directory hierarchy.
+
+That suggests to me that 'stdio' is a good name to use for an interface which
+corresponds to C99 stdio: working with individual streams and files, but where
+filename is an opaque, unstructured string. That's a nice interface to start
+with.
+
+C99 refers to list of args and int return code as a 'Hosted environment', in
+contrast to 'Freestanding environment' when talking about execution
+environments. 'hosted' isn't a terribly intuitive name for me. Not as much as
+stdio is for stdin, stdout, stderr (and apparently file IO but not
+directories).
+
+In C99, getenv belongs to stdlib, considered part of 'general utilities'.
+
+Terminology from posix:
+* 'Command' seems like a thing: a directive to the shell to perform a
+  particular task. So probably includes the program and arguments.
+* 'Application' is a somewhat general name for a program.
+* 'Program' - an application to accomplish a defined task.
+* 'Screen' refers to a rectangular region of columns and lines on a terminal
+  display.
+* 'Shell' is like sh, bash, csh: an interpreter for shell commands.
+* 'Utility' is some times used. Sounds like this corresponds most closely?
+ - Does not include shell builtins. Otherwise I'm not sure how it differs from
+   a program or application.
+
+Yeah, sounds like posix uses 'utility' for programs that can be used in the
+command name part of a command. Specifically: 'non-built-in utility'.
+
+Since 'non-built-in utility' is not intuitive to me... I'm thinking maybe
+'cmd' is good? Short for command? That's what it really means to take a list
+of string arguments and return an exit status. It is being used in a command.
+It's not a command itself though...
+
+/Std/Cmd%.Main@?
+
+fble-cmd?
+
+On the flip side, what would we call a graphical application?
+
+Some random ideas:
+* CLI versus GUI?
+ - CLI stands for command line interface. That's good.
+ - GUI for graphical user interface.
+ - TUI for terminal user interface?
+
+That's cool. I like that distinction: CLI, TUI, GUI. It's exactly that three
+that I was thinking of. It very well captures the distinctions between them.
+It seems to be standard terminology. fble-cli, fble-tui, fble-gui. Sounds
+reasonable to me.
+
+What does it look like, more practically speaking? Focus on CLI, for example.
+* fble-cli is the new name for fble-stdio.
+* Define generic Main@ for CLI in some CLI module:
+  - /Std/CLI%, /Std/Cli%, /Std/UI/Cli? None feel quite right to me.
+* Define Run function in some combination of CLI + whatever I want to replace
+  'IO'.
+
+Sounds reasonable. Don't need to commit yet.
+
+What terminology do I want to replace 'IO'? The concept I'm going for is
+something builtin that is provided by the platform.
+* builtin?
+* platform?
+* ffi?
+* native?
+
+Posix 'builtin' means no need to execute a separate utility, because the logic
+is built into the shell itself. That doesn't quite match what I'm thinking of.
+
+'Platform' sounds right to me, actually.
+
+  Specific computer hardware, as in the phrase "platform-independent".  It may
+  also refer to a specific combination of hardware and {operating system} and/or
+  {compiler}
+
+It's just a bit longer of a word than I'm hoping for.
+
+FFI is not quite right: it suggests a way to call into some other interface
+generally, rather than to call into the platform specifically. Java uses 'JNI'
+for java native interface. NativeInterface might be nice. 'NI'? Or 'OS'?
+Wikipedia claims JNI is an FFI. Why did JNI switch to a foreign function
+interface in later versions? Is that something to learn from here?
+
+To me, 'native interface' suggests more what I have today: you can implement
+functionality using whatever native thing you've implemented things in. Like,
+I implemented fble-stdio in C assuming posix whatever. So you can call into
+that and do whatever the native platform allows.
+
+'foreign function interface' is more like assuming you have some symbols
+available for functions you can call. Those functions can do anything that you
+could do in the platform, so we need to wrap them in some FFI monad to
+indicate as such (or NI?). But FFI also has a way to convert types. If we
+assume a symbol takes some arguments (via registers, or calling conventions
+associated with your architecture), then FFI would provide a way to convert
+between those and fble.
+
+It's almost like a native interface targets C code, but FFI targets machine
+code level interoperability. Since you can call all of posix or whatever from
+machine code, that's more general.
+
+The convenience of FFI is you can write everything in fble syntax. The
+compiler is responsible for any boilerplate you need.
+
+I don't really want to open that can of worms, but it's something worth
+exploring more at some point.
+
+How about for now we use the cryptic name NI for native interface.
+
+So, we have CLI, GUI, TUI. We have NI. What other terminology remains to sort
+out?
+* Stdio
+* Env
+* Sockets
+
+That's enough for me for what I have now. Let's just review potential other
+things to add, and sort out where they might go.
+
+C99: Signals, Locale maybe.
+
+Posix:
+* Configuration interrogation: uname, sysconf, getconf, etc.
+* Process management: fork, spawn, exit, wait
+* Data access:
+ - file access: fopen, fclose, etc.
+ - file metadata: access, chmod, realpath, readlink, etc
+ - file read/write: fgetc, fputc, fread, etc.
+ - directory operations: closedir, link, mkdir, etc
+* etc.
+
+Anyway, the point is, I think it's fair to separate file metadata and
+directory operations outside of what we call 'stdio', which would be basic
+file access and read/write.
+
+Thus I'm proposing:
+* CLI, GUI, TUI for top level program interfaces.
+* NI for anything magically builtin.
+* Env for getenv and maybe setenv.
+* Sockets for sockets.
+* Stdio for C99 equivalent operations on files. Nothing on directories there.
+
+And that's all I need to get started. That's enough for the first big revision
+of the standard library. Flush out Env, Sockets, Stdio as individual APIs.
+Don't worry about adding directory operations, etc. yet. That can be future
+work.
+
+Good. What's the development plan then? Steps involved include:
+* Rename 'fble-stdio' to 'fble-cli'.
+* Rename 'IO' to 'NI' (or 'Native'?).
+* Change Main@ to pass an NI instead of Stdio@.
+* Move Stdio Main to CLI main. Don't mention 'stdio' there.
+* Separate Stdio from Env.
+* Rename 'fble-app' to 'fble-gui'.
+
+This will be a lot of work. Let's put a stake in the ground, plan to go this
+route, implement it, see how painful it is.
+
+---
+
+Maybe we start with the low level interface change.
+
+/Core/Stdio/IO%.Main@, change from
+
+  @ Main@ = (List@<String@>) { IO@<Int@>; };
+
+To:
+
+  @ Main@ = <<@>@ M@>(Native@<M@>, List@<String@>) { M@<Int@>; };
+
+This will be called CLI eventually. For now:
+* /Core/Native% defines Native@.
+* /Core/CLI%.Main@
+
+/Core/CLI% or /Core/Cli%? Or /Core/CommandLineInterface?
+
+Let's play around:
+* /Core/Gui%
+* /Core/GUI%
+* /Core/Tui, /Core/TUI, /Core/IO /Core/Io.
+* /Hwdg%
+* /Cli% fble-cli /Core/Cli% /Std/Cli% Cli@ CLI@ Gui@ Tui@ TUI@ GUI@
+* /Std/Main/Cli%
+
+I'm leaning towards /Core/Cli% for now, /Std/Cli% eventually. I bet I'll get
+used to it. Gui@, Cli@, Tui@ feel better to me than GUI@, CLI@, TUI@. We're
+getting rid of IO@, so we won't have that inconsistency anymore.
+
+---
+
+How to make this first step? Honestly, it might be easier to add a new
+fble-cli program, and have that coexist with fble-stdio for a little while.
+Add support for fble-cli, slowly migrate apps over, then kill fble-stdio.
+
+Here's a question: how do we want to organize the various packages?
+
+I don't want to put everything into a single std package. For example, I don't
+want std to depend on libSDL. Should it depend on sockets? Other native
+builtin interfaces?
+
+I do want to keep the hierarchy: /Std/App, /Std/Sockets. So maybe split those
+off into separate packages: std-app, std-sockets. How about: std-cli?
+
+How about, let's not worry about it for now. I think it will be easy enough to
+reorganize later. Just so long as we don't bring app or sockets into std
+package directly without thinking about it first.
+
+So, for now, put fble-cli in core.
+
+How will I implement it? It's slightly more complicated, because I need to
+provide a monad instance. Can it be some trivial monad instance that does only
+sequencing? I need to pick a value for M@.
+
+<@>@ M@ = <@ A@> { A@; }?
+Return = (A@ x) { x; }
+Do = (A@ mx, (A@) { B@; } f) { f(mx); }
+
+Sounds reasonable enough. The sequencing is there. Hopefully not too hard to
+implement Return and Do in C code. That's the most annoying thing here.
+
+An alternative would be to implement M@, Return, Do in fble directly.
+Essentially go back to (List@<String@>) { Exit@; }. Not even with the IO@ bit
+of it. How to make that safe though? I don't want anyone to be able to write
+and run code with that type signature using fble-cli.
+
+Let's try the hard way first. Because I only have to implement it once and not
+worry about it anymore.
+
+One detail: how do we decide in FbleCliMain which builtins to support? Like,
+if I want to reuse FbleCliMain and fble-cli for a program which uses sockets
+builtins. How would I do that?
+
+We want FbleCliMain to be called from the top level, no extra arguments, so
+that you can compile to use it directly. But then there's no chance to
+register ...
+
+I'm confused. How do we do things today? It already works today. Ah. Because
+you have the dependency on it and we'll link it in? Because you compile
+against it, not interpret against it. If you ran fble-cli as an interpreter,
+we wouldn't get the builtin for network because we have no chance to load it?
+I could believe that. Don't worry about that to start.
+
+---
+
+Okay. I've drafted the code. I like separating Stdio from the runner. The code
+compiles. How do I test it? Should I implement fble-cli first?
+
