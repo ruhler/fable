@@ -1,285 +1,53 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% Not = /Std/Bool%.Not;
-
-@ Char@ = /Std/Char%.Char@;
-@ Ascii@ = /Std/Char/Ascii%.Ascii@;
-% Char = /Std/Char/Ascii%.Char;
-
-@ Coord@ = /Hwdg/Coord%.Coord@; 
-
-@ Data@ = /Hwdg/Data%.Data@;
-% Data = /Hwdg/Data%;
-
-@ Memory@ = /Hwdg/Memory%.Memory@;
-
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% 0 = /Std/Int%.0;
-
 <@>@ List@ = /Std/List%.List@;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
+@ Memory@ = /Hwdg/Memory%.Memory@;
+% Contains = /Hwdg/Memory%.Contains;
+% Disjoint = /Hwdg/Memory%.Disjoint;
+% Override = /Hwdg/Memory%.Override;
 
-% Map = /Core/Map/Tree%.Map(/Hwdg/Coord%.Ord);
-% Set = /Core/Set%.Set(Map);
-@ Set@ = Set.Set@;
+# A rule fires when the memory state is consistent with 'input'. The result of
+# firing a rule is to make the memory state consistent with 'output'
+@ Rule@ = *(Memory@ input, Memory@ output);
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+# A design is a hierarchical composition of rules.
+@ Design@ = +(Rule@ rule, List@<Design@> designs);
 
-# Ports@ --
-#   Convenience type for capturing information about each of the 4 adjacent
-#   ports in a rule: upper left, upper right, lower left, lower right.
-<@>@ Ports@ = <@ T@> { *(T@ ul, T@ ur, T@ ll, T@ lr); };
-
-# PortSpec@ --
-#   Used in the description of a rule. If data is provided, the given value is
-#   read from the port or written to the port. Otherwise the port is unused.
-@ PortSpec@ = Maybe@<Data@>;
-
-# Inputs@ --
-#   Specification for the inputs of a rule.
-@ Inputs@ = Ports@<PortSpec@>;
-
-# Outputs@ --
-#   Specification for the outputs of a rule.
-@ Outputs@ = Ports@<PortSpec@>;
-
-# Rule@ --
-#   A guarded atomic action that can take place at a particular 2x2 area of
-#   memory.
-#
-# A rule consumes the expected inputs from its ports and produces the
-# specified outputs on its ports. A rule is only enabled if the input ports
-# contain their expected values and there is space on the output ports (after
-# input port values have been consumed).
-#
-# For example, the following rule moves a value '1' from the upper left port
-# to the upper right port. The lower left and lower right ports are unused.
-#   1... => .1..
-@ Rule@ = *(Inputs@ inputs, Outputs@ outputs);
-
-# Rule -- 
-#   Convenience literal for describing a rule.
-#
-# The input string is assumed to be of the format:
-#   'IIII => OOOO'
-# Where I and O are one of '1', '0', or '.' for 1, 0, and Nothing respectively.
-#
-# For example:
-#   Rule@ r = Rule|'10.. => ..0.';
-(List@<Ascii@>) { Rule@; } Rule = {
-  (Char@) { PortSpec@; } FromChar = (Char@ c) {
-    /Std/Char/Eq%.Eq(Char|0, c).?(true: Just(Data.0));
-    /Std/Char/Eq%.Eq(Char|1, c).?(true: Just(Data.1));
-    /Std/Char/Eq%.Eq(Char|'.', c).?(true: Nothing<Data@>);
-    Nothing<Maybe@<Data@>>.just;  # Invalid PortSpec character.
-  };
-
-  (List@<Ascii@> l) {
-    String@ s = Str(l);
-    Char@ i0 = s.items.head; String@ s1 = s.items.tail;
-    Char@ i1 = s1.items.head; String@ s2 = s1.items.tail;
-    Char@ i2 = s2.items.head; String@ s3 = s2.items.tail;
-    Char@ i3 = s3.items.head; String@ s4 = s3.items.tail;
-    Char@ _ = s4.items.head; String@ s5 = s4.items.tail;
-    Char@ _ = s5.items.head; String@ s6 = s5.items.tail;
-    Char@ _ = s6.items.head; String@ s7 = s6.items.tail;
-    Char@ _ = s7.items.head; String@ s8 = s7.items.tail;
-    Char@ o0 = s8.items.head; String@ s9 = s8.items.tail;
-    Char@ o1 = s9.items.head; String@ s10 = s9.items.tail;
-    Char@ o2 = s10.items.head; String@ s11 = s10.items.tail;
-    Char@ o3 = s11.items.head;
-    Rule@(
-      Inputs@(FromChar(i0), FromChar(i1), FromChar(i2), FromChar(i3)),
-      Outputs@(FromChar(o0), FromChar(o1), FromChar(o2), FromChar(o3)));
-  };
-};
-
-# Design@ --
-#   Either a single rule, or a collection of designs placed at various
-#   locations relative to the upper left corner of the overall design.
-@ Design@ = +(Rule@ rule, List@<Placed@> designs),
-@ Placed@ = *(Coord@ coord, Design@ design);
-
-# Designs --
-#   Construct a Design from a collection of placed designs.
-(List@<Placed@>) { Design@; } Designs = (List@<Placed@> designs) {
-  Design@(designs: designs);
-};
-
-# PlacedRule -- 
-#   Convenience function for constructing a Placed design with a single rule.
-(Int@, Int@, Rule@) { Placed@; } PlacedRule = (Int@ x, Int@ y, Rule@ r) {
-  Placed@(Coord@(x, y), Design@(rule: r));
-};
-
-# ForEachRulePlaced --
-#   Iterate over the set of rules in a Placed@ design.
-#
-# Conceptually:
-#   B@ b = base
-#   foreach (coord, rule) in placed:
-#     b = body(coord, rule, b)
-#   return b
-(Placed@)<@ B@>(B@, (Coord@, Rule@, B@) { B@; }) { B@; }
-ForEachRulePlaced = (Placed@ placed)<@ B@>(B@ base, (Coord@, Rule@, B@) { B@; } body) {
-  placed.design.?(
-    rule: body(placed.coord, placed.design.rule, base),
-    designs: {
-      /Std/List%.ForEach(placed.design.designs, base,
-        (Placed@ p, B@ b) {
-          Placed@ np = @(
-            coord: /Hwdg/Coord%.Add(placed.coord, p.coord),
-            design: p.design);
-          ForEachRulePlaced(np, b, body);
-          });
-      });
-};
-
-# ForEachRule --
-#   Iterate over the set of rules in a Design@.
-#
-# Conceptually:
-#   B@ b = base
-#   foreach (coord, rule) in design:
-#     b = body(coord, rule, b)
-#   return b
-<@ B@>(Design@, B@, (Coord@, Rule@, B@) { B@; }) { B@; }
-ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body) {
-  ForEachRulePlaced(Placed@(Coord@(0, 0), design), base, body);
-};
-
-# StepInternal --
-#   Run a single step of the given design.
-#
-# This means executing all currently enabled rules in the design, excluding
-# those that are disabled due to conflicts with other rules executed in the
-# same step.
-#
-# Inputs:
-#   design - the design to execute.
-#   memory - the memory to modify.
-#   modified - the set of coordinates modified so far.
-#
-# Returns:
-#   The updated memory. Nothing if no changes were made to memory.
-(Design@, Memory@, Set@) { Maybe@<Memory@>; } StepInternal = {
-  @ B@ = *(Memory@ memory, Set@ updated);
-
-  # Check if a port is blocked because its memory location has already been
-  # updated.
-  (B@, Coord@, PortSpec@, PortSpec@) { Bool@; } Blocked = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
-    pi.?(just: Set.Contains(b.updated, c));
-    po.?(just: Set.Contains(b.updated, c));
-    False;
-  };
-
-  # Check if a port is blocked because the input value is unvailable or does
-  # not match the specification.
-  (B@, Coord@, PortSpec@) { Bool@; } InputBlocked = (B@ b, Coord@ c, PortSpec@ pi) {
-    pi.?(nothing: False);
-
-    Maybe@<Data@> data = /Hwdg/Memory%.Get(b.memory, c);
-    data.?(nothing: True);
-    Not(/Hwdg/Data%.Eq(pi.just, data.just));
-  };
-
-  # Return true if output to the given port is blocked because there's
-  # something in the way.
-  (B@, Coord@, PortSpec@, PortSpec@) { Bool@; } OutputBlocked = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
-    pi.?(just: False);
-    po.?(nothing: False);
-    /Hwdg/Memory%.Get(b.memory, c).?(just: True, nothing: False);
-  };
-
-  # Update the state based on the specification.
-  (B@, Coord@, PortSpec@, PortSpec@) { B@; } Update = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
-    po.?(just: @(
-      memory: /Hwdg/Memory%.Set(b.memory, c, po.just),
-      updated: Set.Insert(b.updated, c)));
-    pi.?(just: @(
-      memory: /Hwdg/Memory%.Clear(b.memory, c),
-      updated: Set.Insert(b.updated, c)));
-    b;
-  };
-
-  (Design@ design, Memory@ memory, Set@ updated) {
-    B@ b = ForEachRule<B@>(design, B@(memory, updated), (Coord@ c, Rule@ r, B@ b) {
-      # The coordinates of each port.
-      Ports@<Coord@> cs = Ports@(
-        Coord@(c.x, c.y),
-        Coord@(Incr(c.x), c.y),
-        Coord@(c.x, Incr(c.y)),
-        Coord@(Incr(c.x), Incr(c.y)));
-
-      # Don't do anything if the data needed for this port has been modified
-      # since the start of the cycle.
-      Blocked(b, cs.ul, r.inputs.ul, r.outputs.ul).?(true: b);
-      Blocked(b, cs.ur, r.inputs.ur, r.outputs.ur).?(true: b);
-      Blocked(b, cs.ll, r.inputs.ll, r.outputs.ll).?(true: b);
-      Blocked(b, cs.lr, r.inputs.lr, r.outputs.lr).?(true: b);
-
-      # Don't do anything if the inputs are blocked.
-      InputBlocked(b, cs.ul, r.inputs.ul).?(true: b);
-      InputBlocked(b, cs.ur, r.inputs.ur).?(true: b);
-      InputBlocked(b, cs.ll, r.inputs.ll).?(true: b);
-      InputBlocked(b, cs.lr, r.inputs.lr).?(true: b);
-
-      # Don't do anything if the outputs are blocked.
-      OutputBlocked(b, cs.ul, r.inputs.ul, r.outputs.ul).?(true: b);
-      OutputBlocked(b, cs.ur, r.inputs.ur, r.outputs.ur).?(true: b);
-      OutputBlocked(b, cs.ll, r.inputs.ll, r.outputs.ll).?(true: b);
-      OutputBlocked(b, cs.lr, r.inputs.lr, r.outputs.lr).?(true: b);
-
-      # Update the state based on execution of the rule.
-      B@ b_ul = Update(b   , cs.ul, r.inputs.ul, r.outputs.ul);
-      B@ b_ur = Update(b_ul, cs.ur, r.inputs.ur, r.outputs.ur);
-      B@ b_ll = Update(b_ur, cs.ll, r.inputs.ll, r.outputs.ll);
-      B@ b_lr = Update(b_ll, cs.lr, r.inputs.lr, r.outputs.lr);
-      b_lr;
+(Design@, Memory@, Memory@) { Memory@; }
+Schedule = (Design@ design, Memory@ memory, Memory@ applied) {
+    design.?(rule: {
+        Rule@ rule = design.rule;
+        Bool@ apply = {
+            Disjoint(rule.input, applied).?(false: False);
+            Disjoint(rule.output, applied).?(false: False);
+            Contains(memory, rule.input).?(false: False);
+            True;
+        };
+        apply.?(true: Override(applied, module.rule.output), false: applied);
+        },
     });
-
-    Set.IsEmpty(b.updated).?(true: Nothing<Memory@>);
-    Just(b.memory);
-  };
 };
 
-# Step --
-#   Run a single step of the given design.
-#
-# This means executing all currently enabled gates in the design, except those
-# that are disabled due to conflicts with other gates executed in the same
-# step.
-#
-# Inputs:
-#   design - the design to execute.
-#   memory - the memory to modify.
-#
-# Returns:
-#   The updated memory.
-(Design@, Memory@) { Memory@; } Step = (Design@ design, Memory@ memory) {
-  Maybe@<Memory@> m = StepInternal(design, memory, Set.Empty);
-  m.?(just: m.just, nothing: memory);
+# Apply a design to a memory in a single step.
+# This selects some subset of enabled non-conflicting rules to execute to
+# update the memory.
+(Design@, Memory@) { Memory@; }
+Apply = (Design@ design, Memory@ memory) {
+    Override(memory, Schedule(design, memory, Empty));
 };
 
-# Run --
-#   Run the design for as long as any gates are enabled.
-#
-# It is the responsibility of the caller to make sure the design terminates.
-(Design@, Memory@) { Memory@; } Run = (Design@ design, Memory@ memory) {
-  Maybe@<Memory@> m = StepInternal(design, memory, Set.Empty);
-  m.?(just: Run(design, m.just), nothing: memory);
+# Helper for constructing a design which is a single rule. For example:
+#   Rule[a, b, c]|001[d, e][11];
+(List@<Addr@>, List@<Data@>, List@<Addr@>, List@<Data@>) { Design@; }
+Rule = (List@<Addr@> in_addrs, List@<Data@> in_data, List@<Addr@> out_addrs,
+    List@<Data@> out_data) {
+    Design@(rule: Rule@(Memory(in_addrs, in_data), Memory(out_addrs, out_data)));
 };
 
-@(
-  Ports@, PortSpec@, Inputs@, Outputs@, Rule@, Rule,
-  Design@, Placed@, Designs, PlacedRule,
-  ForEachRule,
-  Step, Run
-);
+# Construct a design from a list of designs.
+(List@<Design@>) { Design@; }
+Designs = (List@<Design@> designs) {
+    Design@(designs);
+};
+
+@(Design@, Apply, Rule, Designs);

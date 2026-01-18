@@ -1,0 +1,15 @@
+
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+<@>@ Eq@ = /Std/Eq%.Eq@;
+
+@ Data@ = /Hwdg/Data%.Data@;
+
+Eq@<Data@> Eq = (Data@ a, Data@ b) {
+  a.?(
+    0: b.?(0: True, 1: False),
+    1: b.?(0: False, 1: True));
+};
+
+@(Eq);

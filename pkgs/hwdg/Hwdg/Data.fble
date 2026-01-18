@@ -1,9 +1,4 @@
 
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-
-% String = /Std/Char/Ascii/Output%.String;
-
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
@@ -11,14 +6,5 @@
 Data@ 0 = Data@(0: Unit);
 Data@ 1 = Data@(1: Unit);
 
-/Std/Eq%.Eq@<Data@> Eq = (Data@ a, Data@ b) {
-  a.?(
-    0: b.?(0: True, 1: False),
-    1: b.?(0: False, 1: True));
-};
+@(Data@, 0, 1);
 
-/Std/Show%.Show@<Data@> Show = (Data@ x) {
-  x.?(0: String|0, 1: String|1);
-};
-
-@(Data@, 0, 1, Eq, Show);

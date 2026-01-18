@@ -1,0 +1,103 @@
+MVP1
+====
+First step is to be able to implement a 4 or 12 bit adder design, run it, and
+verify it gives the right result. Don't worry about gui yet.
+
+But it makes sense to think a little bit about how we are going to map ports
+to coordinates to draw. Here's the state I'm thinking about:
+
+Data@ or Bit@: 0 or 1. Let's say Data@.
+Port@ - unique id of a port.
+Memory@ - map from Port@ to Data@.
+
+Can we come up with a better name for Port@? Addr@? Sure. Addr@ works for me.
+
+So, we have:
+* Data@, Addr@, Memory@
+* Rule@, Design@
+
+Next I want to implement a builder. Like however I might implement a design.
+
+Let's start with And, for example. You give it the addresses of its inputs and
+outputs. It allocates anything internally that you care about, and returns a
+Design@.
+
+How shall we go about allocating internal addresses?
+
+I could allocate all addresses sequentially. Like around a square:
+
+125
+346
+789...
+
+I won't know what to look for when displaying things graphically though. Maybe
+I can give hints to allocate things nearby? Or that happens naturally based on
+locality? Or just don't worry about it for now.
+
+  Addr@ x <- m.do(Allocate);
+  Addr@ y <- m.do(Allocate);
+  Addr@ z <- m.do(Allocate);
+  
+Hmm... I kind of what to think of my 'design' as a list of rules and
+subdesigns. Rather than a list of sub designs?
+
+  m.return(Design(Rules[
+    Rule[@(a: ., v: 0), ...][...]
+  ]));
+
+Seems like the only thing I really need is a way to allocate addresses for
+now. Allocator@<Design@>? A@<Design@>? Build@<Design@>? Yeah.
+
+What state do I need to keep track of allocating addresses in this order?
+
+125
+346
+789...
+
+(0, 0),
+(1, 0),
+(0, 1),
+(1, 1),
+(2, 0),
+(2, 1),
+(0, 2),
+(1, 2),
+(2, 2),
+
+I suppose:
+  (n, m) => (n, m+1), for m < n
+  (n, n) => (n+1, 0)
+
+Next question: what design do I really want to start with? Do I want things to
+be latency insensitive? Standardized composition? It's not safe to assume what
+order rules fire in. I should account for that.
+
+How about we start with an inverter? And a wire. Then I can make a loop and
+watch things go around.
+
+Design practice will be: inputs + input ready. Outputs plus output ready. You
+can only put to an output when there is space. You can only get from an input
+when there is space.
+
+How do I want to think about designs? Really, in my mind, a design is a list
+of rules or a list of submodules. Why am I tracking that hierarchy at this
+point, if I don't really know what it means? Don't worry about it. It's okay.
+
+What's an easy way to specify a rule? Like, the rules for a wire?
+
+How about:
+* list of ports in some order
+* list of bits as a literal...
+
+So I want a nice way to describe a memory. How about:
+  Memory[a, b, c]|001
+
+That's equivalent to:
+  Memory[a => 0, b => 0, c => 1]. Cool, eh?
+
+How do I initialize the state of memory? I guess I need a special bit for all
+the designs to reset? Sure. Works for me. But how do we do an atomic rule for
+that? That's what we really need, right? A single atomic rule to reset
+everything at once?
+
+Or should we say reset starts by setting everything to 0?

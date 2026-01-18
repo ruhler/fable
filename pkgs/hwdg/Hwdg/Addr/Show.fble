@@ -1,0 +1,12 @@
+
+% Format = /Std/Char/Ascii/Output%.Format;
+
+<@>@ Show@ = /Std/Show%.Show@;
+
+@ Addr@ = /Hwdg/Addr%.Addr@;
+
+Show@<Addr@> Show = (Addr@ x) {
+  Format|'(%s, %s)'[/Std/Int/Show%.Show(x.x), /Std/Int/Show%.Show(x.y)];
+};
+
+@(Show);

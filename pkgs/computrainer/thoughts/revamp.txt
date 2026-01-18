@@ -1,0 +1,74 @@
+Revamp
+======
+
+The concept for computrainer is cool, it's just too hard to implement
+anything. Here's an idea for how to revamp things.
+
+Ditch trains.
+
+Let's say you have a 2D grid of bits as the playing field.
+
+To compute, you provide a set of rules.
+
+A rule describes an atomic transition. Think bludspec style rule. The rule
+fires when a set of bits exactly match a pattern. The result is to set a bunch
+of bits to an exact pattern.
+
+For example, and And gate could be implemented as 4 rules. Say it has 3
+squares, a, b, c.
+
+Rule: a, b ==> c
+
+Rule 1: 0, 0 ==> 0
+Rule 2: 0, 1 ==> 0
+Rule 3: 1, 0 ==> 0
+Rule 4: 1, 1 ==> 1
+
+From a compute point of view, geography doesn't matter. In general we can say
+a rule is a list of inputs that need to be 0, a list of inputs that need to be
+1, a list of outputs that are set to 0 and and a list of outputs that are set
+to 1. The rule fires randomly if the inputs match, with the result of setting
+the outputs.
+
+It's okay for the same square to be both an input and an output of a rule.
+
+Composition of two rules is done by specifying which bits from one rule
+correspond to which bits of another rule. For example, using the rules above.
+
+ 1.a = 2.a
+ 1.b = 2.b
+ 1.c = 2.c
+
+You can have a module, which is a collection of rules or submodules.
+
+I claim it's easy to specify a rule graphically: just drag 0s and 1s to the
+grid where you want inputs and outputs. Maybe have two different colored 0s,
+one for input, one for output, and two different colored 1s. Each tile has
+space for an input and an output. Drag and drop.
+
+Hopefully it's easy to specify a module graphically: drag and drop rules on
+top of each other.
+
+The physical location of a bit doesn't impact computation. You could drag
+different bits around to 'optimize' the circuit. Draging a bit updates the bit
+used for any module or rule that references that location.
+
+We can say something like the cost of executing a rule is proportional to the
+square of the largest distance between locations in a rule. That gives
+motivation to compose small rules rather than define one big massive rule.
+
+I claim it is much easier to describe circuits this way than with trains.
+Everything feels much more direct. We still get a pretty display for execution
+of computation. We can have levels corresponding to functional modules with
+test cases. The user can build libraries of things up. The user can
+instantiate a module and then reshape it however they want for its particular
+use to optimize the network.
+
+To get started, I think best to try implementing a decent sized circuit. Maybe
+a 4 bit or 12 bit adder. Implement it in fble, run it. Don't worry about any
+UI. Then add a display to show the execution. Only after that start to think
+about how the editor might look.
+
+What should I call this?
+
+I should revamp hwdg for this. It's a generalization of that anyway.

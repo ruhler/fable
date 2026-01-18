@@ -1,78 +1,54 @@
 
-@ Coord@ = /Hwdg/Coord%.Coord@;
+@ Addr@ = /Hwdg/Addr%.Addr@;
 @ Data@ = /Hwdg/Data%.Data@;
 
-@ Int@ = /Std/Int%.Int@;
+% Map = /Core/Map/Tree%.Map(/Hwdg/Addr/Ord%.Ord);
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>@ List@ = /Std/List%.List@;
-
-# Memory@ --
-#   An unbounded 2D array of memory.
-#
-# Each location in the memory is either empty or contains data 0 or 1.
-% Map = /Core/Map/Tree%.Map(/Hwdg/Coord%.Ord);
 @ Memory@ = Map.Map@<Data@>;
 
 # Empty -- 
 #   A completely empty memory.
 Memory@ Empty = Map.Empty<Data@>;
 
-# Get --
-#   Get the value of memory at a particular location.
-(Memory@, Coord@) { Maybe@<Data@>; } Get = Map.Lookup<Data@>;
-
-# Put -- 
-#   Set the data value at a particular location.
-(Memory@, Coord@, Data@) { Memory@; } Set = Map.Insert<Data@>;
-
-# Clear --
-#   Clear the data value of a particular location, leaving the location empty.
-(Memory@, Coord@) { Memory@; } Clear = Map.Delete<Data@>;
-
-# Eq --
-#   Test whether two memories contains the same contents.
-/Std/Eq%.Eq@<Memory@> Eq = {
-  /Core/Map/Eq%.Eq(Map, /Hwdg/Coord%.Eq, /Hwdg/Data%.Eq);
+# Insert all values from 'v' into 'm'.
+(Memory@, Memory@) { Memory@; }
+Override = (Memory@ m, Memory@ v) {
+    Map.ForEach(v, m, (Addr@ k, Data@ v, Memory@ s) {
+        Map.Insert(s, k, v);
+    });
 };
 
-/Std/Show%.Show@<Memory@> Show = {
-  /Core/Map/Show%.Show(Map, /Hwdg/Coord%.Show, /Hwdg/Data%.Show);
+# Return true if the two memories have no addresses in common.
+(Memory@, Memory@) { Bool@; }
+Disjoint = (Memory@ a, Memory@ b) {
+    # TODO: avoid iterating as soon as we find something in common.
+    Map.ForEach(a, True, (Addr@ k, Data@ _, Bool@ disjoint) {
+        disjoint.?(false: False);
+        Map.Lookup(b, k).?(just: False);
+        True;
+    });
 };
 
-# ForEach --
-#   Iterate over non-empty values in the memory.
-#
-# Type Parameters:
-#   B@ - The type of value updated and returned by the foreach loop.
-#
-# Inputs:
-#   memory - the memory to iterate over.
-#   base - the initial value to update and return from the loop.
-#   body - the body of the loop.
-#
-# Returns:
-#   The result of applying the body consecutively to the base value, once for
-#   each entry in the map.
-#
-# Conceptually:
-#   B@ b = base
-#   foreach (coord, data) in memory:
-#     b = body(k, coord, data)
-#   return b
-(Memory@)<@ B@>(B@, (Coord@, Data@, B@) { B@; }) { B@; }
-ForEach = Map.ForEach<Data@>;
-
-# Cell@ --
-#   Describes the data value at a particular location in memory.
-@ Cell@ = *(Int@ x, Int@ y, Data@ data);
-
-# Memory --
-#   Construct an initial memory based on a list of Cell@s.
-(List@<Cell@>) { Memory@; } Memory = (List@<Cell@> cells) {
-  /Std/List%.ForEach(cells, Empty, (Cell@ cell, Memory@ memory) {
-    Set(memory, Coord@(cell.x, cell.y), cell.data);
-  });
+# Return true if the first memory contains the second.
+(Memory@, Memory@) { Bool@; }
+Contains = (Memory@ a, Memory@ b) {
+    Map.ForEach(b, True, (Addr@ k, Data@ vb, Bool@ contains) {
+        contains.?(false: False);
+        Maybe@<Data@> mva = Map.Lookup(a, k);
+        mva.?(nothing: False);
+        /Hwdg/Data/Eq%.Eq(vb, mva.just).?(false: False);
+        True;
+    });
 };
 
-@(Memory@, Cell@, Memory, Empty, Get, Set, Clear, Eq, Show, ForEach);
+# Memory literal. For example:
+#    Memory[a, b, c]|'001';
+# The number of addresses must match the number of data.
+(List@<Addr@>, List@<Data@>) { Memory@; }
+Memory = (List@<Addr@> addrs, List@<Data@> data) {
+    addrs.?(empty: Empty);
+    Memory@ tail = Memory(addrs.items.tail, data.items.tail);
+    Map.Insert(tail, addrs.items.head, data.items.head);
+};
+
+@(Memory@, Empty, Memory, Override, Disjoint, Contains);

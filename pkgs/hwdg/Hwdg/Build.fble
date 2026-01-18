@@ -1,0 +1,37 @@
+
+% Int = /Std/Int/Lit%.Int;
+
+@ Addr@ = /Hwdg/Addr%.Addr@;
+
+@ S@ = Addr@;
+<@>@ R@ = <@ A@> { *(S@ s, A@ x); };
+<@>@ Build@ = <@ A@>(S@) { R@<A@>; };
+
+Addr@ Zero = Addr@(Int|0, Int|0);
+
+# Produce a sequence of unique addresses starting from zero.
+(Addr@) { Addr@; }
+Incr = (Addr@ a) {
+    /Std/Int/Ord%.Lt(a.y, a.x).?(true: {
+        a.@(y: /Std/Int%.Incr(a.y));
+    });
+    Addr@(/Std/Int%.Incr(a.x), Int|0);
+};
+
+<@ A@>(A@) { Build@<A@>; }
+Return = <@ A@>(A@ x, Addr@ a) {
+    R@(a, x);
+};
+
+# Allocates an unused address.
+Build@<Addr@> Addr = (Addr@ a) {
+    R@(Incr(Addr), a);
+};
+
+# Run the builder.
+<@ A@>(Build@<A@>) { A@; }
+Run = <@ A@>(Build@<A@> m) {
+    m(Zero).x;
+};
+
+@(Build@, Return, Addr, Run);
