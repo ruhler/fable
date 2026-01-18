@@ -101,3 +101,19 @@ that? That's what we really need, right? A single atomic rule to reset
 everything at once?
 
 Or should we say reset starts by setting everything to 0?
+
+---
+
+I think my address allocation is wrong. The pattern looks wrong on the screen.
+What am I actually getting?
+
+0, 0
+1, 0
+1, 1
+2, 0
+2, 1
+2, 2
+3, 0
+
+notice we never get to 0, 1.
+
