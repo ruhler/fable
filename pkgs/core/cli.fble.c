@@ -11,7 +11,9 @@
 #include <fble/fble-main.h>        // for FbleMain.
 #include <fble/fble-program.h>     // for FblePreloadedModule
 #include <fble/fble-value.h>       // for FbleValue, etc.
-#include <fble/fble-vector.h> // for FbleInitVector.
+#include <fble/fble-vector.h>      // for FbleInitVector.
+
+#include "fble-cli.usage.h"        // for fbldUsageHelpText
 
 #include "char.fble.h"        // for FbleCharValueAccess
 #include "debug.fble.h"       // for /Core/Debug/Builtin%
@@ -180,8 +182,7 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Debug_2f_Builtin_25_);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_);
 
-  unsigned char* usage = (unsigned char*)"TODO: fble-cli usage";
-  FbleMainStatus status = FbleMain(NULL, NULL, "fble-cli", usage,
+  FbleMainStatus status = FbleMain(NULL, NULL, "fble-cli", fbldUsageHelpText,
       &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &main);
 
   FbleFreeVector(builtins);

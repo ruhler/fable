@@ -1,6 +1,8 @@
 namespace eval "pkgs/core" {
   fbld_header_usage $::b/pkgs/core/fble-stdio.usage.h $::s/pkgs/core/fble-stdio.fbld \
     fbldUsageHelpText
+  fbld_header_usage $::b/pkgs/core/fble-cli.usage.h $::s/pkgs/core/fble-cli.fbld \
+    fbldUsageHelpText
 
   # .c library files.
   set objs [list]
@@ -8,7 +10,7 @@ namespace eval "pkgs/core" {
     lappend objs $::b/pkgs/core/$x.o
     obj $::b/pkgs/core/$x.o $::s/pkgs/core/$x.c \
       "-I $::s/include -I $::s/pkgs/core -I $::b/pkgs/core" \
-      $::b/pkgs/core/fble-stdio.usage.h
+      "$::b/pkgs/core/fble-stdio.usage.h $::b/pkgs/core/fble-cli.usage.h"
   }
   pkg core [list std] "" $objs
 
@@ -26,6 +28,16 @@ namespace eval "pkgs/core" {
     "$::b/pkgs/core/fble-stdio.o" \
     "$::b/pkgs/core/libfble-core$::lext $::b/pkgs/std/libfble-std$::lext $::b/lib/libfble$::lext" ""
   install $::b/pkgs/core/fble-stdio $::config::bindir/fble-stdio
+
+  # fble-cli program.
+  fbld_man_usage $::b/pkgs/core/fble-cli.1 $::s/pkgs/core/fble-cli.fbld
+  install $::b/pkgs/core/fble-cli.1 $::config::mandir/man1/fble-cli.1
+  obj $::b/pkgs/core/fble-cli.o $::s/pkgs/core/fble-cli.c \
+    "-I $::s/include -I $::s/pkgs/std -I $::s/pkgs/core"
+  bin $::b/pkgs/core/fble-cli \
+    "$::b/pkgs/core/fble-cli.o" \
+    "$::b/pkgs/core/libfble-core$::lext $::b/pkgs/std/libfble-std$::lext $::b/lib/libfble$::lext" ""
+  install $::b/pkgs/core/fble-cli $::config::bindir/fble-cli
 
   # Build an fble-stdio compiled binary.
   #

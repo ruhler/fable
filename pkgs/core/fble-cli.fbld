@@ -1,0 +1,33 @@
+@usage[fble-cli] runs an fble cli program
+ @synopsis
+ @ @l[fble-cli] \[@a[OPTION]...\] @a[ARG...]
+ 
+ @description
+  Runs an fble cli program.
+ 
+  The fble program should have type @l{/Core/Cli%.Main@}. Otherwise behavior
+  is undefined.
+ 
+ @options
+  @StandardMainOptions
+  @subsection Other Options
+   @opt[@l[--]] indicates end of options
+ 
+   Everything that follows @l[--] is considered @a[ARG...]. Normally the first
+   unrecognized option is considered the start of @a[ARG...]. In the case of
+   compiled fble-cli binaries, all arguments are assumed to belong to
+   @a[ARG...] unless @l[--] is present, in which case arguments before @l[--]
+   are fble-cli options and arguments after @l[--] are @a[ARG...].
+ 
+ @exitstatus
+  @def[0] Successful execution. Application returned exit status 0.
+  @def[1 through 111] Application returned exit status 1 through 111.
+  @def[112] Application returned exit status less than 0 or greater than 111.
+  @def[114] Compilation error.
+  @def[115] Runtime error.
+  @def[116] Usage error.
+  @def[117] Other error.
+ 
+ @examples
+  @ex[fble-cli -p std -p core -m /Core/Cli/Demo% -- a a]
+   Runs the demo program, passing arguments @l[a] and @l[b].

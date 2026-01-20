@@ -1,0 +1,32 @@
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+<@>@ List@ = /Std/List%.List@;
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
+<<@>@>@ Native@ = /Core/Native%.Native@;
+
+@ String@ = /Std/String%.String@;
+
+<<@>@>@ Main@ = /Core/Cli%.Main@;
+% Success = /Core/Cli%.Success;
+% Failure = /Core/Cli%.Failure;
+
+# Demo application for cli programs.
+# It exits with success if all arguments have the same value, false otherwise.
+
+Main@ Demo = <<@>@ M@>(Native@<M@> _, Monad@<M@> m, List@<String@> args) {
+  args.?(empty: m.return(Success));
+  String@ head = args.items.head;
+  Bool@ matching = /Std/List%.ForEach(args.items.tail, True,
+    (String@ arg, Bool@ match) {
+      match.?(false: False);
+      /Std/String/Eq%.Eq(head, arg);
+    });
+  m.return(matching.?(true: Success, false: Failure));
+};
+
+Demo;
