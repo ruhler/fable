@@ -49,7 +49,7 @@ Int@ W = Int|8;
 
 # Design --
 #   The design to simulate.
-% Built = /Hwdg/Build%.Run(/Hwdg/Designs/Cnt1%.Cnt1);
+% Built = /Hwdg/Build%.Run(/Hwdg/Designs/Adder%.Demo);
 Design@ Design = Built.x;
 Memory@ Memory = Built.memory;
 

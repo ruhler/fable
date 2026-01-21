@@ -1,0 +1,154 @@
+
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Empty = /Std/List%.Empty;
+<@>% Items = /Std/List%.Items;
+<@>% Append = /Std/List%.Append;
+
+@ Addr@ = /Hwdg/Addr%.Addr@;
+
+% Data = /Hwdg/Data%;
+
+@ Design@ = /Hwdg/Design%.Design@;
+% Rule = /Hwdg/Design%.Rule;
+% Designs = /Hwdg/Design%.Designs;
+
+<@>@ Build@ = /Hwdg/Build%.Build@;
+<@>% Return = /Hwdg/Build%.Return;
+<@>% Do = /Hwdg/Build%.Do;
+% Addr = /Hwdg/Build%.Addr;
+
+@ MAddr@ = *(Addr@ data, Addr@ valid);
+
+# Adder interface:
+#  Inputs:
+#   a - n bits of the first argument. Most significant bit first.
+#   b - n bits of the second argument.
+#   c_in - carry in
+#
+#  Outputs:
+#   z - n bits of output
+#   c_out - carry out
+@ Adder@ = *(
+    List@<MAddr@> a,
+    List@<MAddr@> b,
+    MAddr@ c_in,
+
+    List@<MAddr@> z,
+    MAddr@ c_out
+);
+
+# 1-bit adder implementation.
+(Adder@) { Build@<Design@>; }
+Adder1 = (Adder@ ifc) {
+    MAddr@ a = ifc.a.items.head;
+    MAddr@ b = ifc.b.items.head;
+    MAddr@ c_in = ifc.c_in;
+
+    MAddr@ z = ifc.z.items.head;
+    MAddr@ c_out = ifc.c_out;
+
+    List@<Addr@> valids = List[a.valid, b.valid, c_in.valid, z.valid, c_out.valid];
+    List@<Addr@> ins = Append(valids, List[a.data, b.data, c_in.data]);
+    List@<Addr@> outs = Append(valids, List[c_out.data, z.data]);
+
+    Return $ Designs[
+        Rule(ins)|11100000(outs)|0001100,
+        Rule(ins)|11100001(outs)|0001101,
+        Rule(ins)|11100010(outs)|0001101,
+        Rule(ins)|11100011(outs)|0001110,
+        Rule(ins)|11100100(outs)|0001101,
+        Rule(ins)|11100101(outs)|0001110,
+        Rule(ins)|11100110(outs)|0001110,
+        Rule(ins)|11100111(outs)|0001111
+    ];
+};
+
+# N-bit adder.
+(Adder@) { Build@<Design@>; }
+Adder = (Adder@ ifc) {
+    # Instantiate N 1-bit adders, connected together via cout => cin.
+    List@<MAddr@> cs := Do $ /Std/List%.ForEach(
+        ifc.a.items.tail, Return(Empty<MAddr@>),
+        (MAddr@ _, Build@<List@<MAddr@>> mkcs) {
+            Addr@ data := Do(Addr(Data.0));
+            Addr@ valid := Do(Addr(Data.0));
+            List@<MAddr@> tail := Do(mkcs);
+            Return(Items(MAddr@(data, valid), tail));
+        });
+    List@<MAddr@> cins = Append(cs, List[ifc.c_in]);
+    List@<MAddr@> couts = Append(List[ifc.c_out], cs);
+
+    (List@<MAddr@>, List@<MAddr@>, List@<MAddr@>, List@<MAddr@>, List@<MAddr@>) { List@<Adder@>; }
+    Zip = (List@<MAddr@> a, List@<MAddr@> b, List@<MAddr@> cin,
+        List@<MAddr@> z, List@<MAddr@> cout) {
+        a.?(empty: Empty<Adder@>);
+        Adder@ head = Adder@(
+            List[a.items.head],
+            List[b.items.head],
+            cin.items.head,
+            List[z.items.head],
+            cout.items.head);
+        List@<Adder@> tail = Zip(a.items.tail, b.items.tail, cin.items.tail, z.items.tail, cout.items.tail);
+        Items(head, tail);
+    };
+
+    List@<Adder@> bits = Zip(ifc.a, ifc.b, cins, ifc.z, couts);
+    List@<Design@> designs := Do $ /Std/List%.ForEach(
+        bits, Return(Empty<Design@>), (Adder@ adder, Build@<List@<Design@>> mk) {
+            Design@ head := Do(Adder1(adder));
+            List@<Design@> tail := Do(mk);
+            Return(Items(head, tail));
+        });
+
+    Return $ Designs(designs);
+};
+
+# 4 bit addition of 6 and 3
+Build@<Design@> Demo = {
+    Addr@ a0_v := Do(Addr(Data.1));
+    Addr@ a1_v := Do(Addr(Data.1));
+    Addr@ a2_v := Do(Addr(Data.1));
+    Addr@ a3_v := Do(Addr(Data.1));
+
+    Addr@ a0_d := Do(Addr(Data.1));
+    Addr@ a1_d := Do(Addr(Data.0));
+    Addr@ a2_d := Do(Addr(Data.1));
+    Addr@ a3_d := Do(Addr(Data.0));
+
+    Addr@ b0_v := Do(Addr(Data.1));
+    Addr@ b1_v := Do(Addr(Data.1));
+    Addr@ b2_v := Do(Addr(Data.1));
+    Addr@ b3_v := Do(Addr(Data.1));
+
+    Addr@ b0_d := Do(Addr(Data.1));
+    Addr@ b1_d := Do(Addr(Data.1));
+    Addr@ b2_d := Do(Addr(Data.0));
+    Addr@ b3_d := Do(Addr(Data.0));
+
+    Addr@ ci_v := Do(Addr(Data.1));
+    Addr@ ci_d := Do(Addr(Data.0));
+
+    Addr@ z0_v := Do(Addr(Data.0));
+    Addr@ z1_v := Do(Addr(Data.0));
+    Addr@ z2_v := Do(Addr(Data.0));
+    Addr@ z3_v := Do(Addr(Data.0));
+
+    Addr@ z0_d := Do(Addr(Data.0));
+    Addr@ z1_d := Do(Addr(Data.0));
+    Addr@ z2_d := Do(Addr(Data.0));
+    Addr@ z3_d := Do(Addr(Data.0));
+
+    Addr@ co_v := Do(Addr(Data.0));
+    Addr@ co_d := Do(Addr(Data.0));
+
+    Adder@ adder = Adder@(
+        List[MAddr@(a3_d, a3_v), MAddr@(a2_d, a2_v), MAddr@(a1_d, a1_v), MAddr@(a0_d, a0_v)],
+        List[MAddr@(b3_d, b3_v), MAddr@(b2_d, b2_v), MAddr@(b1_d, b1_v), MAddr@(b0_d, b0_v)],
+        MAddr@(ci_d, ci_v),
+        List[MAddr@(z3_d, z3_v), MAddr@(z2_d, z2_v), MAddr@(z1_d, z1_v), MAddr@(z0_d, z0_v)],
+        MAddr@(co_d, co_v));
+    Adder(adder);
+};
+
+@(MAddr@, Adder@, Adder, Demo);
