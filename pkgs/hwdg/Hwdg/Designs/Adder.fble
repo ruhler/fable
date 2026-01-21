@@ -106,41 +106,41 @@ Adder = (Adder@ ifc) {
 
 # 4 bit addition of 6 and 3
 Build@<Design@> Demo = {
-    Addr@ a0_v := Do(Addr(Data.1));
-    Addr@ a1_v := Do(Addr(Data.1));
-    Addr@ a2_v := Do(Addr(Data.1));
-    Addr@ a3_v := Do(Addr(Data.1));
-
-    Addr@ a0_d := Do(Addr(Data.1));
-    Addr@ a1_d := Do(Addr(Data.0));
+    Addr@ a3_d := Do(Addr(Data.1));
     Addr@ a2_d := Do(Addr(Data.1));
-    Addr@ a3_d := Do(Addr(Data.0));
+    Addr@ a1_d := Do(Addr(Data.1));
+    Addr@ a0_d := Do(Addr(Data.1));
 
-    Addr@ b0_v := Do(Addr(Data.1));
-    Addr@ b1_v := Do(Addr(Data.1));
-    Addr@ b2_v := Do(Addr(Data.1));
-    Addr@ b3_v := Do(Addr(Data.1));
-
-    Addr@ b0_d := Do(Addr(Data.1));
-    Addr@ b1_d := Do(Addr(Data.1));
-    Addr@ b2_d := Do(Addr(Data.0));
     Addr@ b3_d := Do(Addr(Data.0));
+    Addr@ b2_d := Do(Addr(Data.0));
+    Addr@ b1_d := Do(Addr(Data.0));
+    Addr@ b0_d := Do(Addr(Data.0));
 
-    Addr@ ci_v := Do(Addr(Data.1));
-    Addr@ ci_d := Do(Addr(Data.0));
+    Addr@ a3_v := Do(Addr(Data.1));
+    Addr@ a2_v := Do(Addr(Data.1));
+    Addr@ a1_v := Do(Addr(Data.1));
+    Addr@ a0_v := Do(Addr(Data.1));
 
-    Addr@ z0_v := Do(Addr(Data.0));
-    Addr@ z1_v := Do(Addr(Data.0));
-    Addr@ z2_v := Do(Addr(Data.0));
-    Addr@ z3_v := Do(Addr(Data.0));
+    Addr@ b3_v := Do(Addr(Data.1));
+    Addr@ b2_v := Do(Addr(Data.1));
+    Addr@ b1_v := Do(Addr(Data.1));
+    Addr@ b0_v := Do(Addr(Data.1));
 
-    Addr@ z0_d := Do(Addr(Data.0));
-    Addr@ z1_d := Do(Addr(Data.0));
-    Addr@ z2_d := Do(Addr(Data.0));
     Addr@ z3_d := Do(Addr(Data.0));
+    Addr@ z2_d := Do(Addr(Data.0));
+    Addr@ z1_d := Do(Addr(Data.0));
+    Addr@ z0_d := Do(Addr(Data.0));
+    
+    Addr@ z3_v := Do(Addr(Data.0));
+    Addr@ z2_v := Do(Addr(Data.0));
+    Addr@ z1_v := Do(Addr(Data.0));
+    Addr@ z0_v := Do(Addr(Data.0));
 
-    Addr@ co_v := Do(Addr(Data.0));
+    Addr@ ci_d := Do(Addr(Data.1));
+    Addr@ ci_v := Do(Addr(Data.1));
+
     Addr@ co_d := Do(Addr(Data.0));
+    Addr@ co_v := Do(Addr(Data.0));
 
     Adder@ adder = Adder@(
         List[MAddr@(a3_d, a3_v), MAddr@(a2_d, a2_v), MAddr@(a1_d, a1_v), MAddr@(a0_d, a0_v)],

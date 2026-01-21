@@ -1,6 +1,5 @@
 
 % Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
 % Int = /Std/Int/Lit%.Int;
 
 @ Addr@ = /Hwdg/Addr%.Addr@;
@@ -31,9 +30,9 @@ Do = <@ A@>(Build@<A@> ma)<@ B@>((A@) { Build@<B@>; } f, S@ s) {
 Addr = (Data@ d, S@ s) {
     Addr@ this = s.next;
     Addr@ next = {
-        # We walk diagonally from upper left to lower right.
-        /Std/Int/Eq%.Eq(Int|0, this.y).?(true: Addr@(Int|0, Incr(this.x)));
-        Addr@(Incr(this.x), Decr(this.y));
+        # Go left to right, bottom to top, 8 per row.
+        /Std/Int/Eq%.Eq(Int|7, this.x).?(true: Addr@(Int|0, Incr(this.y)));
+        Addr@(Incr(this.x), this.y);
     };
     Memory@ init = Override(s.init, Memory[this][d]);
     R@(@(next, init), this);

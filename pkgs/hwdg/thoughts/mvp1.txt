@@ -117,3 +117,13 @@ What am I actually getting?
 
 notice we never get to 0, 1.
 
+---
+
+I've implemented an N-bit adder. Looks like it works. Pretty cool. Pretty
+fast.
+
+To make it work, I changed the interface so each input and output bit has its
+own valid bit. Things compose nicely that way. Otherwise it's just too hard to
+manage synchronization.
+
+I thus declare MVPV1 accomplished. What's next?
