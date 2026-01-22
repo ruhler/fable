@@ -1644,3 +1644,26 @@ I could believe that. Don't worry about that to start.
 Okay. I've drafted the code. I like separating Stdio from the runner. The code
 compiles. How do I test it? Should I implement fble-cli first?
 
+---
+
+IStream has type M@<Maybe@<Int@>>. If M@ is pure, this turns into
+Maybe@<Int@>. There's no way to tell when precisely to invoke it. That needs
+to be triggered by do, right? I can't just pass around a Maybe@<Int@> that
+reads one byte when you instantiate it. We need to pass around a function that
+we can call repeatedly for each byte you want to get. That makes things a
+little trickier.
+
+Maybe instead we just need: 
+  M@ = <@ A@>(Unit@) { A@; }
+
+It's a function, you pass Unit@, it returns the value. The do function is the
+important part, right? It looks like:
+
+  Do(ma, f) = (Unit@ u) {
+    f(ma(u))(u);
+  }
+
+And that's how you do the sequencing properly. Sounds reasonable? Let's try
+that.
+    
+

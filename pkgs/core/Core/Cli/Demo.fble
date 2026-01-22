@@ -3,22 +3,32 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
+<<@>@>@ Main@ = /Core/Cli%.Main@;
+% Success = /Core/Cli%.Success;
+% Failure = /Core/Cli%.Failure;
+
 <@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Native@ = /Core/Native%.Native@;
 
-@ String@ = /Std/String%.String@;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
-<<@>@>@ Main@ = /Core/Cli%.Main@;
-% Success = /Core/Cli%.Success;
-% Failure = /Core/Cli%.Failure;
+@ String@ = /Std/String%.String@;
+% Str = /Std/Char/Ascii%.Str;
+
+@ Unit@ = /Std/Unit%.Unit@;
 
 # Demo application for cli programs.
 # It exits with success if all arguments have the same value, false otherwise.
 
-Main@ Demo = <<@>@ M@>(Native@<M@> _, Monad@<M@> m, List@<String@> args) {
+Main@ Demo = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
+  % O = /Core/Stream/OStream%(m);
+  Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
+
+  Unit@ _ := m.do(O.PutLine(stdio.out, Str|'hello, world'));
+
   args.?(empty: m.return(Success));
   String@ head = args.items.head;
   Bool@ matching = /Std/List%.ForEach(args.items.tail, True,

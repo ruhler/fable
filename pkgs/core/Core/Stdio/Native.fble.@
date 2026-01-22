@@ -1,0 +1,8 @@
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<Stdio@<M@>>; } Stdio;
+
+@(Stdio);

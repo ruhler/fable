@@ -4,11 +4,13 @@
 #
 #   You cannot construct an instance of Native@ from fble code. It can only be
 #   constructed from native, where typechecking isn't enforced. We promise we
-#   will only ever construct an instance of Native@<M@> where M@ is the pure
-#   monad: M@ = <@ A@> { A@; }. That means from native code, if you are given
-#   something of type Native@<M@>, you can assume M@ is the pure monad and
-#   essentially ignore its presence. Fble users cannot rely on that, because
-#   they still have to pass type checking.
+#   will only ever construct an instance of Native@<M@> where:
+#
+#       M@ = <@ A@>(Unit@) { A@; }.
+#
+#   That means from native code, if you are given something of type
+#   Native@<M@>, you can assume M@ has the above type. Fble users cannot rely
+#   on that, because they still have to pass type checking.
 #
 #   The motivation for passing around an argument of type Native@<M@> wherever
 #   you need access to native code, instead of having Native@ be the monad

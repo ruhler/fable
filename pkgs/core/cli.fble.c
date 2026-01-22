@@ -15,11 +15,12 @@
 
 #include "fble-cli.usage.h"        // for fbldUsageHelpText
 
-#include "char.fble.h"        // for FbleCharValueAccess
-#include "debug.fble.h"       // for /Core/Debug/Builtin%
-#include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
-#include "stdio.fble.h"       // for /Core/Stdio/IO/Builtin%
-#include "string.fble.h"      // for FbleNewStringValue, FbleStringValueAccess
+#include "char.fble.h"          // for FbleCharValueAccess
+#include "debug.fble.h"         // for /Core/Debug/Builtin%
+#include "int.fble.h"           // for FbleNewIntValue, FbleIntValueAccess
+#include "stdio.fble.h"         // for /Core/Stdio/IO/Builtin%
+#include "stdio.native.fble.h"  // for /Core/Stdio/Native%
+#include "string.fble.h"        // for FbleNewStringValue, FbleStringValueAccess
 
 #define LIST_TAGWIDTH 1
 
@@ -35,7 +36,7 @@ static FbleValue* DoImpl(
  * @func[ReturnImpl] FbleRunFunction for monadic 'return' on a pure monad.
  *  See documentation of FbleRunFunction in fble-function.h
  *
- *  The fble type of the function is @l{(A@) { A@; }}.
+ *  The fble type of the function is @l{(A@, Unit@) { A@; }}.
  *
  *  @sideeffects None.
  */
@@ -50,7 +51,7 @@ static FbleValue* ReturnImpl(
  * @func[DoImpl] FbleRunFunction for monadic 'do' on a pure monad.
  *  See documentation of FbleRunFunction in fble-function.h
  *
- *  The fble type of the function is @l{(A@, (A@) { B@; }) { B@; }}.
+ *  The fble type of the function is @l{((Unit@) { A@; }, (A@, Unit@) { B@; }, Unit@) { B@; }}.
  *
  *  @sideeffects None.
  */
@@ -58,10 +59,12 @@ static FbleValue* DoImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
-  FbleValue* a = args[0];
+  FbleValue* ma = args[0];
   FbleValue* f = args[1];
-  FbleValue* fargs[1] = { a };
-  return FbleCall(heap, profile, f, 1, fargs);
+  FbleValue* u = args[2];
+  FbleValue* a = FbleCall(heap, profile, ma, 1, &u);
+  FbleValue* fargs[2] = { a, u };
+  return FbleCall(heap, profile, f, 2, fargs);
 }
 
 // FbleCli -- see documentation in cli.fble.h
@@ -74,8 +77,8 @@ FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, s
 
   FblePushFrame(heap);
 
-  // We'll apply the main function with what's most convenient:
-  //  M@ = <@ A@> { A@; }
+  // We apply the main function with:
+  //  M@ = <@ A@>(Unit@) { A@; }
 
   // 1st argument: Native@<M@>. It's an empty struct.
   FbleValue* native = FbleNewStructValue_(heap, 0);
@@ -92,7 +95,7 @@ FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, s
   FbleFreeName(block_names[1]);
 
   FbleExecutable return_exe = {
-    .num_args = 1,
+    .num_args = 2,
     .num_statics = 0,
     .max_call_args = 0,
     .run = &ReturnImpl,
@@ -100,7 +103,7 @@ FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, s
   FbleValue* monad_return = FbleNewFuncValue(heap, &return_exe, block_id, NULL);
 
   FbleExecutable do_exe = {
-    .num_args = 2,
+    .num_args = 3,
     .num_statics = 0,
     .max_call_args = 0,
     .run = &DoImpl,
@@ -116,8 +119,11 @@ FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, s
     argS = FbleNewUnionValue(heap, LIST_TAGWIDTH, 0, argP);
   }
 
-  FbleValue* args[3] = { native, monad, argS };
-  FbleValue* result = FbleApply(heap, func, 3, args, profile);
+  // 3rd argument: Unit.
+  FbleValue* unit = FbleNewStructValue_(heap, 0);
+
+  FbleValue* args[4] = { native, monad, argS, unit };
+  FbleValue* result = FbleApply(heap, func, 4, args, profile);
   return FblePopFrame(heap, result);
 }
 
@@ -181,6 +187,7 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   FbleInitVector(builtins);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Debug_2f_Builtin_25_);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_);
+  FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_Native_);
 
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-cli", fbldUsageHelpText,
       &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &main);
