@@ -45,4 +45,4 @@ Main@ Debug = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   };
 };
 
-/Core/Stdio/IO%.Run(Debug);
+/Core/Stdio/Native/Cli%.Run(Debug);

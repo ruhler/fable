@@ -17,7 +17,7 @@ namespace eval "pkgs/pprof" {
   install $::b/pkgs/pprof/fble-pprof $::config::bindir/fble-pprof
 
   # Pprof/Tests compiled
-  stdio $::b/pkgs/pprof/pprof-tests "/Pprof/Tests%" "pprof" ""
+  cli $::b/pkgs/pprof/pprof-tests "/Pprof/Tests%" "pprof" ""
   testsuite $::b/pkgs/pprof/pprof-tests.tr $::b/pkgs/pprof/pprof-tests \
     "$::b/pkgs/pprof/pprof-tests"
 }

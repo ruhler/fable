@@ -28,7 +28,7 @@
 % Show = /Games/TicTacToe/Board/Show%;
 
 # Import to test compilation.
-% _ = /Games/TicTacToe/Stdio%;
+<<@>@>% _ = /Games/TicTacToe/Stdio%;
 
 Test@ Tests = TestSuite(Str|TicTacToe, List[
   Test(Str|TestBoardStatus, (Unit@ _) {

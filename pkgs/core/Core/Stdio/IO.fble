@@ -44,10 +44,4 @@ RunIO = (/Core/Stdio%.Main@<IO@> main, List@<String@> args) {
   main(StdioIO, /Core/Monad/IO%.Monad, args);
 };
 
-# Run --
-#   A top-level IO implementation for running a Stdio Main@ program.
-(/Core/Stdio%.Main@) { Main@; } Run = (/Core/Stdio%.Main@ main) {
-  RunIO(main<IO@>);
-};
-
-@(Main@, StdioIO, Run, RunIO);
+@(Main@, StdioIO, RunIO);
