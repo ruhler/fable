@@ -187,7 +187,7 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   FbleInitVector(builtins);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Debug_2f_Builtin_25_);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_);
-  FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_Native_);
+  FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_Native_25_);
 
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-cli", fbldUsageHelpText,
       &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &main);

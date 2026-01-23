@@ -12,6 +12,6 @@
  * @value[_Fble_2f_Core_2f_Stdio_2f_Native_] @l{/Core/Stdio/Native%} implementation.
  *  @type[FblePreloadedModule]
  */
-extern FblePreloadedModule _Fble_2f_Core_2f_Stdio_2f_Native_;
+extern FblePreloadedModule _Fble_2f_Core_2f_Stdio_2f_Native_25_;
 
 #endif // FBLE_CORE_STDIO_NATIVE_FBLE_H_

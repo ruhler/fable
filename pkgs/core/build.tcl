@@ -75,22 +75,58 @@ namespace eval "pkgs/core" {
     testsuite $target $target.out "cat $target.out"
   }
 
+  # Build an fble-cli compiled binary.
+  #
+  # Inputs:
+  #   target - the file to build.
+  #   path - the module path to use as Main@.
+  #   libs - additional fble packages this depends on, not including core,
+  #          without the fble- prefix.
+  #   lflags - additional linker flags to use when creating the binary.
+  proc ::cli { target path libs lflags} {
+    set objs $target.o
+    set nlibs ""
+    foreach lib [lreverse $libs] {
+      append nlibs " $::b/pkgs/$lib/libfble-$lib$::lext"
+    }
+    append nlibs " $::b/pkgs/core/libfble-core$::lext $::b/pkgs/std/libfble-std$::lext $::b/lib/libfble$::lext"
+
+    fblemain $target.o $::b/bin/fble-compile "--main FbleCliMain -m $path"
+    bin $target $objs $nlibs $lflags
+  }
+
+  # Runs an fble-cli command with proper dependency tracking.
+  #   target - where to put the output of the fble-cli command.
+  #   cmdargs - arguments to fble-cli
+  #   args - additional dependencies.
+  proc ::run_cli { target cmdargs args } {
+    build $target "$::b/pkgs/core/fble-cli $args" \
+      "$::b/pkgs/core/fble-cli --deps-file $target.d --deps-target $target $cmdargs > $target" \
+      "depfile = $target.d"
+  }
+
+  # Runs an fble-cli tests suite interpreted.
+  proc ::run_cli_tests { target cmdargs deps } {
+    run_cli $target.out "$cmdargs -- --prefix Interpreted." $deps
+    testsuite $target $target.out "cat $target.out"
+  }
+
   # /Core/Stdio/Cat% interpreted test.
-  run_stdio $::b/pkgs/core/Core/Stdio/fble-cat.out \
+  run_cli $::b/pkgs/core/Core/Stdio/fble-cat.out \
     "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.fbld"
   test $::b/pkgs/core/Core/Stdio/fble-cat.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld" \
     "diff -Z $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld"
 
   # /Core/Stdio/Cat% interpreted test 2.
-  run_stdio $::b/pkgs/core/Core/Stdio/fble-cat.2.out \
+  run_cli $::b/pkgs/core/Core/Stdio/fble-cat.2.out \
     "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Stdio/Cat% -- $::s/README.fbld"
   test $::b/pkgs/core/Core/Stdio/fble-cat.2.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.2.out" \
     "diff -Z $::b/pkgs/core/Core/Stdio/fble-cat.2.out $::s/README.fbld"
 
   # /Core/Stdio/Cat% compiled.
-  stdio $::b/pkgs/core/fble-cat "/Core/Stdio/Cat%" "" ""
+  cli $::b/pkgs/core/fble-cat "/Core/Stdio/Cat%" "" ""
   install $::b/pkgs/core/fble-cat $::config::bindir/fble-cat
   fbld_man_usage $::b/pkgs/core/fble-cat.1 $::s/pkgs/core/fble-cat.fbld
   install $::b/pkgs/core/fble-cat.1 $::config::mandir/man1/fble-cat.1

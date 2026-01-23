@@ -57,4 +57,4 @@ Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   };
 };
 
-/Core/Stdio/IO%.Run(Cat);
+/Core/Stdio/Native/Cli%.Run(Cat);

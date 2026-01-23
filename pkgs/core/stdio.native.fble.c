@@ -417,7 +417,7 @@ static FbleExecutable Core_Stdio_Native_Executable = {
   .run = &Core_Stdio_Native_Run,
 };
 
-FblePreloadedModule _Fble_2f_Core_2f_Stdio_2f_Native_ = {
+FblePreloadedModule _Fble_2f_Core_2f_Stdio_2f_Native_25_ = {
   .path = &Core_Stdio_Native_Path,
   .deps = { .size = 0, .xs = NULL },
   .executable = &Core_Stdio_Native_Executable,
