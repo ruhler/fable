@@ -59,22 +59,6 @@ namespace eval "pkgs/core" {
     bin $target $objs $nlibs $lflags
   }
 
-  # Runs an fble-stdio command with proper dependency tracking.
-  #   target - where to put the output of the fble-stdio command.
-  #   cmdargs - arguments to fble-stdio
-  #   args - additional dependencies.
-  proc ::run_stdio { target cmdargs args } {
-    build $target "$::b/pkgs/core/fble-stdio $args" \
-      "$::b/pkgs/core/fble-stdio --deps-file $target.d --deps-target $target $cmdargs > $target" \
-      "depfile = $target.d"
-  }
-
-  # Runs an fble-stdio tests suite interpreted.
-  proc ::run_stdio_tests { target cmdargs deps } {
-    run_stdio $target.out "$cmdargs -- --prefix Interpreted." $deps
-    testsuite $target $target.out "cat $target.out"
-  }
-
   # Build an fble-cli compiled binary.
   #
   # Inputs:

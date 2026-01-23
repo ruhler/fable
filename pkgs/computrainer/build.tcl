@@ -4,7 +4,7 @@ namespace eval "pkgs/computrainer" {
   # Computrainer/Tests compiled
   # --allow-shlib-undefined because we know this doesn't use the part of the
   # app package that depends on SDL.
-  stdio $::b/pkgs/computrainer/computrainer-tests "/Computrainer/Tests%" "app computrainer" "-Wl,--allow-shlib-undefined"
+  cli $::b/pkgs/computrainer/computrainer-tests "/Computrainer/Tests%" "app computrainer" "-Wl,--allow-shlib-undefined"
   testsuite $::b/pkgs/computrainer/computrainer-tests.tr $::b/pkgs/computrainer/computrainer-tests \
     "$::b/pkgs/computrainer/computrainer-tests"
 

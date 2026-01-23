@@ -35,7 +35,7 @@
 
 # Import to test compilation.
 % _ = /Md5/Bench%;
-% _ = /Md5/Main%;
+<<@>@>% _ = /Md5/Main%;
 
 # A Hash literal. It should consist of 32 hex digits.
 (List@<Hex@>) { Hash@; } Hash = (List@<Hex@> s00) {
@@ -154,4 +154,4 @@ Test@ Tests = TestSuite(Str|Md5, List[
     HexStr|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
 ]);
 
-/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));
+/Core/Stdio/Native/Cli%.Run(/Core/Test/Stdio%.Run(Tests));

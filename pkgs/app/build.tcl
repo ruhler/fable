@@ -18,7 +18,7 @@ namespace eval "pkgs/app" {
 
   # /App/Tests% interpreted
   set cflags "-I $::s/pkgs/app -I $::s/pkgs/core -I $::s/pkgs/std"
-  run_stdio $::b/pkgs/app/App/tests.out "$cflags -m /App/Tests%"
+  run_cli $::b/pkgs/app/App/tests.out "$cflags -m /App/Tests%"
   test $::b/pkgs/app/App/tests.tr $::b/pkgs/app/App/tests.out \
     "cat $::b/pkgs/app/App/tests.out"
 

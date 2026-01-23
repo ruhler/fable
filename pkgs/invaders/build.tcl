@@ -5,12 +5,12 @@ namespace eval "pkgs/invaders" {
 
   # /Invaders/Tests% interpreted
   set cflags "-I $::s/pkgs/invaders -I $::b/pkgs/invaders -I $::s/pkgs/app -I $::s/pkgs/std -I $::s/pkgs/core"
-  run_stdio_tests $::b/pkgs/invaders/tests-interpreted.tr "$cflags -m /Invaders/Tests%" $::b/pkgs/invaders/Invaders/Usage.fble
+  run_cli_tests $::b/pkgs/invaders/tests-interpreted.tr "$cflags -m /Invaders/Tests%" $::b/pkgs/invaders/Invaders/Usage.fble
 
   # /Invaders/Tests% compiled
   # --allow-shlib-undefined because we know this doesn't use the part of the
   # app package that depends on SDL.
-  stdio $::b/pkgs/invaders/invaders-tests "/Invaders/Tests%" "app invaders" "-Wl,--allow-shlib-undefined"
+  cli $::b/pkgs/invaders/invaders-tests "/Invaders/Tests%" "app invaders" "-Wl,--allow-shlib-undefined"
   testsuite $::b/pkgs/invaders/tests-compiled.tr $::b/pkgs/invaders/invaders-tests \
     "$::b/pkgs/invaders/invaders-tests" 
 

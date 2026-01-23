@@ -23,9 +23,9 @@
 
 # Run --
 #   A top-level IO implementation for running a StringO program.
-(String@) { /Core/Stdio/IO%.Main@; }
+(String@) { /Core/Cli%.Main@; }
 Run = (String@ str) {
-  /Core/Stdio/IO%.Run(StringO(str));
+  /Core/Stdio/Native/Cli%.Run(StringO(str));
 };
 
 @(StringO, Run);

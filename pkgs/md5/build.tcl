@@ -5,22 +5,22 @@ namespace eval "pkgs/md5" {
   pkg md5 [list std core] $::b/pkgs/md5/Md5/Usage.fble ""
 
   # Md5/Tests interpreted
-  run_stdio_tests $::b/pkgs/md5/Md5/tests.tr \
+  run_cli_tests $::b/pkgs/md5/Md5/tests.tr \
     "-I $::s/pkgs/std -I $::s/pkgs/core -I $::s/pkgs/md5 -I $::b/pkgs/md5 -m /Md5/Tests%" \
     $::b/pkgs/md5/Md5/Usage.fble
 
   # Md5/Tests compiled
-  stdio $::b/pkgs/md5/md5-tests "/Md5/Tests%" "md5" ""
+  cli $::b/pkgs/md5/md5-tests "/Md5/Tests%" "md5" ""
   testsuite $::b/pkgs/md5/md5-tests.tr $::b/pkgs/md5/md5-tests \
     "$::b/pkgs/md5/md5-tests --prefix Compiled."
 
   # Md5/Bench compiled
-  stdio $::b/pkgs/md5/md5-bench "/Md5/Bench/Main%" "md5" ""
+  cli $::b/pkgs/md5/md5-bench "/Md5/Bench/Main%" "md5" ""
 
   # fble-md5 program.
   fbld_man_usage $::b/pkgs/md5/fble-md5.1 $::s/pkgs/md5/fble-md5.fbld
   install $::b/pkgs/md5/fble-md5.1 $::config::mandir/man1/fble-md5.1
-  stdio $::b/pkgs/md5/fble-md5 "/Md5/Main%" "md5" ""
+  cli $::b/pkgs/md5/fble-md5 "/Md5/Main%" "md5" ""
   install $::b/pkgs/md5/fble-md5 $::config::bindir/fble-md5
 
   # fble-md5 test

@@ -5,13 +5,13 @@ namespace eval "pkgs/pinball" {
 
   # /Pinball/Tests% interpreted
   set cflags "-I $::s/pkgs/std -I $::s/pkgs/core -I $::s/pkgs/app -I $::s/pkgs/pinball -I $::b/pkgs/pinball"
-  run_stdio_tests $::b/pkgs/pinball/tests-interpreted.tr "$cflags -m /Pinball/Tests%" \
+  run_cli_tests $::b/pkgs/pinball/tests-interpreted.tr "$cflags -m /Pinball/Tests%" \
     $::b/pkgs/pinball/Pinball/Usage.fble
 
   # /Pinball/Tests% compiled
   # --allow-shlib-undefined because we know this doesn't use the part of the
   # app package that depends on SDL.
-  stdio $::b/pkgs/pinball/pinball-tests "/Pinball/Tests%" "app pinball" "-Wl,--allow-shlib-undefined"
+  cli $::b/pkgs/pinball/pinball-tests "/Pinball/Tests%" "app pinball" "-Wl,--allow-shlib-undefined"
   testsuite $::b/pkgs/pinball/tests-compiled.tr \
     $::b/pkgs/pinball/pinball-tests \
     "$::b/pkgs/pinball/pinball-tests --prefix Compiled"

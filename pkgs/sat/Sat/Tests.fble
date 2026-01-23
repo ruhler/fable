@@ -224,4 +224,4 @@ p cnf 5 3
 
 ]);
 
-/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));
+/Core/Stdio/Native/Cli%.Run(/Core/Test/Stdio%.Run(Tests));

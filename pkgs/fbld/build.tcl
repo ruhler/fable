@@ -2,12 +2,12 @@ namespace eval "pkgs/fbld" {
   pkg fbld [list std core] "" ""
 
   # Fbld/Tests compiled
-  stdio $::b/pkgs/fbld/fbld-tests "/Fbld/Tests%" "fbld" ""
+  cli $::b/pkgs/fbld/fbld-tests "/Fbld/Tests%" "fbld" ""
   testsuite $::b/pkgs/fbld/fbld-tests.tr $::b/pkgs/fbld/fbld-tests \
     "$::b/pkgs/fbld/fbld-tests"
 
   # fbld
-  stdio $::b/pkgs/fbld/fble-fbld "/Fbld/Main/IO%" "fbld" ""
+  cli $::b/pkgs/fbld/fble-fbld "/Fbld/Main/Cli%" "fbld" ""
   install $::b/pkgs/fbld/fble-fbld $::config::bindir/fble-fbld
   fbld_man_usage $::b/pkgs/fbld/fble-fbld.1 $::s/pkgs/fbld/fble-fbld.fbld
   install $::b/pkgs/fbld/fble-fbld.1 $::config::mandir/man1/fble-fbld.1

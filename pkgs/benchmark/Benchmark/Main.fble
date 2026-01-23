@@ -20,4 +20,4 @@ Test@ Benchmarks = TestSuite(Str|Benchmarks, List[
   /Sat/Bench%.Bench
 ]);
 
-/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Benchmarks));
+/Core/Stdio/Native/Cli%.Run(/Core/Test/Stdio%.Run(Benchmarks));
