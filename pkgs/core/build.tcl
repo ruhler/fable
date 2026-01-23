@@ -131,18 +131,6 @@ namespace eval "pkgs/core" {
   fbld_man_usage $::b/pkgs/core/fble-cat.1 $::s/pkgs/core/fble-cat.fbld
   install $::b/pkgs/core/fble-cat.1 $::config::mandir/man1/fble-cat.1
 
-  # /Core/Stdio/FastCat% compiled.
-  stdio $::b/pkgs/core/fble-fast-cat "/Core/Stdio/FastCat%" "" ""
-  install $::b/pkgs/core/fble-fast-cat $::config::bindir/fble-fast-cat
-
-  # fble-fast-cat test.
-  build $::b/pkgs/core/fble-fast-cat.out \
-    "$::b/pkgs/core/fble-fast-cat $::s/README.fbld" \
-    "$::b/pkgs/core/fble-fast-cat < $::s/README.fbld > $::b/pkgs/core/fble-fast-cat.out"
-  test $::b/pkgs/core/fble-fast-cat.tr \
-    "$::b/pkgs/core/fble-fast-cat.out $::s/README.fbld" \
-    "diff -Z $::b/pkgs/core/fble-fast-cat.out $::s/README.fbld"
-
   # /Core/Stdio/HelloWorld% interpreted test.
   run_cli $::b/pkgs/core/Core/Stdio/fble-cli.out \
     "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Stdio/HelloWorld%"
