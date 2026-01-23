@@ -21,4 +21,4 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {
   m.return(Success);
 };
 
-/Core/Stdio/IO%.Run(Main);
+/Core/Stdio/Native/Cli%.Run(Main);

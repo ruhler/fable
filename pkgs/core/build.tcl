@@ -144,24 +144,24 @@ namespace eval "pkgs/core" {
     "diff -Z $::b/pkgs/core/fble-fast-cat.out $::s/README.fbld"
 
   # /Core/Stdio/HelloWorld% interpreted test.
-  run_stdio $::b/pkgs/core/Core/Stdio/fble-stdio.out \
+  run_cli $::b/pkgs/core/Core/Stdio/fble-cli.out \
     "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Stdio/HelloWorld%"
-  test $::b/pkgs/core/Core/Stdio/fble-stdio.tr $::b/pkgs/core/Core/Stdio/fble-stdio.out \
-    "grep hello $::b/pkgs/core/Core/Stdio/fble-stdio.out"
+  test $::b/pkgs/core/Core/Stdio/fble-cli.tr $::b/pkgs/core/Core/Stdio/fble-cli.out \
+    "grep hello $::b/pkgs/core/Core/Stdio/fble-cli.out"
 
   # /Core/Stdio/HelloWorld% compiled test.
-  stdio $::b/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/HelloWorld%" "" ""
-  test $::b/pkgs/core/Core/Stdio/fble-stdio-test.out \
-    $::b/pkgs/core/Core/Stdio/fble-stdio-test \
-    "$::b/pkgs/core/Core/Stdio/fble-stdio-test > $::b/pkgs/core/Core/Stdio/fble-stdio-test.out"
-  test $::b/pkgs/core/Core/Stdio/fble-stdio-test.tr $::b/pkgs/core/Core/Stdio/fble-stdio-test.out \
-    "grep hello $::b/pkgs/core/Core/Stdio/fble-stdio-test.out"
+  cli $::b/pkgs/core/Core/Stdio/fble-cli-test "/Core/Stdio/HelloWorld%" "" ""
+  test $::b/pkgs/core/Core/Stdio/fble-cli-test.out \
+    $::b/pkgs/core/Core/Stdio/fble-cli-test \
+    "$::b/pkgs/core/Core/Stdio/fble-cli-test > $::b/pkgs/core/Core/Stdio/fble-cli-test.out"
+  test $::b/pkgs/core/Core/Stdio/fble-cli-test.tr $::b/pkgs/core/Core/Stdio/fble-cli-test.out \
+    "grep hello $::b/pkgs/core/Core/Stdio/fble-cli-test.out"
 
   # Core/Tests interpreted
-  run_stdio_tests $::b/pkgs/core/Core/tests.tr "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Tests%" ""
+  run_cli_tests $::b/pkgs/core/Core/tests.tr "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Tests%" ""
 
   # Core/Tests compiled
-  stdio $::b/pkgs/core/Core/core-tests "/Core/Tests%" "" ""
+  cli $::b/pkgs/core/Core/core-tests "/Core/Tests%" "" ""
   testsuite $::b/pkgs/core/Core/core-tests.tr $::b/pkgs/core/Core/core-tests \
     "$::b/pkgs/core/Core/core-tests --prefix Compiled."
 }
