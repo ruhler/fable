@@ -16,6 +16,8 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
+<<@>@>@ Native@ = /Core/Native%.Native@;
+
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
@@ -31,7 +33,7 @@
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-<<@>@>@ Main@ = /Network/Sockets%.Main@;
+<<@>@>@ Main@ = /Core/Cli%.Main@;
 <<@>@>@ Sockets@ = /Network/Sockets%.Sockets@;
 
 @ Args@ = *(
@@ -97,8 +99,11 @@ GetArgs = (List@<String@> args, Args@ default) {
   GetArgs(nargv, nargs);
 };
 
-Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, List@<String@> argv) {
+Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
   % O = /Core/Stream/OStream%(m);
+
+  Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
+  Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(n, m));
 
   (Int@, IStream@<M@>, OStream@<M@>) { M@<Unit@>; }
   ForwardN = (Int@ n, IStream@<M@> in, OStream@<M@> out) {
@@ -136,4 +141,4 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   m.return(Success);
 };
 
-/Network/Sockets/IO%.Run(Main);
+Main;

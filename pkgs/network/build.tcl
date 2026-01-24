@@ -30,14 +30,14 @@ namespace eval "pkgs/network" {
   fbld_help_fble_usage $::b/pkgs/network/Network/Apps/Client/Usage.fble $::s/pkgs/network/fble-network-client.fbld
   fbld_man_usage $::b/pkgs/network/fble-network-client.1 $::s/pkgs/network/fble-network-client.fbld
   install $::b/pkgs/network/fble-network-client.1 $::config::mandir/man1/fble-network-client.1
-  stdio $::b/pkgs/network/fble-network-client "/Network/Apps/Client%" "network" $ldflags
+  cli $::b/pkgs/network/fble-network-client "/Network/Apps/Client%" "network" $ldflags
   install $::b/pkgs/network/fble-network-client $::config::bindir/fble-network-client
 
   # fble-network-echo program.
   fbld_help_fble_usage $::b/pkgs/network/Network/Apps/Echo/Usage.fble $::s/pkgs/network/fble-network-echo.fbld
   fbld_man_usage $::b/pkgs/network/fble-network-echo.1 $::s/pkgs/network/fble-network-echo.fbld
   install $::b/pkgs/network/fble-network-echo.1 $::config::mandir/man1/fble-network-echo.1
-  stdio $::b/pkgs/network/fble-network-echo "/Network/Apps/Echo%" "network" $ldflags
+  cli $::b/pkgs/network/fble-network-echo "/Network/Apps/Echo%" "network" $ldflags
   install $::b/pkgs/network/fble-network-echo $::config::bindir/fble-network-echo
 
   # Sockets test

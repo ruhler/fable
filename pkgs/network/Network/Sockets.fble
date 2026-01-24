@@ -33,7 +33,4 @@
   (String@, Int@) { M@<Maybe@<Server@<M@>>>; } server
 ); };
 
-# A main program that uses the sockets API.
-<<@>@>@ Main@ = <<@>@ M@>(Sockets@<M@>) { /Core/Stdio%.Main@<M@>; };
-
-@(Sockets@, Server@, Main@);
+@(Sockets@, Server@);

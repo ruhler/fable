@@ -5,6 +5,10 @@
 
 % Char = /Std/Char/Ascii%.Char;
 
+<<@>@>@ Main@ = /Core/Cli%.Main@;
+% Success = /Core/Cli%.Success;
+% Failure = /Core/Cli%.Failure;
+
 @ Int@ = /Std/Int%.Int@;
 % Mul = /Std/Int%.Mul;
 
@@ -30,8 +34,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-% Success = /Core/Stdio%.Success;
-% Failure = /Core/Stdio%.Failure;
+<<@>@>@ Native@ = /Core/Native%.Native@;
 
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
@@ -55,7 +58,6 @@
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-<<@>@>@ Main@ = /Network/Sockets%.Main@;
 <<@>@>@ Server@ = /Network/Sockets%.Server@;
 <<@>@>@ Sockets@ = /Network/Sockets%.Sockets@;
 
@@ -154,9 +156,12 @@ Percent = (Int@ numerator, Int@ denominator) {
   Format|'%s.%s%%'[/Std/Int/Show%.Show(qr.q), fraction];
 };
 
-Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, List@<String@> argv) {
+Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
+
+  Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
+  Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(n, m));
 
   (OStream@<M@>, Profile@, Table@, Int@, (Sequence@) { Sequence@; }) { M@<Unit@>; }
   Table = (OStream@<M@> out, Profile@ profile, Table@ table, Int@ total,
@@ -396,4 +401,4 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   m.return(Success);
 };
 
-/Network/Sockets/IO%.Run(Main);
+Main;

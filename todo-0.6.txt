@@ -4,7 +4,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Remove references to fble-stdio.
  - Migrate app over to CLI.
- - Migrate sockets over to CLI.
 
 * Standardize IO
  - Change getenv function to a pure env function.

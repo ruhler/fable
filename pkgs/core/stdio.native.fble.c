@@ -371,7 +371,7 @@ static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId module_block_id)
 }
 
 /**
- * @func[Stdio] Allocates an fble stdio function.
+ * @func[Stdio] Allocates an fble Stdio function.
  *  @arg[FbleValueHeap*][heap] The value heap.
  *  @arg[FbleBlockId][module_block_id]
  *   The block_id of the /Core/Stdio/Native% block.
@@ -421,5 +421,5 @@ FblePreloadedModule _Fble_2f_Core_2f_Stdio_2f_Native_25_ = {
   .path = &Core_Stdio_Native_Path,
   .deps = { .size = 0, .xs = NULL },
   .executable = &Core_Stdio_Native_Executable,
-  .profile_blocks = { .size = 6, .xs = ProfileBlocks },
+  .profile_blocks = { .size = NUM_PROFILE_BLOCKS, .xs = ProfileBlocks },
 };

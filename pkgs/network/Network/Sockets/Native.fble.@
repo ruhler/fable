@@ -1,0 +1,8 @@
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Sockets@ = /Network/Sockets%.Sockets@;
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<Sockets@<M@>>; } Sockets;
+
+@(Sockets);
