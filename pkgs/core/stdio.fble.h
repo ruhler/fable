@@ -1,5 +1,5 @@
 /**
- * @file stdio.native.fble.h
+ * @file stdio.fble.h
  *  Implementation of @l{/Core/Stdio/Native%} module.
  */
 

@@ -22,7 +22,7 @@
 #include "debug.fble.h"            // for /Core/Debug/Builtin%
 #include "int.fble.h"              // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"           // for FbleStringValueAccess
-#include "stdio.native.fble.h"     // for /Core/Stdio/Native%
+#include "stdio.fble.h"            // for /Core/Stdio/Native%
 #include "cli.fble.h"              // for FbleCliArgs, etc.
 
 #include "fble-app.usage.h"        // for fbldUsageHelpText

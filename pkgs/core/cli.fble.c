@@ -18,7 +18,7 @@
 #include "char.fble.h"          // for FbleCharValueAccess
 #include "debug.fble.h"         // for /Core/Debug/Builtin%
 #include "int.fble.h"           // for FbleNewIntValue, FbleIntValueAccess
-#include "stdio.native.fble.h"  // for /Core/Stdio/Native%
+#include "stdio.fble.h"         // for /Core/Stdio/Native%
 #include "string.fble.h"        // for FbleNewStringValue, FbleStringValueAccess
 
 #define LIST_TAGWIDTH 1

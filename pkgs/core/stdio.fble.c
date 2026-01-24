@@ -1,9 +1,9 @@
 /**
- * @file stdio.native.fble.c
+ * @file stdio.fble.c
  *  Implementation of /Core/Stdio/Native%.
  */
 
-#include "stdio.native.fble.h"
+#include "stdio.fble.h"
 
 #include <stdlib.h>     // for getenv
 #include <stdio.h>      // for FILE, fprintf, fflush, fgetc
