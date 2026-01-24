@@ -3,23 +3,15 @@
  *  Implementation of /Core/Stdio/Native%.
  */
 
-#include "stdio.fble.h"
+#include "stdio.native.fble.h"
 
-#include <assert.h>     // for assert
+#include <stdlib.h>     // for getenv
 #include <stdio.h>      // for FILE, fprintf, fflush, fgetc
-#include <stdlib.h>     // for free
-#include <string.h>     // for strcmp
 
 #include <fble/fble-alloc.h>       // for FbleFree
-#include <fble/fble-main.h>        // for FbleMain.
 #include <fble/fble-program.h>     // for FblePreloadedModule
 #include <fble/fble-value.h>       // for FbleValue, etc.
-#include <fble/fble-vector.h>      // for FbleInitVector.
 
-#include "fble-stdio.usage.h"      // for fbldUsageHelpText
-
-#include "char.fble.h"        // for FbleCharValueAccess
-#include "debug.fble.h"       // for /Core/Debug/Builtin%
 #include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"      // for FbleNewStringValue, FbleStringValueAccess
 

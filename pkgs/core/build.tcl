@@ -1,16 +1,14 @@
 namespace eval "pkgs/core" {
-  fbld_header_usage $::b/pkgs/core/fble-stdio.usage.h $::s/pkgs/core/fble-stdio.fbld \
-    fbldUsageHelpText
   fbld_header_usage $::b/pkgs/core/fble-cli.usage.h $::s/pkgs/core/fble-cli.fbld \
     fbldUsageHelpText
 
   # .c library files.
   set objs [list]
-  foreach {x} { char.fble cli.fble debug.fble int.fble stdio.fble stdio.native.fble string.fble } {
+  foreach {x} { char.fble cli.fble debug.fble int.fble stdio.native.fble string.fble } {
     lappend objs $::b/pkgs/core/$x.o
     obj $::b/pkgs/core/$x.o $::s/pkgs/core/$x.c \
       "-I $::s/include -I $::s/pkgs/core -I $::b/pkgs/core" \
-      "$::b/pkgs/core/fble-stdio.usage.h $::b/pkgs/core/fble-cli.usage.h"
+      "$::b/pkgs/core/fble-cli.usage.h"
   }
   pkg core [list std] "" $objs
 
@@ -18,16 +16,6 @@ namespace eval "pkgs/core" {
   foreach {x} [build_glob $::s/pkgs/core -tails "*.h" "*.c"] {
     fbld_check_dc $::b/pkgs/core/$x.dc $::s/pkgs/core/$x
   }
-
-  # fble-stdio program.
-  fbld_man_usage $::b/pkgs/core/fble-stdio.1 $::s/pkgs/core/fble-stdio.fbld
-  install $::b/pkgs/core/fble-stdio.1 $::config::mandir/man1/fble-stdio.1
-  obj $::b/pkgs/core/fble-stdio.o $::s/pkgs/core/fble-stdio.c \
-    "-I $::s/include -I $::s/pkgs/std -I $::s/pkgs/core"
-  bin $::b/pkgs/core/fble-stdio \
-    "$::b/pkgs/core/fble-stdio.o" \
-    "$::b/pkgs/core/libfble-core$::lext $::b/pkgs/std/libfble-std$::lext $::b/lib/libfble$::lext" ""
-  install $::b/pkgs/core/fble-stdio $::config::bindir/fble-stdio
 
   # fble-cli program.
   fbld_man_usage $::b/pkgs/core/fble-cli.1 $::s/pkgs/core/fble-cli.fbld
@@ -38,26 +26,6 @@ namespace eval "pkgs/core" {
     "$::b/pkgs/core/fble-cli.o" \
     "$::b/pkgs/core/libfble-core$::lext $::b/pkgs/std/libfble-std$::lext $::b/lib/libfble$::lext" ""
   install $::b/pkgs/core/fble-cli $::config::bindir/fble-cli
-
-  # Build an fble-stdio compiled binary.
-  #
-  # Inputs:
-  #   target - the file to build.
-  #   path - the module path to use as Stdio@ main.
-  #   libs - additional fble packages this depends on, not including core,
-  #          without the fble- prefix.
-  #   lflags - additional linker flags to use when creating the binary.
-  proc ::stdio { target path libs lflags} {
-    set objs $target.o
-    set nlibs ""
-    foreach lib [lreverse $libs] {
-      append nlibs " $::b/pkgs/$lib/libfble-$lib$::lext"
-    }
-    append nlibs " $::b/pkgs/core/libfble-core$::lext $::b/pkgs/std/libfble-std$::lext $::b/lib/libfble$::lext"
-
-    fblemain $target.o $::b/bin/fble-compile "--main FbleStdioMain -m $path"
-    bin $target $objs $nlibs $lflags
-  }
 
   # Build an fble-cli compiled binary.
   #

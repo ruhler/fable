@@ -7,7 +7,7 @@
 
 #include <fble/fble-program.h>   // for FblePreloadedModule
 
-#include "stdio.fble.h"          // for FbleNewStdioIO
+#include "cli.fble.h"            // for FbleCliMainStatus
 
 /**
  * @func[FbleAppMain] Main function for running an @l{App@} program.
@@ -25,7 +25,7 @@
  *    events and draw to a display.
  *   @i Writes to a profile if specified by the command line options.
  */
-FbleStdioMainStatus FbleAppMain(int argc, const char** argv, FblePreloadedModule* preloaded);
+FbleCliMainStatus FbleAppMain(int argc, const char** argv, FblePreloadedModule* preloaded);
 
 #endif // FBLE_APP_APP_FBLE_H_
 

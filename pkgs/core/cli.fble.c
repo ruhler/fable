@@ -18,7 +18,6 @@
 #include "char.fble.h"          // for FbleCharValueAccess
 #include "debug.fble.h"         // for /Core/Debug/Builtin%
 #include "int.fble.h"           // for FbleNewIntValue, FbleIntValueAccess
-#include "stdio.fble.h"         // for /Core/Stdio/IO/Builtin%
 #include "stdio.native.fble.h"  // for /Core/Stdio/Native%
 #include "string.fble.h"        // for FbleNewStringValue, FbleStringValueAccess
 
@@ -191,7 +190,6 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   FblePreloadedModuleV builtins;
   FbleInitVector(builtins);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Debug_2f_Builtin_25_);
-  FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_Native_25_);
 
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-cli", fbldUsageHelpText,

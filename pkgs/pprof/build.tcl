@@ -13,7 +13,7 @@ namespace eval "pkgs/pprof" {
   # fble-pprof program.
   fbld_man_usage $::b/pkgs/pprof/fble-pprof.1 $::s/pkgs/pprof/fble-pprof.fbld
   install $::b/pkgs/pprof/fble-pprof.1 $::config::mandir/man1/fble-pprof.1
-  stdio $::b/pkgs/pprof/fble-pprof "/Pprof/Server/Main%" "network pprof" "$ldflags"
+  cli $::b/pkgs/pprof/fble-pprof "/Pprof/Server/Main%" "network pprof" "$ldflags"
   install $::b/pkgs/pprof/fble-pprof $::config::bindir/fble-pprof
 
   # Pprof/Tests compiled
