@@ -33,7 +33,7 @@
 @ Unit@ = /Std/Unit%.Unit@;
 
 # Import to test compilation.
-% _ = /Pinball/AppIO%;
+<<@>@>% _ = /Pinball/AppIO%;
 % _ = /Pinball/Bench%;
 % _ = /Pinball/Circle%;
 

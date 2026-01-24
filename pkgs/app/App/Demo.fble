@@ -78,4 +78,4 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   m.return(Success);
 };
 
-/App/IO%.Run(Main);
+/App/Native%.Run(Main);

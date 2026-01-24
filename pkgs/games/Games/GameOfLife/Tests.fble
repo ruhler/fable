@@ -22,7 +22,7 @@
 % Step = /Games/GameOfLife%.Step;
 
 # Imports to test compilation.
-% _ = /Games/GameOfLife/AppIO%;
+<<@>@>% _ = /Games/GameOfLife/AppIO%;
 % _ = /Games/GameOfLife/Bench%;
 
 Int@ 0 = Int|0;

@@ -22,7 +22,8 @@
 #include "debug.fble.h"            // for /Core/Debug/Builtin%
 #include "int.fble.h"              // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"           // for FbleStringValueAccess
-#include "stdio.fble.h"            // for FbleNewStdioIO
+#include "stdio.native.fble.h"     // for /Core/Stdio/Native%
+#include "cli.fble.h"              // for FbleCliArgs, etc.
 
 #include "fble-app.usage.h"        // for fbldUsageHelpText
 
@@ -274,7 +275,7 @@ static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
 /**
  * @func[EventImpl] FbleRunFunction Implementation of @l{App@.event} function.
  *  See documentation of FbleRunFunction in fble-function.h.
- *  Has fble type @l{IO@<Event>}.
+ *  Has fble type @l{(Unit@) { Event@; }}.
  *  Gets the next input event.
  */
 static FbleValue* EventImpl(
@@ -283,21 +284,18 @@ static FbleValue* EventImpl(
 {
   (void)profile;
 
-  FbleValue* world = args[0];
-  FbleValue* value = NULL;
-  while (value == NULL) {
+  while (true) {
     SDL_Event event;
     SDL_WaitEvent(&event);
     switch (event.type) {
       case SDL_USEREVENT: {
-        value = FbleNewEnumValue(heap, EVENT_TAGWIDTH, 0);
-        break;
+        return FbleNewEnumValue(heap, EVENT_TAGWIDTH, 0);
       }
 
       case SDL_KEYDOWN: {
         FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
         if (key != NULL) {
-          value = FbleNewUnionValue(heap, EVENT_TAGWIDTH, 1, key);
+          return FbleNewUnionValue(heap, EVENT_TAGWIDTH, 1, key);
         }
         break;
       }
@@ -305,7 +303,7 @@ static FbleValue* EventImpl(
       case SDL_KEYUP: {
         FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
         if (key != NULL) {
-          value = FbleNewUnionValue(heap, EVENT_TAGWIDTH, 2, key);
+          return FbleNewUnionValue(heap, EVENT_TAGWIDTH, 2, key);
         }
         break;
       }
@@ -316,7 +314,7 @@ static FbleValue* EventImpl(
           FbleValue* x = FbleNewIntValue(heap, event.button.x);
           FbleValue* y = FbleNewIntValue(heap, event.button.y);
           FbleValue* mouse_button = FbleNewStructValue_(heap, 3, button, x, y);
-          value = FbleNewUnionValue(heap, EVENT_TAGWIDTH, 3, mouse_button);
+          return FbleNewUnionValue(heap, EVENT_TAGWIDTH, 3, mouse_button);
         }
         break;
       }
@@ -327,7 +325,7 @@ static FbleValue* EventImpl(
           FbleValue* x = FbleNewIntValue(heap, event.button.x);
           FbleValue* y = FbleNewIntValue(heap, event.button.y);
           FbleValue* mouse_button = FbleNewStructValue_(heap, 3, button, x, y);
-          value = FbleNewUnionValue(heap, EVENT_TAGWIDTH, 4, mouse_button);
+          return FbleNewUnionValue(heap, EVENT_TAGWIDTH, 4, mouse_button);
         }
         break;
       }
@@ -343,7 +341,7 @@ static FbleValue* EventImpl(
           FbleValue* width = FbleNewIntValue(heap, event.window.data1);
           FbleValue* height = FbleNewIntValue(heap, event.window.data2);
           FbleValue* resized = FbleNewStructValue_(heap, 2, width, height);
-          value = FbleNewUnionValue(heap, EVENT_TAGWIDTH, 5, resized);
+          return FbleNewUnionValue(heap, EVENT_TAGWIDTH, 5, resized);
         }
         break;
       }
@@ -354,19 +352,19 @@ static FbleValue* EventImpl(
         FbleValue* dx = FbleNewIntValue(heap, event.motion.xrel);
         FbleValue* dy = FbleNewIntValue(heap, event.motion.yrel);
         FbleValue* motion = FbleNewStructValue_(heap, 4, x, y, dx, dy);
-        value = FbleNewUnionValue(heap, EVENT_TAGWIDTH, 6, motion);
-        break;
+        return FbleNewUnionValue(heap, EVENT_TAGWIDTH, 6, motion);
       }
     }
   }
 
-  return FbleNewStructValue_(heap, 2, world, value);
+  assert(false && "should never get here");
+  return NULL;
 }
 
 /**
  * @func[EffectImpl] FbleRunFunction Implementation of @l{App@.effect} function.
  *  See documentation of FbleRunFunction in fble-function.h.
- *  Has fble type @l{(Effect@, World@) { R@<Unit@>; }}.
+ *  Has fble type @l{(Effect@, Unit@@) { Unit@; }}.
  *  Applies the given effect to the world.
  */
 static FbleValue* EffectImpl(
@@ -378,7 +376,6 @@ static FbleValue* EffectImpl(
   App* app = (App*)FbleNativeValueData(function->statics[0]);
 
   FbleValue* effect = args[0];
-  FbleValue* world = args[1];
 
   switch (FbleUnionValueTag(effect, EFFECT_TAGWIDTH)) {
     case 0: {
@@ -416,8 +413,7 @@ static FbleValue* EffectImpl(
     }
   }
 
-  FbleValue* unit = FbleNewStructValue_(heap, 0);
-  return FbleNewStructValue_(heap, 2, world, unit);
+  return FbleNewStructValue_(heap, 0);
 }
 
 /**
@@ -470,6 +466,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleInitVector(builtins);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Debug_2f_Builtin_25_);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_);
+  FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_Native_25_);
 
   FbleMainStatus status = FbleMain(&ParseArg, &app_args, "fble-app", fbldUsageHelpText,
       &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &func);
@@ -479,7 +476,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   if (func == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return FbleStdioMainOtherStatus(status);
+    return FbleCliMainOtherStatus(status);
   }
 
   if (app_args.driver != NULL) {
@@ -498,12 +495,19 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return FbleStdioMainOtherStatus(FBLE_MAIN_OTHER_ERROR);
+    return FbleCliMainOtherStatus(FBLE_MAIN_OTHER_ERROR);
   }
 
   SDL_Window* window = SDL_CreateWindow(
       "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480,
       SDL_WINDOW_OPENGL);
+  if (window == NULL) {
+    fprintf(stderr, "Unable to create window: %s\n", SDL_GetError());
+    FbleFreeValueHeap(heap);
+    FbleFreeProfile(profile);
+    return FbleCliMainOtherStatus(FBLE_MAIN_OTHER_ERROR);
+  }
+
   SDL_SetWindowResizable(window, true);
   SDL_GLContext glctx = SDL_GL_CreateContext(window);
   SDL_ShowCursor(SDL_DISABLE);
@@ -511,7 +515,6 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   int width = 0;
   int height = 0;
   SDL_GetWindowSize(window, &width, &height);
-
 
   glShadeModel(GL_FLAT);
   glViewport(0, 0, width, height);
@@ -554,37 +557,19 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleValue* app_value = FbleNewNativeValue(heap, &app, NULL);
   FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe, block_id + 1, &app_value);
 
-  FbleValue* argS = FbleNewEnumValue(heap, LIST_TAGWIDTH, 1);
-  argc = 0;
-  while (argv[argc] != NULL) {
-    argc++;
-  }
-
-  for (size_t i = 0; i < argc; ++i) {
-    FbleValue* argValue = FbleNewStringValue(heap, argv[argc - i - 1]);
-    FbleValue* argP = FbleNewStructValue_(heap, 2, argValue, argS);
-    argS = FbleNewUnionValue(heap, LIST_TAGWIDTH, 0, argP);
-  }
-
+  FbleValue* native = FbleNewStructValue_(heap, 0);     // Native@<M@>
+  FbleValue* monad = FbleCliNativeMonad(heap, profile); // Monad@<M@>
+  FbleValue* fble_app = FbleNewStructValue_(heap, 2, fble_event, fble_effect);
   FbleValue* fble_width = FbleNewIntValue(heap, width);
   FbleValue* fble_height = FbleNewIntValue(heap, height);
+  FbleValue* args = FbleCliArgs(heap, argc, argv);      // List@<String@>
+  FbleValue* unit = FbleNewStructValue_(heap, 0);       // Unit@
 
-  FbleValue* args[5] = {
-    fble_event, fble_effect, fble_width, fble_height, argS
+  FbleValue* func_args[7] = {
+    native, monad, fble_app, fble_width, fble_height, args, unit
   };
-  FbleValue* computation = FbleApply(heap, func, 5, args, profile);
 
-  if (computation == NULL) {
-    FbleFreeValueHeap(heap);
-    FbleFreeProfile(profile);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return FbleStdioMainOtherStatus(FBLE_MAIN_RUNTIME_ERROR);
-  }
-
-  // computation has type IO@<Int@>, which is (World@) { R@<Int@>; }
-  FbleValue* world = FbleNewStructValue_(heap, 0);
-  FbleValue* result = FbleApply(heap, computation, 1, &world, profile);
+  FbleValue* result = FbleApply(heap, func, 7, func_args, profile);
 
   if (app_args.fps) {
     fprintf(stderr, "FPS Histogram:\n");
@@ -595,9 +580,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     }
   }
 
-  // result has type R@<Int@>, which is *(s, x)
-  FbleValue* value = FbleStructValueField(result, RESULT_FIELDC, 1);
-  int exit_status = FbleStdioMainAppStatus(value);
+  int exit_status = FbleCliMainAppStatus(result);
 
   FbleFreeValueHeap(heap);
 

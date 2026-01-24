@@ -2,8 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Figure out what's wrong with fble-app on my pi.
+
 * Remove references to fble-stdio.
- - Migrate app over to CLI.
 
 * Standardize IO
  - Change getenv function to a pure env function.

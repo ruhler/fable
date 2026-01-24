@@ -1,6 +1,6 @@
 /**
  * @file cli.fble.c
- *  Implementation of FbleCli and FbleCliMain functions.
+ *  Implementation of FbleCliMain and helper functions.
  */
 
 #include "cli.fble.h"
@@ -30,7 +30,7 @@ static FbleValue* ReturnImpl(
 static FbleValue* DoImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
-static FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv);
+static FbleValue* Cli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv);
 
 
 /**
@@ -69,7 +69,7 @@ static FbleValue* DoImpl(
 }
 
 /**
- * @func[FbleCli] Executes a @l{/Core/Cli%.Main@} function.
+ * @func[Cli] Executes a @l{/Core/Cli%.Main@} function.
  *  @arg[FbleValueHeap*][heap] The value heap.
  *  @arg[FbleProfile*][profile] Profile to store execution results to.
  *  @arg[FbleValue*][main] The main program to execute. Borrowed.
@@ -85,7 +85,7 @@ static FbleValue* DoImpl(
  *   @i Allocates a value on the heap.
  *   @i Any side effects the main program itself has via native calls.
  */
-static FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv)
+static FbleValue* Cli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv)
 {
   FbleValue* func = FbleEval(heap, main, profile);
   if (func == NULL) {
@@ -205,7 +205,7 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
     return FbleCliMainOtherStatus(status);
   }
 
-  FbleValue* value = FbleCli(heap, profile, main, argc, argv);
+  FbleValue* value = Cli(heap, profile, main, argc, argv);
 
   int result = FbleCliMainAppStatus(value);
 

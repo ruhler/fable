@@ -7,7 +7,7 @@
 % TestSuite = /Std/Test%.TestSuite;
 
 # Import to test compilation.
-% _ = /App/Demo%;
+<<@>@>% _ = /App/Demo%;
 
 Test@ Tests = TestSuite(Str|App, List<Test@>[]);
 
