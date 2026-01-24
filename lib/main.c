@@ -123,9 +123,19 @@ FbleMainStatus FbleMain(
   bool version = false;
   int profile_sample_period_int = *profile_sample_period;
 
+  // If the module is preloaded and there is no explicit '--' argument, we
+  // assume all the arguments are for the application, not options to
+  // FbleMain.
+  bool skip_args = (preloaded != NULL);
+  for (int i = 0; skip_args && i < *argc; ++i) {
+    if (strcmp("--", (*argv)[i]) == 0) {
+      skip_args = false;
+    }
+  }
+
   (*argc)--;
   (*argv)++;
-  while (!(help || error || version) && *argc > 0) {
+  while (!(skip_args || help || error || version) && *argc > 0) {
     if (FbleParseBoolArg("-h", &help, argc, argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, argc, argv, &error)) continue;
     if (FbleParseBoolArg("-v", &version, argc, argv, &error)) continue;

@@ -33,6 +33,7 @@ int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   FbleInitVector(builtins);
   FbleAppendToVector(builtins, &_Fble_2f_SpecTests_2f_Builtin_25_);
 
+  argv[argc++] = "--";
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-test", fbldUsageHelpText,
       &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &result);
 

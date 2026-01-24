@@ -194,22 +194,6 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_Native_25_);
 
-  // If '--' is not present in the list of command line args, trick FbleMain
-  // into thinking there are no args at all. That way precompiled programs can
-  // go straight to args if they want.
-  int argc_orig = argc;
-  bool skip_args = preloaded != NULL;
-  for (int i = 0; skip_args && i < argc; ++i) {
-    if (strcmp("--", argv[i]) == 0) {
-      skip_args = false;
-    }
-  }
-
-  if (skip_args) {
-    argc_orig--;
-    argc = 1;
-  }
-
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-cli", fbldUsageHelpText,
       &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &main);
 
@@ -221,7 +205,7 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
     return FbleCliMainOtherStatus(status);
   }
 
-  FbleValue* value = FbleCli(heap, profile, main, skip_args ? argc_orig : argc, argv);
+  FbleValue* value = FbleCli(heap, profile, main, argc, argv);
 
   int result = FbleCliMainAppStatus(value);
 

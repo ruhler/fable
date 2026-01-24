@@ -458,23 +458,6 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   (void)(FbleIntValueAccess);
   (void)(FbleStringValueAccess);
 
-  // If the module is compiled and '--' isn't present, skip to end of options
-  // right away. That way precompiled programs can go straight to application
-  // args if they want.
-  bool end_of_options = true;
-  if (preloaded != NULL) {
-    for (int i = 0; i < argc; ++i) {
-      if (strcmp(argv[i], "--") == 0) {
-        end_of_options = false;
-        break;
-      }
-    }
-
-    if (end_of_options) {
-      argc = 1;
-    }
-  }
-
   Args app_args = { .fps = false, .driver = NULL };
 
   FbleProfile* profile = FbleNewProfile();

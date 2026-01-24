@@ -37,6 +37,12 @@ typedef enum {
  *  program should exit immediately with success. For example, the --help
  *  option was passed on the command line.
  *
+ *  If a preloaded module is applied and there is no explicit "--" argument,
+ *  all arguments are considered application specific and are otherwise
+ *  skipped. To prevent this behavior, append "--" as the last argument.
+ *  FbleMain promises not to access argv[argc], so you can overwrite the NULL
+ *  value from main argv[argc] purposes for this if you like.
+ *
  *  @arg[FbleArgParser*][arg_parser] Optional custom arg parser.
  *  @arg[void*][data] User data for custom arg parser.
  *  @arg[const char*][tool] Name of the underlying tool, e.g. "fble-test".
