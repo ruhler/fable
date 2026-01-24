@@ -12,26 +12,6 @@
 #include <fble/fble-value.h>     // for FbleValue
 
 /**
- * @func[FbleCli]
- * @ Executes a @l{/Core/Cli%.Main@} function.
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleProfile*][profile] Profile to store execution results to.
- *  @arg[FbleValue*][main] The main program to execute. Borrowed.
- *  @arg[size_t][argc] The number of command line arguments. Borrowed.
- *  @arg[FbleValue**][argv] The command line arguments. Borrowed.
- *
- *  @returns[FbleValue*]
- *   The @l{Exit@} result of executing the main program, or NULL in case of
- *   error.
- *
- *  @sideeffects
- *   @i Updates the profile.
- *   @i Allocates a value on the heap.
- *   @i Any side effects the main program itself has via native calls.
- */
-FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, size_t argc, FbleValue** argv);
-
-/**
  * @type[FbleCliMainStatus]
  *  Status code from running a /Core/Cli%.Main@ application.
  *
@@ -70,5 +50,25 @@ FbleCliMainStatus FbleCliMainAppStatus(FbleValue* result);
  *   @i Writes to a profile if specified by the command line options.
  */
 FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* preloaded);
+
+/**
+ * @func[FbleCliNativeMonad] Helper for creating Monad@ instance for native M@.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleProfile*][profile] Profile to add blocks to.
+ *  @returns[FbleValue*]
+ *   Instance of Monad@<M@> for the M@ we use with Native@<M@>.
+ *  @sideeffects Adds blocks to profile.
+ */
+FbleValue* FbleCliNativeMonad(FbleValueHeap* heap, FbleProfile* profile);
+
+/**
+ * @func[FbleCliArgs] Helper for creating List@<String@> args.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[int][argc] Number of command line args.
+ *  @arg[const char**][argv] The command line args.
+ *  @returns[FbleValue*] List@<String@> for the command line args.
+ *  @sideeffects Allocates values on the fble heap.
+ */
+FbleValue* FbleCliArgs(FbleValueHeap* heap, int argc, const char** argv);
 
 #endif // FBLE_CORE_CLI_FBLE_H_

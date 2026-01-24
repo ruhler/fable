@@ -30,6 +30,7 @@ static FbleValue* ReturnImpl(
 static FbleValue* DoImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
+static FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv);
 
 
 /**
@@ -66,9 +67,25 @@ static FbleValue* DoImpl(
   FbleValue* fargs[2] = { a, u };
   return FbleCall(heap, profile, f, 2, fargs);
 }
-
-// FbleCli -- see documentation in cli.fble.h
-FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, size_t argc, FbleValue** argv)
+
+/**
+ * @func[FbleCli] Executes a @l{/Core/Cli%.Main@} function.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleProfile*][profile] Profile to store execution results to.
+ *  @arg[FbleValue*][main] The main program to execute. Borrowed.
+ *  @arg[size_t][argc] The number of command line arguments. Borrowed.
+ *  @arg[const char**][argv] The command line arguments. Borrowed.
+ *
+ *  @returns[FbleValue*]
+ *   The @l{Exit@} result of executing the main program, or NULL in case of
+ *   error.
+ *
+ *  @sideeffects
+ *   @i Updates the profile.
+ *   @i Allocates a value on the heap.
+ *   @i Any side effects the main program itself has via native calls.
+ */
+static FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv)
 {
   FbleValue* func = FbleEval(heap, main, profile);
   if (func == NULL) {
@@ -79,11 +96,19 @@ FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, s
 
   // We apply the main function with:
   //  M@ = <@ A@>(Unit@) { A@; }
+  FbleValue* native = FbleNewStructValue_(heap, 0);     // Native@<M@>
+  FbleValue* monad = FbleCliNativeMonad(heap, profile); // Monad@<M@>
+  FbleValue* args = FbleCliArgs(heap, argc, argv);      // List@<String@>
+  FbleValue* unit = FbleNewStructValue_(heap, 0);       // Unit@
 
-  // 1st argument: Native@<M@>. It's an empty struct.
-  FbleValue* native = FbleNewStructValue_(heap, 0);
-
-  // 2nd argument: Monad@<M@>.
+  FbleValue* func_args[4] = { native, monad, args, unit };
+  FbleValue* result = FbleApply(heap, func, 4, func_args, profile);
+  return FblePopFrame(heap, result);
+}
+
+// See documentation in cli.fble.h
+FbleValue* FbleCliNativeMonad(FbleValueHeap* heap, FbleProfile* profile)
+{
   FbleName block_names[2];
   block_names[0].name = FbleNewString("CliReturn!");
   block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
@@ -94,7 +119,7 @@ FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, s
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
 
-  FbleExecutable return_exe = {
+  static FbleExecutable return_exe = {
     .num_args = 2,
     .num_statics = 0,
     .max_call_args = 0,
@@ -102,7 +127,7 @@ FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, s
   };
   FbleValue* monad_return = FbleNewFuncValue(heap, &return_exe, block_id, NULL);
 
-  FbleExecutable do_exe = {
+  static FbleExecutable do_exe = {
     .num_args = 3,
     .num_statics = 0,
     .max_call_args = 0,
@@ -110,21 +135,18 @@ FbleValue* FbleCli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, s
   };
   FbleValue* monad_do = FbleNewFuncValue(heap, &do_exe, block_id + 1, NULL);
 
-  FbleValue* monad = FbleNewStructValue_(heap, 2, monad_return, monad_do);
-
-  // 3rd argument: List@<String@> args.
+  return FbleNewStructValue_(heap, 2, monad_return, monad_do);
+}
+
+// See documentation in cli.fble.h
+FbleValue* FbleCliArgs(FbleValueHeap* heap, int argc, const char** argv)
+{
   FbleValue* argS = FbleNewEnumValue(heap, LIST_TAGWIDTH, 1);
   for (size_t i = 0; i < argc; ++i) {
-    FbleValue* argP = FbleNewStructValue_(heap, 2, argv[argc - i -1], argS);
+    FbleValue* argP = FbleNewStructValue_(heap, 2, FbleNewStringValue(heap, argv[argc - i -1]), argS);
     argS = FbleNewUnionValue(heap, LIST_TAGWIDTH, 0, argP);
   }
-
-  // 3rd argument: Unit.
-  FbleValue* unit = FbleNewStructValue_(heap, 0);
-
-  FbleValue* args[4] = { native, monad, argS, unit };
-  FbleValue* result = FbleApply(heap, func, 4, args, profile);
-  return FblePopFrame(heap, result);
+  return argS;
 }
 
 // FbleCliMainStatus -- See documentation in cli.fble.h
@@ -160,23 +182,6 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   (void)(FbleIntValueAccess);
   (void)(FbleStringValueAccess);
 
-  // If the module is compiled and '--' isn't present, skip to end of options
-  // right away. That way precompiled programs can go straight to application
-  // args if they want.
-  bool end_of_options = true;
-  if (preloaded != NULL) {
-    for (int i = 0; i < argc; ++i) {
-      if (strcmp(argv[i], "--") == 0) {
-        end_of_options = false;
-        break;
-      }
-    }
-
-    if (end_of_options) {
-      argc = 1;
-    }
-  }
-
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
   const char* profile_output_file = NULL;
@@ -189,6 +194,22 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_Native_25_);
 
+  // If '--' is not present in the list of command line args, trick FbleMain
+  // into thinking there are no args at all. That way precompiled programs can
+  // go straight to args if they want.
+  int argc_orig = argc;
+  bool skip_args = preloaded != NULL;
+  for (int i = 0; skip_args && i < argc; ++i) {
+    if (strcmp("--", argv[i]) == 0) {
+      skip_args = false;
+    }
+  }
+
+  if (skip_args) {
+    argc_orig--;
+    argc = 1;
+  }
+
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-cli", fbldUsageHelpText,
       &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &main);
 
@@ -200,15 +221,7 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
     return FbleCliMainOtherStatus(status);
   }
 
-  FbleValueV cli_args;
-  FbleInitVector(cli_args);
-  for (int i = 0; argv[i] != NULL; ++i) {
-    FbleAppendToVector(cli_args, FbleNewStringValue(heap, argv[i]));
-  }
-
-  FbleValue* value = FbleCli(heap, profile, main, cli_args.size, cli_args.xs);
-
-  FbleFreeVector(cli_args);
+  FbleValue* value = FbleCli(heap, profile, main, skip_args ? argc_orig : argc, argv);
 
   int result = FbleCliMainAppStatus(value);
 
