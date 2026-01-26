@@ -26,3 +26,19 @@ assigned position and a line for each edge. Click on a node to select it.
 Click on another node to exchange it with the previously selected node. Show
 score somewhere, perhaps as a bar at the bottom if we don't want to worry
 about fonts for rendering numbers at the moment.
+
+---
+
+Cool stuff. MVP is a success. What are the next steps?
+
+Brainstorm:
+* Add an option to undo.
+* Make it prettier.
+* Figure out how to display the score in the gui.
+ - Maybe as a running history of the score that scrolls as you make more
+   moves?
+* Compute the top score ahead of time so there's a clear target?
+* Figure out menus, progression, etc.
+* Figure out how to chose number of edges for a given dimension
+  15 edges for 5x5 seems to work pretty well.
+

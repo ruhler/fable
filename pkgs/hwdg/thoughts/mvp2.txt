@@ -1,0 +1,11 @@
+MVP 2
+=====
+I can express complicated enough designs directly in fble. I can even render
+them in a primitive way. What's the next step? How do we turn this into
+something fun and engaging?
+
+Brainstorm:
+* Make a GUI editor?
+* Have some way to decorate a design so it's clear which bits correspond to
+  which ports when it is displayed?
+
