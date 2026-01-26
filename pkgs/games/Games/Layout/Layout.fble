@@ -117,7 +117,7 @@ Swap = (Layout@ layout, Pos@ a, Pos@ b) {
 Int@ Rows = Int|5;
 Int@ Cols = Int|5;
 Int@ NumNodes = Mul(Rows, Cols);
-Int@ NumEdges = Int|8;
+Int@ NumEdges = Int|15;
 
 # Generates N random edges.
 (Int@, LFSR@) { Shifted@<List@<Edge@>>; }
