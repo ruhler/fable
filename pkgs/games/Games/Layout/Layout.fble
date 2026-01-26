@@ -1,0 +1,310 @@
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+% Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
+% Neg = /Std/Int%.Neg;
+% Mul = /Std/Int%.Mul;
+% Shr = /Std/Int%.Shr;
+% Int = /Std/Int/Lit%.Int;
+% Max = /Std/Int/Ord%.Max;
+% Min = /Std/Int/Ord%.Min;
+% Abs = /Std/Int/Sign%.Abs;
+@ QR@ = /Std/Int/Div%.QR@;
+% Quot = /Std/Int/Div%.Quot;
+
+@ LFSR@ = /Core/LFSR%.LFSR@;
+<@>@ Shifted@ = /Core/LFSR%.Shifted@;
+% Polynomials = /Core/LFSR%.Polynomials;
+% LFSR = /Core/LFSR%.LFSR;
+% ShiftInt = /Core/LFSR/Int%.ShiftInt;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Empty = /Std/List%.Empty;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
+% Map = /Core/Int/Map%.Map;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+% Success = /Core/Stdio%.Success;
+
+@ String@ = /Std/String%.String@;
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Point@ = /App/Drawing%.Point@;
+% Affine = /App/Drawing%.Affine;
+% Blank = /App/Drawing%.Blank;
+% Rect = /App/Drawing%.Rect;
+% Triangle = /App/Drawing%.Triangle;
+% Color = /App/Drawing%.Color;
+% Over = /App/Drawing%.Over;
+% Drawings = /App/Drawing%.Drawings;
+
+# Nodes are identified by integer.
+@ Node@ = Int@;
+
+# The position of a node.
+@ Pos@ = *(Int@ x, Int@ y);
+
+# A layout is the mapping from node id to position.
+@ Layout@ = Map.Map@<Pos@>;
+
+# An edge from node a to node b.
+@ Edge@ = *(Node@ a, Node@ b);
+
+# Computes the cost of the edges in a given layout.
+# The sum of the squares of the distances of all edges.
+(Layout@, List@<Edge@>) { Int@; }
+Cost = (Layout@ layout, List@<Edge@> edges) {
+  edges.?(empty: Int|0);
+
+  Edge@ head = edges.items.head;
+  Pos@ a = Map.Lookup(layout, head.a).just;
+  Pos@ b = Map.Lookup(layout, head.b).just;
+  Int@ dx = Sub(a.x, b.x);
+  Int@ dy = Sub(a.y, b.y);
+  Int@ cost = Add(Mul(dx, dx), Mul(dy, dy));
+  Add(cost, Cost(layout, edges.items.tail));
+};
+
+# Get the node at the given position.
+(Layout@, Pos@) { Maybe@<Node@>; }
+NodeAt = (Layout@ layout, Pos@ pos) {
+  # TODO: More efficient mapping from position to node?
+  Map.ForEach(layout, Nothing<Node@>,
+    (Node@ key, Pos@ value, Maybe@<Node@> found) {
+      found.?(just: found);
+      Bool@ match = {
+        /Std/Int/Eq%.Eq(value.x, pos.x).?(false: False);
+        /Std/Int/Eq%.Eq(value.y, pos.y).?(false: False);
+        True;
+      };
+      match.?(true: Just(key));
+      Nothing<Node@>;
+    });
+};
+
+# Swap the position of two nodes in the layout.
+(Layout@, Pos@, Pos@) { Layout@; }
+Swap = (Layout@ layout, Pos@ a, Pos@ b) {
+  Node@ an = NodeAt(layout, a).just;
+  Node@ bn = NodeAt(layout, b).just;
+  Map.Insert(Map.Insert(layout, bn, a), an, b);
+};
+
+# Grid dimensions.
+Int@ Rows = Int|5;
+Int@ Cols = Int|5;
+Int@ NumNodes = Mul(Rows, Cols);
+Int@ NumEdges = Int|8;
+
+# Generates N random edges.
+(Int@, LFSR@) { Shifted@<List@<Edge@>>; }
+RandEdges = (Int@ n, LFSR@ lfsr) {
+  /Std/Int/Eq%.Eq(Int|0, n).?(true: @(lfsr, output: Empty<Edge@>));
+  Shifted@<Node@> sa = ShiftInt(lfsr, NumNodes);
+  Shifted@<Node@> sb = ShiftInt(sa.lfsr, NumNodes);
+  Shifted@<List@<Edge@>> tail = RandEdges(Decr(n), sb.lfsr);
+  List@<Edge@> output = Items(Edge@(sa.output, sb.output), tail.output);
+  @(lfsr: tail.lfsr, output);
+};
+
+Int@ NodeWidth = Int|20;
+Int@ TileWidth = Int|32;
+Int@ EdgeWidth = Int|4;
+Int@ HalfEdgeWidth = Shr(EdgeWidth, Int|1);
+
+% Colors = @(
+  Background: Color.Black,
+  Selected: Color.Green,
+  Node: Color.Blue,
+  Edge: Color.White
+);
+
+(Layout@) { Drawing@; } DrawNodes = {
+  Int@ NodeOffset = Shr(Sub(TileWidth, NodeWidth), Int|1);
+  
+  (Layout@ layout) {
+    Map.ForEach(layout, Blank, (Node@ _, Pos@ pos, Drawing@ d) {
+      Int@ x = Add(Mul(TileWidth, pos.x), NodeOffset);
+      Int@ y = Add(Mul(TileWidth, pos.y), NodeOffset);
+      Over(d, Rect(x, y, NodeWidth, NodeWidth, Colors.Node));
+    });
+  };
+};
+
+(Pos@, Pos@) { Drawing@; }
+DrawEdge = (Pos@ a, Pos@ b) {
+  # Make 'a' the left most node.
+  /Std/Int/Ord%.Lt(b.x, a.x).?(true: DrawEdge(b, a));
+
+  # The center points of a and b when drawn:
+  Int@ ax = Add(Mul(TileWidth, a.x), Shr(TileWidth, Int|1));
+  Int@ ay = Add(Mul(TileWidth, a.y), Shr(TileWidth, Int|1));
+  Int@ bx = Add(Mul(TileWidth, b.x), Shr(TileWidth, Int|1));
+  Int@ by = Add(Mul(TileWidth, b.y), Shr(TileWidth, Int|1));
+
+  /Std/Int/Eq%.Eq(ax, bx).?(true: {
+    # Vertical
+    Int@ x = Sub(ax, HalfEdgeWidth);
+    Int@ y = Min(ay, by);
+    Rect(x, y, EdgeWidth, Abs(Sub(ay, by)), Colors.Edge);
+  });
+
+  /Std/Int/Eq%.Eq(ay, by).?(true: {
+    # Horizontal
+    Int@ y = Sub(Min(ay, by), HalfEdgeWidth);
+    Rect(ax, y, Sub(bx, ax), EdgeWidth, Colors.Edge);
+  });
+
+  /Std/Int/Ord%.Lt(a.y, b.y).?(true: {
+    # Slopes up to the right.
+    Point@ ul = @(x: Sub(ax, HalfEdgeWidth),
+                  y: Add(Min(ay, by), HalfEdgeWidth));
+    Point@ ur = @(x: Sub(bx, HalfEdgeWidth),
+                  y: Add(Max(ay, by), HalfEdgeWidth));
+    Point@ ll = @(x: Add(ax, HalfEdgeWidth),
+                  y: Sub(Min(ay, by), HalfEdgeWidth));
+    Point@ lr = @(x: Add(bx, HalfEdgeWidth),
+                  y: Sub(Max(ay, by), HalfEdgeWidth));
+    Drawings[Triangle(ul, ur, lr, Colors.Edge),
+             Triangle(ul, lr, ll, Colors.Edge)];
+  });
+
+  # Slopes down to the right.
+  Point@ ul = @(x: Add(ax, HalfEdgeWidth),
+                y: Add(Min(ay, by), HalfEdgeWidth));
+  Point@ ur = @(x: Add(bx, HalfEdgeWidth),
+                y: Add(Max(ay, by), HalfEdgeWidth));
+  Point@ ll = @(x: Sub(ax, HalfEdgeWidth),
+                y: Sub(Min(ay, by), HalfEdgeWidth));
+  Point@ lr = @(x: Sub(bx, HalfEdgeWidth),
+                y: Sub(Max(ay, by), HalfEdgeWidth));
+  Drawings[Triangle(ul, ur, lr, Colors.Edge),
+           Triangle(ul, lr, ll, Colors.Edge)];
+};
+
+(Layout@, List@<Edge@>) { Drawing@; }
+DrawEdges = (Layout@ layout, List@<Edge@> edges) {
+  Drawings(/Std/List%.Map(edges, (Edge@ edge) {
+    Pos@ a = Map.Lookup(layout, edge.a).just;
+    Pos@ b = Map.Lookup(layout, edge.b).just;
+    DrawEdge(a, b);
+  }));
+};
+
+Drawing@ Background = Rect(
+  Int|0, Int|0,
+  Mul(Cols, TileWidth), Mul(Rows, TileWidth),
+  Colors.Background
+);
+
+@ State@ = *(
+  Layout@ layout,
+  List@<Edge@> edges,
+  Maybe@<Pos@> selected
+);
+
+(State@) { Drawing@; }
+Draw = (State@ s) {
+  Drawing@ selected = {
+    s.selected.?(nothing: Blank);
+    Pos@ pos = s.selected.just;
+    Rect(Mul(pos.x, TileWidth), Mul(pos.y, TileWidth), TileWidth, TileWidth, Colors.Selected);
+  };
+
+  Drawings[
+    Background,
+    selected,
+    DrawNodes(s.layout),
+    DrawEdges(s.layout, s.edges)
+  ];
+};
+
+# Create an initial layout for the n'th node and beyond.
+(Int@) { Layout@; }
+InitLayout = (Int@ n) {
+  /Std/Int/Eq%.Eq(n, NumNodes).?(true: Map.Empty<Pos@>);
+  QR@ qr = /Std/Int/Div%.Div(n, Cols);
+  Pos@ pos = @(x: qr.r, y: qr.q);
+  Layout@ tail = InitLayout(Incr(n));
+  Map.Insert(tail, n, pos);
+};
+
+State@ InitialState = @(
+  layout: InitLayout(Int|0),
+  edges: RandEdges(NumEdges, LFSR(Polynomials.8, Polynomials.8)).output,
+  selected: Nothing<Pos@>
+);
+
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ _width, Int@ height, List@<String@> _args) {
+  % O = /Core/Stream/OStream%(m);
+
+  M@<Event@> FilterEvent = {
+    Event@ e := m.do(app.event);
+    e.?(key_down: m.return(e),
+        mouse_down: m.return(e),
+        : FilterEvent);
+  };
+
+  (State@) { M@<Unit@>; } StepUI = (State@ s) {
+    # Map game coordinates into screen coordinates.
+    Int@ scale = Int|1;
+    Int@ offset = Int|50;
+    Point@ a = @(x: scale, y: Neg(scale));
+    Point@ b = @(x: offset, y: Sub(height, offset));
+
+    # Update the display.
+    Unit@ _ := m.do(app.effect(Effect@(draw: Affine(a, b, Draw(s)))));
+
+    # Print out the current score to the user.
+    Int@ cost = Cost(s.layout, s.edges);
+    Unit@ _ := m.do(O.ShowLine(stdio.out, /Std/Int/Show%.Show(cost)));
+
+    # Process the next input event.
+    Event@ e := m.do(FilterEvent);
+    e.?(key_down: e.key_down.?(q: m.return(Unit), : StepUI(s)));
+    e.?(mouse_down: {
+      Int@ screen_x = e.mouse_down.x;
+      Int@ screen_y = e.mouse_down.y;
+      Int@ game_x = Quot(Sub(screen_x, offset), scale);
+      Int@ game_y = Quot(Sub(Sub(height, offset), screen_y), scale);
+      Pos@ pos = Pos@(Quot(game_x, TileWidth), Quot(game_y, TileWidth));
+
+      # Ignore clicks outside the game region.
+      /Std/Int/Ord%.Ge(pos.x, Cols).?(true: StepUI(s));
+      /Std/Int/Ord%.Ge(pos.y, Rows).?(true: StepUI(s));
+
+      s.selected.?(nothing: StepUI(s.@(selected: Just(pos))));
+
+      Layout@ layout = Swap(s.layout, s.selected.just, pos);
+      StepUI(s.@(layout, selected: Nothing<Pos@>));
+    });
+
+    m.return(Unit);
+  };
+
+  Unit@ _ := m.do(StepUI(InitialState));
+  m.return(Success);
+};
+
+/App/Native%.Run(Main);

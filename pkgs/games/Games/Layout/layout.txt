@@ -1,0 +1,28 @@
+Layout Game
+===========
+Extracting a small part of hwdg into its own layout game.
+
+Idea:
+
+You have a graph with nodes and edges. Nodes are assigned to a position on a
+2d grid. The player is initially given a random assignment of nodes to
+positions on the 2d grid. A placement is scored by taking the sum of lengths
+of edges. The player's goal is to reassign nodes to positions on the 2d grid
+to minimize the sum of lengths of edges.
+
+The main interaction could be swiping to exchange positions of two adjacent
+nodes. Or select any two nodes to swap. Or have some way to drag around an
+entire region of nodes.
+
+To provide extra motivation and satisfaction, image each node is assigned a
+color. When you get the best score, the nodes will reveal a delightful image.
+As you get closer, you can start to guess what the image is and use that to
+drive completion.
+
+MVP should be simple. Pick some dimension size for the grid. That gives you
+the number of nodes, label them 0 through N-1. Randomly generate some number
+of edges. Render it with a square drawn for each node at its currently
+assigned position and a line for each edge. Click on a node to select it.
+Click on another node to exchange it with the previously selected node. Show
+score somewhere, perhaps as a bar at the bottom if we don't want to worry
+about fonts for rendering numbers at the moment.

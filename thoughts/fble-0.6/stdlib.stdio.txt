@@ -1666,4 +1666,239 @@ important part, right? It looks like:
 And that's how you do the sequencing properly. Sounds reasonable? Let's try
 that.
     
+---
+
+The migration from fble-stdio to fble-cli is done now. What's the next step?
+
+Some random thoughts:
+* Could we implement fble-app as a thing you instigate entirely via native
+  code so that we can reuse fble-cli? In that case... should everything be
+  fble-cli, no need for fble-tui, fble-app?
+
+Brainstorm of kinds of things to do next:
+* Split off Env@ from Stdio@
+* Flesh out desired Env@ API.
+* Flesh out desired Stdio@ API.
+* Change apps to define themselves with minimal necessary interface?
+ - e.g. remove App Main@ and Stdio Main@ types?
+* Start pulling things into Std?
+
+How do I feel about the new approach? Not bad actually. I like that it
+separates command line arguments and the fble-cli runner entirely from the
+Stdio API. I like that the Main@ function we export to users is for generic
+M@, but is also the type we use internally. No need to have an unsafe wrapper
+laying around in .fble code.
+
+I think the next step should be to flesh out proposals for Env@, Stdio@,
+and maybe also think about App@ and Sockets@ interfaces to double check they
+compose well with Env@ and Stdio@.
+
+Env@ seems easy enough:
+  get :: String@ -> M@<Maybe@<String@>>
+  set :: String@ -> String@ -> M@<Unit@>
+
+I don't generally like the idea of 'set' as a global thing, but somebody's
+going to want to have it eventually I assume? It's easy enough to implement.
+
+Uh... how about an overwrite argument to set? How about an unset function?
+
+Alternatively, I can start with Env@ with a single get field. No need to worry
+about set, delete, or whether those things are visible across different calls
+to set/get or fork. Later on, if I add the ability to fork or do anything that
+can set or read environment variables, we'll have run to add a field to Env@
+with minimal disruption? Or we could start with a single builtin Native@<M@>
+to get function?
+
+Not sure.
+
+---
+
+Let's move discussion for Env@ to stdlib.env.txt. It's separate enough from
+the others I'm not too worried about composition.
+
+---
+
+There's some idea from stdlib.env.txt that we could have an abstract notion of
+a registry as a map from string key to value and reuse that for Env@ and for
+Stdio@ filesystem. Let's look more closely at C99 stdio interface to see if
+that makes sense.
+
+C99:
+* FILE: stream + position + buffer + error + eof
+* stdin, stdout, stderr
+* text vs binary streams.
+
+C99 functions:
+* remove, rename, tmpfile, tmpnam
+* fclose, fflush, fopen, freopen, 
+* setbuf, setvbuf
+* fprintf, fputc, fputs, fwrite, etc.
+* fscanf, fgetc, fgets, fread, etc.
+* fgetpos, fseek, fsetpos, ftell, rewind
+* ungetc,
+* clearerr, feof, ferror, perror
+
+In terms of referring to files, it's by unstructured name:
+* open, close, remove, rename, and tmpfile
+
+What's weird and different about files compared to environment is the 'data'
+changes incrementally. Like somebody could be writing while someone else is
+reading? Or you could modify the contents at a specific point in the stream?
+
+The ability to incrementally output to streams is fundamentally important for
+stdin and stdout and interactive programming.
+
+What if we had stdin, stdout, stderr be 'streams', but have files be more
+atomic in nature? What can you do with files?
+
+1. read - is this a snapshot of the data at the time of open, or depends on
+timing of when you read the next bytes? In particular, what if you are trying
+to communicate via file and you want to open a file that hasn't been
+completely written yet? Like a fifo kind of a stream?
+
+Like, I'm thinking, if we have the concept of a stream, which is interactive,
+can we do atomic manipulation of the file system with respect to streams?
+
+Two things to keep in mind:
+1. The stream interface - that lets you write and read from the stream,
+traverse different parts of the stream.
+2. The underlying contents of the stream.
+
+Note you can have two people with two different interfaces to the same stream.
+
+Opening a file for read gets you access to a new interface to the contents of
+the file. The interface is associated with whatever contents exist at the time
+of open.
+
+So, maybe think about it like this: you have an interface, and you have a pipe
+of data. The interface can be used to modify the pipe of data. At any given
+time, there is a 1 to 1 mapping from file name to pipe of data. And a given
+interface is associated with exactly 1 pipe of data.
+
+I like to separate read/write from a stream. That is, you either have a write
+interface or a read interface, or two separate write/read interfaces. Though
+they can point to the same underlying pipe of data.
+
+We have two different kinds of streams: text (Char@) and binary (Int@?).
+Though I guess the type is associated more with the interface than the
+underlying pipe of data.
+
+Seems like I'm proposing the following entities:
+* File
+* text write interface - tied to a particular File
+* text read interface - tied to a particular File
+* binary write interface - tied to a particular File
+* binary read interface - tied to a particular File
+* mapping from file name to file.
+
+The only way to interact with a file is through a text/binary read/write
+interface.
+
+Operations on directory of files:
+* Get an interface to an existing named file.
+  open for read, open for append, stuff like that.
+* Create a new file, set its name (or get a random available name?), get an
+  interface to it. open for write, creat
+* Rename - needed because we can't directly refer to the file itself.
+
+Wouldn't it be nice if we could directly refer to files, rather than creating
+and renaming and all that stuff indirectly via interfaces?
+
+I need to better understand the modes of opening a file. Specifically in terms
+of when a new file is created versus when an existing file is reused. Imagine
+somebody has opened a file for reading in some mode, and goes part way through
+reading it. Now I open a file with some other mode. Does the previous reader
+have a handle to the same file as me or not?
+
+* read is clear: you are opening the existing file. No new file is created.
+* write is unclear:
+ - If no file exists, you are creating a new file.
+ - If a file exists, you truncate it to 0. So... no new file?
+* append:
+ - If no file exists, create it.
+ - If it exists, start adding to the end. No new file.
+
+In summary:
+* If there was a file there before, you are getting that same file.
+* If there wasn't a file there, you are failing (read) or creating a new file.
+
+The only way to create a new file with the same name as an old file is to
+remove or rename the old file first it would seem.
+
+The stream interface works for a lot of stuff in linux, but not everything.
+Thus we have 'ioctl'. Ioctl is more of an arbitrary side effect, but you have
+to know the names of the things you want to interact with. Would it make more
+sense to provide that kind of interface as the generic way to interact with
+the outside world in an untyped way?
+
+So, instead of names of files, you have names of interfaces. What you can do
+with the interface depends on the interface itself: if it's a special name,
+you know it. But maybe it's not a special name, and you wouldn't have a way to
+discover the interface without that special name, so you need a standard
+interface regardless.
+
+Writing strings to files is a pretty generic way to do things. The difference
+with ioctl is that it works on memory regions directly: arbitrary read/write
+of a region of memory. You could do that inefficiently with files: write a
+string address, read a string address, etc. The difference is with memory you
+get more random access. I don't have that kind of random access in fble... But
+also, it doesn't make sense for some streams, like stdin. But it could make
+sense for the interface to a stream.
+
+If fble supported dynamic types, we could have a function like:
+
+  (String@, Untyped@) { M@<Maybe@<Untyped@>;> }
+
+String@ to identify the interface. Or maybe you have a separate way to open it
+and an abstract handle to the interface. The Untyped@ argument that is
+interpreted by the specific interface in question, and the Untyped@ result
+interpreted by the caller based on the specific interface in question.
+
+Anyway, that all feels a little bit low level. There must be some nice higher
+level abstractions that people want to use that I can provide in a standard
+way:
+* Output stream - for stdout, stderr, writing to a file.
+  (Output@) { M@<Unit@>; } write, M@<Unit@> end.
+  But with Output@ support for Char@ or binary via Int@.
+* Input stream - for stdin, reading from a file.
+  M@<Maybe@<T@>> read, where T@ is Char@ or Int@.
+* File naming - for opening files by name for reading or writing.
+  Or renaming, or deleting.
+  Lookup, Insert, Remove, Rename
+
+Questions/notes:
+* How do I actually translate file bytes to Char@? Don't we need to know what
+  encoding or locale to use?
+* I see no need for buffering options. Write(Output@) let's you output
+  everything you have all at once well enough. There's no notion of buffering
+  for input: you get what's available. The system can read in chunks to make
+  things more efficient internally if it wants. No reason to request it to
+  block when it has data otherwise.
+* I see no need for ungetc. You can implement that on top of Stream@,
+  hopefully? Depends. We'll need to be careful.
+* Do I want to support seeking into files? Seems like a function from stream
+  to stream. Could be useful for efficiency.
+* We probably want some way to provide more detailed error information for
+  things that fail.
+
+The idea of having a handle, like a FILE*, that can be implicitly impacted by
+side effects to M@ is a little tricky. Consider:
+
+  ungetc
+
+If it's a IStream@ to IStream@ function, it's super easy. I can provide a
+replacement function. If, on the other hand, it's an implicit side effect via
+M@, that needs some magic to have the side effect take effect. It's almost
+like we want to separate the notion of pointer to a stream from the stream
+itself. We pass the pointer around everywhere, I update the value, providing a
+new IStream@ instance by referencing the previous instance, and everyone with
+the pointer switches to using my new value.
+
+Kind of like the question of MIter@ versus get:
+
+  M@<Maybe@<A@>> get;
+  @ Iter@ = M@<Maybe@<*(A@ next, Iter@ rest)>>;
+
+Seems like 'get' is a combination of Iter@ + state monad? Maybe it should be
+implemented as such?
 
