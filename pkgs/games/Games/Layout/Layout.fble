@@ -195,13 +195,13 @@ DrawEdge = (Pos@ a, Pos@ b) {
 
   # Slopes down to the right.
   Point@ ul = @(x: Add(ax, HalfEdgeWidth),
-                y: Add(Min(ay, by), HalfEdgeWidth));
-  Point@ ur = @(x: Add(bx, HalfEdgeWidth),
                 y: Add(Max(ay, by), HalfEdgeWidth));
+  Point@ ur = @(x: Add(bx, HalfEdgeWidth),
+                y: Add(Min(ay, by), HalfEdgeWidth));
   Point@ ll = @(x: Sub(ax, HalfEdgeWidth),
-                y: Sub(Min(ay, by), HalfEdgeWidth));
-  Point@ lr = @(x: Sub(bx, HalfEdgeWidth),
                 y: Sub(Max(ay, by), HalfEdgeWidth));
+  Point@ lr = @(x: Sub(bx, HalfEdgeWidth),
+                y: Sub(Min(ay, by), HalfEdgeWidth));
   Drawings[Triangle(ul, ur, lr, Colors.Edge),
            Triangle(ul, lr, ll, Colors.Edge)];
 };
