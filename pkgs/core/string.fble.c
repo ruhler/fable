@@ -44,6 +44,20 @@ FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str)
   return charS;
 }
 
+// FbleNewSubStringValue -- see documentation in string.fble.h
+FbleValue* FbleNewSubStringValue(FbleValueHeap* heap, const char* str, size_t length)
+{
+  size_t max_length = strlen(str);
+  length = max_length < length ? max_length : length;
+  FbleValue* charS = FbleNewEnumValue(heap, LIST_TAGWIDTH, 1);
+  for (size_t i = 0; i < length; ++i) {
+    FbleValue* charV = FbleNewCharValue(heap, str[length - i - 1]);
+    FbleValue* charP = FbleNewStructValue_(heap, 2, charV, charS);
+    charS = FbleNewUnionValue(heap, LIST_TAGWIDTH, 0, charP);
+  }
+  return charS;
+}
+
 // FbleDebugTrace -- see documentation in string.fble.h
 void FbleDebugTrace(FbleValue* str)
 {

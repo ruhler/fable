@@ -2,12 +2,14 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Remove getenv from Stdio interface.
+ - Now that we have a separate /Core/Env/Native% implementation.
+
 * Fix issue with opengl with dummy driver.
  - Remove broken --driver dummy option to FbleAppMain?
  - See commented out code in pkgs/invaders/build.tcl
 
 * Standardize IO
- - Change getenv function to a pure env function.
 
 * Add test for StrE with \q escape.
 * Add spec tests for foo $ bar syntaxes.
@@ -179,3 +181,4 @@ Things to consider doing for the fble-0.6 release.
  - That supports field access.
 
 * Add language support for a proper FFI?
+ - hint: type conversions could be done on the native side?

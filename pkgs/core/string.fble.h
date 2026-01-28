@@ -21,6 +21,21 @@
 FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str);
 
 /**
+ * @func[FbleNewSubStringValue] Converts a C string to @l{/Std/String%.String@}.
+ *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
+ *  @arg[const char*][str] The string to convert.
+ *  @arg[size_t][length] The max number of chars to convert from.
+ *
+ *  @returns[FbleValue*]
+ *   A newly allocated fble @l{/Std/String%.String@} with the first @a[length]
+ *   characters of str.
+ *
+ *  @sideeffects
+ *   Allocates an FbleValue on the heap.
+ */
+FbleValue* FbleNewSubStringValue(FbleValueHeap* heap, const char* str, size_t length);
+
+/**
  * @func[FbleStringValueAccess] Convert a @l{String@} value to a c string.
  *  @arg[FbleValue*][str] The @l{/Std/String%.String@} to convert.
  *
