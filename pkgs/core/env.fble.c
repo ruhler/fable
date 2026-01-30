@@ -99,10 +99,8 @@ static FbleValue* Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunct
     .run = &GetEnvImpl,
   };
 
-  FbleValue* entry = FbleGenericTypeValue;
-  FbleValue* env = FbleGenericTypeValue;
   FbleValue* getenv = FbleNewFuncValue(heap, &getenv_exe, function->profile_block_id + GETENV_BLOCK_OFFSET, NULL);
-  FbleValue* native = FbleNewStructValue_(heap, 3, entry, env, getenv);
+  FbleValue* native = FbleNewStructValue_(heap, 1, getenv);
   return FblePopFrame(heap, native);
 }
 

@@ -1,11 +1,7 @@
 
-<@>@ List@ = /Std/List%.List@;
+@ Env@ = /Core/Env%.Env@;
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Native@ = /Core/Native%.Native@;
-@ String@ = /Std/String%.String@;
-
-@ Entry@ = *(String@ name, String@ value);
-@ Env@ = List@<Entry@>;
 
 # Reads and returns all the environment variables from the native side.
 # Note: This requires nobody is concurrently modifying environment variables.
@@ -20,4 +16,4 @@
 # effects from modifications to the environment after the program has started.
 <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<Env@>; } GetEnv;
 
-@(Entry@, Env@, GetEnv);
+@(GetEnv);
