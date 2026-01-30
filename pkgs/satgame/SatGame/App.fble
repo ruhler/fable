@@ -115,34 +115,8 @@ GetArgs = (List@<String@> args, Args@ default) {
   Transform@ transform  # Transformation to apply to the board.
 );
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
-  % I = /Core/Stream/IStream%(m);
-  % O = /Core/Stream/OStream%(m);
-
-  # Read and update the default seed value.
-  Int@ seed := m.do({
-    Maybe@<String@> home := m.do(stdio.getenv(Str|HOME));
-    home.?(nothing: m.return(Int|0));
-
-    String@ filename = Concat[home.just, Str|'/.fble-satgame'];
-    Maybe@<IStream@<M@>> istream := m.do(stdio.read(filename, /Core/Stdio%.Text));
-
-    Int@ seed := m.do({
-      istream.?(nothing: m.return(Int|0));
-      String@ text := m.do(I.GetText(istream.just));
-      m.return(/Core/Int/Read%.Read(text));
-    });
-
-    Maybe@<OStream@<M@>> ostream := m.do(stdio.write(filename, /Core/Stdio%.Text));
-    Unit@ _ := m.do({
-      ostream.?(nothing: m.return(Unit));
-      O.Show(ostream.just, /Std/Int/Show%.Show(Incr(seed)));
-    });
-
-    m.return(seed);
-  });
-
-  Args@ args = GetArgs(argv, DefaultArgs.@(seed));
+<<@>@ M@>(Monad@<M@>, OStream@<M@>, App@<M@>, Int@, Int@, Args@) { M@<Unit@>; }
+SatGame = <<@>@ M@>(Monad@<M@> m, OStream@<M@> out, App@<M@> app, Int@ width, Int@ height, Args@ args) {
   Params@ params = Params@(args.num_vars, args.num_clauses, args.num_literals_per_clause);
   Layout@ layout = Layout(params);
 
@@ -216,14 +190,15 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       });
   };
 
-  Unit@ _ := m.do(O.ShowLine(stdio.out,
+  % O = /Core/Stream/OStream%(m);
+  Unit@ _ := m.do(O.ShowLine(out,
       Format|'Generating puzzle with params: %s (seed %s)'[
         /SatGame/Puzzle/Show%.Params(params),
         /Std/Int/Show%.Show(args.seed)
   ]));
 
   Puzzle@ puzzle = PureLFSR.Run(Generate(params), args.seed);
-  Unit@ _ := m.do(O.ShowLine(stdio.out, /SatGame/Puzzle/Show%.Puzzle(puzzle)));
+  Unit@ _ := m.do(O.ShowLine(out, /SatGame/Puzzle/Show%.Puzzle(puzzle)));
 
   Game@ game = /SatGame/Game%.Game(puzzle);
 
@@ -239,6 +214,38 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   Unit@ _ := m.do(Draw(state));
   Unit@ _ := m.do(EventLoop(state));
+  m.return(Unit);
+};
+
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
+  % I = /Core/Stream/IStream%(m);
+  % O = /Core/Stream/OStream%(m);
+
+  # Read and update the default seed value.
+  Int@ seed := m.do({
+    Maybe@<String@> home := m.do(stdio.getenv(Str|HOME));
+    home.?(nothing: m.return(Int|0));
+
+    String@ filename = Concat[home.just, Str|'/.fble-satgame'];
+    Maybe@<IStream@<M@>> istream := m.do(stdio.read(filename, /Core/Stdio%.Text));
+
+    Int@ seed := m.do({
+      istream.?(nothing: m.return(Int|0));
+      String@ text := m.do(I.GetText(istream.just));
+      m.return(/Core/Int/Read%.Read(text));
+    });
+
+    Maybe@<OStream@<M@>> ostream := m.do(stdio.write(filename, /Core/Stdio%.Text));
+    Unit@ _ := m.do({
+      ostream.?(nothing: m.return(Unit));
+      O.Show(ostream.just, /Std/Int/Show%.Show(Incr(seed)));
+    });
+
+    m.return(seed);
+  });
+
+  Args@ args = GetArgs(argv, DefaultArgs.@(seed));
+  Unit@ _ := m.do(SatGame(m, stdio.out, app, width, height, args));
   m.return(Success);
 };
 
