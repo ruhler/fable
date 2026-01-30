@@ -1,1 +1,18 @@
-/App/Native%.Run(/SatGame/App%);
+
+@ Int@ = /Std/Int%.Int@;
+<@>@ List@ = /Std/List%.List@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+@ String@ = /Std/String%.String@;
+
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/Native%.Main@;
+
+Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
+  App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
+  Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
+  /SatGame/App%(m, stdio, app, width, height, args);
+};
+
+Main;
