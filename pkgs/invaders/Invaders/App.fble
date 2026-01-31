@@ -6,28 +6,12 @@
 
 % Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Append = /Std/List%.Append;
-<@>% Any = /Std/List/Search%.Any;
-
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-% Success = /Core/Stdio%.Success;
-
-<<@>@>@ IStream@ = /Core/Stream%.IStream@;
-<<@>@>@ OStream@ = /Core/Stream%.OStream@;
-
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
 <<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -53,14 +37,12 @@ Input@ Right = Input@(game: Game.Input@(dir: Dir@(right: Unit)));
 Input@ Stopped = Input@(game: Game.Input@(dir: Dir@(stopped: Unit)));
 Input@ Fire = Input@(game: Game.Input@(fire: Unit));
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
-  % O = /Core/Stream/OStream%(m);
+<<@>@,@>@ Put@ = <<@>@ M@, @ A@>(A@) { M@<Unit@>; };
+<<@>@,@>@ Get@ = <<@>@ M@, @ A@> { M@<A@>; };
+<<@>@,@>@ State@ = <<@>@ M@, @ A@> { *(Get@<M@, A@> get, Put@<M@, A@> put); };
 
-  Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(O.PutStr(stdio.out, /Invaders/Usage%));
-    m.return(Success);
-  });
-
+<<@>@ M@>(Monad@<M@>, State@<M@, Int@>, App@<M@>, Int@, Int@) { M@<Unit@>; }
+Invaders = <<@>@ M@>(Monad@<M@> m, State@<M@, Int@> high_score_s, App@<M@> app, Int@ width, Int@ height) {
   M@<Input@> GetInput = {
     Event@ e := m.do(app.event);
     e.?(
@@ -108,48 +90,17 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   Int@ frame_period = Int|16;
   M@<Unit@> tick = app.effect(Effect@(tick: frame_period));
 
-  # Read High Score
-  % I = /Core/Stream/IStream%(m);
-  Int@ high_score := m.do({
-    Maybe@<String@> home := m.do(stdio.getenv(Str|HOME));
-    home.?(nothing: m.return(Int|0));
-
-    String@ filename = Append(home.just, Str|'/.fble-invaders');
-    Maybe@<IStream@<M@>> istream := m.do(stdio.read(filename, /Core/Stdio%.Text));
-    istream.?(nothing: m.return(Int|0));
-
-    String@ text := m.do(I.GetText(istream.just));
-    m.return(/Core/Int/Read%.Read(text));
-  });
-
-  # Set up the game.
+  # Setup
+  Int@ high_score := m.do(high_score_s.get);
   Game@ game = Game.Initial(high_score);
   Unit@ _ := m.do(app.effect(Effect@(tick: Int|0)));
 
-  # Check for --test mode, where we draw something to the screen and exit
-  # right away.
-  Any(args, /Std/String/Eq%.Eq(Str|'--test')).?(true: {
-    Unit@ _ := m.do(Draw(game));
-    m.return(Success); 
-  });
-
-  # Play the game
+  # Play
   Int@ new_high_score := m.do(Run(tick, game));
 
-  # Save high score.
-  Unit@ _ := m.do({
-    Maybe@<String@> home := m.do(stdio.getenv(Str|HOME));
-    home.?(nothing: m.return(Unit));
-
-    String@ filename = Append(home.just, Str|'/.fble-invaders');
-    Maybe@<OStream@<M@>> ostream := m.do(stdio.write(filename, /Core/Stdio%.Text));
-    ostream.?(nothing: m.return(Unit));
-
-    Unit@ _ := m.do(O.Show(ostream.just, /Std/Int/Show%.Show(new_high_score)));
-    O.Close(ostream.just);
-  });
-
-  m.return(Success);
+  # Finish up
+  Unit@ _ := m.do(high_score_s.put(new_high_score));
+  m.return(Unit);
 };
 
-Main;
+@(Put@, Get@, State@, Invaders);

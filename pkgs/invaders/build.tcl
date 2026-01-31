@@ -19,10 +19,5 @@ namespace eval "pkgs/invaders" {
     install $::b/pkgs/invaders/fble-invaders.1 $::config::mandir/man1/fble-invaders.1
     app $::b/pkgs/invaders/fble-invaders "/Invaders/AppIO%" "invaders"
     install $::b/pkgs/invaders/fble-invaders $::config::bindir/fble-invaders
-
-    # TODO: This test fails, maybe because --driver dummy never supported GL?
-    # test $::b/pkgs/invaders/fble-invaders.tr \
-    #   "$::b/pkgs/invaders/fble-invaders" \
-    #   "$::b/pkgs/invaders/fble-invaders --driver dummy --profile $::b/pkgs/invaders/fble-invaders.prof -- --test"
   }
 }

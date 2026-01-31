@@ -1,1 +1,82 @@
-/App/Native%.Run(/Invaders/App%);
+
+@ Env@ = /Core/Env%.Env@;
+
+@ Int@ = /Std/Int%.Int@;
+
+% Int = /Std/Int/Lit%.Int;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Append = /Std/List%.Append;
+<@>% Any = /Std/List/Search%.Any;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
+<<@>@>@ Native@ = /Core/Native%.Native@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+% Success = /Core/Stdio%.Success;
+
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
+
+@ String@ = /Std/String%.String@;
+% Str = /Std/Char/Ascii%.Str;
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+<<@>@>@ App@ = /App/App%.App@;
+
+<<@>@>@ Main@ = /App/Native%.Main@;
+
+<<@>@,@>@ Put@ = /Invaders/App%.Put@;
+<<@>@,@>@ Get@ = /Invaders/App%.Get@;
+<<@>@,@>@ State@ = /Invaders/App%.State@;
+<<@>@>% Invaders = /Invaders/App%.Invaders;
+
+Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
+  App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
+  Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
+  Env@ env := m.do(/Core/Env/Native%.GetEnv<M@>(n, m));
+
+  % O = /Core/Stream/OStream%(m);
+
+  Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
+    Unit@ _ := m.do(O.PutStr(stdio.out, /Invaders/Usage%));
+    m.return(Success);
+  });
+
+  Maybe@<String@> home = /Core/Env%.Lookup(env, Str|'HOME');
+
+  Get@<M@, Int@> get_high_score = {
+    % I = /Core/Stream/IStream%(m);
+    home.?(nothing: m.return(Int|0));
+
+    String@ filename = Append(home.just, Str|'/.fble-invaders');
+    Maybe@<IStream@<M@>> istream := m.do(stdio.read(filename, /Core/Stdio%.Text));
+    istream.?(nothing: m.return(Int|0));
+
+    String@ text := m.do(I.GetText(istream.just));
+    m.return(/Core/Int/Read%.Read(text));
+  };
+
+  Put@<M@, Int@> put_high_score = (Int@ score) {
+    home.?(nothing: m.return(Unit));
+
+    String@ filename = Append(home.just, Str|'/.fble-invaders');
+    Maybe@<OStream@<M@>> ostream := m.do(stdio.write(filename, /Core/Stdio%.Text));
+    ostream.?(nothing: m.return(Unit));
+
+    Unit@ _ := m.do(O.Show(ostream.just, /Std/Int/Show%.Show(score)));
+    O.Close(ostream.just);
+  };
+
+  State@<M@, Int@> high_score_s = State@<M@, Int@>(get_high_score, put_high_score);
+
+  Unit@ _ := m.do(Invaders(m, high_score_s, app, width, height));
+  m.return(Success);
+};
+
+Main;

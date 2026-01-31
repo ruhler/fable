@@ -7,7 +7,8 @@ Things to consider doing for the fble-0.6 release.
 
 * Fix issue with opengl with dummy driver.
  - Remove broken --driver dummy option to FbleAppMain?
- - See commented out code in pkgs/invaders/build.tcl
+ - See since removed commented out code in pkgs/invaders/build.tcl
+ - Or just remove --driver option entirely if it isn't going to work?
 
 * Standardize IO
 

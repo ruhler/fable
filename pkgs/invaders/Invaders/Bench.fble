@@ -1,20 +1,63 @@
 
-@ Key@ = /App/App%.Key@;
-@ Event@ = /App/App%.Event@;
-
+@ Int@ = /Std/Int%.Int@;
+% Decr = /Std/Int%.Decr;
 % Int = /Std/Int/Lit%.Int;
+% IsNegative = /Std/Int/Sign%.IsNegative;
 
 % Str = /Std/Char/Ascii%.Str;
+
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 @ Test@ = /Std/Test%.Test@;
 % Test = /Std/Test%.Test;
 
+@ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
+
+<<@>@>@ App@ = /App/App%.App@;
+@ Key@ = /App/App%.Key@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+
+<<@>@,@>@ Put@ = /Invaders/App%.Put@;
+<<@>@,@>@ Get@ = /Invaders/App%.Get@;
+<<@>@,@>@ State@ = /Invaders/App%.State@;
+<<@>@>% Invaders = /Invaders/App%.Invaders;
+
+% State = /Core/Monad/State%<Int@>;
+<@>@ M@ = State.State@;
+<@>@ R@ = State.R@;
+Monad@<M@> Monad = State.Monad;
 
 # The number of iterations is chosen so that the benchmark takes on the
 # order of 1 minute to run. The target goal for invaders is 60 frames a
 # second. If we can beat 1 minute for this, great.
-Test@ Bench = Test(Str|Invaders, /App/Benchmark%.Benchmark(
-  /Invaders/App%, Int|3600, Event@(key_down: Key@(q: Unit))));
+Test@ Bench = Test(Str|Invaders, (Unit@ _) {
+  Int@ n = Int|3600;
+  Int@ w = Int|640;
+  Int@ h = Int|480;
+
+  Event@ quit = Event@(key_down: Key@(q: Unit));
+
+  M@<Event@> Event = {
+    Int@ n := Monad.do(State.Get);
+    IsNegative(n).?(true: Monad.return(quit));
+    Unit@ _ := Monad.do(State.Set(Decr(n)));
+    Monad.return(Event@(tick: Unit));
+  };
+
+  (Effect@) { M@<Unit@>; } Effect = (Effect@ _) {
+    Monad.return(Unit);
+  };
+
+  Get@<M@, Int@> get_high_score = Monad.return(Int|0);
+  Put@<M@, Int@> put_high_score = (Int@ _) { Monad.return(Unit); };
+  State@<M@, Int@> high_score_s = State@<M@, Int@>(get_high_score, put_high_score);
+
+  R@<Unit@> r = Invaders<M@>(Monad, high_score_s, App@<M@>(Event, Effect), w, h, n);
+  AssertEquals(/Std/Unit/Eq%.Eq, /Std/Unit/Show%.Show, Unit, r.x);
+});
 
 @(Bench);
