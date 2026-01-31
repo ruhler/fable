@@ -37,10 +37,7 @@ Mode@ Binary = Mode@(binary: Unit);
 
   # Open the named file for writing.
   # Returns an output stream for writing. Nothing if unable to open the file.
-  (String@, Mode@) { M@<Maybe@<OStream@<M@>>>; } write,
-
-  # Gets an environment variable value.
-  (String@) { M@<Maybe@<String@>>; } getenv
+  (String@, Mode@) { M@<Maybe@<OStream@<M@>>>; } write
 ); };
 
 # Program exit status.

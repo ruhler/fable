@@ -2,9 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Remove getenv from Stdio interface.
- - Now that we have a separate /Core/Env/Native% implementation.
-
 * Fix issue with opengl with dummy driver.
  - Remove broken --driver dummy option to FbleAppMain?
  - See since removed commented out code in pkgs/invaders/build.tcl

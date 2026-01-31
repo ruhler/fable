@@ -81,13 +81,7 @@ Write = (String@ _filename, Mode@ _mode) {
   Monad.return(Nothing<OStream@<Pure@>>);
 };
 
-(String@) { Pure@<Maybe@<String@>>; } GetEnv = (String@ _filename) {
-  # TODO: Add a map from String@ to String@to allow modeling of environment
-  # variables.
-  Monad.return(Nothing<String@>);
-};
-
-Stdio@<Pure@> Stdio = Stdio@<Pure@>(In, Out, Err, Read, Write, GetEnv);
+Stdio@<Pure@> Stdio = Stdio@<Pure@>(In, Out, Err, Read, Write);
 
 # Run --
 #   Run a pure stdio computation.

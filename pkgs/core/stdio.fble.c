@@ -33,9 +33,6 @@ static FbleValue* ReadImpl(
 static FbleValue* WriteImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
-static FbleValue* GetEnvImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args);
 static FbleValue* StdioImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
@@ -43,7 +40,6 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
 static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id);
 static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_id);
 static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_id);
-static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_id);
 static FbleValue* Stdio(FbleValueHeap* heap, FbleBlockId profile_block_id);
 
 
@@ -62,19 +58,17 @@ static FbleString StrIStreamBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC,
 static FbleString StrOStreamBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%.OStream", };
 static FbleString StrReadBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%.Read", };
 static FbleString StrWriteBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%.Write", };
-static FbleString StrGetEnvBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%.GetEnv", };
 static FbleString StrStdioBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%.Stdio", };
 
 #pragma GCC diagnostic pop
 
-#define NUM_PROFILE_BLOCKS 7
+#define NUM_PROFILE_BLOCKS 6
 static FbleName ProfileBlocks[] = {
   { .name = &StrModuleBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrIStreamBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrOStreamBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrReadBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrWriteBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
-  { .name = &StrGetEnvBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrStdioBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
 };
 
@@ -195,33 +189,6 @@ static FbleValue* WriteImpl(
 }
 
 /**
- * @func[GetEnvImpl] FbleRunFunction to read and environment variable.
- *  See documentation of FbleRunFunction in fble-function.h
- *
- *  The fble type of the function is:
- *
- *  @code[fble] @
- *   (String@, Unit@) { Maybe@<String@>; }
- */
-static FbleValue* GetEnvImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args)
-{
-  (void)profile;
-
-  char* var = FbleStringValueAccess(args[0]);
-  char* value = getenv(var);
-  FbleFree(var);
-
-  if (value == NULL) {
-    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
-  }
-
-  FbleValue* str = FbleNewStringValue(heap, value);
-  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, str); // Just(str)
-}
-
-/**
  * @func[StdioImpl] FbleRunFunction to generate the native Stdio@ interface.
  *  See documentation of FbleRunFunction in fble-function.h
  *
@@ -246,10 +213,9 @@ static FbleValue* StdioImpl(
   FbleValue* fble_stderr = OStream(heap, stderr, module_block_id);
   FbleValue* fble_read = Read(heap, module_block_id);
   FbleValue* fble_write = Write(heap, module_block_id);
-  FbleValue* fble_getenv = GetEnv(heap, module_block_id);
-  FbleValue* fble_stdio = FbleNewStructValue_(heap, 6,
+  FbleValue* fble_stdio = FbleNewStructValue_(heap, 5,
       fble_stdin, fble_stdout, fble_stderr,
-      fble_read, fble_write, fble_getenv);
+      fble_read, fble_write);
   return FblePopFrame(heap, fble_stdio);
 }
 
@@ -341,25 +307,6 @@ static FbleValue* Write(FbleValueHeap* heap, FbleBlockId module_block_id)
     .run = &WriteImpl,
   };
   return FbleNewFuncValue(heap, &exe, module_block_id + 4, NULL);
-}
-
-/**
- * @func[GetEnv] Allocates an fble getenv function.
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleBlockId][module_block_id]
- *   The block_id of the /Core/Stdio/Native% block.
- *  @returns[FbleValue*] The allocated function.
- *  @sideeffects Allocates an fble value.
- */
-static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId module_block_id)
-{
-  FbleExecutable exe = {
-    .num_args = 2,
-    .num_statics = 0,
-    .max_call_args = 0,
-    .run = &GetEnvImpl,
-  };
-  return FbleNewFuncValue(heap, &exe, module_block_id + 5, NULL);
 }
 
 /**
