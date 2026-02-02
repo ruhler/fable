@@ -1,0 +1,14 @@
+P0
+* Ability to see score / progress on map that you've made.
+* A way to distinguish between overlapping edges.
+
+P1
+* Touch screen support.
+* Come up with a name.
+* Main menu.
+* Tutorials.
+
+P2
+* Prettier edges connecting blocks.
+* Prettier color scheme.
+* Nice physics for dragging around tiles.

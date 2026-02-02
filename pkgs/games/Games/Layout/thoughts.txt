@@ -1,0 +1,20 @@
+Layout Game Thoughts
+====================
+Mainly: how to productionize the game.
+
+First off: we can count score as bigger is better. Define your score for a
+round as the initial sum of squares of distances minus the current sum of
+squares of distances. That way we can also add a new map without changing the
+overall cumulative score.
+
+High level game progression: you are presented with a sequence of maps to
+play. Get a high enough score on a map to unlock the next one. Maybe we do 1,
+2, or 3 stars per map to give feedback on how well it's done. Something cool
+is that we can have a cumulative score for a set of maps, and use that to
+unlock the next set of maps.
+
+We could count score, bronze, silver, or gold trophies to unlock things.
+
+We'll need tutorial. Maybe demo.
+
+

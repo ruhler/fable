@@ -142,7 +142,7 @@ RandEdges = {
 
 Int@ NodeWidth = Int|20;
 Int@ TileWidth = Int|32;
-Int@ EdgeWidth = Int|4;
+Int@ EdgeWidth = Int|2;
 Int@ HalfEdgeWidth = Shr(EdgeWidth, Int|1);
 
 % Colors = @(
