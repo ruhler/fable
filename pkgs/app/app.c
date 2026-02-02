@@ -63,7 +63,7 @@ typedef struct {
   int fpsHistogram[61];
 } App;
 
-static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing);
+static void Draw(int ax, int ay, int bx, int by, FbleValue* drawing);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button);
 
@@ -91,16 +91,15 @@ static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
 
 /**
  * @func[Draw] Draws a drawing to the screen of type @l{/Drawing%.Drawing@}.
- *  @arg[SDL_Surface*][surface] The surface to draw to.
  *  @arg[int][ax, ay, bx, by]
  *   A transformation to apply to the drawing: a*p + b.
  *  @arg[FbleValue*][drawing] The drawing to draw.
  *
  *  @sideeffects
  *   Draws the drawing to the window. The caller must call
- *   SDL_UpdateWindowSurface for the screen to actually be updated.
+ *   SDL_GL_SwapWindow for the screen to actually be updated.
  */
-static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue* drawing)
+static void Draw(int ax, int ay, int bx, int by, FbleValue* drawing)
 {
   switch (FbleUnionValueTag(drawing, DRAWING_TAGWIDTH)) {
     case 0: {
@@ -184,15 +183,15 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
       int byi = FbleIntValueAccess(FbleStructValueField(b, POINT_FIELDC, 1));
 
       // a * (ai * x + bi) + b ==> (a*ai) x + (a*bi + b)
-      Draw(surface, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d);
+      Draw(ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d);
       return;
     }
 
     case 4: {
       // Over.
       FbleValue* over = FbleUnionValueArg(drawing, DRAWING_TAGWIDTH);
-      Draw(surface, ax, ay, bx, by, FbleStructValueField(over, OVER_FIELDC, 0));
-      Draw(surface, ax, ay, bx, by, FbleStructValueField(over, OVER_FIELDC, 1));
+      Draw(ax, ay, bx, by, FbleStructValueField(over, OVER_FIELDC, 0));
+      Draw(ax, ay, bx, by, FbleStructValueField(over, OVER_FIELDC, 1));
       return;
     }
 
@@ -391,8 +390,7 @@ static FbleValue* EffectImpl(
     }
 
     case 1: {
-      SDL_Surface* surface = SDL_GetWindowSurface(app->window);
-      Draw(surface, 1, 1, 0, 0, FbleUnionValueArg(effect, EFFECT_TAGWIDTH));
+      Draw(1, 1, 0, 0, FbleUnionValueArg(effect, EFFECT_TAGWIDTH));
       SDL_GL_SwapWindow(app->window);
 
       // Collect status on frame rate.

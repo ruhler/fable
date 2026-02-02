@@ -1902,3 +1902,408 @@ Kind of like the question of MIter@ versus get:
 Seems like 'get' is a combination of Iter@ + state monad? Maybe it should be
 implemented as such?
 
+---
+
+Let's figure out what I want to do here.
+
+Start with stdin, stdout, and stderr. All of these are text streams, so we
+don't need to worry about that to start.
+
+Input stream questions:
+* Explicit close yes or no.
+* Iter@ versus Get
+* Blocking or non-blocking.
+
+Output stream questions:
+* Explicit close yes or no.
+* Iter@ versus Put
+* Blocking or non-blocking.
+
+I know I want output streams to have explicit close. There is a conceptual
+notion of an end of a stream determined by the person writing to the stream.
+Files have ends. Streaming music or videos have ends. Socket output has an
+end. The person writing the stream needs a way to express that. The person
+reading the stream needs a way to detect that.
+
+Do input streams need explicit close? That feels weird. Like, we can have one
+output stream that is consumed by two different readers in parallel. The
+writer shouldn't have a way to detect if either of the input streams are
+closed. The man page for write suggests you get a SIGPIPE if you write to a
+closed pipe, but otherwise there isn't a use case for the write being able
+to detect the reader end of the stream has been closed. This feels like the
+wrong direction for information flow to go.
+
+What conclusion did I come up with for these questions last time I asked them?
+
+From thoughts/fble-0.5/gc_native.txt: On the question of explicit close for
+input streams:
+
+  Anyway, I'm not going to worry about this for now. Save it for when we do a
+  round of standard library clean up. I think it's still a hard problem
+  without an obvious solution.
+
+I kicked the can down the bucket to here apparently. The other relevant
+question noted then was how to deal with cleanup of resources associated input
+streams that we haven't read to the end of. Like, maybe we need to explicitly
+free the interface to a stream, even though that doesn't send any information
+back to who is writing to the stream in the first place. That seems reasonable
+to me.
+
+So, not paying any attention yet to who is responsible for managing the life
+cycle of an interface to a stream, and focusing just on the contents of a
+stream: explicit close when writing, explicit end of stream when reading. No
+explicit close when reading, no explicit sigpipe equivalent when writing.
+
+On to Iter@ versus Get@. I think Iter@ doesn't make sense. Iter@ is a list
+where I have to check in with the monad in question for each next element. But
+let's say I have this list, I make a copy of it, I have someone iterate
+through the first 5 elements of the list, then someone else starts iterating
+from the start of the list. Does that someone else get the same five elements
+the first person saw? Do they get the next 5 elements of the list? If they get
+the next 5 elements of the list, we should just use a Get@ interface and say
+you always read from the one place on the list and the next read always gets
+the next thing.
+
+In other words, the Get@ interface much better matches the concept of getting
+the next element from the list in a stateful way.
+
+See also discussion in thoughts/fble-0.6/stdlib.io.txt:
+* I landed on Get@ instead of Iter@
+* I also, apparently, decided the order of type args is T@ before M@?
+
+Anyway, Get@ and Put@ rather than Iter@ sound like the right answer to me.
+Simpler interface, makes sense, implementable, doesn't require an extra layer
+of State@ to be able to use, and generalizes to other things like read/write
+of shared variables or stacks or other kinds of data structures.
+
+On to blocking versus non-blocking. Today everything is blocking.
+Specifically: write block on output, but presumably not very long. Reads block
+on input. For input from the command line. For sockets. For files. This really
+matters for the command line inputs and sockets.
+
+Blocking is the easy approach. I know it doesn't do everything you might want.
+I could also say for this release, limit to blocking. But let's also think
+about how a non-blocking API might look.
+
+A non-blocking API needs two things:
+1. A way to say the read would block. No immediate data available. Like
+EAGAIN.
+2. A way to explicitly block on a set of streams. Like poll or select. Because
+we don't want to do polling for normal blocking.
+
+In an ideal world, we could implement the blocking API easily on top of the
+non-blocking API.
+
+Now we need more than Maybe@ type for Get@, because there's multiple states:
+1. Data available and returned.
+2. End of input stream.
+3. Would block.
+
+Or maybe we return Maybe@<List@<Char@>>, where Nothing means end of input
+stream, and Just([]) means would block, and otherwise it gets all the data it
+can in at once. Except you lose control of how big the list could get that
+way.
+
+How would I implement poll? You pass a list of streams to block on, it blocks,
+waiting for the first available data, returning the stream where this is data,
+or letting you iterate through them.
+
+But what if the streams have different types?
+
+How about having a transaction monad, where blocking fails the transaction?
+But then we need a way to undo any side effects during the transaction, such
+as partially read files and other IO interaction with other things. Sounds
+really hard.
+
+Simplest API would be have a 'poll' function that takes a list of names of
+streams and blocks until one of those streams would be ready. It could tell
+you which one, or you could loop through them all to figure it out. But the
+name of the stream will need to be distinct from its type so that we can wait
+on multiple different streams at once.
+
+Non-blocking IO doesn't make sense internally, does it? Like, as a way to
+describe a pure fble function? Why not? Because I know what order things are
+reading and writing in, so I can always predict the next thing to be ready.
+But if I didn't know the order, then I would want a poll operation, even if
+that order is deterministic. For example, a monad for concurrency with round
+robin ordering of threads and explicit yield. I wouldn't be able to predict
+statically what will be ready next, even though it is deterministic.
+
+From that perspective, I think the transaction based API is the right
+approach, we might just need to limit it to make it practical. For example:
+you can run arbitrary code to check whether it would poll or not, as long as
+you don't do any side effects. Or, extremely simple, you give the list of
+names.
+
+In terms of types, it would be something like:
+
+  <@ T@>(Get@<M@, T@>) { M@<Wait@>; };
+
+Where Wait@ is now associated with the stream, and you could pass it via some
+list to Poll.
+
+But let's say Get@ is still blocking, and that Wait@ is an orthogonal
+interface. Then we can worry about non-blocking later, because it still
+composes with pure blocking.
+
+Practically speaking, the way blocking works is to say to the scheduler: run a
+bunch of other stuff until we have something interesting to do again here.
+Implementation wise, the challenge will be coordinating this across fble and
+OS schedulers, assuming there are multiple.
+
+All of which is to say, for now, for this release, let's not worry about
+non-blocking interfaces. I claim we can add that later if desired without
+having to change the blocking interfaces.
+
+Okay? Everything is clear now for stdin, stdout, stderr?
+
+Just a quick note on order: I previously voted for Put@<T@, M@> instead of
+Put@<M@, T@>, mainly so I could do things like PutChar@<M@> ... but that
+doesn't actually sound very convincing to me right now.
+
+Apparently this is more intuitive to me:
+
+  <<@>@,@>@ Put@ = <<@>@ M@, @ A@>(A@) { M@<Unit@>; };
+  <<@>@,@>@ Get@ = <<@>@ M@, @ A@> { M@<A@>; };
+
+But let's stick to Char@ right now regardless, for simplicity. I'll generalize
+later.
+
+  <<@>@,@>@ Put@ = <<@>@ M@, @ A@>(A@) { M@<Unit@>; };
+  <<@>@,@>@ Get@ = <<@>@ M@, @ A@> { M@<A@>; };
+
+  <<@>@>@ IStream@ = <<@>@ M@> { *(
+     Get@<M@, Maybe@<Char@>> get
+  ); };
+
+  <<@>@>@ OStream@ = <<@>@ M@> { *(
+     Put@<M@, Output@> put,
+     M@<Unit@> close
+  ); };
+
+  IStream@<M@> stdin;
+  OStream@<M@> stdout;
+  OStream@<M@> stderr;
+
+A few notes:
+* Put@ and Get@ are lower level, more generic interfaces.
+* IStream@ and OStream@ are stream specific interfaces:
+ - Output streams can be closed.
+ - Input streams have ends.
+* I'm not sure if I want 'get' as a single field for IStream@, or if IStream@
+  should directly be the get function. Having a struct wrapper around the
+  'get' field would make IStream@ more extensible in the future, for example
+  if we wanted to add non-blocking methods or things like 'GetN'. Let's stick
+  with that then to start.
+
+Clear, simple, intuitive, easy, no?
+
+Now, let's discuss files. A file is an optionally partially written stream
+that anyone can read by name?
+
+If there is one writer of the file, it makes sense to me:
+* Before the file has been created, reading returns no such file.
+* After the file has been created, but before it has been ended, reading opens
+  from the beginning, reads to the end, then blocks for the next things to be
+  written.
+* After a file has been ended, reading reads to the end and gets end of file.
+
+Things get weird once you have more than one writer. Options:
+* The second writer creates a new stream. If you already opened the previous
+  stream, that's what you continue to read from. Otherwise you get the new
+  stream. Single writer per stream. All makes sense.
+* The second writer can only append to a finished stream. It gets an error if
+  the stream is already open. Any readers that haven't reached end of file yet
+  will block when getting to the point where the new writing is writing to.
+* A writer can truncate a file (at 0, at the end, somewhere in the middle): 
+  - Readers past the end get undefined behavior?
+  - Readers past the end jump straight to where it was truncated?
+  - Writers do what???
+ 
+I honestly have no idea how this works with posix files when multiple
+different people are writing to the same file at the same time.
+
+The use cases I think we want to support:
+* Single writer: create, write incrementally, set end of file.
+* Append: single writer at a time, perhaps, but with the option to replace
+  existing 'end of file' with new contents. Essentially re-opening the stream.
+  Think for logging and such, where we want to append to a log, not have to
+  rewrite the whole thing.
+
+Let's try to figure out how things work on posix/linux:
+* open sets the file index to the beginning of the file.
+* Opening in append mode automatically updates the file position to the end of
+  the file, *after each write*. Calls to 'write' are atomic.
+* lseek can go past the end of the file. Writes at that point implicitly fill
+  the gap with nul bytes. Apparently 'holes' are a semantic concept in files.
+* read past the end of the file reads 0 bytes, indicating end of file.
+
+It's still not clear to me whether offsets are tracked at the level of the
+underlying file on disk, the system wide open file descriptor, the process
+open file descriptor, or the fd. What does C99 have to say about this?
+
+I can't tell. Let's just try and see.
+
+Specifically I want to know:
+* If you truncate a file someone was reading, what do they read next?
+ - I assume they'll get end of file.
+* If you truncate a file some was writing, where do they write next?
+ - I assume the same place they were add, if they weren't in O_APPEND mode,
+   and there will be a whole in between.
+* If you write to a file in the middle, does it change the file length?
+ - I assume no, and whoever reads the file will end up reading some mix of
+   what is now added and then what was there before?
+
+Let's try it:
+* If we have two writers, they overwrite contents in place, wherever they are.
+* ftrucate does not change the position associated with a file descriptor.
+
+So I'm going to assume each 'fd' has its own position tracker. When you write,
+you write to that position, overwriting any existing contents. If there's a
+whole, there's a whole. The greatest offset in the file with content
+determines the length of the file.
+
+So, at any time, the file has well defined contents. Everyone has their own
+position into the file. Only O_APPEND changes that.
+
+Okay? Seems clear to me. That makes me view a file as a map from offset to
+byte plus a max offset. Writing past the end increases the max offset.
+
+What happens if you read from a file that hasn't been closed yet? Is it end of
+file, or does it block? It's just end of file. No blocking. Sounds like
+blocking is only for things like fifos and sockets, not regular files.
+
+In that sense, files don't feel like streams to me. No blocking. Ability to
+overwrite things in the middle. That kind of thing. But maybe it can work.
+
+Here's what I'm thinking:
+* Separate file creation from stream creation and filenames.
+ - Because it's too confusing to tell when a new file is created.
+* file names can refer to non-files.
+
+We can read and write to files with stream interfaces:
+* Write from beginning - write starting at offset 0
+* Write from end - write starting at offset at end of file
+* More generally: write from offset X.
+* Append - every write goes to the end of the file. Assuming we are talking
+  'Output' interface, it would be nice if it was atomic: you don't interleave
+  two different outputs. I'm not convinced I can implement that though.
+* Truncate and then write from beginning.
+* Read from beginning.
+
+So, let's say we have some file foo. Things I can do with it:
+* Truncate to a specific length.
+* Open for write starting from offset 0 (N more generally).
+* Open for append.
+* Open for read, starting from offset 0 (N more generally).
+
+I don't see a need to write from anything other than 0 or read from anything
+other than 0. I think tell and seek functions would be fine to have, but not
+associated with the stream interface. Maybe they are operators we can use to
+act on streams. Like: you give me a stream, I can make a copy of it. That's
+like 'tell'. Then I can read from that point. or, you give me a stream and an
+offset (possibly negative), and I can give you a new stream that was relative
+to that point in the stream. Or, I can ask the offset of a given stream, and
+then open a new stream at a different location.
+
+In other words, I'm saying a stream interface is tied to a particular file and
+offset. Interacting with the stream changes the offset it is associated with.
+
+We can ask about supporting tell and seek for non-files, like stdin, stdout,
+sockets. Is that meaningful? Either we just don't support it, or we try to
+define semantics. Seeking ahead when writing could mean writing nuls. Seeking
+ahead when reading could mean skip that. But we may as well do that
+explicitly? Seeking backwards when reading could go back to a buffer, but that
+sounds wrong. Backwards when writing makes no sense.
+
+Okay? So here's what I'm imagining:
+
+File operations:
+  M@<File@> Create;
+    - creates a new, empty, unamed file.
+    - maybe we give a mode option to specify permissions?
+  (File@, Int@) { M@<Unit@>; } Truncate;
+    - truncate a file to the given length.
+
+Getting streams for files:
+  (File@) { M@<IStream@<M@>>; } Read
+    - gives a stream interface for reading the given file from the beginning.
+  (File@) { M@<OStream@<M@>>; } Write
+    - gives a stream interface for writing the file from the beginning.
+  (File@) { M@<OStream@<M@>>; } Append
+    - gives a stream interface for writing the file at the end, always
+      appending to the end of the file at time of put.
+
+Directory operations:
+  (File@, String@) { M@<Unit@>; } Name;
+    - give the file the given name in the filesystem.
+  (String@) { M@<Maybe@<File@>>; } Lookup;
+    - look up a file by name.
+  (String@) { M@<Unit@>; } Delete;
+    - remove the given name for a file.
+  (String@, String@) { M@<Unit@>; } Rename;
+    - Atomic Name + Delete operation.
+
+So the only thing I'm missing, I think, is how to test for error conditions on
+files, and how to seek on files. Also, I don't know how to implement naming of
+anonymous files. It looks like you have to associate a name when you create a
+file, and then can only do name changes based on having the old name.
+
+That's awkward. I suppose we could force creation and naming to go together,
+so we always have a name for a file. Having separate 'name' and File@ feels
+risky to me in terms of race conditions.
+
+---
+
+If we can implement the above interface, maybe the best approach is to
+simplify based on what we can implement. How about:
+
+  (String@) { M@<Maybe@<IStream@<M@>>>; } Read;
+    - open an existing file for reading.
+  (String@) { M@<OStream@<M@>>; } Write;
+    - open a new file file for writing, truncates to 0 if needed (?).
+  (String@) { M@<OStream@<M@>>; } Append;
+    - open an existing file for appending. Creates if needed (?).
+  (String@) { M@<Unit@>; } Remove;
+    - remove the named file.
+  (String@, String@) { M@<Unit@>; } Rename;
+    - rename the named file.
+
+It's just hard to deal with all the various combinations. Specifically:
+* Should write truncate to 0 or fail or unlink and create a new file if there
+  is an existing named file?
+ - How about truncate. User can call 'Remove' before hand if they want.
+* Should append create or fail if there is no existing named file?
+ - Create if needed.
+* How can we create temporary files? What mode are they created in?
+ - Don't. What purpose for this?
+
+These are all the things my nice API above makes clear. Or, maybe, combine
+Write and Append functions? Into a single Write function that has options for:
+ - truncate or don't
+ - append mode or not
+
+Seems like gnu has linkat options which could enable naming of otherwise
+anonymous files, but it's gnu specific. Maybe I could work around things by
+picking a name internally for the file, opening it read/write under that name,
+and having File@ store that name and the file descriptor. That way you can
+give it a name whenever you want. I just need a way to come up with a unique
+name for the file.
+
+Oh, I can use mkstemp. It gives me the file descriptor and the name.
+Interesting. Perfect? So I can implement my proposed nice API?
+* Create uses mkstemp to create a unique temp file.
+* ftruncate to truncate the file based on file descriptor.
+* Read uses open with the temp path associated with the file.
+* Write uses open with the temp path associated with the file.
+* Append uses open with the temp path associated with the file.
+* Name calls link.
+* Lookup links the file to a new name ?? then ??
+* Delete does a straight remove.
+* Rename does a straight rename.
+* When we GC the File@ object, we unlink from the temp path.
+
+The trouble is for lookup, we can't safely use the name to identify the file,
+because somebody could rename it without us knowing. I assume that won't
+happen for our temp file names, because nobody knows about those.
+ 
