@@ -7,6 +7,8 @@ Things to consider doing for the fble-0.6 release.
  - See since removed commented out code in pkgs/invaders/build.tcl
  - Or just remove --driver option entirely if it isn't going to work?
 
+* Add test for /Core/Native/Env%.GetVar.
+
 * Standardize IO
 
 * Add test for StrE with \q escape.

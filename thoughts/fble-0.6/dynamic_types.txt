@@ -1,0 +1,277 @@
+Dynamic Types
+=============
+
+The idea of supporting dynamic types keeps coming back.
+
+What I mean by dynamic types is something like a union type that has an open
+set of possible fields rather than a closed set. Something like being able to
+cast to void* and then back. So we can make data structures holding a bunch of
+untyped values and then later recover the types from them, but in a type safe
+way. Something like being able to ask x instanceof(Foo).
+
+Motivations and use cases (see stdlib.stdio.txt for more examples):
+* To implement IORef, STRef, or Link, or shared state in pure fble code.
+ - Dynamic types would allow us to use a state monad where the state is a map
+   from Int@ to Untyped@. To allocate a new reference to an object, get a
+   unique Int@ id, wrap it in a phantom type. On put, cast the typed object to
+   Untyped@. On get, cast it back to the phantom type. Dynamic type checking
+   ensures we can't cast to the wrong type. Higher level logic in the program
+  (aka the Int@ id) ensures we never try to cast to the wrong type.
+* To support a pure implementation of an interface for concurrency.
+ - via STRef like allocation of shared state.
+* To implement generic Error@ type.
+ - Allowing generic code to work with errors it doesn't know about, and pass
+   that on to specific code that can check for a specific error it knows
+   about.
+
+There are a couple different concepts we can use to do this in a sensible way
+from a language point of view:
+
+1. New kind of union type where types are used for field names.
+
+   +()            # The one 'open' union type.
+   +(Int@: 5);    # Construct a value with tag Int@ and arg 5.
+
+   # Switch based on type.
+   x.?(Int@: x.Int@, Bool@: x.Bool@.?(true: 0, false: 1));
+
+2. Some way to create a new hidden tag and cast to/from that.
+
+   +()                # The one 'open' union type.
+   + Int@ MyField;    # Declare an implicit field, store result in MyField.
+   +() x = MyField.put(5);
+   Maybe@<Int@> mx = MyField.get(x);
+
+   Where MyField.get returns nothing unless x was created using a
+   corresponding MyField.put call.
+
+Now (1) sounds hard to implement, because it means keeping types around at
+runtime and doing type equality checks at runtime. My sense is that type
+checks are not cheap.
+
+(2), on the other hand, is perhaps easy to implement. As long as we ensure
+that a given FbleValue* is only ever used with one specific type, we can store
+an FbleValue* along with the value in x, and require the user gives us that
+FbleValue* as the key to get the thing out of x.
+
+It's not the case today that a given FbleValue* is only ever used with one
+specific type. 'Nothing' is the canonical example. Nothing can be type
+Maybe@, or Maybe@<Int@>, or Maybe@<Bool@>.
+
+But I can fix this. I can change how we implement polymorphism to say that
+Nothing (type Maybe@) is polymorphic, so it takes a single type argument. When
+you say Nothing<Int@>, that applies the type argument, calls the poly value as
+a function, and returns you a new value which is Nothing<Int@>. If you refer
+to Nothing<Int@> multiple times, you get multiple different values at runtime
+that are essentially equivalent.
+
+This seems expensive at first glance, but maybe it isn't. For things like
+Nothing@, it will be packed anyway. It's not a new allocation. So practically
+no difference.
+
+For polymorphic functions, like Items<Int@>(x, xs), we are already calling the
+function. Now we just have one more argument.
+
+This would also bring us a step forward towards tracking concrete runtime
+types in polys, if we ever wanted that (we've wanted it in the past for type
+packing and e.g. approach (1) proposed for dynamic types).
+
+I think approach (2) is worth trying. Probably not in fble-0.6, but in a
+subsequent release.
+
+We could do to propose a nicer syntax. Because I don't want to build Maybe@
+into the language if I can avoid it. Though it's not more complicated than the
+List@ type that we build into the language.
+
+The type: +() makes sense to me. Straight forward.
+
+To construct a value of this type, I need a typed key. The key can be any
+object, but it has to determine the type. The type is what we want to actually
+store.
+
+How about: use an object of the type you want to use for the key. It can be
+undefined. Then we have a constructor like: x.(arg) to say x is the key, arg
+is the value to pack, x and arg have to have the same type, this returns a
+value of type +().
+
+Then we want a way to query given x and the packed value v. Maybe:...
+
+Can we treat it like a union? Maybe instead of name: we use value:?
+
+  A@ key;
+  A@ value = ...;
+  Untyped@ packed = Untyped@(key: value);
+  packed.?(key: ...);
+
+Maybe you can give multiple keys at once. That's all fine, except I worry
+about putting a generic expression where today we normally just expect a name.
+Is that doable?
+
+If it is doable, that syntax is nice.
+
+It could be a problem using a generic value for the key. What if the value is
+packed? We couldn't tell if it is unique or not. Probably better to have
+special syntax to define the key. If we do that, can we define the key using a
+name? But I'm going to want to be able to pass the key around.
+
+  + A@ key;
+  A@ value = ...;
+  Untyped@ packed = key(value);   # key is a function to pack?
+  
+  + A@ pack, unpack;
+  A@ value = ...;
+  Untyped@ packed = pack(value);   # pack is a function to pack?
+  A@ unpacked = unpack(??? how to catch error case?
+
+I like the idea of reusing union select syntax. Hmm...
+
+  + A@ key;
+  A@ value = ...;
+  Untyped@ packed = Untyped@(key: value);
+  packed.?(key: ...);
+
+Now we have the '+' statement to make sure key is unique. But this means
+changing 'name: ' syntax to support expressions in general, which worries me.
+
+If we do key(value) to pack, what syntax could we nicely use to unpack?
+
+We already have short hand for (name) getting expanded to (name: name), is
+that useful here? I feel like not. Because I don't have just a name to start.
+I have a value.
+
+We could force the user to use a name, and interpret it as the name of a
+variable which is the key. But that feels awkward.
+
+
+  + A@ pack, unpack;
+  A@ value = ...;
+  Untyped@ packed = pack(value)
+  unpack ???
+
+  A@ value = ...;
+  Untyped@ packed = Untyped@(foo.key: value);
+  packed.?(foo.key: ...);
+
+If we allowed 'expr' instead of 'name' in the syntax, we would have to rely on
+type checking to yell at people who use an expression where a name is
+expected.
+
+  + A@ key;
+  A@ value = ...;
+  Untyped@ packed = key(value)
+
+  +? foo.key, foo.value { A@ unpacked = value; };
+
+Maybe we just need some syntactic help?
+
+  + A@ key;
+  A@ value = ...;
+  Untyped@ packed = key(value)
+  packed.??(key: ...);
+
+Here I'm using '??' instead of '?' to indicate this is the special kind of
+union select. Or:
+
+  packed.+?(key: ...);
+  packed.?+(key: ...);
+
+Now it feels a little silly to make the user provide syntactic difference
+where we know from the type what's expected and required.
+
+Here's what I suggest, when I get around to trying to implement this:
+
+* Replace 'name' with 'expr' in the syntax for union type constructor and
+  union select. See if it causes any issues. Require 'var expr' for any of
+  today's uses where we expect a name.
+
+So, for example, we can have:
+
+  + A@ keyA;
+  + B@ keyB;
+  A@ a = ...;
+  B@ b = ...;
+  Untyped@ packedA = Untyped@(keyA: a);
+  Untyped@ packedB = Untyped@(keyB: b);
+  Untyped@ packed = pickA.?(true: packedA, false: packedB);
+  packed.?(keyA: packed....
+
+Oh. It doesn't work. We would need a way to do an access. Hmm... Back to the
+drawing board on syntax then.
+
+---
+
+Maybe Untyped@ is a bad idea. What's to prevent people from writing functions
+that take Untyped@ and return Untyped@, and completely bypassing the type
+system? For example, writing functions that do different things depending on
+whether the input is a Unit@, String@, Maybe@. That sounds like a bad
+situation to be in.
+
+Consider the 'generic Error@ type' case. Instead of using Untyped@, we could
+use: <@ E@>(Error@<E@> err). Anyone who isn't going to make use of E@ can make
+that polymorphic. Anyone who knows about it and wants to use it can specify
+the type they expect. It all composes well together. It's just a bit tedious
+to have all these polymorphic types all over the place.
+
+How about the STRef use case? Like, I want a way to implement a monad with the
+following interface:
+
+Alloc@ = <<@>@ M@> { *(
+  <@>@ Ref@;                            # reference type
+  <@ A@>(A@) { M@<Ref@<A@>>; } New;     # allocate a new reference of any type.
+  <@ A@>(Ref@<A@>, A@) { M@<Unit@>; } Write;
+  <@ A@>(Ref@<A@>) { M@<A@>; } Read;
+};
+
+And I want it implemented as a state monad: so some pure state object I can
+update and modify internally.
+
+What is the type of state? There is no data structure I can come up with that
+can hold forall types A.
+
+We could have the Ref@<A@> store the data. But then we can't update the data
+without modifying all the references.
+
+I could explicitly list the kinds of types you can store by changing <@
+A@>(A@) to a custom (Value@) type that wraps all the different kinds of types.
+But that doesn't allow composition with unknown types.
+
+Which suggests everyone has to say what kinds of types they want to allocate.
+Then you could compose them together once you know that.
+
+Alloc@ = <<@>@ M@, @ A@> { *(
+  @ Ref@;                         # reference type
+  (A@) { M@<Ref@<A@>>; } New;     # allocate a new reference of type A@.
+  (Ref@<A@>, A@) { M@<Unit@>; } Write;
+  (Ref@<A@>) { M@<A@>; } Read;
+};
+
+Now I implement things like:
+  
+  <<@>@ M@>(Monad@<M@>, Alloc@<M@, Int@>) { M@<...>; }
+  ModelA = (...)
+
+  <<@>@ M@>(Monad@<M@>, Alloc@<M@, Bool@>) { M@<...>; }
+  ModelB = (...)
+
+  <<@>@ M@>(Monad@<M@>, Alloc@<M@, Int@>, Alloc@<M@, Bool@>) { M@<...>; }
+  ModelC = {
+    _ := m.do(ModelA(m, alloc_int));
+    _ := m.do(ModelA(m, alloc_bool));
+  }
+
+
+And we could implement it at the top level.
+
+It's not the same interface. It's definitely restricted. You can't start
+allocating new kinds of things without telling the caller. In this case that
+makes sense if we want the caller to be able to manipulate values of that
+type.
+
+It's just painfully tedious to have to specify all these things everywhere. It
+seems like a kind of proviso hell situation. If you want to modify one thing
+internally, that gets exposed all the way up the call chain. In other words,
+it's not terribly modular if the implementation details have to be encoded in
+the interface.
+
+Perhaps the real question is one about what to consider part of the interface
+and what to consider implementation details when it comes to a state monad.

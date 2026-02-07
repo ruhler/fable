@@ -1,6 +1,4 @@
 
-@ Env@ = /Core/Env%.Env@;
-
 @ Int@ = /Std/Int%.Int@;
 
 % Int = /Std/Int/Lit%.Int;
@@ -39,7 +37,7 @@
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
   App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
-  Env@ env := m.do(/Core/Env/Native%.GetEnv<M@>(n, m));
+	Maybe@<String@> home := m.do(/Core/Env/Native%.GetVar<M@>(n, m, Str|'HOME'));
 
   % O = /Core/Stream/OStream%(m);
 
@@ -47,8 +45,6 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
     Unit@ _ := m.do(O.PutStr(stdio.out, /Invaders/Usage%));
     m.return(Success);
   });
-
-  Maybe@<String@> home = /Core/Env%.Lookup(env, Str|'HOME');
 
   Get@<M@, Int@> get_high_score = {
     % I = /Core/Stream/IStream%(m);

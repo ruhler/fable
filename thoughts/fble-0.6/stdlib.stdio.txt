@@ -2307,3 +2307,366 @@ The trouble is for lookup, we can't safely use the name to identify the file,
 because somebody could rename it without us knowing. I assume that won't
 happen for our temp file names, because nobody knows about those.
  
+---
+
+I should also remember windows is unlikely to support all these crazy posix
+like things. Probably best if I can stick to what we can do with fopen.
+
+Which basically brings us to what we already have implemented: Read, Write.
+Read from beginning. Write to beginning. I suppose I could add Append or have
+an option to 'Write' to create an append stream for a file. I don't have use
+cases for it personally, but I could imagine for logging it makes a lot of
+sense to have.
+
+Anyway, restricting ourselves to fopen makes things pretty easy. I think only
+the three options make sense: Read, Write, Append.
+
+But I'll want to support binary and character streams, and they have different
+types, so they should be different functions.
+
+Output@ can be generalized to work on bytes. Put becomes the main operation.
+We no longer have String, Lines, Join, Format. But if we are doing that,
+should we just do raw Put@<Byte@>? The downside is we lose control of
+buffering. So let's have an Output@<Byte@> option for writing a batch of bytes
+all at once. Underneath, the Put@<Output@> function can do a flush after each
+output. That way you control buffering and performance can be decent.
+
+So, here's what things are looking like at this point:
+
+  * ReadText, WriteText, AppendText
+  * ReadBinary, WriteBinary, AppendBinary
+
+I suppose I could organize them into:
+
+  * Text.{Read, Write, Append}
+  * Binary.{Read, Write, Append}
+
+And for the filesystem stuff, also have:
+  * Remove, Rename, operating on file paths.
+  * No need for tmpfile: you'll have to generate your own unique name?
+    - I'm not sure if this can be done safely and atomically though.
+    - I don't really see the use case for this for now. If you want stuff
+      internal, just use lists or something. No need for going outside to the
+      file system at all.
+
+Good. That's good progress. Next questions to tackle are:
+* Error conditions on files.
+* Support for seeking through files.
+
+Error conditions from C99:
+* Sounds like it's a single bit associated with a stream that records if there
+  was some error or not. We don't get any more information than that.
+* Perhaps the main point is to distinguish between error and eof?
+* Or, maybe errno is set by library functions. Yeah, a bunch of functions can
+  set an implementation defined positive value in errno. perror does the
+  translation to human readable error. Looks like there are three predefined
+  errors: EDOM, EILSEQ, ERANGE
+
+In terms of my stream interface, we could have:
+* Put could fail with an error. I guess that means you would have to try
+  again?
+
+Here are all the errno's on my computer according to perror:
+  errno 0: Success
+  errno 1: Operation not permitted
+  errno 2: No such file or directory
+  errno 3: No such process
+  errno 4: Interrupted system call
+  errno 5: Input/output error
+  errno 6: No such device or address
+  errno 7: Argument list too long
+  errno 8: Exec format error
+  errno 9: Bad file descriptor
+  errno 10: No child processes
+  errno 11: Resource temporarily unavailable
+  errno 12: Cannot allocate memory
+  errno 13: Permission denied
+  errno 14: Bad address
+  errno 15: Block device required
+  errno 16: Device or resource busy
+  errno 17: File exists
+  errno 18: Invalid cross-device link
+  errno 19: No such device
+  errno 20: Not a directory
+  errno 21: Is a directory
+  errno 22: Invalid argument
+  errno 23: Too many open files in system
+  errno 24: Too many open files
+  errno 25: Inappropriate ioctl for device
+  errno 26: Text file busy
+  errno 27: File too large
+  errno 28: No space left on device
+  errno 29: Illegal seek
+  errno 30: Read-only file system
+  errno 31: Too many links
+  errno 32: Broken pipe
+  errno 33: Numerical argument out of domain
+  errno 34: Numerical result out of range
+  errno 35: Resource deadlock avoided
+  errno 36: File name too long
+  errno 37: No locks available
+  errno 38: Function not implemented
+  errno 39: Directory not empty
+  errno 40: Too many levels of symbolic links
+  errno 42: No message of desired type
+  errno 43: Identifier removed
+  errno 44: Channel number out of range
+  errno 45: Level 2 not synchronized
+  errno 46: Level 3 halted
+  errno 47: Level 3 reset
+  errno 48: Link number out of range
+  errno 49: Protocol driver not attached
+  errno 50: No CSI structure available
+  errno 51: Level 2 halted
+  errno 52: Invalid exchange
+  errno 53: Invalid request descriptor
+  errno 54: Exchange full
+  errno 55: No anode
+  errno 56: Invalid request code
+  errno 57: Invalid slot
+  errno 59: Bad font file format
+  errno 60: Device not a stream
+  errno 61: No data available
+  errno 62: Timer expired
+  errno 63: Out of streams resources
+  errno 64: Machine is not on the network
+  errno 65: Package not installed
+  errno 66: Object is remote
+  errno 67: Link has been severed
+  errno 68: Advertise error
+  errno 69: Srmount error
+  errno 70: Communication error on send
+  errno 71: Protocol error
+  errno 72: Multihop attempted
+  errno 73: RFS specific error
+  errno 74: Bad message
+  errno 75: Value too large for defined data type
+  errno 76: Name not unique on network
+  errno 77: File descriptor in bad state
+  errno 78: Remote address changed
+  errno 79: Can not access a needed shared library
+  errno 80: Accessing a corrupted shared library
+  errno 81: .lib section in a.out corrupted
+  errno 82: Attempting to link in too many shared libraries
+  errno 83: Cannot exec a shared library directly
+  errno 84: Invalid or incomplete multibyte or wide character
+  errno 85: Interrupted system call should be restarted
+  errno 86: Streams pipe error
+  errno 87: Too many users
+  errno 88: Socket operation on non-socket
+  errno 89: Destination address required
+  errno 90: Message too long
+  errno 91: Protocol wrong type for socket
+  errno 92: Protocol not available
+  errno 93: Protocol not supported
+  errno 94: Socket type not supported
+  errno 95: Operation not supported
+  errno 96: Protocol family not supported
+  errno 97: Address family not supported by protocol
+  errno 98: Address already in use
+  errno 99: Cannot assign requested address
+  errno 100: Network is down
+  errno 101: Network is unreachable
+  errno 102: Network dropped connection on reset
+  errno 103: Software caused connection abort
+  errno 104: Connection reset by peer
+  errno 105: No buffer space available
+  errno 106: Transport endpoint is already connected
+  errno 107: Transport endpoint is not connected
+  errno 108: Cannot send after transport endpoint shutdown
+  errno 109: Too many references: cannot splice
+  errno 110: Connection timed out
+  errno 111: Connection refused
+  errno 112: Host is down
+  errno 113: No route to host
+  errno 114: Operation already in progress
+  errno 115: Operation now in progress
+  errno 116: Stale file handle
+  errno 117: Structure needs cleaning
+  errno 118: Not a XENIX named type file
+  errno 119: No XENIX semaphores available
+  errno 120: Is a named type file
+  errno 121: Remote I/O error
+  errno 122: Disk quota exceeded
+  errno 123: No medium found
+  errno 124: Wrong medium type
+  errno 125: Operation canceled
+  errno 126: Required key not available
+  errno 127: Key has expired
+  errno 128: Key has been revoked
+  errno 129: Key was rejected by service
+  errno 130: Owner died
+  errno 131: State not recoverable
+  errno 132: Operation not possible due to RF-kill
+  errno 133: Memory page has hardware error
+
+If you know the error, you might be able to address it and act accordingly.
+
+If all you have is a string message, then what you can do is give it to the
+user and let them try to address things as best they can. That's better than
+nothing for sure.
+
+If you have a little more info, there are some things you might be able to do
+programmatically. Address the error directly. Retry. Give up. Things like
+that. Free memory. Free disk space. Close some open files.
+
+String error message is a good catch all. You can describe anything a user
+could interpret. But it's not as good for working at the machine level,
+because the syntax of the error message might change without otherwise
+changing the content. For that you would want a standard number or other
+identifier for the error.
+
+A closed union type could be used as a single central place to put errors. But
+it might also be nice to have an open union type, where you can ask if the
+error is a particular uniquely named entity or not, when the type doesn't
+necessarily know all the list of entities to start. That requires I have a way
+to generate unique names. Or you can have some external central authority for
+assigning unique ids.
+
+For file offsets, I'm tempted to say don't support them in fble. Who needs
+them anyway? Go for a simpler approach. If you are doing fancy things with
+files and seeking and stuff, well, what's wrong with you? But I'm not
+convinced by that argument.
+
+It seems worth thinking about how we could add seeking to the API if we wanted
+to add it, perhaps sometime in the future. It's awkward that some streams
+support seeking and others don't. It's awkward that the stream has to track
+the offset internally, so we need to have some way to interact with the stream
+API to do the tell/seek.
+
+---
+
+In practice I think we need to support error messages. For example, debugging
+sockets issues really requires error messages. Probably any other issues.
+Anywhere something doesn't work, you need as much feedback as you can get
+about why.
+
+This isn't specific to streams and files. Any time you are interacting with
+the real world, you could encounter some unexpected condition. Potentially you
+could run out of memory or encounter a runtime error for pure code too. Not
+sure if that should fall under the same category.
+
+Some potential ways to deal with errors:
+* Explicit return. So, instead of getting a Maybe@<Char@>, you get an
+  Error@<Maybe@<Char@>>.
+* Call back to use on error? Which presumably would end up converting to an
+  explicit return.
+* Throw a catchable exception.
+* Store some info about the error in a side channel, like errno.
+
+Practically speaking, from a programming point of view?
+* Seems like it would be nice if most code didn't have to deal with errors.
+* But I'm not sure how practical that actually is.
+
+What do we do if we've partially written out our file, and then we learn there
+is an error?
+* A. ignore it.
+* B. give up, report the error.
+* C. make a possibly futile attempt to address the error then and there
+* D. let someone up the chain make an attempt to address the error.
+
+Sounds like in go they rely on dynamic types to allow someone to return a
+specialized error type that the caller can check for if they know what to
+check for.
+
+I never check printf to see if there was an error condition...
+
+---
+
+How might things look with support for errors?
+
+  <<@>@,@>@ Put@ = <<@>@ M@, @ A@>(A@) { M@<E@>; };
+  <<@>@,@>@ Get@ = <<@>@ M@, @ A@> { M@<+(E@ err, A@ ok)>; };
+
+Easy to ignore the error for Put@.
+
+  Unit@ _ := m.do(put(...))
+  E@ _ := m.do(put(...))
+
+Tedious to ignore the error for Get@
+
+  A@ a := m.do(get(...))
+  Err@<A@> ma := m.do(get(...))
+  ma.?(err: { ...});
+
+But by no means unprecedented. I have code like that for Maybe@<A@> all over
+the place in my existing code, I feel like.
+
+If the monad m propagated errors for us, we could do something like:
+
+  Unit@ _ := m.do(put(...))
+  A@ a := m.do(get(...))
+  A@ a := m.try(get(...), (E@ e) {
+    ...
+  });
+  
+It feels like putting error handling in the monad itself is a nice way to go.
+
+Like, assume you have to be aware of potential errors to do anything useful
+with them. If you don't know how to handle them, better for them to silently
+be propagated. If you want to handle them, you can chose to.
+
+I already have M@ in both Put@ and Get@, so we could in theory hide errors
+there. The implementations of Put@ and Get@ presumably know what M@.
+
+Next challenge is what this type E@ should be. There's are different levels of
+abstraction:
+* 1. Don't care about errors. Use A@.
+* 2. Only want error/not error. Use Maybe@<A@>.
+* 3. Want error msg/not error. Use *(String@ err, A@ ok).
+* 4. Want detailed error info for particular errors that I know to check for,
+  and generic string error message / unique identifier otherwise.
+
+(4) sounds kind of like dynamic types to me. Some way to pack, untyped, a
+unique name and typed value that you can get at if you know the name and
+expected type. Then specific implementations of Get and Put can pack detailed
+knowledge into an error message
+
+What does an Error@<M@> interface look like? I want:
+* Ability to report an error.
+* Ability to run alternate code in case of error. And/or run and get the
+  error explicitly.
+
+Aside from the question of type used to report an error, it's something like:
+
+  Error@<M@> = <<@>@ M@> { *(
+    <@ A@>(E@) { M@<A@>; } Raise,
+    <@ A@>(M@<A@>) { M@<+(E@ err, A@ ok)>>; } Try
+  );
+
+So, very simple.
+
+If only I had support for dynamic types...
+
+Without dynamic types, we could at least set up the framework. For example:
+* Start with String@ as the error.
+* Or use String@, Int@ as the error, and have some central place to store
+  errors.
+* Or use Error@ as a union type declared in some central place with all known
+  errors? Except that's really not extensible enough.
+
+Is there not some hack we can use to easily introduce dynamic types? Well, the
+challenge is making things unique. We could do that with a monadic interface.
+
+  <@ A@> { M@<*((A@) { Untyped@; } put, (Untyped@) { Maybe@<A@>; } get)>; }
+
+Whenever you call this, it creates a linked pair of functions 'get' and 'put'
+that let you put and get from Untyped@ safely. The implementation is simple:
+create a unique internal object in the runtime as the key, Untyped@ is a pair
+of key and FbleValue* value, get only returns something if the key matches.
+
+---
+
+Let's assume I want to hold off on dynamic types until a future release.
+
+If we assume we are using this magic error monad thing for errors... I could
+add that later. It doesn't change the Put@, Get@ interfaces if everything is
+done via side effects through M@. Treat 'end of file' as a non-error case.
+
+That means I could go ahead with the current proposal, don't worry about
+errors at all. No support for errors in the stream interface itself.
+
+No need to add support for 'seek' for now. If we want support for seek later
+on, add additional methods to IStream and OStream for it? That are only
+supported on some kinds of streams? :/
+

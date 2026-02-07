@@ -1,7 +1,4 @@
 
-% Env = /Core/Env%;
-@ Env@ = Env.Env@;
-
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;
 % Int = /Std/Int/Lit%.Int;
@@ -67,14 +64,13 @@ GetArgs = (List@<String@> args, Args@ default) {
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
   App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
-  Env@ env := m.do(/Core/Env/Native%.GetEnv<M@>(n, m));
+	Maybe@<String@> home := m.do(/Core/Env/Native%.GetVar<M@>(n, m, Str|HOME));
 
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
 
   # Read and update the default seed value.
   Int@ seed := m.do({
-    Maybe@<String@> home = Env.Lookup(env, Str|HOME);
     home.?(nothing: m.return(Int|0));
 
     String@ filename = Concat[home.just, Str|'/.fble-satgame'];
