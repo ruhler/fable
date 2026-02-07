@@ -7,6 +7,13 @@ Things to consider doing for the fble-0.6 release.
  - See since removed commented out code in pkgs/invaders/build.tcl
  - Or just remove --driver option entirely if it isn't going to work?
 
+* Think about api to break out of a ForEach loop mid way through.
+ - Because this comes up a lot, and I tend to just write 'TODO' in my code
+   where I should probably implement a proper interface.
+* Should we have a generic Container interface?
+ - As a way to standardize ForEach and perhaps other loop constructs across
+   all containers? Would that add anything of value?
+
 * Add test for /Core/Native/Env%.GetVar.
 
 * Standardize IO

@@ -1,0 +1,258 @@
+Stdlib Maybe
+------------
+
+Fble interface today:
+* Maybe@, Just, Nothing,
+* Map, Do, For, DoWhile
+
+How much do I make use of Map, Do, For, and DoWhile? I don't remember using
+those at all recently.
+
+Haskell:
+* maybe :: b -> (a -> b) -> Maybe a -> b
+* isJust, isNothing
+* fromJust
+* fromMaybe :: a -> Maybe a -> a
+* listToMaybe, maybeToList
+* catMaybes, mapMaybe: (a -> Maybe b) -> [a] -> [b]
+
+So, some ways to convert between lists and maybes. If we add those, they
+should be in a submodule. Maybe/List%, or List/Maybe%.
+
+Java:
+* Optional: empty, of
+* filter - turns the optional to empty based on a predicate of the value
+* flatMap - Applies a function to the value, in Do style.
+* get - get's the value or throws an exception
+* isPresent
+* map
+* orElse - like fromMaybe
+
+Go:
+* Based on Java Optional.
+* Get, etc... same kind of stuff.
+
+I prefer 'Maybe' terminology, just because that's what I'm used to.
+
+Let's consider the api options:
+* Maybe@, Just, Nothing - definitely want those
+* isJust, isNothing - this maybe should go into Maybe/Bool% or Maybe/Eq?
+  The Int library equivalent is /Std/Int/Sign%.
+* fromJust is the same as '.just'. But we could want a function form. Makes
+  sense to have this with some name.
+* fromMaybe also makes sense to have with some name.
+
+How am I thinking name wise for isJust, isNothing? I suppose: IsJust,
+IsNothing under my conventions. That's fine. What module should it go in?
+Maybe/Eq is pretty tempting...
+
+Interesting that I don't have List IsEmpty, IsNotEmpty functions. Should I add
+those? Oh. I do have them. And I have them in /List/Eq%. That's good precedent
+for /Maybe/Eq% as the home for these. Cool. Makes sense.
+
+What am I thinking for names of fromJust, fromMaybe? How about... Get and
+GetWithDefault?
+  Map(ms, Get)
+  Map(ms, GetDefault(...))
+  Map(ms, GetOrElse(...))
+  Map(ms, JustGet(...))
+  Map(ms, MaybeGet(...))
+
+I kind of like JustGet and MaybeGet. Well, JustGet is nicer than MaybeGet.
+JustGet and Get?
+
+  Value@ v = JustGet(mv);
+  Value@ v = Get(default, mv);
+  Value@ v = Get(mv, default);
+
+The 'Get' is kind of like special case of list foreach where you pass the
+identity function.
+
+  Value@ v = OrElse(default, mv)
+
+I suppose java would be: mv.orElse(default). It's harder for us. I think we
+need to pass the default as the first argument, because it's more likely you
+want to apply the function to a list of maybes than to a list of defaults.
+
+  Value@ v = DefaultGet(default, mv)
+
+If we were to use bind syntax, it would be something like:
+
+  Value@ v := ...
+
+Doesn't apply. It doesn't take a function. The one that takes the function
+would be a 'ForEach' variant:
+
+  Value@ v := ForEach(mv, default);
+  ...
+
+That name doesn't make much sense anymore though: 'each' suggests more than
+one.
+
+  Value@ v = Default(default, mv)
+
+That makes sense to me. Default(3, mv). Makes sense to say Default(3) on its
+own to extract a value from the maybe.
+
+  mv.?(just: mv.just, nothing: 3)
+
+  Default(3) $ { ... }
+
+Maybe try that?
+
+We will want map: Maybe@<a> -> (a -> b) -> Maybe@<b>.
+I like do: Maybe@<A@> -> (A@ -> Maybe@<B@>) -> Maybe@<B@>
+
+Now, how about Maybe? This is applying a function to a maybe, using a default
+value instead of the maybe value if needed.
+
+  maybe d f mv = f(Default(d, mv))
+
+That's like our union select, only passing the branch values as arguments. Not
+sure what to do with this one.
+
+How about the list operations. They make more sense to me as List/Maybe%
+instead of the other way around.
+
+  Head - gets the head of the list, returns Nothing if empty.
+  List - creates a list from a Maybe.
+  Concat - concats a list of maybes.
+
+Equivalent for mapMaybe?
+
+MapMaybe is (a -> Maybe b) -> [a] -> [b]. We filter out nothing results.
+
+I could imagine one where instead we have:
+  (a -> b) -> [Maybe a] -> [b]
+
+Where we filter out nothing inputs.
+
+More generally:
+
+  (a -> Maybe b) -> [Maybe a] -> [b]
+
+I don't know. Seems a bit specific of a function to have where we filter
+outputs but we don't have a similar option to filter inputs.
+
+While I'm thinking about it, should we add a 'Do' function for list?
+
+  [a] -> (a -> [b]) -> [b]
+
+Why not?
+
+What's the equivalent to ForEach for maybe?
+  Maybe a -> b -> ((a, b) -> b) -> b
+
+It's a little weird, because you know what 'b' is from the start if the
+function is called. You could pass that to the function directly. So you could
+have:
+
+  Maybe a -> b -> (a -> b) -> b
+
+Which is the 'maybe' function from Haskell, just in a different order. I like
+the function last so we can use bind syntax if we want. Maybe better to put
+default first, so:
+
+  b -> Maybe a -> (a -> b) -> b
+
+Which says: maybe we will apply a function, or maybe not. What it looks like:
+  
+  Int@ z = Maybe(3, mx, Incr);
+
+Why wouldn't you just write: Default(3, Map(mx, Incr))? That makes more sense
+to me.
+
+Let's see where I'm using these funny For and DoWhile things.
+
+DoWhile is used in sudoku to iterate over all possible symbols. It's like a
+ForEach symbol, but with ForEach split into IterateSymbol. Basically a general
+purpose iterator over a space of possible values.
+
+For is used to iterate over the set of live aliens. I think that's a misuse.
+That we should be doing ForEach over the set of aliens, not turning it into a
+function to return the maybe next alien given the previous one. Though this
+does raise a point about how to break out of for loops early.
+
+Use of Maybe@ for DoWhile and For here is like an iterator that can compute
+it's next value based on its current value, as opposed to having it baked in.
+But we could just as well bake it in, by passing the current value to the next
+value. I rather do this with 'Iter@' type than with Maybe@ type, if we even
+want to have iterators of this style.
+
+I vote we ditch For and DoWhile. Leave them in core for now. Phase them out
+more properly.
+
+Maybe and ForEach, we said, are basically equivalent. You might want ForEach
+as a drop in replacement for the list, maybe, container equivalent. I think
+that's worth having, and it makes sense to call it ForEach.
+
+  maybe: b -> (a -> b) -> Maybe a -> b
+  mapMaybe: (a -> Maybe b) -> [a] -> [b]
+
+
+  maybe: b -> Maybe a -> (a -> b) -> b
+  maybe: Maybe a -> b -> (a -> b) -> b
+  foreach: Maybe a -> b -> ((a, b) -> b) -> b
+
+  Bool@ b := IfNothing(mv, 2);
+  b.?(true: 1, false: 0);
+
+  Int@ r = {
+    Bool@ b := For(mv, 2);
+    b.?(true: 1, false: 0);
+  }
+
+  Int@ r = /Std/Maybe%.For(mv, 2, (Bool@ b) {
+      b.?(true: 1, false: 0);
+    });
+
+  Int@ r = /Std/Maybe%.If(mv, 2, (Bool@ b) {
+      b.?(true: 1, false: 0);
+    });
+
+I think 'For' sounds sort of reasonable. A shortening of ForEach. Makes sense
+to have the function last: you provide the default, it runs over all values,
+returns the last value returned. Okay?
+
+That leaves us with mapMaybes.
+
+  mapMaybe: (a -> Maybe b) -> [a] -> [b]
+
+But hey, I can do this easily as a list ForEach, right?
+
+  ForEach(xs, Empty, ((A@ x, List@<B@> tail) {
+    Maybe@<B@> mb = f(x);
+    B@ b := For(mb, tail);
+    Items(b, tail);
+  }
+
+Yeah, so I say ditch this. Not needed for my style.
+
+Hmm... I was very tempted to write:
+
+    B@ b := Default(tail, mb);
+    Items(b, tail);
+
+Like: Default returns 'tail' by default, otherwise it gets the value from b
+and returns what you ask for. Should I use 'Default' as the name for Maybe/For
+instead?
+
+    B@ b = Get(tail, mb);
+    B@ b := Default(tail, mb);
+    f(b);
+
+I'm tempted. Get(tail, mb) means get from either tail or mb, depending.
+Default means return a value by default, otherwise run some code on the value.
+
+Running Proposal:
+* /Maybe%: Maybe@, Just, Nothing
+  JustGet (Maybe a -> a),
+  Get(a -> Maybe a -> a)
+  Default (b -> Maybe a -> (a -> b) -> b),
+  Map, Do,
+  ForEach (Maybe a -> b -> ((a, b) -> b) -> b)
+* /Maybe/Eq%: Eq, IsJust, IsNothing
+* /List/Maybe%: List, Head, Last, Concat
+* /List%: Do
+
+Awesome. I like it. Proposal is there, let's try it out.
