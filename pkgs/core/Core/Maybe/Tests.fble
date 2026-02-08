@@ -19,6 +19,8 @@
 <@>% JustGet = /Core/Maybe%.JustGet;
 <@>% Default = /Core/Maybe%.Default;
 <@>% ForEach = /Core/Maybe%.ForEach;
+<@>% IsJust = /Core/Maybe/Eq%.IsJust;
+<@>% IsNothing = /Core/Maybe/Eq%.IsNothing;
 
 <@>@ Show@ = /Std/Show%.Show@;
 % ToString = /Std/Char/Output%.ToString;
@@ -100,6 +102,30 @@ Test@ Tests = TestSuite(Str|Maybe, List[
     String@ got = ForEach(Nothing<String@>, Str|Default,
       (String@ str, String@ _) { str; });
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|IsJust_Yes, (Unit@ _) {
+    Bool@ wnt = True;
+    Bool@ got = IsJust(Just(A));
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|IsJust_No, (Unit@ _) {
+    Bool@ wnt = False;
+    Bool@ got = IsJust(Nothing<AB@>);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|IsNothing_Yes, (Unit@ _) {
+    Bool@ wnt = True;
+    Bool@ got = IsNothing(Nothing<AB@>);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|IsNothing_No, (Unit@ _) {
+    Bool@ wnt = False;
+    Bool@ got = IsNothing(Just(A));
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|Eq_JustEq, (Unit@ _) {
