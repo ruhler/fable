@@ -1,0 +1,39 @@
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Empty = /Std/List%.Empty;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+# Convert a maybe to a list.
+<@ A@>(Maybe@<A@>) { List@<A@>; }
+List = <@ A@>(Maybe@<A@> maybe) {
+  maybe.?(nothing: Empty<A@>);
+  /Std/List%.List[maybe.just];
+};
+
+# Get the first element of the list, or nothing.
+<@ A@>(List@<A@>) { Maybe@<A@>; }
+Head = <@ A@>(List@<A@> list) {
+  list.?(empty: Nothing<A@>);
+  Just(list.items.head);
+};
+
+# Get the last element of the list, or nothing.
+<@ A@>(List@<A@>) { Maybe@<A@>; }
+Last = <@ A@>(List@<A@> list) {
+  list.?(empty: Nothing<A@>);
+  list.items.tail.?(empty: Just(list.items.head));
+  Last(list.items.tail);
+};
+
+<@ A@>(List@<Maybe@<A@>>) { List@<A@>; }
+Concat = <@ A@>(List@<Maybe@<A@>> xs) {
+  xs.?(empty: Empty<A@>);
+  xs.items.head.?(nothing: Concat(xs.items.tail));
+  Items(xs.items.head.just, Concat(xs.items.tail));
+};
+
+@(List, Head, Last, Concat);
