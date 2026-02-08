@@ -196,6 +196,21 @@ Map = <@ A@>(List@<A@> list)<@ B@>((A@) { B@; } f) {
   Items(f(list.items.head), Map(list.items.tail, f));
 };
 
+# @func[Do] Monadic do for list types.
+#  Applies a function to every element of a list and concatenates the list of
+#  results.
+#
+#  @arg[@][A@] The type of element on the given list.
+#  @arg[List@<A@>][list] The list to map over.
+#  @arg[@][B@] The type of element on the returned list.
+#  @arg[(A@) { List@<B@>; }][f] The function to apply.
+#  @returns[List@<B@>]
+#   The list of elements f(a_i) for each a_i in the input list.
+<@ A@>(List@<A@>)<@ B@>((A@) { List@<B@>; }) { List@<B@>; }
+Do = <@ A@>(List@<A@> list)<@ B@>((A@) { List@<B@>; } f) {
+  Concat(Map(list, f));
+};
+
 # @func[Reverse] Reverses the elements of a list.
 #  @arg[@][T@] The type of element on the list.
 #  @arg[List@<T@>][list] The list to reverse.
@@ -209,6 +224,6 @@ Reverse = <@ T@>(List@<T@> list) {
   List@, List, Items, Empty,
   Append, Concat, Join,
   Head, Tail, Last, Init,
-  ForEach, Map,
+  ForEach, Map, Do,
   Reverse
 );

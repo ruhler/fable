@@ -23,6 +23,7 @@
 <@>% Init = /Std/List%.Init;
 <@>% Concat = /Std/List%.Concat;
 <@>% Map = /Std/List%.Map;
+<@>% Do = /Std/List%.Do;
 <@>% ForEach = /Std/List%.ForEach;
 <@>% Reverse = /Std/List%.Reverse;
 <@>% Join = /Std/List%.Join;
@@ -76,6 +77,17 @@ Test@ Tests = TestSuite(Str|List, List[
 
     List@<Elem@> wnt = EL|BCDEA;
     List@<Elem@> got = Map(l, f);
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|'Do', (Unit@ _) {
+    List@<Elem@> l = EL|ABCD;
+    (Elem@) { List@<Elem@>; } f = (Elem@ e) {
+      e.?(A: EL|AB, B: EL|BC, C: EL|CD, D: EL|DE, E: EL|EA);
+    };
+
+    List@<Elem@> wnt = EL|ABBCCDDE;
+    List@<Elem@> got = Do(l, f);
     AssertEquals(Eq, Show, wnt, got);
   }),
 
