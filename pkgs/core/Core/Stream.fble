@@ -3,7 +3,7 @@
 % Neg = /Std/Int%.Neg;
 % Int = /Std/Int/Lit%.Int;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 @ Unit@ = /Std/Unit%.Unit@;
 
 # An input stream of bytes.

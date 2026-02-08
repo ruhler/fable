@@ -7,7 +7,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 # Char@ to V@ map implemented as Int@ to V@ using ascii value for the Int@.
 % M = /Core/Int/Map%.Map;

@@ -1,7 +1,7 @@
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Nothing = /Core/Maybe%.Nothing;
-<@>% Just = /Core/Maybe%.Just;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Nothing = /Std/Maybe%.Nothing;
+<@>% Just = /Std/Maybe%.Just;
 
 @ Num@ = /Pinball/Num%.Num@;
 % Add = /Pinball/Num%.Add;

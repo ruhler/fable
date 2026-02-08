@@ -1,7 +1,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 

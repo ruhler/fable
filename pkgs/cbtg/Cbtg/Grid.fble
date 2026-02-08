@@ -5,7 +5,7 @@
 
 % Ord = /Core/Int/Ord%.Ord;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 <@>@ List@ = /Std/List%.List@;
 

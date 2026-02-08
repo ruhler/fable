@@ -1,7 +1,7 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 

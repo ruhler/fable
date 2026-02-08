@@ -28,8 +28,8 @@
 
 <@>% List = /Std/List%.List;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Just = /Std/Maybe%.Just;
 
 % Str = /Std/Char/Ascii%.Str;
 

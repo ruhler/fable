@@ -5,7 +5,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 @ Addr@ = /Hwdg/Addr%.Addr@;
 @ Data@ = /Hwdg/Data%.Data@;

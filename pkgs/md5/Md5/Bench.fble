@@ -6,9 +6,9 @@
 % Int = /Std/Int/Lit%.Int;
 % IsZero = /Std/Int/Sign%.IsZero;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Just = /Std/Maybe%.Just;
+<@>% Nothing = /Std/Maybe%.Nothing;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 

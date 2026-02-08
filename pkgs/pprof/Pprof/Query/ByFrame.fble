@@ -9,7 +9,7 @@
 <@>% Empty = /Std/List%.Empty;
 <@>% List = /Std/List%.List;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 @ BlockId@ = /Pprof/Profile%.BlockId@;
 @ Profile@ = /Pprof/Profile%.Profile@;

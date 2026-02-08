@@ -12,13 +12,13 @@
 <@>% Tail = /Std/List%.Tail;
 <@>% Append = /Std/List%.Append;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
-<@>% Get = /Core/Maybe%.Get;
-<@>% JustGet = /Core/Maybe%.JustGet;
-<@>% Default = /Core/Maybe%.Default;
-<@>% ForEach = /Core/Maybe%.ForEach;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Just = /Std/Maybe%.Just;
+<@>% Nothing = /Std/Maybe%.Nothing;
+<@>% Get = /Std/Maybe%.Get;
+<@>% JustGet = /Std/Maybe%.JustGet;
+<@>% Default = /Std/Maybe%.Default;
+<@>% ForEach = /Std/Maybe%.ForEach;
 <@>% IsJust = /Core/Maybe/Eq%.IsJust;
 <@>% IsNothing = /Core/Maybe/Eq%.IsNothing;
 

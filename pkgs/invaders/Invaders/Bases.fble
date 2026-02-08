@@ -19,7 +19,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 Int@ 1 = Int|1;
 

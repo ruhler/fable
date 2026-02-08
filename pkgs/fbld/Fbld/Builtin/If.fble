@@ -16,7 +16,7 @@ Int@ 4 = Int|4;
 
 <@>% Get = /Std/List/Index%.Get;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 @ Unit@ = /Std/Unit%.Unit@;
 

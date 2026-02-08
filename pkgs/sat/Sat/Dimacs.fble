@@ -16,9 +16,9 @@
 <@>% Length = /Std/List/Index%.Length;
 <@>% Split = /Std/List/Search%.Split;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Just = /Std/Maybe%.Just;
+<@>% Nothing = /Std/Maybe%.Nothing;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;

@@ -1,8 +1,8 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Nothing = /Core/Maybe%.Nothing;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Nothing = /Std/Maybe%.Nothing;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;

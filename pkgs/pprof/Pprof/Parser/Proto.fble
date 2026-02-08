@@ -20,7 +20,7 @@
 <@>% Empty = /Std/List%.Empty;
 <@>% Items = /Std/List%.Items;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 

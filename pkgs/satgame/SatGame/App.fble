@@ -7,7 +7,7 @@
 % Min = /Std/Int/Ord%.Min;
 % Int = /Std/Int/Lit%.Int;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 

@@ -7,9 +7,9 @@
 % 8 = Hex.8; % 9 = Hex.9; % A = Hex.A; % B = Hex.B;
 % C = Hex.C; % D = Hex.D; % E = Hex.E;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Just = /Std/Maybe%.Just;
+<@>% Nothing = /Std/Maybe%.Nothing;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 

@@ -22,7 +22,7 @@
 <@>% Get = /Std/List/Index%.Get;
 <@>% Length = /Std/List/Index%.Length;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 

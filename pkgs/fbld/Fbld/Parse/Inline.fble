@@ -18,7 +18,7 @@
 <@>% Items = /Std/List%.Items;
 <@>% Concat = /Std/List%.Concat;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;

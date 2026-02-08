@@ -1,5 +1,5 @@
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 <@>@ Show@ = /Std/Show%.Show@;
 % Format = /Std/Char/Ascii/Output%.Format;
 % String = /Std/Char/Ascii/Output%.String;

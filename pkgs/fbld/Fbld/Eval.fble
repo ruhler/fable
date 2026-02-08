@@ -5,7 +5,7 @@
 <@>% Items = /Std/List%.Items;
 <@>% Length = /Std/List/Index%.Length;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 % Format = /Std/Char/Ascii/Output%.Format;
 

@@ -1,0 +1,129 @@
+# @module[/Std/Maybe%]
+#  Maybe type and basic operations.
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+# @type[Maybe@] An optional value.
+#  @arg[@][T@] The type of value.
+#  @field[T@][just] The value if present.
+#  @field[Unit@][nothing] Indicates the value is not present.
+<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+
+# @func[Just] Construct a Maybe@ with a value that is present.
+#  @arg[@][T@] The type of value.
+#  @arg[T@][value] The value.
+#  @returns[Maybe@<T@>] A Maybe@ with the given present value.
+#
+#  Example:
+#
+#  @code[fble] @
+#   Maybe@<Bool@> = Just(False);
+<@ T@>(T@){ Maybe@<T@>; }
+Just = <@ T@>(T@ x) {
+  Maybe@(just: x);
+};
+
+# @func[Nothing] A Maybe@ that does not have a value present.
+#  @arg[@][T@] The type of value.
+#  @returns[Maybe@<T@>] A Maybe@ with no value present.
+#
+#  Example:
+#
+#  @code[fble] @
+#   Maybe@<Bool@> = Nothing<Bool@>;
+Maybe@ Nothing = <@ T@> {
+  Maybe@<T@>(nothing: Unit);
+};
+
+# @func[Get] Gets the value of a Maybe@ or a default.
+#  @arg[@][T@] The type of value.
+#  @arg[T@][default] The default value.
+#  @arg[Maybe@<T@>][maybe] The Maybe@ to get the value from.
+#  @returns[T@] The value of the Maybe@ if present, else the default value.
+<@ T@>(T@, Maybe@<T@>) { T@; }
+Get = <@ T@>(T@ default, Maybe@<T@> maybe) {
+  maybe.?(just: maybe.just);
+  default;
+};
+
+# @func[JustGet] Gets the value of a Maybe@.
+#  Assuming the value is present.
+#
+#  @arg[@][T@] The type of value.
+#  @arg[Maybe@<T@>][maybe] The Maybe@ to get the value from.
+#  @returns[T@] The value of the Maybe@.
+#  @sideeffects Behavior is undefined if no value is present.
+<@ T@>(Maybe@<T@>) { T@; }
+JustGet = <@ T@>(Maybe@<T@> maybe) {
+  maybe.just;
+};
+
+# @func[Default] Applies a function to the value if present.
+#  @arg[@][B@] The function return type.
+#  @arg[B@][default] The default return value.
+#  @arg[@][A@] The function argument type.
+#  @arg[Maybe@<A@>][maybe] The possible argument to the function.
+#  @arg[(A@) { B@; }][f] The function to apply.
+#  @returns[B@]
+#   The result of applying the function on the argument value if present.
+#   The default value otherwise.
+<@ B@>(B@)<@ A@>(Maybe@<A@>, (A@) { B@; }) { B@; }
+Default = <@ B@>(B@ default)<@ A@>(Maybe@<A@> maybe, (A@) { B@; } f) {
+  maybe.?(nothing: default);
+  f(maybe.just);
+};
+
+# @func[ForEach] Iterate over the element of a maybe.
+#  Analogous to /Std/List%.ForEach when treating Maybe@ as a list of no more
+#  than one element. See /Std/List%.ForEach for more information.
+#
+#  @arg[@][A@] The type of element.
+#  @arg[Maybe@<A@>][maybe] The Maybe@ to iterate over.
+#  @arg[@][B@] The type of data to return.
+#  @arg[B@][base] The value to return for an empty Maybe@.
+#  @arg[(A@, B@) { B@; }][body]
+#   A function to update the value to return given the next element.
+#  @returns[B@]
+#   The result of applying the body consecutively to the base value, once for
+#   each element in the maybe.
+<@ A@>(Maybe@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
+ForEach = <@ A@>(Maybe@<A@> maybe)<@ B@>(B@ base, (A@, B@) { B@; } body) {
+  maybe.?(nothing: base);
+  body(maybe.just, base);
+};
+
+# @func[Map] Applies a function to every element of the maybe.
+#  Analogous to /Std/List%.Map when treating Maybe@ as a list of no more
+#  than one element. See /Std/List%.Map for more information.
+#
+#  @arg[@][A@] The type of value.
+#  @arg[Maybe@<A@>][maybe] The Maybe@ to map over.
+#  @arg[@][B@] The type of element on the returned Maybe@.
+#  @arg[(A@) { B@; }][f] The function to apply.
+#  @returns[Maybe@<B@>]
+#   The result of applying f to the argument value. Nothing if no argument
+#   value is present.
+<@ A@, @ B@>(Maybe@<A@>, (A@) { B@; }) { Maybe@<B@>; }
+Map = <@ A@, @ B@>(Maybe@<A@> m, (A@) { B@; } f) {
+  m.?(nothing: Nothing<B@>);
+  Just(f(m.just));
+};
+
+# @func[Do] Monadic do for Maybe@ type.
+#  Applies the function if the argument value is present.
+#
+#  @arg[@][A@] The type of value.
+#  @arg[Maybe@<A@>][maybe] The argument.
+#  @arg[@][B@] The result type.
+#  @arg[(A@) { Maybe@<B@>; }][f] The function to apply.
+#  @returns[Maybe@<B@>]
+#   The result of applying f if the argument is present.
+#   Nothing if the argument is not present.
+<@ A@>(Maybe@<A@>)<@ B@>((A@) { Maybe@<B@>; }) { Maybe@<B@>; }
+Do = <@ A@>(Maybe@<A@> m)<@ B@>((A@) { Maybe@<B@>; } f) {
+  m.?(nothing: Nothing<B@>);
+  f(m.just);
+};
+
+@(Maybe@, Just, Nothing, Get, JustGet, Default, ForEach, Map, Do);

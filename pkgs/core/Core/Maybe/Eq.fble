@@ -5,7 +5,7 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 <@ T@>(Maybe@<T@>) { Bool@; }
 IsJust = <@ T@>(Maybe@<T@> maybe) {

@@ -8,9 +8,9 @@
 <@>@ Cmp@ = /Std/Cmp%.Cmp@;
 @ Compared@ = /Std/Cmp%.Compared@;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Nothing = /Core/Maybe%.Nothing;
-<@>% Just = /Core/Maybe%.Just;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Nothing = /Std/Maybe%.Nothing;
+<@>% Just = /Std/Maybe%.Just;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

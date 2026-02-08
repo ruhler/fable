@@ -3,9 +3,9 @@
 <@>% List = /Std/List%.List;
 <@>% ForEach = /Std/List%.ForEach;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Just = /Std/Maybe%.Just;
+<@>% Nothing = /Std/Maybe%.Nothing;
 <@>% DoWhile = /Core/Maybe%.DoWhile;
 
 % Less = /Std/Cmp%.Less;

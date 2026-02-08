@@ -19,7 +19,7 @@
 <@>% Concat = /Std/List%.Concat;
 <@>% Any = /Std/List/Search%.Any;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 

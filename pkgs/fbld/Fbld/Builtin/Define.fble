@@ -16,7 +16,7 @@ Int@ 4 = Int|4;
 <@>% Get = /Std/List/Index%.Get;
 <@>% Split = /Std/List/Search%.Split;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
