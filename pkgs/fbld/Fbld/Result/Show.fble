@@ -13,7 +13,7 @@ ShowErrors = <@ T@>(Result@<T@> r) {
 <@ T@>(Show@<T@>) { Show@<Result@<T@>>; }
 Show = <@ T@>(Show@<T@> show, Result@<T@> r) {
   r.failed.?(false: Format|'ok: '[show(r.value.just)]);
-  Format|'failed: %s, %s'[r.errors, /Core/Maybe/Show%.Show(show, r.value)];
+  Format|'failed: %s, %s'[r.errors, /Std/Maybe/Show%.Show(show, r.value)];
 };
 
 @(Show, ShowErrors);

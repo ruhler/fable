@@ -319,7 +319,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /Std/Test%.ExpectFails(Str|'Nothing') $
     /Std/Eq/Assert%.AssertEquals(
       /Std/Maybe/Eq%.Eq(EqColor),
-      /Core/Maybe/Show%.Show(ShowColor), wnt, got);
+      /Std/Maybe/Show%.Show(ShowColor), wnt, got);
   }),
 
   Test(Str|'Poked Eye Triangle', (Unit@ _) {

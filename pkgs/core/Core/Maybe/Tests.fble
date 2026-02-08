@@ -55,7 +55,7 @@ Show@<AB@> ShowAB = (AB@ x) {
 };
 
 Eq@<Maybe@<AB@>> Eq = /Std/Maybe/Eq%.Eq(EqAB);
-Show@<Maybe@<AB@>> Show = /Core/Maybe/Show%.Show(ShowAB);
+Show@<Maybe@<AB@>> Show = /Std/Maybe/Show%.Show(ShowAB);
 
 # Tests --
 #  A test suite to test the /Maybe% module and friends.

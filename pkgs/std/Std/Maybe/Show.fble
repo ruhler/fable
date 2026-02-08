@@ -1,0 +1,28 @@
+# @module[/Std/Maybe/Show%]
+#  The Show@ instance for Maybe@.
+
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>@ Show@ = /Std/Show%.Show@;
+% Format = /Std/Char/Ascii/Output%.Format;
+% String = /Std/Char/Ascii/Output%.String;
+
+
+# Show --
+#   Implementation of Show@ for Maybe@<T@>. See documentation of /Show%.Show@.
+# @func[Show] Show a Maybe@ value.
+#  For example:
+#
+#  @code[fble] @
+#   /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show, Just(False));
+#
+#  @arg[@][T@] The type of value.
+#  @arg[Show@<T@>][show] How to show a value.
+#  @arg[Maybe@<T@>][maybe] The maybe to show.
+#  @returns[Output@] Output that shows the maybe.
+<@ T@>(Show@<T@>) { Show@<Maybe@<T@>>; }
+Show = <@ T@>(Show@<T@> show, Maybe@<T@> maybe) {
+  maybe.?(nothing: String|'Nothing');
+  Format|'Just:%s'[show(maybe.just)];
+};
+
+@(Show);

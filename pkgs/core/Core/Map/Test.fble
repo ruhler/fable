@@ -41,7 +41,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       Maybe@<Unit@> got = m.Lookup(m.Empty<Unit@>, b);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(/Std/Unit/Eq%.Eq),
-        /Core/Maybe/Show%.Show(/Std/Unit/Show%.Show),
+        /Std/Maybe/Show%.Show(/Std/Unit/Show%.Show),
         wnt, got);
     }),
 
@@ -51,7 +51,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       Maybe@<Unit@> got = m.Lookup(map, b);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(/Std/Unit/Eq%.Eq),
-        /Core/Maybe/Show%.Show(/Std/Unit/Show%.Show),
+        /Std/Maybe/Show%.Show(/Std/Unit/Show%.Show),
         wnt, got);
     }),
 
@@ -64,7 +64,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       Maybe@<Bool@> got = m.Lookup(map, b);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
-        /Core/Maybe/Show%.Show(/Std/Bool/Show%.Show),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
         wnt, got);
     }),
 
@@ -76,7 +76,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       Maybe@<Bool@> got = m.Lookup(map, b);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
-        /Core/Maybe/Show%.Show(/Std/Bool/Show%.Show),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
         wnt, got);
     }),
 
@@ -86,7 +86,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       Maybe@<Bool@> got = m.Lookup(map, b);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
-        /Core/Maybe/Show%.Show(/Std/Bool/Show%.Show),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
         wnt, got);
     }),
 
@@ -96,7 +96,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       Maybe@<Bool@> got = m.Lookup(map, b);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
-        /Core/Maybe/Show%.Show(/Std/Bool/Show%.Show),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
         wnt, got);
     }),
 

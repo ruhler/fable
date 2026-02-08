@@ -50,7 +50,7 @@ Test@ Tests = TestSuite(Str|Fifo, List[
     Maybe@<Elem@> got = First(Empty<Elem@>);
     AssertEquals(
       /Std/Maybe/Eq%.Eq(ElemEq),
-      /Core/Maybe/Show%.Show(ElemShow),
+      /Std/Maybe/Show%.Show(ElemShow),
       wnt, got);
   }),
 
@@ -60,7 +60,7 @@ Test@ Tests = TestSuite(Str|Fifo, List[
     Maybe@<Elem@> got = First(fifo);
     AssertEquals(
       /Std/Maybe/Eq%.Eq(ElemEq),
-      /Core/Maybe/Show%.Show(ElemShow),
+      /Std/Maybe/Show%.Show(ElemShow),
       wnt, got);
   }),
 
@@ -70,7 +70,7 @@ Test@ Tests = TestSuite(Str|Fifo, List[
     Maybe@<Elem@> got = First(fifo);
     AssertEquals(
       /Std/Maybe/Eq%.Eq(ElemEq),
-      /Core/Maybe/Show%.Show(ElemShow),
+      /Std/Maybe/Show%.Show(ElemShow),
       wnt, got);
   }),
 
@@ -80,7 +80,7 @@ Test@ Tests = TestSuite(Str|Fifo, List[
     Maybe@<Elem@> got = First(Next(fifo));
     AssertEquals(
       /Std/Maybe/Eq%.Eq(ElemEq),
-      /Core/Maybe/Show%.Show(ElemShow),
+      /Std/Maybe/Show%.Show(ElemShow),
       wnt, got);
   }),
 
@@ -93,7 +93,7 @@ Test@ Tests = TestSuite(Str|Fifo, List[
     Maybe@<Elem@> got = First(bac);
     AssertEquals(
       /Std/Maybe/Eq%.Eq(ElemEq),
-      /Core/Maybe/Show%.Show(ElemShow),
+      /Std/Maybe/Show%.Show(ElemShow),
       wnt, got);
   })
 ]);
