@@ -11,7 +11,7 @@ Eq = <@ V@>(Eq@<V@> eq, Map@<V@> a, Map@<V@> b) {
   a.?(empty: b.?(empty: True, : False));
   b.?(empty: False);
 
-  /Core/Maybe/Eq%.Eq(eq, a.p.1, b.p.1).?(false: False);
+  /Std/Maybe/Eq%.Eq(eq, a.p.1, b.p.1).?(false: False);
   Eq(eq, a.p.2p0, b.p.2p0).?(false: False);
   Eq(eq, a.p.2p1, b.p.2p1).?(false: False);
   True;

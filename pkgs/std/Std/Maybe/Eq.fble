@@ -1,0 +1,45 @@
+# @module[/Std/Maybe/Eq%]
+#  The Eq@ instance for Maybe@.
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+<@>@ Eq@ = /Std/Eq%.Eq@;
+
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+
+# @func[IsJust] Check if a value is present.
+#  @arg[@][T@] The type of value.
+#  @arg[Maybe@<T@>][maybe] The maybe to check.
+#  @returns[Bool@] True if a value is present, false otherwise.
+<@ T@>(Maybe@<T@>) { Bool@; }
+IsJust = <@ T@>(Maybe@<T@> maybe) {
+  maybe.?(just: True);
+  False;
+};
+
+# @func[IsJust] Check if no value is present.
+#  @arg[@][T@] The type of value.
+#  @arg[Maybe@<T@>][maybe] The maybe to check.
+#  @returns[Bool@] True if no value is present, false otherwise.
+<@ T@>(Maybe@<T@>) { Bool@; }
+IsNothing = <@ T@>(Maybe@<T@> maybe) {
+  maybe.?(nothing: True);
+  False;
+};
+
+# @func[Eq] Check if two maybes are equal.
+#  @arg[@][T@] The type of value.
+#  @arg[Eq@<T@>][eq] Value equality.
+#  @arg[Maybe@<T@>][a] The first maybe.
+#  @arg[Maybe@<T@>][b] The second maybe.
+#  @returns[Bool@] True if the maybes are equal, false otherwise.
+<@ T@>(Eq@<T@>) { Eq@<Maybe@<T@>>; }
+Eq = <@ T@>(Eq@<T@> eq, Maybe@<T@> a, Maybe@<T@> b) {
+  a.?(nothing: b.?(nothing: True, : False));
+  b.?(nothing: False);
+  eq(a.just, b.just);
+};
+
+@(IsJust, IsNothing, Eq);

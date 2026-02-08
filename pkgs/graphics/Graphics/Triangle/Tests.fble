@@ -318,7 +318,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /Std/Test%.ExpectFails(Str|'') $
     /Std/Test%.ExpectFails(Str|'Nothing') $
     /Std/Eq/Assert%.AssertEquals(
-      /Core/Maybe/Eq%.Eq(EqColor),
+      /Std/Maybe/Eq%.Eq(EqColor),
       /Core/Maybe/Show%.Show(ShowColor), wnt, got);
   }),
 

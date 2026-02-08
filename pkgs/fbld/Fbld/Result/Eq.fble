@@ -11,7 +11,7 @@
 Eq = <@ T@>(Eq@<T@> eq, Result@<T@> a, Result@<T@> b) {
   /Std/String/Eq%.Eq(ToString(a.errors), ToString(b.errors)).?(false: False);
   /Std/Bool/Eq%.Eq(a.failed, b.failed).?(false: False);
-  /Core/Maybe/Eq%.Eq(eq, a.value, b.value);
+  /Std/Maybe/Eq%.Eq(eq, a.value, b.value);
 };
 
 @(Eq);

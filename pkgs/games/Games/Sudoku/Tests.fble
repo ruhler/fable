@@ -233,7 +233,7 @@ Test@ Tests = TestSuite(Str|Sudoku, List[
     Maybe@<Solved@> want = Just(SampleSolved);
     Maybe@<Solved@> got = Solve(SampleInput);
     AssertEquals(
-      /Core/Maybe/Eq%.Eq(EqBoard),
+      /Std/Maybe/Eq%.Eq(EqBoard),
       /Core/Maybe/Show%.Show(ShowBoard(False)),
       want, got);
   })
