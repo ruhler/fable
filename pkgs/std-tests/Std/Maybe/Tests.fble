@@ -156,7 +156,9 @@ Test@ Tests = TestSuite|Maybe $ List[
         /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
         wnt, got);
     }
-  ]
+  ],
+
+  /Std/Maybe/Eq/Tests%.Tests
 ];
 
 @(Tests);

@@ -1,9 +1,5 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
 <@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 <@>% List = /Std/List%.List;
@@ -11,8 +7,6 @@
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
 <@>% Just = /Std/Maybe%.Just;
 <@>% Nothing = /Std/Maybe%.Nothing;
-<@>% IsJust = /Std/Maybe/Eq%.IsJust;
-<@>% IsNothing = /Std/Maybe/Eq%.IsNothing;
 
 <@>@ Show@ = /Std/Show%.Show@;
 % ToString = /Std/Char/Output%.ToString;
@@ -31,14 +25,7 @@
 # AB@ --
 #   Helper type to test eq and show of Maybe@.
 @ AB@ = +(Unit@ a, Unit@ b);
-AB@ A = AB@(a: Unit);
 AB@ B = AB@(b: Unit);
-
-# EqAB --
-#   An instance of Eq@ for AB@.
-Eq@<AB@> EqAB = (AB@ x, AB@ y) {
-  x.?(a: y.?(a: True, b: False), b: y.?(a: False, b: True));
-};
 
 # ShowAB --
 #   An instance of Show@ for AB@.
@@ -46,60 +33,11 @@ Show@<AB@> ShowAB = (AB@ x) {
   x.?(a: String|a, b: String|b);
 };
 
-Eq@<Maybe@<AB@>> Eq = /Std/Maybe/Eq%.Eq(EqAB);
 Show@<Maybe@<AB@>> Show = /Std/Maybe/Show%.Show(ShowAB);
 
 # Tests --
 #  A test suite to test the /Maybe% module and friends.
 Test@ Tests = TestSuite(Str|Maybe, List[
-  Test(Str|IsJust_Yes, (Unit@ _) {
-    Bool@ wnt = True;
-    Bool@ got = IsJust(Just(A));
-    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|IsJust_No, (Unit@ _) {
-    Bool@ wnt = False;
-    Bool@ got = IsJust(Nothing<AB@>);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|IsNothing_Yes, (Unit@ _) {
-    Bool@ wnt = True;
-    Bool@ got = IsNothing(Nothing<AB@>);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|IsNothing_No, (Unit@ _) {
-    Bool@ wnt = False;
-    Bool@ got = IsNothing(Just(A));
-    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Eq_JustEq, (Unit@ _) {
-    Bool@ wnt = True;
-    Bool@ got = Eq(Just(A), Just(A));
-    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Eq_JustNe, (Unit@ _) {
-    Bool@ wnt = False;
-    Bool@ got = Eq(Just(A), Just(B));
-    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Eq_JustNothing, (Unit@ _) {
-    Bool@ wnt = False;
-    Bool@ got = Eq(Just(A), Nothing<AB@>);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Eq_Nothing, (Unit@ _) {
-    Bool@ wnt = True;
-    Bool@ got = Eq(Nothing<AB@>, Nothing<AB@>);
-    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-  }),
-
   Test(Str|Show_Just, (Unit@ _) {
     String@ wnt = Str|'Just:b';
     String@ got = ToString(Show(Just(B)));
