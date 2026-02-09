@@ -1,0 +1,49 @@
+# @module[/Std/Maybe/Show/Tests%]
+#  Tests for /Std/Maybe/Show%.
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+
+<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+<@>% List = /Std/List%.List;
+
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Just = /Std/Maybe%.Just;
+<@>% Nothing = /Std/Maybe%.Nothing;
+
+<@>@ Show@ = /Std/Show%.Show@;
+% ToString = /Std/Char/Output%.ToString;
+
+@ String@ = /Std/String%.String@;
+% Str = /Std/Char/Ascii%.Str;
+
+@ Test@ = /Std/Test%.Test@;
+% Test = OnAscii $ /Std/Test%.Test;
+% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+Show@<Maybe@<Bool@>> Show = /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show);
+
+# @value[Tests] Test suite for /Std/Maybe/Show%
+#  @type[Test@]
+Test@ Tests = TestSuite|Show $ List[
+  TestSuite|Show $ List [
+    Test|Just $ (Unit@ _) {
+      String@ wnt = Str|'Just:True';
+      String@ got = ToString(Show(Just(True)));
+      AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+    },
+
+    Test|Nothing $ (Unit@ _) {
+      String@ wnt = Str|Nothing;
+      String@ got = ToString(Show(Nothing<Bool@>));
+      AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+    }
+  ]
+];
+
+@(Tests);

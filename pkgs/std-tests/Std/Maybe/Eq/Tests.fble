@@ -30,8 +30,8 @@
 
 Eq@<Maybe@<String@>> Eq = /Std/Maybe/Eq%.Eq(/Std/String/Eq%.Eq);
 
-# Tests --
-#  A test suite to test the /Maybe% module and friends.
+# @value[Tests] Test suite for /Std/Maybe/Eq%
+#  @type[Test@]
 Test@ Tests = TestSuite|Eq $ List[
   TestSuite|IsJust $ List[
     Test|Just $ (Unit@ _) {

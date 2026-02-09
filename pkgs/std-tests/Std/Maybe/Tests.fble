@@ -158,7 +158,8 @@ Test@ Tests = TestSuite|Maybe $ List[
     }
   ],
 
-  /Std/Maybe/Eq/Tests%.Tests
+  /Std/Maybe/Eq/Tests%.Tests,
+  /Std/Maybe/Show/Tests%.Tests
 ];
 
 @(Tests);
