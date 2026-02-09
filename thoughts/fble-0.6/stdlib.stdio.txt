@@ -2670,3 +2670,136 @@ No need to add support for 'seek' for now. If we want support for seek later
 on, add additional methods to IStream and OStream for it? That are only
 supported on some kinds of streams? :/
 
+---
+
+How to add seek later: Seek implies random access to a file. Let's say we have
+a function to open a file that supports random access. It fails if the path
+you give refers to something that doesn't support random access. Then we can
+read from an arbitrary location. We can create a State@<Int@> to represent the
+location and pass that as an argument to a random access IStream or OStream
+implementation. As long as we hold the State@<Int@> instance (presumably
+separately), we can always ask/tell that separate State@<Int@> instances to
+effect the stream. Or create a new stream at a different place.
+
+In other words, I see no reason to make tell/seek part of IStream or OStream.
+We can add it later via some other interface if/when desired. We can derive an
+IStream/OStream easily enough from a random access file and reuse functions
+that work on pure streams.
+
+So let's put seek/tell to rest for now. Worry about it in some future release.
+
+That leaves us with the question of error handling for IStream and OStream.
+
+OStream put should return a status result, which is either 'ok' or 'err', and
+'err' should have some useful information.
+
+IStream get should return either 'ok' with the value, 'end_of_stream', or
+'err', and 'err' should have some useful information.
+
+So these are not generic Put@, Get@ interfaces. Or, if they are, then we want
+to generalize Put@ and Get@ to support error responses? It's a bit tedious for
+implementations of Put@ and Get@ that can't have any error conditions, like
+ones where we are just getting/setting state values from a State@ monad.
+
+Does it make more sense to associate the error with the monad? That makes it
+much easier to ignore the potential error, intentionally or accidentally.
+Hmm...
+
+What are considerations for error handling in general?
+* Do they come with a stack trace. If so, how costly is that.
+* Do they allow custom data. Or it's all a string. Or a unique error code?
+* Do you have to explicitly ignore errors or explicitly catch errors?
+
+I see no reason to give a stack trace with an error. That's easy.
+
+Unique error code is light weight, but I don't have a good way to come up with
+them. We need some policy to avoid name conflicts. Or maybe some weird
+language magic around use of a module name: e.g. a way to convert a module
+path to a unique integer, and then use two integers to uniquely define an
+error code: module + code.
+
+We could always provide separate mapping from error code to string, but it
+means we would need some other mechanism to supply extra details about the
+error, such as the parameters involved. So error code alone doesn't sound
+sufficient to me.
+
+Strings let you provide arbitrary information, it's great for the user to be
+able to read an error message. It's not great for machine's to be able to read
+the error message and extract the relevant information.
+
+Arbitrary error type E@ let's you have full information about the kind of
+error: use a union type with tag for the error code, implement a Show function
+to report error messages, direct access to the internals. Seems like a win win
+situation. Except maybe a little more tedious to make things work for generic
+E@, because, for example, we need to parameterize things by E@ and pass around
+Show@ instances if we want to be able to show them to the user.
+
+Honestly, I vote generic E@ to start. If it's too tedious, it will be nice to
+know why and see if we can address that at the language level.
+
+Which leaves us with the question of: explicit ignore or explicit catch?
+
+Honestly, explicit ignore isn't that hard. I don't think so anyway:
+
+  Result@ _ := m.do(Put(...));
+
+  Result@ r := m.do(Get(...));
+  Value@ v = r.ok;
+
+The second example shows for cases like 'Get' it's not reasonable to ignore if
+it means you don't have the data you need to decide what to do next. What we
+could do for get is treat any error as 'end of file', but lets be honest, that
+doesn't make sense.
+
+Thus we end up with: explicit ignore.
+
+Now we could do an error a couple ways:
+* Result@<A@, E@> = +(A@ ok, E@ err);
+* E@<A@>, with 'Do' implement to allow extracting the value.
+  Would allow us to provide an E@<A@> = A@; implementation where we know there
+  can be no error.
+
+Mostly I'm worried about the question: when should an interface allow for the
+possibility of error, and when can it safely ignore that possibility?
+
+Consider for example the interfaces I have now:
+* Native, GetEnv, App, Stdio are the only ones?
+
+Things like Show, Eq, Ord don't make sense to have errors. They aren't about
+interacting with the outside world.
+
+Right now:
+* GetEnv error behaves as if the environment variable wasn't defined. But
+  there's no way for the underlying 'getenv' function to report an error
+  anyway, so there's nothing to do here error wise.
+
+Which leaves us with IStream and OStream. Put@ and Get@. When does it make
+sense to allow for an error and when not?
+
+---
+
+I missed something when choosing explicit error type E@. We say if it's an
+explicit error type E@, then if I know about the error, I can try and handle
+it. What if I know about some of the possible errors, but not all of the
+possible errors? I should be able to handle the errors I know about, but pass
+on the ones I don't. We can't express that with explicit type E@. I either
+have to know about them all, or know about none of them.
+
+What if I don't care about the kinds of errors, but I do have my own specific
+error I want to be able to add? Explicit E@ only works there if you give me a
+function to allow me to report my specific error types into E@. That seems
+pretty tedious?
+
+Both of these things are naturally and easily solved with an Untyped@ dynamic
+types based approach. Error can hold anything. If you know what it is, you can
+check for that specific thing. Or you can put in your own specific thing, and
+anyone who knows about it will be able to read that back out.
+
+Like, we could say I work for any E@, but you have to give me ways to check if
+it is type A@, B@, etc... or give me ways to put in type A@, B@, etc. Or, we
+could just agree to use Untyped@, and then I can use standard existing ways of
+checking if it is type A@, B@, etc... or put in type A@, B@, etc. The
+practical difference is what the caller knows about. Does the caller know I'm
+going to try and work with these types A@, B@, etc. or not? The same question
+I arrived at before in thoughts/fble-0.6/dynamic_types.txt.
+

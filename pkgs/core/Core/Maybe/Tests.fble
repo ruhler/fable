@@ -3,22 +3,14 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-@ Char@ = /Std/Char%.Char@;
-
 <@>@ Eq@ = /Std/Eq%.Eq@;
 <@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 <@>% List = /Std/List%.List;
-<@>% Tail = /Std/List%.Tail;
-<@>% Append = /Std/List%.Append;
 
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
 <@>% Just = /Std/Maybe%.Just;
 <@>% Nothing = /Std/Maybe%.Nothing;
-<@>% Get = /Std/Maybe%.Get;
-<@>% JustGet = /Std/Maybe%.JustGet;
-<@>% Default = /Std/Maybe%.Default;
-<@>% ForEach = /Std/Maybe%.ForEach;
 <@>% IsJust = /Std/Maybe/Eq%.IsJust;
 <@>% IsNothing = /Std/Maybe/Eq%.IsNothing;
 
@@ -60,50 +52,6 @@ Show@<Maybe@<AB@>> Show = /Std/Maybe/Show%.Show(ShowAB);
 # Tests --
 #  A test suite to test the /Maybe% module and friends.
 Test@ Tests = TestSuite(Str|Maybe, List[
-  Test(Str|'GetFromJust', (Unit@ _) {
-    String@ wnt = Str|Just; 
-    String@ got = Get(Str|Default, Just(Str|Just));
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|'GetFromNothing', (Unit@ _) {
-    String@ wnt = Str|Default; 
-    String@ got = Get(Str|Default, Nothing<String@>);
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|'JustGet', (Unit@ _) {
-    String@ wnt = Str|Just; 
-    String@ got = JustGet(Just(Str|Just));
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|'DefaultFromJust', (Unit@ _) {
-    String@ wnt = Str|BCD; 
-    String@ got = Default(Str|Default, Just(Str|'ABCD'), Tail<Char@>);
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|'DefaultFromNothing', (Unit@ _) {
-    String@ wnt = Str|Default; 
-    String@ got = Default(Str|Default, Nothing<String@>, Tail<Char@>);
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|'ForEachFromJust', (Unit@ _) {
-    String@ wnt = Str|ABCD; 
-    String@ got = ForEach(Just(Str|'AB'), Str|'CD',
-      (String@ str, String@ base) { Append(str, base); });
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|'ForEachFromNothing', (Unit@ _) {
-    String@ wnt = Str|Default; 
-    String@ got = ForEach(Nothing<String@>, Str|Default,
-      (String@ str, String@ _) { str; });
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
   Test(Str|IsJust_Yes, (Unit@ _) {
     Bool@ wnt = True;
     Bool@ got = IsJust(Just(A));

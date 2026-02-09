@@ -104,8 +104,8 @@ ForEach = <@ A@>(Maybe@<A@> maybe)<@ B@>(B@ base, (A@, B@) { B@; } body) {
 #  @returns[Maybe@<B@>]
 #   The result of applying f to the argument value. Nothing if no argument
 #   value is present.
-<@ A@, @ B@>(Maybe@<A@>, (A@) { B@; }) { Maybe@<B@>; }
-Map = <@ A@, @ B@>(Maybe@<A@> m, (A@) { B@; } f) {
+<@ A@>(Maybe@<A@>)<@ B@>((A@) { B@; }) { Maybe@<B@>; }
+Map = <@ A@>(Maybe@<A@> m)<@ B@>((A@) { B@; } f) {
   m.?(nothing: Nothing<B@>);
   Just(f(m.just));
 };

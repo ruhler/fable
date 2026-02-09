@@ -1,0 +1,162 @@
+# @module[/Std/Maybe/Tests%]
+#  Tests for /Std/Maybe%.
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+
+@ Char@ = /Std/Char%.Char@;
+
+<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+<@>% List = /Std/List%.List;
+<@>% Tail = /Std/List%.Tail;
+<@>% Append = /Std/List%.Append;
+
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Just = /Std/Maybe%.Just;
+<@>% Nothing = /Std/Maybe%.Nothing;
+<@>% Get = /Std/Maybe%.Get;
+<@>% JustGet = /Std/Maybe%.JustGet;
+<@>% Default = /Std/Maybe%.Default;
+<@>% ForEach = /Std/Maybe%.ForEach;
+<@>% Map = /Std/Maybe%.Map;
+<@>% Do = /Std/Maybe%.Do;
+
+@ String@ = /Std/String%.String@;
+% Str = /Std/Char/Ascii%.Str;
+% String = /Std/Char/Ascii/Output%.String;
+
+@ Test@ = /Std/Test%.Test@;
+% Test = OnAscii $ /Std/Test%.Test;
+% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+% Pass = /Std/Test%.Pass;
+% Fail = /Std/Test%.Fail;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+# @value[Tests] Test suite for /Std/Maybe%
+#  @type[Test@]
+Test@ Tests = TestSuite|Maybe $ List[
+  Test|Just $ (Unit@ _) {
+    Just(Str|Just).?(just: Pass, nothing: Fail(String|'Just is nothing'));
+  },
+
+  Test|Nothing $ (Unit@ _) {
+    Nothing<String@>.?(just: Fail(String|'Nothing is just'), nothing: Pass);
+  },
+
+  TestSuite|Get $ List[
+    Test|Just $ (Unit@ _) {
+      String@ wnt = Str|Just; 
+      String@ got = Get(Str|Default, Just(Str|Just));
+      AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+    },
+
+    Test|Nothing $ (Unit@ _) {
+      String@ wnt = Str|Default; 
+      String@ got = Get(Str|Default, Nothing<String@>);
+      AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+    }
+  ],
+
+  Test|JustGet $ (Unit@ _) {
+    String@ wnt = Str|Just; 
+    String@ got = JustGet(Just(Str|Just));
+    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+  },
+
+  TestSuite|Default $ List[
+    Test|Just $ (Unit@ _) {
+      String@ wnt = Str|BCD; 
+      String@ got = Default(Str|Default, Just(Str|ABCD), Tail<Char@>);
+      AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+    },
+
+    Test|Nothing $ (Unit@ _) {
+      String@ wnt = Str|Default; 
+      String@ got = Default(Str|Default, Nothing<String@>, Tail<Char@>);
+      AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+    }
+  ],
+
+  TestSuite|ForEach $ List[
+    Test|Just $ (Unit@ _) {
+      String@ wnt = Str|ABCD; 
+      String@ got = ForEach(Just(Str|AB), Str|CD,
+        (String@ str, String@ base) { Append(str, base); });
+      AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+    },
+
+    Test|Nothing $ (Unit@ _) {
+      String@ wnt = Str|Default; 
+      String@ got = ForEach(Nothing<String@>, Str|Default,
+        (String@ str, String@ _) { str; });
+      AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+    }
+  ],
+
+  TestSuite|Map $ List[
+    Test|Just $ (Unit@ _) {
+      Maybe@<String@> wnt = Just(Str|BCD); 
+      Maybe@<String@> got = Map(Just(Str|ABCD), Tail<Char@>);
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/String/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/String/Show%.Show),
+        wnt, got);
+    },
+
+    Test|Nothing $ (Unit@ _) {
+      Maybe@<String@> wnt = Nothing<String@>;
+      Maybe@<String@> got = Map(Nothing<String@>, Tail<Char@>);
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/String/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/String/Show%.Show),
+        wnt, got);
+    }
+  ],
+
+  TestSuite|Do $ List[
+    Test|JustJust $ (Unit@ _) {
+      Maybe@<Bool@> wnt = Just(True);
+      Maybe@<Bool@> got = {
+        String@ a := Do(Just(Str|ABCD));
+        a.?(items: Just(True), empty: Nothing<Bool@>);
+      };
+
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
+        wnt, got);
+    },
+
+    Test|JustNothing $ (Unit@ _) {
+      Maybe@<Bool@> wnt = Nothing<Bool@>;
+      Maybe@<Bool@> got = {
+        String@ a := Do(Just(Str|''));
+        a.?(items: Just(True), empty: Nothing<Bool@>);
+      };
+
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
+        wnt, got);
+    },
+
+    Test|Nothing $ (Unit@ _) {
+      Maybe@<Bool@> wnt = Nothing<Bool@>;
+      Maybe@<Bool@> got = {
+        String@ a := Do(Nothing<String@>);
+        a.?(items: Just(True), empty: Nothing<Bool@>);
+      };
+
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
+        wnt, got);
+    }
+  ]
+];
+
+@(Tests);
