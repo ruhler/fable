@@ -1,15 +1,18 @@
 # @module[/Std/List/Tests%]
 #  Tests for /Std/List%.
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-
 <@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+
+<@>@ Eq@ = /Std/Eq%.Eq@;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
+<@>% Append = /Std/List%.Append;
+
+<@>@ Show@ = /Std/Show%.Show@;
 
 % String = /Std/Char/Ascii/Output%.String;
 
@@ -21,16 +24,29 @@
 
 @ Unit@ = /Std/Unit%.Unit@;
 
+@ Elem@ = /Std/List/Tests/Elem%.Elem@;
+% Elem = /Std/List/Tests/Elem%.Elem;
+% Elems = /Std/List/Tests/Elem%.Elems;
+
+Eq@<List@<Elem@>> ElemsEq = /Std/List/Eq%.Eq(/Std/List/Tests/Elem%.Eq);
+Show@<List@<Elem@>> ElemsShow = /Std/List/Show%.Show(/Std/List/Tests/Elem%.Show);
+
 # @value[Tests] Test suite for /Std/List%
 #  @type[Test@]
 Test@ Tests = TestSuite|List $ List[
   Test|Empty $ (Unit@ _) {
-    Empty<Bool@>.?(items: Fail(String|'Empty is items'), empty: Pass);
+    Empty<Elem@>.?(items: Fail(String|'Empty is items'), empty: Pass);
   },
 
   Test|Items $ (Unit@ _) {
-    List@<Bool@> list = Items(True, Empty<Bool@>);
+    List@<Elem@> list = Items(Elem.A, Empty<Elem@>);
     list.?(items: Pass, empty: Fail(String|'Items is empty'));
+  },
+
+  Test|Append $ (Unit@ _) {
+    List@<Elem@> wnt = Elems|ABCDE;
+    List@<Elem@> got = Append(Elems|ABC, Elems|DE);
+    AssertEquals(ElemsEq, ElemsShow, wnt, got);
   }
 ];
 
