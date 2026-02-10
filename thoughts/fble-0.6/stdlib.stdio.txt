@@ -2803,3 +2803,122 @@ practical difference is what the caller knows about. Does the caller know I'm
 going to try and work with these types A@, B@, etc. or not? The same question
 I arrived at before in thoughts/fble-0.6/dynamic_types.txt.
 
+---
+
+You know, if you look at the type of IStream and OStream, they are already in
+some M@ monad. We could put the error there, right?
+
+Like, say I'm in a generic M@ monad. I could do straight up:
+
+  (Output@) { M@<Unit@>; } Put
+  M@<Maybe@<Char@>> Get
+
+If I wanted errors it would be, perhaps ideally:
+
+  (Output@) { M@<Result<Unit@>>; } Put
+  M@<Result@<Maybe@<Char@>>> Get
+
+But that's the same, except with M@ replaced with:
+    <@ A@> { M@<Result@<A@>>; }
+
+Aka: ResultM@<M@>
+
+What does this mean practically? Depends what I want to be able to do.
+
+Code that works for all IStream, OStream, and doesn't know how to handle
+errors: Use IStream@, OStream@, Put, Get, no mention of errors. No checking
+for errors. If Get fails, we rely on the Monad@<M@> instance to raise that as
+an error.
+
+If we want to be able to produce errors, we specify a more interesting type
+than M@. For example, maybe:
+  (Native@<M@>, Monad@<M@>, String@) { M@<IStream@<ErrorM@<StdioError@,
+M@>>>; } Read;
+
+Now, when I invoke a function that uses this IStream, I pass it an
+ErrorM%.Monad instance.
+
+If we want to be able to handle errors... we need to be given the interface to
+try executing something of type M@ and get an ok result or an error, of
+whatever specific type we are looking for. Maybe you know there are other
+kinds of errors possible, well, if that's what we hit, then raise that out of
+the Try interface you pass to the caller, because they wouldn't know how to
+handle it.
+
+I would say it's messy, but otherwise you can do everything you might want.
+You just need to give things what they need or know how to deal with in order
+to let them do that.
+
+No magic dynamic types needed for the interface to support everything it may
+want to. But we do need to decide what specific error types we are going to
+give to the IStream returned by Read, Write, Open, etc. And we need to decide
+how we want to express and implement the API for error handling.
+
+I think we have something we can work with here. Next steps:
+* Think about whether we should use Maybe@ for Get, or if we should have an
+  explicit type to distinguish between EndOfInput and Data.
+* Brainstorm (again) the interface to errors of type E@ I would want.
+* Propose a specific type for E@ suitable for my stdio implementation.
+* Bring it all together to a proposed stdio API.
+
+---
+
+Maybe@<Char@> or something else? Goal is to indicate data versus end of input
+stream. It makes sense to me to reuse a standard type, so we get everything
+you can do to it. Returning 'nothing' when you reached the end of the stream
+also makes sense to me. Let's continue to use Maybe@ and just be sure to
+document clearly what Just versus Nothing means in this context.
+
+Interface for working with errors:
+* Throw/Raise: <@ A@>(E@ err) { M@<A@>; }
+  Raises an error of type E@.
+* Try/Catch: <@ A@>(M@<A@>) { M@<+(A@ ok, E@ err)>; }
+  Try running something. If there is an error, catch it and return it
+  explicitly.
+
+That's all we need. Now we can have a top level runner for the monad that's
+like Try/Catch, but that's not really part of the interface.
+
+I would suggest we can have different types of Throw and Catch. For example,
+you could give me:
+
+  <@ A@>(E1@ err) { M@<A@>; } ThrowE1
+  <@ A@>(E2@ err) { M@<A@>; } ThrowE2
+  <@ A@>(M@<A@>) { M@<+(A@ ok, E1@ err)>; } CatchE1
+  <@ A@>(M@<A@>) { M@<+(A@ ok, E2@ err)>; } CatchE2
+
+That let's us throw different types of errors and catch different types of
+errors. The trick for catching is, if there's been an error of type E2@, and
+you call CatchE1, it doesn't catch the E2@ error, it continues to raise that
+E2@ error.
+
+Now this lets you thrown and catch different errors, depending what you know
+about. The errors are part of the monad M@. We could easily implement this
+with a pure error monad such as:
+  E@ = +(E1@ e1, E2@ e2);
+  M@ = <@ A@> { +(A@ ok, E@ err); };
+  Throw1 = <@ A@>(E1@ e1) { M@<A@>(err: E@(e1: e1)); };
+  Throw2 = <@ A@>(E2@ e2) { M@<A@>(err: E@(e2: e2)); };
+  Catch1 = <@ A@>(M@<A@> ma) {
+    ma.?(ok: Return(M@<A@>(ok: ma.ok)));
+    ma.?(err: ma.err.e1.?(Return(M@<A@>(...
+
+Anyway, slightly tedious, but totally doable. Not hard at all.
+    
+What specific type is suitable for my stdio implementation? We don't need to
+list the errors as part of the Put/Get, or IStream/OStream implementations.
+The errors are associated with the monad M@, which is nice.
+
+Possible Put errors:
+* From fputc - error yes/no. No details in the man page. But maybe it sets
+  errno and perror would give us something more interesting?
+* From fclose: EBADF stream not valid, but I don't think that should happen?
+* From fflush(3): stream not open for writing. Shouldn't happen.
+* From write(2): EDQUOT (out of quota), EFBIG (file too big), EINTR, EIO,
+  ENOSPC, EPERM, EPIPE
+* From close(2): see man page for notes on what to do in case of error.
+
+I suppose it's possible to open socket like things and fifos via the file
+system? So we shouldn't assume we are only working with files.
+
+

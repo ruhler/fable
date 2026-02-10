@@ -1,0 +1,37 @@
+# @module[/Std/List/Tests%]
+#  Tests for /Std/List%.
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+
+<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Items = /Std/List%.Items;
+<@>% Empty = /Std/List%.Empty;
+
+% String = /Std/Char/Ascii/Output%.String;
+
+@ Test@ = /Std/Test%.Test@;
+% Test = OnAscii $ /Std/Test%.Test;
+% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+% Pass = /Std/Test%.Pass;
+% Fail = /Std/Test%.Fail;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+# @value[Tests] Test suite for /Std/List%
+#  @type[Test@]
+Test@ Tests = TestSuite|List $ List[
+  Test|Empty $ (Unit@ _) {
+    Empty<Bool@>.?(items: Fail(String|'Empty is items'), empty: Pass);
+  },
+
+  Test|Items $ (Unit@ _) {
+    List@<Bool@> list = Items(True, Empty<Bool@>);
+    list.?(items: Pass, empty: Fail(String|'Items is empty'));
+  }
+];
+
+@(Tests);
