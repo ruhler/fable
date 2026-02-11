@@ -17,6 +17,10 @@
 <@>% Tail = /Std/List%.Tail;
 <@>% Last = /Std/List%.Last;
 <@>% Init = /Std/List%.Init;
+<@>% Map = /Std/List%.Map;
+<@>% Do = /Std/List%.Do;
+<@>% ForEach = /Std/List%.ForEach;
+<@>% Reverse = /Std/List%.Reverse;
 
 <@>@ Show@ = /Std/Show%.Show@;
 
@@ -42,6 +46,12 @@ Show@<List@<Elem@>> ElemsShow = /Std/List/Show%.Show(/Std/List/Tests/Elem%.Show)
 # @value[Tests] Test suite for /Std/List%
 #  @type[Test@]
 Test@ Tests = TestSuite|List $ List[
+  Test|List $ (Unit@ _) {
+    List@<Elem@> wnt = Elems|ABCDE;
+    List@<Elem@> got = List<Elem@>|ABCDE;
+    AssertEquals(ElemsEq, ElemsShow, wnt, got);
+  },
+
   Test|Empty $ (Unit@ _) {
     Empty<Elem@>.?(items: Fail(String|'Empty is items'), empty: Pass);
   },
@@ -90,6 +100,41 @@ Test@ Tests = TestSuite|List $ List[
   Test|Init $ (Unit@ _) {
     List@<Elem@> wnt = Elems|ABCD;
     List@<Elem@> got = Init<Elem@>|ABCDE;
+    AssertEquals(ElemsEq, ElemsShow, wnt, got);
+  },
+
+  Test|ForEach $ (Unit@ _) {
+    List@<Elem@> wnt = Elems|EDCBA;
+    List@<Elem@> got =
+      ForEach(Elems|ABCDE, Empty<Elem@>, (Elem@ e, List@<Elem@> b) {
+        Items(e, b);
+      });
+    AssertEquals(ElemsEq, ElemsShow, wnt, got);
+  },
+
+  Test|Map $ (Unit@ _) {
+    (Elem@) { Elem@; } f = (Elem@ e) {
+      e.?(A: Elem.B, B: Elem.C, C: Elem.D, D: Elem.E, E: Elem.A);
+    };
+
+    List@<Elem@> wnt = Elems|BCDEA;
+    List@<Elem@> got = Map(Elems|ABCDE, f);
+    AssertEquals(ElemsEq, ElemsShow, wnt, got);
+  },
+
+  Test|Do $ (Unit@ _) {
+    (Elem@) { List@<Elem@>; } f = (Elem@ e) {
+      e.?(A: Elems|AB, B: Elems|BC, C: Elems|CD, D: Elems|DE, E: Elems|EA);
+    };
+
+    List@<Elem@> wnt = Elems|ABBCCDDE;
+    List@<Elem@> got = Do(Elems|ABCD, f);
+    AssertEquals(ElemsEq, ElemsShow, wnt, got);
+  },
+
+  Test|Reverse $ (Unit@ _) {
+    List@<Elem@> wnt = Elems|EDCBA;
+    List@<Elem@> got = Reverse<Elem@>|ABCDE;
     AssertEquals(ElemsEq, ElemsShow, wnt, got);
   }
 ];

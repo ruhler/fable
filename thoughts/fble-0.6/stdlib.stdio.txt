@@ -2964,3 +2964,46 @@ bunch of different lists of possible errors associated with it: for
 Get,Put,Read,Write,Append. Parameterizing it with 5 different error types
 feels pretty painful.
 
+---
+
+Maybe we ditch the idea of a bundled Stdio@ interface and have everyone
+explicitly request what they need. Read, Write, or Append.
+
+Or, come up with a common shared error type. Which, to be fair, could be some
+or all of:
+* String message - human readable.
+* Unique error code - a String@ with module path in the name?
+* Untyped@ - for error code specific data.
+
+I suppose we could come up with a standard interface for packing data. Like...
+into a list of bytes, for example. Or a map from string to value. Or some mix
+of various builtin data types. Though that feels like it has its own issues.
+But that's like a generalization of encoding everything in a string error
+message and parsing the string to get at the underlying data.
+
+How about, for the sake of progress, assuming we have some standard Error@
+type defined, sketch out the APIs with that. Sketch them out again with some
+generic error types. Because it's one or the other of those, right?
+
+  <@>@ Result@ = <@ A@> { +(A@ ok, Err@ err); }
+  <@,@>@ Result@ = <@ A@, @ E@> { +(A@ ok, E@ err); };
+
+  IStream@ = <<@>@ M@, @ A@, @ E@> { *(
+      M@<Result@<Maybe@<A@>, E@>> get
+    );
+  };
+
+  OStream@ = <<@>@ M@, @ A@, @ E@> { *(
+      (Output@) { M@<Result@<Unit@, E@>>; } put;
+      M@<Result@<Unit@, E@>> close;
+    );
+  };
+
+Should put and close use different error types? What does it even mean to have
+an error closing?
+
+Or, how about we play around with real code instead of imaginary code. Update
+IStream@ type to be Result@ with Error@ defined for now as a String. Implement
+it, with support for the errors that could actually be given for my various
+implementations. Update the code to handle those errors. See how it feels.
+That feels like a decent concrete next step.

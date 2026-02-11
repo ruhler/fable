@@ -14,12 +14,6 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
-<@>% Map = /Std/List%.Map;
-<@>% Do = /Std/List%.Do;
-<@>% ForEach = /Std/List%.ForEach;
-<@>% Reverse = /Std/List%.Reverse;
 
 <@>% Count = /Std/List/Count%.Count;
 
@@ -34,45 +28,6 @@
 % ElemEq = /Core/List/Tests/Elem%.ElemEq;
 
 Test@ Tests = TestSuite(Str|List, List[
-  Test(Str|'Map', (Unit@ _) {
-    List@<Elem@> l = EL|ABCDE;
-    (Elem@) { Elem@; } f = (Elem@ e) {
-      e.?(A: Elems.B, B: Elems.C, C: Elems.D, D: Elems.E, E: Elems.A);
-    };
-
-    List@<Elem@> wnt = EL|BCDEA;
-    List@<Elem@> got = Map(l, f);
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|'Do', (Unit@ _) {
-    List@<Elem@> l = EL|ABCD;
-    (Elem@) { List@<Elem@>; } f = (Elem@ e) {
-      e.?(A: EL|AB, B: EL|BC, C: EL|CD, D: EL|DE, E: EL|EA);
-    };
-
-    List@<Elem@> wnt = EL|ABBCCDDE;
-    List@<Elem@> got = Do(l, f);
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|'ForEach', (Unit@ _) {
-    List@<Elem@> l = EL|ABCDE;
-    List@<Elem@> wnt = EL|EDCBA;
-    List@<Elem@> got =
-      ForEach(l, Empty<Elem@>, (Elem@ e, List@<Elem@> b) {
-        Items(e, b);
-      });
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|'Reverse', (Unit@ _) {
-    List@<Elem@> input = EL|ABCDE;
-    List@<Elem@> wnt = EL|EDCBA;
-    List@<Elem@> got = Reverse(input);
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
   Test(Str|'Sort', (Unit@ _) {
     List@<Elem@> unsorted = EL|DABEC;
     List@<Elem@> wnt = EL|ABCDE;
