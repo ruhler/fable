@@ -11,6 +11,12 @@
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
 <@>% Append = /Std/List%.Append;
+<@>% Concat = /Std/List%.Concat;
+<@>% Join = /Std/List%.Join;
+<@>% Head = /Std/List%.Head;
+<@>% Tail = /Std/List%.Tail;
+<@>% Last = /Std/List%.Last;
+<@>% Init = /Std/List%.Init;
 
 <@>@ Show@ = /Std/Show%.Show@;
 
@@ -27,6 +33,8 @@
 @ Elem@ = /Std/List/Tests/Elem%.Elem@;
 % Elem = /Std/List/Tests/Elem%.Elem;
 % Elems = /Std/List/Tests/Elem%.Elems;
+% ElemEq = /Std/List/Tests/Elem%.Eq;
+% ElemShow = /Std/List/Tests/Elem%.Show;
 
 Eq@<List@<Elem@>> ElemsEq = /Std/List/Eq%.Eq(/Std/List/Tests/Elem%.Eq);
 Show@<List@<Elem@>> ElemsShow = /Std/List/Show%.Show(/Std/List/Tests/Elem%.Show);
@@ -46,6 +54,42 @@ Test@ Tests = TestSuite|List $ List[
   Test|Append $ (Unit@ _) {
     List@<Elem@> wnt = Elems|ABCDE;
     List@<Elem@> got = Append(Elems|ABC, Elems|DE);
+    AssertEquals(ElemsEq, ElemsShow, wnt, got);
+  },
+
+  Test|Concat $ (Unit@ _) {
+    List@<Elem@> wnt = Elems|ABCDEABCD;
+    List@<Elem@> got = Concat[Elems|ABC, Elems|DE, Elems|'', Elems|ABCD];
+    AssertEquals(ElemsEq, ElemsShow, wnt, got);
+  },
+
+  Test|Join $ (Unit@ _) {
+    List@<Elem@> wnt = Elems|ABCEEDEEEAB;
+    List@<Elem@> got = Join[Elems|ABC, Elems|DE, Elems|AB]|EE;
+    AssertEquals(ElemsEq, ElemsShow, wnt, got);
+  },
+
+  Test|Head $ (Unit@ _) {
+    Elem@ wnt = Elem.B;
+    Elem@ got = Head<Elem@>|BAC;
+    AssertEquals(ElemEq, ElemShow, wnt, got);
+  },
+
+  Test|Tail $ (Unit@ _) {
+    List@<Elem@> wnt = Elems|BCDE;
+    List@<Elem@> got = Tail<Elem@>|ABCDE;
+    AssertEquals(ElemsEq, ElemsShow, wnt, got);
+  },
+
+  Test|Last $ (Unit@ _) {
+    Elem@ wnt = Elem.C;
+    Elem@ got = Last<Elem@>|BAC;
+    AssertEquals(ElemEq, ElemShow, wnt, got);
+  },
+
+  Test|Init $ (Unit@ _) {
+    List@<Elem@> wnt = Elems|ABCD;
+    List@<Elem@> got = Init<Elem@>|ABCDE;
     AssertEquals(ElemsEq, ElemsShow, wnt, got);
   }
 ];

@@ -2921,4 +2921,46 @@ Possible Put errors:
 I suppose it's possible to open socket like things and fifos via the file
 system? So we shouldn't assume we are only working with files.
 
+---
+
+I'm having second thoughts about putting the error in M@. For a generic user,
+there's no indication at all what could be in M@, unless we pass some way to
+catch or throw an error. That seems scary. It could call a function without
+having any idea that it could abort the flow of execution unless it does it in
+an explicit try block.
+
+Conceptually, doesn't it make sense than an input stream could have issues
+getting the next element from the stream? Or that an output stream could have
+issues putting the next element into the stream?
+
+
+  IStream@ = <<@>@ M@> { *(
+      M@<+(Char@ ok, Unit@ end, E@ err)> get;
+    );
+  };
+
+  OStream@ = <<@>@ M@> { *(
+      (Output@) { M@<+(Unit@ ok, E@ err)>; } put;
+      M@<+(Unit@ ok, E@ err)> close;
+    );
+  };
+
+We can do the same kind of thing of adapting error types to known types, but
+now it would be something like: if you can't handle errors, E@ is arbitrary:
+you have to be able to change control flow on get if you get an error at
+least. You can't ignore that. If you can catch and print errors, but know
+nothing else about them, E@ is String@. If you know about some particular
+types of errors that you can handle, then you list them explicitly:
+  E@ = +(Unit@ no_space, String@ other), etc...
+
+In other words, the type of OStream@ that you accept also says exactly what
+kinds of errors you are capable of doing something with.
+
+The native code to open a file, for example, will give us the list of all
+possible errors it could report. To pass it to something that expects a
+slightly different list of errors, we write an adaptor at the top level. Fine,
+no? Slightly tedious maybe. Especially given that Stdio@ is going to have a
+bunch of different lists of possible errors associated with it: for
+Get,Put,Read,Write,Append. Parameterizing it with 5 different error types
+feels pretty painful.
 

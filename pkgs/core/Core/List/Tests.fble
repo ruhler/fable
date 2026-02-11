@@ -16,17 +16,10 @@
 <@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
-<@>% Head = /Std/List%.Head;
-<@>% Tail = /Std/List%.Tail;
-<@>% Last = /Std/List%.Last;
-<@>% Append = /Std/List%.Append;
-<@>% Init = /Std/List%.Init;
-<@>% Concat = /Std/List%.Concat;
 <@>% Map = /Std/List%.Map;
 <@>% Do = /Std/List%.Do;
 <@>% ForEach = /Std/List%.ForEach;
 <@>% Reverse = /Std/List%.Reverse;
-<@>% Join = /Std/List%.Join;
 
 <@>% Count = /Std/List/Count%.Count;
 
@@ -39,36 +32,8 @@
 % EL = /Core/List/Tests/Elem%.EL;
 % ElemCmp = /Core/List/Tests/Elem%.ElemCmp;
 % ElemEq = /Core/List/Tests/Elem%.ElemEq;
-% ElemShow = /Core/List/Tests/Elem%.ElemShow;
 
 Test@ Tests = TestSuite(Str|List, List[
-  Test(Str|'Append', (Unit@ _) {
-    List@<Elem@> a = EL|ABC;
-    List@<Elem@> b = EL|DEE;
-    List@<Elem@> wnt = EL|ABCDEE;
-    List@<Elem@> got = Append(a, b);
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|'Init', (Unit@ _) {
-    List@<Elem@> l = EL|ABCDE;
-    List@<Elem@> wnt = EL|ABCD;
-    List@<Elem@> got = Init(l);
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|'Concat', (Unit@ _) {
-    List@<List@<Elem@>> l = List[
-      EL|ABC,
-      EL|DEA,
-      EL|BB
-    ];
-
-    List@<Elem@> wnt = EL|ABCDEABB;
-    List@<Elem@> got = Concat<Elem@>(l);
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
   Test(Str|'Map', (Unit@ _) {
     List@<Elem@> l = EL|ABCDE;
     (Elem@) { Elem@; } f = (Elem@ e) {
@@ -119,33 +84,6 @@ Test@ Tests = TestSuite(Str|List, List[
     Int@ wnt = Int|5;
     Int@ got = Count(EL|ABCBBAABCEB, ElemEq(Elems.B));
     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Join, (Unit@ _) {
-    List@<Elem@> wnt = EL|'AABBCBBDE';
-    List@<Elem@> got = Join(List[EL|'AA', EL|'C', EL|'DE'], EL|'BB');
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|Head, (Unit@ _) {
-    List@<Elem@> list = EL|'ABCDE';
-    Elem@ got = Head(list);
-    Elem@ wnt = Elems.A;
-    AssertEquals(ElemEq, ElemShow, wnt, got);
-  }),
-
-  Test(Str|Tail, (Unit@ _) {
-    List@<Elem@> list = EL|'ABCDE';
-    List@<Elem@> got = Tail(list);
-    List@<Elem@> wnt = EL|'BCDE';
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|Last, (Unit@ _) {
-    List@<Elem@> list = EL|'ABCDE';
-    Elem@ got = Last(list);
-    Elem@ wnt = Elems.E;
-    AssertEquals(ElemEq, ElemShow, wnt, got);
   }),
 
   /Core/List/Eq/Tests%.Tests,
