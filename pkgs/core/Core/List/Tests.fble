@@ -42,8 +42,7 @@ Test@ Tests = TestSuite(Str|List, List[
   }),
 
   /Core/List/Eq/Tests%.Tests,
-  /Core/List/Search/Tests%.Tests,
-  /Core/List/Index/Tests%.Tests
+  /Core/List/Search/Tests%.Tests
 ]);
 
 @(Tests);

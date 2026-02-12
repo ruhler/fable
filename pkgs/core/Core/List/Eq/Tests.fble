@@ -289,10 +289,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
     List@<Elem@> wnt = EL|'AEADEEAAEA';
     List@<Elem@> got = Replace(ElemEq, list, delim, target);
     AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  /Core/List/Search/Tests%.Tests,
-  /Core/List/Index/Tests%.Tests
+  })
 ]);
 
 @(Tests);

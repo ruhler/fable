@@ -136,7 +136,9 @@ Test@ Tests = TestSuite|List $ List[
     List@<Elem@> wnt = Elems|EDCBA;
     List@<Elem@> got = Reverse<Elem@>|ABCDE;
     AssertEquals(ElemsEq, ElemsShow, wnt, got);
-  }
+  },
+
+  /Std/List/Index/Tests%.Tests
 ];
 
 @(Tests);
