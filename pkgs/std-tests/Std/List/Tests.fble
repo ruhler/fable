@@ -138,6 +138,7 @@ Test@ Tests = TestSuite|List $ List[
     AssertEquals(ElemsEq, ElemsShow, wnt, got);
   },
 
+  /Std/List/Count/Tests%.Tests,
   /Std/List/Index/Tests%.Tests
 ];
 

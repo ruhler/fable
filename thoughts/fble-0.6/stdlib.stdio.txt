@@ -3007,3 +3007,245 @@ IStream@ type to be Result@ with Error@ defined for now as a String. Implement
 it, with support for the errors that could actually be given for my various
 implementations. Update the code to handle those errors. See how it feels.
 That feels like a decent concrete next step.
+
+---
+
+Even before I deal with errors, how do I want to deal with Output@ and Char@
+versus Byte@? My current conversion from Char@ to Byte@ is wrong because we
+only write out the low 8 bits of the unicode code point for each character.
+
+Which brings us to the question of locales, because who am I to assume when
+writing a character based file that it should be using an ascii or utf8
+encoding?
+
+Conceptually I want to read a file as a character stream and write a file as a
+character stream. If it's stored internally as a byte stream, then we need to
+know what encoding to use. If it's not stored internally as a byte stream,
+then I need to pass Char@ to the native side so it can do whatever conversions
+it needs.
+
+If it's stored as a byte stream, either we know somehow what the encoding is
+and can specify to use that specific encoding. Or the platform knows what the
+encoding is. Somebody has to know.
+
+What C99 has to say on the subject:
+* Source files can be multibyte. Interpretation is locale specific.
+* wctomb converts wchar_t to bytes.
+* wchar_t is any character in the current locale. Which isn't necessarily
+  unicode...
+* Note: locale isn't just about character encodings. It talks about how to
+  format numbers and things like that too.
+
+Things seem tricky. Like, we have a platform native locale, which is LC_CTYPE
+"". We have a C locale, which is LC_CTYPE "C". And I have ... unicode? Yes.
+Char@ is assuming unicode code points.
+
+My personal native locale is UTF8. But you can't really assume that. If we
+don't assume that, then how can I possibly interpret the native locale
+properly? Or... will the platform do that for me?
+
+Like, if I write a file in locale FOO, then later read in in locale BAR, will
+it be totally corrupted because I'm using the wrong locale, or the platform
+has some internal representation and it will properly translate between the
+two? Sounds like it's worth experimenting on.
+
+---
+
+locale -m lists a bunch of different character maps, including:
+  UTF-8, EBCDIC-US
+
+I bet those two are completely incompatible, so worth testing on.
+
+My default is: `locale -c`:
+  LC_CTYPE
+  UTF-8
+
+Maybe I can change my locale using LC_CTYPE?
+
+  LC_CTYPE="en_US.UTF-8"
+  LC_CTYPE="en_US.EBCDIC-US"
+
+Nope. It says I can't. It's not one of the locale -a options.
+
+Sounds local locale has character encoding as part of it. That's how you can
+get a default character encoding. But maybe that's nothing to do with C99?
+
+The iconv command supports a bunch of encodings for explicit encoding, using
+locale as default.
+
+Calling setlocale from the C side also doesn't work. What's it looking for?
+
+  /usr/lib/locale/EBCDIC-US/LC_CTYPE
+  
+
+The only locale I have available there is C.utf8.
+
+So setlocale will fail if I try to set it to something unavailable. Is utf8
+the only one supported? Surely people can change their locale's somehow? Can I
+install a different locale?
+
+There are more listed in:
+
+  cat /etc/locale.gen
+
+In theory I should be able to do:
+
+  sudo locale-gen es_MX.UTF-8
+
+Looks like my relevant options are:
+
+  # en_US ISO-8859-1
+  # en_US.ISO-8859-15 ISO-8859-15
+  # en_US.UTF-8 UTF-8
+
+Or something interesting like:
+ 
+  zh_CN.GBK GBK
+
+The US ones are all ascii+ something. So I should try a GBK one maybe?
+
+---
+
+I could use iconv to create a couple different encodings of the same file. The
+real question is, if I use the multibyte input functions, what wchar_t value
+they give for each character, and is there any difference. For example, is GBK
+still unicode based?
+
+Take KOI-8 for example. Wikipedia suggests KOI-8 code point C0 is unicode
+code point 044E. Which means it's certainly not À. If the system is using
+KOI-8 and I read C0, and I claim that I'm using unicode for Char@, then I need
+to convert C0 to 044E rather than leave it as C0.
+
+Okay, so what are the options here?
+A. Don't claim that Char@ is unicode. Have Char@ be whatever the users current
+   character set is. Which means I can't define an explicit mapping from
+   source character to code point in the library. Because I don't know what
+   the current character set is there.
+B. Require people to use a unicode character set. Anything else will break.
+   Probably not too big a problem, pushes people to standardize, which is in
+   line with it being in a standard library.
+C. Properly convert from the users character set to unicode under the covers.
+   But how? Where do I get the code that knows how to do that?
+
+Looks like 'iconv' maybe could do that? Except that goes from char* to char*,
+not wchar_t related.
+
+Let me confirm via experiment. Specifically I want to show that the value of
+some specific symbol, like '$', depends on the locale ctype.
+
+* 8859-1: first two blocks of unicode?
+* 8859-15: replaces some symbols.
+
+Okay, so here should be an easy test:
+
+          A4 A6 A8 B4 B8 BC BD BE
+  8859-1  ¤  ¦  ¨  ´  ¸  ¼  ½  ¾
+  8859-15 €  Š  š  Ž  ž  Œ  œ  Ÿ
+
+I'm clearly using 8859-1 right now. Imagine two cases:
+1. I'm outputting the character €.
+2. I'm inputting the character 0xA4.
+
+Assuming Char@ is unicode, € is 20ac. That's what I would have in memory. If
+using utf8, that has a clear encoding if my locale is set to UTF8. I assume
+wchar_t will be 20ac. I wonder if I'm using 'C' as the local, if this instead
+would be read as wchar_t 0x20 followed by 0xAC. So we can even experiment with
+UTF8 versus C as the locale to mess me up.
+
+I want to try that. fgetwc.
+
+Yeah, we get a difference between whatever locale is default (C right?) and
+the locale I get from "" (UTF-8 I think).
+
+In other words, locale matters in a significant way.
+
+Whose job is it to chose between C, "", and/or some other locale? I have to
+call setlocale myself, nobody else will do that for me. We've seen it can fail
+if you specify a currently unsupported locale.
+
+Conceptually I'm fine with any locale that maps to unicode. So, UTF-8, UTF-16,
+etc. are all fine. But 8859-15 would not be okay.
+
+On the other hand... do we really need to say Char@ is unicode? I already have
+different subpages for ascii. You could easily imagine a Char/8859-15% module
+that defines that particular mapping between source character and code point.
+And then I can say interpretation of code points is platform specific? That's
+not reasonable. We can't have a programmer specify a character set and bake
+that in and expect that to work reasonably on environments with mismatching
+character sets.
+
+Now, if your locale is C, we can still properly read into the unicode
+character set, we are just interpreting files differently. There's no conflict
+there. But somebody has to specify if you consider your files to be C
+encoded or UTF8 encoded.
+
+Layers that need to be specified:
+* Encoding of files: how we map a sequence of bytes to code points.
+* Character set: how we interpret code points.
+
+I would love to say Char@ is unicode code points. Done. No reason to support
+anything else.
+
+Okay, then how do we specify the encoding of files? I feel like we should
+specify it explicitly when we open a file, with the option to use "LC_CTYPE"
+or some such magic symbol to say do whatever the locale says to do.
+
+But can we also enforce that LC_CYPE is unicode compatible? Or doesn't it
+matter? For example, you decide to use 8859-15 as your encoding, but we
+interpret that as an encoding for unicode, so when we read 8859-15 character
+€, your encoding says that's code point A4, we pretend its unicode code point
+A4, and thus interpret your 8859-15 encoding in a unicode context as saying
+you really want ¤ as the character.
+
+I need to decide what API I want for stdio character streams and Read/Write of
+text files. Is Char@ unicode or something else? Is the other end of the stream
+unicode or something else, and what encoding does it use? How do we specify?
+
+It's easy at the source level to hard code any mapping from source level
+character to code point of our choice. My actual standard library is probably
+encoded in utf8. At least what I'm writing. Though I guess you could run iconv
+to convert it to something else. Not sure what the implications of that are.
+
+---
+
+Here's a radical idea: don't support text mode streams. Do binary. Do all
+character encoding in fble land. We can easily wrap a byte stream in a
+character stream if we specify an explicit encoding. We can read LC_CTYPE
+environment variable or have some other mechanism to read LC_CTYPE to get the
+default character encoder. So long as I could figure out some way to deal with
+windows line ending issues, this is great, right? You specify just as much as
+you would have to otherwise with implicit LC_CTYPE of character streams, but
+you have a lot more control and much better standardization. And a simpler
+native interface.
+
+Sounds like python does something like that, though they still distinguish
+between 'text' and 'binary' and handle newline translation appropriately. How
+hard would it be to do my own newline translation? What would we need to
+specify when opening a file?
+
+Binary has to not muck with the newline characters. We can muck with newline
+characters once we wrap a byte stream as a character stream. We can make that
+a parameter of the encoding.
+
+Is it as simple as: '\r\n' ==> '\n'?
+
+Then we could have two separate passes:
+1. Stream@<Byte@> --> Stream@<Char@> that does the actual encoding.
+2. Stream@<Char@> --> Stream@<Char@> that does newline replacement.
+
+We will want some way to know what the platform default newline replacement
+policy ought to be. We may or may not want some way to ask what the platform
+default character encoding is.
+
+When reading a file, we could always go '\r\n' ==> '\n' and have it work
+everywhere. But writing a file we need to know if '\n' goes to '\n' or '\r\n'
+for interoperability with other programs on the platform.
+
+I'm sure I can reopen stdin, stdout, stderr in binary mode on windows. I hope.
+Yeah. With freopen, which is in C99, passing NULL as the name.
+
+Say we go this route. What are the next steps?
+* Design APIs for my existing programs to use to get Char@ streams.
+* Switch existing programs over to new APIs, with all files opened in binary
+  mode and stdin/stdout/stderr reopened in binary mode.
+* Make sure things work correctly on windows.

@@ -1,0 +1,30 @@
+
+<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+@ Int@ = /Std/Int%.Int@;
+% Int = /Std/Int/Lit%.Int;
+
+<@>% List = /Std/List%.List;
+<@>% Count = /Std/List/Count%.Count;
+
+@ Test@ = /Std/Test%.Test@;
+% Test = OnAscii $ /Std/Test%.Test;
+% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+% Elem = /Std/List/Tests/Elem%.Elem;
+% Elems = /Std/List/Tests/Elem%.Elems;
+% ElemEq = /Std/List/Tests/Elem%.Eq;
+
+Test@ Tests = TestSuite|Count $ List[
+  Test|Count $ (Unit@ _) {
+    Int@ wnt = Int|5;
+    Int@ got = Count(Elems|ABCBBAABCEB, ElemEq(Elem.B));
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+  }
+];
+
+@(Tests);
