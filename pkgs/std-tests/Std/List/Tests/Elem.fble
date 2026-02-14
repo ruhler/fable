@@ -5,7 +5,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-@ Compared@ = /Std/Cmp%.Compared@;
+<@>@ Cmp@ = /Std/Cmp%.Cmp@;
 % Less = /Std/Cmp%.Less;
 % Equal = /Std/Cmp%.Equal;
 % Greater = /Std/Cmp%.Greater;
@@ -36,7 +36,7 @@ Show@<Elem@> Show = (Elem@ e) {
   e.?(A: String|A, B: String|B, C: String|C, D: String|D, E: String|E);
 };
 
-(Elem@, Elem@) { Compared@; } Cmp = (Elem@ a, Elem@ b) {
+Cmp@<Elem@> Cmp = (Elem@ a, Elem@ b) {
   a.?(A: b.?(A: Equal, : Less),
       B: b.?(A: Greater, B: Equal, : Less),
       C: b.?(A: Greater, B: Greater, C: Equal, : Less),

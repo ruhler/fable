@@ -1,33 +1,12 @@
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
 % Str = /Std/Char/Ascii%.Str;
 
 @ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
 % TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
-
-<@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 
-<@>% Sort = /Std/List/Sort%.Sort;
-
-@ Elem@ = /Core/List/Tests/Elem%.Elem@;
-% Eq = /Core/List/Tests/Elem%.Eq;
-% Show = /Core/List/Tests/Elem%.Show;
-% EL = /Core/List/Tests/Elem%.EL;
-% ElemCmp = /Core/List/Tests/Elem%.ElemCmp;
-
 Test@ Tests = TestSuite(Str|List, List[
-  Test(Str|'Sort', (Unit@ _) {
-    List@<Elem@> unsorted = EL|DABEC;
-    List@<Elem@> wnt = EL|ABCDE;
-    List@<Elem@> got = Sort(ElemCmp, unsorted);
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
   /Core/List/Eq/Tests%.Tests,
   /Core/List/Search/Tests%.Tests
 ]);

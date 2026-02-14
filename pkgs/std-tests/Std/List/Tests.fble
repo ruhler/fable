@@ -139,7 +139,8 @@ Test@ Tests = TestSuite|List $ List[
   },
 
   /Std/List/Count/Tests%.Tests,
-  /Std/List/Index/Tests%.Tests
+  /Std/List/Index/Tests%.Tests,
+  /Std/List/Sort/Tests%.Tests
 ];
 
 @(Tests);

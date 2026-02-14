@@ -1,0 +1,35 @@
+
+<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+
+<@>@ Eq@ = /Std/Eq%.Eq@;
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Sort = /Std/List/Sort%.Sort;
+
+<@>@ Show@ = /Std/Show%.Show@;
+
+@ Test@ = /Std/Test%.Test@;
+% Test = OnAscii $ /Std/Test%.Test;
+% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+@ Elem@ = /Std/List/Tests/Elem%.Elem@;
+% Elems = /Std/List/Tests/Elem%.Elems;
+% Cmp = /Std/List/Tests/Elem%.Cmp;
+
+Eq@<List@<Elem@>> ElemsEq = /Std/List/Eq%.Eq(/Std/List/Tests/Elem%.Eq);
+Show@<List@<Elem@>> ElemsShow = /Std/List/Show%.Show(/Std/List/Tests/Elem%.Show);
+
+Test@ Tests = TestSuite|Sort $ List[
+  Test|Sort $ (Unit@ _) {
+    List@<Elem@> unsorted = Elems|DABEC;
+    List@<Elem@> wnt = Elems|ABCDE;
+    List@<Elem@> got = Sort(Cmp, unsorted);
+    AssertEquals(ElemsEq, ElemsShow, wnt, got);
+  }
+];
+
+@(Tests);
