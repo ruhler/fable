@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Factor out common code for /Std/List/Tests% ElemsEq and ElemsShow functions
+  redefined in lots of the list test modules.
+
 * Fix issue with opengl with dummy driver.
  - Remove broken --driver dummy option to FbleAppMain?
  - See since removed commented out code in pkgs/invaders/build.tcl
@@ -63,9 +66,6 @@ Things to consider doing for the fble-0.6 release.
   adding a spec test for.
 
 * Optimize encoding of FbleNewLiteralValue prgm?
-
-* Add a 'function' standard library?
- - compose, flip
 
 * Update tutorial on literals.
   - Particularly about 'longest' versus 'first' match.
@@ -159,8 +159,8 @@ Things to consider doing for the fble-0.6 release.
  - Add support for mutable data structures?
  - Add some way to catch or recover from errors at runtime?
    Vital for composition.
-   See thoughts/fble-0.6/stdlib.test.txt and thoughts/fble-0.6/exceptions.txt
-   for discussion.
+   See thoughts/fble-0.6/stdlib.test.txt, thoughts/fble-0.6/exceptions.txt,
+   thoughts/fble-0.6/stdlib.stdio.txt for discussion.
  - Some way to implement a web server that can handle multiple requests
    concurrently?
  - Think seriously about compatibility as the language and libraries evolve.

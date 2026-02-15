@@ -7,8 +7,7 @@
 <@>% List = /Std/List%.List;
 
 Test@ Tests = TestSuite(Str|List, List[
-  /Core/List/Eq/Tests%.Tests,
-  /Core/List/Search/Tests%.Tests
+  /Core/List/Eq/Tests%.Tests
 ]);
 
 @(Tests);

@@ -3249,3 +3249,118 @@ Say we go this route. What are the next steps?
 * Switch existing programs over to new APIs, with all files opened in binary
   mode and stdin/stdout/stderr reopened in binary mode.
 * Make sure things work correctly on windows.
+
+---
+
+Upon reflection, the primary users of text streams shouldn't have to care at
+all about encodings or line endings. As a user, I know if I'm working with
+binary or text. The types are fundamentally different. We have a sequence of
+Char@ versus a sequence of Byte@ (or Int@ or Bit@ or whatever). There is no
+way to mistake those.
+
+When I open a stream, I know if I want it to be binary or text. When I work
+with stdin, stdout, stderr, I know they are text based. When working with text
+streams, all I care about is Char@. I don't care about encodings, because that
+has something to do with bytes, which I don't care about.
+
+What matters and what doesn't?
+
+Start simple: reading/writing Char@ streams to yourself:
+* If I write out a Char@ stream and read it back in, I should see exactly the
+  same sequence of Char@ that I wrote out.
+* If I read a Char@ stream, write back out exactly what I read in, then read
+  that back in, I should see exactly the same sequence of Char@ that I read
+  the first time.
+
+Now we have a problem if we use unicode Char@ and fputwc/fgetwc if LC_CTYPE is
+set to 'C' or something other than a unicode encoding, because we'll get
+EILSEQ when trying to write something out that can't be encoded. We'll have a
+problem if we use putc/getc if LC_CYPTE is set to 'C' because we'll write a
+single multibyte character out and truncate its bits and read it back wrong.
+Or if we convert to utf-8 manually on the way out, we'll read it in as two
+characters instead unless we convert from utf-8 manually on the way in.
+
+Things start to get more complicated in these cases:
+* Same program read/write same files, but across reboots where LC_CTYPE
+  configuration has been changed on the platform.
+* Same program, but writing as Char@ and reading as Byte@ or vice versa. That
+  is a weird and wrong thing to do I feel like. But it would certainly let you
+  see the precise encoding that is being used under the covers for Char@.
+* Sharing data across two different programs, presumably one fble and one not,
+  and wanting things to work as expected by each of the programs.
+
+What are our options? What makes sense? What should the API be?
+
+Let's say behavior of writing to a binary file and reading back as Char@, or
+writing to a Char@ and reading back as binary is undefined, or implementation
+defined. To start. I can define things more clearly later if it makes sense.
+Which means I don't have to promise any particular binary encoding for Char@
+at the fble layer.
+
+Changes to LC_CTYPE seem rare to me. Maybe don't worry so much about that.
+
+Which suggests the biggest practical constraint in terms of how to represent
+Char@ on disk is exchanging character streams across different programs.
+
+If I write a file using vim with multibyte characters and then read it in
+fble, how do I end up reading the right thing back?
+
+Let me go back to my locale experiment with the multibyte characters? Or ask
+what the options are for a C program in general:
+* Internally represent unicode as utf8, write using putc/getc.
+ - Assume a utf8 encoding for the binary stream, decode from that into
+   unicode, and we'll get the right values.
+* Internally represent unicode as wchar_t, write using putwc/getwc.
+ - if LC_CTYPE is C, we lose data when writing, right? No. We get EILSEQ.
+ - if LC_CTYPE is UTF-8 or other unicode supporting thing, we're good.
+* Internally represent some other space as wchar_t, write using putwc/getwc
+ - if LC_CTYPE supports multibyte, we will read the wrong values into Char@.
+
+Proposal:
+* My implementation uses the platform default locale and furthermore requires
+  that locale uses the unicode values for wchar_t and can support the entire
+  space of them. Or at least the ones that you end up using. We use
+  putwc/getwc. We open text as text and binary as binary.
+
+That way we can write unicode, we can work with other locale-aware programs
+running on your device. If you wrote something in C locale as a sequence of
+raw bytes assuming an implicit existing encoding, we should be fine. If you
+try to read in C locale something we wrote in unicode, you can deal with the
+characters read back. Should be fine.
+
+In other words, I think it's fair to assume than an app either:
+1. Is locale aware and uses the platform default locale.
+2. Is not locale aware, but treats sequences of char as sequences of char
+without breaking them up, so it preserves any multibyte encoding according to
+the platform default locale.
+
+The thing that would be wrong to do is have an interpretation for a sequence
+of char as a sequence of wchar_t and not use the platform default locale.
+
+Okay? So let me switch to wchar_t, setlocale to default, use fputwc/fgetwc,
+and hope we don't run into illegal sequences.
+
+Here's an interesting question: will my fble-cat program properly cat my file
+with multibyte data? Should we add a specific test case for that? Answer: it
+does fine today, because we don't interpret the sequence of bytes. But if I
+read it in as a Char@ stream and looked at the values, they would not match
+what I expect because the multibyte characters would be read as multiple
+single byte characters.
+
+A better test might be to write out unicode Pi symbol from within fble and see
+that it doesn't read back in correctly. Let me write this test, then fix the
+current implementation?
+
+Wait, what do I mean fix the current implementation? The current
+implementation is that I'm writing binary. The native side is all bytes, even
+though it opens things as text streams when requested.
+
+Anyway, I think I need separate native implementations for reading/writing
+binary and reading/writing text. That might be a good place to start.
+
+Okay. Next steps:
+* Redesign stdio native interface to distinguish between binary and text
+  streams for read and write. Don't worry about error conditions for this
+  first round of improvements.
+* Implement it correctly. Add a test that we can write out a unicode character
+  and read it back in properly.
