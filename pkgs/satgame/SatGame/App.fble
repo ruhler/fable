@@ -1,4 +1,6 @@
 
+<@>@ Output@ = /Std/Char/Output%.Output@;
+
 @ Int@ = /Std/Int%.Int@;
 % Sub = /Std/Int%.Sub;
 % Mul = /Std/Int%.Mul;
@@ -11,7 +13,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<<@>@>@ OStream@ = /Core/Stream%.OStream@;
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
 
 % Format = /Std/Char/Ascii/Output%.Format;
 
@@ -74,8 +76,8 @@ Args@ DefaultArgs = @(
   Transform@ transform  # Transformation to apply to the board.
 );
 
-<<@>@ M@>(Monad@<M@>, OStream@<M@>, App@<M@>, Int@, Int@, Args@) { M@<Unit@>; }
-SatGame = <<@>@ M@>(Monad@<M@> m, OStream@<M@> out, App@<M@> app, Int@ width, Int@ height, Args@ args) {
+<<@>@ M@>(Monad@<M@>, Put@<M@, Output@>, App@<M@>, Int@, Int@, Args@) { M@<Unit@>; }
+SatGame = <<@>@ M@>(Monad@<M@> m, Put@<M@, Output@> out, App@<M@> app, Int@ width, Int@ height, Args@ args) {
   Params@ params = Params@(args.num_vars, args.num_clauses, args.num_literals_per_clause);
   Layout@ layout = Layout(params);
 
@@ -149,15 +151,14 @@ SatGame = <<@>@ M@>(Monad@<M@> m, OStream@<M@> out, App@<M@> app, Int@ width, In
       });
   };
 
-  % O = /Core/Stream/OStream%(m);
-  Unit@ _ := m.do(O.ShowLine(out,
+  Unit@ _ := m.do(out $
       Format|'Generating puzzle with params: %s (seed %s)'[
         /SatGame/Puzzle/Show%.Params(params),
         /Std/Int/Show%.Show(args.seed)
-  ]));
+  ]);
 
   Puzzle@ puzzle = PureLFSR.Run(Generate(params), args.seed);
-  Unit@ _ := m.do(O.ShowLine(out, /SatGame/Puzzle/Show%.Puzzle(puzzle)));
+  Unit@ _ := m.do(out $ /SatGame/Puzzle/Show%.Puzzle(puzzle));
 
   Game@ game = /SatGame/Game%.Game(puzzle);
 

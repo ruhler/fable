@@ -3455,3 +3455,13 @@ Cool. Concrete next steps:
      into a single stdio interface to be honest.
 
 Then we can decide how we want to proceed with the binary stream APIs.
+
+---
+
+(1) and (2) are done. Let's migrate. Let's start with migrating an OStream
+first, like an stdout? Because I think that will be easier. SatGame is a great
+example, because it takes OStream@<M@>.
+
+Looks like it works great. Cool. And in this case I used Put@ version instead
+of OStream@ version, because SatGame doesn't ever want to close stdout.
+
