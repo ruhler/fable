@@ -1,0 +1,24 @@
+
+@ Char@ = /Std/Char%.Char@;
+
+<@>@ Output@ = /Std/Char/Output%.Output@;
+
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+<<@>@,@>@ Put@ = <<@>@ M@, @ A@> { (A@) { M@<Unit@>; }; };
+<<@>@,@>@ Get@ = <<@>@ M@, @ A@> { M@<A@>; };
+
+# Character input stream.
+#   Get's the next character in the input stream. Gets nothing if the end of
+#   the stream has been reached.
+<<@>@>@ IStream@ = <<@>@ M@> { Get@<M@, Maybe@<Char@>>; };
+
+# Character output stream.
+<<@>@>@ OStream@ = <<@>@ M@> { *(
+  Put@<M@, Output@> put,    # Put output to the stream.
+  M@<Unit@> close           # Close the stream.
+); };
+
+@(Put@, Get@, IStream@, OStream@);

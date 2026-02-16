@@ -3364,3 +3364,94 @@ Okay. Next steps:
   first round of improvements.
 * Implement it correctly. Add a test that we can write out a unicode character
   and read it back in properly.
+
+---
+
+High level changes needed:
+* define char stream - put based on Output@.
+* in, out, err need to switch to char stream.
+* Add read, write functions for character streams.
+* If desired, reorganize interfaces to more easily distinguish between text
+  and binary based read/write functions.
+
+Should I change handling of output stream to split put from close while I'm at
+it? There's no equivalent for close for Output@ like there is for Int@ as
+Byte@.
+
+Draft to start with. Maybe we can keep the binary interface unchanged to
+start, to simplify migration. So focus on character streams, and assume these
+are in some submodule with 'Char' already part of the namespace.
+
+  <<@>@>@ IStream@ = <<@>@ M@> { M@<Maybe@<Char@>>; };
+
+  <<@>@>@ OStream@ = <<@>@ M@> { *(
+      (Output@) { M@<Unit@>; } put,
+      M@<Unit@> close
+    );
+  };
+
+Or, we can say OStream@ isn't closeable, but when you open a file it is? The
+question is if I want to have a name for (Output@) { M@<Unit@>; } to make it
+easier to pass around a put interface without giving callees any way to close
+the output stream.
+
+Options:
+1. OStream@ is a single function that can put or close.
+2. OStream@ is put, something else is both.
+3. OStream@ is both, something else is just put.
+
+Whoever opens the stream needs a way to close it, or to delegate closing it.
+But lots of users probably shouldn't be allowed to close the stream, because
+that messes up whoever comes after? We could say stdin, stdout, stderr
+shouldn't be allowed to be closed explicitly? Or should they?
+
+My vote:
+  <<@>@,@>@ Put@ = <<@>@ M@, @ A@>(A@) { M@<Unit@>; };
+  <<@>@,@>@ Get@ = <<@>@ M@, @ A@> { M@<A@>; };
+
+  # Character streams:
+  <<@>@>@ IStream@ = <<@>@ M@> { Get@<M@, Maybe@<Char@>>; };
+  <<@>@>@ OStream@ = <<@>@ M@> { *(
+      Put@<M@, Output@> put,
+      M@<Unit@> close
+    );
+  };
+  
+That way you can use Put@<M@, Output@> and Get@<Maybe@<Char@>> if you want, or
+you can use IStream@<M@> and OStream@<M@> if you want. Note that Put@ and Get@
+are generic to any type, but IStream@ and OStream@ are specific to 'character
+stream' in this case and will be defined with different types for binary
+streams:
+
+  # Byte streams:
+  <<@>@>@ IStream@ = <<@>@ M@> { Get@<M@, Maybe@<Int@>>; };
+  <<@>@>@ OStream@ = <<@>@ M@> { *(
+      Put@<M@, Int@> put,
+      M@<Unit@> close
+    );
+  };
+
+Though we might want to support an 'Output@' type for byte streams too, to
+allow us to do 'atomic' puts and have some control over buffering.
+
+Um... let's plan to have:
+  /Std/Char/Stream% to define IStream@ and OStream@.
+
+Maybe it makes sense to have Put@ and Get@ go with Monad@? Or... better,
+define them in /Std/Char/Stream% for now. We can redefine them whereever we
+define byte streams later on.
+
+Cool. Concrete next steps:
+1. Define /Core/Char/Stream% with Put@, Get@, IStream@, OStream@.
+2. Implement /Core/Char/Stream% wrappers over /Core/Stdio/Stream% types.
+3. Slowly migrate all users of character streams to the /Core/Char/Stream%
+   types, using the wrappers to convert where needed.
+4. Change stdin, stdout, stderr to be IStream@, OStream@ natively.
+   May as well allow people to close those streams if they want.
+5. Add character based 'read' and 'write' functions to Stdio@ interface.
+   - No need for a mode argument.
+   - But also, consider not adding them to /Core/Stdio%, but rather piecemeal
+     to /Core/Stdio/Native? I see no need to bundle everything all together
+     into a single stdio interface to be honest.
+
+Then we can decide how we want to proceed with the binary stream APIs.

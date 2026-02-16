@@ -160,6 +160,6 @@ ToString = (Output@ show) {
   show(StringStream, Empty<Char@>);
 };
 
-@(Output@,
+@(Output@, Stream@,
   Return, Do, Put, String, Format, Concat, Lines, Join,
   ToString);
