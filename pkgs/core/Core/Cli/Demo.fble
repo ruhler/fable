@@ -3,6 +3,10 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
+<@>@ Output@ = /Std/Char/Output%.Output@;
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
 % Failure = /Core/Cli%.Failure;
@@ -16,7 +20,7 @@
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
 @ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+% StringE = /Std/Char/Ascii/Output%.StringE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -24,10 +28,10 @@
 # It exits with success if all arguments have the same value, false otherwise.
 
 Main@ Demo = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
-  % O = /Core/Stream/OStream%(m);
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
 
-  Unit@ _ := m.do(O.PutLine(stdio.out, Str|'hello, world'));
+  Unit@ _ := m.do(out $ StringE|'hello, world\n');
 
   args.?(empty: m.return(Success));
   String@ head = args.items.head;

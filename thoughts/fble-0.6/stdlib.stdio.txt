@@ -3465,3 +3465,14 @@ example, because it takes OStream@<M@>.
 Looks like it works great. Cool. And in this case I used Put@ version instead
 of OStream@ version, because SatGame doesn't ever want to close stdout.
 
+Let's find the rest of the uses of stdout and migrate those over? There must
+be a bunch, right? We can make the first goal to remove /Core/Stream/OStream%
+module usage entirely.
+
+This is going to be a bit tedious... There are 24 occurrences that need
+replacing.
+
+Is it worth testing the input side of things too? I'll just want to add
+support for things like GetChar, GetLine, and GetText, which should be easy
+enough. Except it will be annoying to have to pass the monad in everywhere? I
+guess we'll find out.
