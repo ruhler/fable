@@ -3,6 +3,14 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% String = /Std/Char/Output%.String;
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
+% StringE = /Std/Char/Ascii/Output%.StringE;
+
 <@>% Concat = /Std/List%.Concat;
 <@>% ForEach = /Std/List%.ForEach;
 
@@ -12,7 +20,6 @@
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
-% FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 @ Test@ = /Std/Test%.Test@;
 @ TestResult@ = /Std/Test%.TestResult@;
@@ -20,10 +27,8 @@
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-<<@>@ M@>(Monad@<M@> m, OStream@<M@> out) {
-  % O = /Core/Stream/OStream%(m);
-  % PutStr = O.PutStr;
-  % PutLine = O.PutLine;
+<<@>@ M@>(Monad@<M@> m, OStream@<M@> out_) {
+  Put@<M@, Output@> out = OStream<M@>(out_, m).put;
 
   # Returns True if the tests all pass, false otherwise.
   (String@, Test@) { M@<Bool@>; } RunTests = (String@ prefix, Test@ test) {
@@ -33,23 +38,23 @@
       test.?(
         case: {
           String@ name = Concat[prefix, test.case.name];
-          Unit@ _ := m.do(PutStr(out, Concat[Str|'@[', name, Str|']: ']));
+          Unit@ _ := m.do(out $ FormatE|'@[%s]: '[String(name)]);
           TestResult@ tr = test.case.test(Unit);
           tr.?(
             pass: {
-              Unit@ _ := m.do(PutLine(out, Str|'@PASS'));
+              Unit@ _ := m.do(out $ StringE|'@PASS\n');
               m.return(passing);
             },
             fail: {
-              Unit@ _ := m.do(O.Show(out, FormatE|'@FAIL: %s\n'[tr.fail]));
+              Unit@ _ := m.do(out $ FormatE|'@FAIL: %s\n'[tr.fail]);
               m.return(False);
             },
             expected_fail: {
-              Unit@ _ := m.do(PutLine(out, Str|'@EXPECTED_FAIL'));
+              Unit@ _ := m.do(out $ StringE|'@EXPECTED_FAIL\n');
               m.return(passing);
             },
             skip: {
-              Unit@ _ := m.do(O.Show(out, FormatE|'@SKIP: %s\n'[tr.skip]));
+              Unit@ _ := m.do(out $ FormatE|'@SKIP: %s\n'[tr.skip]);
               m.return(passing);
             });
         },

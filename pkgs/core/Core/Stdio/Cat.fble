@@ -1,7 +1,13 @@
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% String = /Std/Char/Output%.String;
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
+
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
-<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
 <@>% Just = /Std/Maybe%.Just;
@@ -23,13 +29,13 @@
 # The 'cat' program.
 Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % I = /Core/Stream/IStream%(m);
-  % O = /Core/Stream/OStream%(m);
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
 
   (I.IStream@) { M@<Unit@>; } cat = (I.IStream@ input) {
     String@ line := m.do(I.GetLine(input));
     line.?(empty: m.return(Unit));
 
-    Unit@ _ := m.do(O.PutStr(stdio.out, line));
+    Unit@ _ := m.do(out $ String(line));
     cat(input);
   };
 
@@ -43,8 +49,8 @@ Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     });
 
     istream.?(nothing: {
-      String@ msg = Concat[Str|'fble-cat: Unable to open ', filename];
-      Unit@ _ := m.do(O.PutLine(stdio.err, msg));
+      Unit@ _ := m.do(out $
+        FormatE|'fble-cat: Unable to open %s\n'[String(filename)]);
       m.return(Failure);
     });
 

@@ -1,4 +1,11 @@
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% String = /Std/Char/Output%.String;
+% Format = /Std/Char/Ascii/Output%.Format;
+
 <@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
@@ -15,8 +22,8 @@
 #   A stdio main function that outputs a single string.
 (String@) { Main@; } StringO = (String@ str) {
   <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {
-    % O = /Core/Stream/OStream%(m);
-    Unit@ _ := m.do(O.PutLine(stdio.out, str));
+    Put@<M@, Output@> out = OStream(stdio.out, m).put;
+    Unit@ _ := m.do(out $ Format|'%s\n'[String(str)]);
     m.return(Success);
   };
 };

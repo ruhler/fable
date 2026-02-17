@@ -1,5 +1,10 @@
 
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+
+<@>@ Output@ = /Std/Char/Output%.Output@;
+
 <@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
@@ -9,15 +14,14 @@
 % Success = /Core/Stdio%.Success;
 
 @ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+% StringE = /Std/Char/Ascii/Output%.StringE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
 # A hello world program using the Stdio@ interface.
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {
-  % O = /Core/Stream/OStream%(m);
-  
-  Unit@ _ := m.do(O.PutLine(stdio.out, Str|'hello, world'));
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
+  Unit@ _ := m.do(out $ StringE|'hello, world\n');
   m.return(Success);
 };
 
