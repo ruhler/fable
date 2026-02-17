@@ -2,9 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Factor out common code for /Std/List/Tests% ElemsEq and ElemsShow functions
-  redefined in lots of the list test modules.
-
 * Fix issue with opengl with dummy driver.
  - Remove broken --driver dummy option to FbleAppMain?
  - See since removed commented out code in pkgs/invaders/build.tcl

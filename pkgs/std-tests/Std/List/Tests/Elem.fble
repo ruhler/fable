@@ -10,6 +10,8 @@
 % Equal = /Std/Cmp%.Equal;
 % Greater = /Std/Cmp%.Greater;
 
+<@>@ Eq@ = /Std/Eq%.Eq@;
+
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 
@@ -56,7 +58,7 @@ Cmp@<Elem@> Cmp = (Elem@ a, Elem@ b) {
   Le(b, a);
 };
 
-(Elem@, Elem@) { Bool@; } Eq = (Elem@ a, Elem@ b) {
+Eq@<Elem@> Eq = (Elem@ a, Elem@ b) {
   a.?(A: b.?(A: True, : False),
       B: b.?(B: True, : False),
       C: b.?(C: True, : False),
@@ -64,4 +66,7 @@ Cmp@<Elem@> Cmp = (Elem@ a, Elem@ b) {
       E: b.?(E: True, : False));
 };
 
-@(Elem@, Elem, Elems, Show, Cmp, Le, Ge, Eq);
+Eq@<List@<Elem@>> Eqs = /Std/List/Eq%.Eq(Eq);
+Show@<List@<Elem@>> Shows = /Std/List/Show%.Show(Show);
+
+@(Elem@, Elem, Elems, Show, Cmp, Le, Ge, Eq, Eqs, Shows);

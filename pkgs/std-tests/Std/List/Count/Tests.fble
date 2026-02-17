@@ -17,12 +17,12 @@
 
 % Elem = /Std/List/Tests/Elem%.Elem;
 % Elems = /Std/List/Tests/Elem%.Elems;
-% ElemEq = /Std/List/Tests/Elem%.Eq;
+% Eq = /Std/List/Tests/Elem%.Eq;
 
 Test@ Tests = TestSuite|Count $ List[
   Test|Count $ (Unit@ _) {
     Int@ wnt = Int|5;
-    Int@ got = Count(Elems|ABCBBAABCEB, ElemEq(Elem.B));
+    Int@ got = Count(Elems|ABCBBAABCEB, Eq(Elem.B));
     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
   }
 ];
