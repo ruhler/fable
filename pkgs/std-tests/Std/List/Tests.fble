@@ -141,6 +141,7 @@ Test@ Tests = TestSuite|List $ List[
   /Std/List/Count/Tests%.Tests,
   /Std/List/Eq/Tests%.Tests,
   /Std/List/Index/Tests%.Tests,
+  /Std/List/Maybe/Tests%.Tests,
   /Std/List/Search/Tests%.Tests,
   /Std/List/Sort/Tests%.Tests
 ];

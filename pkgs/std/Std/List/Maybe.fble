@@ -1,0 +1,57 @@
+# @module[/Std/List/Maybe%]
+#  Utilities for converting between List@ and Maybe@ types.
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Empty = /Std/List%.Empty;
+
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Just = /Std/Maybe%.Just;
+<@>% Nothing = /Std/Maybe%.Nothing;
+
+# @func[List] Convert a Maybe@ to a List@.
+#  @arg[@][A@] The type of element.
+#  @arg[Maybe@<A@>][maybe] An optional value.
+#  @returns[List@<A@>]
+#   A single element list if a value is present. An empty list otherwise.
+<@ A@>(Maybe@<A@>) { List@<A@>; }
+List = <@ A@>(Maybe@<A@> maybe) {
+  maybe.?(nothing: Empty<A@>);
+  /Std/List%.List[maybe.just];
+};
+
+# @func[Head] Gets the first element of the list if any.
+#  @arg[@][A@] The type of element.
+#  @arg[List@<A@>][list] The list to get the first element of.
+#  @returns[Maybe<A@>]
+#   The first element of the list. Nothing if the list is empty.
+<@ A@>(List@<A@>) { Maybe@<A@>; }
+Head = <@ A@>(List@<A@> list) {
+  list.?(empty: Nothing<A@>);
+  Just(list.items.head);
+};
+
+# @func[Last] Gets the last element of the list if any.
+#  @arg[@][A@] The type of element.
+#  @arg[List@<A@>][list] The list to get the last element of.
+#  @returns[Maybe<A@>]
+#   The last element of the list. Nothing if the list is empty.
+<@ A@>(List@<A@>) { Maybe@<A@>; }
+Last = <@ A@>(List@<A@> list) {
+  list.?(empty: Nothing<A@>);
+  list.items.tail.?(empty: Just(list.items.head));
+  Last(list.items.tail);
+};
+
+# @func[Concat] Concatenate a list of maybe values.
+#  @arg[@][A@] The type of element.
+#  @arg[List@<Maybe@<A@>>][list] A list of optional values.
+#  @returns[List<A@>] The list of present values.
+<@ A@>(List@<Maybe@<A@>>) { List@<A@>; }
+Concat = <@ A@>(List@<Maybe@<A@>> xs) {
+  xs.?(empty: Empty<A@>);
+  xs.items.head.?(nothing: Concat(xs.items.tail));
+  Items(xs.items.head.just, Concat(xs.items.tail));
+};
+
+@(List, Head, Last, Concat);

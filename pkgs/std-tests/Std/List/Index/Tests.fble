@@ -36,7 +36,7 @@
 Eq@<List@<Elem@>> ElemsEq = /Std/List/Eq%.Eq(/Std/List/Tests/Elem%.Eq);
 Show@<List@<Elem@>> ElemsShow = /Std/List/Show%.Show(/Std/List/Tests/Elem%.Show);
 
-Test@ Tests = TestSuite|List $ List[
+Test@ Tests = TestSuite|Index $ List[
   Test|Length $ (Unit@ _) {
     Int@ wnt = Int|5;
     Int@ got = Length(Elems|ABCDE);
