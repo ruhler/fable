@@ -1,6 +1,11 @@
 
 % Success = /Core/Stdio%.Success;
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
+
 @ CRC@ = /Core/CRC%.CRC@;
 % Feed = /Core/CRC%.Feed;
 
@@ -25,14 +30,14 @@
 
 
 Main@ Debug = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
-  % O = /Core/Stream/OStream%(m);
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
   
   (List@<String@> _args) {
     (CRC@, List@<Bit@>) { M@<CRC@>; } DFeeds = (CRC@ crc, List@<Bit@> bits) {
       bits.?(empty: m.return(crc));
 
       CRC@ ncrc = Feed(crc, bits.items.head);
-      Unit@ _ := m.do(O.ShowLine(stdio.out, ShowBits(ncrc.checksum)));
+      Unit@ _ := m.do(out $ FormatE|'%s\n'[ShowBits(ncrc.checksum)]);
       DFeeds(ncrc, bits.items.tail);
     };
 

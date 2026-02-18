@@ -1,4 +1,10 @@
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% String = /Std/Char/Output%.String;
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
+
 @ Int@ = /Std/Int%.Int@;
 % Int = /Std/Int/Lit%.Int;
 
@@ -36,7 +42,8 @@
 
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % I = /Core/Stream/IStream%(m);
-  % O = /Core/Stream/OStream%(m);
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
+  Put@<M@, Output@> err = OStream(stdio.err, m).put;
 
   (List@<String@>) { M@<List@<String@>>; }
   PrependReversedLines = (List@<String@> lines) {
@@ -60,21 +67,21 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
   (List@<String@> args) {
     Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-      Unit@ _ := m.do(O.PutStr(stdio.out, /Sat/Usage%));
+      Unit@ _ := m.do(out $ String $ /Sat/Usage%);
       m.return(Success);
     });
 
     List@<String@> lines := m.do(GetLines);
     Parse@<Formula@> parsed = ParseLines(lines);
     parsed.?(error: {
-      Unit@ _ := m.do(O.PutStr(stdio.err, parsed.error));
+      Unit@ _ := m.do(err $ String $ parsed.error);
       m.return(Failure);
     });
 
     Int@ debug = GetDebugArg(args);
     Solver@ solver = AddClauses(NewSolver, parsed.parsed); 
     Result@ result := m.do(Solve(m, Debug(m, debug, stdio.out), solver));
-    Unit@ _ := m.do(O.ShowLine(stdio.out, ShowResult(result)));
+    Unit@ _ := m.do(out $ FormatE|'%s\n'[ShowResult(result)]);
     m.return(Success);
   };
 };

@@ -1,4 +1,8 @@
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+% String = /Std/Char/Output%.String;
+
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
@@ -42,7 +46,8 @@
 #   Main function for fbld program.
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % I = /Core/Stream/IStream%(m);
-  % O = /Core/Stream/OStream%(m);
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
+  Put@<M@, Output@> err = OStream(stdio.err, m).put;
 
   (List@<String@>) { M@<Result@<List@<Text@>>>; }
   ReadInputs = (List@<String@> filenames) {
@@ -69,7 +74,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   (List@<String@> args) {
     Result@<List@<Text@>> inputs := m.do(ReadInputs(args));
     inputs.failed.?(true: {
-      Unit@ _ := m.do(O.Show(stdio.err, ShowErrors(inputs)));
+      Unit@ _ := m.do(err $ ShowErrors(inputs));
       m.return(Failure);
     });
 
@@ -80,11 +85,11 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     };
 
     result.failed.?(true: {
-      Unit@ _ := m.do(O.Show(stdio.err, ShowErrors(result)));
+      Unit@ _ := m.do(err $ ShowErrors(result));
       m.return(Failure);
     });
 
-    Unit@ _ := m.do(O.PutStr(stdio.out, result.value.just));
+    Unit@ _ := m.do(out $ String $ result.value.just);
     m.return(Success);
   };
 };

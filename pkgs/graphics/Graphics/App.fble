@@ -1,4 +1,9 @@
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% String = /Std/Char/Output%.String;
+
 @ Int@ = /Std/Int%.Int@;
 % Neg = /Std/Int%.Neg;
 % Mul = /Std/Int%.Mul;
@@ -126,10 +131,10 @@ State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48))
 };
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
-  % O = /Core/Stream/OStream%(m);
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(O.PutStr(stdio.out, /Graphics/Usage%));
+    Unit@ _ := m.do(out $ String $ /Graphics/Usage%);
     m.return(Success);
   });
 

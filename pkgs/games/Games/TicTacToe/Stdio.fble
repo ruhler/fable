@@ -5,8 +5,11 @@
 % Format = /Std/Char/Ascii/Output%.Format;
 % FormatE = /Std/Char/Ascii/Output%.FormatE;
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+
 <@>@ List@ = /Std/List%.List@;
-<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
 <@>% Just = /Std/Maybe%.Just;
@@ -21,7 +24,6 @@
 <@>@ Show@ = /Std/Show%.Show@;
 
 @ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -110,19 +112,19 @@ Show@<Game@> ShowGame = (Game@ game) {
 # Play a game of tic-tac-toe.
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % I = /Core/Stream/IStream%(m);
-  % O = /Core/Stream/OStream%(m);
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
-    Unit@ _ := m.do(O.Show(stdio.out, ShowGame(game)));
+    Unit@ _ := m.do(out $ ShowGame(game));
 
     String@ line := m.do(I.GetLine(stdio.in));
     line.?(empty: m.return(Unit));
 
     Maybe@<Input@> mi = ParseInput(line);
     mi.?(nothing: {
-      Unit@ _ := m.do(O.PutLine(stdio.out, Concat[
-        Str|'invalid input: ',
-        Str|'expected {A,B,C}{1,2,3}, P, Q, or R']));
+      Unit@ _ := m.do(out $ FormatE|'%s%s\n'[
+        String|'invalid input: ',
+        String|'expected {A,B,C}{1,2,3}, P, Q, or R']);
       TicTacToe(game);
     });
 

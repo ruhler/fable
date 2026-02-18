@@ -1,4 +1,8 @@
 
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% String = /Std/Char/Output%.String;
+
 @ Int@ = /Std/Int%.Int@;
 
 % Int = /Std/Int/Lit%.Int;
@@ -39,10 +43,10 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
 	Maybe@<String@> home := m.do(/Core/Env/Native%.GetVar<M@>(n, m, Str|'HOME'));
 
-  % O = /Core/Stream/OStream%(m);
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(O.PutStr(stdio.out, /Invaders/Usage%));
+    Unit@ _ := m.do(out $ String $ /Invaders/Usage%);
     m.return(Success);
   });
 
@@ -65,8 +69,9 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
     Maybe@<OStream@<M@>> ostream := m.do(stdio.write(filename, /Core/Stdio%.Text));
     ostream.?(nothing: m.return(Unit));
 
-    Unit@ _ := m.do(O.Show(ostream.just, /Std/Int/Show%.Show(score)));
-    O.Close(ostream.just);
+    /Core/Char/Stream%.OStream@<M@> fout = OStream(ostream.just, m);
+    Unit@ _ := m.do(fout.put $ /Std/Int/Show%.Show(score));
+    fout.close;
   };
 
   State@<M@, Int@> high_score_s = State@<M@, Int@>(get_high_score, put_high_score);
