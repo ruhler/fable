@@ -1,5 +1,8 @@
 
 @ Ascii@ = /Std/Char/Ascii%.Ascii@;
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 @ Int@ = /Std/Int%.Int@;
 % Int = /Std/Int/Lit%.Int;
@@ -23,11 +26,11 @@
 % FannkuchRedux = /Games/BenchmarkGame/FannkuchRedux%.FannkuchRedux;
 
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
-  % O = /Core/Stream/OStream%(m);
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
 
   (List@<Ascii@>, List@<Output@>) { M@<Unit@>; }
   FmtL = (List@<Ascii@> fmt, List@<Output@> args) {
-    O.ShowLine(stdio.out, Format(fmt, args));
+    out $ FormatE|'%s\n'[Format(fmt, args)];
   };
 
   (List@<String@> args) {

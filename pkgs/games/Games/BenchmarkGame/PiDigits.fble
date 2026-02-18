@@ -1,6 +1,9 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
 % Neg = /Std/Int%.Neg;
@@ -105,11 +108,7 @@ State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
 # Output the digits of pi, one digit output for each input string, starting
 # from state 's'.
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
-  % O = /Core/Stream/OStream%(m);
-
-  (Output@) { M@<Unit@>; } PutS = (Output@ str) {
-    O.Show(stdio.out, str);
-  };
+  Put@<M@, Output@> PutS = OStream(stdio.out, m).put;
 
   (List@<String@> args) {
     Int@ n = /Core/Int/Read%.Read(args.items.head);

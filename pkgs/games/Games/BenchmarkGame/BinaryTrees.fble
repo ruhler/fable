@@ -1,4 +1,8 @@
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
+
 @ Ascii@ = /Std/Char/Ascii%.Ascii@;
 
 @ Int@ = /Std/Int%.Int@;
@@ -52,11 +56,11 @@ Int@ 2 = Int|2;
 };
 
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
-  % O = /Core/Stream/OStream%(m);
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
 
   (List@<Ascii@>, List@<Output@>) { M@<Unit@>; }
   FmtL = (List@<Ascii@> fmt, List@<Output@> args) {
-    O.ShowLine(stdio.out, Format(fmt, args));
+    out $ FormatE|'%s\n'[Format(fmt, args)];
   };
 
   (List@<String@> args) {
