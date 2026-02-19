@@ -5,6 +5,11 @@
 @ Ascii@ = /Std/Char/Ascii%.Ascii@;
 % ToChar = /Std/Char/Ascii%.ToChar;
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% String = /Std/Char/Ascii/Output%.String;
+
 <@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 @ Int@ = /Std/Int%.Int@;
@@ -39,8 +44,8 @@
 % IStream = /Core/Stream/IStream%<Pure@>(Monad);
 % GetLine = IStream.GetLine;
 
-% OStream = /Core/Stream/OStream%<Pure@>(Monad);
-% PutStr = OStream.PutStr;
+Put@<Pure@, Output@> Stdout = OStream<Pure@>(Stdio.out, Monad).put;
+Put@<Pure@, Output@> Stderr = OStream<Pure@>(Stdio.err, Monad).put;
 
 (List@<Ascii@>) { List@<Int@>; } Bytes = (List@<Ascii@> str) {
   /Std/List%.Map(str, (Ascii@ a) { /Std/Char%.Pos(ToChar(a)); });
@@ -90,7 +95,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
     List@<Int@> inputs = HelloWorld;
     PureResult@<Unit@> wnt = PureResult@<Unit@>(
       PureState@(inputs, Bytes|There, Empty<Int@>), Unit);
-    PureResult@<Unit@> got = Run(PutStr(Stdio.out, Str|There), inputs);
+    PureResult@<Unit@> got = Run(Stdout $ String|There, inputs);
     AssertEquals(
       PureResultEq(/Std/Unit/Eq%.Eq),
       PureResultShow(/Std/Unit/Show%.Show),
@@ -101,7 +106,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
     List@<Int@> inputs = HelloWorld;
     PureResult@<Unit@> wnt = PureResult@<Unit@>(
       PureState@(inputs, Empty<Int@>, Bytes|There), Unit);
-    PureResult@<Unit@> got = Run(PutStr(Stdio.err, Str|There), inputs);
+    PureResult@<Unit@> got = Run(Stderr $ String|There, inputs);
     AssertEquals(
       PureResultEq(/Std/Unit/Eq%.Eq),
       PureResultShow(/Std/Unit/Show%.Show),
@@ -115,8 +120,8 @@ Test@ Tests = TestSuite(Str|Stdio, List[
       PureState@(inputs, Bytes|AB, Empty<Int@>), Unit);
 
     PureResult@<Unit@> got = Run({
-      Unit@ _ := Monad.do(PutStr(Stdio.out, Str|A));
-      Unit@ _ := Monad.do(PutStr(Stdio.out, Str|B));
+      Unit@ _ := Monad.do(Stdout $ String|A);
+      Unit@ _ := Monad.do(Stdout $ String|B);
       Monad.return(Unit);
     }, inputs);
 
@@ -133,8 +138,8 @@ Test@ Tests = TestSuite(Str|Stdio, List[
       PureState@(inputs, Empty<Int@>, Bytes|AB), Unit);
 
     PureResult@<Unit@> got = Run({
-      Unit@ _ := Monad.do(PutStr(Stdio.err, Str|A));
-      Unit@ _ := Monad.do(PutStr(Stdio.err, Str|B));
+      Unit@ _ := Monad.do(Stderr $ String|A);
+      Unit@ _ := Monad.do(Stderr $ String|B);
       Monad.return(Unit);
     }, inputs);
 
