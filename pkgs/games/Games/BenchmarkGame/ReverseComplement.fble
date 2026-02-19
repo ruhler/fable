@@ -4,6 +4,10 @@
 % Ascii = /Std/Char/Ascii%.Ascii;
 % IsNewline = /Core/Char/Type%.IsNewline;
 
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% Put = /Std/Char/Output%.Put;
+% Do = /Std/Char/Output%.Do;
+
 @ Int@ = /Std/Int%.Int@;
 % Sub = /Std/Int%.Sub;
 % Int = /Std/Int/Lit%.Int;
@@ -84,22 +88,22 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _) {
   };
 
   # Prints codes to stdout, breaking lines every 60 characters.
-  (Int@, String@) { M@<Unit@>; } PrintCodes = (Int@ n, String@ codes) {
-    codes.?(empty: O.PutChar(stdio.out, Ascii.nl));
+  (Int@, String@) { Output@; } OutputCodes = (Int@ n, String@ codes) {
+    codes.?(empty: Put(Ascii.nl));
 
     IsZero(n).?(true: {
-      Unit@ _ := m.do(O.PutChar(stdio.out, Ascii.nl));
-      PrintCodes(Int|60, codes);
+      Unit@ _ := Do(Put(Ascii.nl));
+      OutputCodes(Int|60, codes);
     });
 
-    Unit@ _ := m.do(O.PutChar(stdio.out, codes.items.head));
-    PrintCodes(Sub(n, Int|1), codes.items.tail);
+    Unit@ _ := Do(Put(codes.items.head));
+    OutputCodes(Sub(n, Int|1), codes.items.tail);
   };
 
   # Prints a sequence to stdout.
   (Seq@) { M@<Unit@>; } PrintSeq = (Seq@ s) {
     Unit@ _ := m.do(O.PutLine(stdio.out, s.header));
-    PrintCodes(Int|60, s.codes);
+    O.Show(stdio.out, OutputCodes(Int|60, s.codes));
   };
 
   # Complements an already-reversed sequence and prints the result to stdout.

@@ -26,7 +26,7 @@ GTAATGTTGG
 ';
 
 Test@ Tests = Test(
-  Str|PiDigits,
+  Str|ReverseComplement,
   /Games/BenchmarkGame/ReverseComplement%.Main,
   Str|'0', input, output);
 
