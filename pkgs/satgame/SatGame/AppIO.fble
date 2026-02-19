@@ -1,4 +1,8 @@
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;
 % Int = /Std/Int/Lit%.Int;
@@ -67,7 +71,6 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
 	Maybe@<String@> home := m.do(/Core/Env/Native%.GetVar<M@>(n, m, Str|HOME));
 
   % I = /Core/Stream/IStream%(m);
-  % O = /Core/Stream/OStream%(m);
 
   # Read and update the default seed value.
   Int@ seed := m.do({
@@ -83,10 +86,11 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
     });
 
     Maybe@<OStream@<M@>> ostream := m.do(stdio.write(filename, /Core/Stdio%.Text));
-    Unit@ _ := m.do({
+    Unit@ _ := m.do $ {
       ostream.?(nothing: m.return(Unit));
-      O.Show(ostream.just, /Std/Int/Show%.Show(Incr(seed)));
-    });
+      Put@<M@, Output@> out = OStream(ostream.just, m).put;
+      out $ /Std/Int/Show%.Show(Incr(seed));
+    };
 
     m.return(seed);
   });

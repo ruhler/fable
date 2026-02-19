@@ -4,9 +4,14 @@
 % Ascii = /Std/Char/Ascii%.Ascii;
 % IsNewline = /Core/Char/Type%.IsNewline;
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
+
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % Put = /Std/Char/Output%.Put;
 % Do = /Std/Char/Output%.Do;
+% String = /Std/Char/Output%.String;
 
 @ Int@ = /Std/Int%.Int@;
 % Sub = /Std/Int%.Sub;
@@ -75,7 +80,7 @@
 
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _) {
   % I = /Core/Stream/IStream%(m);
-  % O = /Core/Stream/OStream%(m);
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
 
   # Gets a line from stdin, discarding the final newline if any.
   M@<String@> GetLine = {
@@ -102,8 +107,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _) {
 
   # Prints a sequence to stdout.
   (Seq@) { M@<Unit@>; } PrintSeq = (Seq@ s) {
-    Unit@ _ := m.do(O.PutLine(stdio.out, s.header));
-    O.Show(stdio.out, OutputCodes(Int|60, s.codes));
+    out $ FormatE|'%s\n%s'[String(s.header), OutputCodes(Int|60, s.codes)];
   };
 
   # Complements an already-reversed sequence and prints the result to stdout.

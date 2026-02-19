@@ -4,11 +4,15 @@
 % False = /Std/Bool%.False;
 % And = /Std/Bool%.And;
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+% String = /Std/Char/Output%.String;
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
+
 @ Int@ = /Std/Int%.Int@;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
-<@>% Concat = /Std/List%.Concat;
 <@>% Any = /Std/List/Search%.Any;
 
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
@@ -39,7 +43,8 @@
 # Main --
 #   Main function for fble-md5 program.
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
-  % O = /Core/Stream/OStream%(m);
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
+  Put@<M@, Output@> err = OStream(stdio.out, m).put;
 
   (String@) { M@<Bool@>; } md5 = (String@ filename) {
     Maybe@<IStream@<M@>> istream := m.do({
@@ -48,8 +53,9 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     });
 
     istream.?(nothing: {
-      String@ msg = Concat[Str|'fble-md5: Unable to open ', filename];
-      Unit@ _ := m.do(O.PutLine(stdio.err, msg));
+      Unit@ _ := m.do(err $ FormatE|'fble-md5: unable to open %s\n'[
+        String(filename)
+      ]);
       m.return(False);
     });
 
@@ -60,7 +66,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
     Hash@ hash := m.do(/Md5/Md5%.Md5(m, in));
     Output@ line = Format|'%s  %s'[/Md5/Hash%.Show(hash), /Std/Char/Output%.String(filename)];
-    Unit@ _ := m.do(O.ShowLine(stdio.out, line));
+    Unit@ _ := m.do(out $ FormatE|'%s\n'[line]);
     m.return(True);
   };
 
@@ -73,7 +79,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
   (List@<String@> args) {
     Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-      Unit@ _ := m.do(O.PutStr(stdio.out, /Md5/Usage%));
+      Unit@ _ := m.do(out $ String $ /Md5/Usage%);
       m.return(Success);
     });
 

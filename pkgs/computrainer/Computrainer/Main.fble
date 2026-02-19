@@ -3,6 +3,8 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;
 % Decr = /Std/Int%.Decr;
@@ -336,11 +338,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   State@ final := m.do(StepUI(initial));
 
-  % O = /Core/Stream/OStream%(m);
-  Maybe@<OStream@<M@>> ostream := m.do(stdio.write(file, /Core/Stdio%.Text));
-  ostream.?(nothing: m.return(Success));
-  Unit@ _ := m.do(O.Show(ostream.just, /Computrainer/Model/Save%.Model(final.model)));
-  Unit@ _ := m.do(O.Close(ostream.just));
+  Maybe@<OStream@<M@>> mostream := m.do(stdio.write(file, /Core/Stdio%.Text));
+  mostream.?(nothing: m.return(Success));
+  /Core/Char/Stream%.OStream@<M@> ostream = OStream(mostream.just, m);
+  Unit@ _ := m.do(ostream.put $ /Computrainer/Model/Save%.Model(final.model));
+  Unit@ _ := m.do(ostream.close);
 
   m.return(Success);
 };
