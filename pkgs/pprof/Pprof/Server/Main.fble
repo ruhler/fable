@@ -4,6 +4,8 @@
 % False = /Std/Bool%.False;
 
 % Char = /Std/Char/Ascii%.Char;
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
 
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
@@ -23,7 +25,6 @@
 <@>% List = /Std/List%.List;
 <@>% Last = /Std/List%.Last;
 <@>% Append = /Std/List%.Append;
-<@>% Concat = /Std/List%.Concat;
 <@>% Get = /Std/List/Index%.Get;
 <@>% Drop = /Std/List/Index%.Drop;
 <@>% Length = /Std/List/Index%.Length;
@@ -37,9 +38,12 @@
 <<@>@>@ Native@ = /Core/Native%.Native@;
 
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
-<<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
+% Do = /Std/Char/Output%.Do;
+% Put = /Std/Char/Output%.Put;
+<@>% Return = /Std/Char/Output%.Return;
+% String = /Std/Char/Output%.String;
 
 % Split = /Std/String/Eq%.Split;
 
@@ -54,6 +58,8 @@
 % Str = /Std/Char/Ascii%.Str;
 % StrE = /Std/Char/Ascii%.StrE;
 % Format = /Std/Char/Ascii/Output%.Format;
+% FormatE = /Std/Char/Ascii/Output%.FormatE;
+% StringE = /Std/Char/Ascii/Output%.StringE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -163,14 +169,13 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(n, m));
 
-  (OStream@<M@>, Profile@, Table@, Int@, (Sequence@) { Sequence@; }) { M@<Unit@>; }
-  Table = (OStream@<M@> out, Profile@ profile, Table@ table, Int@ total,
-    (Sequence@) { Sequence@; } link) {
-    Unit@ _ := m.do(O.PutLine(out, Str|'<table>'));
+  (Profile@, Table@, Int@, (Sequence@) { Sequence@; }) { Output@; }
+  Table = (Profile@ profile, Table@ table, Int@ total, (Sequence@) { Sequence@; } link) {
+    Unit@ _ := Do(StringE|'<table>\n');
 
-    (Sequence@) { M@<Unit@>; }
+    (Sequence@) { Output@; }
     SeqNames = (Sequence@ seq) {
-      seq.?(empty: m.return(Unit));
+      seq.?(empty: Return);
 
       BlockId@ block = seq.items.head;
       Maybe@<Block@> mname = Blocks.Lookup(profile.blocks, block);
@@ -180,47 +185,46 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
           ToString(Format|'block %s not found'[/Std/Int/Show%.Show(block)]));
         Format|'??%s??'[/Std/Int/Show%.Show(block)];
       };
-      Unit@ _ := m.do(O.Show(out, name));
-      seq.items.tail.?(empty: m.return(Unit));
+      Unit@ _ := Do(name);
+      seq.items.tail.?(empty: Return);
 
-      Unit@ _ := m.do(O.PutChar(out, Char|';'));
+      Unit@ _ := Do(Put(Char|';'));
       SeqNames(seq.items.tail);
     };
 
-    (Sequence@) { M@<Unit@>; }
+    (Sequence@) { Output@; }
     SeqBlocks = (Sequence@ seq) {
-      seq.?(empty: m.return(Unit));
+      seq.?(empty: Return);
 
       BlockId@ block = seq.items.head;
-      Output@ name = /Std/Int/Show%.Show(block);
-      Unit@ _ := m.do(O.Show(out, name));
-      seq.items.tail.?(empty: m.return(Unit));
+      Unit@ _ := Do(/Std/Int/Show%.Show(block));
+      seq.items.tail.?(empty: Return);
 
-      Unit@ _ := m.do(O.PutChar(out, Char|','));
+      Unit@ _ := Do(Put(Char|','));
       SeqBlocks(seq.items.tail);
     };
 
-    (Entry@) { M@<Unit@>; }
+    (Entry@) { Output@; }
     Row = (Entry@ entry) {
-      Unit@ _ := m.do(O.Show(out,
+      Unit@ _ := Do(
           Format|'<tr><td>%s</td><td>%s</td><td><a href="/seq/'[
             Percent(entry.value, total),
-            /Std/Int/Show%.Show(entry.value)]));
-      Unit@ _ := m.do(SeqBlocks(link(entry.seq)));
-      Unit@ _ := m.do(O.PutStr(out, Str|'">'));
-      Unit@ _ := m.do(SeqNames(entry.seq));
-      O.PutLine(out, Str|'</a></td></tr>');
+            /Std/Int/Show%.Show(entry.value)]);
+      Unit@ _ := Do(SeqBlocks(link(entry.seq)));
+      Unit@ _ := Do(StringE|'">');
+      Unit@ _ := Do(SeqNames(entry.seq));
+      StringE|'</a></td></tr>\n';
     };
 
-    (List@<Entry@>) { M@<Unit@>; }
+    (List@<Entry@>) { Output@; }
     Rows = (List@<Entry@> entries) {
-      entries.?(empty: m.return(Unit));
-      Unit@ _ := m.do(Row(entries.items.head));
+      entries.?(empty: Return);
+      Unit@ _ := Do(Row(entries.items.head));
       Rows(entries.items.tail);
     };
 
-    Unit@ _ := m.do(Rows(table));
-    O.PutLine(out, Str|'</table>');
+    Unit@ _ := Do(Rows(table));
+    StringE|'</table>\n';
   };
 
   Args@ args = GetArgs(argv, DefaultArgs);
@@ -273,55 +277,51 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
 
   Profile@ profile = parsed.ok;
 
-  (OStream@<M@>) { M@<Unit@>; }
-  OverviewPage = (OStream@<M@> out) {
+  Output@ OverviewPage = {
     Int@ total = Total.Total(profile);
-    Unit@ _ := m.do(O.PutLine(out, Str|'<h1>Overview</h1>'));
-    Unit@ _ := m.do(O.PutLine(out, Concat[Str|'Profile: ', args.file, Str|'<br />']));
-    Unit@ _ := m.do(O.ShowLine(out, Format|'Samples: %s<br />'[/Std/Int/Show%.Show(total)]));
-    O.ShowLine(out, Format|'Sequences: %s<br />'[/Std/Int/Show%.Show(Length(profile.samples))]);
+    Unit@ _ := Do(StringE|'<h1>Overview</h1>\n');
+    Unit@ _ := Do(FormatE|'Profile: %s<br />\n'[String(args.file)]);
+    Unit@ _ := Do(FormatE|'Samples: %s<br />\n'[/Std/Int/Show%.Show(total)]);
+    FormatE|'Sequences: %s<br />\n'[/Std/Int/Show%.Show(Length(profile.samples))];
   };
 
-  (OStream@<M@>) { M@<Unit@>; }
-  OverallPage = (OStream@<M@> out) {
-    Unit@ _ := m.do(O.PutLine(out, Str|'<h1>Frames by overall time</h1>'));
+  Output@ OverallPage = {
+    Unit@ _ := Do(StringE|'<h1>Frames by overall time</h1>\n');
     Table@ table = Overall.Query(profile);
     Int@ total = Total.Total(profile);
-    Table(out, profile, table, total, (Sequence@ s) { s; });
+    Table(profile, table, total, (Sequence@ s) { s; });
   };
 
-  (OStream@<M@>) { M@<Unit@>; }
-  SelfPage = (OStream@<M@> out) {
-    Unit@ _ := m.do(O.PutLine(out, Str|'<h1>Frames by self time</h1>'));
+  Output@ SelfPage = {
+    Unit@ _ := Do(StringE|'<h1>Frames by self time</h1>\n');
     Table@ table = Self.Query(profile);
     Int@ total = Total.Total(profile);
-    Table(out, profile, table, total, (Sequence@ s) { s; });
+    Table(profile, table, total, (Sequence@ s) { s; });
   };
 
-  (OStream@<M@>) { M@<Unit@>; }
-  SeqsPage = (OStream@<M@> out) {
-    Unit@ _ := m.do(O.PutLine(out, Str|'<h1>Full Sequences</h1>'));
+  Output@ SeqsPage = {
+    Unit@ _ := Do(StringE|'<h1>Full Sequences</h1>\n');
     Table@ table = Sequences.Query(profile);
     Int@ total = Total.Total(profile);
-    Table(out, profile, table, total, (Sequence@ s) { s; });
+    Table(profile, table, total, (Sequence@ s) { s; });
   };
 
-  (OStream@<M@>, Sequence@) { M@<Unit@>; }
-  SeqPage = (OStream@<M@> out, Sequence@ seq) {
-    Unit@ _ := m.do(O.PutLine(out, Str|'<h1>Sequence</h1>'));
+  (Sequence@) { Output@; }
+  SeqPage = (Sequence@ seq) {
+    Unit@ _ := Do(StringE|'<h1>Sequence</h1>\n');
     Int@ total = Total.Total(profile);
     Table@ sequence = Sequence.Sequence(seq, profile);
-    Unit@ _ := m.do(Table(out, profile, sequence, total, (Sequence@ s) { s; }));
+    Unit@ _ := Do(Table(profile, sequence, total, (Sequence@ s) { s; }));
 
-    Unit@ _ := m.do(O.PutLine(out, Str|'<h1>Incoming</h1>'));
+    Unit@ _ := Do(StringE|'<h1>Incoming</h1>\n');
     Int@ ss_total = Total.Contains(profile, seq);
     Table@ incoming = Sequence.Incoming(seq, profile);
-    Unit@ _ := m.do(Table(out, profile, incoming, ss_total,
+    Unit@ _ := Do(Table(profile, incoming, ss_total,
         (Sequence@ s) { Append(s, seq); }));
 
-    Unit@ _ := m.do(O.PutLine(out, Str|'<h1>Outgoing</h1>'));
+    Unit@ _ := Do(StringE|'<h1>Outgoing</h1>\n');
     Table@ outgoing = Sequence.Outgoing(seq, profile);
-    Table(out, profile, outgoing, ss_total,
+    Table(profile, outgoing, ss_total,
       (Sequence@ s) { Append(seq, s); });
   };
 
@@ -358,35 +358,37 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
 
     Unit@ _ := m.do(O.PutStr(ios.out, Lines[/Pprof/Server/Menu%.Menu]));
 
-    /Std/String/Eq%.Eq(Str|'/', path).?(true: OverviewPage(ios.out));
-    /Std/String/Eq%.Eq(Str|'/overall', path).?(true: OverallPage(ios.out));
-    /Std/String/Eq%.Eq(Str|'/self', path).?(true: SelfPage(ios.out));
-    /Std/String/Eq%.Eq(Str|'/seqs', path).?(true: SeqsPage(ios.out));
+    Put@<M@, Output@> out = OStream(ios.out, m).put;
+    /Std/String/Eq%.Eq(Str|'/', path).?(true: out $ OverviewPage);
+    /Std/String/Eq%.Eq(Str|'/overall', path).?(true: out $ OverallPage);
+    /Std/String/Eq%.Eq(Str|'/self', path).?(true: out $ SelfPage);
+    /Std/String/Eq%.Eq(Str|'/seqs', path).?(true: out $ SeqsPage);
 
     /Std/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
       List@<String@> ids = Split(Drop(path, Int|5), Str|',');
-      SeqPage(ios.out, /Std/List%.Map(ids, /Core/Int/Read%.Read));
+      out $ SeqPage(/Std/List%.Map(ids, /Core/Int/Read%.Read));
     });
 
-    O.PutStr(ios.out, Lines[
-      StrE|'<h1>Unsupported Request</h1>',
-      StrE|'<h2>Request Info</h2>',
-      Concat[StrE|'Method: ', method, StrE|' <br/>'],
-      Concat[StrE|'Path: ', path, StrE|' <br/>'],
-      Concat[StrE|'Query: ', query, StrE|' <br/>'],
-      Concat[StrE|'Version: ', version, StrE|' <br/>']]);
+    out $ /Std/Char/Output%.Lines[
+      StringE|'<h1>Unsupported Request</h1>',
+      StringE|'<h2>Request Info</h2>',
+      FormatE|'Method: %s <br/>'[String $ method],
+      FormatE|'Path: %s <br/>'[String $ path],
+      FormatE|'Query: %s <br/>'[String $ query],
+      FormatE|'Version: %s <br/>'[String $ version]];
   };
 
   args.benchmark.?(true: {
     # Run through a few different queries to act as a benchmark.
-    Unit@ _ := m.do(OverviewPage(stdio.out));
-    Unit@ _ := m.do(OverallPage(stdio.out));
-    Unit@ _ := m.do(SelfPage(stdio.out));
-    Unit@ _ := m.do(SeqsPage(stdio.out));
+    Put@<M@, Output@> out = OStream(stdio.out, m).put;
+    Unit@ _ := m.do(out $ OverviewPage);
+    Unit@ _ := m.do(out $ OverallPage);
+    Unit@ _ := m.do(out $ SelfPage);
+    Unit@ _ := m.do(out $ SeqsPage);
 
     profile.samples.?(empty: m.return(Success));
     Sequence@ seq = List[Last(profile.samples.items.head.sequence)];
-    Unit@ _ := m.do(SeqPage(stdio.out, seq));
+    Unit@ _ := m.do(out $ SeqPage(seq));
     m.return(Success);
   });
 
