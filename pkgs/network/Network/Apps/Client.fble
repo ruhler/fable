@@ -3,6 +3,12 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% String = /Std/Char/Output%.String;
+% StringE = /Std/Char/Ascii/Output%.StringE;
+
 @ Int@ = /Std/Int%.Int@;
 % Neg = /Std/Int%.Neg;
 % Decr = /Std/Int%.Decr;
@@ -28,7 +34,6 @@
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
-% StrE = /Std/Char/Ascii%.StrE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -100,9 +105,10 @@ GetArgs = (List@<String@> args, Args@ default) {
 };
 
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
-  % O = /Core/Stream/OStream%(m);
-
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
+  Put@<M@, Output@> err = OStream(stdio.err, m).put;
+
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(n, m));
 
   (Int@, IStream@<M@>, OStream@<M@>) { M@<Unit@>; }
@@ -118,25 +124,26 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Unit@ _ := m.do(O.PutStr(stdio.out, /Network/Apps/Echo/Usage%));
+    Unit@ _ := m.do(out $ String $ /Network/Apps/Echo/Usage%);
     m.return(Success);
   });
 
   args.error.?(items: {
-    Unit@ _ := m.do(O.PutStr(stdio.err, args.error));
-    Unit@ _ := m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
+    Unit@ _ := m.do(err $ String $ args.error);
+    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
     m.return(Failure);
   });
 
   Maybe@<IOStream@<M@>> mios := m.do(sockets.client(args.hostname, args.port));
   mios.?(nothing: {
-    Unit@ _ := m.do(O.PutLine(stdio.err, Str|'unable to connect'));
+    Unit@ _ := m.do(err $ StringE|'unable to connect\n');
     m.return(Failure);
   });
 
   IOStream@<M@> ios = mios.just;
+  Put@<M@, Output@> os = OStream(ios.out, m).put;
 
-  Unit@ _ := m.do(O.PutStr(ios.out, args.message));
+  Unit@ _ := m.do(os $ String $ args.message);
   Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, stdio.out));
   m.return(Success);
 };

@@ -6,6 +6,12 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>% OStream = /Core/Stream/Char%.OStream;
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% String = /Std/Char/Output%.String;
+% StringE = /Std/Char/Ascii/Output%.StringE;
+
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 
 @ Int@ = /Std/Int%.Int@;
@@ -35,7 +41,6 @@
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
-% StrE = /Std/Char/Ascii%.StrE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -101,34 +106,36 @@ GetArgs = (List@<String@> args, Args@ default) {
 };
 
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
-  % O = /Core/Stream/OStream%(m);
-
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
+  Put@<M@, Output@> out = OStream(stdio.out, m).put;
+  Put@<M@, Output@> err = OStream(stdio.err, m).put;
+
+
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(n, m));
 
   (IStream@<M@>, OStream@<M@>) { M@<Unit@>; }
   ForwardAll = (IStream@<M@> in, OStream@<M@> out) {
     Maybe@<Int@> mb := m.do(in);
-    mb.?(nothing: O.Close(out));
+    mb.?(nothing: out(/Core/Stream%.End));
     Unit@ _ := m.do(out(mb.just));
     ForwardAll(in, out);
   };
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Unit@ _ := m.do(O.PutStr(stdio.out, /Network/Apps/Echo/Usage%));
+    Unit@ _ := m.do(out $ String $ /Network/Apps/Echo/Usage%);
     m.return(Success);
   });
 
   args.error.?(items: {
-    Unit@ _ := m.do(O.PutStr(stdio.err, args.error));
-    Unit@ _ := m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
+    Unit@ _ := m.do(err $ String $ args.error);
+    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
     m.return(Failure);
   });
 
   Maybe@<Server@<M@>> ms := m.do(sockets.server(args.hostname, args.port));
   ms.?(nothing: {
-    Unit@ _ := m.do(O.PutLine(stdio.err, Str|'unable to serve'));
+    Unit@ _ := m.do(err $ StringE|'unable to serve\n');
     m.return(Failure);
   });
 
