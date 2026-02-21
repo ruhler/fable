@@ -1,0 +1,37 @@
+
+@ Char@ = /Std/Char%.Char@;
+% IsNewline = /Core/Char/Type%.IsNewline;
+
+<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
+
+<@>% List = /Std/List%.List;
+<@>% Items = /Std/List%.Items;
+
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
+@ String@ = /Std/String%.String@;
+
+# Gets everything up to and including the next newline character from stdin.
+# Returns an empty list in case of end of input.
+<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<String@>; }
+GetLine = <<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
+  Maybe@<Char@> c := m.do(in);
+  c.?(nothing: m.return(List<Char@>[]));
+  IsNewline(c.just).?(true: m.return(List[c.just]));
+
+  String@ tail := m.do(GetLine<M@>(in, m));
+  m.return(Items(c.just, tail));
+};
+
+# Gets all the rest of the input stream.
+<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<String@>; }
+GetText = <<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
+  Maybe@<Char@> c := m.do(in);
+  c.?(nothing: m.return(List<Char@>[]));
+
+  String@ tail := m.do(GetText<M@>(in, m));
+  m.return(Items(c.just, tail));
+};
+
+@(GetLine, GetText);

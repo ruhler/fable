@@ -3476,3 +3476,49 @@ Is it worth testing the input side of things too? I'll just want to add
 support for things like GetChar, GetLine, and GetText, which should be easy
 enough. Except it will be annoying to have to pass the monad in everywhere? I
 guess we'll find out.
+
+---
+
+Trouble with type inference.
+  IStream@<M@> in = ...;
+  GetLine(in, m);
+
+Errors out with:
+
+  error: expected type IStream@<Get@<M@>>, but found IStream@<M@>
+   Inferred types:
+     M@: Get@<M@>
+
+What's wrong?
+
+Type of GetLine is:
+
+<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<String@>; }
+
+IStream@ is defined as:
+
+<<@>@>@ IStream@ = <<@>@ M@> { Get@<M@, Maybe@<Char@>>; };
+
+So this looks like:
+
+  Get@<M@, Maybe@<Char@>> in = ...;
+  M@<Maybe@<Char@>> in = ...;
+
+Type of GetLine is:
+  <<@>@ M@>(M@<Maybe@<Char@>>, Monad@<M@>) { M@<String@>; }
+
+I would hope it could infer that properly. Ah. But
+
+ Get@<M@, Maybe@<Char@>> is the same as
+ Get@<M@><Maybe@<Char@>>.
+
+So I can see how it is matching Get@<M@> against M@ then trying to check Char@
+is the same as Maybe@<Char@>. But still seems like it should be able to figure
+this out correctly, because it knows Get@. It should be able to compute
+Get@<M@>, even if M@ is unknown.
+
+Should I ditch Get@ and IStream@, just use: M@<Maybe@<Char@>>?
+
+Or ditch Get@, have IStream@<M@> be M@<Maybe@<Char@>>?
+
+I shouldn't have to. I should be allowed to use extra layers of abstraction.

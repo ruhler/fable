@@ -15,7 +15,7 @@
 % Byte = /Core/Stream%;
 % Char = /Core/Char/Stream%;
 
-# Convert an byte input stream to a character input stream.
+# Convert a byte input stream to a character input stream.
 <<@>@ M@>(Byte.IStream@<M@>, Monad@<M@>) { Char.IStream@<M@>; }
 IStream = <<@>@ M@>(Byte.IStream@<M@> s, Monad@<M@> m) {
   # TODO: Handle unicode characters.
