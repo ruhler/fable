@@ -7,6 +7,8 @@
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
 <<@>@>@ OStream@ = /Core/Char/Stream%.OStream@;
 <<@>@>% OStream = /Core/Stream/Char%.OStream;
+<<@>@>% IStream = /Core/Stream/Char%.IStream;
+<<@>@>% GetLine = /Core/Char/Stream/IStream%.GetLine;
 
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
@@ -50,7 +52,8 @@
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
-<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+<<@>@>@ BinaryIStream@ = /Core/Stream%.IStream@;
+<<@>@>@ CharIStream@ = /Core/Char/Stream%.IStream@;
 
 % ToString = /Std/Char/Output%.ToString;
 % Lines = /Std/Char/Output%.Lines;
@@ -164,8 +167,6 @@ Percent = (Int@ numerator, Int@ denominator) {
 };
 
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
-  % I = /Core/Stream/IStream%(m);
-
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
   Put@<M@, Output@> out = OStream(stdio.out, m).put;
   Put@<M@, Output@> err = OStream(stdio.err, m).put;
@@ -259,7 +260,7 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
   Unit@ _ := m.do(out $
       FormatE|'parsing %s...\n'[/Std/Char/Output%.String(args.file)]);
 
-  Maybe@<IStream@<M@>> fin := m.do(stdio.read(args.file, /Core/Stdio%.Binary));
+  Maybe@<BinaryIStream@<M@>> fin := m.do(stdio.read(args.file, /Core/Stdio%.Binary));
   fin.?(nothing: {
     Unit@ _ := m.do(err $ FormatE|'unable to open ''%s''\n'[
         /Std/Char/Output%.String(args.file)]);
@@ -328,14 +329,14 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
       (Sequence@ s) { Append(seq, s); });
   };
 
-  (IStream@<M@>, Put@<M@, Output@>) { M@<Unit@>; }
-  HandleConnection = (IStream@<M@> is, Put@<M@, Output@> os) {
+  (CharIStream@<M@>, Put@<M@, Output@>) { M@<Unit@>; }
+  HandleConnection = (CharIStream@<M@> is, Put@<M@, Output@> os) {
     # Get the start line
-    String@ start := m.do(I.GetLine(is));
+    String@ start := m.do(GetLine(is, m));
 
     # Skip past the request headers. We don't care about those.
     M@<Unit@> SkipHeaders = {
-      String@ line := m.do(I.GetLine(is));
+      String@ line := m.do(GetLine(is, m));
       /Std/String/Eq%.Eq(StrE|'\r\n', line).?(true: m.return(Unit));
       SkipHeaders;
     };
@@ -396,7 +397,8 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
   M@<Unit@> Serve = {
     IOStream@<M@> ios := m.do(s);
     OStream@<M@> os = OStream(ios.out, m);
-    Unit@ _ := m.do(HandleConnection(ios.in, os.put));
+    CharIStream@<M@> is = IStream(ios.in, m);
+    Unit@ _ := m.do(HandleConnection(is, os.put));
     Unit@ _ := m.do(os.close);
     Serve;
   };
