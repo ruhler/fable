@@ -1,0 +1,188 @@
+Random
+======
+
+I want a library for pseudo random number generation. Primary initial use is
+in games: random food spawning points, random puzzle generations, etc.
+
+Right now I have LFSR. In general pseudo random number generators are a
+sequences of states of some arbitrary type S@ depending on the generator,
+where each state S@ has some number of pseudo random bits associated with it,
+again depending on the generator.
+
+For example, my 8 bit LFSR has 8 bits of state S@, and each state has 1 bit of
+randomness associated with it.
+
+Once we have the interface for a pseudo random number generator, we can
+compose that together all sorts of ways for higher level use cases. Like, get
+a random Int@ in some range. Or draw from some distribution.
+
+The particular choice of random number generator matters because:
+* Some are clearly better than others, depending on the use case.
+* To be able to repeat a sequence across different runs, you need to be able
+  to identify a particular generator to reuse given your seed.
+* Over time, better generators are discovered and likely to be generally
+  adopted.
+
+High level questions are:
+* What should the low level interface for random number generators be?
+* Which particular random number generators should I provide as part of the
+  library?
+* Should we have a default recommended random number generator for people to
+  use?
+* What high level interface should I provide for getting random things?
+
+The user of a low level random number generator wants a way to capture the
+seed, store it somewhere, and reuse it later across different invocations.
+Let's be honest, a seed is a representation of the state S@. We could store it
+as a String@ or an Int@ generically I suppose. Or allow custom seeds depending
+on the random number generator chosen.
+
+If we are all within fble, we could pass around the State S@ explicitly as the
+seed.
+
+A relevant question for the low level interface is if we want to reuse that
+same interface for true random numbers, which presumably come from outside of
+fble.
+
+If we didn't care about true random numbers, I might have a simple interface
+like:
+
+  <@>@ Generator = <@ S@> { *(
+    (S@) { List@<Bit@>; } RandomBits,
+    (S@) { S@; } Next
+  ); };
+
+Here I decided to return a list of bits because it makes clear from the list
+how many bits of randomness you get from the state. Other options could be to
+return an Int@ and have a separate parameter describing the range of Int@ that
+is returned.
+  
+I think it's important to allow the generator to return its natural number
+random bits at a time, rather than say force it to return 1 bit or a requested
+number of bits, because that makes sure we can clearly identify a particular
+state. Alternatively, we could require S@ to track substates, conceptually
+some RealS@ plus a List@<Bit@> of bits not yet consumed from the previous
+state.
+
+Instead of having two separate functions, we could have a single function that
+advances the state and returns the random bits all at once.
+
+  (S@) { *(S@ next, List@<Bit@> rand); }
+
+That's how LFSR works. LFSR also has the option to inject entropy in the
+stream, for example to change the sequence depending on whether you move some
+direction up, down, left, right in the snake game. I suppose we could always
+inject entropy by choosing to advance the state N number of times? That might
+not be the most effective approach, depending on the generator being used.
+
+Perhaps the most natural way to interact with a random number generator is
+monadically:
+
+  <<@>@>@ Random@ = <<@>@ M@> { M@<List@<Bit@>>; }
+
+A single operation to get the next available bits and advance the state. Or,
+optionally, we give a way to get/set the seed:
+    
+  <<@>@>@ Random@ = <<@>@ M@> { *(
+    State@<M@, Int@> seed,
+    M@<List@<Bit@>> random
+  ); };
+
+What's nice about this interface:
+* It works for true random numbers, because we don't have to mention the type
+  of state S@ anywhere, that's hidden inside of M@ and generalized away by
+  generic seed type Int@.
+* We could generalize the interface to return a particular type randomly:
+  Random@<M@, Foo@>. The underlying generator can be of type Random@<M@,
+  List@<Bit@>>, or whatever it prefers. We build ways to get other types of
+  objects randomly on top of that.
+
+We could implement Random@ by providing a state monad on M@ for the type of
+random number generator:
+
+  <<@>@ M@>(State@<M@, LFSR@>, Monad@<M@>) { Random@<Bit@>; }
+  LFSR = ...;
+
+And hey, if you are passing the State@, you may as well keep it to control
+seeding rather than have that be part of the Random@ interface.
+
+And we could always provide State@ and Monad@ instances for a custom StateM@
+type for anyone who would rather have the interface above:
+
+  (S@) { *(S@ next, List@<Bit@> rand); }
+
+So, instead of things like:
+
+(LFSR@, List@<Pos@>) { Pos@; } GetNextFood = (LFSR@ rand, List@<Pos@> snake) {
+  Shifted@<Int@> row = ShiftInt(rand, MaxRow);
+  Shifted@<Int@> col = ShiftInt(row.lfsr, MaxCol);
+
+We would have something like... well, first off, I would rather change
+GetNextFood to be M@ so we can ShiftInt twice using Do and := syntax. But
+otherwise you still can do:
+
+(LFSR@, List@<Pos@>) { Pos@; } GetNextFood = (LFSR@ rand, List@<Pos@> snake) {
+  StateM@<Int@> row = RandInt(MaxRow, LFSR, StateM<LFSR@>, rand);
+  StateM@<Int@> col = RandInt(MaxCol, LFSR, StateM<LFSR@>, row.lfsr);
+
+Which is honestly just as easy. Well, details are probably wrong, but I think
+it should be pretty easy.
+
+And hey, we don't even really need to define 'Random' as a thing, because it's
+literally just: M@<Foo@>.
+
+So, for example, LFSR could be:
+
+  # Get random bits from a linear feedback shift register.
+  <<@>@ M@>(State@<M@, LFSR@>, Monad@<M@>) { M@<Bit@>; } LFSR;
+
+Perhaps we should define a generator to standardize the low level feature
+support. Basically what our atomic operation is going to be:
+
+  <<@>@>@ RandomGenerator@ = <<@>@ M@> { M@<List@<Bit@>>; };
+
+On top of which we can build RandInt, RandList, RandMaybe, RandFoo,
+RandNormal, etc. Where each individual operation uses as many bits as it can
+and as few state transitions as it can, but the smallest operation is an
+integer number of underlying state transitions so we can always capture a
+meaningful seed in between operations.
+
+Sounds like a plan to me. In summary:
+* The low level interface is M@<List@<Bit@>>;
+* Many of the generators will be constructed with State@ as an argument, which
+  is what you can use to get/set the seed associated with that state.
+* Maybe we provide convenient ways to convert a seed S@ to an Int@. Or maybe
+  not.
+
+I wonder if it's better to ask for a specific number of bits. If the low level
+operation knows how many bits it needs, and we know that we aren't going to
+ask only once for all the bits we need, and we know that has to correspond to
+an integer number of state transitions, then we may as well have the interface
+be:
+
+  (Int@) { M@<Int@>; }
+
+Where the argument is the number of bits of randomness desired, and we return
+an Int@ in the range 0 to 2^n-1.
+
+That moves the onus for repeat calling into the generator though. Wouldn't it
+be better to move that common logic elsewhere? So the generator only has to
+care about how many bits of randomness it can naturally return anyway? I kind
+of think so.
+
+---
+
+So far I've assumed we want to be able to read out the current state and
+reseed back to that. But maybe we don't need to be so powerful. Maybe we just
+need to say: if you start with this Int@ seed, we can go into a deterministic
+state S@ of the random generator.
+
+That gives a simpler interface for seeding, perhaps. For example, LFSR@ could
+provide a Seed function of type (Int@) { LFSR@; }, along with whatever other
+parameters you have.
+
+If we wanted to and it's clear how, we could provide a way to convert S@ to
+the Int@ that produces S@ when using the Int@ as a seed. If it's feasible. But
+also not required.
+
+

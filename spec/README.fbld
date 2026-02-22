@@ -111,7 +111,7 @@
   Imagine for this example that the spec says there should be a compile error
   at location 3:4, but the implementation incorrectly fails to give any error.
   The sequence above says that currently the test is expected to fail, the
-  behavior we see in practice is no-error. If every worked according to the
-  spec, we would see compile-error 3:4. Note that the presence of the no-error
-  line causes all subsequent @l{@@fble-test@@} lines to be ignored, including
-  the compile-error 3:4 line.
+  behavior we see in practice is no-error. If everything worked according to
+  the spec, we would see compile-error 3:4. Note that the presence of the
+  no-error line causes all subsequent @l{@@fble-test@@} lines to be ignored,
+  including the compile-error 3:4 line.
