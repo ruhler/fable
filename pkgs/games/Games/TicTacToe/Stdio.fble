@@ -120,7 +120,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
     Unit@ _ := m.do(out $ ShowGame(game));
 
-    String@ line := m.do(GetLine<M@>(in, m));
+    String@ line := m.do(GetLine(in, m));
     line.?(empty: m.return(Unit));
 
     Maybe@<Input@> mi = ParseInput(line);

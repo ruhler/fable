@@ -20,7 +20,7 @@ GetLine = <<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
   c.?(nothing: m.return(List<Char@>[]));
   IsNewline(c.just).?(true: m.return(List[c.just]));
 
-  String@ tail := m.do(GetLine<M@>(in, m));
+  String@ tail := m.do(GetLine(in, m));
   m.return(Items(c.just, tail));
 };
 

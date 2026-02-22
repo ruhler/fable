@@ -13,7 +13,9 @@
 # Character input stream.
 #   Get's the next character in the input stream. Gets nothing if the end of
 #   the stream has been reached.
-<<@>@>@ IStream@ = <<@>@ M@> { Get@<M@, Maybe@<Char@>>; };
+# TODO: Reuse Get@ if/when the type inference issue is worked out.
+# <<@>@>@ IStream@ = <<@>@ M@> { Get@<M@, Maybe@<Char@>>; };
+<<@>@>@ IStream@ = <<@>@ M@> { M@<Maybe@<Char@>>; };
 
 # Character output stream.
 <<@>@>@ OStream@ = <<@>@ M@> { *(

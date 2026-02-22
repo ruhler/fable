@@ -46,7 +46,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
   (List@<String@>) { M@<List@<String@>>; }
   PrependReversedLines = (List@<String@> lines) {
-    String@ next := m.do(GetLine<M@>(in, m));
+    String@ next := m.do(GetLine(in, m));
     next.?(empty: m.return(lines));
     PrependReversedLines(Items(next, lines));
   };
