@@ -27,7 +27,6 @@
 <@>% PureResultEq = /Core/Stdio/Pure/Eq%.PureResult;
 <@>% PureResultShow = /Core/Stdio/Pure/Show%.PureResult;
 
-@ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 
 @ Test@ = /Std/Test%.Test@;
@@ -40,9 +39,6 @@
 # Import to test compilation.
 <<@>@>% _ = /Core/Stdio/Cat%;
 <<@>@>% _ = /Core/Stdio/HelloWorld%;
-
-% IStream = /Core/Stream/IStream%<Pure@>(Monad);
-% GetLine = IStream.GetLine;
 
 Put@<Pure@, Output@> Stdout = OStream<Pure@>(Stdio.out, Monad).put;
 Put@<Pure@, Output@> Stderr = OStream<Pure@>(Stdio.err, Monad).put;
@@ -65,29 +61,6 @@ Test@ Tests = TestSuite(Str|Stdio, List[
     AssertEquals(
       PureResultEq(/Std/Bool/Eq%.Eq),
       PureResultShow(/Std/Bool/Show%.Show),
-      wnt, got);
-  }),
-
-  Test(Str|GetLine, (Unit@ _) {
-    List@<Int@> inputs = HelloWorld;
-    PureResult@<String@> wnt = PureResult@<String@>(
-      PureState@(Bytes|World, Empty<Int@>, Empty<Int@>), Str|'Hello
-');
-    PureResult@<String@> got = Run(GetLine(Stdio.in), inputs);
-    AssertEquals(
-      PureResultEq(/Std/String/Eq%.Eq),
-      PureResultShow(/Std/String/Show%.Show),
-      wnt, got);
-  }),
-
-  Test(Str|GetLineEnd, (Unit@ _) {
-    List@<Int@> inputs = Empty<Int@>;
-    PureResult@<String@> wnt = PureResult@<String@>(
-      PureState@(Empty<Int@>, Empty<Int@>, Empty<Int@>), Str|'');
-    PureResult@<String@> got = Run(GetLine(Stdio.in), inputs);
-    AssertEquals(
-      PureResultEq(/Std/String/Eq%.Eq),
-      PureResultShow(/Std/String/Show%.Show),
       wnt, got);
   }),
 

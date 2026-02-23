@@ -4,6 +4,8 @@
 % False = /Std/Bool%.False;
 
 <<@>@>% OStream = /Core/Stream/Char%.OStream;
+<<@>@>% IStream = /Core/Stream/Char%.IStream;
+<<@>@>% GetText = /Core/Char/Stream/IStream%.GetText;
 
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;
@@ -319,7 +321,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   Maybe@<IStream@<M@>> istream := m.do(stdio.read(file, /Core/Stdio%.Text));
   Model@ model := m.do({
       istream.?(nothing: m.return(Model(Grid.Empty<Gate@>, Grid.Empty<Car@>)));
-      String@ text := m.do(/Core/Stream/IStream%(m).GetText(istream.just));
+      String@ text := m.do(GetText(IStream(istream.just, m), m));
       m.return(/Computrainer/Model/Load%.Model(text));
   });
 

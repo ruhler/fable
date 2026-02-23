@@ -2,6 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Add tests for /Core/Char/Stream/IStream%.GetLine.
+
 * Bug in type inference?
  - See /SpecTests/6.4-TypeInference/Regression/Getline%
 

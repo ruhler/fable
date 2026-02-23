@@ -1,6 +1,8 @@
 
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
 <<@>@>% OStream = /Core/Stream/Char%.OStream;
+<<@>@>% IStream = /Core/Stream/Char%.IStream;
+<<@>@>% GetText = /Core/Char/Stream/IStream%.GetText;
 % String = /Std/Char/Output%.String;
 
 <@>@ List@ = /Std/List%.List@;
@@ -18,8 +20,6 @@
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % Format = /Std/Char/Ascii/Output%.Format;
-
-<<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
@@ -45,7 +45,6 @@
 # Main --
 #   Main function for fbld program.
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
-  % I = /Core/Stream/IStream%(m);
   Put@<M@, Output@> out = OStream(stdio.out, m).put;
   Put@<M@, Output@> err = OStream(stdio.err, m).put;
 
@@ -56,7 +55,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     tail.failed.?(true: m.return(tail));
 
     String@ filename = filenames.items.head;
-    Maybe@<IStream@<M@>> fin := m.do({
+    Maybe@</Core/Stream%.IStream@<M@>> fin := m.do({
       /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
       stdio.read(filename, /Core/Stdio%.Text);
     });
@@ -66,7 +65,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
       m.return(Error<List@<Text@>>(Unknown, msg));
     });
 
-    String@ contents := m.do(I.GetText(fin.just));
+    String@ contents := m.do(GetText(IStream(fin.just, m), m));
     Text@ text = Text(Start(filename), contents);
     m.return(Ok(Items(text, tail.value.just)));
   };

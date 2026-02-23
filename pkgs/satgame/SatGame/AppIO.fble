@@ -1,6 +1,8 @@
 
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
 <<@>@>% OStream = /Core/Stream/Char%.OStream;
+<<@>@>% IStream = /Core/Stream/Char%.IStream;
+<<@>@>% GetText = /Core/Char/Stream/IStream%.GetText;
 <@>@ Output@ = /Std/Char/Output%.Output@;
 
 @ Int@ = /Std/Int%.Int@;
@@ -70,8 +72,6 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
 	Maybe@<String@> home := m.do(/Core/Env/Native%.GetVar<M@>(n, m, Str|HOME));
 
-  % I = /Core/Stream/IStream%(m);
-
   # Read and update the default seed value.
   Int@ seed := m.do({
     home.?(nothing: m.return(Int|0));
@@ -81,7 +81,7 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
 
     Int@ seed := m.do({
       istream.?(nothing: m.return(Int|0));
-      String@ text := m.do(I.GetText(istream.just));
+      String@ text := m.do(GetText(IStream(istream.just, m), m));
       m.return(/Core/Int/Read%.Read(text));
     });
 

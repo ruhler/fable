@@ -1,5 +1,7 @@
 
 <<@>@>% OStream = /Core/Stream/Char%.OStream;
+<<@>@>% IStream = /Core/Stream/Char%.IStream;
+<<@>@>% GetText = /Core/Char/Stream/IStream%.GetText;
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % String = /Std/Char/Output%.String;
 
@@ -20,7 +22,6 @@
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 % Success = /Core/Stdio%.Success;
 
-<<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 @ String@ = /Std/String%.String@;
@@ -51,14 +52,13 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
   });
 
   Get@<M@, Int@> get_high_score = {
-    % I = /Core/Stream/IStream%(m);
     home.?(nothing: m.return(Int|0));
 
     String@ filename = Append(home.just, Str|'/.fble-invaders');
-    Maybe@<IStream@<M@>> istream := m.do(stdio.read(filename, /Core/Stdio%.Text));
+    Maybe@</Core/Stream%.IStream@<M@>> istream := m.do(stdio.read(filename, /Core/Stdio%.Text));
     istream.?(nothing: m.return(Int|0));
 
-    String@ text := m.do(I.GetText(istream.just));
+    String@ text := m.do(GetText(IStream(istream.just, m), m));
     m.return(/Core/Int/Read%.Read(text));
   };
 
