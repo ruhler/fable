@@ -5,13 +5,16 @@
 
 #include "stdio.fble.h"
 
+#include <locale.h>     // for setlocale, LC_CTYPE
 #include <stdlib.h>     // for getenv
 #include <stdio.h>      // for FILE, fprintf, fflush, fgetc
+#include <wchar.h>      // for wint_t, fgetwc
 
 #include <fble/fble-alloc.h>       // for FbleFree
 #include <fble/fble-program.h>     // for FblePreloadedModule
 #include <fble/fble-value.h>       // for FbleValue, etc.
 
+#include "char.fble.h"        // for FbleNewCharValue, FbleCharValueAccess
 #include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"      // for FbleNewStringValue, FbleStringValueAccess
 
@@ -21,6 +24,9 @@
 #define RESULT_FIELDC 2
 #define MODE_TAGWIDTH 1
 
+static FbleValue* ICharStreamImpl(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args);
 static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
@@ -36,11 +42,16 @@ static FbleValue* WriteImpl(
 static FbleValue* StdioImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
+static FbleValue* StdinImpl(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args);
+static FbleValue* ICharStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id);
 static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id);
 static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id);
 static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_id);
 static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_id);
 static FbleValue* Stdio(FbleValueHeap* heap, FbleBlockId profile_block_id);
+static FbleValue* Stdin(FbleValueHeap* heap, FbleBlockId profile_block_id);
 
 
 // -Wpedantic doesn't like our initialization of flexible array members when
@@ -54,23 +65,54 @@ static FbleString StrStdio = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str =
 static FbleString StrNative = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Native", };
 
 static FbleString StrModuleBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%", };
+static FbleString StrICharStreamBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%.ICharStream", };
 static FbleString StrIStreamBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%.IStream", };
 static FbleString StrOStreamBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%.OStream", };
 static FbleString StrReadBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%.Read", };
 static FbleString StrWriteBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%.Write", };
 static FbleString StrStdioBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%.Stdio", };
+static FbleString StrStdinBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/Native%.Stdin", };
 
 #pragma GCC diagnostic pop
 
-#define NUM_PROFILE_BLOCKS 6
+#define NUM_PROFILE_BLOCKS 8
 static FbleName ProfileBlocks[] = {
   { .name = &StrModuleBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+  { .name = &StrICharStreamBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrIStreamBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrOStreamBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrReadBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrWriteBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrStdioBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+  { .name = &StrStdinBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
 };
+
+/**
+ * @func[ICharStreamImpl] FbleRunFunction to read a character from a file.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is @l{(Unit@) { @<Maybe@<Char@>>; }}.
+ *
+ *  @sideeffects
+ *   Reads a byte from the file.
+ */
+static FbleValue* ICharStreamImpl(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  (void)profile;
+  (void)args;
+
+  FILE* file = (FILE*)FbleNativeValueData(function->statics[0]);
+
+  wint_t c = fgetwc(file);
+  if (c == WEOF) {
+    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1);
+  }
+
+  FbleValue* v = FbleNewCharValue(heap, c);
+  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
+}
 
 /**
  * @func[IStreamImpl] FbleRunFunction to read a byte from a file.
@@ -151,8 +193,8 @@ static FbleValue* ReadImpl(
     return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
   }
 
-  // The Read block id is index 3 from the main block id
-  FbleBlockId module_block_id = function->profile_block_id - 3;
+  // The Read block id is index 4 from the main block id
+  FbleBlockId module_block_id = function->profile_block_id - 4;
   FbleValue* stream = IStream(heap, fin, module_block_id);
   return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, stream); // Just(stream)
 }
@@ -182,8 +224,8 @@ static FbleValue* WriteImpl(
     return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
   }
 
-  // The Write block id is index 4 from the main block id
-  FbleBlockId module_block_id = function->profile_block_id - 4;
+  // The Write block id is index 5 from the main block id
+  FbleBlockId module_block_id = function->profile_block_id - 5;
   FbleValue* stream = OStream(heap, fin, module_block_id);
   return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, stream); // Just(stream)
 }
@@ -220,6 +262,53 @@ static FbleValue* StdioImpl(
 }
 
 /**
+ * @func[StdinImpl] FbleRunFunction to generate the native Stdin interface.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (Native@<M@>, Monad@<M@>, Unit@) { IStream@<M@>; }
+ */  
+static FbleValue* StdinImpl(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  (void)profile;
+  (void)args;
+
+  // The Stdin block id is index 7 from the main block id
+  FbleBlockId module_block_id = function->profile_block_id - 7;
+  return ICharStream(heap, stdin, module_block_id);
+}
+
+/**
+ * @func[ICharStream] Allocates an text @l{IStream@} for a file.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FILE*][file] The FILE to allocate the @l{IStream@} for.
+ *  @arg[FbleBlockId][module_block_id]
+ *   The block_id of the /Core/Stdio/Native% block.
+ *
+ *  @returns[FbleValue*] An fble @l{IStream@} function value.
+ *
+ *  @sideeffects
+ *   Allocates a value on the heap.
+ */
+static FbleValue* ICharStream(FbleValueHeap* heap, FILE* file, FbleBlockId module_block_id)
+{
+  FbleValue* native = FbleNewNativeValue(heap, file, NULL);
+
+  FbleExecutable exe = {
+    .num_args = 1,
+    .num_statics = 1,
+    .max_call_args = 0,
+    .run = &ICharStreamImpl,
+  };
+
+  return FbleNewFuncValue(heap, &exe, module_block_id + 1, &native);
+}
+
+/**
  * @func[IStream] Allocates an @l{IStream@} for a file.
  *  @arg[FbleValueHeap*][heap] The value heap.
  *  @arg[FILE*][file] The FILE to allocate the @l{IStream@} for.
@@ -242,7 +331,7 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId module_bl
     .run = &IStreamImpl,
   };
 
-  return FbleNewFuncValue(heap, &exe, module_block_id + 1, &native);
+  return FbleNewFuncValue(heap, &exe, module_block_id + 2, &native);
 }
 
 /**
@@ -268,7 +357,7 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId module_bl
     .run = &OStreamImpl,
   };
 
-  return FbleNewFuncValue(heap, &exe, module_block_id + 2, &native);
+  return FbleNewFuncValue(heap, &exe, module_block_id + 3, &native);
 }
 
 /**
@@ -287,7 +376,7 @@ static FbleValue* Read(FbleValueHeap* heap, FbleBlockId module_block_id)
     .max_call_args = 0,
     .run = &ReadImpl,
   };
-  return FbleNewFuncValue(heap, &exe, module_block_id + 3, NULL);
+  return FbleNewFuncValue(heap, &exe, module_block_id + 4, NULL);
 }
 
 /**
@@ -306,7 +395,7 @@ static FbleValue* Write(FbleValueHeap* heap, FbleBlockId module_block_id)
     .max_call_args = 0,
     .run = &WriteImpl,
   };
-  return FbleNewFuncValue(heap, &exe, module_block_id + 4, NULL);
+  return FbleNewFuncValue(heap, &exe, module_block_id + 5, NULL);
 }
 
 /**
@@ -327,6 +416,24 @@ static FbleValue* Stdio(FbleValueHeap* heap, FbleBlockId module_block_id) {
   return FbleNewFuncValue(heap, &exe, module_block_id + 6, NULL);
 }
 
+/**
+ * @func[Stdin] Allocates an fble Stdin function.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleBlockId][module_block_id]
+ *   The block_id of the /Core/Stdio/Native% block.
+ *  @returns[FbleValue*] The allocated function.
+ *  @sideeffects Allocates an fble value.
+ */
+static FbleValue* Stdin(FbleValueHeap* heap, FbleBlockId module_block_id) {
+  FbleExecutable exe = {
+    .num_args = 3,
+    .num_statics = 0,
+    .max_call_args = 0,
+    .run = &StdinImpl,
+  };
+  return FbleNewFuncValue(heap, &exe, module_block_id + 7, NULL);
+}
+
 static FbleName Core_Stdio_Native_PathEntries[] = {
   { .name = &StrCore, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrStdio, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
@@ -342,10 +449,13 @@ static FbleModulePath Core_Stdio_Native_Path = {
 
 static FbleValue* Core_Stdio_Native_Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* function, FbleValue** args)
 {
+  setlocale(LC_CTYPE, "");
+
   FbleBlockId block_id = function->profile_block_id;
   FblePushFrame(heap);
+  FbleValue* fble_stdin = Stdin(heap, block_id);
   FbleValue* fble_stdio = Stdio(heap, block_id);
-  FbleValue* fble_module = FbleNewStructValue_(heap, 1, fble_stdio);
+  FbleValue* fble_module = FbleNewStructValue_(heap, 2, fble_stdin, fble_stdio);
   return FblePopFrame(heap, fble_module);
 }
 

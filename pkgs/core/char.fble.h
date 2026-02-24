@@ -5,6 +5,8 @@
 #ifndef FBLE_CORE_CHAR_FBLE_H_
 #define FBLE_CORE_CHAR_FBLE_H_
 
+#include <stddef.h>            // for wchar_t
+
 #include <fble/fble-value.h>   // for FbleValue, etc.
 
 /**
@@ -18,7 +20,7 @@
  *  @sideeffects
  *   Allocates a value that must be freed when no longer required.
  */
-FbleValue* FbleNewCharValue(FbleValueHeap* heap, char c);
+FbleValue* FbleNewCharValue(FbleValueHeap* heap, wchar_t c);
 
 /**
  * @func[FbleCharValueAccess] Reads a character type @l{/Std/Char%.Char@}.
@@ -30,6 +32,6 @@ FbleValue* FbleNewCharValue(FbleValueHeap* heap, char c);
  *  @sideeffects
  *   None
  */
-char FbleCharValueAccess(FbleValue* c);
+wchar_t FbleCharValueAccess(FbleValue* c);
 
 #endif // FBLE_CORE_CHAR_FBLE_H_

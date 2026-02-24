@@ -11,13 +11,13 @@
 #include <fble/fble-value.h>   // for FbleValue, etc.
 
 // FbleNewCharValue -- see documentation in char.fble.h
-FbleValue* FbleNewCharValue(FbleValueHeap* heap, char c)
+FbleValue* FbleNewCharValue(FbleValueHeap* heap, wchar_t c)
 {
   return FbleNewStructValue_(heap, 1, FbleNewIntValue(heap, (uint64_t)c));
 }
 
 // FbleCharValueAccess -- see documentation in char.fble.h
-char FbleCharValueAccess(FbleValue* c)
+wchar_t FbleCharValueAccess(FbleValue* c)
 {
-  return FbleIntValueAccess(FbleStructValueField(c, 1, 0));
+  return (wchar_t)FbleIntValueAccess(FbleStructValueField(c, 1, 0));
 }
