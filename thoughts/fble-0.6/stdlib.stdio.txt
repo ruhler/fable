@@ -3522,3 +3522,20 @@ Should I ditch Get@ and IStream@, just use: M@<Maybe@<Char@>>?
 Or ditch Get@, have IStream@<M@> be M@<Maybe@<Char@>>?
 
 I shouldn't have to. I should be allowed to use extra layers of abstraction.
+
+---
+
+Next step for migrating to text based stdin:
+
+We have two use cases that are slightly tricky to convert:
+1. Choosing between stdin and an opened file.
+Not sure why this is hard to convert, but it seems to be.
+
+Might be easiest to start if we provide a helper function to open a text
+stream for read somewhere. Maybe in /Core/Stream/IStream or something. Or
+provide the actual native ones.
+
+2. Apps that we have pure tests for that currently leverage the pure stdio
+monad. I'll need some replacement using streams. Which sounds like state monad
+composition of some kind.
+

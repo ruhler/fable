@@ -1,0 +1,331 @@
+Foreign Function Interface
+==========================
+
+Revisiting the question of having FFI baked into the language.
+
+See thoughts/fble-0.4/foreign_function_interface.txt for background.
+
+I'm thinking about it differently today though. The main goals for me with FFI
+now are:
+* Eliminate the need to write tedious, error prone code for defining profile
+  blocks and FbleExecutables in my native modules.
+* Allow easier mixing of foreign and pure code in the same module.
+
+Concrete examples:
+* I'm pretty sure I have my profile block ids wrong in my implementation of
+  pkgs/core/stdio.fble.c, or I did, or I broke things and didn't notice.
+* It's a pain to add new profile blocks and adjust everything based on
+  position.
+* It's a pain to define the module paths needed for the .path field of an
+  FblePreloadedModule.
+* It's a pain to have FooImpl and Foo wrapper function for every native
+  function.
+* For native getenv, I wanted to define Env@ type in the same module as
+  getenv, and I wanted to provide a Lookup function that translated from the
+  list of pairs to a lookup function in the same module.
+
+Looking at things now, I'm not sure the details quite work out, but the idea
+this time is what if we focus on only having to write the run functions for
+things, and let the compiler do all the rest.
+
+The idea is the compiler needs to know the function type, including number of
+actual arguments, and the name of the symbol, e.g. FbleIStreamImpl. It writes
+the wrapper function and profiling things as needed. Probably best to have the
+syntax be a function type/call like thing:
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = ? FbleStdin <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; };
+
+You can't just use a type or type synonym. We need to know the difference
+between taking an argument and returning a function.
+
+static FbleValue* FbleStdin(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args);
+
+The problem's that show up right away:
+* FbleStdin needs to be a 3 argument function, because it assumes a type for
+  M@ that we aren't allowed to assume on the fble side. Or rather, that I
+  don't want to be allowed to assume on the fble side.
+* FbleStdin wants to return a function with a static value, but if we can do
+  that, we either need to let native code call into fble code, or we're back
+  to square 1 with defining our own FbleValue* functions which require manual
+  block ids.
+
+Oh well. It was worth a try.
+
+---
+
+We don't need to assume any type for M@. Just use the passed Monad instance
+and call return on it. Easy. That's probably a better way to do things anyway.
+
+We don't have to return a function with a static value if we do partial
+applies all on the fble side. For example, have 'stdin' return a File@, and
+have GetChar take that File@ as an argument. On the fble side, we return a
+char IStream by calling stdin, partially applying it to GetChar, and returning
+that.
+
+One concern I have with FFI is that people could abuse it. For example, once I
+implement some FFI function, what's to prevent anyone from using it and
+subverting any type protections?
+
+The answer: have the compiler include the module name in the FFI label. For
+example, if my function is 'Foo' and I instantiate the FFI function literal
+from module /A/B%, then the FFI function we try to call is /A/B%.Foo. But if
+we instantiate an FFI function from some other module /C%, then the FFI
+function we try to call is /C%.Foo, which is a completely different function.
+
+For Stdin as above, it would be nice to define a private File@ type that is
+constructed and deconstructed entirely on the native side. Now we can do
+whatever we want on the native side, so we can use any type at all on the fble
+side. For example, Unit@. And we can restrict that Unit@ to the module in
+question, so other people can't try to construct wrong things. But that
+doesn't prevent us from accidentally constructing the wrong thing.
+
+A suggested workaround: define a single element struct type instead, with some
+unique field name to avoid accidentally mistaking two different types.
+
+ @ File@ = *(Unit@ file);
+
+I don't want to define File@ as an Int@ pointer value, because we don't want
+people to create them out of thin air.
+
+In terms of syntax, what we need abstractly is:
+* The fble type of the function.
+* The name of the FFI function.
+* The (implicit) name of the module instantiating the FFI function.
+* The number of arguments expected by the function.
+
+We could as easily specify the number of arguments separately from the type of
+the function. I think that makes sense.
+
+What kind of syntax would make sense? It's something that takes a type as an
+argument. So put the type first? Or use <...>. Those are the two precedents
+for variations on types. I suppose fields are 'type name'.
+
+Let's play around a bit, shall we?
+
+Say I want an FFI function for:
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; } Stdin;
+
+What's a natural way to write it?
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = ? FbleStdin<<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }>
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; } ? FbleStdin;
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = ? FbleStdin: <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; };
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; } Stdin ?= FbleStdin;
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = ?FbleStdin<@<Stdin>>;
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = ?(FbleStdin <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; });
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = (,)(FbleStdin <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; });
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = !FbleStdin(,) { <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; };};
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = !FbleStdin(,)<<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }>
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = !FbleStdin(,)<@<Stdin>>;
+
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; } Stdin ?= FbleStdin(,);
+
+! <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; } FbleStdin(,);
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = !(<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; } FbleStdin);
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = !FbleStdin(,) { <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }; } FbleStdin);
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = ^FbleStdin(,) { <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }; } FbleStdin);
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = ?FbleStdin(,) { <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }; } FbleStdin);
+
+You can't distinguish between 0 and 1 using the (,,,) syntax.
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = <<@>@ M@>(Native@<M@>, Monad@<M@>) FbleStdio { M@<IStream@<M@>>; };
+
+I guess you can't call a zero argument function, so maybe that's fine?
+
+I feel like I'm leaning towards something like...
+
+    ?<name>(,,) { <type>; }
+
+Where (,,) means it takes 3 arguments. (,) would be 2. () 1.
+
+Because this looks funny with the '?'. It looks like a function value sort of
+with the (,,) { ... }, and we specify the type clearly enough, right?
+
+The shortened version looks pretty nice too:
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = ?FbleStdin(,) { @<Stdin>; };
+
+Cool. Sounds like a decent initial proposal for syntax.
+
+How could we implement it? Something like func value, but different.
+
+Today the interpreter uses FbleNewInterpretedFuncValue to create the function
+value. We just need number of args, number of statics is 0, oh. max_call_args.
+What to do about that? And the run function.
+
+The block id is part of the instruction. That's good. We can reuse that same
+thing for an FbleForeignFuncValueInstr.
+
+What to do about max_call_args? Force it to 0? We can't call a function?
+
+For example, I'm going to want to call Monad.return...
+
+Then I start to wonder why I can't specify these on the C side. The number of
+args and the number of call args, but preferably not the profile block id?
+
+To construct a function value, the backend needs:
+* executable
+ - num_args we want to supply on the C side.
+ - num_statics is 0
+ - max_call_args we want to supply on the C side.
+ - run we want to supply on the C side.
+* profile block id - say this comes from the instruction.
+* statics - say this is always empty.
+
+In short, seems like I want to expose an FbleExecutable in C code rather than
+a run function? How would that look?
+
+static FbleValue* IStream(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args);
+
+FbleExecutable _Fble_2f_Core_2f_Stdio_2f_Native_25_IStream_ = {
+  .num_args = 1,
+  .num_statics = 0,
+  .max_call_args = 0,
+  .run = &IStreamImpl,
+};
+
+A bit more tedious than if we could just specify the function. But it really
+does make sense to supply those as part of the C side of things.
+
+What does that mean for our concrete syntax?
+
+No worries?
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = ?FbleStdin { @<Stdin>; };
+
+Or take advantage of it?
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = @<Stdin>.|FbleStdin;
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }|FbleStdin;
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = @<Stdin>|FbleStdin;
+
+In other words, share concrete syntax with 'literal', only in this case the
+expr is a function type instead of a function value?
+
+Sure. Why not? No new syntax. That makes things easy from that point of view.
+
+Or, use '.' access, but with function type? Like, a function type access?
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }.FbleStdin;
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = @<Stdin>.FbleStdin;
+
+I think the '|' stands out much better, to be honest.
+
+Cool. What do you think? Should I try it out? Draft it up? See if it works,
+how it works, how it feels? Or should we punt to the next release?
+
+The type heap knows the current module. So, I propose we have typecheck.c get
+the module and insert it into our FBLE_FOREIGN_FUNC_VALUE_TC, which will store
+the module path there along with the name. Then have an
+FBLE_FOREIGN_FUNC_INSTR, and the backend deals with it just fine.
+
+It should be easy to implement in C and aarch64 backends. Mangle the module
+name together with the symbol name, assume that gives you a symbol which
+points to an external FbleExecutable or FbleExecutable*? FbleExecutable is
+probably easier to implement.
+
+For the interpreter, we want to pass a list of triples of module path, name,
+and FbleExecutable or pointer to FbleExecutable. Do we have a mechanism for
+that?
+
+Or do we do that in the linker? No, we don't want to crawl through all the
+instructions. How can we pass that context to the interpreter?
+
+Use dlsym magic? Or have some global registry? Actually, a global registry
+sort of makes sense? Except what if we have a single C program that loads two
+different fble code hierarchies? Is that a thing that could happen?
+
+Right now we pass builtin modules to the linker to look for.
+
+Or we could add another argument to RunFunction which is the list of
+registered foreign functions. We could even reuse that for aarch64 and C
+backends if we don't want to do symbol mangling. Or stuff it into the
+FbleValueHeap?
+
+Honestly, FbleValueHeap doesn't sound like a terrible idea. We already have
+tail_call_sentinel, tail_call_buffer, and tail_call_argc.
+
+Okay? Then here's what I'm proposing:
+* Add an API to register a foreign function with an FbleValueHeap. You pass
+  the module name, the function name, and an FbleExecutable (borrowed pointer,
+  or copied value, or whatever).
+* For all backends, the implementation should call FbleForignFuncValue which
+  looks up the module path and function name in the value heap for you. Easy.
+
+Except that requires we populate all the foreign functions we might want in
+the FbleValueHeap. Which is annoying for things I don't want to have to do
+that, like currently sockets. Which suggests maybe we want to support the name
+mangling approach too?
+
+It would be very convenient if we could use name mangling always, instead of
+have to provide all the builtins explicitly to the interpreter.
+
+It's like I want some linker magic that let's every module linked in to add to
+a shared data structure by the shear fact of its being linked in.
+
+---
+
+To get dlsym like behavior on linux:
+* dlsym(NULL, "Foo") seems to work as long as I pass -export-dynamic to gcc.
+
+If I can get it to work on windows too, then we can just go this approach for
+the interpreter, right? Maybe same with builtins?
+
+I guess it doesn't solve the bulitins problem if fble-cli is my interpreter
+binary and doesn't have the foreign functions linked in. That would need to be
+solved with dynamic loading.
+
+---
+
+Turns out it's not hard to do dlsym equivalent on windows. It's just a
+different name, an extra call in place of NULL, and different linker flag.
+
+I vote we try adding ffi this release:
+* To greatly simplify the native implementations of things like stdio.
+* To allow mixing of native and pure fble code in the same module.
+* To establish use of dlsym for searching for symbols, which we could use to
+  replace explicit builtin module lists when linking eventually.

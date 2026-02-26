@@ -3,6 +3,7 @@
 <<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
 <<@>@>% OStream = /Core/Stream/Char%.OStream;
 <<@>@>% IStream = /Core/Stream/Char%.IStream;
+<<@>@>% Read = /Core/Stream/Char%.Read;
 <<@>@>% GetLine = /Core/Char/Stream/IStream%.GetLine;
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
@@ -32,6 +33,8 @@
 # The 'cat' program.
 Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   Put@<M@, Output@> out = OStream(stdio.out, m).put;
+  IStream@<M@> in = IStream(stdio.in, m);
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read = Read(stdio.read, m);
 
   (IStream@<M@>) { M@<Unit@>; } cat = (IStream@<M@> input) {
     String@ line := m.do(GetLine(input, m));
@@ -45,10 +48,10 @@ Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     inputs.?(empty: m.return(Success));
     String@ filename = inputs.items.head;
 
-    Maybe@</Core/Stream%.IStream@<M@>> istream := m.do({
-      /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
-      stdio.read(filename, /Core/Stdio%.Text);
-    });
+    Maybe@<IStream@<M@>> istream := m.do $ {
+      /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(in)));
+      read(filename);
+    };
 
     istream.?(nothing: {
       Unit@ _ := m.do(out $
@@ -56,7 +59,7 @@ Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
       m.return(Failure);
     });
 
-    Unit@ _ := m.do(cat(IStream(istream.just, m)));
+    Unit@ _ := m.do(cat(istream.just));
     cats(inputs.items.tail);
   };
 

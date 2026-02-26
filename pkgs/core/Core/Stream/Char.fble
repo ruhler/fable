@@ -9,6 +9,11 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
+@ Mode@ = /Core/Stdio%.Mode@;
+% Text = /Core/Stdio%.Text;
+
+@ String@ = /Std/String%.String@;
+
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
@@ -22,6 +27,14 @@ IStream = <<@>@ M@>(Byte.IStream@<M@> s, Monad@<M@> m) {
   Maybe@<Int@> mbyte := m.do(s);
   mbyte.?(nothing: m.return(Nothing<Char@>));
   m.return(Just(/Std/Char%.Char(mbyte.just)));
+};
+
+# Convert a Stdio.read function to a character read function.
+<<@>@ M@>((String@, Mode@) { M@<Maybe@<Byte.IStream@<M@>>>; }, Monad@<M@>, String@) { M@<Maybe@<Char.IStream@<M@>>>; }
+Read = <<@>@ M@>((String@, Mode@) { M@<Maybe@<Byte.IStream@<M@>>>; } read, Monad@<M@> m, String@ file) {
+  Maybe@<Byte.IStream@<M@>> fin := m.do(read(file, Text));
+  fin.?(nothing: m.return(Nothing<Char.IStream@<M@>>));
+  m.return(Just(IStream(fin.just, m)));
 };
 
 # Convert a byte output stream to a character output stream.
@@ -50,4 +63,4 @@ OStream = <<@>@ M@>(Byte.OStream@<M@> s, Monad@<M@> m) {
   @(put, close);
 };
 
-@(IStream, OStream);
+@(IStream, Read, OStream);
