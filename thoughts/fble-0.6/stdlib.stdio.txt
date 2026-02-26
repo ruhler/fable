@@ -3539,3 +3539,7 @@ provide the actual native ones.
 monad. I'll need some replacement using streams. Which sounds like state monad
 composition of some kind.
 
+---
+
+Trouble: md5 wants to read stdin in binary mode. Is that allowed? Should we
+support that? If so, how?
