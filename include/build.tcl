@@ -59,6 +59,8 @@ namespace eval "include" {
       FbleParseModulePath
       FbleCopyModulePath
       FbleFreeModulePath
+      FbleMangleModulePath
+      FbleMangleForeignFunction
     }
     fble-name.h {
       FbleNameSpace FbleName FbleNameV

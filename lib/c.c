@@ -36,7 +36,6 @@ static void ReturnAbort(FILE* fout, const char* lmsg, FbleLoc loc);
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
 static size_t SizeofSanitizedString(const char* str);
 static void SanitizeString(const char* str, char* dst);
-static FbleString* LabelForPath(FbleModulePath* path);
 
 /**
  * @func[CollectBlocks] Gets the list of code blocks referenced by a code block.
@@ -215,7 +214,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
   LabelId path_id = StaticModulePath(fout, label_id, module->path);
 
   for (size_t i = 0; i < module->link_deps.size; ++i) {
-    FbleString* dep_name = LabelForPath(module->link_deps.xs[i]->path);
+    FbleString* dep_name = FbleMangleModulePath(module->link_deps.xs[i]->path);
     fprintf(fout, "extern FblePreloadedModule %s;\n", dep_name->str);
     FbleFreeString(dep_name);
   }
@@ -223,7 +222,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
   LabelId deps_xs_id = (*label_id)++;
   fprintf(fout, "static FblePreloadedModule* " LABEL "[] = {\n", deps_xs_id);
   for (size_t i = 0; i < module->link_deps.size; ++i) {
-    FbleString* dep_name = LabelForPath(module->link_deps.xs[i]->path);
+    FbleString* dep_name = FbleMangleModulePath(module->link_deps.xs[i]->path);
     fprintf(fout, "  &%s,\n", dep_name->str);
     FbleFreeString(dep_name);
   }
@@ -243,7 +242,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
 
   LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->profile_blocks);
 
-  FbleString* module_name = LabelForPath(module->path);
+  FbleString* module_name = FbleMangleModulePath(module->path);
   fprintf(fout, "FblePreloadedModule %s = {\n", module_name->str);
   fprintf(fout, "  .path = &" LABEL ",\n", path_id);
   fprintf(fout, "  .deps = { .size = %zi, .xs = " LABEL "},\n",
@@ -647,65 +646,6 @@ static void SanitizeString(const char* str, char* dst)
   }
 }
 
-/**
- * @func[LabelForPath] Returns a C identifier for a module path. 
- *  @arg[FbleMOdulePath*][path] The path to get the name for.
- *
- *  @returns[FbleString*]
- *   A C function name for the module path.
- *
- *  @sideeffects
- *   Allocates an FbleString* that should be freed with FbleFreeString when no
- *   longer needed.
- */
-static FbleString* LabelForPath(FbleModulePath* path)
-{
-  // The conversion from path to name works as followed:
-  // * We add _Fble as a prefix.
-  // * Characters [0-9], [a-z], [A-Z] are kept as is.
-  // * Other characters are translated to _XX_, where XX is the 2 digit hex
-  //   representation of the ascii value of the character.
-  // * We include translated '/' and '%' characters where expected in the
-  //   path.
-
-  // Determine the length of the name.
-  size_t len = strlen("_Fble") + 1; // prefix and terminating '\0'.
-  for (size_t i = 0; i < path->path.size; ++i) {
-    len += 4;   // translated '/' character.
-    for (const char* p = path->path.xs[i].name->str; *p != '\0'; p++) {
-      if (isalnum((unsigned char)*p)) {
-        len++;        // untranslated character
-      } else {
-        len += 4;     // translated character
-      }
-    }
-  }
-  len += 4; // translated '%' character.
-
-  // Construct the name.
-  char name[len];
-  char translated[5];
-  name[0] = '\0';
-  strcat(name, "_Fble");
-  for (size_t i = 0; i < path->path.size; ++i) {
-    sprintf(translated, "_%02x_", '/');
-    strcat(name, translated);
-    for (const char* p = path->path.xs[i].name->str; *p != '\0'; p++) {
-      if (isalnum((unsigned char)*p)) {
-        sprintf(translated, "%c", *p);
-        strcat(name, translated);
-      } else {
-        sprintf(translated, "_%02x_", *p);
-        strcat(name, translated);
-      }
-    }
-  }
-  sprintf(translated, "_%02x_", '%');
-  strcat(name, translated);
-
-  return FbleNewString(name);
-}
-
 // See documentation in fble-generate.h.
 void FbleGenerateC(FILE* fout, FbleModule* module)
 {
@@ -761,7 +701,7 @@ void FbleGenerateC(FILE* fout, FbleModule* module)
 // See documentation in fble-generate.h.
 void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 {
-  FbleString* module_name = LabelForPath(path);
+  FbleString* module_name = FbleMangleModulePath(path);
   fprintf(fout, "#include <fble/fble-link.h>\n");   // for FbleExecutableProgram
   fprintf(fout, "extern FblePreloadedModule %s;\n", module_name->str);
   fprintf(fout, "FblePreloadedModule* %s = &%s;\n", name, module_name->str);
@@ -771,7 +711,7 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 // See documentation in fble-generate.h.
 void FbleGenerateCMain(FILE* fout, const char* main, FbleModulePath* path)
 {
-  FbleString* module_name = LabelForPath(path);
+  FbleString* module_name = FbleMangleModulePath(path);
 
   fprintf(fout, "#include <fble/fble-link.h>\n");
   fprintf(fout, "extern FblePreloadedModule %s;\n", module_name->str);

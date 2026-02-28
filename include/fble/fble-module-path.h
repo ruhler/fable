@@ -149,4 +149,49 @@ FbleModulePath* FbleCopyModulePath(FbleModulePath* path);
  */
 void FbleFreeModulePath(FbleModulePath* path);
 
+/**
+ * @func[FbleMangleModulePath] Creates a mangled name for a module path.
+ *  This uses the conventional mangling for fble module paths to allow them to
+ *  be used as symbols for things like builtin modules and foreign functions.
+ *  The name mangling convention is:
+ *
+ *  @i We add _Fble as a prefix.
+ *  @i Characters [0-9], [a-z], [A-Z] are kept as is.
+ *  @item
+ *   Other characters are translated to _XX_, where XX is the 2 digit hex
+ *   represntation of the ascii value of the character.
+ *  @item
+ *   We included translated '/' and '%' characters where expected in the path.
+ *
+ *  For example, the module path @l{/Foo/Bar%} is mangled to
+ *  @l{_Fble_2f_Foo_2f_Bar_25_}.
+ *
+ *  @arg[FbleModulePath*][path] The path to create the mangle name for.
+ *  @returns[FbleString*] The mangled name.
+ *
+ *  @sideeffects
+ *   The caller should call FbleFreeString on the returned string when no
+ *   longer needed.
+ */
+FbleString* FbleMangleModulePath(FbleModulePath* path);
+
+/**
+ * @func[FbleMangleForeignFunction]
+ * @ Creates a mangled name for a foreign function
+ *  Uses the same convention as module path naming, except adds '.<name>'
+ *  after the module path. For example, the foreign function @l{MyFunc} for
+ *  module path @l{/Foo/Bar%} gets mangled to
+ *  @l{_Fble_2f_foo_2f_Bar_25__2e_MyFunc}
+ *
+ *  @arg[FbleModulePath*][path] The module associated with the function.
+ *  @arg[const char*][name] The name of the foreign function.
+ *
+ *  @returns[FbleString*] The mangled name.
+ *
+ *  @sideeffects
+ *   The caller should call FbleFreeString on the returned string when no
+ *   longer needed.
+ */
+FbleString* FbleMangleForeignFunction(FbleModulePath* path, const char* name);
+
 #endif // FBLE_MODULE_PATH_H_

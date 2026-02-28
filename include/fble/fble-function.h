@@ -71,7 +71,10 @@ typedef struct {
  * @struct[FbleForeignFunction] Description of a foreign function.
  *  FbleForeignFunction is intended to be statically allocated so that
  *  lifetime considerations are not a concern, including the path and name
- *  string pointers.
+ *  string pointers. Convention is to use the name mangling of
+ *  FbleMangleForeignFunction to determine the symbol name of the statically
+ *  allocated FbleForeignFunction. See FbleMangleForeignFunction in
+ *  fble-module-path.h for more info.
  *
  *  @field[const char*][path] The module path of the foreign function.
  *  @field[const char*][name] The name of the foreign function.

@@ -689,3 +689,47 @@ Or, I could change FbleNewForeignFuncValue to take the module path as a
 string. Then do the conversion from FbleModulePath to string in the compiler
 or backend.
 
+---
+
+Foreign functions are slightly different from builtin modules? No. I'm
+thinking about whether we have to standardize the map from module path to
+mangled name. I think we do, for both builtin and foreign functions. Because
+we don't know what backend is going to reference it: C or aarch64. And if we
+add dlsym, interpreter will be another possible backend to worry about.
+
+So we should standardize it. What better way than to provide a function to
+convert FbleModulePath to mangled string and/or FbleModulePath + field to
+mangled string? We will also need to publish it so people know what to name
+their modules and foreign functions.
+
+We have to be a little careful to avoid ambiguity I fear. What if someone
+tries to put '%' in the name of the function? Then we can't tell where the
+module path ends and the function name begins?
+
+For example:
+
+  /A/B/C%.'D%e' versus /A/B/'C%.D'%e
+
+Do we already have this problem? I feel like yes:
+
+  /A/'B/C'% versus /A/B/C%
+
+So maybe let's not worry about it.
+
+In terms of API...
+* I have FbleModulePathName already.
+* We could add FbleMangleName as a generic way of mangling things, and reuse
+  that with FbleModulePathName. Thought it's too bad to have to do the
+  intermediate allocations.
+* Is there an easy way to get '/Foo/Bar%.C' as an FbleName for use with
+  mangling?
+
+Or should I just have:
+  FbleString* FbleMangle(FbleModulePath* path, const char* name);
+
+Where we are allowed to set name to NULL. And FbleMangleModulePath which
+doesn't have the const char* name argument? Or 
+
+FbleMangleModulePath? and FbleMangleForeignFunction?
+
+Sure. Let's do that. I can put them in module.c and fble-module.h.

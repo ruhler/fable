@@ -125,7 +125,6 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
 static void EmitCode(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, FbleCode* code);
 static size_t SizeofSanitizedString(const char* str);
 static void SanitizeString(const char* str, char* dst);
-static FbleString* LabelForPath(FbleModulePath* path);
 
 /**
  * @func[AddLoc] Adds a source location to the list of locations.
@@ -375,7 +374,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
   fprintf(fout, "  .align 3\n");
   fprintf(fout, LABEL ":\n", deps_xs_id);
   for (size_t i = 0; i < module->link_deps.size; ++i) {
-    FbleString* dep_name = LabelForPath(module->link_deps.xs[i]->path);
+    FbleString* dep_name = FbleMangleModulePath(module->link_deps.xs[i]->path);
     fprintf(fout, "  .xword %s\n", dep_name->str);
     FbleFreeString(dep_name);
   }
@@ -396,7 +395,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
 
   LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->profile_blocks);
 
-  FbleString* module_name = LabelForPath(module->path);
+  FbleString* module_name = FbleMangleModulePath(module->path);
   fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
   fprintf(fout, "  .global %s\n", module_name->str);
@@ -1340,66 +1339,6 @@ static void SanitizeString(const char* str, char* dst)
   }
 }
 
-/**
- * @func[LableForPath]
- * @ Returns a C function identifier to for the give module path.
- *  @arg[FbleModulePath*][path] The path to get the name for.
- *
- *  @returns[FbleString*]
- *   A C function name for the module path.
- *
- *  @sideeffects
- *   Allocates an FbleString* that should be freed with FbleFreeString when no
- *   longer needed.
- */
-static FbleString* LabelForPath(FbleModulePath* path)
-{
-  // The conversion from path to name works as followed:
-  // * We add _Fble as a prefix.
-  // * Characters [0-9], [a-z], [A-Z] are kept as is.
-  // * Other characters are translated to _XX_, where XX is the 2 digit hex
-  //   representation of the ascii value of the character.
-  // * We include translated '/' and '%' characters where expected in the
-  //   path.
-
-  // Determine the length of the name.
-  size_t len = strlen("_Fble") + 1; // prefix and terminating '\0'.
-  for (size_t i = 0; i < path->path.size; ++i) {
-    len += 4;   // translated '/' character.
-    for (const char* p = path->path.xs[i].name->str; *p != '\0'; p++) {
-      if (isalnum((unsigned char)*p)) {
-        len++;        // untranslated character
-      } else {
-        len += 4;     // translated character
-      }
-    }
-  }
-  len += 4; // translated '%' character.
-
-  // Construct the name.
-  char name[len];
-  char translated[5]; 
-  name[0] = '\0';
-  strcat(name, "_Fble");
-  for (size_t i = 0; i < path->path.size; ++i) {
-    sprintf(translated, "_%02x_", '/');
-    strcat(name, translated);
-    for (const char* p = path->path.xs[i].name->str; *p != '\0'; p++) {
-      if (isalnum((unsigned char)*p)) {
-        sprintf(translated, "%c", *p);
-        strcat(name, translated);
-      } else {
-        sprintf(translated, "_%02x_", *p);
-        strcat(name, translated);
-      }
-    }
-  }
-  sprintf(translated, "_%02x_", '%');
-  strcat(name, translated);
-
-  return FbleNewString(name);
-}
-
 // See documentation in fble-generate.h.
 void FbleGenerateAArch64(FILE* fout, FbleModule* module)
 {
@@ -1635,7 +1574,7 @@ void FbleGenerateAArch64(FILE* fout, FbleModule* module)
 // See documentation in fble-generate.h.
 void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* path)
 {
-  FbleString* module_name = LabelForPath(path);
+  FbleString* module_name = FbleMangleModulePath(path);
   fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
   fprintf(fout, "  .global %s\n", name);
@@ -1654,7 +1593,7 @@ void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path)
   fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
   fprintf(fout, "  mov FP, SP\n");
 
-  FbleString* module_name = LabelForPath(path);
+  FbleString* module_name = FbleMangleModulePath(path);
   GAdr(fout, "x2", "%s", module_name->str);
   FbleFreeString(module_name);
 
