@@ -420,3 +420,230 @@ plate, as planned.
 It is unpleasant that I don't get a static error if I get the FFI wrong. It's
 hard to know where all I need to register things for it to work properly.
 
+Let's figure this out properly, because I'm afraid to switch things over to
+FFI for fear I'll make a mistake and not know about it because we don't have
+enough test coverage to figure out I messed up somewhere with finding the FFI
+function.
+
+Let's understand symbols better.
+
+Specifically:
+* What effect does -rdynamic have on what symbols are exported?
+* Is there a way to limit to just the symbols I want to expose?
+
+Let's focus on linux to start, because I honestly think windows will be easier
+in this case, based on my experiments.
+
+What I know so far in theory:
+* -rdynamic or -export-dynamic option to gcc is needed to see all symbols via
+  dlsym.
+* There are function attributes like __attribute__((visibility("default")))
+  you can put on functions. For windows, the dllexport one works to make a
+  specific function visible without any extra options to gcc needed. With
+  linux, I haven't gotten a function attribute to make a difference.
+
+In practice I'll be compiling my .o files separately from my final binary. We
+can consider these kinds of functions (or symbols in general):
+* static private. Shouldn't be exported for any external use.
+* not marked static, used in final link.
+* not marked static, not used in final link.
+* explicitly marked for export, not used in final link, but available to
+  dlsym.
+
+First thing to check: can I see the dynamic symbols list in the final
+executable, and see the impact of -rdynamic there rather than via dlsym?
+
+Yes. Absolutely:
+* objdump -T foo
+
+Without -rdynamic, I'm getting:
+* l: .init, .data
+* And a bunch of D, DF *UND*
+  - abort, dlsym, __libc_start_main_ are DF
+  - others like __gmon_start__, __cxa_finalize
+
+Let's see what the various fields mean from objdump:
+* l: local
+* g: global
+* w: weak
+* d: debug symbol
+* D: dynamic symbol
+* F: name of a function
+* *UND*: symbols is referenced, but not defined in the file.
+
+So, .init, .data are debug. Otherwise we have some references to dynamic
+functions defined externally and some dynamic non-functions defined
+externally.
+
+When I add -rdynamic, I get a bunch more stuff included:
+* Global symbols defined locally including the ones I want exported, but also
+  a bunch of start/ends of sections.
+
+To put this to the test, let me work on a specific object file and try static
+functions and a couple non-static functions.
+
+Note that -rdynamic and -export-dynamic appear to have the same results.
+
+If I compile to a .o file, I can no longer run objdump. But I can run nm. I
+get something like:
+
+0000000000000038 T Bar
+0000000000000018 T Foo
+0000000000000000 t FooImpl
+0000000000000000 D P
+
+Meanings are:
+* D - Data section.
+* T, t - text section
+* U undefined
+* v weak
+
+Lowercase for local, uppercase for global. So we can see here: Bar, Foo, P are
+all non-static, and FooImpl is static.
+
+We can run 'nm -a' to get debug symbols too.
+
+We can run 'nm -D' to list dynamic symbols?
+
+Okay, so I split my sample program into separate .o files. What do I need at
+each level to get something useful for dlsym?
+* I need -rdynamic on the final link. Not on any object files.
+
+Note I can run 'objdump -t' on foo.o to get the list of symbols. The three
+symbols I care about show up as global there.
+
+Interestingly, Bar shows up in my final executable, even if I don't use it and
+don't export it as a dynamic symbol. Perhaps it would be different if I passed
+foo.o into the link as a library.
+
+Okay. What's next? My goal, ideally, is to get the dynamic symbol table, but
+only with 'Foo' and not 'Bar'. Somehow, magically.
+
+In theory I can use the --dynamic-list option to ld.
+
+Internet suggests I can:
+* Make all symbols in files hidden by default, and explicitly export the ones
+  I want.
+
+-fvisibility=hidden + __attribute__((__visibility__("default")))
+
+See explanation of how to do it at:
+ https://www.gnu.org/software/gnulib/manual/html_node/Exported-Symbols-of-Shared-Libraries.html
+
+Looks like I could use --version-script for the linker to specify a glob. That
+might be nice, if we glob export everything that's _Fble_*. No need to do
+anything special at all otherwise?
+
+Sample VERSION file:
+ CODEABI_1.0 {
+         global: *entry_point*;
+         local: *;
+ };
+
+Or:
+
+ {
+     global:
+         JNI_*;
+         Java_*;
+     local:
+         *;
+ };
+
+-Wl,--version-script,foo
+
+It sounds like attribute based approach is better, because gcc can do some
+compile time optimizations, it can be made to work with windows, and I like
+explicitly annotating things. Let me try to get that to work.
+
+Yeah, that works fine. When compiling the object file, specify
+-fvisibility=hidden. On the functions I want to export, specify
+__attribute__((__visibility__("default"))). On the final link, specify
+-export-dynamic or -rdynamic.
+
+Let me try the linker script approach, just for the fun of it.
+
+Example that works:
+
+Foo_VER {
+  global: Fo*;
+  local: *;
+};
+
+I still need -export-dynamic to make it work with dlsym though.
+
+How bad would it be for complexity of symbol table if I used -export-dynamic,
+for example on a compiled fble program such as fble-invaders? Let's find out.
+
+We add maybe 70KB to the size of fble-invaders.
+Number of exported symbols jumps from 80 to 323:
+* All the compiled modules.
+* All the Fble library API.
+
+That's most of it. Also some other global variables I have that I typically
+would consider internal.
+
+So think about it. Decide what I want to do. We can start by exporting
+everything the easy way, then limit what we export as a follow on
+optimization.
+
+---
+
+Options we can consider:
+* Dynamic loading
+ - works for interpreter and compiled code
+ - errors only at runtime
+* Static linking
+ - only works for compiled code
+* Explicit registration
+ - works for interpreter and compiled code
+ - errors only at runtime
+* Some mix of the above depending.
+
+It would be much nicer to not have to explicitly register things. To just make
+them available with the right symbol, particularly in the interpreter case.
+Just in terms of quality of life.
+
+Remember that foreign functions are tied to their module. If we are compiling
+the module in question, there is no reason to export the symbol as a dynamic
+symbol. There is no reason to look up the symbol dynamically.
+
+It's only for the interpreter case things get tedious.
+
+I do worry about this fble-cli + external package with some native code in
+interpreter mode. Today things will just silently fail. For example, if I try
+running the network programs in interpreter mode. We get an error like:
+
+$ ./out/pkgs/core/fble-cli -I pkgs/std -I pkgs/core -I pkgs/network -m /Network/Apps/Echo% -- -p 8123
+pkgs/network/Network/Apps/Echo.fble:114:32: error: module /Network/Sockets/Native% not found
+
+I wouldn't know that's about to happen unless I tried it.
+
+Is it worth trying to solve that problem right now?
+
+One option to make things easier to register would be to define an
+FbleForeignFunction type, which is like FbleExecutable, but without
+num_statics, and with extra const char* fields for module path and name. Then
+I can register as easily as builtins.
+
+Or... we could go all the way and say, for code where you have some native
+component and it isn't linked into the executable, you need to have a .so file
+next to your .fble file. If you do, we try to load that and read symbols from
+it. Otherwise... error.
+
+It would be nice if we got ffi errors at link time instead of use time. That
+way we never see anything for the module working unless the ffi function would
+work. Practically I'm not sure that makes much difference though.
+
+If I defined FbleForeignFunction as a type, we could pass that to
+FbleNewForeignFuncValue. Interpreter case just looks for a matching registered
+one. Compiled case passes the statically computed one. That would be a
+convenient way to share the logic for calling FbleNewFuncValue? Or is it
+basically the same so it doesn't really matter?
+
+---
+
+It probably wouldn't be hard to list the foreign function names in an
+FbleModule somewhere, so we can quickly check at link time that they are all
+registered. If I'm concerned about that, or about having different behavior
+for foreign functions than builtin modules today.

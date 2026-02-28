@@ -1815,12 +1815,8 @@ FbleValue* FbleNewForeignFuncValue(FbleValueHeap* heap_, FbleModulePath* path, c
     ForeignFunction* foreign = heap->foreign.xs + i;
     if (FbleModulePathsEqual(path, foreign->path)
         && strcmp(name, foreign->name->str) == 0) {
-      EnsureTailCallArgsSpace(heap, foreign->exe.max_call_args);
-      FbleFuncValue* v = NewValue(heap, FbleFuncValue, FUNC_VALUE);
-      v->function.profile_block_id = profile_block_id;
       assert(foreign->exe.num_statics == 0);
-      memcpy(&v->function.executable, &foreign->exe, sizeof(FbleExecutable));
-      return &v->_base;
+      return FbleNewFuncValue(heap_, &foreign->exe, profile_block_id, NULL);
     }
   }
   return NULL;
