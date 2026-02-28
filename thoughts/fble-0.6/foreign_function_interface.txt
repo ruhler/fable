@@ -329,3 +329,46 @@ I vote we try adding ffi this release:
 * To allow mixing of native and pure fble code in the same module.
 * To establish use of dlsym for searching for symbols, which we could use to
   replace explicit builtin module lists when linking eventually.
+
+---
+
+It doesn't make sense to use dlsym at this point. For compiled code we should
+just directly reference the symbol. For interpreter we should register a list
+and pass through the FbleValueHeap.
+
+Since compiled code can directly reference its FFI code, we never need special
+dlsym support for it. We would use the dlsym to load the module itself, but
+internally nothing else is needed.
+
+The only case where we might want to dlsym FFI code is if you want to ship
+foreign functions for use with interpreted code that you don't want to
+compile. Then we need to arrange for where to look for that native code,
+perhaps in a specially named .so file. But that's beyond what I need right
+now.
+
+I can't figure out how to annotate a symbol as dlsym-able in gcc without using
+a blanket -rdynamic flag, which I don't want to deal with. I don't want to
+deal with the headache of a non-C99 solution when there's a perfectly fine C99
+solution available.
+
+Anyway, let me continue my draft using FbleNewForeignFuncValue helper function
+in all the backends, then switch aarch64 and C backends to directly reference
+the magic symbol? Or maybe go straight to the magic symbol, because it
+simplifies the aarch64 and C backends in theory because we don't need to
+define static module paths and string values.
+
+---
+
+There's going to be a question about whether missing foreign function is a
+runtime error or a compile (link time) error. Because I think I'm going to end
+up with it being a link time (compile time) error for C and aarch64 backend,
+but a runtime error for the interpreter. But I can't write a spec test for
+that.
+
+Maybe I should use dlsym after all to turn C and aarch64 backend approach into
+a runtime error instead of compile time? But surely you rather have it be a
+compile error if you can?
+
+Well, the user is in charge of writing the function. So maybe they should be
+in charge of registering it too if they want, even for C and aarch64 backends?
+

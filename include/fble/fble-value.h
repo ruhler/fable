@@ -8,8 +8,9 @@
 
 #include <stdbool.h>    // for bool
 
-#include "fble-function.h"  // for FbleExecutable, FbleFunction
-#include "fble-profile.h"   // for FbleProfile
+#include "fble-function.h"    // for FbleExecutable, FbleFunction
+#include "fble-module-path.h" // for FbleModulePath
+#include "fble-profile.h"     // for FbleProfile
 
 /**
  * @struct[FbleValue] An fble value.
@@ -418,6 +419,26 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t prgm_len, size_t* prg
  *   Allocates a function value on the heap.
  */
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics);
+
+/**
+ * @func[FbleNewForeignFuncValue] Creates an fble foreign function value.
+ *  @arg[FbleValueHeap*] heap
+ *   Heap to use for allocations.
+ *  @arg[FbleModulePath*] path
+ *   Module path associated with the foreign function.
+ *  @arg[const char*] name
+ *   The name of the foreign function.
+ *  @arg[size_t] profile_block_id
+ *   The profile block id to use for the function.
+ *
+ *  @returns FbleValue*
+ *   A newly allocated function value. NULL if the foreign function could not
+ *   be found.
+ *
+ *  @sideeffects
+ *   Allocates a function value on the heap.
+ */
+FbleValue* FbleNewForeignFuncValue(FbleValueHeap* heap, FbleModulePath* path, const char* name, size_t profile_block_id);
 
 /**
  * @func[FbleEval] Evaluates a linked program.

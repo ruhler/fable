@@ -1428,8 +1428,49 @@
 
    Any attempt to use the value of @L{/Foo/Internal%} from a module not
    starting with @L{/Foo%} will result in a type error.
+ 
+ @section 10. Foreign Function Interface
+  The foreign function interface provides a way to interact with native
+  platform code more easily than via fully native builtin modules. It allows
+  you to import a function defined with native code into fble as an fble
+  function value. This allows the compiler to generate any boiler plate code
+  typically associated with a module implementation and facilitates
+  composition of pure fble and foreign code in the same fble module.
+
+  @subsection 10.1 Foreign Function Value
+   @AbstractSyntax @
+    Expr: foreign_func_value (type : Type) (name : Name)
   
- @section 10. Abstract Syntax Reference
+   @ConcreteSyntax @
+    expr = type '|' name
+  
+   @Example @
+    (Bool@) { Bool@; }|Not;
+
+   The foreign function value expression describes a function whose
+   implementation is provided in a platform dependent manner. The
+   implementation is identified using both the foreign function name provided
+   and the name of the module where the foreign function value is defined so
+   that use of a foreign function implementation is restricted to the single
+   module it was intended for.
+
+   The type of the foreign function value is the type provided, which must be
+   a (possibly polymorphic) function type. Runtime is the platform dependent
+   time required to identify and link in the matching platform implementation
+   of the foreign function. It is a runtime error if the platform is unable to
+   find a suitable foreign implementation for the function.
+
+   Any type conversion required between fble and the platform implementation
+   must be done on the platform side. The correct type must be supplied at the
+   fble level to avoid undefined runtime behavior, because the compiler is
+   unable to validate the type of the foreign function implementation.
+
+   Care should be taken to ensure the foreign function implementation doesn't
+   violate reasonable expectations of the user of the function: namely that it
+   is side effect free from the perspective of program behavior unless
+   suitably typed otherwise.
+  
+ @section 11. Abstract Syntax Reference
   @code[txt] @
    NormalName: A string of characters.
    TypeName: A string of characters.
@@ -1488,12 +1529,14 @@
     | package_type (path : Path)
     | private_type (type : Type) (package : Type)
     | private_value (value : Expr) (package : Type)
+
+    | foreign_func_value (type : Type) (name : Name)
     ;
    
    Module: (value : Expr) (modules : [Module])
  
- @section 11. Concrete Syntax
-  @subsection 11.1 Lexical Syntax
+ @section 12. Concrete Syntax
+  @subsection 12.1 Lexical Syntax
    We have the following categories of characters:
   
    @def[Whitespace] Any whitespace character, as traditionally classified.
@@ -1531,7 +1574,7 @@
    single quote characters are used to embed a single quote character in a
    word.
   
-  @subsection 11.2 Concrete Syntax Reference
+  @subsection 12.2 Concrete Syntax Reference
    @code[ebnf] @
     word = ? word as described in the section on lexical syntax ?
     normal_name = word
@@ -1587,6 +1630,8 @@
      | '@', path                                       (* package_type *)
      | type, '.%', '(', path, ')'                      (* private_type *)
      | expr, '.%', '(', path, ')'                      (* private_value *)
+
+     | type '|' name                                   (* foreign_func_value *)
     
      | block
      ;
@@ -1627,6 +1672,10 @@
    @item
     The concrete syntax for private type and private value are identical. The
     type of the argument is used to distinguish between the two cases.
+
+   @item
+    The concrete syntax for literal and foreign func value are the same.
+    The type of the argument is used to distinguish between the two cases.
 
    @item
     The module value for module @L{/Foo/Bar%} is stored in @l{Foo/Bar.fble}.

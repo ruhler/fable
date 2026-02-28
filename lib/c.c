@@ -75,6 +75,7 @@ static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
       case FBLE_TYPE_INSTR: break;
       case FBLE_LIST_INSTR: break;
       case FBLE_LITERAL_INSTR: break;
+      case FBLE_FOREIGN_FUNC_VALUE_INSTR: break;
       case FBLE_NOP_INSTR: break;
       case FBLE_UNDEF_INSTR: break;
     }
@@ -307,6 +308,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   memset(jump_target, 0, sizeof(bool) * code->instrs.size);
   size_t lit_id = 0;
   size_t exe_id = 0;
+  LabelId label_id = 0;
   for (size_t pc = 0; pc < code->instrs.size; ++pc) {
     FbleInstr* instr = code->instrs.xs[pc];
 
@@ -576,6 +578,19 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         break;
       }
 
+      case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
+        FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
+
+        LabelId path_id = StaticModulePath(fout, &label_id, func_instr->path);
+        fprintf(fout, "  l[%zi] = FbleNewForeignFuncValue(heap, &" LABEL ", ",
+            func_instr->dest, path_id);
+        StringLit(fout, func_instr->name->str);
+        fprintf(fout, ", profile_block_id + %zi);\n", func_instr->profile_block_offset);
+        fprintf(fout, "  if (l[%zi] == NULL) ", func_instr->dest);
+        ReturnAbort(fout, "ForeignNotFound", func_instr->loc);
+        break;
+      }
+
       case FBLE_NOP_INSTR: {
         break;
       }
@@ -705,6 +720,7 @@ void FbleGenerateC(FILE* fout, FbleModule* module)
 
   // Error messages.
   fprintf(fout, "static const char* CalleeAborted = \"callee aborted\";\n");
+  fprintf(fout, "static const char* ForeignNotFound = \"foreign function not found\";\n");
   fprintf(fout, "static const char* UndefinedStructValue = \"undefined struct value access\";\n");
   fprintf(fout, "static const char* UndefinedUnionValue = \"undefined union value access\";\n");
   fprintf(fout, "static const char* UndefinedUnionSelect = \"undefined union value select\";\n");

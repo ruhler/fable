@@ -1763,6 +1763,22 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap_, FbleExecutable* executable, si
 }
 
 // See documentation in fble-value.h.
+FbleValue* FbleNewForeignFuncValue(FbleValueHeap* heap_, FbleModulePath* path, const char* name, size_t profile_block_id)
+{
+  // ValueHeap* heap = (ValueHeap*)heap_;
+  // FbleExecutable* executable = <TODO>;
+  // EnsureTailCallArgsSpace(heap, executable->max_call_args);
+  // FbleFuncValue* v = NewValue(heap, FbleFuncValue, FUNC_VALUE);
+  // v->function.profile_block_id = profile_block_id;
+  // assert(executable->num_statics == 0);
+  // memcpy(&v->function.executable, executable, sizeof(FbleExecutable));
+  // return &v->_base;
+
+  // TODO: Implement me.
+  return NULL;
+}
+
+// See documentation in fble-value.h.
 FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
   FbleValue* unit = FbleNewStructValue_(heap, 0);

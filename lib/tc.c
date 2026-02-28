@@ -193,6 +193,15 @@ void FbleFreeTc(FbleTc* tc)
       FbleFree(tc);
       return;
     }
+
+    case FBLE_FOREIGN_FUNC_VALUE_TC: {
+      FbleForeignFuncValueTc* func_tc = (FbleForeignFuncValueTc*)tc;
+      FbleFreeModulePath(func_tc->path);
+      FbleFreeLoc(func_tc->name_loc);
+      FbleFreeString(func_tc->name);
+      FbleFree(tc);
+      return;
+    }
   }
 
   FbleUnreachable("should never get here");

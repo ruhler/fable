@@ -2,6 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Move spec tests /11.1-Lex to 12.1-Lex?
+
 * Test unicode for character based native input and output streams.
 * Add tests for /Core/Char/Stream/IStream%.GetLine.
 

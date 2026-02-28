@@ -519,6 +519,10 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
     case FBLE_LITERAL_TC: {
       return FbleCopyTc(tc);
     }
+
+    case FBLE_FOREIGN_FUNC_VALUE_TC: {
+      return FbleCopyTc(tc);
+    }
   }
 
   FbleUnreachable("should never get here");
@@ -1359,6 +1363,22 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         FbleAppendToVector(literal_instr->prgm, literal_tc->prgm.xs[i]);
       }
 
+      return local;
+    }
+
+    case FBLE_FOREIGN_FUNC_VALUE_TC: {
+      FbleForeignFuncValueTc* func_tc = (FbleForeignFuncValueTc*)v;
+
+      Local* local = NewLocal(scope);
+      FbleBlockId block = GetBlock(blocks, func_tc->name_loc);
+      FbleForeignFuncValueInstr* instr = FbleAllocInstr(FbleForeignFuncValueInstr, FBLE_FOREIGN_FUNC_VALUE_INSTR);
+      instr->loc = FbleCopyLoc(func_tc->name_loc);
+      instr->dest = local->var.index;
+      instr->profile_block_offset = block - scope->code->profile_block_id;
+      instr->path = FbleCopyModulePath(func_tc->path);
+      instr->name = FbleCopyString(func_tc->name);
+      AppendInstr(scope, &instr->_base);
+      CompileExit(exit, scope, local);
       return local;
     }
   }

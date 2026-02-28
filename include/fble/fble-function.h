@@ -6,7 +6,6 @@
 #ifndef FBLE_FUNCTION_H_
 #define FBLE_FUNCTION_H_
 
-#include "fble-module-path.h" // for FbleModulePath
 #include "fble-profile.h"     // for FbleProfileThread
 
 // Forward references from fble-value.h

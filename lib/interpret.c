@@ -303,6 +303,19 @@ static FbleValue* Interpret(
         break;
       }
 
+      case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
+        FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
+        FbleValue* func = FbleNewForeignFuncValue(heap, func_instr->path, func_instr->name->str, profile_block_id + func_instr->profile_block_offset);
+        if (func == NULL) {
+          FbleReportError("foreign function not found\n", func_instr->loc);
+          return NULL;
+        }
+
+        locals[func_instr->dest] = func;
+        pc++;
+        break;
+      }
+
       case FBLE_NOP_INSTR: {
         pc++;
         break;

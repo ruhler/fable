@@ -1,0 +1,20 @@
+# @@fble-test@@ xfail
+# @@fble-test@@ runtime-error 15:43
+# @@fble-test@@ no-error
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+Bool@ False = Bool@(false: Unit@());
+
+# Basic use of a foreign function.
+# The foreign function 'Not' for this module must be supplied by the test
+# driver somewhere. It should behave as a boolean 'Not' function.
+(Bool@) { Bool@; } F = (Bool@) { Bool@; }|Not;
+
+Unit@ _ = F(True).false;
+Unit@ _ = F(False).true;
+Unit;
+

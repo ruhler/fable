@@ -1847,10 +1847,29 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      FbleFuncType* func_type = (FbleFuncType*)FbleNormalType(th, func.type);
-      CleanType(cleaner, &func_type->_base);
+      FbleType* normal = FbleNormalType(th, func.type);
+      CleanType(cleaner, normal);
+
+      FbleType* valueof = FbleValueOfType(th, normal);
+      CleanType(cleaner, valueof);
+      if (valueof != NULL) {
+        FbleFuncType* func_type = (FbleFuncType*)FbleNormalType(th, valueof);
+        CleanType(cleaner, &func_type->_base);
+        if (func_type->_base.tag != FBLE_FUNC_TYPE) {
+          ReportError(literal_expr->func->loc, "expected a function or function type, but found something of type %t\n", func.type);
+          return TC_FAILED;
+        }
+
+        FbleForeignFuncValueTc* ffi_tc = FbleNewTc(FbleForeignFuncValueTc, FBLE_FOREIGN_FUNC_VALUE_TC, expr->loc);
+        ffi_tc->path = FbleCopyModulePath(FbleTypeHeapGetContext(th));
+        ffi_tc->name_loc = FbleCopyLoc(literal_expr->word_loc);
+        ffi_tc->name = FbleNewString(literal_expr->word);
+        return MkTc(FbleRetainType(th, valueof), &ffi_tc->_base);
+      }
+
+      FbleFuncType* func_type = (FbleFuncType*)normal;
       if (func_type->_base.tag != FBLE_FUNC_TYPE) {
-        ReportError(literal_expr->func->loc, "expected a function, but found something of type %t\n", func.type);
+        ReportError(literal_expr->func->loc, "expected a function or function type, but found something of type %t\n", func.type);
         return TC_FAILED;
       }
 

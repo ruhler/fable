@@ -7,6 +7,7 @@
 #define FBLE_INTERNAL_TC_H_
 
 #include <fble/fble-loc.h>
+#include <fble/fble-module-path.h>
 #include <fble/fble-name.h>
 
 #include "tag.h"        // for FbleTagV
@@ -49,6 +50,7 @@ typedef enum {
   FBLE_FUNC_APPLY_TC,
   FBLE_LIST_TC,
   FBLE_LITERAL_TC,
+  FBLE_FOREIGN_FUNC_VALUE_TC,
 } FbleTcTag;
 
 /**
@@ -357,6 +359,22 @@ typedef struct {
   FbleTc _base;
   FbleTagV prgm;
 } FbleLiteralTc;
+
+/**
+ * @struct[FbleForeignFuncValueTc] FBLE_FOREIGN_FUNC_VALUE_TC
+ *  A foreign function value.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleModulePath*][path] The module instantiated the function.
+ *  @field[FbleLoc][name_loc] The location of the name of the function.
+ *  @field[FbleString*][name] The name of the function.
+ */
+typedef struct {
+  FbleTc _base;
+  FbleModulePath* path;
+  FbleLoc name_loc;
+  FbleString* name;
+} FbleForeignFuncValueTc;
 
 /**
  * @func[FbleNewTc] Allocates a new tc.

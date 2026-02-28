@@ -120,9 +120,9 @@ static size_t GetSingleTarget(Interval* interval);
 static void EmitSearch(Context* context, Interval* interval);
 
 
-static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size_t pc, FbleInstr* instr);
+static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, size_t func_id, size_t pc, FbleInstr* instr);
 static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* instr);
-static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
+static void EmitCode(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, FbleCode* code);
 static size_t SizeofSanitizedString(const char* str);
 static void SanitizeString(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
@@ -220,6 +220,13 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
       case FBLE_TYPE_INSTR: break;
       case FBLE_LIST_INSTR: break;
       case FBLE_LITERAL_INSTR: break;
+
+      case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
+        FbleForeignFuncValueInstr* instr = (FbleForeignFuncValueInstr*)code->instrs.xs[i];
+        AddLoc(instr->loc.source->str, locs);
+        break;
+      }
+
       case FBLE_NOP_INSTR: break;
       case FBLE_UNDEF_INSTR: break;
     }
@@ -662,6 +669,7 @@ static void EmitSearch(Context* context, Interval* interval)
 /**
  * @func[EmitInstr] Generates code to execute an instruction.
  *  @arg[FILE*][fout] The output stream to write the code to.
+ *  @arg[LabelId*][label_id] Id of next available label to use.
  *  @arg[FbleNameV][profile_blocks]
  *   The list of profile block names for the module.
  *  @arg[size_t][code]
@@ -670,9 +678,10 @@ static void EmitSearch(Context* context, Interval* interval)
  *  @arg[FbleInstr*][instr] The instruction to execute.
  *
  *  @sideeffects
- *   Outputs code to fout.
+ *   @i Outputs code to fout.
+ *   @i Allocates label ids
  */
-static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size_t pc, FbleInstr* instr)
+static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, size_t func_id, size_t pc, FbleInstr* instr)
 {
   // Emit dwarf location information for the instruction.
   for (FbleDebugInfo* info = instr->debug_info; info != NULL; info = info->next) {
@@ -1051,6 +1060,23 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       return;
     }
 
+    case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
+      FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
+      LabelId path_id = StaticModulePath(fout, label_id, func_instr->path);
+      LabelId name_id = StaticString(fout, label_id, func_instr->name->str);
+
+      fprintf(fout, "  .text\n");
+      fprintf(fout, "  .align 2\n");
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      Adr(fout, "x1", LABEL, path_id);
+      Adr(fout, "x2", LABEL, name_id);
+      fprintf(fout, "  add x3, R_PROFILE_BLOCK_ID, #%zi\n", func_instr->profile_block_offset);
+      fprintf(fout, "  bl FbleNewForeignFuncValue\n");
+      SetFrameVar(fout, "x0", func_instr->dest);
+      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.abort\n", func_id, pc);
+      return;
+    }
+
     case FBLE_NOP_INSTR: {
       // Nothing to do.
       return;
@@ -1186,6 +1212,14 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
     case FBLE_TYPE_INSTR: return;
     case FBLE_LIST_INSTR: return;
     case FBLE_LITERAL_INSTR: return;
+
+    case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
+      FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
+      fprintf(fout, ".Lo.%04zx.%zi.abort:\n", func_id, pc);
+      DoAbort(fout, func_id, pc, ".L.ForeignNotFound", func_instr->loc);
+      return;
+    }
+
     case FBLE_NOP_INSTR: return;
     case FBLE_UNDEF_INSTR: return;
   }
@@ -1194,6 +1228,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
 /**
  * @func[EmitCode] Generates code to execute an FbleCode block.
  *  @arg[FILE*][fout] The output stream to write the code to.
+ *  @arg[LabelId*][label_id] Id of next available label to use.
  *  @arg[FbleNameV][profile_blocks]
  *   The list of profile block names for the module.
  *  @arg[FbleCode*][code] The block of code to generate a C function for.
@@ -1201,7 +1236,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
  *  @sideeffects
  *   Outputs code to fout with two space indent.
  */
-static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
+static void EmitCode(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, FbleCode* code)
 {
   size_t func_id = code->profile_block_id;
 
@@ -1239,7 +1274,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   // Emit code for each fble instruction
   for (size_t i = 0; i < code->instrs.size; ++i) {
     fprintf(fout, ".Lr.%04zx.%zi:\n", func_id, i);
-    EmitInstr(fout, profile_blocks, func_id, i, code->instrs.xs[i]);
+    EmitInstr(fout, label_id, profile_blocks, func_id, i, code->instrs.xs[i]);
   }
 
   // Restores stack and frame pointer and return whatever is in x0.
@@ -1389,6 +1424,8 @@ void FbleGenerateAArch64(FILE* fout, FbleModule* module)
   fprintf(fout, "  .string \"%%s:%%d:%%d: error: %%s\"\n");
   fprintf(fout, ".L.CalleeAborted:\n");
   fprintf(fout, "  .string \"callee aborted\\n\"\n");
+  fprintf(fout, ".L.ForeignNotFound:\n");
+  fprintf(fout, "  .string \"foreign function not found\\n\"\n");
   fprintf(fout, ".L.UndefinedStructValue:\n");
   fprintf(fout, "  .string \"undefined struct value access\\n\"\n");
   fprintf(fout, ".L.UndefinedUnionValue:\n");
@@ -1415,12 +1452,12 @@ void FbleGenerateAArch64(FILE* fout, FbleModule* module)
 
   FbleNameV profile_blocks = module->profile_blocks;
 
+  LabelId label_id = 0;
   for (size_t i = 0; i < blocks.size; ++i) {
-    EmitCode(fout, profile_blocks, blocks.xs[i]);
+    EmitCode(fout, &label_id, profile_blocks, blocks.xs[i]);
   }
   fprintf(fout, ".L.high_pc:\n");
 
-  LabelId label_id = 0;
   StaticPreloadedModule(fout, &label_id, module);
 
   // Emit dwarf debug info.

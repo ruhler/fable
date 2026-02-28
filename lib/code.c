@@ -151,6 +151,15 @@ void FbleFreeInstr(FbleInstr* instr)
       return;
     }
 
+    case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
+      FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
+      FbleFreeLoc(func_instr->loc);
+      FbleFreeModulePath(func_instr->path);
+      FbleFreeString(func_instr->name);
+      FbleFree(instr);
+      return;
+    }
+
     case FBLE_NOP_INSTR: {
       FbleFree(instr);
       return;
@@ -522,6 +531,16 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
             comma = ", ";
           }
           fprintf(fout, ");\n");
+          break;
+        }
+
+        case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
+          FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
+          fprintf(fout, "%4zi.  ", i);
+          fprintf(fout, "l%zi = ffi ", func_instr->dest);
+          FblePrintModulePath(fout, func_instr->path);
+          fprintf(fout, " %s;", func_instr->name->str);
+          PrintLoc(fout, func_instr->loc);
           break;
         }
 

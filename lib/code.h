@@ -108,6 +108,7 @@ typedef enum {
   FBLE_TYPE_INSTR,
   FBLE_LIST_INSTR,
   FBLE_LITERAL_INSTR,
+  FBLE_FOREIGN_FUNC_VALUE_INSTR,
   FBLE_NOP_INSTR,
   FBLE_UNDEF_INSTR,
 } FbleInstrTag;
@@ -497,6 +498,33 @@ typedef struct {
   FbleTagV prgm;
   FbleLocalIndex dest;
 } FbleLiteralInstr;
+
+/**
+ * @struct[FbleForeignFuncValueInstr] FBLE_FOREIGN_FUNC_VALUE_INSTR
+ *  Creates a foreign function value.
+ *
+ *  @code[txt] @
+ *   *dest = <ffi>
+ *
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleLoc][loc] Location of the call for error reporting.
+ *  @field[FbleLocalIndex][dest] Where to store the allocated function.
+ *  @field[FbleBlockId][profile_block_offset]
+ *   The profile_block_id of the function, relative to the profile_block_id of
+ *   the currently executing function.
+ *  @field[FbleModulePath*][path]
+ *   Module path associated with the function.
+ *  @field[FbleString*][name]
+ *   The name of the foreign function.
+ */
+typedef struct {
+  FbleInstr _base;
+  FbleLoc loc;
+  FbleLocalIndex dest;
+  FbleBlockId profile_block_offset;
+  FbleModulePath* path;
+  FbleString* name;
+} FbleForeignFuncValueInstr;
 
 /**
  * @struct[FbleNopInstr] FBLE_NOP_INSTR: Does nothing.
