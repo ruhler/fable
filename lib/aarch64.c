@@ -1063,7 +1063,11 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
     case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
       FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
       LabelId path_id = StaticModulePath(fout, label_id, func_instr->path);
-      LabelId name_id = StaticString(fout, label_id, func_instr->name->str);
+      LabelId name_id = (*label_id)++;
+      fprintf(fout, "  .section .data\n");
+      fprintf(fout, "  .align 3\n");
+      fprintf(fout, LABEL ":\n", name_id);
+      StringLit(fout, func_instr->name->str);
 
       fprintf(fout, "  .text\n");
       fprintf(fout, "  .align 2\n");

@@ -372,3 +372,8 @@ compile error if you can?
 Well, the user is in charge of writing the function. So maybe they should be
 in charge of registering it too if they want, even for C and aarch64 backends?
 
+---
+
+When registering a foreign function explicitly, it's pretty tedious to
+construct and then free the ModulePath. Maybe more reason to reconsider my
+decision to register explicitly instead of using dlsym approach?

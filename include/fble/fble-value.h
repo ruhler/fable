@@ -205,6 +205,19 @@ void FblePushFrame(FbleValueHeap* heap);
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value);
 
 /**
+ * @func[FbleRegisterForeignFunction] Registers a foreign function.
+ *  @arg[FbleValueHeap*][heap] The heap to register the function with.
+ *  @arg[FbleModulePath*][path] The module path associated with the function.
+ *  @arg[const char*][name] The name of the function.
+ *  @arg[FbleExecutable][exe]
+ *   The implementation of the function. The executable must take exactly 0
+ *   static variables, otherwise behavior is undefined.
+ *  @sideeffects
+ *   Registers the foreign function with the heap.
+ */
+void FbleRegisterForeignFunction(FbleValueHeap* heap, FbleModulePath* path, const char* name, FbleExecutable exe);
+
+/**
  * @value[FbleGenericTypeValue] FbleValue instance for types.
  *  Used as an instance of an fble type for those types that don't need any
  *  extra information at runtime.

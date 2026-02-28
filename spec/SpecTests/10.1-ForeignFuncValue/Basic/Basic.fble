@@ -1,5 +1,3 @@
-# @@fble-test@@ xfail
-# @@fble-test@@ runtime-error 15:43
 # @@fble-test@@ no-error
 
 @ Unit@ = *();

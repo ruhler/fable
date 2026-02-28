@@ -20,6 +20,37 @@
 
 extern FblePreloadedModule _Fble_2f_SpecTests_2f_Builtin_25_;
 
+static FbleValue* Foreign1_Not_impl(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args);
+
+static FbleExecutable Foreign1_Not = {
+  .num_args = 1,
+  .num_statics = 0,
+  .max_call_args = 0,
+  .run = &Foreign1_Not_impl
+};
+
+/**
+ * @func[Foreign1_Not_impl] FbleRunFunction for 'Not' foreign function.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is @l{(Bool@) { Bool@; }}.
+ *
+ *  @sideeffects None
+ */
+static FbleValue* Foreign1_Not_impl(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  FbleValue* arg = args[0];
+  switch (FbleUnionValueTag(arg, 1)) {
+    case 0: return FbleNewEnumValue(heap, 1, 1);
+    case 1: return FbleNewEnumValue(heap, 1, 0);
+  }
+  return NULL;
+}
+
 // FbleTestMain -- see documentation in test.h
 int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 {
@@ -28,6 +59,10 @@ int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   const char* profile_output_file = NULL;
   uint64_t profile_sample_period = 0;
   FbleValue* result = NULL;
+
+  FbleModulePath* foreign1 = FbleParseModulePath("/SpecTests/'10.1-ForeignFuncValue'/Basic/Basic%");
+  FbleRegisterForeignFunction(heap, foreign1, "Not", Foreign1_Not);
+  FbleFreeModulePath(foreign1);
 
   FblePreloadedModuleV builtins;
   FbleInitVector(builtins);

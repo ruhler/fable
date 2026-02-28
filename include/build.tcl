@@ -88,6 +88,8 @@ namespace eval "include" {
       FbleValue FbleValueHeap
       FbleStructValue FbleUnionValue FbleFuncValue
       FbleNewValueHeap FbleFreeValueHeap
+      FblePushFrame FblePopFrame
+      FbleRegisterForeignFunction
       FbleValueV
       FbleGenericTypeValue
       FbleNewStructValue FbleNewStructValue_

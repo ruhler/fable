@@ -392,6 +392,28 @@ typedef struct {
 } Gc;
 
 /**
+ * @struct[ForeignFunction] A foreign function entry.
+ *  @field[FbleModulePath*][path] Module the function belongs to.
+ *  @field[FbleString*][name] The name of the function.
+ *  @field[FbleExecutable][exe] The implementation of the function.
+ */
+typedef struct {
+  FbleModulePath* path;
+  FbleString* name;
+  FbleExecutable exe;
+} ForeignFunction;
+
+/**
+ * @struct[ForeignFunctionV] Vector of ForeignFunction
+ *  @field[size_t][size] Number of elements.
+ *  @field[ForeignFunction*][xs] Elements.
+ */
+typedef struct {
+  size_t size;
+  ForeignFunction* xs;
+} ForeignFunctionV;
+
+/**
  * @struct[ValueHeap] The full FbleValueHeap.
  *  @field[FbleValueHeap][_base]
  *   The publically exposed parts of the value heap.
@@ -404,6 +426,7 @@ typedef struct {
  *  @field[Chunk*][chunks]
  *   Chunks of allocated stack memory not currently in use.
  *  @field[uintptr_t][ref_id] The next available ref_id.
+ *  @field[ForeignFuncV][foreign] List of registered foreign functions.
  */
 typedef struct {
   FbleValueHeap _base;
@@ -414,6 +437,7 @@ typedef struct {
   Gc gc;
   Chunk* chunks;
   uintptr_t ref_id;
+  ForeignFunctionV foreign;
 } ValueHeap;
 
 static StackAllocatedValue* StackAllocatedValueOf(FbleValue* value);
@@ -1050,6 +1074,8 @@ FbleValueHeap* FbleNewValueHeap()
   heap->chunks = NULL;
   heap->ref_id = 1;
 
+  FbleInitVector(heap->foreign);
+
   return &heap->_base;
 }
 
@@ -1086,6 +1112,12 @@ void FbleFreeValueHeap(FbleValueHeap* heap_)
   }
 
   FbleFree(heap->_base.tail_call_buffer);
+
+  for (size_t i = 0; i < heap->foreign.size; ++i) {
+    FbleFreeModulePath(heap->foreign.xs[i].path);
+    FbleFreeString(heap->foreign.xs[i].name);
+  }
+  FbleFree(heap->foreign.xs);
 
   FbleFree(heap);
 }
@@ -1762,19 +1794,35 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap_, FbleExecutable* executable, si
   return &v->_base;
 }
 
+// See documentation in fble-value.h
+void FbleRegisterForeignFunction(FbleValueHeap* heap_, FbleModulePath* path, const char* name, FbleExecutable exe)
+{
+  assert(exe.num_statics == 0 && "foreign num_statics must be 0");
+
+  ValueHeap* heap = (ValueHeap*)heap_;
+
+  ForeignFunction* foreign = FbleExtendVector(heap->foreign);
+  foreign->path = FbleCopyModulePath(path);
+  foreign->name = FbleNewString(name);
+  foreign->exe = exe;
+}
+
 // See documentation in fble-value.h.
 FbleValue* FbleNewForeignFuncValue(FbleValueHeap* heap_, FbleModulePath* path, const char* name, size_t profile_block_id)
 {
-  // ValueHeap* heap = (ValueHeap*)heap_;
-  // FbleExecutable* executable = <TODO>;
-  // EnsureTailCallArgsSpace(heap, executable->max_call_args);
-  // FbleFuncValue* v = NewValue(heap, FbleFuncValue, FUNC_VALUE);
-  // v->function.profile_block_id = profile_block_id;
-  // assert(executable->num_statics == 0);
-  // memcpy(&v->function.executable, executable, sizeof(FbleExecutable));
-  // return &v->_base;
-
-  // TODO: Implement me.
+  ValueHeap* heap = (ValueHeap*)heap_;
+  for (size_t i = 0; i < heap->foreign.size; ++i) {
+    ForeignFunction* foreign = heap->foreign.xs + i;
+    if (FbleModulePathsEqual(path, foreign->path)
+        && strcmp(name, foreign->name->str) == 0) {
+      EnsureTailCallArgsSpace(heap, foreign->exe.max_call_args);
+      FbleFuncValue* v = NewValue(heap, FbleFuncValue, FUNC_VALUE);
+      v->function.profile_block_id = profile_block_id;
+      assert(foreign->exe.num_statics == 0);
+      memcpy(&v->function.executable, &foreign->exe, sizeof(FbleExecutable));
+      return &v->_base;
+    }
+  }
   return NULL;
 }
 
