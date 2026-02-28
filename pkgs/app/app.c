@@ -461,11 +461,11 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   uint64_t profile_sample_period = 0;
   FbleValue* func = NULL;
 
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Debug_2f_Builtin_25__2e_Trace);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar);
 
   FblePreloadedModuleV builtins;
   FbleInitVector(builtins);
-  FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Debug_2f_Builtin_25_);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_Native_25_);
 
   FbleMainStatus status = FbleMain(&ParseArg, &app_args, "fble-app", fbldUsageHelpText,

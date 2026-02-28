@@ -733,3 +733,28 @@ doesn't have the const char* name argument? Or
 FbleMangleModulePath? and FbleMangleForeignFunction?
 
 Sure. Let's do that. I can put them in module.c and fble-module.h.
+
+---
+
+aarch64 and C backends have been switched over to statically link. It was
+easier than I expected. Where does that leave us?
+
+Do I want to do something about checking interpreter foreign function linkage
+at module link/load time? What's my policy about making things like GetEnv
+available to things like fble-app for interpreting? Should we just require
+everything is compiled (I've had this discussion before and it always turns
+out that we should continue to support interpreted code...).
+
+If we switch everything to FFI, is there a need for builtin functions anymore?
+Does that make it easier to define the foreign function code in per-library
+modules that we can dynamically load and check at link time or statically link
+in and rely on the symbol being defined that way? Or should I just not worry
+about this yet, save it for another release?
+
+Honestly, I think next step should be to convert as much over to FFI as we
+can, now that I feel like the interface is reasonable. If we migrate off of
+registering and searching for foreign functions by name in the interpreter,
+we can remove the path and name fields from FbleForeignFunction, which might
+be nice cleanup.
+
+Let's migrate debug then, shall we?

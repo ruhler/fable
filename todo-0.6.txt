@@ -4,6 +4,13 @@ Things to consider doing for the fble-0.6 release.
 
 * Verify all api is listed in include/build.tcl.
 
+* Test coverage for FFI
+ - Verify names matter.
+ - Verify module paths matter.
+ - Test what happens if you can't find the foreign function?
+ - Consider taking this opportunity to move test foreign function definitions
+   into a new test/foreign.c file.
+
 * Test unicode for character based native input and output streams.
 * Add tests for /Core/Char/Stream/IStream%.GetLine.
 
