@@ -24,9 +24,10 @@ static FbleValue* Foreign_Basic_Not_impl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
 
-static FbleExecutable Foreign_Basic_Not = {
+static FbleForeignFunction Foreign_Basic_Not = {
+  .path = "/SpecTests/'10.1-ForeignFuncValue'/Basic/Basic%",
+  .name = "Not",
   .num_args = 1,
-  .num_statics = 0,
   .max_call_args = 0,
   .run = &Foreign_Basic_Not_impl
 };
@@ -35,9 +36,10 @@ static FbleValue* Foreign_Poly_Nothing_impl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
 
-static FbleExecutable Foreign_Poly_Nothing = {
+static FbleForeignFunction Foreign_Poly_Nothing = {
+  .path = "/SpecTests/'10.1-ForeignFuncValue'/Basic/Poly%",
+  .name = "Nothing",
   .num_args = 1,
-  .num_statics = 0,
   .max_call_args = 0,
   .run = &Foreign_Poly_Nothing_impl
 };
@@ -86,13 +88,8 @@ int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   uint64_t profile_sample_period = 0;
   FbleValue* result = NULL;
 
-  FbleModulePath* foreign_basic = FbleParseModulePath("/SpecTests/'10.1-ForeignFuncValue'/Basic/Basic%");
-  FbleRegisterForeignFunction(heap, foreign_basic, "Not", Foreign_Basic_Not);
-  FbleFreeModulePath(foreign_basic);
-
-  FbleModulePath* foreign_poly = FbleParseModulePath("/SpecTests/'10.1-ForeignFuncValue'/Basic/Poly%");
-  FbleRegisterForeignFunction(heap, foreign_poly, "Nothing", Foreign_Poly_Nothing);
-  FbleFreeModulePath(foreign_poly);
+  FbleRegisterForeignFunction(heap, &Foreign_Basic_Not);
+  FbleRegisterForeignFunction(heap, &Foreign_Poly_Nothing);
 
   FblePreloadedModuleV builtins;
   FbleInitVector(builtins);

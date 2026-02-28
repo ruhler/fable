@@ -461,9 +461,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   uint64_t profile_sample_period = 0;
   FbleValue* func = NULL;
 
-  FbleModulePath* core_env_native = FbleParseModulePath("/Core/Env/Native%");
-  FbleRegisterForeignFunction(heap, core_env_native, "GetVar", _Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar);
-  FbleFreeModulePath(core_env_native);
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar);
 
   FblePreloadedModuleV builtins;
   FbleInitVector(builtins);

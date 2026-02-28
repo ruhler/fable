@@ -392,25 +392,13 @@ typedef struct {
 } Gc;
 
 /**
- * @struct[ForeignFunction] A foreign function entry.
- *  @field[FbleModulePath*][path] Module the function belongs to.
- *  @field[FbleString*][name] The name of the function.
- *  @field[FbleExecutable][exe] The implementation of the function.
- */
-typedef struct {
-  FbleModulePath* path;
-  FbleString* name;
-  FbleExecutable exe;
-} ForeignFunction;
-
-/**
- * @struct[ForeignFunctionV] Vector of ForeignFunction
+ * @struct[ForeignFunctionV] Vector of FbleForeignFunction*
  *  @field[size_t][size] Number of elements.
- *  @field[ForeignFunction*][xs] Elements.
+ *  @field[FbleForeignFunction**][xs] Elements.
  */
 typedef struct {
   size_t size;
-  ForeignFunction* xs;
+  FbleForeignFunction** xs;
 } ForeignFunctionV;
 
 /**
@@ -1112,13 +1100,7 @@ void FbleFreeValueHeap(FbleValueHeap* heap_)
   }
 
   FbleFree(heap->_base.tail_call_buffer);
-
-  for (size_t i = 0; i < heap->foreign.size; ++i) {
-    FbleFreeModulePath(heap->foreign.xs[i].path);
-    FbleFreeString(heap->foreign.xs[i].name);
-  }
   FbleFree(heap->foreign.xs);
-
   FbleFree(heap);
 }
 
@@ -1795,16 +1777,10 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap_, FbleExecutable* executable, si
 }
 
 // See documentation in fble-value.h
-void FbleRegisterForeignFunction(FbleValueHeap* heap_, FbleModulePath* path, const char* name, FbleExecutable exe)
+void FbleRegisterForeignFunction(FbleValueHeap* heap_, FbleForeignFunction* foreign)
 {
-  assert(exe.num_statics == 0 && "foreign num_statics must be 0");
-
   ValueHeap* heap = (ValueHeap*)heap_;
-
-  ForeignFunction* foreign = FbleExtendVector(heap->foreign);
-  foreign->path = FbleCopyModulePath(path);
-  foreign->name = FbleNewString(name);
-  foreign->exe = exe;
+  FbleAppendToVector(heap->foreign, foreign);
 }
 
 // See documentation in fble-value.h.
@@ -1812,11 +1788,22 @@ FbleValue* FbleNewForeignFuncValue(FbleValueHeap* heap_, FbleModulePath* path, c
 {
   ValueHeap* heap = (ValueHeap*)heap_;
   for (size_t i = 0; i < heap->foreign.size; ++i) {
-    ForeignFunction* foreign = heap->foreign.xs + i;
-    if (FbleModulePathsEqual(path, foreign->path)
-        && strcmp(name, foreign->name->str) == 0) {
-      assert(foreign->exe.num_statics == 0);
-      return FbleNewFuncValue(heap_, &foreign->exe, profile_block_id, NULL);
+    FbleForeignFunction* foreign = heap->foreign.xs[i];
+    if (strcmp(name, foreign->name) == 0) {
+      // TODO: It's silly to have to allocate temporary module paths for every
+      // module we want to check against. Figure out a better way.
+      FbleModulePath* foreign_path = FbleParseModulePath(foreign->path);
+      bool paths_match = foreign_path != NULL && FbleModulePathsEqual(path, foreign_path);
+      FbleFreeModulePath(foreign_path);
+      if (paths_match) {
+        FbleExecutable exe = {
+          .num_args = foreign->num_args,
+          .num_statics = 0,
+          .max_call_args = foreign->max_call_args,
+          .run = foreign->run
+        };
+        return FbleNewFuncValue(heap_, &exe, profile_block_id, NULL);
+      }
     }
   }
   return NULL;

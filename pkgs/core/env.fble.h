@@ -6,13 +6,13 @@
 #ifndef FBLE_CORE_ENV_FBLE_H_
 #define FBLE_CORE_ENV_FBLE_H_
 
-#include <fble/fble-function.h>   // for FbleExecutable
+#include <fble/fble-function.h>   // for FbleForeignFunction
 
 /**
  * @value[_Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar]
  * @ Foreign function /Core/Env/Native%.GetVar
- *  @type[FbleExecutable]
+ *  @type[FbleForeignFunction]
  */
-extern FbleExecutable _Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar;
+extern FbleForeignFunction _Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar;
 
 #endif // FBLE_CORE_ENV_FBLE_H_

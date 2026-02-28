@@ -647,3 +647,45 @@ It probably wouldn't be hard to list the foreign function names in an
 FbleModule somewhere, so we can quickly check at link time that they are all
 registered. If I'm concerned about that, or about having different behavior
 for foreign functions than builtin modules today.
+
+The only way to address the case of fble-cli trying to interpreted load some
+network module that has FFI or builtin references is to supply a shared
+dynamic library in the search path, dlopen it, and dlsym search for symbols of
+the things we need. I'm not there yet. I don't need to be there yet. But I can
+prepare for it.
+
+There is the question of whether we want to explicitly register code or
+implicitly do it via attributes, dynamic symbols, etc. Here I'm talking about
+the static case for things like stdio or env ffi in fble-cli, where we are
+statically linking the foreign code into the interpreter. That's a separate
+case. The benefit of explicitly registering is you have the choice not to
+explicitly register. The downside is it's slightly more tedious and error
+prone, because you might forget to register.
+
+Here's what I vote for now:
+1. Define FbleForeignFunction type as defined above. Use that to specify
+foreign functions.
+2. Have interpreter validate ffi functions are present at link time, not at
+run time. Update the spec accordingly.
+3. Change aarch64 and c backends to map directly to the target symbol for FFI
+ - Which means have a well defined name mangling. I'm happy with
+  mangled /Foo/Bar%.Name, for example. I don't think that's ambiguous.
+ - We can check things work by removing getenv from app.c.
+4. Save dlsym, dlopen, export-dynamic, all the fun stuff for a future release.
+
+---
+
+It's tedious specifying the module path. If we specify it as FbleModulePath in
+FbleForeignFunction, it's annoying to make a static version of that. If we
+specify it as char*, it's annoying to convert that to FbleModulePath for the
+comparison.
+
+Oh well.
+
+I suppose if we used dlsym, we could avoid that entirely by encoding the
+module path in the name of the symbol.
+
+Or, I could change FbleNewForeignFuncValue to take the module path as a
+string. Then do the conversion from FbleModulePath to string in the compiler
+or backend.
+
