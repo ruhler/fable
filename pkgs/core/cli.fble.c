@@ -188,6 +188,10 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   uint64_t profile_sample_period = 0;
   FbleValue* main = NULL;
 
+  FbleModulePath* core_env_native = FbleParseModulePath("/Core/Env/Native%");
+  FbleRegisterForeignFunction(heap, core_env_native, "GetEnv", _Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar);
+  FbleFreeModulePath(core_env_native);
+
   FblePreloadedModuleV builtins;
   FbleInitVector(builtins);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Debug_2f_Builtin_25_);

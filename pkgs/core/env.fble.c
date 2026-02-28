@@ -76,17 +76,17 @@ static FbleValue* GetVarImpl(FbleValueHeap* heap, FbleProfileThread* profile, Fb
   return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, str); // Just(str)
 }
 
+FbleExecutable _Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar = {
+  .num_args = 4,
+  .num_statics = 0,
+  .max_call_args = 0,
+  .run = &GetVarImpl,
+};
+
 static FbleValue* Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* function, FbleValue** args)
 {
   FblePushFrame(heap);
-  FbleExecutable getvar_exe = {
-    .num_args = 4,
-    .num_statics = 0,
-    .max_call_args = 0,
-    .run = &GetVarImpl,
-  };
-
-  FbleValue* getvar = FbleNewFuncValue(heap, &getvar_exe, function->profile_block_id + GETVAR_BLOCK_OFFSET, NULL);
+  FbleValue* getvar = FbleNewFuncValue(heap, &_Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar, function->profile_block_id + GETVAR_BLOCK_OFFSET, NULL);
   FbleValue* native = FbleNewStructValue_(heap, 1, getvar);
   return FblePopFrame(heap, native);
 }

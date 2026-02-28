@@ -377,3 +377,38 @@ in charge of registering it too if they want, even for C and aarch64 backends?
 When registering a foreign function explicitly, it's pretty tedious to
 construct and then free the ModulePath. Maybe more reason to reconsider my
 decision to register explicitly instead of using dlsym approach?
+
+But maybe it won't be so bad if I just need one module path per module, and I
+can use const char* and parse the module path. And if I really want to, I can
+change the register function to take const char* and parse the module path
+itself. So that's a bit of a lame excuse.
+
+At this point, I think there are two branches we can split down:
+1. Switch over everyone to use FFI instead of builtin modules.
+2. Figure out the best way to register/lookup foreign functions.
+
+Probably they can be done independently. I assume any changes in (2) will be
+minor.
+
+What do you think? Shall we try it out for /Core/Env/Native%? Define GetVar as
+a foreign function? Register it with fble-cli and fble-app, and wherever else
+we need to?
+
+In terms of whether foreign not found is a compile, link, or runtime error, I
+think it's okay to say it's platform dependent. I would like to return the
+error at link time if at all possible, because it's better to catch the error
+as early as possible. Is there not some existing precedent for the error for
+failing to find a builtin module?
+
+How do I feel about the term 'Native', native interface, versus 'Foreign',
+ffi? Should we switch to /Core/Env/FFI%? /Core/Env/Foreign?
+
+I want it to be clear from the name it is doing some magic under the covers.
+But I also would like consistency in terminology. Let's stick with
+/Core/Env/Native% for now.
+
+Maybe I can register the GetVar function with FFI first, then swap
+/Core/Env/Native% impl to use FFI, then remove the old builtin module code on
+the C side. That should be a good test of how convenient FFI is compared to
+builtin modules to use.
+
