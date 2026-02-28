@@ -471,7 +471,7 @@ static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, Fbl
   fprintf(fout, "  bl fprintf\n");
 
   // Return NULL.
-  fprintf(fout, "  mov x0, XZR\n");
+  fprintf(fout, "  mov x0, xzr\n");
   fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
 }
 
@@ -1061,22 +1061,35 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
 
     case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
       FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
-      LabelId path_id = StaticModulePath(fout, label_id, func_instr->path);
-      LabelId name_id = (*label_id)++;
-      fprintf(fout, "  .section .data\n");
-      fprintf(fout, "  .align 3\n");
-      fprintf(fout, LABEL ":\n", name_id);
-      StringLit(fout, func_instr->name->str);
 
-      fprintf(fout, "  .text\n");
-      fprintf(fout, "  .align 2\n");
+      // Get a pointer to the FbleForeignFunction in x0.
+      FbleString* foreign = FbleMangleForeignFunction(func_instr->path, func_instr->name->str);
+      GAdr(fout, "x0", "%s", foreign->str);
+      FbleFreeString(foreign);
+
+      // Allocate space for an FbleExecutable on the stack.
+      size_t sp_offset = sizeof(FbleExecutable);
+      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
+
+      // populate the FbleExecutable at SP from the FbleForeignFunction in x0.
+      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleForeignFunction, num_args));
+      fprintf(fout, "  str x1, [SP, #%zi]\n", offsetof(FbleExecutable, num_args));
+      fprintf(fout, "  str xzr, [SP, #%zi]\n", offsetof(FbleExecutable, num_statics));
+      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleForeignFunction, max_call_args));
+      fprintf(fout, "  str x1, [SP, #%zi]\n", offsetof(FbleExecutable, max_call_args));
+      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleForeignFunction, run));
+      fprintf(fout, "  str x1, [SP, #%zi]\n", offsetof(FbleExecutable, run));
+
+      // Call FbleNewFuncValue.
       fprintf(fout, "  mov x0, R_HEAP\n");
-      Adr(fout, "x1", LABEL, path_id);
-      Adr(fout, "x2", LABEL, name_id);
-      fprintf(fout, "  add x3, R_PROFILE_BLOCK_ID, #%zi\n", func_instr->profile_block_offset);
-      fprintf(fout, "  bl FbleNewForeignFuncValue\n");
+      fprintf(fout, "  mov x1, SP\n");
+      fprintf(fout, "  add x2, R_PROFILE_BLOCK_ID, #%zi\n", func_instr->profile_block_offset);
+      fprintf(fout, "  mov x3, xzr\n");
+      fprintf(fout, "  bl FbleNewFuncValue\n");
       SetFrameVar(fout, "x0", func_instr->dest);
-      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.abort\n", func_id, pc);
+
+      // Free the stack space allocated for the FbleExecutable
+      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       return;
     }
 
@@ -1162,7 +1175,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
       DoAbort(fout, func_id, pc, ".L.UndefinedUnionValue", access_instr->loc);
 
       fprintf(fout, ".Lo.%04zx.%zi.bt:\n", func_id, pc);
-      SetFrameVar(fout, "XZR", access_instr->dest);
+      SetFrameVar(fout, "xzr", access_instr->dest);
       DoAbort(fout, func_id, pc, ".L.WrongUnionTag", access_instr->loc);
       return;
     }
@@ -1215,14 +1228,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
     case FBLE_TYPE_INSTR: return;
     case FBLE_LIST_INSTR: return;
     case FBLE_LITERAL_INSTR: return;
-
-    case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
-      FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
-      fprintf(fout, ".Lo.%04zx.%zi.abort:\n", func_id, pc);
-      DoAbort(fout, func_id, pc, ".L.ForeignNotFound", func_instr->loc);
-      return;
-    }
-
+    case FBLE_FOREIGN_FUNC_VALUE_INSTR: return;
     case FBLE_NOP_INSTR: return;
     case FBLE_UNDEF_INSTR: return;
   }
@@ -1367,8 +1373,6 @@ void FbleGenerateAArch64(FILE* fout, FbleModule* module)
   fprintf(fout, "  .string \"%%s:%%d:%%d: error: %%s\"\n");
   fprintf(fout, ".L.CalleeAborted:\n");
   fprintf(fout, "  .string \"callee aborted\\n\"\n");
-  fprintf(fout, ".L.ForeignNotFound:\n");
-  fprintf(fout, "  .string \"foreign function not found\\n\"\n");
   fprintf(fout, ".L.UndefinedStructValue:\n");
   fprintf(fout, "  .string \"undefined struct value access\\n\"\n");
   fprintf(fout, ".L.UndefinedUnionValue:\n");
