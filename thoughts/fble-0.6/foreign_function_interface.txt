@@ -412,3 +412,11 @@ Maybe I can register the GetVar function with FFI first, then swap
 the C side. That should be a good test of how convenient FFI is compared to
 builtin modules to use.
 
+---
+
+GetVar implementation is much nicer with FFI. I eliminate a ton of boiler
+plate, as planned.
+
+It is unpleasant that I don't get a static error if I get the FFI wrong. It's
+hard to know where all I need to register things for it to work properly.
+

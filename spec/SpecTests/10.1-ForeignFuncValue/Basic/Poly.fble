@@ -1,0 +1,18 @@
+# @@fble-test@@ no-error
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+<@>@ Maybe@ = <@ T@> { +(Unit@ nothing, T@ just); };
+
+# Polymorphic functions should be allowed as foreign functions.
+# The foreign function 'Nothing' for this module must be supplied by the test
+# driver somewhere. It should behave as a Nothing constructor.
+<@>@ F@ = <@ T@>(Unit@) { Maybe@<T@>; };
+F@ F = F@|Nothing;
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+Maybe@<Bool@> nothing = F<Bool@>(Unit);
+nothing.nothing;
+

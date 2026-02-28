@@ -15,6 +15,7 @@
 #
 # No mechanism is currently provided to list the environment variables. We'll
 # consider adding that in the future when a clear use case presents itself.
-<<@>@ M@>(Native@<M@>, Monad@<M@>, String@) { M@<Maybe@<String@>>; } GetVar;
+<<@>@ M@>(Native@<M@>, Monad@<M@>, String@) { M@<Maybe@<String@>>; }
+GetVar = @<GetVar>|GetVar;
 
 @(GetVar);

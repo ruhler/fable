@@ -6,13 +6,7 @@
 #ifndef FBLE_CORE_ENV_FBLE_H_
 #define FBLE_CORE_ENV_FBLE_H_
 
-#include <fble/fble-program.h>   // for FblePreloadedModule
-
-/**
- * @value[_Fble_2f_Core_2f_Env_2f_Native_25_] @l{/Core/Env/Native%} implementation.
- *  @type[FblePreloadedModule]
- */
-extern FblePreloadedModule _Fble_2f_Core_2f_Env_2f_Native_25_;
+#include <fble/fble-function.h>   // for FbleExecutable
 
 /**
  * @value[_Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar]

@@ -20,6 +20,7 @@
 
 #include "char.fble.h"             // for FbleCharValueAccess
 #include "debug.fble.h"            // for /Core/Debug/Builtin%
+#include "env.fble.h"              // for /Core/Env/Native%.GetEnv
 #include "int.fble.h"              // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"           // for FbleStringValueAccess
 #include "stdio.fble.h"            // for /Core/Stdio/Native%
@@ -459,6 +460,10 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   const char* profile_output_file = NULL;
   uint64_t profile_sample_period = 0;
   FbleValue* func = NULL;
+
+  FbleModulePath* core_env_native = FbleParseModulePath("/Core/Env/Native%");
+  FbleRegisterForeignFunction(heap, core_env_native, "GetVar", _Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar);
+  FbleFreeModulePath(core_env_native);
 
   FblePreloadedModuleV builtins;
   FbleInitVector(builtins);

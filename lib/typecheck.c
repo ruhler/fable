@@ -1853,7 +1853,11 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleType* valueof = FbleValueOfType(th, normal);
       CleanType(cleaner, valueof);
       if (valueof != NULL) {
-        FbleFuncType* func_type = (FbleFuncType*)FbleNormalType(th, valueof);
+        FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
+        FbleInitVector(*vars);
+        CleanTypeAssignmentV(cleaner, vars);
+
+        FbleFuncType* func_type = (FbleFuncType*)DepolyType(th, valueof, vars);
         CleanType(cleaner, &func_type->_base);
         if (func_type->_base.tag != FBLE_FUNC_TYPE) {
           ReportError(literal_expr->func->loc, "expected a function or function type, but found something of type %t\n", func.type);
