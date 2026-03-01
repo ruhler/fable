@@ -7,7 +7,6 @@
 % False = /Std/Bool%.False;
 
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>% OStream = /Core/Stream/Char%.OStream;
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % String = /Std/Char/Output%.String;
 % StringE = /Std/Char/Ascii/Output%.StringE;
@@ -35,7 +34,6 @@
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 % Success = /Core/Stdio%.Success;
 % Failure = /Core/Stdio%.Failure;
 
@@ -106,10 +104,8 @@ GetArgs = (List@<String@> args, Args@ default) {
 };
 
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
-  Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
-  Put@<M@, Output@> out = OStream(stdio.out, m).put;
-  Put@<M@, Output@> err = OStream(stdio.err, m).put;
-
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
+  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Stderr<M@>(n, m));
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(n, m));
 

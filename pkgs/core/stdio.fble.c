@@ -401,6 +401,62 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdin = {
 };
 
 /**
+ * @func[GetStdout] FbleRunFunction to for GetStdout foreign function.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (Native@<M@>, Monad@<M@>, Unit@) { File@; }
+ */  
+static FbleValue* GetStdout(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  (void)profile;
+  (void)args;
+
+  return FbleNewNativeValue(heap, stdout, NULL);
+}
+
+// /Core/Stdio/FFI%.GetStdout foreign function.
+FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdout = {
+  .path = "/Core/Stdio/FFI%",
+  .name = "GetStdout",
+  .num_args = 3,
+  .max_call_args = 0,
+  .run = &GetStdout,
+};
+
+/**
+ * @func[GetStderr] FbleRunFunction to for GetStderr foreign function.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (Native@<M@>, Monad@<M@>, Unit@) { File@; }
+ */  
+static FbleValue* GetStderr(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  (void)profile;
+  (void)args;
+
+  return FbleNewNativeValue(heap, stderr, NULL);
+}
+
+// /Core/Stdio/FFI%.GetStderr foreign function.
+FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStderr = {
+  .path = "/Core/Stdio/FFI%",
+  .name = "GetStderr",
+  .num_args = 3,
+  .max_call_args = 0,
+  .run = &GetStderr,
+};
+
+/**
  * @func[GetChar] FbleRunFunction for GetChar foreign function.
  *  See documentation of FbleRunFunction in fble-function.h
  *
@@ -438,3 +494,81 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar = {
   .max_call_args = 0,
   .run = &GetChar,
 };
+
+/**
+ * @func[PutChar] FbleRunFunction for PutChar foreign function.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (Native@<M@>, Monad@<M@>, File@, Char@, Unit@) { Unit@; }.
+ *
+ *  @sideeffects
+ *   Writes a character to the give file.
+ */
+static FbleValue* PutChar(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  (void)profile;
+  (void)args;
+
+  FILE* file = (FILE*)FbleNativeValueData(args[2]);
+  wchar_t c = FbleCharValueAccess(args[3]);
+  fputwc(c, file);
+  return FbleNewStructValue_(heap, 0);
+}
+
+// /Core/Stdio/FFI%.GetChar foreign function.
+FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar = {
+  .path = "/Core/Stdio/FFI%",
+  .name = "PutChar",
+  .num_args = 5,
+  .max_call_args = 0,
+  .run = &PutChar,
+};
+
+/**
+ * @func[Flush] FbleRunFunction for Flush foreign function.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (Native@<M@>, Monad@<M@>, File@, Unit@) { Unit@; }.
+ *
+ *  @sideeffects
+ *   Flushes the given file.
+ */
+static FbleValue* Flush(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  (void)profile;
+  (void)args;
+
+  FILE* file = (FILE*)FbleNativeValueData(args[2]);
+  fflush(file);
+  return FbleNewStructValue_(heap, 0);
+}
+
+// /Core/Stdio/FFI%.GetChar foreign function.
+FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Flush = {
+  .path = "/Core/Stdio/FFI%",
+  .name = "Flush",
+  .num_args = 4,
+  .max_call_args = 0,
+  .run = &Flush,
+};
+
+// See documentation in stdio.fble.h
+void FbleRegisterStdioForeignFunctions(FbleValueHeap* heap)
+{
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdin);
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdout);
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStderr);
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar);
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar);
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Flush);
+}

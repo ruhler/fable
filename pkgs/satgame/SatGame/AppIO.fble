@@ -95,9 +95,9 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
     m.return(seed);
   });
 
-  /Core/Char/Stream%.OStream@<M@> out = /Core/Stream/Char%.OStream(stdio.out, m);
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
   Args@ args = GetArgs(argv, DefaultArgs.@(seed));
-  Unit@ _ := m.do(SatGame(m, out.put, app, width, height, args));
+  Unit@ _ := m.do(SatGame(m, out, app, width, height, args));
   m.return(Success);
 };
 

@@ -5,7 +5,6 @@
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>% OStream = /Core/Stream/Char%.OStream;
 
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
@@ -17,8 +16,6 @@
 
 <<@>@>@ Native@ = /Core/Native%.Native@;
 
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-
 @ String@ = /Std/String%.String@;
 % StringE = /Std/Char/Ascii/Output%.StringE;
 
@@ -28,8 +25,7 @@
 # It exits with success if all arguments have the same value, false otherwise.
 
 Main@ Demo = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
-  Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
-  Put@<M@, Output@> out = OStream(stdio.out, m).put;
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
 
   Unit@ _ := m.do(out $ StringE|'hello, world\n');
 

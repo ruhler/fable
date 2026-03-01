@@ -3543,3 +3543,20 @@ composition of some kind.
 
 Trouble: md5 wants to read stdin in binary mode. Is that allowed? Should we
 support that? If so, how?
+
+It's wrong. It must be broken on windows, because on windows it matters and we
+read stdin in text mode, not binary mode. I should be able to reproduce errors
+when using a text file with windows line endings read from file versus read
+from stdin.
+
+Given it's broken, I kind of feel like it should be fine to remove support for
+reading stdin from fble-md5. It doesn't make sense to do md5 computations on
+character streams.
+
+---
+
+Now I have a nice FFI feature in fble I can use to more easily implement
+support for my newly proposed stdio interface. Let's get to work.
+
+We have Stdin defined. How about defining Stdout and Stderr next?
+

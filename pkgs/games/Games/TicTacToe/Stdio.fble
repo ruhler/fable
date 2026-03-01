@@ -7,7 +7,6 @@
 
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
 <<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
-<<@>@>% OStream = /Core/Stream/Char%.OStream;
 <@>@ Output@ = /Std/Char/Output%.Output@;
 <<@>@>% GetLine = /Core/Char/Stream/IStream%.GetLine;
 
@@ -23,8 +22,6 @@
 
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
-
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
 <@>@ Show@ = /Std/Show%.Show@;
 
@@ -116,8 +113,7 @@ Show@<Game@> ShowGame = (Game@ game) {
 
 # Play a game of tic-tac-toe.
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> _args) {
-  Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
-  Put@<M@, Output@> out = OStream(stdio.out, m).put;
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
 
   IStream@<M@> in := m.do(/Core/Stdio/FFI%.Stdin<M@>(n, m));
 
