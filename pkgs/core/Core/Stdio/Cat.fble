@@ -35,7 +35,7 @@
 Main@ Cat = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
   Put@<M@, Output@> out = OStream(stdio.out, m).put;
-  IStream@<M@> in := m.do(/Core/Stdio/Native%.Stdin<M@>(n, m));
+  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Stdin<M@>(n, m));
   (String@) { M@<Maybe@<IStream@<M@>>>; } read = Read(stdio.read, m);
 
   (IStream@<M@>) { M@<Unit@>; } cat = (IStream@<M@> input) {

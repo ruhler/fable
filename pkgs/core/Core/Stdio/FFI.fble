@@ -1,0 +1,27 @@
+
+@ Char@ = /Std/Char%.Char@;
+
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+
+<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@>@ Native@ = /Core/Native%.Native@;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+# Pretend type for FILE*. Only to be accessed from FFI functions.
+@ File@ = *(Unit@ file);
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<File@>; }
+GetStdin = @<GetStdin>|GetStdin;
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>, File@) { M@<Maybe@<Char@>>; }
+GetChar = @<GetChar>|GetChar;
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+Stdin = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
+  File@ stdin := m.do(GetStdin<M@>(n, m));
+  m.return(GetChar<M@>(n, m, stdin));
+};
+
+@(Stdin);

@@ -1,10 +1,8 @@
 
-<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Native@ = /Core/Native%.Native@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
-<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; } Stdin;
 <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<Stdio@<M@>>; } Stdio;
 
-@(Stdin, Stdio);
+@(Stdio);

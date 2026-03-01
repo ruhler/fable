@@ -119,7 +119,7 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> _args) {
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
   Put@<M@, Output@> out = OStream(stdio.out, m).put;
 
-  IStream@<M@> in := m.do(/Core/Stdio/Native%.Stdin<M@>(n, m));
+  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Stdin<M@>(n, m));
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
     Unit@ _ := m.do(out $ ShowGame(game));

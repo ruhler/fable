@@ -190,6 +190,8 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
 
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Debug_2f_Builtin_25__2e_Trace);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar);
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdin);
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar);
 
   FblePreloadedModuleV builtins;
   FbleInitVector(builtins);
