@@ -1457,8 +1457,11 @@
    The type of the foreign function value is the type provided, which must be
    a (possibly polymorphic) function type. Runtime is the platform dependent
    time required to identify and link in the matching platform implementation
-   of the foreign function. It is a runtime error if the platform is unable to
-   find a suitable foreign implementation for the function.
+   of the foreign function.
+
+   It is an error if the platform is unable to find a suitable foreign
+   implementation for the function. The error may occur at link time or at
+   runtime depending on the platform implementation.
 
    Any type conversion required between fble and the platform implementation
    must be done on the platform side. The correct type must be supplied at the

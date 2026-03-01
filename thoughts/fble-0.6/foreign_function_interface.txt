@@ -758,3 +758,9 @@ we can remove the path and name fields from FbleForeignFunction, which might
 be nice cleanup.
 
 Let's migrate debug then, shall we?
+
+---
+
+Cool. I can start using FFI for the next stdio. Good. I assume I'll come back
+for more discussion when we go to test FFI in detail, but for now, let's call
+that a wrap.
