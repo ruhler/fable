@@ -1,0 +1,18 @@
+
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+
+<@>@ Output@ = /Std/Char/Output%.Output@;
+% ToNull = /Std/Char/Output%.ToNull;
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
+# Constructs an output stream that discards the output characters.
+# For use in test cases and benchmarking, where we want to exercise the output
+# code but don't care about what is output.
+# TODO: Come up with a better name to distinguish this from m.return(Unit)?
+<<@>@ M@>(Monad@<M@>) { Put@<M@, Output@>; }
+NullOutput = <<@>@ M@>(Monad@<M@> m, Output@ output) {
+  m.return(ToNull(output));
+};
+
+@(NullOutput);

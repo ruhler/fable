@@ -2,6 +2,15 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Figure out why I need to pass M@ everywhere explicitly?
+ - Like, why can't type inference figure it out?
+
+* Add tests for Output ToString and ToNull
+ - Assuming we don't already have them.
+
+* Replace all uses of Core/Monad/State with Core/State/StateM.
+* Find a better home for /Core/State/StateM?
+
 * For complex types with M@ as a type argument, type error messages aren't
   informative.
  - I'll get something like 'unable to infer type for B@'. If it's not obvious

@@ -160,6 +160,27 @@ ToString = (Output@ show) {
   show(StringStream, Empty<Char@>);
 };
 
+# Null output stream that goes through the output but ignores the characters
+# output.
+Stream@<Unit@> NullStream = @(
+  return: Unit,
+  do: (Unit@ u, (Unit@) { Unit@; } f) { f(u); },
+  put: (Char@ _) { Unit; }
+);
+
+# @func[ToNull] Output to a Unit@.
+#  This goes through the output character by character, ignoring the
+#  characters seen. Useful for test cases and benchmarks. If you don't care
+#  about the output in normal execution, you should just ignore the Output@ in
+#  the first place.
+#
+#  @arg[Output@] The output to render.
+#  @returns[Unit@] Nothing interesting.
+(Output@) { Unit@; }
+ToNull = (Output@ show) {
+  show(NullStream);
+};
+
 @(Output@, Stream@,
   Return, Do, Put, String, Format, Concat, Lines, Join,
-  ToString);
+  ToString, ToNull);

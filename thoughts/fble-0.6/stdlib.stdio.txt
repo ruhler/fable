@@ -3607,3 +3607,43 @@ over that way?
 
 We can chose to use Exit@ for the generic test runner implementation, or
 True/False. Both work.
+
+---
+
+Next things to port off of Stdio@:
+* /Sat/Main% - wants a way to benchmark that reads input, ignores output, returns result.
+  Or output to string to include that in the cost?
+* /Fbld/Main% - wants a way to benchmark that reads input, ignores outputs.
+  Or output to string to include that in the cost?
+* benchmark games:
+ - Wants a way to test that reads input and produces expected output.
+ - Wants a way to benchmark that ignores output.
+   Or output to string to include that in the cost?
+
+Is it fair to ignore output for benchmarks? That would mean we don't include
+any of the cost of formatting, for example. I think better would be to run
+through the output entirely, but discard the characters at the put stage. That
+should be pretty easy to implement. We have ToString. We could add ToNull.
+
+Let's start with /Sat/Main% and see how it goes.
+
+It takes a single --help option. Should we pull that out and separate it?
+Sure. So /Sat/Main/Cli% maybe?
+
+Should we parse the input as part of Cli or as part of /Sat/Main? We want that
+included in the benchmark. I already have a separate AddClauses interface.
+Feels like that should be part of /Sat/Main. But that means the sat solver
+itself is returning pass/fail.
+
+Should it return exit status or Bool? Sigh. Let's not care too much right now?
+
+Now we need a way to pass a pure string to an IStream@. Which means I would
+like to define State@<M@, T@> and a function that goes from
+State@<M@, String@> to IStream@<M@>. And then a StateM@ monad and Monad
+instance for arbitrary type T. And maybe something that goes from Monad@ to
+Put@<M@, Output@> for any monad by nulling out the output, character by
+character - for use in testing and benchmarking.
+
+That's 3 or 4 things to set up, then compose together to get the behavior I
+want for the sat benchmark. And hopefully it's easy to reuse for everything
+else.

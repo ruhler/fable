@@ -1,0 +1,8 @@
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+<@,<@>@>@ State@ = <@ S@, <@>@ M@> {
+  *(M@<S@> get, (S@) { M@<Unit@>; } put);
+};
+
+@(State@);

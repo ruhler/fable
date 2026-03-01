@@ -8,9 +8,15 @@
 <@>% Items = /Std/List%.Items;
 
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Just = /Std/Maybe%.Just;
+<@>% Nothing = /Std/Maybe%.Nothing;
+
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<@,<@>@>@ State@ = /Core/State%.State@;
 
 @ String@ = /Std/String%.String@;
+
+@ Unit@ = /Std/Unit%.Unit@;
 
 # Gets everything up to and including the next newline character from stdin.
 # Returns an empty list in case of end of input.
@@ -34,4 +40,14 @@ GetText = <<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
   m.return(Items(c.just, tail));
 };
 
-@(GetLine, GetText);
+# Make an IStream from a String@ state monad.
+# TODO: Move this to a different module to avoid false dependency on State@?
+<<@>@ M@>(State@<String@, M@>, Monad@<M@>) { IStream@<M@>; }
+IStream = <<@>@ M@>(State@<String@, M@> s, Monad@<M@> m) {
+  String@ str := m.do(s.get);
+  str.?(empty: m.return(Nothing<Char@>));
+  Unit@ _ := m.do(s.put(str.items.tail));
+  m.return(Just(str.items.head));
+};
+
+@(GetLine, GetText, IStream);
