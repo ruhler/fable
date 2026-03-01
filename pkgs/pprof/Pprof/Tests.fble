@@ -11,4 +11,4 @@ Test@ Tests = TestSuite(Str|Pprof, List[
   /Pprof/Query/Tests%.Tests
 ]);
 
-/Core/Stdio/Native/Cli%.Run(/Core/Test/Stdio%.Run(Tests));
+/Core/Test/Cli%.Run(Tests);

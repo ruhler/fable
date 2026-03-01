@@ -323,4 +323,4 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
   })
 ]);
 
-/Core/Stdio/Native/Cli%.Run(/Core/Test/Stdio%.Run(Tests));
+/Core/Test/Cli%.Run(Tests);

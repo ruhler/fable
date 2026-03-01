@@ -15,4 +15,4 @@ Test@ Tests = TestSuite(Str|Graphics, List[
   /Graphics/Triangle/Tests%.Tests
 ]);
 
-/Core/Stdio/Native/Cli%.Run(/Core/Test/Stdio%.Run(Tests));
+/Core/Test/Cli%.Run(Tests);

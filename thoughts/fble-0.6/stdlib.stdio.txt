@@ -3585,3 +3585,25 @@ Current uses:
 Oh. That's notas bad as I thought. It's already on cli under the hood. I can
 ... change it to be pure cli.
 
+---
+
+What to do about /Core/Test/Stdio%?
+
+Input is a Test@. Output is a Main@ program. Currently a stdio main program.
+Eventually I'll want it to go to cli, but I also want to be able to reuse it
+in pure scenarios, right?
+
+Except we already have /Core/Test/Run% for the abstract test runner interface.
+The difference is...? I'm a little confused.
+
+I want two things:
+1. A generic test runner implementation:
+   <<@>@ M@>(Monad@<M@>, Put@<M@, Output@>, String@, Test@) { M@<Exit@>; }
+2. A cli native implementation of that.
+
+This shouldn't be too bad. Let's update /Core/Test/Run% to be the generic test
+runner, and /Core/Test/Cli% to be the cli test runner, and switch everything
+over that way?
+
+We can chose to use Exit@ for the generic test runner implementation, or
+True/False. Both work.

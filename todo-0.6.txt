@@ -2,6 +2,13 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* For complex types with M@ as a type argument, type error messages aren't
+  informative.
+ - I'll get something like 'unable to infer type for B@'. If it's not obvious
+   what the error is, it's very difficult to debug.
+ - For example, happens if I do '=' instead of ':=', or do Foo instead of
+   m.return(Foo) after that.
+
 * Verify all api is listed in include/build.tcl.
 
 * Test coverage for FFI

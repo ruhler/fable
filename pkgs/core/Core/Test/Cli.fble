@@ -1,0 +1,43 @@
+
+@ Bool@ = /Std/Bool%.Bool@;
+
+<@>@ Output@ = /Std/Char/Output%.Output@;
+<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+
+<@>@ List@ = /Std/List%.List@;
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@>@ Native@ = /Core/Native%.Native@;
+
+<<@>@>@ Main@ = /Core/Cli%.Main@;
+% Success = /Core/Cli%.Success;
+% Failure = /Core/Cli%.Failure;
+
+@ String@ = /Std/String%.String@;
+% Str = /Std/Char/Ascii%.Str;
+
+@ Test@ = /Std/Test%.Test@;
+
+# Run --
+#   A cli program to run a set of tests.
+#
+# Inputs:
+#   tests - the tests to run.
+#
+# Result:
+#   A cli Main@ program to run the tests.
+(Test@) { Main@; } Run = (Test@ tests) {
+  <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
+    String@ prefix = {
+      args.?(empty: Str|'');
+      /Std/String/Eq%.Eq(Str|'--prefix', args.items.head).?(false: Str|'');
+      args.items.tail.items.head;
+    };
+
+    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
+    Bool@ passed := m.do(/Core/Test/Run%.Run<M@>(m, out, prefix, tests));
+    m.return(passed.?(true: Success, false: Failure));
+  };
+};
+
+@(Run);

@@ -2,9 +2,9 @@
 @ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
+% And = /Std/Bool%.And;
 
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>% OStream = /Core/Stream/Char%.OStream;
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % String = /Std/Char/Output%.String;
@@ -16,8 +16,6 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<<@>@>@ OStream@ = /Core/Stream%.OStream@;
-
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 
@@ -27,49 +25,42 @@
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-<<@>@ M@>(Monad@<M@> m, OStream@<M@> out_) {
-  Put@<M@, Output@> out = OStream<M@>(out_, m).put;
-
-  # Returns True if the tests all pass, false otherwise.
-  (String@, Test@) { M@<Bool@>; } RunTests = (String@ prefix, Test@ test) {
-
-    (Test@, String@, Bool@) { M@<Bool@>; }
-    Run = (Test@ test, String@ prefix, Bool@ passing) {
-      test.?(
-        case: {
-          String@ name = Concat[prefix, test.case.name];
-          Unit@ _ := m.do(out $ FormatE|'@[%s]: '[String(name)]);
-          TestResult@ tr = test.case.test(Unit);
-          tr.?(
-            pass: {
-              Unit@ _ := m.do(out $ StringE|'@PASS\n');
-              m.return(passing);
-            },
-            fail: {
-              Unit@ _ := m.do(out $ FormatE|'@FAIL: %s\n'[tr.fail]);
-              m.return(False);
-            },
-            expected_fail: {
-              Unit@ _ := m.do(out $ StringE|'@EXPECTED_FAIL\n');
-              m.return(passing);
-            },
-            skip: {
-              Unit@ _ := m.do(out $ FormatE|'@SKIP: %s\n'[tr.skip]);
-              m.return(passing);
-            });
+# Runs a test or test suite, outputting summary information along the way.
+# Returns True if the all the tests pass, false otherwise.
+<<@>@ M@>(Monad@<M@>, Put@<M@, Output@>, String@, Test@) { M@<Bool@>; }
+Run = <<@>@ M@>(Monad@<M@> m, Put@<M@, Output@> out, String@ prefix, Test@ test) {
+  test.?(
+    case: {
+      String@ name = Concat[prefix, test.case.name];
+      Unit@ _ := m.do(out $ FormatE|'@[%s]: '[String(name)]);
+      TestResult@ tr = test.case.test(Unit);
+      tr.?(
+        pass: {
+          Unit@ _ := m.do(out $ StringE|'@PASS\n');
+          m.return(True);
         },
-        suite: {
-          String@ nprefix = Concat[prefix, test.suite.name, Str|'.'];
-          ForEach(test.suite.tests, m.return(passing),
-            (Test@ test, M@<Bool@> mp) {
-              Bool@ passing := m.do(mp);
-              Run(test, nprefix, passing);
-            });
+        fail: {
+          Unit@ _ := m.do(out $ FormatE|'@FAIL: %s\n'[tr.fail]);
+          m.return(False);
+        },
+        expected_fail: {
+          Unit@ _ := m.do(out $ StringE|'@EXPECTED_FAIL\n');
+          m.return(True);
+        },
+        skip: {
+          Unit@ _ := m.do(out $ FormatE|'@SKIP: %s\n'[tr.skip]);
+          m.return(True);
         });
-    };
-
-    Run(test, prefix, True);
-  };
-
-  @(RunTests: RunTests);
+    },
+    suite: {
+      String@ nprefix = Concat[prefix, test.suite.name, Str|'.'];
+      ForEach(test.suite.tests, m.return(True),
+        (Test@ test, M@<Bool@> mp) {
+          Bool@ passing := m.do(mp);
+          Bool@ pass := m.do(Run(m, out, nprefix, test));
+          m.return(And(passing, pass));
+        });
+    });
 };
+
+@(Run);
