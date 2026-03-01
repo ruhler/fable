@@ -1,6 +1,5 @@
 
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>% OStream = /Core/Stream/Char%.OStream;
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % String = /Std/Char/Output%.String;
@@ -10,30 +9,23 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-<<@>@>@ Main@ = /Core/Stdio%.Main@;
-% Success = /Core/Stdio%.Success;
+<<@>@>@ Main@ = /Core/Cli%.Main@;
+% Success = /Core/Cli%.Success;
+
+<<@>@>@ Native@ = /Core/Native%.Native@;
 
 @ String@ = /Std/String%.String@;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
-# StringO --
-#   A stdio main function that outputs a single string.
-(String@) { Main@; } StringO = (String@ str) {
-  <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {
-    Put@<M@, Output@> out = OStream(stdio.out, m).put;
+# Run --
+#   A cli main function that outputs a single string.
+(String@) { Main@; } Run = (String@ str) {
+  <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> _args) {
+    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
     Unit@ _ := m.do(out $ Format|'%s\n'[String(str)]);
     m.return(Success);
   };
 };
 
-# Run --
-#   A top-level IO implementation for running a StringO program.
-(String@) { /Core/Cli%.Main@; }
-Run = (String@ str) {
-  /Core/Stdio/Native/Cli%.Run(StringO(str));
-};
-
-@(StringO, Run);
-
+@(Run);

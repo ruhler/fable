@@ -3560,3 +3560,16 @@ support for my newly proposed stdio interface. Let's get to work.
 
 We have Stdin defined. How about defining Stdout and Stderr next?
 
+Works well. It's nice I can implement the Output@ stuff entirely on the fble
+side. We'll see if we can get away with that performance wise in the end, but
+it works great for now.
+
+I still have a lot of stuff referencing Stdio@ as their main interface instead
+of Native@. I'll need to port those off before I can get rid of the old Stdio@
+interface.
+
+How about implementing Text.Read and Text.Write? Or do I not have anyone who
+uses that that we could try yet?
+
+Feels like better to switch everyone over to the cli Main@. Then it will be
+much easier to phase in the new apis and phase out the old ones.
