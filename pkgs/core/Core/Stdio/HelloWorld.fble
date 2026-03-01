@@ -1,28 +1,27 @@
 
 
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>% OStream = /Core/Stream/Char%.OStream;
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
 
 <@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@>@ Native@ = /Core/Native%.Native@;
 
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-<<@>@>@ Main@ = /Core/Stdio%.Main@;
-% Success = /Core/Stdio%.Success;
+<<@>@>@ Main@ = /Core/Cli%.Main@;
+% Success = /Core/Cli%.Success;
 
 @ String@ = /Std/String%.String@;
 % StringE = /Std/Char/Ascii/Output%.StringE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
-# A hello world program using the Stdio@ interface.
-Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {
-  Put@<M@, Output@> out = OStream(stdio.out, m).put;
+# A hello world program using the cli interface.
+Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> _args) {
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
   Unit@ _ := m.do(out $ StringE|'hello, world\n');
   m.return(Success);
 };
 
-/Core/Stdio/Native/Cli%.Run(Main);
+Main;

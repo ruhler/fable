@@ -3573,3 +3573,15 @@ uses that that we could try yet?
 
 Feels like better to switch everyone over to the cli Main@. Then it will be
 much easier to phase in the new apis and phase out the old ones.
+
+---
+
+What to do about /Core/Stdio/HelloWorld%?
+
+Current uses:
+* Demo use of Stdio@ api
+* Test native Stdio@ implementation
+
+Oh. That's notas bad as I thought. It's already on cli under the hood. I can
+... change it to be pure cli.
+
