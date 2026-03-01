@@ -1,8 +1,5 @@
 
-% Success = /Core/Stdio%.Success;
-
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>% OStream = /Core/Stream/Char%.OStream;
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % FormatE = /Std/Char/Ascii/Output%.FormatE;
 
@@ -22,32 +19,31 @@
 @ String@ = /Std/String%.String@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@>@ Native@ = /Core/Native%.Native@;
 
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-<<@>@>@ Main@ = /Core/Stdio%.Main@;
+<<@>@>@ Main@ = /Core/Cli%.Main@;
+% Success = /Core/Cli%.Success;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
 
-Main@ Debug = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
-  Put@<M@, Output@> out = OStream(stdio.out, m).put;
+Main@ Debug = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> _args) {
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
   
-  (List@<String@> _args) {
-    (CRC@, List@<Bit@>) { M@<CRC@>; } DFeeds = (CRC@ crc, List@<Bit@> bits) {
-      bits.?(empty: m.return(crc));
+  (CRC@, List@<Bit@>) { M@<CRC@>; } DFeeds = (CRC@ crc, List@<Bit@> bits) {
+    bits.?(empty: m.return(crc));
 
-      CRC@ ncrc = Feed(crc, bits.items.head);
-      Unit@ _ := m.do(out $ FormatE|'%s\n'[ShowBits(ncrc.checksum)]);
-      DFeeds(ncrc, bits.items.tail);
-    };
-
-    List@<Bit@> poly = Items(Bit.1, HexToBits|04C11DB7);
-    List@<Bit@> init = HexToBits|00000000;
-    CRC@ crc = CRC@(poly, init);
-    CRC@ _result := m.do(DFeeds(crc, HexToBits|31323334353637383900000000));
-
-    m.return(Success);
+    CRC@ ncrc = Feed(crc, bits.items.head);
+    Unit@ _ := m.do(out $ FormatE|'%s\n'[ShowBits(ncrc.checksum)]);
+    DFeeds(ncrc, bits.items.tail);
   };
+
+  List@<Bit@> poly = Items(Bit.1, HexToBits|04C11DB7);
+  List@<Bit@> init = HexToBits|00000000;
+  CRC@ crc = CRC@(poly, init);
+  CRC@ _result := m.do(DFeeds(crc, HexToBits|31323334353637383900000000));
+
+  m.return(Success);
 };
 
-/Core/Stdio/Native/Cli%.Run(Debug);
+Debug;
