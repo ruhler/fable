@@ -1,2 +1,1 @@
-
-/Core/Stdio/Native/Cli%.Run(/Games/BenchmarkGame/PiDigits%.Main);
+/Games/BenchmarkGame/Game%.Run(/Games/BenchmarkGame/PiDigits%.Main);

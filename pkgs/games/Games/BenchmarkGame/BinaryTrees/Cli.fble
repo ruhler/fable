@@ -1,1 +1,1 @@
-/Core/Stdio/Native/Cli%.Run(/Games/BenchmarkGame/BinaryTrees%.Main);
+/Games/BenchmarkGame/Game%.Run(/Games/BenchmarkGame/BinaryTrees%.Main);

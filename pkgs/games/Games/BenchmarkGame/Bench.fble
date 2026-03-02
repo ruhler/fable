@@ -1,39 +1,21 @@
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
 <@>% List = /Std/List%.List;
 
-<@>@ Pure@ = /Core/Monad/Pure%.Pure@;
-% Monad = /Core/Monad/Pure%.Monad;
-<@>% Run = /Core/Monad/Pure%.Run;
-
-<<@>@>@ Main@ = /Core/Stdio%.Main@;
-@ Exit@ = /Core/Stdio%.Exit@;
-% Success = /Core/Stdio%.Success;
-
-@ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 
 @ Test@ = /Std/Test%.Test@;
-@ TestResult@ = /Std/Test%.TestResult@;
-% Test = /Std/Test%.Test;
 % TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
-
-% Stdio = /Core/Stdio/Stub%.Stdio<Pure@>(Monad);
-
-(Main@, String@, Unit@) { TestResult@; }
-RunBench = (Main@ game, String@ n, Unit@ _) {
-  Exit@ got = Run(game<Pure@>(Stdio, Monad, List[n]));
-  AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, Success, got);
-};
+% Game = /Games/BenchmarkGame/Game%;
+<<@>@>% BinaryTrees = /Games/BenchmarkGame/BinaryTrees%.Main;
+<<@>@>% FannkuchRedux = /Games/BenchmarkGame/FannkuchRedux/Main%.Main;
+<<@>@>% PiDigits = /Games/BenchmarkGame/PiDigits%.Main;
 
 # Benchmark for the benchmark games that takes about 1 minute to run.
 Test@ Bench = TestSuite(Str|BenchmarkGame, List[
-  Test(Str|BinaryTrees, RunBench(/Games/BenchmarkGame/BinaryTrees%.Main, Str|14)),
-  Test(Str|FannkuchRedux, RunBench(/Games/BenchmarkGame/FannkuchRedux/Main%.Main, Str|8)),
-  Test(Str|PiDigits, RunBench(/Games/BenchmarkGame/PiDigits%.Main, Str|22))]
-);
+  Game.Bench(Str|BinaryTrees, BinaryTrees, Str|'', List[Str|14]),
+  Game.Bench(Str|FannkuchRedux, FannkuchRedux, Str|'', List[Str|8]),
+  Game.Bench(Str|PiDigits, PiDigits, Str|'', List[Str|22])
+]);
 
 @(Bench);

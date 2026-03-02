@@ -88,10 +88,10 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
       wnt, got);
   }),
 
-  /Games/BenchmarkGame/Test%.Test(
+  /Games/BenchmarkGame/Game%.Test(
     Str|IO,
     /Games/BenchmarkGame/FannkuchRedux/Main%.Main,
-    Str|6, Str|'',
+    Str|'', List[Str|6],
     StrE|'49\nPfannkuchen(6) = 10\n')
 ]);
 

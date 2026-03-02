@@ -3647,3 +3647,43 @@ character - for use in testing and benchmarking.
 That's 3 or 4 things to set up, then compose together to get the behavior I
 want for the sat benchmark. And hopefully it's easy to reuse for everything
 else.
+
+---
+
+/Fbld/Main% makes use of 'read'. When we test it, we provide a single input
+stream and ask it to read '-', but I think the generic top level interface
+should take the ability to open files by name. But I haven't implement that
+for character streams yet. Since I'm not using the right interface, it's not
+ready to migrate off of Stdio@.
+
+How about the benchmark games? Do they have a common interface we can reuse?
+Like, something more specific than Stdio@?
+
+PiDigits:
+* Takes a single integer argument.
+* Has an output stream.
+* Never returns Failure.
+
+BinaryTrees: Same as PiDigits.
+FannkuchRedux: Same as PiDigits.
+
+ReverseComplement:
+* Reads from stdin. Writes to stdout.
+* Doesn't take an int argument.
+
+Seems we have two classes of games: Int to Output, and Input to Output.
+
+Any other kinds I see that I haven't implemented yet? It's hard to tell, but I
+think that covers most of it.
+
+---
+
+Do I want to test that PiDigits interprets its arguments correctly? If so,
+shouldn't I pass as arguments: out and list of args? And if we generalize, we
+can have: in, out, list of args. And use that as a common Main@ type for
+benchmark games? Or do we want to be more specific?
+
+It is nice to test at the level of passing string arguments rather than
+directly do Int@. Benchmark doesn't care. Hmm...
+
+Okay. Let's try that.

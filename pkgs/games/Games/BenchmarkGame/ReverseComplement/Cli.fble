@@ -1,1 +1,1 @@
-/Core/Stdio/Native/Cli%.Run(/Games/BenchmarkGame/ReverseComplement%.Main);
+/Games/BenchmarkGame/Game%.Run(/Games/BenchmarkGame/ReverseComplement%.Main);

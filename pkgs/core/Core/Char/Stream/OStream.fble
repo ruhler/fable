@@ -3,8 +3,12 @@
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % ToNull = /Std/Char/Output%.ToNull;
+% Do = /Std/Char/Output%.Do;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<@,<@>@>@ State@ = /Core/State%.State@;
+
+@ Unit@ = /Std/Unit%.Unit@;
 
 # Constructs an output stream that discards the output characters.
 # For use in test cases and benchmarking, where we want to exercise the output
@@ -15,4 +19,12 @@ NullOutput = <<@>@ M@>(Monad@<M@> m, Output@ output) {
   m.return(ToNull(output));
 };
 
-@(NullOutput);
+# Make an output stream from an Output@ state monad.
+# TODO: Move this to a different module to avoid false dependency on State@?
+<<@>@ M@>(State@<Output@, M@>, Monad@<M@>) { Put@<M@, Output@>; }
+OStream = <<@>@ M@>(State@<Output@, M@> s, Monad@<M@> m, Output@ output) {
+  Output@ prev := m.do(s.get);
+  s.put(Do(prev, (Unit@ _) { output; }));
+};
+
+@(NullOutput, OStream);

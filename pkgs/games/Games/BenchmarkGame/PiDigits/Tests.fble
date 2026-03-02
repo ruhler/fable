@@ -1,15 +1,14 @@
 
+<@>% List = /Std/List%.List;
+
 % Str = /Std/Char/Ascii%.Str;
+% StrE = /Std/Char/Ascii%.StrE;
 
 @ Test@ = /Std/Test%.Test@;
+% Test = /Games/BenchmarkGame/Game%.Test;
 
-% Test = /Games/BenchmarkGame/Test%.Test;
+% PiDigits = /Games/BenchmarkGame/PiDigits%;
 
-Test@ Tests = Test(
-  Str|PiDigits,
-  /Games/BenchmarkGame/PiDigits%.Main,
-  Str|10, Str|'',
-  Str|'3141592653	:10
-');
+Test@ Tests = Test(Str|PiDigits, PiDigits.Main, Str|'', List[Str|10], StrE|'3141592653\t:10\n');
 
 @(Tests);

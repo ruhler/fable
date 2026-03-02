@@ -2,9 +2,11 @@
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;
 
+<@>% List = /Std/List%.List;
+
 @ Test@ = /Std/Test%.Test@;
 
-% Test = /Games/BenchmarkGame/Test%.Test;
+% Test = /Games/BenchmarkGame/Game%.Test;
 
 String@ input = Str|
 '>ONE
@@ -28,6 +30,6 @@ GTAATGTTGG
 Test@ Tests = Test(
   Str|ReverseComplement,
   /Games/BenchmarkGame/ReverseComplement%.Main,
-  Str|'0', input, output);
+  input, List[Str|0], output);
 
 @(Tests);

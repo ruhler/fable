@@ -1,6 +1,5 @@
 
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>% OStream = /Core/Stream/Char%.OStream;
 % FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 @ Ascii@ = /Std/Char/Ascii%.Ascii@;
@@ -17,9 +16,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-<<@>@>@ Main@ = /Core/Stdio%.Main@;
-% Success = /Core/Stdio%.Success;
+<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
 
@@ -28,6 +25,8 @@
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
+
+<<@>@>@ Main@ = /Games/BenchmarkGame/Game%.Main@;
 
 Int@ MinDepth = Int|4;
 
@@ -55,51 +54,48 @@ Int@ 2 = Int|2;
   Mul(2, Exp2(Sub(x, 1)));
 };
 
-Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
-  Put@<M@, Output@> out = OStream(stdio.out, m).put;
-
+Main@
+Main = <<@>@ M@>(Monad@<M@> m, IStream@<M@> _in, Put@<M@, Output@> out, List@<String@> args) {
   (List@<Ascii@>, List@<Output@>) { M@<Unit@>; }
   FmtL = (List@<Ascii@> fmt, List@<Output@> args) {
     out $ FormatE|'%s\n'[Format(fmt, args)];
   };
 
-  (List@<String@> args) {
-    Int@ n = args.?(items: /Core/Int/Read%.Read(args.items.head), empty: 0);
-    Int@ max_depth = Gt(Add(2, MinDepth), n).?(
-      true: Add(2, MinDepth),
-      false: n);
-    Int@ stretch_depth = Add(1, max_depth);
+  Int@ n = args.?(items: /Core/Int/Read%.Read(args.items.head), empty: 0);
+  Int@ max_depth = Gt(Add(2, MinDepth), n).?(
+    true: Add(2, MinDepth),
+    false: n);
+  Int@ stretch_depth = Add(1, max_depth);
 
-    Int@ check = Check(Tree(stretch_depth));
-    Unit@ _ := m.do(FmtL|'stretch tree of depth %s	 check: %s'[
-      /Std/Int/Show%.Show(stretch_depth),
-      /Std/Int/Show%.Show(check)]);
+  Int@ check = Check(Tree(stretch_depth));
+  Unit@ _ := m.do(FmtL|'stretch tree of depth %s	 check: %s'[
+    /Std/Int/Show%.Show(stretch_depth),
+    /Std/Int/Show%.Show(check)]);
 
-    Tree@ long_lived = Tree(max_depth);
+  Tree@ long_lived = Tree(max_depth);
 
-    (Int@) { M@<Unit@>; } ForDepth = (Int@ depth) {
-      Gt(depth, max_depth).?(true: m.return(Unit));
+  (Int@) { M@<Unit@>; } ForDepth = (Int@ depth) {
+    Gt(depth, max_depth).?(true: m.return(Unit));
 
-      Int@ iterations = Exp2(Add(Sub(max_depth, depth), MinDepth));
+    Int@ iterations = Exp2(Add(Sub(max_depth, depth), MinDepth));
 
-      (Int@, Int@) { Int@; } ForIter = (Int@ check, Int@ n) {
-        Gt(n, iterations).?(true: check);
-        ForIter(Add(check, Check(Tree(depth))), Add(1, n));
-      };
-
-      Int@ check = ForIter(0, 1);
-      Unit@ _ := m.do(FmtL|'%s	 trees of depth %s	 check: %s'[
-        /Std/Int/Show%.Show(iterations),
-        /Std/Int/Show%.Show(depth),
-        /Std/Int/Show%.Show(check)]);
-      ForDepth(Add(2, depth));
+    (Int@, Int@) { Int@; } ForIter = (Int@ check, Int@ n) {
+      Gt(n, iterations).?(true: check);
+      ForIter(Add(check, Check(Tree(depth))), Add(1, n));
     };
-    Unit@ _ := m.do(ForDepth(MinDepth));
-    Unit@ _ := m.do(FmtL|'long lived tree of depth %s	 check: %s'[
-      /Std/Int/Show%.Show(max_depth),
-      /Std/Int/Show%.Show(Check(long_lived))]);
-    m.return(Success);
+
+    Int@ check = ForIter(0, 1);
+    Unit@ _ := m.do(FmtL|'%s	 trees of depth %s	 check: %s'[
+      /Std/Int/Show%.Show(iterations),
+      /Std/Int/Show%.Show(depth),
+      /Std/Int/Show%.Show(check)]);
+    ForDepth(Add(2, depth));
   };
+  Unit@ _ := m.do(ForDepth(MinDepth));
+  Unit@ _ := m.do(FmtL|'long lived tree of depth %s	 check: %s'[
+    /Std/Int/Show%.Show(max_depth),
+    /Std/Int/Show%.Show(Check(long_lived))]);
+  m.return(Unit);
 };
 
 @(Main);
