@@ -1,39 +1,57 @@
 
+% Str = /Std/Char/Ascii%.Str;
+
+<@>@ Output@ = /Std/Char/Output%.Output@;
+
+<<@>@, @>@ Put@ = /Core/Char/Stream%.Put@;
+<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
+<<@>@>% IStream = /Core/Char/Stream/IStream%.IStream;
+<<@>@>% NullOutput = /Core/Char/Stream/OStream%.NullOutput;
+
+@ Exit@ = /Core/Cli%.Exit@;
+% Success = /Core/Cli%.Success;
+
 <@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-@ Int@ = /Std/Int%.Int@;
-
 <@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 
-@ Exit@ = /Core/Stdio%.Exit@;
-% Success = /Core/Stdio%.Success;
+<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Nothing = /Std/Maybe%.Nothing;
 
-<@>@ Pure@ = /Core/Stdio/Pure%.Pure@;
-<@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
-% Monad = /Core/Stdio/Pure%.Monad;
-% Stdio = /Core/Stdio/Pure%.Stdio;
-<@>% Run = /Core/Stdio/Pure%.Run;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 @ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+
+<@,<@>@>@ State@ = /Core/State%.State@;
+
+<@,@>@ StateM@ = /Core/State/StateM%.StateM@;
+<@>% Monad = /Core/State/StateM%.Monad;
+<@>% State = /Core/State/StateM%.State;
+<@,@>% Eval = /Core/State/StateM%.Eval;
 
 @ Test@ = /Std/Test%.Test@;
 % Test = /Std/Test%.Test;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
-(String@) { List@<Int@>; } Bytes = (String@ str) {
-  /Std/List%.Map(str, /Std/Char%.Pos);
-};
+<<@>@>@ IO@ = /Fbld/Main%.IO@;
 
 Test@ Bench = Test(Str|Fbld, (Unit@ _) {
-  List@<Int@> input = Bytes(/Fbld/Bench/Input%);
-  Pure@<Exit@> go = /Fbld/Main%.Main<Pure@>(Stdio, Monad)[Str|'-'];
-  PureResult@<Exit@> result = Run(go, input);
-  AssertEquals(
-    /Std/Int/Eq%.Eq,
-    /Std/Int/Show%.Show,
-    Success, result.x);
+  <@>@ M@ = StateM@<String@>;
+  Monad@<M@> m = Monad<String@>;
+  State@<String@, M@> s = State<String@>;
+  IStream@<M@> in = IStream<M@>(s, m);
+  Put@<M@, Output@> out = NullOutput<M@>(m);
+  Put@<M@, Output@> err = NullOutput<M@>(m);
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read = (String@ _) {
+    m.return(Nothing<IStream@<M@>>);
+  };
+  IO@<M@> io = @(in, out, err, read);
+  List@<String@> args = List[Str|'-'];
+  Exit@ wnt = Success;
+  Exit@ got = Eval(/Fbld/Main%.Main<M@>(m, io, args), /Fbld/Bench/Input%);
+  AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
 });
 
 @(Bench);

@@ -3687,3 +3687,11 @@ It is nice to test at the level of passing string arguments rather than
 directly do Int@. Benchmark doesn't care. Hmm...
 
 Okay. Let's try that.
+
+---
+
+Next step is /Fbld/Main%. Implement text based 'Read' function as FFI. Switch
+over to that and migrate /Fbld/Main% off of stdio@ in one fell swoop. For the
+test case, since it's using stdin, we can provide a 'read' function that fails
+to find any files.
+

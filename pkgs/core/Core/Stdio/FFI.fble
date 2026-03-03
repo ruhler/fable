@@ -1,14 +1,19 @@
 
 @ Char@ = /Std/Char%.Char@;
 
+% Str = /Std/Char/Ascii%.Str;
 <@>@ Output@ = /Std/Char/Output%.Output@;
 
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
+<@>% Just = /Std/Maybe%.Just;
+<@>% Nothing = /Std/Maybe%.Nothing;
 
 <<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Native@ = /Core/Native%.Native@;
+
+@ String@ = /Std/String%.String@;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -24,6 +29,9 @@ GetStdout = @<GetStdout>|GetStdout;
 
 <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<File@>; }
 GetStderr = @<GetStderr>|GetStderr;
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>, String@, String@) { M@<Maybe@<File@>>; }
+Open = @<Open>|Open;
 
 <<@>@ M@>(Native@<M@>, Monad@<M@>, File@) { M@<Maybe@<Char@>>; }
 GetChar = @<GetChar>|GetChar;
@@ -64,4 +72,15 @@ Stderr = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
   m.return(Output<M@>(n, m, stderr));
 };
 
-@(Stdin, Stdout, Stderr);
+% Text = {
+  <<@>@ M@>(Native@<M@>, Monad@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
+  Read = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, String@ path) {
+    Maybe@<File@> file := m.do(Open<M@>(n, m, path, Str|rb));
+    file.?(nothing: m.return(Nothing<IStream@<M@>>));
+    m.return(Just(GetChar<M@>(n, m, file.just)));
+  };
+
+  @(Read);
+};
+
+@(Stdin, Stdout, Stderr, Text);

@@ -1,9 +1,6 @@
 
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
 <<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
-<<@>@>% OStream = /Core/Stream/Char%.OStream;
-<<@>@>% IStream = /Core/Stream/Char%.IStream;
-<<@>@>% Read = /Core/Stream/Char%.Read;
 <<@>@>% GetText = /Core/Char/Stream/IStream%.GetText;
 % String = /Std/Char/Output%.String;
 
@@ -15,10 +12,10 @@
 <@>% Just = /Std/Maybe%.Just;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-<<@>@>@ Main@ = /Core/Stdio%.Main@;
-% Success = /Core/Stdio%.Success;
-% Failure = /Core/Stdio%.Failure;
+
+@ Exit@ = /Core/Cli%.Exit@;
+% Success = /Core/Cli%.Success;
+% Failure = /Core/Cli%.Failure;
 
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % Format = /Std/Char/Ascii/Output%.Format;
@@ -44,13 +41,17 @@
 % Text = /Fbld/Text%.Text;
 
 
+<<@>@>@ IO@ = <<@>@ M@> { *(
+  IStream@<M@> in,
+  Put@<M@, Output@> out,
+  Put@<M@, Output@> err,
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read
+); };
+
 # Main --
 #   Main function for fbld program.
-Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
-  Put@<M@, Output@> out = OStream(stdio.out, m).put;
-  Put@<M@, Output@> err = OStream(stdio.err, m).put;
-  IStream@<M@> in = IStream(stdio.in, m);
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read = Read(stdio.read, m);
+<<@>@ M@>(Monad@<M@>, IO@<M@>, List@<String@>) { M@<Exit@>; }
+Main = <<@>@ M@>(Monad@<M@> m, IO@<M@> io, List@<String@> args) {
 
   (List@<String@>) { M@<Result@<List@<Text@>>>; }
   ReadInputs = (List@<String@> filenames) {
@@ -60,8 +61,8 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
     String@ filename = filenames.items.head;
     Maybe@<IStream@<M@>> fin := m.do $ {
-      /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(in)));
-      read(filename);
+      /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(io.in)));
+      io.read(filename);
     };
 
     fin.?(nothing: {
@@ -74,27 +75,25 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     m.return(Ok(Items(text, tail.value.just)));
   };
 
-  (List@<String@> args) {
-    Result@<List@<Text@>> inputs := m.do(ReadInputs(args));
-    inputs.failed.?(true: {
-      Unit@ _ := m.do(err $ ShowErrors(inputs));
-      m.return(Failure);
-    });
+  Result@<List@<Text@>> inputs := m.do(ReadInputs(args));
+  inputs.failed.?(true: {
+    Unit@ _ := m.do(io.err $ ShowErrors(inputs));
+    m.return(Failure);
+  });
 
-    Result@<String@> result = {
-      Markup@ parsed := r.do(/Fbld/Parse%.Parse(inputs.value.just));
-      Markup@ evaled := r.do(/Fbld/Eval%.Eval(/Fbld/Builtin%.Env, parsed));
-      /Fbld/Markup%.ToString(evaled);
-    };
-
-    result.failed.?(true: {
-      Unit@ _ := m.do(err $ ShowErrors(result));
-      m.return(Failure);
-    });
-
-    Unit@ _ := m.do(out $ String $ result.value.just);
-    m.return(Success);
+  Result@<String@> result = {
+    Markup@ parsed := r.do(/Fbld/Parse%.Parse(inputs.value.just));
+    Markup@ evaled := r.do(/Fbld/Eval%.Eval(/Fbld/Builtin%.Env, parsed));
+    /Fbld/Markup%.ToString(evaled);
   };
+
+  result.failed.?(true: {
+    Unit@ _ := m.do(io.err $ ShowErrors(result));
+    m.return(Failure);
+  });
+
+  Unit@ _ := m.do(io.out $ String $ result.value.just);
+  m.return(Success);
 };
 
-@(Main);
+@(IO@, Main);

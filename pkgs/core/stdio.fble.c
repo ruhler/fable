@@ -457,6 +457,44 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStderr = {
 };
 
 /**
+ * @func[Open] FbleRunFunction to for Open foreign function.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (Native@<M@>, Monad@<M@>, String@, String@, Unit@) { Maybe@<File@>; }
+ */  
+static FbleValue* Open(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  (void)profile;
+  (void)args;
+
+  char* file = FbleStringValueAccess(args[2]);
+  char* mode = FbleStringValueAccess(args[3]);
+  FILE* fout = fopen(file, mode);
+  FbleFree(file);
+  FbleFree(mode);
+
+  if (fout == NULL) {
+    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1);
+  }
+
+  FbleValue* v = FbleNewNativeValue(heap, fout, NULL);
+  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
+}
+// /Core/Stdio/FFI%.Open foreign function.
+FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Open = {
+  .path = "/Core/Stdio/FFI%",
+  .name = "Open",
+  .num_args = 5,
+  .max_call_args = 0,
+  .run = &Open,
+};
+
+/**
  * @func[GetChar] FbleRunFunction for GetChar foreign function.
  *  See documentation of FbleRunFunction in fble-function.h
  *
@@ -568,6 +606,7 @@ void FbleRegisterStdioForeignFunctions(FbleValueHeap* heap)
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdin);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdout);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStderr);
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Open);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Flush);

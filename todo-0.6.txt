@@ -2,6 +2,12 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Figure out what FbleStringValueAccess should do in terms of unicode.
+
+* Define a type synonym for Put@<M@, Output@>? Something like:
+  OStream@<M@>... but just for the Output@ part? So I don't have to be
+  importing both Put@ and Output@ everywhere?
+
 * Figure out why I need to pass M@ everywhere explicitly?
  - Like, why can't type inference figure it out?
 
