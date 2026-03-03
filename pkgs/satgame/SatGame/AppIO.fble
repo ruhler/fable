@@ -18,7 +18,7 @@
 <<@>@>@ Native@ = /Core/Native%.Native@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-% Success = /Core/Stdio%.Success;
+% Success = /Core/Cli%.Success;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;

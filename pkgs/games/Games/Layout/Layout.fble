@@ -42,7 +42,7 @@
 % Map = /Core/Int/Map%.Map;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-% Success = /Core/Stdio%.Success;
+% Success = /Core/Cli%.Success;
 
 @ String@ = /Std/String%.String@;
 

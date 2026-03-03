@@ -21,7 +21,6 @@ Test@ Tests = TestSuite(Str|Core, List[
   /Core/LFSR/Tests%.Tests,
   /Core/Map/Tests%.Tests,
   /Core/Set/Tests%.Tests,
-  /Core/Stdio/Tests%.Tests,
   /Core/String/Tests%.Tests,
   /Core/Test/Tests%.Tests
 ]);

@@ -37,7 +37,7 @@
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-% Success = /Core/Stdio%.Success;
+% Success = /Core/Cli%.Success;
 
 @ String@ = /Std/String%.String@;
 

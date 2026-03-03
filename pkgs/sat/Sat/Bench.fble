@@ -16,8 +16,8 @@
 <@>% State = /Core/State/StateM%.State;
 <@,@>% Eval = /Core/State/StateM%.Eval;
 
-@ Exit@ = /Core/Stdio%.Exit@;
-% Success = /Core/Stdio%.Success;
+@ Exit@ = /Core/Cli%.Exit@;
+% Success = /Core/Cli%.Success;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;

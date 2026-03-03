@@ -34,8 +34,8 @@
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 
-% Success = /Core/Stdio%.Success;
-% Failure = /Core/Stdio%.Failure;
+% Success = /Core/Cli%.Success;
+% Failure = /Core/Cli%.Failure;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;

@@ -33,7 +33,7 @@
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-% Success = /Core/Stdio%.Success;
+% Success = /Core/Cli%.Success;
 
 @ String@ = /Std/String%.String@;
 % Str = /Std/Char/Ascii%.Str;

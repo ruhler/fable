@@ -8,7 +8,7 @@
 <@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-@ Exit@ = /Core/Stdio%.Exit@;
+@ Exit@ = /Core/Cli%.Exit@;
 
 @ String@ = /Std/String%.String@;
 

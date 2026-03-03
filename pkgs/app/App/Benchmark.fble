@@ -12,8 +12,8 @@
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-@ Exit@ = /Core/Stdio%.Exit@;
-% Success = /Core/Stdio%.Success;
+@ Exit@ = /Core/Cli%.Exit@;
+% Success = /Core/Cli%.Success;
 
 @ String@ = /Std/String%.String@;
 
