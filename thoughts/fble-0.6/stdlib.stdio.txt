@@ -3695,3 +3695,9 @@ over to that and migrate /Fbld/Main% off of stdio@ in one fell swoop. For the
 test case, since it's using stdin, we can provide a 'read' function that fails
 to find any files.
 
+---
+
+Trying to get rid of IStream conversion from old byte stream to new char
+stream. Issues:
+* Converting binary socket stream to a character stream.
+* Computrainer is on an app Main@ interface.
