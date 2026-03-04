@@ -495,6 +495,35 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Open = {
 };
 
 /**
+ * @func[Close] FbleRunFunction to for Close foreign function.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (Native@<M@>, Monad@<M@>, File@, Unit@) { Unit@; }
+ */  
+static FbleValue* Close(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  (void)profile;
+  (void)args;
+
+  FILE* file = (FILE*)FbleNativeValueData(args[2]);
+  fclose(file);
+  return FbleNewStructValue_(heap, 0);
+}
+// /Core/Stdio/FFI%.Close foreign function.
+FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Close = {
+  .path = "/Core/Stdio/FFI%",
+  .name = "Close",
+  .num_args = 4,
+  .max_call_args = 0,
+  .run = &Close,
+};
+
+/**
  * @func[GetChar] FbleRunFunction for GetChar foreign function.
  *  See documentation of FbleRunFunction in fble-function.h
  *
@@ -607,6 +636,7 @@ void FbleRegisterStdioForeignFunctions(FbleValueHeap* heap)
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdout);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStderr);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Open);
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Close);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Flush);

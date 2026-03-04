@@ -3701,3 +3701,22 @@ Trying to get rid of IStream conversion from old byte stream to new char
 stream. Issues:
 * Converting binary socket stream to a character stream.
 * Computrainer is on an app Main@ interface.
+
+---
+
+What are the next steps? Ultimately I'm trying to:
+* Get rid of /Core/Stdio/Native% builtin module.
+
+Current uses:
+* App Main@ still takes a Stdio@, so still needs to provide a Stdio@.
+* pprof server wants to read binary files.
+* md5 wants to read binary files (and binary stdin)
+* network client wants to write to stdio in binary.
+* satgame wants to write text files.
+* invaders wants to write text files.
+
+Some of these are easier to fix than others. Let's start with:
+* write text files.
+
+Then go from there.
+

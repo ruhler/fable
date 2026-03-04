@@ -2,6 +2,10 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Double check error message for over application of a function.
+  It shouldn't say "can't apply arguments to something of type (Foo@) { ...}"
+  Because that's not true, right? Better would be "too many arguments?"
+
 * Figure out what FbleStringValueAccess should do in terms of unicode.
 
 * Define a type synonym for Put@<M@, Output@>? Something like:

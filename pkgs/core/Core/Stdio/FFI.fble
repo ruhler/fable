@@ -9,6 +9,7 @@
 <@>% Nothing = /Std/Maybe%.Nothing;
 
 <<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Char/Stream%.OStream@;
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Native@ = /Core/Native%.Native@;
@@ -32,6 +33,9 @@ GetStderr = @<GetStderr>|GetStderr;
 
 <<@>@ M@>(Native@<M@>, Monad@<M@>, String@, String@) { M@<Maybe@<File@>>; }
 Open = @<Open>|Open;
+
+<<@>@ M@>(Native@<M@>, Monad@<M@>, File@) { M@<Unit@>; }
+Close = @<Close>|Close;
 
 <<@>@ M@>(Native@<M@>, Monad@<M@>, File@) { M@<Maybe@<Char@>>; }
 GetChar = @<GetChar>|GetChar;
@@ -75,12 +79,23 @@ Stderr = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
 % Text = {
   <<@>@ M@>(Native@<M@>, Monad@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
   Read = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, String@ path) {
-    Maybe@<File@> file := m.do(Open<M@>(n, m, path, Str|rb));
+    Maybe@<File@> file := m.do(Open<M@>(n, m, path, Str|r));
     file.?(nothing: m.return(Nothing<IStream@<M@>>));
     m.return(Just(GetChar<M@>(n, m, file.just)));
   };
 
-  @(Read);
+  <<@>@ M@>(Native@<M@>, Monad@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, String@ path) {
+    Maybe@<File@> file := m.do(Open<M@>(n, m, path, Str|w));
+    file.?(nothing: m.return(Nothing<OStream@<M@>>));
+    OStream@<M@> ostream = @(
+      put: Output<M@>(n, m, file.just),
+      close: Close<M@>(n, m, file.just)
+    );
+    m.return(Just(ostream));
+  };
+
+  @(Read, Write);
 };
 
 @(Stdin, Stdout, Stderr, Text);
