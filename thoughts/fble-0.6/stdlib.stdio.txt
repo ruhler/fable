@@ -3712,8 +3712,9 @@ Current uses:
 * pprof server wants to read binary files.
 * md5 wants to read binary files (and binary stdin)
 * network client wants to write to stdio in binary.
-* satgame wants to write text files.
-* invaders wants to write text files.
+* satgame wants to write text files. DONE.
+* invaders wants to write text files. DONE.
+* computrainer wants to write text files.
 
 Some of these are easier to fix than others. Let's start with:
 * write text files.

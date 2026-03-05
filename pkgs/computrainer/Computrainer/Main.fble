@@ -3,8 +3,9 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-<<@>@>% OStream = /Core/Stream/Char%.OStream;
-<<@>@>% IStream = /Core/Stream/Char%.IStream;
+<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Char/Stream%.OStream@;
+
 <<@>@>% GetText = /Core/Char/Stream/IStream%.GetText;
 
 @ Int@ = /Std/Int%.Int@;
@@ -29,10 +30,8 @@
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@>@ Native@ = /Core/Native%.Native@;
 
-<<@>@>@ IStream@ = /Core/Stream%.IStream@;
-<<@>@>@ OStream@ = /Core/Stream%.OStream@;
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 % Success = /Core/Cli%.Success;
 
 @ String@ = /Std/String%.String@;
@@ -42,7 +41,7 @@
 % Unit = /Std/Unit%.Unit;
 
 <<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/App%.Main@;
+<<@>@>@ Main@ = /App/Native%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -110,7 +109,10 @@ SelectCar = (Car@ c) {
     Bool@ paused
 );
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
+Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read<M@>(n, m);
+  (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write<M@>(n, m);
+
   Int@ MenuScale = Int|8;
   Int@ MenuHeight = Add(Mul(MenuScale, W), Int|8);
 
@@ -318,10 +320,10 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   };
 
   String@ file = args.?(items: args.items.head, empty: Str|'model.ct');
-  Maybe@<IStream@<M@>> istream := m.do(stdio.read(file, /Core/Stdio%.Text));
+  Maybe@<IStream@<M@>> istream := m.do(read(file));
   Model@ model := m.do({
       istream.?(nothing: m.return(Model(Grid.Empty<Gate@>, Grid.Empty<Car@>)));
-      String@ text := m.do(GetText(IStream(istream.just, m), m));
+      String@ text := m.do(GetText(istream.just, m));
       m.return(/Computrainer/Model/Load%.Model(text));
   });
 
@@ -340,13 +342,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   State@ final := m.do(StepUI(initial));
 
-  Maybe@<OStream@<M@>> mostream := m.do(stdio.write(file, /Core/Stdio%.Text));
+  Maybe@<OStream@<M@>> mostream := m.do(write(file));
   mostream.?(nothing: m.return(Success));
-  /Core/Char/Stream%.OStream@<M@> ostream = OStream(mostream.just, m);
+  OStream@<M@> ostream = mostream.just;
   Unit@ _ := m.do(ostream.put $ /Computrainer/Model/Save%.Model(final.model));
   Unit@ _ := m.do(ostream.close);
 
   m.return(Success);
 };
 
-/App/Native%.Run(Main);
+Main;

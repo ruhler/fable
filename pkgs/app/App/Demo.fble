@@ -7,8 +7,8 @@
 <@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@>@ Native@ = /Core/Native%.Native@;
 
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 % Success = /Core/Cli%.Success;
 
 @ String@ = /Std/String%.String@;
@@ -17,7 +17,7 @@
 % Unit = /Std/Unit%.Unit;
 
 <<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/App%.Main@;
+<<@>@>@ Main@ = /App/Native%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -34,7 +34,7 @@
   Color@ mouse_color
 );
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Native@<M@> _n, Monad@<M@> m, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
   M@<Event@> FilterEvent = {
     Event@ e := m.do(app.event);
     e.?(tick: m.return(e),
@@ -78,4 +78,4 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   m.return(Success);
 };
 
-/App/Native%.Run(Main);
+Main;

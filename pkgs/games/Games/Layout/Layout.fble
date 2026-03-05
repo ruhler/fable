@@ -4,7 +4,6 @@
 % False = /Std/Bool%.False;
 
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>% OStream = /Core/Stream/Char%.OStream;
 <@>@ Output@ = /Std/Char/Output%.Output@;
 % FormatE = /Std/Char/Ascii/Output%.FormatE;
 
@@ -38,10 +37,10 @@
 <@>% Nothing = /Std/Maybe%.Nothing;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@>@ Native@ = /Core/Native%.Native@;
 
 % Map = /Core/Int/Map%.Map;
 
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 % Success = /Core/Cli%.Success;
 
 @ String@ = /Std/String%.String@;
@@ -50,7 +49,7 @@
 % Unit = /Std/Unit%.Unit;
 
 <<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/App%.Main@;
+<<@>@>@ Main@ = /App/Native%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -270,8 +269,8 @@ State@ InitialState = @(
   hovered: Nothing<Pos@>
 );
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ _width, Int@ height, List@<String@> _args) {
-  Put@<M@, Output@> out = OStream(stdio.out, m).put;
+Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, App@<M@> app, Int@ _width, Int@ height, List@<String@> _args) {
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
 
   M@<Event@> FilterEvent = {
     Event@ e := m.do(app.event);
@@ -338,4 +337,4 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ _width
   m.return(Success);
 };
 
-/App/Native%.Run(Main);
+Main;
