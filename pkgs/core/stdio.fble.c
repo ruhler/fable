@@ -563,6 +563,45 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar = {
 };
 
 /**
+ * @func[GetByte] FbleRunFunction for GetByte foreign function.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (Native@<M@>, Monad@<M@>, File@, Unit@) { Maybe@<Int@>; }.
+ *
+ *  @sideeffects
+ *   Reads a byte from the give file.
+ */
+static FbleValue* GetByte(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  (void)profile;
+  (void)args;
+
+  FILE* file = (FILE*)FbleNativeValueData(args[2]);
+
+  int c = fgetc(file);
+  if (c == EOF) {
+    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1);
+  }
+
+  FbleValue* v = FbleNewIntValue(heap, c);
+  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
+}
+
+// /Core/Stdio/FFI%.GetByte foreign function.
+FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetByte = {
+  .path = "/Core/Stdio/FFI%",
+  .name = "GetByte",
+  .num_args = 4,
+  .max_call_args = 0,
+  .run = &GetByte,
+};
+
+/**
  * @func[PutChar] FbleRunFunction for PutChar foreign function.
  *  See documentation of FbleRunFunction in fble-function.h
  *
@@ -587,7 +626,7 @@ static FbleValue* PutChar(
   return FbleNewStructValue_(heap, 0);
 }
 
-// /Core/Stdio/FFI%.GetChar foreign function.
+// /Core/Stdio/FFI%.PutChar foreign function.
 FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar = {
   .path = "/Core/Stdio/FFI%",
   .name = "PutChar",
@@ -620,7 +659,7 @@ static FbleValue* Flush(
   return FbleNewStructValue_(heap, 0);
 }
 
-// /Core/Stdio/FFI%.GetChar foreign function.
+// /Core/Stdio/FFI%.Flush foreign function.
 FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Flush = {
   .path = "/Core/Stdio/FFI%",
   .name = "Flush",
@@ -638,6 +677,7 @@ void FbleRegisterStdioForeignFunctions(FbleValueHeap* heap)
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Open);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Close);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar);
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetByte);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Flush);
 }

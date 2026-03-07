@@ -4,12 +4,12 @@
 % Str = /Std/Char/Ascii%.Str;
 <@>@ Output@ = /Std/Char/Output%.Output@;
 
+@ Int@ = /Std/Int%.Int@;
+
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
 <@>% Just = /Std/Maybe%.Just;
 <@>% Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
-<<@>@>@ OStream@ = /Core/Char/Stream%.OStream@;
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Native@ = /Core/Native%.Native@;
@@ -40,6 +40,9 @@ Close = @<Close>|Close;
 <<@>@ M@>(Native@<M@>, Monad@<M@>, File@) { M@<Maybe@<Char@>>; }
 GetChar = @<GetChar>|GetChar;
 
+<<@>@ M@>(Native@<M@>, Monad@<M@>, File@) { M@<Maybe@<Int@>>; }
+GetByte = @<GetByte>|GetByte;
+
 <<@>@ M@>(Native@<M@>, Monad@<M@>, File@, Char@) { M@<Unit@>; }
 PutChar = @<PutChar>|PutChar;
 
@@ -59,6 +62,9 @@ Output = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, File@ file, Output@ output) {
 };
 
 % Text = {
+  <<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
+  <<@>@>@ OStream@ = /Core/Char/Stream%.OStream@;
+
   <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
   Stdin = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
     File@ stdin := m.do(GetStdin<M@>(n, m));
@@ -98,4 +104,24 @@ Output = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, File@ file, Output@ output) {
   @(Stdin, Stdout, Stderr, Read, Write);
 };
 
-@(Text);
+% Binary = {
+  <<@>@>@ IStream@ = /Core/Stream%.IStream@;
+
+  <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+  Stdin = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
+    # TODO: Re-open stdin in binary mode?
+    File@ stdin := m.do(GetStdin<M@>(n, m));
+    m.return(GetByte<M@>(n, m, stdin));
+  };
+
+  <<@>@ M@>(Native@<M@>, Monad@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
+  Read = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, String@ path) {
+    Maybe@<File@> file := m.do(Open<M@>(n, m, path, Str|rb));
+    file.?(nothing: m.return(Nothing<IStream@<M@>>));
+    m.return(Just(GetByte<M@>(n, m, file.just)));
+  };
+
+  @(Stdin, Read);
+};
+
+@(Text, Binary);

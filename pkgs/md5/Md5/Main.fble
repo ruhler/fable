@@ -20,7 +20,6 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Native@ = /Core/Native%.Native@;
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
 % Failure = /Core/Cli%.Failure;
@@ -43,14 +42,15 @@
 # Main --
 #   Main function for fble-md5 program.
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
-  Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
+  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Binary.Stdin<M@>(n, m));
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
   Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr<M@>(n, m));
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Binary.Read<M@>(n, m);
 
   (String@) { M@<Bool@>; } md5 = (String@ filename) {
     Maybe@<IStream@<M@>> istream := m.do({
-      /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
-      stdio.read(filename, /Core/Stdio%.Binary);
+      /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(in)));
+      read(filename);
     });
 
     istream.?(nothing: {
