@@ -3,15 +3,6 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-
-<@>@ List@ = /Std/List%.List@;
-
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-@ Exit@ = /Core/Cli%.Exit@;
-
-@ String@ = /Std/String%.String@;
-
 @ Unit@ = /Std/Unit%.Unit@;
 
 @ Key@ = +(
@@ -72,22 +63,4 @@
   (Effect@) { M@<Unit@>; } effect);
 };
 
-# Main@ --
-#   Interface for an App.
-#
-# Inputs:
-#   M@ - An abstract computation type.
-#   monad - The monad interface for M@.
-#   stdio - A Stdio@ interface for M@.
-#   app - The app interface for M@.
-#   width - The initial width of the screen.
-#   height - The initial height of the screen.
-#   args - The list of arguments to the application.
-#
-# Results:
-#   The /Core/Stdio.Exit@ status of the program.
-<<@>@>@ Main@ = <<@>@ M@>(
-  Monad@<M@>, Stdio@<M@>,
-  App@<M@>, Int@, Int@, List@<String@>) { M@<Exit@>; };
-
-@(App@, Main@, Key@, Resize@, Event@, Effect@);
+@(App@, Key@, Resize@, Event@, Effect@);
