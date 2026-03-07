@@ -3721,3 +3721,29 @@ Some of these are easier to fix than others. Let's start with:
 
 Then go from there.
 
+---
+
+Before I forget:
+* We need a way to close input files, right? How do we do that?
+
+On binary versus text:
+* Windows has ways to set the mode of any file stream, including stdin,
+  stdout, etc. as binary or text.
+* Default is to open stdin, stdout, stderr in text mode.
+* Http protocol uses octets in the spec.
+* Sockets are always opened in binary mode on windows.
+
+So, if we want md5 to work on stdin, we need a way to open stdin in binary
+mode and get bytes. Network echo would like a way to open stdout in binary
+ideally. Otherwise it's a bit hacky to convert to ascii chars and output
+those. Network client would like to open stdin in binary.
+
+All my issues are solved, it feels like, if we have a way to open
+stdin/stdout/stderr(?) in either text or binary modes.
+
+What if someone tries to open one of those streams in both binary and text?
+Can we interleave them? Say it's undefined? Say you have to get one or the
+other?
+
+It won't matter for linux. It only matters for line ending conversion on
+windows.

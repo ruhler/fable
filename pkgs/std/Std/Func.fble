@@ -12,11 +12,12 @@ Id = <@ A@>(A@ x) {
 
 # @func[Const] The constant function.
 #  @arg[@][A@] The argument type.
-#  @arg[A@][value] The value to return.
-#  @returns[(A@) { A@; }]
+#  @arg[@][B@] The return type.
+#  @arg[B@][value] The value to return.
+#  @returns[(A@) { B@; }]
 #   A function that ignores its argument and returns the constant @a{value};
-<@ A@>(A@, A@) { A@; }
-Const = <@ A@>(A@ value, A@ _) {
+<@ A@, @ B@>(B@, A@) { B@; }
+Const = <@ A@, @ B@>(B@ value, A@ _) {
   value;
 };
 
