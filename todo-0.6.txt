@@ -6,6 +6,8 @@ Things to consider doing for the fble-0.6 release.
   It shouldn't say "can't apply arguments to something of type (Foo@) { ...}"
   Because that's not true, right? Better would be "too many arguments?"
 
+* Add tests for /Std/Func%.
+
 * Figure out what FbleStringValueAccess should do in terms of unicode.
 
 * Define a type synonym for Put@<M@, Output@>? Something like:
@@ -164,7 +166,7 @@ Things to consider doing for the fble-0.6 release.
  - Consider separating the FbleModule* for execution and for type for a given
    module path.
  - Add option for loading modules from .so files?
- - Have fble-stdio check that the function has the right type?
+ - Have fble-cli check that the function has the right type?
  - Load minimum dependencies needed for type checking when possible?
   
 * Make programs run twice as fast.
@@ -224,6 +226,3 @@ Things to consider doing for the fble-0.6 release.
  - That works on all backends.
  - That supports single step through code.
  - That supports field access.
-
-* Add language support for a proper FFI?
- - hint: type conversions could be done on the native side?

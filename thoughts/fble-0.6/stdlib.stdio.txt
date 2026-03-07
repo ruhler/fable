@@ -3747,3 +3747,38 @@ other?
 
 It won't matter for linux. It only matters for line ending conversion on
 windows.
+
+---
+
+Support for binary stdin/stdout/stderr in addition to text makes sense to me.
+Opening as both binary and text and having them interfere with each other
+doesn't. Ideally there's some way to open a separate FILE* for the binary
+version so we have two different modes of the stream open that don't interfere
+with each other.
+
+Worst case I could store some extra state with the stream to indicate which
+mode we are in and switch before/after every input/output operation. Sounds
+annoying to have to do every time to support a very rare event of opening the
+stream in both modes.
+
+Another option could be to always open everything in binary in fble. The
+binary encoding of text is not defined, if you stay within fble. Let the user
+convert their text files from other programs running on Windows into binary
+format before going into/out of an fble application. But I like the idea of
+'default text encoding is platform setlocal("") text mode' if we can do that
+without too much trouble.
+
+Anything in C99 to allow us to open a new FILE* for stdout, for example, in
+binary mode?
+* C99 says stdin, stdout, stderr are unoriented at startup. Interesting. So in
+  theory if the first operation we do is a character operation, they go to
+  text, and if the first operation is a binary operation, they go to binary.
+  Not sure if windows actually implements it that way or what is a char versus
+  binary operation.
+ - Except later it says these are text streams. Oh well.
+* freopen and try to change the mode of a FILE*, but that would effect the
+  existing value of the FILE*.
+
+Posix has fdopen and dup.
+
+I should play around with freopen on Windows to see what we can do.

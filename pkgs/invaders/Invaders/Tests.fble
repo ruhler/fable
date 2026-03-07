@@ -9,7 +9,6 @@
 # Import to test compilation.
 <<@>@>% _ = /Invaders/AppIO%;
 % _ = /Invaders/Bench%;
-<<@>@>% _ = /Invaders/Screenshot/AppIO%;
 
 Test@ Tests = TestSuite(Str|Invaders, List<Test@>[]);
 
