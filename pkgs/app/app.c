@@ -23,7 +23,7 @@
 #include "env.fble.h"              // for /Core/Env/Native%.GetEnv
 #include "int.fble.h"              // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"           // for FbleStringValueAccess
-#include "stdio.fble.h"            // for /Core/Stdio/Native%
+#include "stdio.fble.h"            // for /Core/Stdio/FFI%
 #include "cli.fble.h"              // for FbleCliArgs, etc.
 
 #include "fble-app.usage.h"        // for fbldUsageHelpText
@@ -465,9 +465,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar);
   FbleRegisterStdioForeignFunctions(heap);
 
-  FblePreloadedModuleV builtins;
-  FbleInitVector(builtins);
-  FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_Native_25_);
+  FblePreloadedModuleV builtins = { .size = 0 };
 
   FbleMainStatus status = FbleMain(&ParseArg, &app_args, "fble-app", fbldUsageHelpText,
       &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &func);
