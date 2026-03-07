@@ -1,19 +1,58 @@
 
-@ Key@ = /App/App%.Key@;
-@ Event@ = /App/App%.Event@;
-
+@ Int@ = /Std/Int%.Int@;
+% Decr = /Std/Int%.Decr;
+% IsNegative = /Std/Int/Sign%.IsNegative;
 % Int = /Std/Int/Lit%.Int;
 
 % Str = /Std/Char/Ascii%.Str;
 
+<@,@>% Const = /Std/Func%.Const;
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
+<@,<@>@>@ State@ = /Core/State%.State@;
+<@,@>@ StateM@ = /Core/State/StateM%.StateM@;
+<@>% Monad = /Core/State/StateM%.Monad;
+<@>% State = /Core/State/StateM%.State;
+<@,@>% Eval = /Core/State/StateM%.Eval;
+
 @ Test@ = /Std/Test%.Test@;
 % Test = /Std/Test%.Test;
+% Pass = /Std/Test%.Pass;
 
+@ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-Test@ Bench = Test(Str|Snake, /App/Benchmark%.Benchmark(
+<<@>@>@ App@ = /App/App%.App@;
+@ Key@ = /App/App%.Key@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+
+Test@ Bench = Test(Str|'Snake', (Unit@ _) {
   # 1300 is around the number of iterations the Snake app runs for. Don't try
   # to run more, otherwise we could get deadlock.
-  /Games/Snake%, Int|1300, Event@(key_down: Key@(q: Unit))));
+  Int@ n = Int|1300;
+
+  Int@ w = Int|640;
+  Int@ h = Int|480;
+
+  <@>@ M@ = StateM@<Int@>;
+  Monad@<M@> m = Monad<Int@>;
+  State@<Int@, M@> s = State<Int@>;
+
+  M@<Event@> event = {
+    Int@ n := m.do(s.get);
+    IsNegative(n).?(true: m.return(Event@(key_down: Key@(q: Unit))));
+    Unit@ _ := m.do(s.put(Decr(n)));
+    m.return(Event@(tick: Unit));
+  };
+
+  (Effect@) { M@<Unit@>; } effect = Const<Effect@> $ m.return(Unit);
+
+  App@<M@> app = App@<M@>(event, effect);
+
+  Unit@ _ = Eval(/Games/Snake%.Main<M@>(m, app, w, h), n);
+  Pass;
+});
 
 @(Bench);

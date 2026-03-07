@@ -36,16 +36,10 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-% Success = /Core/Cli%.Success;
-
-@ String@ = /Std/String%.String@;
-
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
 <<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -260,7 +254,8 @@ State@ InitialState = {
   Best(Best(up, down), Best(left, right)).dir;
 };
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
+<<@>@ M@>(Monad@<M@>, App@<M@>, Int@, Int@) { M@<Unit@>; } 
+Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   M@<Input@> GetInput = {
     Event@ e := m.do(app.event);
     e.?(
@@ -318,8 +313,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
     e.?(key_down: m.return(Unit), : WaitForKeyPress);
   };
 
-  Unit@ _ := m.do(WaitForKeyPress);
-  m.return(Success);
+  WaitForKeyPress;
 };
 
-Main;
+@(Main);
