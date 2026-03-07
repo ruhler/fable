@@ -636,6 +636,41 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar = {
 };
 
 /**
+ * @func[PutByte] FbleRunFunction for PutByte foreign function.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (Native@<M@>, Monad@<M@>, File@, Int@, Unit@) { Unit@; }.
+ *
+ *  @sideeffects
+ *   Writes a byte to the give file.
+ */
+static FbleValue* PutByte(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  (void)profile;
+  (void)args;
+
+  FILE* file = (FILE*)FbleNativeValueData(args[2]);
+  int byte = FbleIntValueAccess(args[3]);
+  fputc(byte, file);
+  return FbleNewStructValue_(heap, 0);
+}
+
+// /Core/Stdio/FFI%.PutByte foreign function.
+FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutByte = {
+  .path = "/Core/Stdio/FFI%",
+  .name = "PutByte",
+  .num_args = 5,
+  .max_call_args = 0,
+  .run = &PutByte,
+};
+
+
+/**
  * @func[Flush] FbleRunFunction for Flush foreign function.
  *  See documentation of FbleRunFunction in fble-function.h
  *
@@ -679,5 +714,6 @@ void FbleRegisterStdioForeignFunctions(FbleValueHeap* heap)
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetByte);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar);
+  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutByte);
   FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Flush);
 }

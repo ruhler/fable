@@ -167,9 +167,9 @@ Percent = (Int@ numerator, Int@ denominator) {
 };
 
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
-  Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
   Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr<M@>(n, m));
+  (String@) { M@<Maybe@<BinaryIStream@<M@>>>; } read = /Core/Stdio/FFI%.Binary.Read<M@>(n, m);
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(n, m));
 
@@ -260,7 +260,7 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
   Unit@ _ := m.do(out $
       FormatE|'parsing %s...\n'[/Std/Char/Output%.String(args.file)]);
 
-  Maybe@<BinaryIStream@<M@>> fin := m.do(stdio.read(args.file, /Core/Stdio%.Binary));
+  Maybe@<BinaryIStream@<M@>> fin := m.do(read(args.file));
   fin.?(nothing: {
     Unit@ _ := m.do(err $ FormatE|'unable to open ''%s''\n'[
         /Std/Char/Output%.String(args.file)]);

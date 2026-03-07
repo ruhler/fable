@@ -46,6 +46,9 @@ GetByte = @<GetByte>|GetByte;
 <<@>@ M@>(Native@<M@>, Monad@<M@>, File@, Char@) { M@<Unit@>; }
 PutChar = @<PutChar>|PutChar;
 
+<<@>@ M@>(Native@<M@>, Monad@<M@>, File@, Int@) { M@<Unit@>; }
+PutByte = @<PutByte>|PutByte;
+
 <<@>@ M@>(Native@<M@>, Monad@<M@>, File@) { M@<Unit@>; }
 Flush = @<Flush>|Flush;
 
@@ -114,6 +117,12 @@ Output = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, File@ file, Output@ output) {
     m.return(GetByte<M@>(n, m, stdin));
   };
 
+  <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<Put@<M@, Int@>>; }
+  Stdout = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
+    File@ stdout := m.do(GetStdout<M@>(n, m));
+    m.return(PutByte<M@>(n, m, stdout));
+  };
+
   <<@>@ M@>(Native@<M@>, Monad@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
   Read = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, String@ path) {
     Maybe@<File@> file := m.do(Open<M@>(n, m, path, Str|rb));
@@ -121,7 +130,7 @@ Output = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, File@ file, Output@ output) {
     m.return(Just(GetByte<M@>(n, m, file.just)));
   };
 
-  @(Stdin, Read);
+  @(Stdin, Stdout, Read);
 };
 
 @(Text, Binary);

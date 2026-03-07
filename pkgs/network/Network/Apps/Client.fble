@@ -28,7 +28,6 @@
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 % Success = /Core/Cli%.Success;
 % Failure = /Core/Cli%.Failure;
 
@@ -105,8 +104,6 @@ GetArgs = (List@<String@> args, Args@ default) {
 };
 
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
-  Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
   Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr<M@>(n, m));
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(n, m));
@@ -124,6 +121,7 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
+    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
     Unit@ _ := m.do(out $ String $ /Network/Apps/Echo/Usage%);
     m.return(Success);
   });
@@ -142,9 +140,10 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
 
   IOStream@<M@> ios = mios.just;
   Put@<M@, Output@> os = OStream(ios.out, m).put;
+  Put@<M@, Int@> out := m.do(/Core/Stdio/FFI%.Binary.Stdout<M@>(n, m));
 
   Unit@ _ := m.do(os $ String $ args.message);
-  Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, stdio.out));
+  Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, out));
   m.return(Success);
 };
 
