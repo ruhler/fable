@@ -113,9 +113,9 @@ Show@<Game@> ShowGame = (Game@ game) {
 
 # Play a game of tic-tac-toe.
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> _args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
 
-  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Stdin<M@>(n, m));
+  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin<M@>(n, m));
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
     Unit@ _ := m.do(out $ ShowGame(game));

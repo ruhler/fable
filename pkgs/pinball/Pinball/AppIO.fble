@@ -27,7 +27,7 @@ Main@
 Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
     App@<M@> app, Int@ width, Int@ height, List@<String@> args)
 {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ := m.do(out $ String $ /Pinball/Usage%);

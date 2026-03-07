@@ -25,7 +25,7 @@
 # It exits with success if all arguments have the same value, false otherwise.
 
 Main@ Demo = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
 
   Unit@ _ := m.do(out $ StringE|'hello, world\n');
 

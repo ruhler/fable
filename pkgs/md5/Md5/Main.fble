@@ -44,8 +44,8 @@
 #   Main function for fble-md5 program.
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
-  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Stderr<M@>(n, m));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
+  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr<M@>(n, m));
 
   (String@) { M@<Bool@>; } md5 = (String@ filename) {
     Maybe@<IStream@<M@>> istream := m.do({

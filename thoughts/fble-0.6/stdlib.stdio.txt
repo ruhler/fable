@@ -3708,13 +3708,13 @@ What are the next steps? Ultimately I'm trying to:
 * Get rid of /Core/Stdio/Native% builtin module.
 
 Current uses:
-* App Main@ still takes a Stdio@, so still needs to provide a Stdio@.
+* App Main@ still takes a Stdio@, so still needs to provide a Stdio@. DONE.
 * pprof server wants to read binary files.
 * md5 wants to read binary files (and binary stdin)
 * network client wants to write to stdio in binary.
 * satgame wants to write text files. DONE.
 * invaders wants to write text files. DONE.
-* computrainer wants to write text files.
+* computrainer wants to write text files. DONE.
 
 Some of these are easier to fix than others. Let's start with:
 * write text files.
@@ -3782,3 +3782,36 @@ binary mode?
 Posix has fdopen and dup.
 
 I should play around with freopen on Windows to see what we can do.
+
+---
+
+freopen doesn't work on Windows with stdin/stdout/stderr, because it doesn't
+work with the console and those are associated with the console by default. I
+can use _setmode instead to change to binary mode on windows.
+
+---
+
+If we write files without changing \n to \r\n, then everyone will still read
+them back as \n. The only issue is if we read files without changing \r\n to
+\n, we get this extra \r that looks funny.
+
+It's very tempting to say we always use binary mode on windows. Users can work
+around it. We just need to specify things clearly, right?
+
+---
+
+Anyway, I think it's time to step back and review the API for streams text
+and binary, because I want to migrate the binary parts of Stdio@ over to FFI,
+but the target API isn't clear to me.
+
+What if instead of /Core/Char/Stream% we had /Core/Stream/Text% and
+/Core/Stream/Binary%? And, optionally, /Core/Stream% for general streams?
+
+* Text/Binary or Char/Int?
+* Have an API to close an input stream? Or that's more of a file thing?
+* Have a name for a non-closeable output stream? Or that doesn't make any
+  sense?
+* Have an Output@ type corresponding to Int@ like we do for Char@?
+* Have a general Output@ type, or keep Char@ and Int@ as unrelated
+  specializations?
+

@@ -22,7 +22,7 @@
 #   A cli main function that outputs a single string.
 (String@) { Main@; } Run = (String@ str) {
   <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> _args) {
-    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
+    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
     Unit@ _ := m.do(out $ Format|'%s\n'[String(str)]);
     m.return(Success);
   };

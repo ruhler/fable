@@ -270,7 +270,7 @@ State@ InitialState = @(
 );
 
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, App@<M@> app, Int@ _width, Int@ height, List@<String@> _args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
 
   M@<Event@> FilterEvent = {
     Event@ e := m.do(app.event);

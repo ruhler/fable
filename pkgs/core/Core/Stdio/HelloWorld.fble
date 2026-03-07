@@ -19,7 +19,7 @@
 
 # A hello world program using the cli interface.
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> _args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
   Unit@ _ := m.do(out $ StringE|'hello, world\n');
   m.return(Success);
 };

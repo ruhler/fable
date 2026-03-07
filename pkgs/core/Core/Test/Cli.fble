@@ -34,7 +34,7 @@
       args.items.tail.items.head;
     };
 
-    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
+    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
     Bool@ passed := m.do(/Core/Test/Run%.Run<M@>(m, out, prefix, tests));
     m.return(passed.?(true: Success, false: Failure));
   };

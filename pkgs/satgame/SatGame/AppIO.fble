@@ -93,7 +93,7 @@ Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
     m.return(seed);
   });
 
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
   Args@ args = GetArgs(argv, DefaultArgs.@(seed));
   Unit@ _ := m.do(SatGame(m, out, app, width, height, args));
   m.return(Success);

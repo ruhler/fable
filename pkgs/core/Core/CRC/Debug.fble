@@ -28,7 +28,7 @@
 
 
 Main@ Debug = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> _args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
   
   (CRC@, List@<Bit@>) { M@<CRC@>; } DFeeds = (CRC@ crc, List@<Bit@> bits) {
     bits.?(empty: m.return(crc));

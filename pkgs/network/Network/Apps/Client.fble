@@ -106,8 +106,8 @@ GetArgs = (List@<String@> args, Args@ default) {
 
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
   Stdio@<M@> stdio := m.do(/Core/Stdio/Native%.Stdio<M@>(n, m));
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
-  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Stderr<M@>(n, m));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
+  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr<M@>(n, m));
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(n, m));
 

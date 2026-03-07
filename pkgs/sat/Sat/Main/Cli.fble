@@ -20,9 +20,9 @@
 @ Unit@ = /Std/Unit%.Unit@;
 
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
-  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Stderr<M@>(n, m));
-  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Stdin<M@>(n, m));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
+  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr<M@>(n, m));
+  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin<M@>(n, m));
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ := m.do(out $ String $ /Sat/Usage%);

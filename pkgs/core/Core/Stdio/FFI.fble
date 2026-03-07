@@ -58,25 +58,25 @@ Output = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, File@ file, Output@ output) {
   Flush<M@>(n, m, file);
 };
 
-<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
-Stdin = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
-  File@ stdin := m.do(GetStdin<M@>(n, m));
-  m.return(GetChar<M@>(n, m, stdin));
-};
-
-<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<Put@<M@, Output@>>; }
-Stdout = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
-  File@ stdout := m.do(GetStdout<M@>(n, m));
-  m.return(Output<M@>(n, m, stdout));
-};
-
-<<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<Put@<M@, Output@>>; }
-Stderr = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
-  File@ stderr := m.do(GetStderr<M@>(n, m));
-  m.return(Output<M@>(n, m, stderr));
-};
-
 % Text = {
+  <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<IStream@<M@>>; }
+  Stdin = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
+    File@ stdin := m.do(GetStdin<M@>(n, m));
+    m.return(GetChar<M@>(n, m, stdin));
+  };
+
+  <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<Put@<M@, Output@>>; }
+  Stdout = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
+    File@ stdout := m.do(GetStdout<M@>(n, m));
+    m.return(Output<M@>(n, m, stdout));
+  };
+
+  <<@>@ M@>(Native@<M@>, Monad@<M@>) { M@<Put@<M@, Output@>>; }
+  Stderr = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
+    File@ stderr := m.do(GetStderr<M@>(n, m));
+    m.return(Output<M@>(n, m, stderr));
+  };
+
   <<@>@ M@>(Native@<M@>, Monad@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
   Read = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, String@ path) {
     Maybe@<File@> file := m.do(Open<M@>(n, m, path, Str|r));
@@ -95,7 +95,7 @@ Stderr = <<@>@ M@>(Native@<M@> n, Monad@<M@> m) {
     m.return(Just(ostream));
   };
 
-  @(Read, Write);
+  @(Stdin, Stdout, Stderr, Read, Write);
 };
 
-@(Stdin, Stdout, Stderr, Text);
+@(Text);

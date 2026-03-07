@@ -39,7 +39,7 @@
 Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
   App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
 	Maybe@<String@> home := m.do(/Core/Env/Native%.GetVar<M@>(n, m, Str|'HOME'));
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Stdout<M@>(n, m));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
   (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read<M@>(n, m);
   (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write<M@>(n, m);
 
