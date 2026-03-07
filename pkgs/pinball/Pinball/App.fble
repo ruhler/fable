@@ -1,27 +1,14 @@
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>% OStream = /Core/Stream/Char%.OStream;
-<@>@ Output@ = /Std/Char/Output%.Output@;
-% String = /Std/Char/Output%.String;
-
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
-<@>% Any = /Std/List/Search%.Any;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-% Success = /Core/Cli%.Success;
-
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
 <<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -205,14 +192,8 @@ Drawing@ DrawnBall = Circle(Point@(Floor(Int|0), Floor(Int|0)), Floor(Radius), C
   World@(w.gravity, w.ball, w.edges, List[l, RightPaddle(v, r.pos)]);
 };
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
-  Put@<M@, Output@> out = OStream(stdio.out, m).put;
-
-  Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(out $ String $ /Pinball/Usage%);
-    m.return(Success);
-  });
-
+<<@>@ M@>(Monad@<M@>, App@<M@>, Int@, Int@) { M@<Unit@>; } 
+Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   M@<Event@> GetInput = app.event;
 
   Point@ a = @(x: Floor(Int|1), y: Floor(Neg(Int|1)));
@@ -263,8 +244,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   M@<Unit@> tick = app.effect(Effect@(tick: frame_period));
 
   Unit@ _ := m.do(app.effect(Effect@(tick: Floor(0))));
-  Unit@ _ := m.do(Run(tick, Initial)); 
-  m.return(Success);
+  Run(tick, Initial); 
 };
 
-Main;
+@(Main);

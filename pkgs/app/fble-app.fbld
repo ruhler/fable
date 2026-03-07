@@ -5,9 +5,8 @@
  @description
   Runs an fble app program.
  
-  The fble program should be the result of calling @l{/App/IO%.Run} on an
-  argument of type @l{/App/App%.Main@}. Behavior is undefined if the module
-  does not have type @l{/App/IO%.Main@}.
+  The fble program should have type @l{/App/Native%.Main@}. Behavior is
+  undefined if the module does not have type @l{/App/Native%.Main@}.
  
  @options
   @StandardMainOptions
