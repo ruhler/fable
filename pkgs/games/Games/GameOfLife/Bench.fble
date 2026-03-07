@@ -1,19 +1,58 @@
 
-@ Key@ = /App/App%.Key@;
-@ Event@ = /App/App%.Event@;
-
+@ Int@ = /Std/Int%.Int@;
+% Decr = /Std/Int%.Decr;
+% IsNegative = /Std/Int/Sign%.IsNegative;
 % Int = /Std/Int/Lit%.Int;
 
 % Str = /Std/Char/Ascii%.Str;
 
+<@,@>% Const = /Std/Func%.Const;
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
+<@,<@>@>@ State@ = /Core/State%.State@;
+<@,@>@ StateM@ = /Core/State/StateM%.StateM@;
+<@>% Monad = /Core/State/StateM%.Monad;
+<@>% State = /Core/State/StateM%.State;
+<@,@>% Eval = /Core/State/StateM%.Eval;
+
 @ Test@ = /Std/Test%.Test@;
 % Test = /Std/Test%.Test;
+% Pass = /Std/Test%.Pass;
 
+@ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-Test@ Bench = Test(Str|GameOfLife, /App/Benchmark%.Benchmark(
+<<@>@>@ App@ = /App/App%.App@;
+@ Key@ = /App/App%.Key@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+
+Test@ Bench = Test(Str|'GameOfLife', (Unit@ _) {
   # The GameOfLife App is set to run for 200 iterations. Use a little less
   # than that for the benchmark to avoid deadlock.
-  /Games/GameOfLife/App%, Int|180, Event@(key_down: Key@(q: Unit))));
+  Int@ n = Int|180;
+
+  Int@ w = Int|640;
+  Int@ h = Int|480;
+
+  <@>@ M@ = StateM@<Int@>;
+  Monad@<M@> m = Monad<Int@>;
+  State@<Int@, M@> s = State<Int@>;
+
+  M@<Event@> event = {
+    Int@ n := m.do(s.get);
+    IsNegative(n).?(true: m.return(Event@(key_down: Key@(q: Unit))));
+    Unit@ _ := m.do(s.put(Decr(n)));
+    m.return(Event@(tick: Unit));
+  };
+
+  (Effect@) { M@<Unit@>; } effect = Const<Effect@> $ m.return(Unit);
+
+  App@<M@> app = App@<M@>(event, effect);
+
+  Unit@ _ = Eval(/Games/GameOfLife/App%.Main<M@>(m, app, w, h), n);
+  Pass;
+});
 
 @(Bench);

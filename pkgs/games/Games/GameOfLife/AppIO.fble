@@ -1,1 +1,26 @@
-/App/Native%.Run(/Games/GameOfLife/App%);
+
+% Success = /Core/Cli%.Success;
+
+@ Int@ = /Std/Int%.Int@;
+
+<@>@ List@ = /Std/List%.List@;
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@>@ Native@ = /Core/Native%.Native@;
+
+@ String@ = /Std/String%.String@;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/Native%.Main@;
+
+Main@
+Main = <<@>@ M@>(Native@<M@> _n, Monad@<M@> m,
+    App@<M@> app, Int@ width, Int@ height, List@<String@> _args)
+{
+  Unit@ _ := m.do $ /Games/GameOfLife/App%.Main<M@>(m, app, width, height);
+  m.return(Success);
+};
+
+Main;
