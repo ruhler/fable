@@ -3815,3 +3815,10 @@ What if instead of /Core/Char/Stream% we had /Core/Stream/Text% and
 * Have a general Output@ type, or keep Char@ and Int@ as unrelated
   specializations?
 
+---
+
+I decided to migrate everything over to FFI first. We no longer have Stdio@
+type or builtin module. Yay!
+
+Okay. Now back to the API questions.
+

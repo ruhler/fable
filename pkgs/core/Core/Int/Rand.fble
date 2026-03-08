@@ -1,0 +1,43 @@
+
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
+% Shl = /Std/Int%.Shl;
+% Gt = /Std/Int/Ord%.Gt;
+% Lt = /Std/Int/Ord%.Lt;
+% Int = /Std/Int/Lit%.Int;
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@,@>@ Rand@ = /Core/Rand%.Rand@;
+
+
+# Generates a random integer uniformly in the range [0, n).
+<<@>@ M@>(Rand@<M@>, Monad@<M@>, Int@) { M@<Int@>; }
+Of = <<@>@ M@>(Rand@<M@> r, Monad@<M@> m, Int@ n) {
+  # Draw just enough random bits to cover at least the range [0, n).
+  #  range - the range drawn so far
+  #  x - the random bits drawn so far. Invariant: x < range
+  (Int@, Int@) { M@<Int@>; } DrawBits = (Int@ range, Int@ x) {
+    Gt(range, n).?(true: m.return(x));
+
+    Int@ nrange = Shl(range, Int|1);
+    Int@ lsb := m.do(r(Int|0, Int|1));
+    Int@ nx = Add(Shl(x, Int|1), lsb); 
+    DrawBits(nrange, nx);
+  };
+
+  # Accept x if it is in range. Otherwise try again.
+  Int@ x := m.do(DrawBits(Int|1, Int|0));
+  Lt(x, n).?(true: m.return(x));
+  Of(r, m, n);
+};
+
+# Generates a random integer uniformly in the range [lo, hi]
+<<@>@ M@>(Rand@<M@>, Monad@<M@>, Int@, Int@) { M@<Int@>; }
+Range = <<@>@ M@>(Rand@<M@> r, Monad@<M@> m, Int@ lo, Int@ hi) {
+  Int@ x := m.do $ Of(r, m, Incr(Sub(hi, lo)));
+  m.return $ Add(lo, x);
+};
+
+@(Of, Range);

@@ -185,4 +185,222 @@ If we wanted to and it's clear how, we could provide a way to convert S@ to
 the Int@ that produces S@ when using the Int@ as a seed. If it's feasible. But
 also not required.
 
+---
 
+For me the most natural low level interface for using a random number
+generator is a single function:
+
+  <<@>@ M@>(Monad@<M@> m)<@ A@>(A@, A@) { M@<A@>; } 
+
+It chooses between two options randomly. We can build everything else up off
+of that.
+
+The most natural interface for generating random numbers is...? I feel like
+most existing random number generators give you a list of bits of some length.
+So return a list of bits: either as an explicit list, or as an Int@ with some
+known range to encode the list of bits.
+
+Within fble, as long as we can go from a seed to an initial state, it should
+be fine. We need to not change the implementation of things like RandInt
+though, otherwise we'll give back a different random sequence.
+
+If you want to make things portable across different languages, it sounds
+hard. You have to know the implementations of things like RandInt or whatever.
+Or you provide the state transition for the underlying generator and let the
+user figure out how to use the well defined states themselves.
+
+The getrandom function takes a count of bytes and fills in that many. Maybe
+that should be the low level interface: specify a number of bits and get a
+list of that many random bits back. Or specify a number of bits and get an
+Int@ back in the range [0, 2^n-1]?
+
+Anyway it probably doesn't matter, because it's not hard to adapt different
+interfaces to each other. The more important consideration for the interface
+we force on people is probably performance. Which would suggest it's better to
+do bulk random calls instead of bit by bit, and maybe better to encode things
+as Int@ than List@<Bit@>.
+
+Brainstorm of higher level API to offer:
+* RandInt - pick a random integer in a range. Or between 0 and some number.
+* Choice: Pick a random element from a sequence.
+  Same as RandInt + List get?
+* Choices: Pick k random elements from a sequence with replacement.
+* Shuffle: randomly sort a list.
+* Sample: Pick k random elements from a sequence without replacement.
+
+Maybe I want an interface like Show@, Eq@, etc. to produce a random data
+value? Like, random bool@? Or that only makes sense for finite sized data?
+
+What I currently use today:
+* random int between 0 and max.
+* random bit.
+
+Let's not worry about distributions like normal, Poisson, etc. yet, because I
+don't have a floating point representation for numbers yet.
+
+It would be nice if I didn't force a dependency on Int@ for the interface
+though. But is List and Bit better? Can I please just ask for a single bit at
+a time? Is it really going to be that slow? How about start simple, revise
+later if it becomes a performance issue.
+
+Straw proposal:
+* /Std/Random%
+    Random@: <<@>@ M@> { <@ A@>(A@, A@) { M@<A@>; }; };
+* /Std/Int/Random%
+    (Random@<M@> r, Monad@<M@> m, Int@ lo, Int@ hi) { M@<Int@>; } Range;
+    (Random@<M@> r, Monad@<M@> m, Int@ hi) { M@<Int@>; } Random;
+* /Std/Bool/Random%
+    (Random@<M@> r, Monad@<M@> m) { M@<Bool@>; } Random;
+* /Std/List/Random%
+    Choice
+    Choices (with weights?)
+    Sample
+    Shuffle
+    
+  
+Questions:
+* 'Rand' or 'Random'?
+* Similar to Eq, Show:
+    /Std/Bool/Random%.Random 
+ or /Std/Bool/Rand%.Rand
+ or /Std/Bool/Rand%.Bool
+ ?
+
+Let's go short with rand. I think that's fair. And we can be a little bit
+ad-hoc on naming. But I would expect a common name, like 'Rand' to return a
+uniformly random value across the range of the type. Whereas for integer, we
+get a limited range.
+
+Brainstorm of naming from other languages:
+* python:
+  - randrange - start, stop, step, with some of those optional.
+  - randint - a <= x <= b
+* C:
+  - rand - random int across whole space.
+* Java:
+  - next - x in range [0, 2^n-1] for given n.
+  - nextInt - random across whole range of int.
+  - nextInt(bound) - 0 <= x < bound
+  - They clearly specify the algorithm in the java docs.
+* Go:
+  - Int - non-negative
+  - Int31 - non-negative 31 bit integer
+  - Int31n - [0, n)
+* Rust:
+  - random - across whole space of given type
+  - random_range - selects randomly from a range.
+
+How about this for my naming:
+* Rand means across the whole space.
+ - Which we can't do for things like Int@.
+* Range makes sense to me for lo to hi. Inclusive?
+* How about 'Of' for [0, N)? I want a random integer of N choices. Makes sense
+  to rename from [0, N).
+* Do I want N bits of randomness as an option? Or use Of/Range for that?
+ - I think I rather do Of/Range for that. It's too arbitrary otherwise.
+ - Otherwise we could call it 'Bits' I suppose.
+
+Next proposal:
+* /Std/Rand%
+    Rand@: <<@>@ M@> { <@ A@>(A@, A@) { M@<A@>; }; };
+* /Std/Rand/Lcg%
+    Implementation of Rand@ using linear congruential engine.
+    Lcg - generic to parameters.
+    Rand48 - parameters of lrand48 which can be seeded.
+* /Std/Int/Rand%
+    (Rand@<M@> r, Monad@<M@> m, Int@ lo, Int@ hi) { M@<Int@>; } Range;
+    (Rand@<M@> r, Monad@<M@> m, Int@ n) { M@<Int@>; } Of;
+* /Std/Bool/Rand%
+    (Rand@<M@> r, Monad@<M@> m) { M@<Bool@>; } Rand;
+* /Std/List/Rand%
+    (Rand@<M@> r, Monad@<M@> m, List@<A@> l) { A@; } Choice;
+    (Rand@<M@> r, Monad@<M@> m, List@<A@> l) { List@<A@>; } Shuffle;
+
+It's not complete, but I think it's a useful start. Things that are missing
+potentially:
+- python sample, choices equivalent.
+- Rand@ instances for other types like Unit@, Maybe@, etc.
+
+I don't know how to pick my default LCG. Maybe Java's or standard C++? Or come
+up with my own choice based on literature review? Sounds dubious...
+
+---
+
+Notes from research on LCG:
+
+  x = (a * x + c) mod m
+
+  m: modulus
+  a: multiplier
+  c: increment
+  x0: seed
+
+Power of 2 modulus have smaller periods for lower bits.
+
+Question: why not use a cryptographically secure prng by default? Then we
+don't need disclaimers all over the place about them not being secure. If it's
+only 2 to 10x slower, seems worth while? Of course, who knows if I implement
+it correctly.
+
+e.g.
+
+  deterministic random bit generator NIST SP 800-90A Rev. 1
+
+Sounds too hard to start though. Maybe use lrand48?
+  m = 2^48, a = 0x5DEECE66D, c = 0xB, pull from the higher order 32 bits.
+
+This is the same as Java, so seems reasonable for a first choice.
+
+But if we know the higher order bits are better quality, how many bits do I
+take each iteration? Just 1? 32? Just 1 sounds nice and easy to start, to be
+honest. No need to keep track of which bits I've used so far. No need to worry
+about bits getting less random as we go down the list. Maybe performance isn't
+great, but when is it ever in fble?
+
+Let's start here. Nice and easy. Swap out LFSR entirely. See how it feels.
+
+---
+
+How to structure implementation?
+* Lcg is fine as a function. We can set parameters for Rand48. I would love to
+  have direct Int@ to be able to test it.
+* But for Rand@ implementation, I want the higher order bit.
+* So, is the type for Rand48 the one that gives the sequence of Int@, or the
+  one that gives the high order bit? How to distinguish between the two?
+
+In practice I have honestly two use cases:
+1. Be able to test Lcg. Be able to test it with Rand48 against known values
+   from another implementation.
+2. Pick Rand48 as my Rand@ implementation.
+
+Um... should we also be honest in assuming Rand48 is really the only parameter
+set I plan to implement, aside from testing?
+
+Maybe have:
+  /Std/Rand/Lcg%.Generators.Rand48
+  /Std/Rand/Lcg%.Rand.Rand48
+
+Use that prefix of Gen versus Rand to distinguish among them? Or:
+  /Std/Rand/Lcg%.Generators.Rand48
+  /Std/Rand/Lcg%.Rand48
+
+Or don't bother with testing and exposing the raw Lcg interface. Just export
+Rand48 as an instance of Rand@ given the state monad. And you use the state
+monad to set the seed if you want to.
+
+Yeah. Let's keep things simple.
+
+Or, perhaps:
+
+  /Std/Rand/Rng%.Rand           - default random number generator
+  /Std/Rand/Rng/Rand48%.Rand48  - specifically rand 48
+
+How to seed properly? How to test? Who knows.
+
+Or, if I have a default. Why not just /Std/Rand/Rng%.Rand?
+
+Oh, if I want to test, I can just observe the intermediate state values. Easy.
+
+Anyway, I have a draft implementation of Rand48, the interface, and a way to
+generate random integers in a range. Let's see if we can use this in the snake
+game.

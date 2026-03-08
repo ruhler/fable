@@ -2,6 +2,15 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Change State@ to be:
+  ((A@) { A@; }) { M@<A@>; }
+  Which modifies in place and then returns either the initial or final value?
+  Feels more natural to how I use things in practice, and get/put are easy to
+  implement on top of this using Const and Id?
+
+* Write a script to help find unused modules?
+ - Because I suspect I have some unused modules in my packages...
+
 * Pick better example for docs in /Std/Monad%
  - Now that we no longer have Stdio@.
 
