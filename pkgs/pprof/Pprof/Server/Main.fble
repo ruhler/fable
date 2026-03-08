@@ -50,8 +50,6 @@
 
 % Split = /Std/String/Eq%.Split;
 
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-
 <<@>@>@ BinaryIStream@ = /Core/Stream%.IStream@;
 <<@>@>@ CharIStream@ = /Core/Char/Stream%.IStream@;
 
