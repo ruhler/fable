@@ -404,3 +404,31 @@ Oh, if I want to test, I can just observe the intermediate state values. Easy.
 Anyway, I have a draft implementation of Rand48, the interface, and a way to
 generate random integers in a range. Let's see if we can use this in the snake
 game.
+
+---
+
+How to use in snake game? First, let's see the structure of snake:
+* StepRand: Dir@, LFSR@ to LFSR@
+  - Adds entropy into the shift register.
+  - Could be Dir@ to M@<Unit@>.
+  - Called from Move function, which is State@ to either State@ or Dead.
+* GetNextFood: LFSR@, List@<Pos@> to Pos@
+  - Called from Move function.
+
+Simplest way to substitute things out would be:
+* Store Int@ rand as part of State
+* Implement StepRand and GetNextFood as generic in M@ with Rand@.
+* Add a helper function...
+
+It's odd that GetNextFood doesn't return its updated state.
+
+I wish the Move function was a monad with state?
+
+Anyway, if I want to be surgical about it, I would do:
+* GetNextFood - operates on Rand@.
+* StepRand - operates on Rand@.
+* Helper function: Random(M@<...>, Int@) to pair of Int@ and A@?
+
+Would it make sense to put everything in a monad? Doesn't have to be pure
+state. It can be a mix of state and maybe to capture the case of dead.
+

@@ -284,21 +284,17 @@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
 
   (State@) { M@<Unit@>; } Snake = (State@ s) {
     Input@ x := m.do(GetInput);
-    x.?(
-      dir: Snake(State@(x.dir, s.food, s.rand, s.snake, s.speed)),
-      quit: m.return(Unit),
-      tick: {
-        Dir@ dir = AI(s);
-        State@ ns = State@(dir, s.food, s.rand, s.snake, s.speed);
-        MoveResultM@ mr = Move(ns);
-        mr.?(
-          dead: m.return(Unit),
-          state: {
-             Unit@ _ := m.do(Output(Effect@(draw: Draw(ns))));
-             Unit@ _ := m.do(Output(Effect@(tick: ns.speed)));
-             Snake(mr.state);
-          });
-      });
+    x.?(dir: Snake(s.@(dir: x.dir)));
+    x.?(quit: m.return(Unit));
+
+    Dir@ dir = AI(s);
+    State@ ns = s.@(dir);
+    MoveResultM@ mr = Move(ns);
+    mr.?(dead: m.return(Unit));
+
+    Unit@ _ := m.do(Output(Effect@(draw: Draw(ns))));
+    Unit@ _ := m.do(Output(Effect@(tick: ns.speed)));
+    Snake(mr.state);
   };
 
   State@ s = InitialState;
@@ -310,7 +306,8 @@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
 
   M@<Unit@> WaitForKeyPress = {
     Event@ e := m.do(app.event);
-    e.?(key_down: m.return(Unit), : WaitForKeyPress);
+    e.?(key_down: m.return(Unit));
+    WaitForKeyPress;
   };
 
   WaitForKeyPress;
