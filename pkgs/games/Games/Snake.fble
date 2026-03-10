@@ -178,19 +178,17 @@ State@ InitialState = {
   Lt(nhead.col, MinCol).?(true: dead);
   InPosS(s.snake, nhead).?(true: dead);
 
-  List@<Pos@> nsnake = Items(nhead, s.snake);
-  LFSR@ nrand = StepRand(s.dir, s.rand);
+  List@<Pos@> snake = Items(nhead, s.snake);
+  LFSR@ rand = StepRand(s.dir, s.rand);
 
   EqPos(nhead, s.food).?(true: {
     # TODO: Properly handle the case where the snake eats food at its tail.
-    Pos@ nfood = GetNextFood(nrand, nsnake);
-    Int@ nspeed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
-    State@ ns = State@(s.dir, nfood, nrand, nsnake, nspeed);
-    MoveResultM@(state: ns);
+    Pos@ food = GetNextFood(rand, snake);
+    Int@ speed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
+    MoveResultM@(state: s.@(food, rand, snake, speed));
   });
 
-  State@ ns = State@(s.dir, s.food, nrand, Init(nsnake), s.speed);
-  MoveResultM@(state: ns);
+  MoveResultM@(state: s.@(rand, snake: Init(snake)));
 };
 
 # Computer controlled choice of next direction.
