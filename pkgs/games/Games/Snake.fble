@@ -137,7 +137,6 @@ State@ InitialState = {
 };
 
 @ MoveResultM@ = +(Unit@ dead, State@ state);
-@ PosM@ = +(Unit@ dead, Pos@ pos);
 
 # Return true if the given position is found in the list of positions.
 (List@<Pos@>, Pos@) { Bool@; } InPosS = (List@<Pos@> l, Pos@ p) {
@@ -165,42 +164,33 @@ State@ InitialState = {
 };
 
 (State@) { MoveResultM@; } Move = (State@ s) {
-  LFSR@ nrand = StepRand(s.dir, s.rand);
-  PosM@ pm = s.dir.?(
-    up: Eq(s.snake.items.head.row, MaxRow).?(
-      true: PosM@(dead: Unit),
-      false: PosM@(pos: Pos@(Incr(s.snake.items.head.row), s.snake.items.head.col))),
-    down: Eq(s.snake.items.head.row, MinRow).?(
-      true: PosM@(dead: Unit),
-      false: PosM@(pos: Pos@(Decr(s.snake.items.head.row), s.snake.items.head.col))),
-    left: Eq(s.snake.items.head.col, MinCol).?(
-      true: PosM@(dead: Unit),
-      false: PosM@(pos: Pos@(s.snake.items.head.row, Decr(s.snake.items.head.col)))),
-    right: Eq(s.snake.items.head.col, MaxCol).?(
-      true: PosM@(dead: Unit),
-      false: PosM@(pos: Pos@(s.snake.items.head.row, Incr(s.snake.items.head.col)))));
+  Pos@ head = s.snake.items.head;
+  Pos@ nhead = s.dir.?(
+    up: Pos@(Incr(head.row), head.col),
+    down: Pos@(Decr(head.row), head.col),
+    left: Pos@(head.row, Decr(head.col)),
+    right: Pos@(head.row, Incr(head.col)));
 
-  pm.?(
-    dead: MoveResultM@(dead: Unit),
-    pos: EqPos(pm.pos, s.food).?(
-      true: {
-        # TODO: Properly handle the case where the snake eats food at its
-        # tail.
-        List@<Pos@> nsnake = Items(s.food, s.snake);
-        Pos@ nfood = GetNextFood(nrand, nsnake);
-        Int@ nspeed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
-        State@ ns = State@(s.dir, nfood, nrand, nsnake, nspeed);
-        MoveResultM@(state: ns);
-      },
-      false: InPosS(s.snake, pm.pos).?(
-        true: MoveResultM@(dead: Unit),
-        false: {
-          # TODO: Combine calls to Init and Last so we only have to
-          # iterate over the list of elements once instead of twice?
-          List@<Pos@> nsnake = Items(pm.pos, Init(s.snake));
-          State@ ns = State@(s.dir, s.food, nrand, nsnake, s.speed);
-          MoveResultM@(state: ns);
-         })));
+  MoveResultM@ dead = MoveResultM@(dead: Unit);
+  Gt(nhead.row, MaxRow).?(true: dead);
+  Lt(nhead.row, MinRow).?(true: dead);
+  Gt(nhead.col, MaxCol).?(true: dead);
+  Lt(nhead.col, MinCol).?(true: dead);
+  InPosS(s.snake, nhead).?(true: dead);
+
+  List@<Pos@> nsnake = Items(nhead, s.snake);
+  LFSR@ nrand = StepRand(s.dir, s.rand);
+
+  EqPos(nhead, s.food).?(true: {
+    # TODO: Properly handle the case where the snake eats food at its tail.
+    Pos@ nfood = GetNextFood(nrand, nsnake);
+    Int@ nspeed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
+    State@ ns = State@(s.dir, nfood, nrand, nsnake, nspeed);
+    MoveResultM@(state: ns);
+  });
+
+  State@ ns = State@(s.dir, s.food, nrand, Init(nsnake), s.speed);
+  MoveResultM@(state: ns);
 };
 
 # Computer controlled choice of next direction.
