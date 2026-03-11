@@ -432,3 +432,10 @@ Anyway, if I want to be surgical about it, I would do:
 Would it make sense to put everything in a monad? Doesn't have to be pure
 state. It can be a mix of state and maybe to capture the case of dead.
 
+---
+
+It's tedious. Having to switch from being able to do a raw S@ to S@ function
+on the seed to using calling a generic monadic state function. Maybe it's the
+right thing to do, but it feels awkward to make this change. Like I'm being
+sucked into generic M@ against my will.
+
