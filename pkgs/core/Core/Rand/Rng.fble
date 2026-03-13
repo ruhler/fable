@@ -32,7 +32,12 @@ Rand48 = {
 
 # Default random generator.
 # Not suitable for cryptography.
-<<@>@ M@>(State@<Int@, M@>, Monad@<M@>) { Rand@<M@>; }
+@ RandS@ = Int@;
+
+(Int@) { RandS@; }
+Seed = (Int@ s) { s; };
+
+<<@>@ M@>(State@<RandS@, M@>, Monad@<M@>) { Rand@<M@>; }
 Rand = Rand48;
 
-@(Rand);
+@(RandS@, Rand, Seed);
