@@ -83,4 +83,12 @@ LFSR = (List@<Bit@> coefficients, List@<Bit@> seed) {
   24: BitStr|111000010000000000000000
 );
 
-@(LFSR@, Shifted@, LFSR, Shift, Polynomials);
+# LFSRs -- 
+#   A collection of pre-seeded LFSRs with period 2^n - 1.
+% LFSRs = @(
+  8: LFSR(Polynomials.8, Polynomials.8),
+  16: LFSR(Polynomials.16, Polynomials.16),
+  24: LFSR(Polynomials.24, Polynomials.24)
+);
+
+@(LFSR@, Shifted@, LFSR, Shift, Polynomials, LFSRs);

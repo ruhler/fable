@@ -53,12 +53,12 @@ Int@ 1 = Int|1;
 Int@ 2 = Int|2;
 
 # API wrapper around a pseudo random number generator.
-@ Prng@ = /Core/Rand/Rng%.RandS@;
+@ Prng@ = /Core/LFSR/Rand%.RandS@;
 % Prng = {
   <@>@ M@ = /Core/State/StateM%.StateM@<Prng@>;
   /Std/Monad%.Monad@<M@> m = /Core/State/StateM%.Monad<Prng@>;
   /Core/State%.State@<Prng@, M@> s = /Core/State/StateM%.State<Prng@>;
-  /Core/Rand%.Rand@<M@> rand = /Core/Rand/Rng%.Rand<M@>(s, m);
+  /Core/Rand%.Rand@<M@> rand = /Core/LFSR/Rand%.Rand<M@>(s, m);
   % Of = /Core/Int/Rand%.Of<M@>(rand, m);
   <@>% Eval = /Core/State/StateM%.Eval<Prng@>;
   <@>% Exec = /Core/State/StateM%.Exec<Prng@>;
@@ -67,9 +67,9 @@ Int@ 2 = Int|2;
     Exec(rand(Unit, Unit), prng);
   };
 
-  % Seed = /Core/Rand/Rng%.Seed;
+  Prng@ Seeded = /Core/LFSR%.LFSRs.8;
 
-  @(M@, Do: m.do, Return: m.return, Of, Skip, Eval, Seed);
+  @(M@, Do: m.do, Return: m.return, Of, Skip, Eval, Seeded);
 };
 
 # Aliens move together in a group of rows and columns. They decide which
@@ -300,7 +300,7 @@ Int@ DyingTime = Int|10;
     next: Just(FirstAlien),
     turn: False,
     dying: Empty<Dying@>,
-    prng: Prng.Seed(Int|42));
+    prng: Prng.Seeded);
 };
 
 # TickDying --

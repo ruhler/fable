@@ -2,7 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Switch back to LFSR or optimize Rand48 to fix jank issue in fble-invaders.
+* Debug jank issues in fble-invaders?
+  --fps shows a few slow frames.
 
 * fble-app capture input so we don't see a bunch of it on the console after
   the game is done?
