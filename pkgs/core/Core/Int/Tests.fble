@@ -24,9 +24,6 @@
 @ Int@ = /Std/Int%.Int@;
 % Neg = /Std/Int%.Neg;
 
-% Div = /Std/Int/Div%.Div;
-% Quot = /Std/Int/Div%.Quot;
-% Mod = /Std/Int/Div%.Mod;
 % Sqrt = /Std/Int/Sqrt%.Sqrt;
 
 % Lt = /Std/Int/Ord%.Lt;
@@ -155,25 +152,6 @@ Test@ Tests = TestSuite(Str|Int, List[
   TEq(Str|Abs_0, Int|0, (Unit@ _) { Abs(0); }),
   TEq(Str|Abs_3, Int|3, (Unit@ _) { Abs(3); }),
   TEq(Str|Abs_m3, Int|3, (Unit@ _) { Abs(Neg(3)); }),
-
-  TEq(Str|DivQ_11_4, Int|2, (Unit@ _) { Div(Int|11, Int|4).q; }),
-  TEq(Str|DivR_11_4, Int|3, (Unit@ _) { Div(Int|11, Int|4).r; }),
-  TEq(Str|DivQ_m11_4, Neg(Int|3), (Unit@ _) { Div(Neg(Int|11), Int|4).q; }),
-  TEq(Str|DivR_m11_4, Int|1, (Unit@ _) { Div(Neg(Int|11), Int|4).r; }),
-  TEq(Str|DivQ_11_m4, Neg(Int|3), (Unit@ _) { Div(Int|11, Neg(Int|4)).q; }),
-  TEq(Str|DivR_11_m4, Neg(Int|1), (Unit@ _) { Div(Int|11, Neg(Int|4)).r; }),
-  TEq(Str|DivQ_m11_m4, Int|2, (Unit@ _) { Div(Neg(Int|11), Neg(Int|4)).q; }),
-  TEq(Str|DivR_m11_m4, Neg(Int|3), (Unit@ _) { Div(Neg(Int|11), Neg(Int|4)).r; }),
-
-  TEq(Str|Quot_11_4, Int|2, (Unit@ _) { Quot(Int|11, Int|4); }),
-  TEq(Str|Quot_m11_4, Neg(Int|3), (Unit@ _) { Quot(Neg(Int|11), Int|4); }),
-  TEq(Str|Quot_11_m4, Neg(Int|3), (Unit@ _) { Quot(Int|11, Neg(Int|4)); }),
-  TEq(Str|Quot_m11_m4, Int|2, (Unit@ _) { Quot(Neg(Int|11), Neg(Int|4)); }),
-
-  TEq(Str|Mod_11_4, Int|3, (Unit@ _) { Mod(Int|11, Int|4); }),
-  TEq(Str|Mod_m11_4, Int|1, (Unit@ _) { Mod(Neg(Int|11), Int|4); }),
-  TEq(Str|Mod_11_m4, Neg(Int|1), (Unit@ _) { Mod(Int|11, Neg(Int|4)); }),
-  TEq(Str|Mod_m11_m4, Neg(Int|3), (Unit@ _) { Mod(Neg(Int|11), Neg(Int|4)); }),
 
   TEq(Str|Sqrt_0_q, Int|0, (Unit@ _) { Sqrt(Int|0).q; }),
   TEq(Str|Sqrt_0_r, Int|0, (Unit@ _) { Sqrt(Int|0).r; }),

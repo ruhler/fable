@@ -1,0 +1,51 @@
+
+@ Ascii@ = /Std/Char/Ascii%.Ascii@;
+<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+
+<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+@ Int@ = /Std/Int%.Int@;
+% Div = /Std/Int/Div%.Div;
+% Quot = /Std/Int/Div%.Quot;
+% Mod = /Std/Int/Div%.Mod;
+% Neg = /Std/Int%.Neg;
+% Int = /Std/Int/Lit%.Int;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+
+@ Test@ = /Std/Test%.Test@;
+% Test = OnAscii $ /Std/Test%.Test;
+% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+# Test the various ways of calling division for the given arguments.
+(List@<Ascii@>, Int@, Int@, Int@, Int@) { Test@; }
+DivTest = (List@<Ascii@> name, Int@ a, Int@ b, Int@ q, Int@ r) {
+  TestSuite(name) $ List[
+    Test|DivQ $ (Unit@ _) {
+      AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, q, Div(a, b).q);
+    },
+    Test|DivR $ (Unit@ _) {
+      AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, r, Div(a, b).r);
+    },
+    Test|Quot $ (Unit@ _) {
+      AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, q, Quot(a, b));
+    },
+    Test|Mod $ (Unit@ _) {
+      AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, r, Mod(a, b));
+    }
+  ];
+};
+
+Test@ Tests = TestSuite|Div $ List[
+  DivTest|PP(Int|11, Int|4, Int|2, Int|3),
+  DivTest|NP(Neg(Int|11), Int|4, Neg(Int|3), Int|1),
+  DivTest|PN(Int|11, Neg(Int|4), Neg(Int|3), Neg(Int|1)),
+  DivTest|NN(Neg(Int|11), Neg(Int|4), Int|2, Neg(Int|3)),
+  DivTest|ZP(Int|0, Int|4, Int|0, Int|0),
+  DivTest|ZN(Int|0, Neg(Int|4), Int|0, Int|0)
+];
+
+@(Tests);

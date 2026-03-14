@@ -136,6 +136,7 @@ Test@ Tests = TestSuite|Int $ List[
     Binary|NP(Shr, Neg(Int|1298), Int|4, Neg(Int|81))
   ],
 
+  /Std/Int/Div/Tests%.Tests,
   /Std/Int/Eq/Tests%.Tests,
   /Std/Int/Show/Tests%.Tests
 ];
