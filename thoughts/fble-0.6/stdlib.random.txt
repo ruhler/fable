@@ -439,3 +439,71 @@ on the seed to using calling a generic monadic state function. Maybe it's the
 right thing to do, but it feels awkward to make this change. Like I'm being
 sucked into generic M@ against my will.
 
+---
+
+In the end, the conversion to Snake was tedious but okay. The code doesn't
+look too bad. The two things that stand out are it's not so convenient to
+inject bits into the random number generator, and we need to add this adapter
+layer to go from functions with explicit clear types to monadic style.
+
+Shall we try getting rid of LFSR everywhere else now too? Current uses are:
+* Invaders
+* SatGame
+* Layout game
+
+Seems like it shouldn't be too bad?
+
+Except I have to go through the same tedious exercise.
+
+I understand that in general we shouldn't assume we can explicitly represent
+the state of the random number generator. But for my pseudo random number
+generators, you definitely can. And for Snake and invaders, etc., I'm assuming
+you can.
+
+If we can assume you can explicitly represent the state of the random number
+generator, it is tempting to have an API that talks about that explicitly.
+
+Rand@ = <@ A@> { *(S@ state, A@ result); }
+
+Aka: Rand@ = StateM%.Result@;
+
+And now Rand can be:
+
+  <@ A@>(A@, A@) { StateM@<S@, A@>; }
+
+And now running it is as easy as:
+
+  % r = rand(a, b);
+  r.state, r.result
+
+Or, if I'm already in the monad:
+
+  Int@ result := do(rand(a, b))
+  
+Maybe all I need is the helper function to give me the StateM wrapper around a
+pseudo random number generator. But I can only do that if I assume there is
+some state... but we have that in the constructor.
+
+<<@>@ M@>(State@<RandS@, M@>, Monad@<M@>) { Rand@<M@>; } Rand;
+
+If I have access to that, I should be able to transform that into a StateM
+based API for working with random numbers.
+
+But should I? If we do this, it encourages us to hard code pseudo randomness
+into our implementations. But isn't it better to force us to support real
+randomness too? But that would suggest we need to surface the Rand@ interface
+all the way to the top of Snake. It doesn't feel great. It's nice when things
+are contained and pure, not having to pass around implicit magic everywhere.
+
+---
+
+For Invaders I ended up implementing my own API wrapper around the interface
+which provides a monad for random number generation that I can run. The game
+loop is also set up a little weirdly in that we don't have the ability to
+route out the updated prng value after using it, so instead of have a separate
+place to advance the prng and draw rand values off of it.
+
+There is clearly jank when using Rand48. I want to switch back to LFSR for
+this. How about providing an LFSR implementation of Rand@ to start with and
+worry about optimizing for performance later?
+

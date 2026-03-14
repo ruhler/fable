@@ -2,6 +2,15 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Switch back to LFSR or optimize Rand48 to fix jank issue in fble-invaders.
+
+* fble-app capture input so we don't see a bunch of it on the console after
+  the game is done?
+
+* Double check benchmark deadlock conditions
+  - for example, for snake, now that we changed the random number generator
+    used.
+
 * Change State@ to be:
   ((A@) { A@; }) { M@<A@>; }
   Which modifies in place and then returns either the initial or final value?

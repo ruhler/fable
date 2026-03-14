@@ -35,13 +35,6 @@
 % Int = /Std/Int/Lit%.Int;
 % Ord = /Core/Int/Ord%.Ord;
 
-@ LFSR@ = /Core/LFSR%.LFSR@;
-<@>@ Shifted@ = /Core/LFSR%.Shifted@;
-% LFSR = /Core/LFSR%.LFSR;
-% Polynomials = /Core/LFSR%.Polynomials;
-% Shift = /Core/LFSR%.Shift;
-% ShiftInt = /Core/LFSR/Int%.ShiftInt;
-
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
@@ -58,6 +51,26 @@
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;
 Int@ 2 = Int|2;
+
+# API wrapper around a pseudo random number generator.
+@ Prng@ = /Core/Rand/Rng%.RandS@;
+% Prng = {
+  <@>@ M@ = /Core/State/StateM%.StateM@<Prng@>;
+  /Std/Monad%.Monad@<M@> m = /Core/State/StateM%.Monad<Prng@>;
+  /Core/State%.State@<Prng@, M@> s = /Core/State/StateM%.State<Prng@>;
+  /Core/Rand%.Rand@<M@> rand = /Core/Rand/Rng%.Rand<M@>(s, m);
+  % Of = /Core/Int/Rand%.Of<M@>(rand, m);
+  <@>% Eval = /Core/State/StateM%.Eval<Prng@>;
+  <@>% Exec = /Core/State/StateM%.Exec<Prng@>;
+
+  (Prng@) { Prng@; } Skip = (Prng@ prng) {
+    Exec(rand(Unit, Unit), prng);
+  };
+
+  % Seed = /Core/Rand/Rng%.Seed;
+
+  @(M@, Do: m.do, Return: m.return, Of, Skip, Eval, Seed);
+};
 
 # Aliens move together in a group of rows and columns. They decide which
 # direction to move. Then each live alien, in turn, makes a move. After a full
@@ -269,8 +282,8 @@ Int@ DyingTime = Int|10;
   # The list of currently dying aliens.
   List@<Dying@> dying,
 
-  # LFSR used for deciding when to drop bombs.
-  LFSR@ lfsr
+  # prng used for deciding when to drop bombs.
+  Prng@ prng
 );
 
 # Initial --
@@ -287,7 +300,7 @@ Int@ DyingTime = Int|10;
     next: Just(FirstAlien),
     turn: False,
     dying: Empty<Dying@>,
-    lfsr: LFSR(Polynomials.8, Polynomials.8));
+    prng: Prng.Seed(Int|42));
 };
 
 # TickDying --
@@ -318,35 +331,47 @@ Vanguard = (Aliens@ aliens, Int@ col) {
 
 # FireBombs --
 #   Launch bombs at the ship if appropriate.
-(Aliens@, Bombs@) { Bombs@; } FireBombs = (Aliens@ aliens, Bombs@ bombs) {
-  # We launch bombs once all aliens have completed their move.
-  aliens.next.?(just: bombs);
+(Aliens@, Bombs@) { Bombs@; } FireBombs = {
+  <@>@ M@ = Prng.M@;
+  <@>% Return = Prng.Return;
+  <@>% Do = Prng.Do;
+  % Of = Prng.Of;
 
-  @ State@ = *(LFSR@ lfsr, Bombs@ bombs);
-  /Core/Iter%.For(/Core/Int/Iter%.Range(Int|0, NumCols),
-    State@(aliens.lfsr, bombs),
-    (Int@ col, State@ s) {
-      Maybe@<Alien@> alien = Vanguard(aliens, col);
-      alien.?(nothing: s);
+  (Aliens@, Bombs@) { M@<Bombs@>; }
+  Fire = (Aliens@ aliens, Bombs@ bombs) {
+    # We launch bombs once all aliens have completed their move.
+    aliens.next.?(just: Return(bombs));
 
-      Shifted@<Int@> r = ShiftInt(s.lfsr, Int|100);
-      Lt(r.output, Int|15).?(false: State@(r.lfsr, s.bombs));
-      Shifted@<Int@> x_shift = ShiftInt(r.lfsr, MoveX);
-      Int@ x = Add(Add(Int|4, x_shift.output),
-                   Add(aliens.dst_x, Mul(StrideX, alien.just.col)));
-      Int@ y = Sub(Add(aliens.dst_y, Mul(StrideY, alien.just.row)), Int|6);
-      Kind@ kind = Lt(r.output, Int|2).?(
-        true: Kind@(squiggle: Unit),
-        false: Kind@(bomb: Unit));
-      State@(x_shift.lfsr, /Invaders/Bombs%.Fire(x, y, kind, s.bombs));
-    }).bombs;
+    /Core/Iter%.For(/Core/Int/Iter%.Range(Int|0, NumCols), Return(bombs)) $
+      (Int@ col, M@<Bombs@> mbombs) {
+        Maybe@<Alien@> alien = Vanguard(aliens, col);
+        alien.?(nothing: mbombs);
+
+        Bombs@ bombs := Do(mbombs);
+        Int@ r := Do(Of(Int|100));
+        Lt(r, Int|15).?(false: Return(bombs));
+
+        Int@ x_shift := Do(Of(MoveX));
+        Int@ x = Add(Add(Int|4, x_shift),
+          Add(aliens.dst_x, Mul(StrideX, alien.just.col)));
+        Int@ y = Sub(Add(aliens.dst_y, Mul(StrideY, alien.just.row)), Int|6);
+        Kind@ kind = Lt(r, Int|2).?(
+          true: Kind@(squiggle: Unit),
+          false: Kind@(bomb: Unit));
+        Return(/Invaders/Bombs%.Fire(x, y, kind, bombs));
+      };
+  };
+
+  (Aliens@ aliens, Bombs@ bombs) {
+    Prng.Eval(Fire(aliens, bombs), aliens.prng);
+  };
 };
 
 # Tick --
 #   Advance the aliens by one unit of time tick.
 (Aliens@) { Aliens@; } Tick = (Aliens@ a) {
   List@<Dying@> dying = TickDying(a.dying);
-  LFSR@ lfsr = Shift(a.lfsr).lfsr;
+  Prng@ prng = Prng.Skip(a.prng);
   a.next.?(
     just: {
       Int@ left = Add(a.dst_x, Mul(StrideX, a.next.just.col));
@@ -354,7 +379,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
         left: Lt(left, LeftEdge),
         right: Gt(left, RightEdge)));
       Maybe@<Alien@> next = NextAlive(a.alive, a.next.just);
-      a.@(next, turn, dying, lfsr);
+      a.@(next, turn, dying, prng);
     },
     nothing: {
       Int@ src_x = a.dst_x;
@@ -366,10 +391,10 @@ Vanguard = (Aliens@ aliens, Int@ col) {
         true: a.@(src_x, src_y,
           dst_y: Sub(a.dst_y, MoveY),
           dir: FlipDir(a.dir),
-          phase, next, turn, dying, lfsr),
+          phase, next, turn, dying, prng),
         false: a.@(src_x, src_y,
           dst_x: a.dir.?(left: Sub(a.dst_x, MoveX), right: Add(a.dst_x, MoveX)),
-          phase, next, turn, dying, lfsr));
+          phase, next, turn, dying, prng));
     });
 };
 
