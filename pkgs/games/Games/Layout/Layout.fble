@@ -22,12 +22,6 @@
 @ QR@ = /Std/Int/Div%.QR@;
 % Quot = /Std/Int/Div%.Quot;
 
-@ LFSR@ = /Core/LFSR%.LFSR@;
-<@>@ Shifted@ = /Core/LFSR%.Shifted@;
-% Polynomials = /Core/LFSR%.Polynomials;
-% LFSR = /Core/LFSR%.LFSR;
-% ShiftInt = /Core/LFSR/Int%.ShiftInt;
-
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
@@ -122,14 +116,28 @@ Int@ NumNodes = Mul(Rows, Cols);
 Int@ NumEdges = Int|15;
 
 # Generates N random edges.
-(Int@, LFSR@) { Shifted@<List@<Edge@>>; }
-RandEdges = (Int@ n, LFSR@ lfsr) {
-  /Std/Int/Eq%.Eq(Int|0, n).?(true: @(lfsr, output: Empty<Edge@>));
-  Shifted@<Node@> sa = ShiftInt(lfsr, NumNodes);
-  Shifted@<Node@> sb = ShiftInt(sa.lfsr, NumNodes);
-  Shifted@<List@<Edge@>> tail = RandEdges(Decr(n), sb.lfsr);
-  List@<Edge@> output = Items(Edge@(sa.output, sb.output), tail.output);
-  @(lfsr: tail.lfsr, output);
+(Int@) { List@<Edge@>; }
+RandEdges = {
+  @ Prng@ = /Core/LFSR/Rand%.RandS@;
+  <@>@ M@ = /Core/State/StateM%.StateM@<Prng@>;
+  /Std/Monad%.Monad@<M@> m = /Core/State/StateM%.Monad<Prng@>;
+  /Core/State%.State@<Prng@, M@> s = /Core/State/StateM%.State<Prng@>;
+  /Core/Rand%.Rand@<M@> rand = /Core/LFSR/Rand%.Rand<M@>(s, m);
+  % Of = /Core/Int/Rand%.Of<M@>(rand, m);
+  <@>% Eval = /Core/State/StateM%.Eval<Prng@>;
+
+  (Int@) { M@<List@<Edge@>>; }
+  Gen = (Int@ n) {
+    /Std/Int/Eq%.Eq(Int|0, n).?(true: m.return(Empty<Edge@>));
+    Node@ a := m.do(Of(NumNodes));
+    Node@ b := m.do(Of(NumNodes));
+    List@<Edge@> tail := m.do(Gen(Decr(n)));
+    m.return $ Items(Edge@(a, b), tail);
+  };
+
+  (Int@ n) {
+    Eval(Gen(n), /Core/LFSR%.LFSRs.8);
+  };
 };
 
 Int@ NodeWidth = Int|20;
@@ -264,7 +272,7 @@ InitLayout = (Int@ n) {
 
 State@ InitialState = @(
   layout: InitLayout(Int|0),
-  edges: RandEdges(NumEdges, LFSR(Polynomials.8, Polynomials.8)).output,
+  edges: RandEdges(NumEdges),
   selected: Nothing<Pos@>,
   hovered: Nothing<Pos@>
 );

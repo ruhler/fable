@@ -7,6 +7,11 @@ Things to consider doing for the fble-0.6 release.
 
 * fble-app capture input so we don't see a bunch of it on the console after
   the game is done?
+  - Quick search on the internet didn't bring anything obvious up.
+  - This would be bad for a password protected field, for example...
+
+* Switch back to LFSR for snake?
+  - Because it's faster and good enough?
 
 * Double check benchmark deadlock conditions
   - for example, for snake, now that we changed the random number generator
@@ -38,6 +43,7 @@ Things to consider doing for the fble-0.6 release.
 
 * Figure out why I need to pass M@ everywhere explicitly?
  - Like, why can't type inference figure it out?
+ - Because you can't infer generalize M@ from a specific M@<A@> instance?
 
 * Add tests for Output ToString and ToNull
  - Assuming we don't already have them.
@@ -118,9 +124,6 @@ Things to consider doing for the fble-0.6 release.
 * Double check performance of ReverseComplement, specifically the
   ComplementCode function. Maybe use a map instead?
   Similar for /Invaders/Graphics%.String.
-
-* Change FbleNewCharValue to take wchar_t.
-* Change FbleCharValueAccess to return wchar_t.
 
 * Does private type access restrict access to literals?
   Like, if Digit@ was private, could I still construct a list of Digit@ via a
@@ -208,7 +211,8 @@ Things to consider doing for the fble-0.6 release.
  - See thoughts/fble-0.3/stack_alloc.txt for details.
  - See thoughts/fble-0.5/gc.txt for more thoughts.
 
-* Remove now unused FBLE_PROFILE_ENTER_OP, EXIT_OP, and REPLACE_OPs
+* Remove now unused FBLE_PROFILE_ENTER_OP, EXIT_OP, and REPLACE_OPs?
+ - Or wait to see if we want them for code coverage?
 
 * New apps
  - IEEE floating point support.
