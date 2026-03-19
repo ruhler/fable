@@ -507,3 +507,380 @@ There is clearly jank when using Rand48. I want to switch back to LFSR for
 this. How about providing an LFSR implementation of Rand@ to start with and
 worry about optimizing for performance later?
 
+---
+
+Maybe what I need is a few helper function to make it easier to run some
+random number generation on explicit state.
+
+You write your random number generator for abstract monad M@ and Rand@<M@>.
+Then, at the top level, you want to run it. I provide a helper that takes the
+generic function to run and evals it or execs it as a pure function given an
+int seed.
+
+/Core/Rand/Pure% perhaps?
+
+But how do I choose which random number generator I want? We need to pass that
+to the Run and Eval functions too, right? And seed it? I kind of wish
+everything had a standard Int@ based seeding API.
+
+If we don't mind baking Int@ into the random API, we could change the
+primitive to Of and use that to reduce the number of calls to the random
+number generator needed. That should improve performance? Or ask for a
+specific number of random bits, returning an Int@ in [0, 2^n).
+
+In other words, we want to pass around batches of bits. Int@ is the type we
+chose to do that. We can use it for asking for bits, and we can use it for
+initializing the state of the random number generator.
+
+Maybe I can have a Prng@ interface that deals directly with S@ and Int@,
+without any Monad@. Then have a common adapter for that to the Rand@
+interface?
+
+I definitely want to keep the monad interface for describing random generators
+though. Which is used in all my cases. What I want is:
+* Easy access to a monad for describing random generators.
+  for all M@ probably works fine for this.
+* Easy implementation of a pseudo random number generator.
+  S@, Seed, Of, Influence(?)
+* Easy way to run a random generator of my choice.
+
+The last one is the tricky one. I have a custom random generator that works
+for all M@. I want to either Run or Exec or Eval. And I want to pick which
+random number generator to use, and what the seed should be? Or what the
+initial state should be?
+
+Do I want just a function 'Pure' which goes from generator to State@<S@>
+associated with whatever rng I pick to use? Then I say things like:
+
+   Eval $ Pure(Foo(x, y), Seed(Int|42));
+
+That seems reasonable? Is it any better than what I've already tried?
+
+---
+
+How about 'feed' for the name of the function that lets you inject some bits
+into the prng?
+
+---
+
+Next straw proposal:
+* /Core/Rand%
+  <<@>@ M@> { *(
+    (Int@) { M@<Int@>; } bits,        # Returns n bits of randomness
+    (Int@, Int@) { M@<Unit@>; } feed  # Feeds in n bits of randomness
+  };
+* /Core/Rand/Prng%
+  Pure - function that takes a custom generator, a pseudo random number
+         generator type and returns a StateM@<S@>.
+* /Core/Rand/Foo%
+  Provides implementations of Prng@ and a Seed function.
+
+How to get here?
+* Update implementations of Rand48 and LFSR to 
+
+Umm.... I don't currently use my Rand48 implementation. Everyone is using LFSR
+at the moment. Any reason to keep Rand48 around then? Maybe I should
+temporarily remove it just to simplify the transition? Or is it good to have
+two different rngs, to make sure the API supports both reasonably well?
+
+I think first step should be implement Prng helper and make use of it. Then
+change Rand@ definition under the covers to return n bits of randomness. Then
+add the feed option. See where that leaves us.
+
+For both Lcg and Lfsr, we have a general algorithm that works for a general
+seed type, but with different embedded parameters. So maybe I want things
+like:
+
+  /Core/Rand/LFSR%.LFSR(<params>)
+  /Core/Rand/LFSR%.LFSRs.8, 12, 24
+  /Core/Rand/LCG%.LCG(<params>)
+  /Core/Rand/LCG%.LCGs.Rand48
+
+That kind of thing?
+
+I need to decide on capitalization here.
+  Prng, PRNG?
+  Lfsr, LFSR?
+  Lcg, LCG?
+
+It's nicer to add s to all caps. PRNGs versus Prngs. LFSRs versus Lfsrs. But
+we have things like Cli in core library instead of CLI. I feel like Prng,
+Lfsr, Lcg is the right way to go long term.
+
+I don't know. It feels weird. Maybe it's better to provide a concrete monadic
+type M@ that the generators can be written to use? Like, abstract types
+instead of parameterized types?
+
+---
+
+It's certainly annoying having to pass M@, m, r explicitly every time we call
+a random generator function. Could we do the trick like we do for Output@?
+Compose everything using generic M@, and then instantiate it all at once? Or I
+want to be able to mix calls to rand and IO?
+
+Anyway, a bunch of things I'm wrestling with:
+* Need to separate LFSR@ parameters from state, so that we can implement a
+  seed function for LFSR independent of parameters.
+* Migrate satgame over from it's custom Random@ type to Rand@.
+* Implement /Core/Bool/Rand%.Rand.
+* Implement a nice way to go from generic M@, Rand@ to a state monad.
+
+---
+
+Review of different ways of doing things:
+
+1. Explicit pure state monad.
+  @ S@ = ...;
+  <@>@ Rand@ = StateM@<S@>;
+  Monad<Rand@> Monad = ...
+
+Pros:
+* Simple types involved.
+* Don't have to pass M@, m, r around everywhere.
+
+Cons:
+* Hard codes monad type - harder to compose.
+* Hard codes state type S@, and transitively the kind of prng.
+* Won't work with true random IO that takes to the outside world
+  - Unless we have a hack for S@ to let it be "the world"
+
+2. Abstract hard coded stuff
+  Same as (1), except we let different modules provide different hard coded
+  sets of things.
+
+Example:
+* This is the approach I'm using with Map@ right now.
+* This is the approach I use with invaders Prng@.
+
+Pros:
+* Simple types involved.
+* Don't have to pass M@, m, r around everywhere.
+* Can work with different kinds of prng, but have to pick one at a time to
+  work with or take as input at a higher level.
+
+Cons:
+* Can't mix two different prng impls in the same program for the same custom
+  code.
+
+3. StateT approach - generalizes the monad
+  @ S@ = ...;
+  <<@>@> Rand@ = StateTM@<S@>;
+  Monad@<Rand@<M@>> = <<@>@ M@>( ... ) { Monad@<Rand@<M@>>; }
+
+Pros:
+* Doesn't hard code monad type: can interleave with other side effects.
+
+Cons:
+* Hard codes state type S@, and transitively the kind of prng.
+* Won't work with true random IO.
+* Complicated use of lift. More complicated types.
+
+4. Hidden forall approach - generalizes state and monad.
+  Rand@ = <<@>@ M@>(Monad@<M@>, RandImpl@<M@>) { M@<A@>; }
+  Monad@<Rand@> Monad = ...;
+
+Example:
+* This is the approach I use for Output@.
+* This is what I sort of tried using for Snake random number generation.
+
+Pros:
+* Simple types involved.
+* Don't have to pass M@, m, r around everywhere.
+* Supports any kind of state for the prng.
+* Supports any kind of monadic type for the state of the prng.
+  - Including true random numbers.
+* Don't have to pass around M@, m, or r everywhere.
+
+Cons:
+* Doesn't allow interleaving of side effects from different monads.
+
+5. Explicit forall approach
+  <<@>@,@>@ Rand@ = <<@>@ M@> { <@ A@>(A@, A@) { M@<A@>; }; };
+
+Example:
+* This is the approach I've been trying to implement.
+
+Pros:
+* Works with any type of state or monad.
+* Allows full interleaving of side effects from different monads.
+
+Cons:
+* Complex types. Have to pass around M@, m, r everywhere.
+* Tedious to provide top level M@, m, r implementations to run.
+
+So... where does that leave me?
+
+Monad composition still feels unsolved. Even if I use the totally generic M@
+approach, for example, how can I add state into cli native M@? I have to use
+state monad anyway.
+
+And while it seems great to be totally generic, I'm not convinced it's good to
+surface all the side effects to the very top level. For example, Snake and
+Invaders use pure rng, they can do that entirely internally. No reason for the
+callers of Snake and Invaders to need to know about that internal
+implementation detail. Not unless they need to switch to true random numbers,
+at which point they need the assistance of the caller.
+
+Which brings me back around to discussion I've had before. If all side effects
+can be represented as state transformations and we had a single monad that let
+you allocate state, would it not be better to just put everything in that same
+monad? aka... IO monad? Or ST or Process or whatever realization of it that
+you want.
+
+But we can pass state via function calls as well as via state monad. I suppose
+state monad is just function calls at the end of the day. But it can be done
+as a reader monad to some extent.
+
+---
+
+Think about this a little more deeply. What are the fundamental underlying
+challenges?
+
+1. We build up a library of utilities on top of a few small axioms.
+For example: Output@ is all built up on top of putting to a stream. Random@ is
+all built up on top of getting some random bits. IO is built up on top of some
+monadic interface.
+
+I don't want to hard code the underlying axioms. But it's annoying to have to
+pass them around everywhere.
+
+Honestly, I don't think this is the biggest problem I'm facing. It's not that
+bad to pass m, n, r, whatever around everywhere.
+
+This is the only problem with writing generic code that operates given a Rand@
+interface. That's not the part that's hard for me to write.
+
+What's the next fundamental challenge? It shows up as it being tedious to
+provide a pure implementation for whatever random number generator I want to
+use. in Snake, RunRand has about a 10 line adaptor function needed, and it
+only works if I push m and r to the last arguments (which feels weird).
+Invaders is similar, a dozen lines of code just to declare everything to use
+LFSR. Layout also has it. Why so much? We need to define:
+* M@, S@, m, s, rand, and our Run function.
+
+This is where we are specifying the specific LFSR we want. It's where I'm
+saying: I want this LFSR and to use it with this pure state monad.
+
+Why can't I easily factor that out into common code shared by all my games?
+It's specific to pure state monad, but generic in rng type so long as the rng
+is prng. Note that it's separate from the definition of my custom generator
+functions (of which there may be multiple) and separate from the use of my
+custom generator functions (of which there may be multiple). Once you define
+it, you compose it with the use of the custom generator functions.
+
+Conceptually what I want is:
+1. Declaration of the thing: specifies which LFSR I want to use.
+ - Provides M@, m, rand, Run functions.
+2. Use of the thing: combines with custom generator functions.
+
+If the generator functions are forall M@, then we only need to export the Run
+function. Except maybe I want Eval and Exec too. Alternatively we could write
+the custom generator functions to use M@, m, rand directly from here. Doesn't
+that make a lot of sense? We can import and supply the higher level functions
+we want too, to avoid passing around m and rand directly everywhere.
+
+It's like, take whatever you were going to import for doing the random number
+stuff, and import it under the context of your chosen random number generator.
+Then refer to those modified imports instead.
+
+The other end of approaches is to write the custom generators using totally
+abstract functions. But I don't need that. I know I want them to use a
+particular consistent value.
+
+In other words? My Invaders approach seems the best. Import and set things up
+using our random prng monad. Import whatever you need under a Rand namespace,
+for example. Then do Rand.M@, or RandM@? Except, that's more verbose than M@
+and m. Which is why I prefer not to do things this way. The namespace aspect.
+If you take M@ as a parameter, it makes total sense what you are referring to
+locally when you say M@. If you want to use a hard coded value, suddenly you
+need to be more clear that you want the Rand hard coded value. Which might be
+fine if you define all the random functions in the same block as the random
+stuff? Then we can use M@ and m?
+
+Anyway, the common code I want to factor out is:
+* I give you the Rand function, which is forall M@, State@<S@, M@>, Monad@<@>
+  returning a Rand@<M@>.
+* You give me: A concrete M@, m, r, Pure functions to turn any custom
+  generator function into a StateM monad which I can then Run, Eval, Exec as I
+  like.
+
+There are three ways we have discussed to combine this with your custom
+generator functions:
+1. Require the generator functions to take forall M@ as last args / return
+type.
+2. Have the generator functions take M@, m, r directly. No need for 'Pure'
+function to convert.
+3. Have the generator functions take M@, m, r as first arguments. To combine:
+apply the hard coded M@, m, r that you already have.
+
+(1) let's me not have to worry about the hard coded M@, m, or r at composition
+time. (1) and (3) let me not worry about them at custom function declaration
+time. (2) let's me use the generator functions directly without extra logic
+needed at use time (aside from Run, Eval, Exec...).
+
+Which is best approach to use? (1), (2), or (3)?
+
+---
+
+I know (1) can work. It just feels weird. It doesn't allow us to write the
+custom generator functions to capture the monad and rand arguments
+statically.
+
+For example, something like:
+
+  % Prng = /Core/Rand/Prng%.Prng(/Core/Rand/Rng%.Rand);
+  (Dir@)<<@>@ M@>(Monad@<M@>, Rand@<M@>) { M@<Unit@>; } StepRand = ...
+
+  Prng.S@ rand = Exec $ Prng.Pure(StepRand(s.dir), s.rand);
+
+I also know (2) can work. I was going to say it's not flexible to having
+Rand@<M@> passed in, but if we have that, we don't need to worry about this
+anyway. So maybe no downside? It's something like:
+
+  % Prng = /Core/Rand/Prng%.Prng(/Core/Rand/Rng%.Rand);
+
+  (Dir@) { Prng.M@<Unit@>; }
+  StepRand = {
+    <@>@ M@ = Prng.M@;
+    Monad@<M@> m = Prng.m;
+    Rand@<M@> r = Prng.r;
+
+    (Dir@ d) { 
+      ...
+    };
+  };
+
+  Prng.S@ rand = Exec $ StepRand(s.dir);
+
+It's nice we don't need an extra function call wrapper around StepRand where
+it is used. That feels very good. Also, that we can capture m, r as statics in
+the function returned by StepRand. The only downside is having to refer to
+Prng.M@ in the type for StepRand, and having to 'import' M@, m, r in the body.
+
+How would (3) work? I don't think I've tried this. I guess something like:
+
+  % Prng = /Core/Rand/Prng%.Prng(/Core/Rand/Rng%.Rand);
+
+  <<@>@ M@>(Monad@<M@>, Rand@<M@>, Dir@) { M@<Unit@>; } StepRand = ...
+
+  Prng.S@ rand = Exec $ StepRand<Prng.M@>(Prng.m, Prng.rand, s.dir);
+
+I don't like it as much. So, honestly, I'm a little surprised to say, (2)
+looks the best to me.
+
+Can I try it? Let's try it. See how it feels to migrate things over to it.
+
+For Snake, (2) isn't bad. Minor annoyances:
+* Having to import M@, m, r in every custom generator.
+* Having to pass M@, m, r to functions like Range.
+ - But we have to do that regardless. That's how Range works.
+
+To go the next level though, I should factor out the common code for the Prng
+module declaration. Which means defining some Prng@ type that let's us turn a
+State@ into a Rand@, a state type S@, and a Seed function to go from Int@ to
+that type. Let's make this the next step. And then I'm thinking I definitely
+want to revamp the Rand@ type to work on Int@, or some other list of bits
+representation. Like... List@<Bool@>? The nice thing about List@<Bool@> (which
+we can rebrand Bit@ = Bool@; Bits@ = List@<Bit@>) is it captures exactly how
+many bits of state you are getting. We don't have that for Int@.
+

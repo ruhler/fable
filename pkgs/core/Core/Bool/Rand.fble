@@ -1,0 +1,15 @@
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@,@>@ Rand@ = /Core/Rand%.Rand@;
+
+# Generates a random boolean.
+<<@>@ M@>(Rand@<M@>, Monad@<M@>) { M@<Bool@>; }
+Rand = <<@>@ M@>(Rand@<M@> r, Monad@<M@> _) {
+  r(True, False);
+};
+
+@(Rand);
