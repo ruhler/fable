@@ -64,7 +64,7 @@ Int@ 2 = Int|2;
   <@>% Exec = /Core/State/StateM%.Exec<Prng@>;
 
   (Prng@) { Prng@; } Skip = (Prng@ prng) {
-    Exec(rand(Unit, Unit), prng);
+    Exec(rand.choose(Unit, Unit), prng);
   };
 
   Prng@ Seeded = /Core/LFSR%.LFSRs.8;

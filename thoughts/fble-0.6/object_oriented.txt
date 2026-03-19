@@ -1,0 +1,126 @@
+Object Oriented
+===============
+
+I mean something very specific when I say this. Let me say what I mean and not
+worry about the terminology for now.
+
+The problem:
+
+See thoughts/fble-0.6/stdlib.random.txt for context and motivation.
+
+We have some core api, like generating random bits or writing a character to
+an output stream. We want to build up things on top of those core APIs, like
+generating random booleans, random integers, drawing from continuous
+probability distributions. Or like writing lines and whole files to an output
+stream.
+
+The way I've been doing things for this so far has something like:
+
+  # The core API:
+  <<@>@>@ Rand@ = <<@>@ M@> { *(M@<Bit@> bit); }
+
+  # A higher level function:
+  <<@>@ M@>(Rand@<M@>, Monad@<M@>)<@ A@>(List@<A@>) { M@<List@<A@>>; }
+  Shuffle = ...;
+
+Whenever I want to call the higher level function, I have to provide M@,
+Rand@<M@>, and Monad@<M@> all explicitly. Note that type inference cannot
+infer the type M@ from Rand@<M@> or Monad@<M@>, because you can't infer a
+general M@ type from a few concrete M@<X@> examples.
+
+This leads to slightly annoying code like:
+
+  (List@<Pos@>) { Prng.M@<Pos@>; }
+  GetNextFood = {
+    <@>@ M@ = Prng.M@;
+    % m = Prng.m;
+    <@>% r = Prng.r;
+   
+    (List@<Pos@> snake) {
+      Int@ row := m.do(Range<M@>(r, m, MinRow, MaxRow));
+      Int@ col := m.do(Range<M@>(r, m, MinCol, MaxCol));
+      Pos@ pos = Pos@(row, col);
+      InPosS(snake, pos).?(false: m.return(pos));
+      GetNextFood(snake);
+    };
+  };
+
+In particular, note the need to 'import' M@, m, r and the need to pass M@, r,
+and m to the high level Range function.
+
+I think we might be able to solve all of this if we take a slightly different
+approach to defining our interfaces and add another variation of function
+application syntax to fble.
+
+The key ideas are:
+
+1. If the Rand@ interface had M@ as a field and included the Monad@<M@> in its
+interface, then type inference should be able to infer M@ and we only have to
+pass one object 'r' instead of the three M@, r, m everywhere.
+
+2. For whatever strange reason, it's much easier and more natural for me to
+write things like:
+   r.Range(Min, Max), r.Foo(a, b)
+
+Than it is to write things like:
+  Range(r, Min, Max), Foo(r, a, b).
+
+This is what I mean by object oriented: the ability to do obj.Foo and have it
+turn into a function call that takes obj as the first this/self argument.
+
+The syntax proposal to start feels hacky / weird, but maybe also what we want:
+
+  expr '.' name
+
+Here name needs to be the name of a variable of function type. This is
+syntactic sugar for function application:
+  
+  name(expr)
+
+I have concerns with this syntax:
+* It conflicts with struct and union access. But maybe we can say there is a
+  priority: try struct or union access first. Only if those fail do we look
+  for the function approach. Maybe that's even a feature: the object in
+  question can provide a specialized implementation of a high level function
+  if it wants to.
+* Do we want/need the ability to apply extra arguments?
+  - So we could do things like: obj.Foo() with zero additional arguments?
+  - To allow for additional type inference based on those extra arguments?
+
+Anyway, assuming we work that all out, my sample code from above simplifies to
+something like:
+
+  (List@<Pos@>) { Prng.M@<Pos@>; }
+  GetNextFood = {
+    Rand@ r = Prng.r;
+   
+    (List@<Pos@> snake) {
+      Int@ row := r.do(r.Range(MinRow, MaxRow));
+      Int@ col := r.do(r.Range(MinCol, MaxCol));
+      Pos@ pos = Pos@(row, col);
+      InPosS(snake, pos).?(false: r.return(pos));
+      GetNextFood(snake);
+    };
+  };
+
+Which feels surprisingly nicer.
+
+Or, if you prefer, it's now much easier to write things like:
+
+  <<@>@ M@>(Rand@<M@>, List@<Pos@>) { Prng.M@<Pos@>; }
+  GetNextFood = <<@>@ M@>(Rand@<M@> r, List@<Pos@> snake) {
+    Int@ row := r.do(r.Range(MinRow, MaxRow));
+    Int@ col := r.do(r.Range(MinCol, MaxCol));
+    Pos@ pos = Pos@(row, col);
+    InPosS(snake, pos).?(false: r.return(pos));
+    GetNextFood(snake);
+  };
+
+And then later on call it using:
+
+  Prng.GetNextFood(...)
+
+Even better.
+
+That's the core idea anyway. I think there's lots of issues to work through
+before I can feel good about it.

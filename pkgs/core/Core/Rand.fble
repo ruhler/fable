@@ -1,7 +1,9 @@
 
 # Standard interface for a random number generator.
-# Randomly choses 1 of two values to return.
-<<@>@,@>@ Rand@ = <<@>@ M@> { <@ A@>(A@, A@) { M@<A@>; }; };
+# Randomly chooses 1 of two values to return.
+<<@>@>@ Rand@ = <<@>@ M@> { *(
+  <@ A@>(A@, A@) { M@<A@>; } choose
+); };
 
 @(Rand@);
 

@@ -9,7 +9,7 @@
 % Int = /Std/Int/Lit%.Int;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@,@>@ Rand@ = /Core/Rand%.Rand@;
+<<@>@>@ Rand@ = /Core/Rand%.Rand@;
 
 
 # Generates a random integer uniformly in the range [0, n).
@@ -22,7 +22,7 @@ Of = <<@>@ M@>(Rand@<M@> r, Monad@<M@> m, Int@ n) {
     Gt(range, n).?(true: m.return(x));
 
     Int@ nrange = Shl(range, Int|1);
-    Int@ lsb := m.do(r(Int|0, Int|1));
+    Int@ lsb := m.do(r.choose(Int|0, Int|1));
     Int@ nx = Add(Shl(x, Int|1), lsb); 
     DrawBits(nrange, nx);
   };

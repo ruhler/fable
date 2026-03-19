@@ -62,7 +62,7 @@ Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 
 # The pseudo random number generator we are using.
 % Prng = {
-  <<@>@,@>@ Rand@ = /Core/Rand%.Rand@;
+  <<@>@>@ Rand@ = /Core/Rand%.Rand@;
   @ S@ = /Core/Rand/Rng%.RandS@;
   % Seed = /Core/Rand/Rng%.Seed;
 
@@ -163,15 +163,15 @@ State@ InitialState = {
 (Dir@) { Prng.M@<Unit@>; }
 StepRand = {
   % m = Prng.m;
-  <@>% r = Prng.r;
+  % r = Prng.r;
 
   (Dir@ d) {
     d.?(up: m.return(Unit));
-    Unit@ _ := m.do $ r(Unit, Unit);
+    Unit@ _ := m.do $ r.choose(Unit, Unit);
     d.?(down: m.return(Unit));
-    Unit@ _ := m.do $ r(Unit, Unit);
+    Unit@ _ := m.do $ r.choose(Unit, Unit);
     d.?(left: m.return(Unit));
-    r(Unit, Unit);
+    r.choose(Unit, Unit);
   };
 };
 
@@ -181,7 +181,7 @@ StepRand = {
 GetNextFood = {
   <@>@ M@ = Prng.M@;
   % m = Prng.m;
-  <@>% r = Prng.r;
+  % r = Prng.r;
  
   (List@<Pos@> snake) {
     Int@ row := m.do(Range<M@>(r, m, MinRow, MaxRow));

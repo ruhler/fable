@@ -884,3 +884,19 @@ representation. Like... List@<Bool@>? The nice thing about List@<Bool@> (which
 we can rebrand Bit@ = Bool@; Bits@ = List@<Bit@>) is it captures exactly how
 many bits of state you are getting. We don't have that for Int@.
 
+---
+
+See thoughts/fble-0.6/object_oriented.txt for an idea how to improve things
+here. There are two key ideas, one of which needs a language change, but the
+other doesn't. Maybe I try that.
+
+Namely: Have M@, and the Monad@ interface be built into the Rand@ interface so
+that type inference works, we only have to pass one thing around, and then
+it's easy to define encapsulate the arguments for a particular Prng as a
+single Rand@ interface rather than three separate entities.
+
+Composition doesn't work quite so well, in the sense that I don't see how I
+can reuse Monad@<M@> in the definition of Rand@<M@> without adding an extra
+layer of name hierarchy to access the monad instance. I don't know. Try it and
+see?
+

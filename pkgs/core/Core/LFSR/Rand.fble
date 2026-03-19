@@ -2,7 +2,7 @@
 @ Bit@ = /Core/Digits%.Bit@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@,@>@ Rand@ = /Core/Rand%.Rand@;
+<<@>@>@ Rand@ = /Core/Rand%.Rand@;
 <@,<@>@>@ State@ = /Core/State%.State@;
 
 @ LFSR@ = /Core/LFSR%.LFSR@;
@@ -14,11 +14,13 @@
 @ RandS@ = LFSR@;
 
 <<@>@ M@>(State@<LFSR@, M@>, Monad@<M@>) { Rand@<M@>; }
-Rand = <<@>@ M@>(State@<LFSR@, M@> s, Monad@<M@> m)<@ A@>(A@ a, A@ b) {
-  LFSR@ lfsr := m.do(s.get);
-  Shifted@<Bit@> bit = Shift(lfsr);
-  Unit@ _ := m.do(s.put(bit.lfsr));
-  m.return(bit.output.?(0: a, 1: b));
+Rand = <<@>@ M@>(State@<LFSR@, M@> s, Monad@<M@> m) {
+  @(choose: <@ A@>(A@ a, A@ b) {
+      LFSR@ lfsr := m.do(s.get);
+      Shifted@<Bit@> bit = Shift(lfsr);
+      Unit@ _ := m.do(s.put(bit.lfsr));
+      m.return(bit.output.?(0: a, 1: b));
+    });
 };
 
 @(RandS@, Rand);

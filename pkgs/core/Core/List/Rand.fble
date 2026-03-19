@@ -7,7 +7,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<<@>@,@>@ Rand@ = /Core/Rand%.Rand@;
+<<@>@>@ Rand@ = /Core/Rand%.Rand@;
 
 # Shuffles the elements of a list randomly.
 <<@>@ M@>(Monad@<M@>, Rand@<M@>)<@ T@>(List@<T@>) { M@<List@<T@>>; }
