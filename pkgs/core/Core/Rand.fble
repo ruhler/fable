@@ -2,6 +2,7 @@
 # Standard interface for a random number generator.
 # Randomly chooses 1 of two values to return.
 <<@>@>@ Rand@ = <<@>@ M@> { *(
+  @<M@> M@,
   <@ A@>(A@, A@) { M@<A@>; } choose
 ); };
 

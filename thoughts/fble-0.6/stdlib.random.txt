@@ -900,3 +900,33 @@ can reuse Monad@<M@> in the definition of Rand@<M@> without adding an extra
 layer of name hierarchy to access the monad instance. I don't know. Try it and
 see?
 
+---
+
+Adding M@ as a field to Rand@ totally solves the type inference thing for M@.
+That's good. If I also add Monad@<M@>, or it's functions do and return, then I
+should have as single object to pass around everywhere, and I can have my Prng
+helper function simply return one of those objects. Super easy, no?
+
+---
+
+New suggestion to try:
+
+* Rand@<M@> gives us choose/feed API.
+* RandM@<M@> gives us M@, Rand@<M@> r, Monad@<M@> m
+* For the most part, we pass around RandM@<M@>. You can pass it as the first
+  argument to a function. Call it 'this'. Then do things like:
+    this.m.do(...)
+    this.m.return(...)
+    this.r.feed(...)
+    this.r.choose(...)
+
+My helper function can produce a RandM@.
+
+At least in this case the naming feels reasonable. RandM@ is a combination of
+Rand@ and Monad@. Be careful though, because I'm using a different convention
+for naming of State@ and StateM@ at the moment. I suppose the split there
+should be changed to: State@: get/put, StateM@: M@, State@, Monad@,
+/Core/State/Pure%.Pure - returns a StateM@ with a pure monad and functions
+Exec, Eval, Run, etc. that operate on the StateM@ passing that as the 'this'
+argument.
+  

@@ -124,3 +124,261 @@ Even better.
 
 That's the core idea anyway. I think there's lots of issues to work through
 before I can feel good about it.
+
+---
+
+Here's what I suggest:
+1. Try to come up with a different syntax than '.' for this:
+ - To avoid ambiguity between member access and self func apply.
+ - To more clearly convey the cost involved of calling a function.
+2. Don't worry about function application type inference stuff.
+ - Just: 'expr .$ name'  as the entire thing, it applies the function with a
+   single argument.
+ - We can internally merge it with subsequent applications if we want. Err...
+   I guess we have to be clear from the spec point of view though?
+3. Not sure about making it easier to 'subclass' struct types.
+ - Is it worth it, or fine to manually inline, or fine to use the namespace?
+
+Let's explore some syntax then.
+
+  r.Range(MinRow, MaxRow)
+  r.$Range(MinRow, MaxRow)
+  r.:Range(MinRow, MaxRow)
+  r:Range(MinRow, MaxRow)
+  Range(r, MinRow, MaxRow)
+
+  r | Range(MinRow, MaxRow)
+
+  r..Range(MinRow, MaxRow);
+
+  Int@ row := r.>do(r.>Range(MinRow, MaxRow));
+  Int@ col := r.>do(r.>Range(MinCol, MaxCol));
+
+  Int@ row := r.$do(r.$Range(MinRow, MaxRow));
+  Int@ col := r.$do(r.$Range(MinCol, MaxCol));
+
+  Int@ row := r/do(r/Range(MinRow, MaxRow));
+  Int@ col := r/do(r/Range(MinCol, MaxCol));
+
+  Int@ row := r.do(r:Range(MinRow, MaxRow));
+  Int@ col := r.do(r:Range(MinCol, MaxCol));
+
+  Int@ row := r .$ do(r .$ Range(MinRow, MaxRow));
+  Int@ col := r .$ do(r .$ Range(MinCol, MaxCol));
+
+  Int@ row := r.do(r.Range(MinRow, MaxRow));
+  Int@ col := r.do(r.Range(MinCol, MaxCol));
+
+  Int@ row := r,do(r,Range(MinRow, MaxRow));
+  Int@ col := r,do(r,Range(MinCol, MaxCol));
+
+  Int@ row := r.do(r..Range(MinRow, MaxRow));
+  Int@ col := r.do(r..Range(MinCol, MaxCol));
+
+  Int@ row := r.:do(r.:Range(MinRow, MaxRow));
+  Int@ col := r.:do(r.:Range(MinCol, MaxCol));
+
+  Int@ row := r.do(Range.r(MinRow, MaxRow));
+  Int@ col := r.do(Range.r(MinCol, MaxCol));
+
+  Int@ row := r.do(r::Range(MinRow, MaxRow));
+  Int@ col := r.do(r::Range(MinCol, MaxCol));
+
+  Int@ row := r.do(.r.Range(MinRow, MaxRow));
+  Int@ col := r.do(.r.Range(MinCol, MaxCol));
+
+  Int@ row := r.do(Range(r)(MinRow, MaxRow));
+  Int@ col := r.do(Range(r)(MinCol, MaxCol));
+
+  r^Range(MinRow, MaxRow)
+
+  r:Range:(MinRow, MaxRow)
+
+Sadly I can't come up with anything that looks right besides r.Range.
+Considerations:
+* It needs to clearly bind Range to r. Like: (r.Range)(x, y, ...), not 
+   r.(Range(x, y, ...))
+
+  x.$y.$z.$f
+  x | y | z | f
+  x . y(a, b)
+  x.y(a, b)
+  x.F(a, b)
+  x..F(a, b)
+  x.:F(a, b)
+  x:F(a, b)
+  x:y(a,b):z:f(w)
+  x.y(a,b).z.f(w)
+  x|y(a,b)|z|f(w)
+  x.$y(a,b).$z.$f(w)
+
+The trouble with '.$' is it doesn't feel like it binds tightly. It feels like:
+x.$(f(a, b)) instead of (x.$f)(a, b)
+
+  <<@>@ M@>(Rand@<M@>, List@<Pos@>) { Prng.M@<Pos@>; }
+  GetNextFood = <<@>@ M@>(Rand@<M@> r, List@<Pos@> snake) {
+    Int@ row := r.do(Range(r, MinRow, MaxRow));
+    Int@ col := r.do(Range(r, MinCol, MaxCol));
+    Pos@ pos = Pos@(row, col);
+    InPosS(snake, pos).?(false: r.return(pos));
+    GetNextFood(snake);
+  };
+
+  <<@>@ M@>(Rand@<M@>, List@<Pos@>) { Prng.M@<Pos@>; }
+  GetNextFood = <<@>@ M@>(Rand@<M@> r, List@<Pos@> snake) {
+    Int@ row := r.do(r.Range(MinRow, MaxRow));
+    Int@ col := r.do(r.Range(MinCol, MaxCol));
+    Pos@ pos = Pos@(row, col);
+    InPosS(snake, pos).?(false: r.return(pos));
+    GetNextFood(snake);
+  };
+
+I don't know. I'm not convinced r.Range buys us so much over Range(r). But
+they are fundamentally different, right? In terms of pipelining things?
+
+Consider this example:
+  
+  x.y(a,b).z.f(w)
+
+That turns into:
+
+  f(z(y(x, a, b)), w)
+
+The ordering is totally different. I like data flowing left to right with the
+'.' operator going through functions.
+
+But it's different from pipe
+
+  x|y(a,b)|z|f(w)
+
+Which feels much more like
+
+  x | y(a,b) | z | f(w)
+
+Rather than
+  (((x.y)(a,b).z).f)(w)
+
+
+  x~y(a,b)~z~f(w)
+
+  <<@>@ M@>(Rand@<M@>, List@<Pos@>) { Prng.M@<Pos@>; }
+  GetNextFood = <<@>@ M@>(Rand@<M@> r, List@<Pos@> snake) {
+    Int@ row := r.do(r~Range(MinRow, MaxRow));
+    Int@ col := r.do(r~Range(MinCol, MaxCol));
+    Pos@ pos = Pos@(row, col);
+    InPosS(snake, pos).?(false: r.return(pos));
+    GetNextFood(snake);
+  };
+
+Actually, '~' isn't bad. Looks kind of like -> from pointers:
+  r->Range(...)
+  r~Range(...)
+
+Maybe let's propose that. I'm not using ~ for anything else right now, right?
+
+Or is that bad for other reasons, like keyboard ergonomics, other keyboard
+layouts, etc?
+
+r~Do(r~Range(MinRow, MaxRow));
+
+My guess is I would get used to ~ if I started using it for a while.
+
+f(x, y)~Range(MinRow, MaxRow)
+
+Okay. That feels a little weird.
+
+f(x, y).Range(MinRow, MaxRow)
+
+Dunno. Let it stew some more.
+
+---
+
+Next challenge: subclasses.
+
+I want Rand@<M@> to have a Monad@<M@> instance built in. Options:
+1. Composition. r.Monad gives us the Monad@<M@>.
+ - Easy to construct.
+ - Easy to pass subinterface around.
+ - Annoying to have to refer to everywhere
+     r.Monad.do(...)
+     r.Monad.return(...)
+   Compared to:
+     r.do(...)
+     r.return(...)
+ - Composes well with arbitrary nesting of different interfaces.
+
+2. Inlining. r has fields do and return.
+ - Slightly awkward to specify and construct.
+ - Slightly awkward to pass around subinterfaces.
+ - Nice to refer to everywhere.
+ - Doesn't compose well with arbitrary nesting of different interfaces.
+
+Composition would be really nice if we could get around the name issue. But
+this is like having object oriented name resolution. Like, what if we say r.do
+first looks in 'r', then starts to look in subfields of r. Like how we do with
+literals now. Just hope there isn't any conflict. If there is conflict, you
+can explicitly specify the one you want, and we can have a default order
+otherwise.
+
+In short, feels like I should use composition, but maybe provide some compiler
+magic to allow us to shorten references to subfields.
+
+---
+
+Another challenge that comes up with including Monad@<M@> in the subinterface
+for Rand@<M@> is what happens when we want to compose, say, Rand@<M@> and
+State@<M@>, or whatever other high level interface. If everyone carries around
+Monad@<M@>, how do you know they are the same? Isn't it weird to have copies
+of it everywhere?
+
+It's almost like I want two different layers: the raw interfaces and the
+composition of interfaces. Mix and match that way.
+
+For example:
+  Rand@<M@> has choose/feed.
+  State@<S@, M@> just has get/put.
+  Monad@<M@> has do/return.
+
+Instead of passing around Rand@<M@>, Monad@<M@> always as pairs, we pass
+around something else. Called??? Maybe we call the above RandI@, StateI@,
+MonadI@? Hmm... Anyway, whatever we call this top level thing, it has M@,
+Rand@<M@>, and Monad@<M@>.
+
+Consider for example the Range function:
+
+  # Generates a random integer uniformly in the range [lo, hi]
+  <<@>@ M@>(Rand@<M@>, Monad@<M@>, Int@, Int@) { M@<Int@>; }
+  Range = <<@>@ M@>(Rand@<M@> r, Monad@<M@> m, Int@ lo, Int@ hi) {
+    Int@ x := m.do $ Of(r, m, Incr(Sub(hi, lo)));
+    m.return $ Add(lo, x);
+  };
+
+Instead of this interface... maybe:
+
+  <<@>@ M@>(RandM@<M@>, Int@, Int@) { M@<Int@>; }
+  Range = <<@>@ M@>(RandM@<M@> this, Int@ lo, Int@ hi) {
+    Int@ x := this.m.do $ Of(this, Incr(Sub(hi, lo)));
+    this.m.return $ Add(lo, x);
+  };
+
+That's not too bad. If we had magic syntax, it would be like:
+
+  <<@>@ M@>(RandM@<M@>, Int@, Int@) { M@<Int@>; }
+  Range = <<@>@ M@>(RandM@<M@> this, Int@ lo, Int@ hi) {
+    Int@ x := this.m.do $ this~Of(Incr(Sub(hi, lo)));
+    this.m.return $ Add(lo, x);
+  };
+
+I don't think the magic syntax helps here, to be honest. I suppose the nice
+thing here is having a generic otherwise meaningless name 'this'.
+
+Maybe let's see how far we can go without adding magic syntax. Just use what
+we have already today. In other words, for my 3 main challenge:
+
+1. Don't have special syntax. Use normal function application. No ambiguity to
+worry about, no new syntax needed.
+
+2. No need to worry about applying extra arguments. Not applicable.
+
+3. Subclass by having raw interfaces be separate from top level interfaces.
+The top level interface is just a small composition with short names.

@@ -179,13 +179,12 @@ StepRand = {
 # snakes position.
 (List@<Pos@>) { Prng.M@<Pos@>; }
 GetNextFood = {
-  <@>@ M@ = Prng.M@;
   % m = Prng.m;
   % r = Prng.r;
  
   (List@<Pos@> snake) {
-    Int@ row := m.do(Range<M@>(r, m, MinRow, MaxRow));
-    Int@ col := m.do(Range<M@>(r, m, MinCol, MaxCol));
+    Int@ row := m.do(Range(r, m, MinRow, MaxRow));
+    Int@ col := m.do(Range(r, m, MinCol, MaxCol));
     Pos@ pos = Pos@(row, col);
     InPosS(snake, pos).?(false: m.return(pos));
     GetNextFood(snake);

@@ -15,7 +15,7 @@
 
 <<@>@ M@>(State@<LFSR@, M@>, Monad@<M@>) { Rand@<M@>; }
 Rand = <<@>@ M@>(State@<LFSR@, M@> s, Monad@<M@> m) {
-  @(choose: <@ A@>(A@ a, A@ b) {
+  @(M@, choose: <@ A@>(A@ a, A@ b) {
       LFSR@ lfsr := m.do(s.get);
       Shifted@<Bit@> bit = Shift(lfsr);
       Unit@ _ := m.do(s.put(bit.lfsr));
