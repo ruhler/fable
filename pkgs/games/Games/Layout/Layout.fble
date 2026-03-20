@@ -122,8 +122,8 @@ RandEdges = {
   <@>@ M@ = /Core/State/StateM%.StateM@<Prng@>;
   /Std/Monad%.Monad@<M@> m = /Core/State/StateM%.Monad<Prng@>;
   /Core/State%.State@<Prng@, M@> s = /Core/State/StateM%.State<Prng@>;
-  /Core/Rand%.Rng@<M@> rand = /Core/LFSR/Rand%.Rand<M@>(s, m);
-  /Core/Rand%.RngM@<M@> rng = @(M@, m, r: rand);
+  /Core/Random/Rng%.Rng@<M@> rand = /Core/LFSR/Rand%.Rand<M@>(s, m);
+  /Core/Random/Rng%.RngM@<M@> rng = @(M@, m, r: rand);
   % Of = /Core/Int/Rand%.Of(rng);
   <@>% Eval = /Core/State/StateM%.Eval<Prng@>;
 

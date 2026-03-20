@@ -8,7 +8,7 @@
 % Lt = /Std/Int/Ord%.Lt;
 % Int = /Std/Int/Lit%.Int;
 
-<<@>@>@ RngM@ = /Core/Rand%.RngM@;
+<<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
 
 # Generates a random integer uniformly in the range [0, n).
 <<@>@ M@>(RngM@<M@>, Int@) { M@<Int@>; }

@@ -3,7 +3,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-<<@>@>@ RngM@ = /Core/Rand%.RngM@;
+<<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
 
 # Generates a random boolean.
 <<@>@ M@>(RngM@<M@>) { M@<Bool@>; }

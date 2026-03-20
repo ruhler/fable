@@ -62,15 +62,15 @@ Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 
 # The pseudo random number generator we are using.
 % Prng = {
-  <<@>@>@ Rng@ = /Core/Rand%.Rng@;
-  <<@>@>@ RngM@ = /Core/Rand%.RngM@;
-  @ S@ = /Core/Rand/Rng%.RandS@;
-  % Seed = /Core/Rand/Rng%.Seed;
+  <<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
+  <<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
+  @ S@ = /Core/Random/Lcg%.RandS@;
+  % Seed = /Core/Random/Lcg%.Seed;
 
   <@>@ M@ = /Core/State/StateM%.StateM@<S@>;
   Monad@<M@> m = /Core/State/StateM%.Monad<S@>;
   /Core/State%.State@<S@, M@> s = /Core/State/StateM%.State<S@>;
-  Rng@<M@> r = /Core/Rand/Rng%.Rand<M@>(s, m);
+  Rng@<M@> r = /Core/Random/Lcg%.Rand<M@>(s, m);
   RngM@<M@> rng = @(M@, m, r);
 
   S@ Init = Seed(Int|42);

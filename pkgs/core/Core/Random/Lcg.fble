@@ -10,7 +10,7 @@
 % Hex = /Std/Int/Lit%.Hex;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Rng@ = /Core/Rand%.Rng@;
+<<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
 <@,<@>@>@ State@ = /Core/State%.State@;
 
 @ Unit@ = /Std/Unit%.Unit@;

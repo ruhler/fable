@@ -2,7 +2,7 @@
 @ Bit@ = /Core/Digits%.Bit@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Rng@ = /Core/Rand%.Rng@;
+<<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
 <@,<@>@>@ State@ = /Core/State%.State@;
 
 @ LFSR@ = /Core/LFSR%.LFSR@;

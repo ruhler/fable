@@ -5,7 +5,7 @@
 <@>% Items = /Std/List%.Items;
 <@>% Append = /Std/List%.Append;
 
-<<@>@>@ RngM@ = /Core/Rand%.RngM@;
+<<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
 
 # Shuffles the elements of a list randomly.
 <<@>@ M@>(RngM@<M@>)<@ T@>(List@<T@>) { M@<List@<T@>>; }
