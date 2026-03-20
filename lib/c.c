@@ -592,6 +592,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
         fprintf(fout, "  l[%zi] = FbleNewFuncValue(heap, &exe_%zi, profile_block_id + %zi, NULL);\n",
             func_instr->dest, exe_id, func_instr->profile_block_offset);
+        exe_id++;
         break;
       }
 
