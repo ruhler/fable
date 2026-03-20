@@ -64,16 +64,16 @@ Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 % Prng = {
   <<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
   <<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
-  @ S@ = /Core/Random/Lcg%.RandS@;
-  % Seed = /Core/Random/Lcg%.Seed;
+  % Prng = /Core/Random/Lcg%.Rand48;
+  @ S@ = Prng.S@;
 
   <@>@ M@ = /Core/State/StateM%.StateM@<S@>;
   Monad@<M@> m = /Core/State/StateM%.Monad<S@>;
   /Core/State%.State@<S@, M@> s = /Core/State/StateM%.State<S@>;
-  Rng@<M@> r = /Core/Random/Lcg%.Rand<M@>(s, m);
+  Rng@<M@> r = Prng.rng<M@>(s, m);
   RngM@<M@> rng = @(M@, m, r);
 
-  S@ Init = Seed(Int|42);
+  S@ Init = Prng.seed(Int|42);
 
   @(M@, S@, m, r, rng, Init);
 };

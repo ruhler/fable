@@ -1,0 +1,15 @@
+
+@ Int@ = /Std/Int%.Int@;
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+<<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
+<@,<@>@>@ State@ = /Core/State%.State@;
+
+# Interface for a pseudo-random number generator.
+<@>@ Prng@ = <@ S@> { *(
+    # State of the Prng@.
+    @<S@> S@,
+    (Int@) { S@; } seed,
+    <<@>@ M@>(State@<S@, M@>, Monad@<M@>) { Rng@<M@>; } rng
+); };
+
+@(Prng@);
