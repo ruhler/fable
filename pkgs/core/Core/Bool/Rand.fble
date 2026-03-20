@@ -3,13 +3,12 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Rand@ = /Core/Rand%.Rand@;
+<<@>@>@ RngM@ = /Core/Rand%.RngM@;
 
 # Generates a random boolean.
-<<@>@ M@>(Rand@<M@>, Monad@<M@>) { M@<Bool@>; }
-Rand = <<@>@ M@>(Rand@<M@> r, Monad@<M@> _) {
-  r.choose(True, False);
+<<@>@ M@>(RngM@<M@>) { M@<Bool@>; }
+Rand = <<@>@ M@>(RngM@<M@> rng) {
+  rng.r.choose(True, False);
 };
 
 @(Rand);

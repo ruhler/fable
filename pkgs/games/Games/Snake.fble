@@ -62,18 +62,20 @@ Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 
 # The pseudo random number generator we are using.
 % Prng = {
-  <<@>@>@ Rand@ = /Core/Rand%.Rand@;
+  <<@>@>@ Rng@ = /Core/Rand%.Rng@;
+  <<@>@>@ RngM@ = /Core/Rand%.RngM@;
   @ S@ = /Core/Rand/Rng%.RandS@;
   % Seed = /Core/Rand/Rng%.Seed;
 
   <@>@ M@ = /Core/State/StateM%.StateM@<S@>;
   Monad@<M@> m = /Core/State/StateM%.Monad<S@>;
   /Core/State%.State@<S@, M@> s = /Core/State/StateM%.State<S@>;
-  Rand@<M@> r = /Core/Rand/Rng%.Rand<M@>(s, m);
+  Rng@<M@> r = /Core/Rand/Rng%.Rand<M@>(s, m);
+  RngM@<M@> rng = @(M@, m, r);
 
   S@ Init = Seed(Int|42);
 
-  @(M@, S@, m, r, Init);
+  @(M@, S@, m, r, rng, Init);
 };
 
 @ Pos@ = *(Int@ row, Int@ col);
@@ -179,14 +181,13 @@ StepRand = {
 # snakes position.
 (List@<Pos@>) { Prng.M@<Pos@>; }
 GetNextFood = {
-  % m = Prng.m;
-  % r = Prng.r;
+  % rng = Prng.rng;
  
   (List@<Pos@> snake) {
-    Int@ row := m.do(Range(r, m, MinRow, MaxRow));
-    Int@ col := m.do(Range(r, m, MinCol, MaxCol));
+    Int@ row := rng.m.do(Range(rng, MinRow, MaxRow));
+    Int@ col := rng.m.do(Range(rng, MinCol, MaxCol));
     Pos@ pos = Pos@(row, col);
-    InPosS(snake, pos).?(false: m.return(pos));
+    InPosS(snake, pos).?(false: rng.m.return(pos));
     GetNextFood(snake);
   };
 };

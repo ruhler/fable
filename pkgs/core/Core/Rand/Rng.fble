@@ -10,12 +10,12 @@
 % Hex = /Std/Int/Lit%.Hex;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Rand@ = /Core/Rand%.Rand@;
+<<@>@>@ Rng@ = /Core/Rand%.Rng@;
 <@,<@>@>@ State@ = /Core/State%.State@;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
-<<@>@ M@>(State@<Int@, M@>, Monad@<M@>) { Rand@<M@>; }
+<<@>@ M@>(State@<Int@, M@>, Monad@<M@>) { Rng@<M@>; }
 Rand48 = {
   Int@ m = Shl(Int|1, Int|48);
   Int@ a = Hex|5DEECE66D;
@@ -23,7 +23,7 @@ Rand48 = {
   (Int@) { Int@; } gen = (Int@ x) { Mod(Add(Mul(a, x), c), m); };
   
   <<@>@ M@>(State@<Int@, M@> s, Monad@<M@> m) {
-    @(M@, choose: <@ A@>(A@ a, A@ b) {
+    @(choose: <@ A@>(A@ a, A@ b) {
         Int@ x := m.do(s.get);
         Int@ nx = gen(x);
         Unit@ _ := m.do(s.put(nx));
@@ -39,7 +39,7 @@ Rand48 = {
 (Int@) { RandS@; }
 Seed = (Int@ s) { s; };
 
-<<@>@ M@>(State@<RandS@, M@>, Monad@<M@>) { Rand@<M@>; }
+<<@>@ M@>(State@<RandS@, M@>, Monad@<M@>) { Rng@<M@>; }
 Rand = Rand48;
 
 @(RandS@, Rand, Seed);

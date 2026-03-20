@@ -1,10 +1,18 @@
 
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
 # Standard interface for a random number generator.
 # Randomly chooses 1 of two values to return.
-<<@>@>@ Rand@ = <<@>@ M@> { *(
-  @<M@> M@,
+<<@>@>@ Rng@ = <<@>@ M@> { *(
   <@ A@>(A@, A@) { M@<A@>; } choose
 ); };
 
-@(Rand@);
+# Monadic interface for generating random numbers.
+<<@>@>@ RngM@ = <<@>@ M@> { *(
+  @<M@> M@,
+  Monad@<M@> m,
+  Rng@<M@> r
+); };
+
+@(Rng@, RngM@);
 
