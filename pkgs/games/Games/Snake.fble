@@ -4,9 +4,6 @@
 % False = /Std/Bool%.False;
 % And = /Std/Bool%.And;
 
-<@,@>% Exec = /Core/State/StateM%.Exec;
-<@,@>% Run = /Core/State/StateM%.Run;
-
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 <@>% Init = /Std/List%.Init;
@@ -33,6 +30,9 @@
 <<@>@>% Range = /Core/Int/Rand%.Range;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
+<@,@>% Exec = /Core/State/StateM%.Exec;
+<@,@>% Run = /Core/State/StateM%.Run;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -61,22 +61,8 @@ Int@ MinCol = Int|0;    # Inclusive. This is a legal col.
 Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 
 # The pseudo random number generator we are using.
-% Prng = {
-  <<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
-  <<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
-  % Prng = /Core/Random/Lcg%.Rand48;
-  @ S@ = Prng.S@;
-
-  <@>@ M@ = /Core/State/StateM%.StateM@<S@>;
-  Monad@<M@> m = /Core/State/StateM%.Monad<S@>;
-  /Core/State%.State@<S@, M@> s = /Core/State/StateM%.State<S@>;
-  Rng@<M@> r = Prng.rng<M@>(s, m);
-  RngM@<M@> rng = @(M@, m, r);
-
-  S@ Init = Prng.seed(Int|42);
-
-  @(M@, S@, m, r, rng, Init);
-};
+% Prng = /Core/Random/Lcg%.Rand48;
+% Rng = /Core/Random/Prng/Pure%.Pure(Prng);
 
 @ Pos@ = *(Int@ row, Int@ col);
 
@@ -147,7 +133,7 @@ State@ InitialState = {
   State@(
     Dir@(right: Unit),
     Pos@(r4, c1),
-    Prng.Init,
+    Prng.seed(Int|42),
     List[Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)],
     Int|40);
 };
@@ -162,34 +148,25 @@ State@ InitialState = {
 # Update the random number for where the next food will be generate.
 # Takes the current direction of the snake to add some randomness to the
 # update.
-(Dir@) { Prng.M@<Unit@>; }
-StepRand = {
-  % m = Prng.m;
-  % r = Prng.r;
-
-  (Dir@ d) {
-    d.?(up: m.return(Unit));
-    Unit@ _ := m.do $ r.choose(Unit, Unit);
-    d.?(down: m.return(Unit));
-    Unit@ _ := m.do $ r.choose(Unit, Unit);
-    d.?(left: m.return(Unit));
-    r.choose(Unit, Unit);
-  };
+(Dir@) { Rng.M@<Unit@>; }
+StepRand = (Dir@ d) {
+  d.?(up: Rng.m.return(Unit));
+  Unit@ _ := Rng.m.do $ Rng.r.choose(Unit, Unit);
+  d.?(down: Rng.m.return(Unit));
+  Unit@ _ := Rng.m.do $ Rng.r.choose(Unit, Unit);
+  d.?(left: Rng.m.return(Unit));
+  Rng.r.choose(Unit, Unit);
 };
 
 # Pick the position of the next food randomly, given the random bits and the
 # snakes position.
-(List@<Pos@>) { Prng.M@<Pos@>; }
-GetNextFood = {
-  % rng = Prng.rng;
- 
-  (List@<Pos@> snake) {
-    Int@ row := rng.m.do(Range(rng, MinRow, MaxRow));
-    Int@ col := rng.m.do(Range(rng, MinCol, MaxCol));
-    Pos@ pos = Pos@(row, col);
-    InPosS(snake, pos).?(false: rng.m.return(pos));
-    GetNextFood(snake);
-  };
+(List@<Pos@>) { Rng.M@<Pos@>; }
+GetNextFood = (List@<Pos@> snake) {
+  Int@ row := Rng.m.do(Range(Rng, MinRow, MaxRow));
+  Int@ col := Rng.m.do(Range(Rng, MinCol, MaxCol));
+  Pos@ pos = Pos@(row, col);
+  InPosS(snake, pos).?(false: Rng.m.return(pos));
+  GetNextFood(snake);
 };
 
 (State@) { MoveResultM@; } Move = (State@ s) {
