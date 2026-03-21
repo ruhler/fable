@@ -930,3 +930,26 @@ should be changed to: State@: get/put, StateM@: M@, State@, Monad@,
 Exec, Eval, Run, etc. that operate on the StateM@ passing that as the 'this'
 argument.
   
+---
+
+It's not feeling too bad to do:
+  
+   Rng.m.do(...)
+   Rng.m.return(...)
+
+With Rng either as parametized argument 'rng' or hardcoded at top level to a
+specific random number generator.
+
+Now here's a question: what's a decent way to test the random number
+generators? I already have an LFSR test, but I rather have all the
+implementation detail be internal, if at all possible. How can you test it if
+the implementation detail is internal, and otherwise there isn't a clear spec
+for what the output should be?
+
+What I want is to test the transition function. Separately from the function
+that gives you the random bits out of the state.
+
+I could expose that as part of the Prng@ interface. Next, to go from S@ to S@.
+Maybe a separate hepper function that goes from that to... whatever interface
+we want eventually. Or, not have it as part of Prng. Have each random number
+generator export it separately for testing purposes. Let me try that to start.

@@ -1,59 +1,88 @@
 
-@ Bit@ = /Core/Digits%.Bit@;
-% Bit = /Core/Digits%.Bit;
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+% And = /Std/Bool%.And;
+% Xor = /Std/Bool%.Xor;
 
 @ Int@ = /Std/Int%.Int@;
+% Decr = /Std/Int%.Decr;
 @ QR@ = /Std/Int/Div%.QR@;
 % Div = /Std/Int/Div%.Div;
 % IsZero = /Std/Int/Sign%.IsZero;
 % Int = /Std/Int/Lit%.Int;
 
-@ LFSR@ = /Core/LFSR%.LFSR@;
-<@>@ Shifted@ = /Core/LFSR%.Shifted@;
-% LFSR = /Core/LFSR%.LFSR;
-% Polynomials = /Core/LFSR%.Polynomials;
-% Shift = /Core/LFSR%.Shift;
-
 <@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
+<@>% Append = /Std/List%.Append;
+<@>% Init = /Std/List%.Init;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
 <@>@ Prng@ = /Core/Random/Prng%.Prng@;
-<@,<@>@>@ State@ = /Core/State%.State@;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
-@ S@ = List@<Bit@>;
+# Prod --
+#   Compute the element wise product of bits in the given lists.
+(List@<Bool@>, List@<Bool@>) { List@<Bool@>; }
+Prod = (List@<Bool@> a, List@<Bool@> b) {
+  a.?(empty: a);
+
+  List@<Bool@> tail = Prod(a.items.tail, b.items.tail);
+  Items(And(a.items.head, b.items.head), tail);
+};
+
+# Sum --
+#   Compute the sum over all bits in the given list.
+(List@<Bool@>) { Bool@; } Sum = (List@<Bool@> xs) {
+  xs.?(empty: False);
+  Xor(xs.items.head, Sum(xs.items.tail));
+};
+
+@ Coeffs@ = List@<Bool@>;
+@ State@ = List@<Bool@>;
+
+# Transition function for a linear feedback shift register.
+# The number of coefficients must match the state size, otherwise behavior is
+# undefined.
+(Coeffs@, State@) { State@; }
+Next = (Coeffs@ coefficients, State@ state) {
+  Bool@ in = Sum(Items(True, Prod(coefficients, state)));
+  Append(Init(state), List[in]);
+};
+
+(Coeffs@, Int@) { State@; }
+Seed = (Coeffs@ coeffs) {
+  # Extracts n bits from the given integer.
+  (Int@, Int@) { List@<Bool@>; }
+  IntToBits = (Int@ n, Int@ x) {
+    IsZero(n).?(true: Empty<Bool@>);
+
+    QR@ qr = Div(x, Int|2);
+    Bool@ bit = /Std/Int/Eq%.Eq(Int|0, qr.r);
+    Items(bit, IntToBits(Decr(n), qr.q));
+  };
+
+  Int@ len = /Std/List/Index%.Length(coeffs);
+  IntToBits(len);
+};
 
 # Not suitable for cryptography.
-(List@<Bit@>) { Prng@<S@>; } Lfsr = (List@<Bit@> coefficients) {
-  @ S@ = List@<Bit@>;
+(Coeffs@) { Prng@<State@>; } Lfsr = (Coeffs@ coefficients) {
+  @ S@ = State@;
+  (Int@) { S@; } seed = Seed(coefficients);
 
-  (Int@, List@<Bit@>) { List@<Bit@>; }
-  IntToBits = (Int@ x, List@<Bit@> bits) {
-    IsZero(x).?(true: bits);
-    QR@ qr = Div(x, Int|2);
-    Bit@ bit = /Std/Int/Eq%.Eq(Int|0, qr.r).?(true: Bit.0, false: Bit.1);
-    IntToBits(qr.q, Items(bit, bits));
-  };
-
-  (Int@) { S@; } seed = (Int@ s) {
-      # TODO: Inline some of this stuff, because it's a bit silly to wrap
-      # and unwrap coefficients.
-      LFSR(coefficients, IntToBits(s, Empty<Bit@>)).s;
-  };
-
-  <<@>@ M@>(State@<S@, M@>, Monad@<M@>) { Rng@<M@>; }
+  <<@>@ M@>(/Core/State%.State@<S@, M@>, Monad@<M@>) { Rng@<M@>; }
   rng = {
-    <<@>@ M@>(State@<S@, M@> s, Monad@<M@> m) {
+    <<@>@ M@>(/Core/State%.State@<S@, M@> s, Monad@<M@> m) {
       @(choose: <@ A@>(A@ a, A@ b) {
           S@ bits := m.do(s.get);
-          LFSR@ lfsr = LFSR(coefficients, bits);
-          Shifted@<Bit@> bit = Shift(lfsr);
-          Unit@ _ := m.do(s.put(bit.lfsr.s));
-          m.return(bit.output.?(0: a, 1: b));
+          S@ next = Next(coefficients, bits);
+          Unit@ _ := m.do(s.put(next));
+          m.return(next.items.head.?(true: a, false: b));
         });
     };
   };
@@ -61,8 +90,16 @@
   @(S@, seed, rng);
 };
 
-Prng@<S@> Lfsr8 = Lfsr(Polynomials.8);
-Prng@<S@> Lfsr16 = Lfsr(Polynomials.16);
-Prng@<S@> Lfsr24 = Lfsr(Polynomials.24);
+@ Bit@ = +(Unit@ 0, Unit@ 1);
 
-@(Lfsr, Lfsr8, Lfsr16, Lfsr24);
+(List@<Bit@>) { List@<Bool@>; }
+Bits = (List@<Bit@> xs) {
+  Bit@ bit := /Std/List%.Map(xs);
+  bit.?(0: False, 1: True);
+};
+
+Prng@<State@> Lfsr8 = Lfsr(Bits|10111000);
+Prng@<State@> Lfsr16 = Lfsr(Bits|1101000000001000);
+Prng@<State@> Lfsr24 = Lfsr(Bits|111000010000000000000000);
+
+@(Lfsr, Bits, Next, Lfsr8, Lfsr16, Lfsr24);

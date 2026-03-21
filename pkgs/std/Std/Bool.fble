@@ -46,4 +46,12 @@ Bool@ False = Bool@(false: Unit);
   a.?(true: True, false: b);
 };
 
-@(Bool@, True, False, Not, And, Or);
+# @func[Xor] Exclusive OR.
+#  @arg[Bool@][a] The first operand
+#  @arg[Bool@][b] The second operand.
+#  @returns[Bool@] True if exactly one of the arguments is True, False otherwise.
+(Bool@, Bool@) { Bool@; } Xor = (Bool@ a, Bool@ b) {
+  a.?(true: Not(b), false: b);
+};
+
+@(Bool@, True, False, Not, And, Or, Xor);

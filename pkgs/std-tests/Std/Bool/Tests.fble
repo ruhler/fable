@@ -5,6 +5,7 @@
 % Not = /Std/Bool%.Not;
 % And = /Std/Bool%.And;
 % Or = /Std/Bool%.Or;
+% Xor = /Std/Bool%.Xor;
 
 @ Ascii@ = /Std/Char/Ascii%.Ascii@;
 <@>% OnAscii = /Std/Char/Ascii%.OnAscii;
@@ -65,6 +66,13 @@ Test@ Tests = TestSuite|Bool $ List[
     Binary|FT(Or, False, True, True),
     Binary|TF(Or, True, False, True),
     Binary|TT(Or, True, True, True)
+  ],
+
+  TestSuite|Xor $ List[
+    Binary|FF(Xor, False, False, False),
+    Binary|FT(Xor, False, True, True),
+    Binary|TF(Xor, True, False, True),
+    Binary|TT(Xor, True, True, False)
   ],
 
   /Std/Bool/Eq/Tests%.Tests,
