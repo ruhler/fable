@@ -15,8 +15,7 @@
 <@>% Empty = /Std/List%.Empty;
 <@>% Any = /Std/List/Search%.Any;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Random@ = /SatGame/Random%.Random@;
+<<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
 
 @ Var@ = /SatGame/Var%.Var@;
 
@@ -47,37 +46,37 @@ IsCanonical = (Var@ v) {
 };
 
 # Generate a random variable.
-<<@>@ M@>(Monad@<M@>, Random@<M@>) { M@<Var@>; }
-Var = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand) {
-  Bool@ ul := m.do(rand.bool);
-  Bool@ uc := m.do(rand.bool);
-  Bool@ ur := m.do(rand.bool);
-  Bool@ ml := m.do(rand.bool);
-  Bool@ mc := m.do(rand.bool);
-  Bool@ mr := m.do(rand.bool);
-  Bool@ ll := m.do(rand.bool);
-  Bool@ lc := m.do(rand.bool);
-  Bool@ lr := m.do(rand.bool);
+<<@>@ M@>(RngM@<M@>) { M@<Var@>; }
+Var = <<@>@ M@>(RngM@<M@> rng) {
+  Bool@ ul := rng.m.do(/Core/Bool/Rand%.Rand(rng));
+  Bool@ uc := rng.m.do(/Core/Bool/Rand%.Rand(rng));
+  Bool@ ur := rng.m.do(/Core/Bool/Rand%.Rand(rng));
+  Bool@ ml := rng.m.do(/Core/Bool/Rand%.Rand(rng));
+  Bool@ mc := rng.m.do(/Core/Bool/Rand%.Rand(rng));
+  Bool@ mr := rng.m.do(/Core/Bool/Rand%.Rand(rng));
+  Bool@ ll := rng.m.do(/Core/Bool/Rand%.Rand(rng));
+  Bool@ lc := rng.m.do(/Core/Bool/Rand%.Rand(rng));
+  Bool@ lr := rng.m.do(/Core/Bool/Rand%.Rand(rng));
   Var@ var = @(ul, uc, ur, ml, mc, mr, ll, lc, lr);
-  IsCanonical(var).?(true: m.return(var));
-  Var(m, rand);
+  IsCanonical(var).?(true: rng.m.return(var));
+  Var(rng);
 };
 
 # Generates a random variable distinct from the given list of variables.
-<<@>@ M@>(Monad@<M@>, Random@<M@>, List@<Var@>) { M@<Var@>; }
-DistinctVar = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand, List@<Var@> vars) {
-  Var@ x := m.do(Var(m, rand));
-  Any(vars, /SatGame/Var/Eq%.Eq(x)).?(false: m.return(x));
-  DistinctVar(m, rand, vars);
+<<@>@ M@>(RngM@<M@>, List@<Var@>) { M@<Var@>; }
+DistinctVar = <<@>@ M@>(RngM@<M@> rng, List@<Var@> vars) {
+  Var@ x := rng.m.do(Var(rng));
+  Any(vars, /SatGame/Var/Eq%.Eq(x)).?(false: rng.m.return(x));
+  DistinctVar(rng, vars);
 };
 
 # Generate N distinct random variables.
-<<@>@ M@>(Monad@<M@>, Random@<M@>, Int@) { M@<List@<Var@>>; }
-Vars = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand, Int@ n) {
-  IsZero(n).?(true: m.return(Empty<Var@>));
-  List@<Var@> tail := m.do(Vars(m, rand, Decr(n)));
-  Var@ head := m.do(DistinctVar(m, rand, tail));
-  m.return(Items(head, tail));
+<<@>@ M@>(RngM@<M@>, Int@) { M@<List@<Var@>>; }
+Vars = <<@>@ M@>(RngM@<M@> rng, Int@ n) {
+  IsZero(n).?(true: rng.m.return(Empty<Var@>));
+  List@<Var@> tail := rng.m.do(Vars(rng, Decr(n)));
+  Var@ head := rng.m.do(DistinctVar(rng, tail));
+  rng.m.return(Items(head, tail));
 };
 
 @(Var, Vars);

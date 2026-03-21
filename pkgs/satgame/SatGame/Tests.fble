@@ -30,8 +30,7 @@
 
 % Var = /SatGame/Var/Lit%.Var;
 
-% PureLFSR = /SatGame/Random/PureLFSR%;
-% Generate = /SatGame/Generate%<PureLFSR.M@>(PureLFSR.Monad, PureLFSR.Random);
+% Generate = /SatGame/Generate%;
 
 % _ = /SatGame/Graphics%;
 
@@ -53,7 +52,7 @@ Test@ Tests = TestSuite(Str|SatGame, List[
       num_literals_per_clause: Int|3
     );
     Int@ seed = Int|0;
-    Puzzle@ puzzle = PureLFSR.Run(Generate(params), seed);
+    Puzzle@ puzzle = Generate(params, seed);
     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show,
       Int|6, /Std/List/Index%.Length(puzzle));
   }),

@@ -46,8 +46,7 @@
 % Layout = /SatGame/Game/Draw%.Layout;
 % TileOf = /SatGame/Game/Draw%.TileOf;
 
-% PureLFSR = /SatGame/Random/PureLFSR%;
-% Generate = /SatGame/Generate%<PureLFSR.M@>(PureLFSR.Monad, PureLFSR.Random);
+% Generate = /SatGame/Generate%;
 
 @ Args@ = *(
   Int@ num_vars,
@@ -157,7 +156,7 @@ SatGame = <<@>@ M@>(Monad@<M@> m, Put@<M@, Output@> out, App@<M@> app, Int@ widt
         /Std/Int/Show%.Show(args.seed)
   ]);
 
-  Puzzle@ puzzle = PureLFSR.Run(Generate(params), args.seed);
+  Puzzle@ puzzle = Generate(params, args.seed);
   Unit@ _ := m.do(out $ /SatGame/Puzzle/Show%.Puzzle(puzzle));
 
   Game@ game = /SatGame/Game%.Game(puzzle);
