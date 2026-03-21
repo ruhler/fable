@@ -118,26 +118,22 @@ Int@ NumEdges = Int|15;
 # Generates N random edges.
 (Int@) { List@<Edge@>; }
 RandEdges = {
-  @ Prng@ = /Core/LFSR/Rand%.RandS@;
-  <@>@ M@ = /Core/State/StateM%.StateM@<Prng@>;
-  /Std/Monad%.Monad@<M@> m = /Core/State/StateM%.Monad<Prng@>;
-  /Core/State%.State@<Prng@, M@> s = /Core/State/StateM%.State<Prng@>;
-  /Core/Random/Rng%.Rng@<M@> rand = /Core/LFSR/Rand%.Rand<M@>(s, m);
-  /Core/Random/Rng%.RngM@<M@> rng = @(M@, m, r: rand);
-  % Of = /Core/Int/Rand%.Of(rng);
-  <@>% Eval = /Core/State/StateM%.Eval<Prng@>;
+  <@,@>% Eval = /Core/State/StateM%.Eval;
+  % Prng = /Core/Random/Lfsr%.Lfsr8;
+  % Rng = /Core/Random/Prng/Pure%.Pure(Prng);
+  % Of = /Core/Int/Rand%.Of(Rng);
 
-  (Int@) { M@<List@<Edge@>>; }
+  (Int@) { Rng.M@<List@<Edge@>>; }
   Gen = (Int@ n) {
-    /Std/Int/Eq%.Eq(Int|0, n).?(true: m.return(Empty<Edge@>));
-    Node@ a := m.do(Of(NumNodes));
-    Node@ b := m.do(Of(NumNodes));
-    List@<Edge@> tail := m.do(Gen(Decr(n)));
-    m.return $ Items(Edge@(a, b), tail);
+    /Std/Int/Eq%.Eq(Int|0, n).?(true: Rng.m.return(Empty<Edge@>));
+    Node@ a := Rng.m.do(Of(NumNodes));
+    Node@ b := Rng.m.do(Of(NumNodes));
+    List@<Edge@> tail := Rng.m.do(Gen(Decr(n)));
+    Rng.m.return $ Items(Edge@(a, b), tail);
   };
 
   (Int@ n) {
-    Eval(Gen(n), /Core/LFSR%.LFSRs.8);
+    Eval(Gen(n), Prng.seed(Int|42));
   };
 };
 
