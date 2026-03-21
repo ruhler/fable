@@ -53,24 +53,26 @@ Int@ 1 = Int|1;
 Int@ 2 = Int|2;
 
 # API wrapper around a pseudo random number generator.
-@ Prng@ = /Core/LFSR/Rand%.RandS@;
 % Prng = {
-  <@>@ M@ = /Core/State/StateM%.StateM@<Prng@>;
-  /Std/Monad%.Monad@<M@> m = /Core/State/StateM%.Monad<Prng@>;
-  /Core/State%.State@<Prng@, M@> s = /Core/State/StateM%.State<Prng@>;
-  /Core/Random/Rng%.Rng@<M@> rand = /Core/LFSR/Rand%.Rand<M@>(s, m);
+  % Prng = /Core/Random/Lfsr%.Lfsr8;
+  @ S@ = Prng.S@;
+
+  <@>@ M@ = /Core/State/StateM%.StateM@<S@>;
+  /Std/Monad%.Monad@<M@> m = /Core/State/StateM%.Monad<S@>;
+  /Core/State%.State@<S@, M@> s = /Core/State/StateM%.State<S@>;
+  /Core/Random/Rng%.Rng@<M@> rand = Prng.rng<M@>(s, m);
   /Core/Random/Rng%.RngM@<M@> rng = @(M@, m, r: rand);
   % Of = /Core/Int/Rand%.Of(rng);
-  <@>% Eval = /Core/State/StateM%.Eval<Prng@>;
-  <@>% Exec = /Core/State/StateM%.Exec<Prng@>;
+  <@>% Eval = /Core/State/StateM%.Eval<S@>;
+  <@>% Exec = /Core/State/StateM%.Exec<S@>;
 
-  (Prng@) { Prng@; } Skip = (Prng@ prng) {
+  (S@) { S@; } Skip = (S@ prng) {
     Exec(rand.choose(Unit, Unit), prng);
   };
 
-  Prng@ Seeded = /Core/LFSR%.LFSRs.8;
+  S@ Seeded = Prng.seed(Int|42);
 
-  @(M@, Do: m.do, Return: m.return, Of, Skip, Eval, Seeded);
+  @(S@, M@, Do: m.do, Return: m.return, Of, Skip, Eval, Seeded);
 };
 
 # Aliens move together in a group of rows and columns. They decide which
@@ -284,7 +286,7 @@ Int@ DyingTime = Int|10;
   List@<Dying@> dying,
 
   # prng used for deciding when to drop bombs.
-  Prng@ prng
+  Prng.S@ prng
 );
 
 # Initial --
@@ -372,7 +374,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
 #   Advance the aliens by one unit of time tick.
 (Aliens@) { Aliens@; } Tick = (Aliens@ a) {
   List@<Dying@> dying = TickDying(a.dying);
-  Prng@ prng = Prng.Skip(a.prng);
+  Prng.S@ prng = Prng.Skip(a.prng);
   a.next.?(
     just: {
       Int@ left = Add(a.dst_x, Mul(StrideX, a.next.just.col));
