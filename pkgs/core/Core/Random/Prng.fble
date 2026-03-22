@@ -1,15 +1,14 @@
 
 @ Int@ = /Std/Int%.Int@;
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
-<@,<@>@>@ State@ = /Core/State%.State@;
 
 # Interface for a pseudo-random number generator.
 <@>@ Prng@ = <@ S@> { *(
-    # State of the Prng@.
-    @<S@> S@,
-    (Int@) { S@; } seed,
-    <<@>@ M@>(State@<S@, M@>, Monad@<M@>) { Rng@<M@>; } rng
+    @<S@> S@,               # State of the Prng@.
+    (S@) { S@; } next,      # State transition function.
+    Int@ n,                 # Number of random bits you get per state.
+    (S@) { Int@; } bits,    # The bits associated with the state.
+    (Int@) { S@; } seed,    # Seed the state from an integer.
+    (Int@, Int@, S@) { S@; } feed     # Feed n random bits into the state.
 ); };
 
 @(Prng@);

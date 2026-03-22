@@ -4,41 +4,32 @@
 % Shl = /Std/Int%.Shl;
 % Shr = /Std/Int%.Shr;
 % Mul = /Std/Int%.Mul;
-% IsZero = /Std/Int/Sign%.IsZero;
 % Mod = /Std/Int/Div%.Mod;
 % Int = /Std/Int/Lit%.Int;
 % Hex = /Std/Int/Lit%.Hex;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
 <@>@ Prng@ = /Core/Random/Prng%.Prng@;
-<@,<@>@>@ State@ = /Core/State%.State@;
-
-@ Unit@ = /Std/Unit%.Unit@;
 
 # Not suitable for cryptography.
 Prng@<Int@> Rand48 = {
   @ S@ = Int@;
-  (Int@) { S@; } seed = (Int@ s) { s; };
 
-  <<@>@ M@>(State@<Int@, M@>, Monad@<M@>) { Rng@<M@>; }
-  rng = {
-    Int@ m = Shl(Int|1, Int|48);
-    Int@ a = Hex|5DEECE66D;
-    Int@ c = Hex|B;
-    (Int@) { Int@; } gen = (Int@ x) { Mod(Add(Mul(a, x), c), m); };
-    
-    <<@>@ M@>(State@<Int@, M@> s, Monad@<M@> m) {
-      @(choose: <@ A@>(A@ a, A@ b) {
-          Int@ x := m.do(s.get);
-          Int@ nx = gen(x);
-          Unit@ _ := m.do(s.put(nx));
-          m.return $ IsZero(Shr(nx, Int|47)).?(true: a, false: b);
-        });
-    };
+  Int@ m = Shl(Int|1, Int|48);
+  Int@ a = Hex|5DEECE66D;
+  Int@ c = Hex|B;
+  (Int@) { Int@; } next = (Int@ x) { Mod(Add(Mul(a, x), c), m); };
+
+  Int@ n = Int|32;
+  (S@) { Int@; } bits = (S@ s) {
+      Shr(s, Int|16);
   };
 
-  @(S@, seed, rng);
+  (Int@) { S@; } seed = (Int@ s) { s; };
+  (Int@, Int@, S@) { S@; } feed = (Int@ _, Int@ x, S@ s) {
+      Add(x, s);
+  };
+
+  @(S@, next, n, bits, seed, feed);
 };
 
 @(Rand48);

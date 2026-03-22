@@ -953,3 +953,139 @@ I could expose that as part of the Prng@ interface. Next, to go from S@ to S@.
 Maybe a separate hepper function that goes from that to... whatever interface
 we want eventually. Or, not have it as part of Prng. Have each random number
 generator export it separately for testing purposes. Let me try that to start.
+
+---
+
+Lfsr test works fine with exposing a separte Next function, unrelated to the
+Prng@ interface. But let's think more about the Rng@ and Prng@ interfaces.
+
+For Prng@, I'm tempted to get rid of State@ and Monad@ entirely, and instead
+have something like:
+* seed : Int@ -> S@
+* next : S@ -> S@
+* bits : S@ -> Bits@
+
+Which goes back to the question of Rng@. Problems with the current 'choose'
+API:
+* Better to return a random Bool@ than chose between two arguments.
+ - There's no reason to embed boolean type implicitly with choice. Just use
+   Bool@.
+* Rand48 is super slow if we can only get 1 bit of rand per state transition.
+ - Ideally we could get, say, 32 bits of randomness per step.
+
+Different Rng@ will support different amounts of randomness per step. Lfsr is
+1 bit. Rand48 is 32 bits (maybe?). I wish we had a way to represent Bits@,
+which is some number of bits, where you can figure out how many bits there are
+from the value itself. Int@ doesn't quite work for that, because you don't
+know how many bits are there. Unless you say the most significant bit of the
+Int@ is always 1.
+
+So, Rng@ can get back as many bits as it can per step. You ask for a random
+boolean, it will transition then pull a single bit. You ask for a random
+integer with some number of bits, it will ask for that many bits then turn
+into an integer, potentially transitioning multiple times as needed satisfy
+the number of requested bits.
+
+I suppose what I want is:
+
+Rng@ = *(
+  M@<Bits@> next,               # returns some number of random bits.
+  (Bits@) { M@<Unit@>; } feed,  # feeds in some number of random bits.
+);
+
+Prng@ = *(
+  (S@) { S@; } next         # transition to next state.
+  (S@) { Bits@> } bits      # get bits from the current state.
+  (Int@) { S@; } seed       # seed the state from an integer.
+  (Bits@, S@) { S@; } feed  # feeds in some number of random bits.
+);
+
+Where Bits@ is a list of random bits of some size that you can query. The
+question is, what representation do I want to use for Bits@?
+
+Current use cases for the type:
+* Honestly, I want it to be a list of bits. And I want to have helpers to get
+  the list of bits from a single bit and from an Int.
+
+But it feels unfortunate for Rand48, for example, if we are converting Int@ +
+32 to a list of 32 bits, then asking for, say, an 8 bit integer back from
+that.
+
+We could represent Bits@ as:
+
+  Bits@ = *(Int@ n, Int@ x);
+
+Where 'n' is the number of bits of data, and x contains the relevant bits.
+
+Now it's super easy to go from Int@ into Bits@ if you know how many you have.
+And it's not hard to check how many you have, and pull what you want back out
+of it.
+
+How about for seeding? Should we use Int@ or Bits@? I'd rather not have to
+provide that much information.
+
+Anyway, this sounds like a decent proposal to me.
+
+Or, should we just have List@<Bool@>, or a custom type like:
+
+  Bits@ = *(Unit@ e, Bits@ 0, Bits@ 1);
+
+In that case, we would need to convert between that and Int@ a bit at a time.
+We can't take advantage of Int@ for bits. But we also don't have to worry
+about negative numbers? But we can't figure out how many bits we have without
+scanning the list, in case we need more bits.
+
+---
+
+Nobody who uses Rng@ wants to get some arbitrary number of bits. And they want
+to feed an explicit number of bits. So I vote we specify explicitly how many
+bits of randomness you want in Rng@. Which means may as well return the bits
+as Int@, because we know from context how many there are.
+
+Prng@ on the other hand is for implementing Rng@. It's more convenient to
+return whatever number of bits is natural. We can add an extra field somewhere
+to say what that is, assuming it's a fixed function of the Lfsr.
+
+Thus the proposal is:
+
+Rng@ = *(
+  (Int@) { M@<Int@>; } rand,         # returns a random n-bit integer.
+  (Int@, Int@) { M@<Unit@>; } feed,  # feed an n-bit integer of bits.
+);
+
+Prng@ = *(
+  (S@) { S@; } next              # transition to next state.
+
+  Int@ n;                        # Number of bits returned by bits.
+  (S@) { Int@; } bits            # get bits from the current state.
+
+  (Int@) { S@; } seed            # seed the state from an integer.
+  (Int@, Int@, S@) { S@; } feed  # feeds in some number of random bits.
+);
+
+The bits_per_state is weird. Better to return a pair from bits?
+
+I don't know. It still feels wrong. What's wrong with dealing with lists of
+bits?
+
+Rng@ = *(
+  (Int@) { M@<Bits@>; } rand,    # returns n random bits.
+  (Bits@) { M@<Unit@>; } feed,   # feed bits in.
+);
+
+Prng@ = *(
+  (S@) { S@; } next              # transition to next state.
+  (S@) { Bits@; } bits           # get bits from the current state.
+  (Int@) { S@; } seed            # seed the state from an integer.
+  (Bits@, S@) { S@; } feed       # feeds in some number of random bits.
+);
+
+Where Bits specifies how many and the actual bits. Surely that's better. Just
+need to decide how to express Bits@ though. A list, or a pair of count and
+Int@ for the actual bits?
+
+I'm making this change partly because I care about performance. If that's the
+case, Bits@ should be Int@, Int@. Because I assume most states will be based
+on Int@ internally.
+
+I don't know. Let me try something with Int@. See how it goes in practice.

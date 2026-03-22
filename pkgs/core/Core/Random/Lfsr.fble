@@ -17,9 +17,8 @@
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
 <@>% Append = /Std/List%.Append;
+<@>% Drop = /Std/List/Index%.Drop;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
 <@>@ Prng@ = /Core/Random/Prng%.Prng@;
 
 @ Unit@ = /Std/Unit%.Unit@;
@@ -48,45 +47,41 @@ Prod = (List@<Bool@> a, List@<Bool@> b) {
 # The number of coefficients must match the state size, otherwise behavior is
 # undefined.
 (Coeffs@, State@) { State@; }
-Next = (Coeffs@ coefficients, State@ state) {
-  Bool@ in = Sum(Items(True, Prod(coefficients, state)));
+Next = (Coeffs@ coeffs, State@ state) {
+  Bool@ in = Sum(Items(True, Prod(coeffs, state)));
   Append(state.items.tail, List[in]);
 };
 
-(Coeffs@, Int@) { State@; }
-Seed = (Coeffs@ coeffs) {
-  # Extracts n bits from the given integer.
-  (Int@, Int@) { List@<Bool@>; }
-  IntToBits = (Int@ n, Int@ x) {
-    IsZero(n).?(true: Empty<Bool@>);
+# Extracts n bits from the given integer.
+(Int@, Int@) { List@<Bool@>; }
+IntToBits = (Int@ n, Int@ x) {
+  IsZero(n).?(true: Empty<Bool@>);
 
-    QR@ qr = Div(x, Int|2);
-    Bool@ bit = /Std/Int/Eq%.Eq(Int|1, qr.r);
-    Items(bit, IntToBits(Decr(n), qr.q));
-  };
-
-  Int@ len = /Std/List/Index%.Length(coeffs);
-  IntToBits(len);
+  QR@ qr = Div(x, Int|2);
+  Bool@ bit = /Std/Int/Eq%.Eq(Int|1, qr.r);
+  Items(bit, IntToBits(Decr(n), qr.q));
 };
 
 # Not suitable for cryptography.
-(Coeffs@) { Prng@<State@>; } Lfsr = (Coeffs@ coefficients) {
-  @ S@ = State@;
-  (Int@) { S@; } seed = Seed(coefficients);
+(Coeffs@) { Prng@<State@>; } Lfsr = (Coeffs@ coeffs) {
+  Int@ len = /Std/List/Index%.Length(coeffs);
 
-  <<@>@ M@>(/Core/State%.State@<S@, M@>, Monad@<M@>) { Rng@<M@>; }
-  rng = {
-    <<@>@ M@>(/Core/State%.State@<S@, M@> s, Monad@<M@> m) {
-      @(choose: <@ A@>(A@ a, A@ b) {
-          S@ bits := m.do(s.get);
-          S@ next = Next(coefficients, bits);
-          Unit@ _ := m.do(s.put(next));
-          m.return(next.items.head.?(true: a, false: b));
-        });
-    };
+  @ S@ = State@;
+  (S@) { S@; } next = Next(coeffs);
+  Int@ n = Int|1;
+
+  (S@) { Int@; } bits = (S@ s) {
+    s.items.head.?(true: Int|1, false: Int|0);
   };
 
-  @(S@, seed, rng);
+  (Int@) { S@; } seed = IntToBits(len);
+
+  (Int@, Int@, S@) { S@; } feed = (Int@ n, Int@ x, S@ s) {
+    List@<Bool@> bits = IntToBits(n, x);
+    Drop(Append(s, bits), n);
+  };
+
+  @(S@, next, n, bits, seed, feed);
 };
 
 @ Bit@ = +(Unit@ 0, Unit@ 1);

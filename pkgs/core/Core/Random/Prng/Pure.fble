@@ -1,15 +1,30 @@
 
+@ Int@ = /Std/Int%.Int@;
+% IsZero = /Std/Int/Sign%.IsZero;
+% Int = /Std/Int/Lit%.Int;
+% Mod = /Std/Int/Div%.Mod;
+
 <<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
 <<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
 <@>@ Prng@ = /Core/Random/Prng%.Prng@;
 
 <@,@>@ Pure@ = /Core/State/Pure%.Pure@;
 
+@ Unit@ = /Std/Unit%.Unit@;
+
 # Pure state monad RngM@ implementation of a Prng@.
 <@ S@>(Prng@<S@>) { RngM@<Pure@<S@>>; }
 Pure = <@ S@>(Prng@<S@> prng) {
   % p = /Core/State/Pure%.Pure<S@>;
-  Rng@<p.M@> r = prng.rng<p.M@>(p.s, p.m);
+
+  Rng@<p.M@> r = @(choose: <@ A@>(A@ a, A@ b) {
+    S@ s := p.m.do(p.s.get);
+    S@ next = prng.next(s);
+    Unit@ _ := p.m.do(p.s.put(next));
+    Int@ bits = prng.bits(next);
+    p.m.return $ IsZero(Mod(bits, Int|2)).?(true: a, false: b);
+  });
+
   RngM@<p.M@>(p.M@, p.m, r);
 };
 
