@@ -48,6 +48,7 @@ IsCanonical = (Var@ v) {
 # Generate a random variable.
 <<@>@ M@>(RngM@<M@>) { M@<Var@>; }
 Var = <<@>@ M@>(RngM@<M@> rng) {
+  /Std/Unit%.Unit@ _ = /Core/Debug%.TraceLn(/Std/Char/Ascii%.Str|'Var');
   Bool@ ul := rng.m.do(/Core/Bool/Rand%.Rand(rng));
   Bool@ uc := rng.m.do(/Core/Bool/Rand%.Rand(rng));
   Bool@ ur := rng.m.do(/Core/Bool/Rand%.Rand(rng));
