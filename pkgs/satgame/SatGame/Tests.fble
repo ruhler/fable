@@ -51,7 +51,7 @@ Test@ Tests = TestSuite(Str|SatGame, List[
       num_clauses: Int|6,
       num_literals_per_clause: Int|3
     );
-    Int@ seed = Int|42;
+    Int@ seed = Int|0;
     Puzzle@ puzzle = Generate(params, seed);
     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show,
       Int|6, /Std/List/Index%.Length(puzzle));

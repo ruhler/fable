@@ -61,7 +61,7 @@ Seed = (Coeffs@ coeffs) {
     IsZero(n).?(true: Empty<Bool@>);
 
     QR@ qr = Div(x, Int|2);
-    Bool@ bit = /Std/Int/Eq%.Eq(Int|0, qr.r);
+    Bool@ bit = /Std/Int/Eq%.Eq(Int|1, qr.r);
     Items(bit, IntToBits(Decr(n), qr.q));
   };
 
