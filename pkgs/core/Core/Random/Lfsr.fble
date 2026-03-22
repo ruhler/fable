@@ -17,7 +17,6 @@
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
 <@>% Append = /Std/List%.Append;
-<@>% Init = /Std/List%.Init;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 <<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
@@ -51,7 +50,7 @@ Prod = (List@<Bool@> a, List@<Bool@> b) {
 (Coeffs@, State@) { State@; }
 Next = (Coeffs@ coefficients, State@ state) {
   Bool@ in = Sum(Items(True, Prod(coefficients, state)));
-  Append(Init(state), List[in]);
+  Append(state.items.tail, List[in]);
 };
 
 (Coeffs@, Int@) { State@; }
@@ -102,4 +101,4 @@ Prng@<State@> Lfsr8 = Lfsr(Bits|10111000);
 Prng@<State@> Lfsr16 = Lfsr(Bits|1101000000001000);
 Prng@<State@> Lfsr24 = Lfsr(Bits|111000010000000000000000);
 
-@(Lfsr, Bits, Next, Lfsr8, Lfsr16, Lfsr24);
+@(Coeffs@, State@, Lfsr, Bits, Next, Lfsr8, Lfsr16, Lfsr24);
