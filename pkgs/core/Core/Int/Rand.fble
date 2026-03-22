@@ -3,8 +3,8 @@
 % Incr = /Std/Int%.Incr;
 % Add = /Std/Int%.Add;
 % Sub = /Std/Int%.Sub;
-% Shl = /Std/Int%.Shl;
-% Gt = /Std/Int/Ord%.Gt;
+% Shr = /Std/Int%.Shr;
+% IsZero = /Std/Int/Sign%.IsZero;
 % Lt = /Std/Int/Ord%.Lt;
 % Int = /Std/Int/Lit%.Int;
 
@@ -13,22 +13,21 @@
 # Generates a random integer uniformly in the range [0, n).
 <<@>@ M@>(RngM@<M@>, Int@) { M@<Int@>; }
 Of = <<@>@ M@>(RngM@<M@> rng, Int@ n) {
-  # Draw just enough random bits to cover at least the range [0, n).
-  #  range - the range drawn so far
-  #  x - the random bits drawn so far. Invariant: x < range
-  (Int@, Int@) { M@<Int@>; } DrawBits = (Int@ range, Int@ x) {
-    Gt(range, n).?(true: rng.m.return(x));
+  # Find the smallest k such that n < 2^k
+  (Int@) { Int@; }
+  FindK = (Int@ n) {
+    IsZero(n).?(true: Int|1);
+    Incr(FindK(Shr(n, Int|1)));
+  };
+  Int@ k = FindK(n);
 
-    Int@ nrange = Shl(range, Int|1);
-    Int@ lsb := rng.m.do(rng.r.choose(Int|0, Int|1));
-    Int@ nx = Add(Shl(x, Int|1), lsb); 
-    DrawBits(nrange, nx);
+  M@<Int@> Try = {
+    Int@ x := rng.m.do(rng.r.rand(k));
+    Lt(x, n).?(true: rng.m.return(x));
+    Try;
   };
 
-  # Accept x if it is in range. Otherwise try again.
-  Int@ x := rng.m.do(DrawBits(Int|1, Int|0));
-  Lt(x, n).?(true: rng.m.return(x));
-  Of(rng, n);
+  Try;
 };
 
 # Generates a random integer uniformly in the range [lo, hi]

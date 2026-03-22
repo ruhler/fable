@@ -1089,3 +1089,8 @@ case, Bits@ should be Int@, Int@. Because I assume most states will be based
 on Int@ internally.
 
 I don't know. Let me try something with Int@. See how it goes in practice.
+
+---
+
+Cool. Seems okay. What do you think? Things feel good from a random number
+generation point of view now?

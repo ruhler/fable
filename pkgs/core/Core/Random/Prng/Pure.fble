@@ -1,8 +1,10 @@
 
 @ Int@ = /Std/Int%.Int@;
-% IsZero = /Std/Int/Sign%.IsZero;
-% Int = /Std/Int/Lit%.Int;
-% Mod = /Std/Int/Div%.Mod;
+% Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
+% Shl = /Std/Int%.Shl;
+% Shr = /Std/Int%.Shr;
+% Le = /Std/Int/Ord%.Le;
 
 <<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
 <<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
@@ -17,13 +19,26 @@
 Pure = <@ S@>(Prng@<S@> prng) {
   % p = /Core/State/Pure%.Pure<S@>;
 
-  Rng@<p.M@> r = @(choose: <@ A@>(A@ a, A@ b) {
+  (Int@) { p.M@<Int@>; } rand = (Int@ n) {
     S@ s := p.m.do(p.s.get);
     S@ next = prng.next(s);
     Unit@ _ := p.m.do(p.s.put(next));
-    Int@ bits = prng.bits(next);
-    p.m.return $ IsZero(Mod(bits, Int|2)).?(true: a, false: b);
-  });
+
+    Int@ lo = prng.bits(next);
+    Le(n, prng.n).?(true: {
+      p.m.return $ Shr(lo, Sub(prng.n, n));
+    });
+
+    Int@ hi := p.m.do(rand(Sub(n, prng.n)));
+    p.m.return $ Add(Shl(hi, prng.n), lo);
+  };
+
+  (Int@, Int@) { p.M@<Unit@>; } feed = (Int@ n, Int@ x) {
+    S@ s := p.m.do(p.s.get);
+    p.s.put(prng.feed(n, x, s));
+  };
+
+  Rng@<p.M@> r = @(rand, feed);
 
   RngM@<p.M@>(p.M@, p.m, r);
 };

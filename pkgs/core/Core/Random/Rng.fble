@@ -1,10 +1,14 @@
 
+@ Int@ = /Std/Int%.Int@;
+
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
+@ Unit@ = /Std/Unit%.Unit@;
+
 # Standard interface for a random number generator.
-# Randomly chooses 1 of two values to return.
 <<@>@>@ Rng@ = <<@>@ M@> { *(
-  <@ A@>(A@, A@) { M@<A@>; } choose
+  (Int@) { M@<Int@>; } rand,        # returns a random n-bit integer.
+  (Int@, Int@) { M@<Unit@>; } feed  # feed n bits of entropy into the generator.
 ); };
 
 # Monadic interface for generating random numbers.

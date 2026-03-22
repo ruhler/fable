@@ -1,14 +1,18 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+% Not = /Std/Bool%.Not;
+
+@ Int@ = /Std/Int%.Int@;
+% IsZero = /Std/Int/Sign%.IsZero;
+% Int = /Std/Int/Lit%.Int;
 
 <<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
 
 # Generates a random boolean.
 <<@>@ M@>(RngM@<M@>) { M@<Bool@>; }
 Rand = <<@>@ M@>(RngM@<M@> rng) {
-  rng.r.choose(True, False);
+  Int@ x := rng.m.do(rng.r.rand(Int|1));
+  rng.m.return $ Not(IsZero(x));
 };
 
 @(Rand);
