@@ -19,16 +19,13 @@
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
 <@>% Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-
 @ String@ = /Std/String%.String@;
 
-<@,<@>@>@ State@ = /Core/State%.State@;
+<@,<@>@>@ StateM@ = /Core/State%.StateM@;
 
-<@,@>@ StateM@ = /Core/State/StateM%.StateM@;
-<@>% Monad = /Core/State/StateM%.Monad;
-<@>% State = /Core/State/StateM%.State;
-<@,@>% Eval = /Core/State/StateM%.Eval;
+<@,@>@ Pure@ = /Core/State/Pure%.Pure@;
+<@>% Pure = /Core/State/Pure%.Pure;
+<@,@>% Eval = /Core/State/Pure%.Eval;
 
 @ Test@ = /Std/Test%.Test@;
 % Test = /Std/Test%.Test;
@@ -38,19 +35,18 @@
 <<@>@>@ IO@ = /Fbld/Main%.IO@;
 
 Test@ Bench = Test(Str|Fbld, (Unit@ _) {
-  <@>@ M@ = StateM@<String@>;
-  Monad@<M@> m = Monad<String@>;
-  State@<String@, M@> s = State<String@>;
-  IStream@<M@> in = IStream<M@>(s, m);
-  Put@<M@, Output@> out = NullOutput<M@>(m);
-  Put@<M@, Output@> err = NullOutput<M@>(m);
+  <@>@ M@ = Pure@<String@>;
+  StateM@<String@, M@> p = Pure<String@>;
+  IStream@<M@> in = IStream<M@>(p.s, p.m);
+  Put@<M@, Output@> out = NullOutput<M@>(p.m);
+  Put@<M@, Output@> err = NullOutput<M@>(p.m);
   (String@) { M@<Maybe@<IStream@<M@>>>; } read = (String@ _) {
-    m.return(Nothing<IStream@<M@>>);
+    p.m.return(Nothing<IStream@<M@>>);
   };
   IO@<M@> io = @(in, out, err, read);
   List@<String@> args = List[Str|'-'];
   Exit@ wnt = Success;
-  Exit@ got = Eval(/Fbld/Main%.Main<M@>(m, io, args), /Fbld/Bench/Input%);
+  Exit@ got = Eval(/Fbld/Main%.Main<M@>(p.m, io, args), /Fbld/Bench/Input%);
   AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
 });
 

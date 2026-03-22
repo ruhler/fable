@@ -37,7 +37,7 @@
 % Prng = /Core/Random/Lfsr%.Lfsr24;
 % Rng = /Core/Random/Prng/Pure%.Pure(Prng);
 
-<@,@>% Eval = /Core/State/StateM%.Eval;
+<@,@>% Eval = /Core/State/Pure%.Eval;
 
 # @func[Generate] Generates a random satgame puzzle.
 #  @arg[Params@][params] Parameters for the puzzle to generate.

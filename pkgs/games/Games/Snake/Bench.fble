@@ -8,13 +8,10 @@
 
 <@,@>% Const = /Std/Func%.Const;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-
-<@,<@>@>@ State@ = /Core/State%.State@;
-<@,@>@ StateM@ = /Core/State/StateM%.StateM@;
-<@>% Monad = /Core/State/StateM%.Monad;
-<@>% State = /Core/State/StateM%.State;
-<@,@>% Eval = /Core/State/StateM%.Eval;
+<@,<@>@>@ StateM@ = /Core/State%.StateM@;
+<@,@>@ Pure@ = /Core/State/Pure%.Pure@;
+<@>% Pure = /Core/State/Pure%.Pure;
+<@,@>% Eval = /Core/State/Pure%.Eval;
 
 @ Test@ = /Std/Test%.Test@;
 % Test = /Std/Test%.Test;
@@ -36,22 +33,21 @@ Test@ Bench = Test(Str|'Snake', (Unit@ _) {
   Int@ w = Int|640;
   Int@ h = Int|480;
 
-  <@>@ M@ = StateM@<Int@>;
-  Monad@<M@> m = Monad<Int@>;
-  State@<Int@, M@> s = State<Int@>;
+  <@>@ M@ = Pure@<Int@>;
+  StateM@<Int@, M@> p = Pure<Int@>;
 
   M@<Event@> event = {
-    Int@ n := m.do(s.get);
-    IsNegative(n).?(true: m.return(Event@(key_down: Key@(q: Unit))));
-    Unit@ _ := m.do(s.put(Decr(n)));
-    m.return(Event@(tick: Unit));
+    Int@ n := p.m.do(p.s.get);
+    IsNegative(n).?(true: p.m.return(Event@(key_down: Key@(q: Unit))));
+    Unit@ _ := p.m.do(p.s.put(Decr(n)));
+    p.m.return(Event@(tick: Unit));
   };
 
-  (Effect@) { M@<Unit@>; } effect = Const<Effect@> $ m.return(Unit);
+  (Effect@) { M@<Unit@>; } effect = Const<Effect@> $ p.m.return(Unit);
 
   App@<M@> app = App@<M@>(event, effect);
 
-  Unit@ _ = Eval(/Games/Snake%.Main<M@>(m, app, w, h), n);
+  Unit@ _ = Eval(/Games/Snake%.Main<M@>(p.m, app, w, h), n);
   Pass;
 });
 

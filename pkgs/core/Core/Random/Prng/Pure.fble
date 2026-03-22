@@ -1,23 +1,16 @@
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-
 <<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
 <<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
 <@>@ Prng@ = /Core/Random/Prng%.Prng@;
 
-<@,<@>@>@ State@ = /Core/State%.State@;
-<@,@>@ StateM@ = /Core/State/StateM%.StateM@;
-<@>% Monad = /Core/State/StateM%.Monad;
-<@>% State = /Core/State/StateM%.State;
+<@,@>@ Pure@ = /Core/State/Pure%.Pure@;
 
 # Pure state monad RngM@ implementation of a Prng@.
-<@ S@>(Prng@<S@>) { RngM@<StateM@<S@>>; }
+<@ S@>(Prng@<S@>) { RngM@<Pure@<S@>>; }
 Pure = <@ S@>(Prng@<S@> prng) {
-  <@>@ M@ = StateM@<S@>;
-  Monad@<M@> m = Monad<S@>;
-  State@<S@, M@> s = State<S@>;
-  Rng@<M@> r = prng.rng<M@>(s, m);
-  RngM@<M@>(M@, m, r);
+  % p = /Core/State/Pure%.Pure<S@>;
+  Rng@<p.M@> r = prng.rng<p.M@>(p.s, p.m);
+  RngM@<p.M@>(p.M@, p.m, r);
 };
 
 @(Pure);

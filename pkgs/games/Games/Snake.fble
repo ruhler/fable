@@ -31,8 +31,8 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<@,@>% Exec = /Core/State/StateM%.Exec;
-<@,@>% Run = /Core/State/StateM%.Run;
+<@,@>% Exec = /Core/State/Pure%.Exec;
+<@,@>% Run = /Core/State/Pure%.Run;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

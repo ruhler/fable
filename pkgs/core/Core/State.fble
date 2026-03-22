@@ -1,8 +1,17 @@
 
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
 @ Unit@ = /Std/Unit%.Unit@;
 
 <@,<@>@>@ State@ = <@ S@, <@>@ M@> {
   *(M@<S@> get, (S@) { M@<Unit@>; } put);
 };
 
-@(State@);
+<@,<@>@>@ StateM@ = <@ S@, <@>@ M@> { *(
+  @<S@> S@,
+  @<M@> M@,
+  Monad@<M@> m,
+  State@<S@, M@> s
+); };
+
+@(State@, StateM@);

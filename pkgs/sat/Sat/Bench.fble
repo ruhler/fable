@@ -6,15 +6,13 @@
 <<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
 <<@>@>% IStream = /Core/Char/Stream/IStream%.IStream;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<@,<@>@>@ State@ = /Core/State%.State@;
-
 <<@>@>% NullOutput = /Core/Char/Stream/OStream%.NullOutput;
 
-<@,@>@ StateM@ = /Core/State/StateM%.StateM@;
-<@>% Monad = /Core/State/StateM%.Monad;
-<@>% State = /Core/State/StateM%.State;
-<@,@>% Eval = /Core/State/StateM%.Eval;
+<@,<@>@>@ StateM@ = /Core/State%.StateM@;
+
+<@,@>@ Pure@ = /Core/State/Pure%.Pure@;
+<@>% Pure = /Core/State/Pure%.Pure;
+<@,@>% Eval = /Core/State/Pure%.Eval;
 
 @ Exit@ = /Core/Cli%.Exit@;
 % Success = /Core/Cli%.Success;
@@ -28,11 +26,10 @@
 @ Unit@ = /Std/Unit%.Unit@;
 
 Test@ Bench = Test(Str|Sat, (Unit@ _) {
-  <@>@ M@ = StateM@<String@>;
-  Monad@<M@> m = Monad<String@>;
-  State@<String@, M@> s = State<String@>;
-  Put@<M@, Output@> null = NullOutput<M@>(m);
-  M@<Exit@> go = /Sat/Main%.Main<M@>(m, IStream<M@>(s, m), null, null);
+  <@>@ M@ = Pure@<String@>;
+  StateM@<String@, M@> p = Pure<String@>;
+  Put@<M@, Output@> null = NullOutput<M@>(p.m);
+  M@<Exit@> go = /Sat/Main%.Main<M@>(p.m, IStream<M@>(p.s, p.m), null, null);
   Exit@ got = Eval(go, /Sat/Bench/Input%);
   Exit@ wnt = Success;
   AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);

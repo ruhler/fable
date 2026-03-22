@@ -46,8 +46,8 @@
 <@>% DoWhile = /Core/Maybe%.DoWhile;
 <@>% For = /Core/Maybe%.For;
 
-<@,@>% Eval = /Core/State/StateM%.Eval;
-<@,@>% Exec = /Core/State/StateM%.Exec;
+<@,@>% Eval = /Core/State/Pure%.Eval;
+<@,@>% Exec = /Core/State/Pure%.Exec;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
