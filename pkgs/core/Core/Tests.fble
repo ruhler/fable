@@ -6,11 +6,6 @@
 @ Test@ = /Std/Test%.Test@;
 % TestSuite = /Std/Test%.TestSuite;
 
-# Import to test compilation.
-% _ = /Std/Char/Show%;
-% _ = /Core/Monad/IO%;
-% _ = /Core/Scratch%;
-
 Test@ Tests = TestSuite(Str|Core, List[
   /Core/Char/Tests%.Tests,
   /Core/CRC/Tests%.Tests,

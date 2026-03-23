@@ -1,0 +1,119 @@
+Fble 0.6 Release
+================
+
+It's fairly late in the release development cycle now. How to finish out this
+release?
+
+The main thing for this release is standard library cleanup. I'm already
+punting documentation for the standard library to later, because it's clearly
+too much work. The standard library cleanup is a slog.
+
+Other notable things I've changed along the way for the standard library
+cleanup:
+* Foreign Function Interface
+* Composite character literal support (?)
+* Change -> to := for monadic bind
+* Support for '$' function application.
+
+There's still a long way to go with the rest of the standard library cleanup.
+I fear I'll have to give up at some point. Anyway, status is something like:
+
+* Random numbers, API worked out in some detail. Needs next round of review
+  and cleanup.
+  - pkgs/core/Core/Bool/Rand.fble
+  - pkgs/core/Core/Int/Rand.fble
+  - pkgs/core/Core/List/Rand.fble
+  - pkgs/core/Core/Random/Lcg.fble
+  - pkgs/core/Core/Random/Lfsr/Tests.fble
+  - pkgs/core/Core/Random/Lfsr.fble
+  - pkgs/core/Core/Random/Prng/Pure.fble
+  - pkgs/core/Core/Random/Prng.fble
+  - pkgs/core/Core/Random/Rng.fble
+* Cleanup standard Cmp/Ord interfaces.
+  - pkgs/core/Core/Bool/Ord.fble
+  - pkgs/core/Core/Char/Ord.fble
+  - pkgs/core/Core/Int/IntP/Ord.fble
+  - pkgs/core/Core/Int/Ord.fble
+  - pkgs/core/Core/List/Ord.fble
+  - pkgs/core/Core/Ord/Eq.fble
+  - pkgs/core/Core/Ord/Show.fble
+  - pkgs/core/Core/Ord.fble
+  - pkgs/core/Core/String/Ord.fble
+* Start work on Map cleanup
+  - pkgs/core/Core/Char/Map/Tests.fble
+  - pkgs/core/Core/Char/Map.fble
+  - pkgs/core/Core/Int/IntP/Map/Eq.fble
+  - pkgs/core/Core/Int/IntP/Map.fble
+  - pkgs/core/Core/Int/Map/Eq.fble
+  - pkgs/core/Core/Int/Map/Tests.fble
+  - pkgs/core/Core/Int/Map.fble
+  - pkgs/core/Core/List/Map.fble
+  - pkgs/core/Core/Map/Eq/Tests.fble
+  - pkgs/core/Core/Map/Eq.fble
+  - pkgs/core/Core/Map/Show/Tests.fble
+  - pkgs/core/Core/Map/Show.fble
+  - pkgs/core/Core/Map/Test.fble
+  - pkgs/core/Core/Map/Tests.fble
+  - pkgs/core/Core/Map/Tree/Tests.fble
+  - pkgs/core/Core/Map/Tree.fble
+  - pkgs/core/Core/Map.fble
+  - pkgs/core/Core/String/Map/Tests.fble
+  - pkgs/core/Core/String/Map.fble
+  - pkgs/core/Core/Set/Eq.fble
+  - pkgs/core/Core/Set/Show.fble
+  - pkgs/core/Core/Set/Tests.fble
+  - pkgs/core/Core/Set.fble
+* Next round of Stdio@ API revisions
+  - pkgs/core/Core/Char/Stream/IStream.fble
+  - pkgs/core/Core/Char/Stream/OStream.fble
+  - pkgs/core/Core/Char/Stream.fble
+  - pkgs/core/Core/Stdio/Cat.fble
+  - pkgs/core/Core/Stdio/FFI.fble
+  - pkgs/core/Core/Stdio/HelloWorld.fble
+  - pkgs/core/Core/Stdio/StringO.fble
+  - pkgs/core/Core/Stream/Char.fble
+  - pkgs/core/Core/Stream/IStream/Pure.fble
+  - pkgs/core/Core/Stream.fble
+* Revise state monad based on random numbers api design?
+  - pkgs/core/Core/Monad/State.fble
+  - pkgs/core/Core/State/Pure.fble
+  - pkgs/core/Core/State.fble
+* Next round of formalization/cleanup of native APIs
+  - pkgs/core/Core/Cli/Demo.fble
+  - pkgs/core/Core/Cli.fble
+  - pkgs/core/Core/Env/Native.fble
+  - pkgs/core/Core/Native.fble
+* Finish porting test cases over to std-test
+  - pkgs/core/Core/Char/Tests.fble
+  - pkgs/core/Core/Int/Show/Tests.fble
+  - pkgs/core/Core/Int/Tests.fble
+  - pkgs/core/Core/String/Tests.fble
+  - pkgs/core/Core/Test/Tests.fble
+  - pkgs/core/Core/Tests.fble
+* Figure out what to do with all the other miscellaneous stuff.
+  - pkgs/core/Core/Char/Type.fble
+  - pkgs/core/Core/CRC/Debug.fble
+  - pkgs/core/Core/CRC/Tests.fble
+  - pkgs/core/Core/CRC.fble
+  - pkgs/core/Core/Debug/Builtin.fble
+  - pkgs/core/Core/Debug/Tests.fble
+  - pkgs/core/Core/Debug.fble
+  - pkgs/core/Core/Digits/Eq.fble
+  - pkgs/core/Core/Digits/Show.fble
+  - pkgs/core/Core/Digits/String.fble
+  - pkgs/core/Core/Digits/Tests.fble
+  - pkgs/core/Core/Digits.fble
+  - pkgs/core/Core/Fifo/Tests.fble
+  - pkgs/core/Core/Fifo.fble
+  - pkgs/core/Core/Int/Digits.fble
+  - pkgs/core/Core/Int/Iter.fble
+  - pkgs/core/Core/Int/Read.fble
+  - pkgs/core/Core/Iter.fble
+  - pkgs/core/Core/Maybe.fble
+  - pkgs/core/Core/Monad/IO.fble
+  - pkgs/core/Core/Monad/Pure.fble
+  - pkgs/core/Core/Scratch.fble
+  - pkgs/core/Core/Test/Cli.fble
+  - pkgs/core/Core/Test/Run.fble
+
+So, as you can see, it's a pretty long list of things.
