@@ -22,6 +22,8 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
+<@,@>% Exec = /Core/State/Pure%.Exec;
+
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
@@ -72,15 +74,15 @@ Permutes = <<@>@ M@>(Monad@<M@> m, List@<Int@> l, (List@<Int@>) { M@<Unit@>; } f
   Int@ max_flips
 );
 
-% P = /Core/Monad/State%<Fannkuch@>;
+% P = /Core/State/Pure%.Pure<Fannkuch@>;
 
-(List@<Int@>) { P.State@<Unit@>;  } DoPermutation = (List@<Int@> l) {
-  Fannkuch@ s := P.Monad.do(P.Get);
+(List@<Int@>) { P.M@<Unit@>;  } DoPermutation = (List@<Int@> l) {
+  Fannkuch@ s := P.m.do(P.s.get);
   Int@ flips = Flips(Int|0, l);
   Fannkuch@ ns = s.even.?(
     true: Fannkuch@(False, Add(s.checksum, flips), Max(s.max_flips, flips)),
     false: Fannkuch@(True, Sub(s.checksum, flips), Max(s.max_flips, flips)));
-  P.Set(ns);
+  P.s.put(ns);
 };
 
 # Returns the list of integers [N, N-1, ..., 1].
@@ -91,8 +93,8 @@ Permutes = <<@>@ M@>(Monad@<M@> m, List@<Int@> l, (List@<Int@>) { M@<Unit@>; } f
 
 (Int@) { Fannkuch@; } FannkuchRedux = (Int@ n) {
   List@<Int@> p0 = CountDown(n);
-  P.State@<Unit@> fannkuch = Permutes<P.State@>(P.Monad, p0, DoPermutation);
-  P.Run(fannkuch, Fannkuch@(True, Int|0, Int|0)).s;
+  P.M@<Unit@> fannkuch = Permutes<P.M@>(P.m, p0, DoPermutation);
+  Exec(fannkuch, Fannkuch@(True, Int|0, Int|0));
 };
 
 @(Fannkuch@, Flip, Flips, RotateRight, Permutes, FannkuchRedux);

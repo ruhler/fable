@@ -12,6 +12,8 @@
 % Str = /Std/Char/Ascii%.Str;
 % StrE = /Std/Char/Ascii%.StrE;
 
+<@,@>% Exec = /Core/State/Pure%.Exec;
+
 @ Test@ = /Std/Test%.Test@;
 % Test = /Std/Test%.Test;
 % TestSuite = /Std/Test%.TestSuite;
@@ -64,14 +66,14 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
       List[Int|1, Int|3, Int|2]];
 
     @ S@ = List@<List@<Int@>>;
-    % P = /Core/Monad/State%<S@>;
-    (List@<Int@>) { P.State@<Unit@>; } F = (List@<Int@> l) {
-      S@ s := P.Monad.do(P.Get);
-      P.Set(Append(s, List[l]));
+    % p = /Core/State/Pure%.Pure<S@>;
+    (List@<Int@>) { p.M@<Unit@>; } F = (List@<Int@> l) {
+      S@ s := p.m.do(p.s.get);
+      p.s.put(Append(s, List[l]));
     };
 
-    P.State@<Unit@> permutes = Permutes<P.State@>(P.Monad, input, F);
-    List@<List@<Int@>> got = P.Run(permutes, Empty<List@<Int@>>).s;
+    p.M@<Unit@> permutes = Permutes<p.M@>(p.m, input, F);
+    List@<List@<Int@>> got = Exec(permutes, Empty<List@<Int@>>);
     AssertEquals(
       /Std/List/Eq%.Eq(/Std/List/Eq%.Eq(/Std/Int/Eq%.Eq)),
       /Std/List/Show%.Show(/Std/List/Show%.Show(/Std/Int/Show%.Show)),

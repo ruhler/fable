@@ -3822,3 +3822,11 @@ type or builtin module. Yay!
 
 Okay. Now back to the API questions.
 
+---
+
+I made some advances with stdlib.random.txt that suggest we review the
+proposed Stdio API under that light. Specifically this idea of having sperate
+Foo@ as the interface and FooM@ as the interface bundled together with M@ and
+Monad implementation to help with type inference and avoid having to pass
+around 3 separate things everywhere.
+

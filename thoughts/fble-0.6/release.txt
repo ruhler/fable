@@ -75,7 +75,7 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Stream/IStream/Pure.fble
   - pkgs/core/Core/Stream.fble
 * Revise state monad based on random numbers api design?
-  - pkgs/core/Core/Monad/State.fble
+  - pkgs/core/Core/Monad/State.fble [Removed]
   - pkgs/core/Core/State/Pure.fble
   - pkgs/core/Core/State.fble
 * Next round of formalization/cleanup of native APIs
@@ -110,10 +110,11 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Int/Read.fble
   - pkgs/core/Core/Iter.fble
   - pkgs/core/Core/Maybe.fble
-  - pkgs/core/Core/Monad/IO.fble
+  - pkgs/core/Core/Monad/IO.fble    [Removed]
   - pkgs/core/Core/Monad/Pure.fble
   - pkgs/core/Core/Scratch.fble
   - pkgs/core/Core/Test/Cli.fble
   - pkgs/core/Core/Test/Run.fble
 
-So, as you can see, it's a pretty long list of things.
+So, as you can see, it's a pretty long list of things. And a bunch of them
+will probably be difficult.

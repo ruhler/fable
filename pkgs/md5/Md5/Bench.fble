@@ -10,8 +10,6 @@
 <@>% Just = /Std/Maybe%.Just;
 <@>% Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-
 % Str = /Std/Char/Ascii%.Str;
 
 @ Test@ = /Std/Test%.Test@;
@@ -27,25 +25,22 @@
 
 Int@ 1 = Int|1;
 
-% State = /Core/Monad/State%<Int@>;
-
-<@>@ M@ = State.State@;
-<@>@ R@ = State.R@;
-Monad@<M@> Monad = State.Monad;
+% P = /Core/State/Pure%.Pure<Int@>;
+<@,@>% Eval = /Core/State/Pure%.Eval;
 
 Maybe@<Bit8@> A5 = Just(H8|A5);
 
-M@<Maybe@<Bit8@>> Get = {
-  Int@ n := Monad.do(State.Get);
-  IsZero(n).?(true: Monad.return(Nothing<Bit8@>));
-  Unit@ _ := Monad.do(State.Set(Sub(n, 1)));
-  Monad.return(A5);
+P.M@<Maybe@<Bit8@>> Get = {
+  Int@ n := P.m.do(P.s.get);
+  IsZero(n).?(true: P.m.return(Nothing<Bit8@>));
+  Unit@ _ := P.m.do(P.s.put(Sub(n, 1)));
+  P.m.return(A5);
 };
     
 # Benchmark for md5 sum that takes about 1 minute to run.
 Test@ Bench = Test(Str|Md5, (Unit@ _) {
-  R@<Hash@> md5 = Md5<M@>(Monad, Get, Int|60000);
-  AssertEquals(/Md5/Hash%.Eq, /Md5/Hash%.Show, md5.x, md5.x);
+  Hash@ md5 = Eval(Md5<P.M@>(P.m, Get), Int|60000);
+  AssertEquals(/Md5/Hash%.Eq, /Md5/Hash%.Show, md5, md5);
 });
 
 @(Bench);
