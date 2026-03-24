@@ -1094,3 +1094,14 @@ I don't know. Let me try something with Int@. See how it goes in practice.
 
 Cool. Seems okay. What do you think? Things feel good from a random number
 generation point of view now?
+
+---
+
+Things that I'm hesitant about before moving this to std library:
+* Is 'Pure' really the best name to use for pure state and prng? Is there not
+  something a little more descriptive?
+* Some way to prevent seeding an LFSR with -1, which would break things?
+* Should we generalize Lcg and add support for a few more variations?
+* How will people decide between Lfsr and Lcg? If Rand48 was fast enough,
+  wouldn't I want to get rid of Lfsr entirely?
+

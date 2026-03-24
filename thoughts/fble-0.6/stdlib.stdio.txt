@@ -3830,3 +3830,42 @@ Foo@ as the interface and FooM@ as the interface bundled together with M@ and
 Monad implementation to help with type inference and avoid having to pass
 around 3 separate things everywhere.
 
+---
+
+Going back to foundations of IO, we have:
+* Untyped data interchange between different programs in different languages.
+ - Binary / Text as approaches for untyped data
+* Batching is important for performance.
+ - Semantically batching means: reader doesn't need to read the first element
+   in a batch until the last element in the batch is ready.
+ - We could implement batching with a 'flush' or 'sync' command instead of
+   Output@.
+* Streaming is important to make better use of memory.
+ - Streaming probably shouldn't be tied to batching, because different parts
+   of the system have different ideal batch sizes.
+ - Which suggests we should be able to stream out data within a given batch.
+* End of file is an important mechanism to avoid deadlock
+ - It should be out of band, so that the OS can inject an end of file in case
+   the writer crashes.
+ - It may be the case that in practice we need to be able to close an input
+   and propagate that information to the corresponding output. But for now
+   let's assume that's not the case and say information travels only from
+   output to input.
+
+Output@ is like a monoid: 'return' is the identity, 'do' is a weird variation
+on the operation. Do we really need 'do' instead of a raw 'seq' function? Oh,
+and 'put' is special. That's not something that's natural to a monoid.
+
+Perhaps an output stream should be: Output@ + flush + close. Maybe Output@
+should be built on top of a monoid type. Maybe Output@ should be built on top
+of Monad@?
+
+It feels now like it's all worth reconsidering. It would be nice if there was
+better symmetry between input stream and output stream.
+
+I say output is text (Char@) or binary (Int@). But, depending on how we deal
+with batching/Output@, it also makes sense to be generic Foo@, as a way to
+help transition between typed and untyped data types. Like, we generate a
+typed Foo@ stream (batchable, closeable), and then add an adapter to convert
+each Foo@ to text or binary while preserving the batch boundaries.
+

@@ -112,7 +112,7 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Maybe.fble
   - pkgs/core/Core/Monad/IO.fble    [Removed]
   - pkgs/core/Core/Monad/Pure.fble
-  - pkgs/core/Core/Scratch.fble
+  - pkgs/core/Core/Scratch.fble     [Removed]
   - pkgs/core/Core/Test/Cli.fble
   - pkgs/core/Core/Test/Run.fble
 
