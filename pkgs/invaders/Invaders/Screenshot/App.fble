@@ -7,7 +7,7 @@
 <@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 % Success = /Core/Cli%.Success;
 
@@ -27,7 +27,7 @@
 
 % Screenshot = /Invaders/Graphics%.Screenshot;
 
-Main@ Main = <<@>@ M@>(Native@<M@> _n, Monad@<M@> m, App@<M@> app, Int@ _width, Int@ _height, List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Io@<M@> _n, Monad@<M@> m, App@<M@> app, Int@ _width, Int@ _height, List@<String@> _args) {
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Int|2, y: Neg(Int|2));
   Point@ b = @(x: Int|0, y: Int|480);

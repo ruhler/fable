@@ -556,7 +556,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleValue* app_value = FbleNewNativeValue(heap, &app, NULL);
   FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe, block_id + 1, &app_value);
 
-  FbleValue* native = FbleNewStructValue_(heap, 0);     // Native@<M@>
+  FbleValue* native = FbleNewStructValue_(heap, 0);     // Io@<M@>
   FbleValue* monad = FbleCliNativeMonad(heap, profile); // Monad@<M@>
   FbleValue* fble_app = FbleNewStructValue_(heap, 2, fble_event, fble_effect);
   FbleValue* fble_width = FbleNewIntValue(heap, width);

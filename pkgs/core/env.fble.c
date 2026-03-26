@@ -23,7 +23,7 @@
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Native@<M@>, Monad@<M@>, String@, Unit@) { Maybe@<String@>; }
+ *   (Io@<M@>, Monad@<M@>, String@, Unit@) { Maybe@<String@>; }
  */
 static FbleValue* GetVarImpl(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* function, FbleValue** args)
 {

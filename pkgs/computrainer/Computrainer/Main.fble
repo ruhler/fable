@@ -30,7 +30,7 @@
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 % Success = /Core/Cli%.Success;
 
@@ -109,7 +109,7 @@ SelectCar = (Car@ c) {
     Bool@ paused
 );
 
-Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
+Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
   (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read<M@>(n, m);
   (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write<M@>(n, m);
 

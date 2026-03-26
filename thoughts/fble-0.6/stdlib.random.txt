@@ -1104,4 +1104,6 @@ Things that I'm hesitant about before moving this to std library:
 * Should we generalize Lcg and add support for a few more variations?
 * How will people decide between Lfsr and Lcg? If Rand48 was fast enough,
   wouldn't I want to get rid of Lfsr entirely?
+* 'Of' is a bad name for that function.
+* Double check if there are any other Rand library functions I want.
 

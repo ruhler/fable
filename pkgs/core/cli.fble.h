@@ -56,7 +56,7 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
  *  @arg[FbleValueHeap*][heap] The value heap.
  *  @arg[FbleProfile*][profile] Profile to add blocks to.
  *  @returns[FbleValue*]
- *   Instance of Monad@<M@> for the M@ we use with Native@<M@>.
+ *   Instance of Monad@<M@> for the M@ we use with Io@<M@>.
  *  @sideeffects Adds blocks to profile.
  */
 FbleValue* FbleCliNativeMonad(FbleValueHeap* heap, FbleProfile* profile);

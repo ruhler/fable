@@ -15,7 +15,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 @ Exit@ = /Core/Cli%.Exit@;
@@ -29,7 +29,7 @@
 % Unit = /Std/Unit%.Unit;
 
 # The 'cat' program.
-Main@ Cat = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
+Main@ Cat = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> args) {
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
   IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin<M@>(n, m));
   (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read<M@>(n, m);

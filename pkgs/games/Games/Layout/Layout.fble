@@ -31,7 +31,7 @@
 <@>% Nothing = /Std/Maybe%.Nothing;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 % Map = /Core/Int/Map%.Map;
 
@@ -274,7 +274,7 @@ State@ InitialState = @(
   hovered: Nothing<Pos@>
 );
 
-Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, App@<M@> app, Int@ _width, Int@ height, List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, App@<M@> app, Int@ _width, Int@ height, List@<String@> _args) {
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
 
   M@<Event@> FilterEvent = {

@@ -12,7 +12,7 @@
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
 
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 @ String@ = /Std/String%.String@;
 
@@ -21,7 +21,7 @@
 # Run --
 #   A cli main function that outputs a single string.
 (String@) { Main@; } Run = (String@ str) {
-  <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> _args) {
+  <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> _args) {
     Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
     Unit@ _ := m.do(out $ Format|'%s\n'[String(str)]);
     m.return(Success);

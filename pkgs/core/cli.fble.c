@@ -96,7 +96,7 @@ static FbleValue* Cli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main
 
   // We apply the main function with:
   //  M@ = <@ A@>(Unit@) { A@; }
-  FbleValue* native = FbleNewStructValue_(heap, 0);     // Native@<M@>
+  FbleValue* native = FbleNewStructValue_(heap, 0);     // Io@<M@>
   FbleValue* monad = FbleCliNativeMonad(heap, profile); // Monad@<M@>
   FbleValue* args = FbleCliArgs(heap, argc, argv);      // List@<String@>
   FbleValue* unit = FbleNewStructValue_(heap, 0);       // Unit@

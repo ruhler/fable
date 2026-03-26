@@ -22,7 +22,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
@@ -103,7 +103,7 @@ GetArgs = (List@<String@> args, Args@ default) {
   GetArgs(nargv, nargs);
 };
 
-Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
+Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> argv) {
   Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr<M@>(n, m));
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(n, m));

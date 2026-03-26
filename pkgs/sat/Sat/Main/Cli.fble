@@ -9,7 +9,7 @@
 <@>% Any = /Std/List/Search%.Any;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
@@ -19,7 +19,7 @@
 
 @ Unit@ = /Std/Unit%.Unit@;
 
-Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
+Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> args) {
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
   Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr<M@>(n, m));
   IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin<M@>(n, m));

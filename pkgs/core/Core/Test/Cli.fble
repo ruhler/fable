@@ -7,7 +7,7 @@
 <@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
@@ -27,7 +27,7 @@
 # Result:
 #   A cli Main@ program to run the tests.
 (Test@) { Main@; } Run = (Test@ tests) {
-  <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
+  <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> args) {
     String@ prefix = {
       args.?(empty: Str|'');
       /Std/String/Eq%.Eq(Str|'--prefix', args.items.head).?(false: Str|'');

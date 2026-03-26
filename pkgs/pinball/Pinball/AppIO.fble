@@ -14,7 +14,7 @@
 <@>% Any = /Std/List/Search%.Any;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 @ String@ = /Std/String%.String@;
 
@@ -24,7 +24,7 @@
 <<@>@>@ Main@ = /App/Native%.Main@;
 
 Main@
-Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
+Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m,
     App@<M@> app, Int@ width, Int@ height, List@<String@> args)
 {
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));

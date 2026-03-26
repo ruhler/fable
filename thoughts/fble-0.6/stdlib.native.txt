@@ -1,0 +1,171 @@
+
+How do I want Native% / Cli% / Ffi% stuff exposed in the standard library?
+
+What we have today:
+* Native@ type, abstract.
+* Cli main takes forall M@, Native@<M@>, Monad@<M@>
+* I pass the Native@, Monad@ to my FFI functions, but ignore them in practice.
+ - Remember, this is a way to try and make it harder for pure code to call FFI
+   functions that result in stateful side effects not captured in the type of
+   the fble function doing the side effects.
+
+Considerations:
+* Is 'Native' a good name to use? Is FFI better? Should something be built
+  into the language itself?
+* Let's take advantage of the NativeM@ approach to avoid having to pass three
+  separate things everywhere.
+* Any performance cost of passing unused Native@, Monad@ everywhere?
+* Should we change FFI implementations to use the provided Monad@ rather than
+  make assumptions about what M@ is?
+
+What's to prevent me from doing something like:
+
+  Native@<Foo@> n;
+  getenv<Foo@>(n, m);
+
+In pure code? Anyone can create an undefined value of any type.
+
+It seems a little sad to make people pay performance overhead for all IO when
+it's so easy to work around any value that overhead gives us.
+
+---
+
+I see three options.
+
+1. Concrete IO monad.
+(String@) { Io@<Maybe@<String@>>; } GetVar = @<GetVar>|GetVar;
+
+With some concrete Monad implementation for composition. And CLI at the top
+level is Io@<Exit@>.
+
+Pros:
+* Deals with concrete types, which is simple.
+
+Cons:
+* Pulls people into writing everything in the Io monad?
+* If you want to generalize an Io computation to generic M@, you have to
+  rewrite all the IO related calls and types.
+* Tedious to lift an Io@ function up to a generic M@ function.
+
+2. Passing a magic key.
+<<@>@ M@>(NativeM@<M@>, String@) { M@<Maybe@<String@>>; } GetVar = @<GetVar>|GetVar;
+
+We say only native code can construct/access the key, so if you have one, you
+are okay.
+
+Pros:
+* People write for generic M@ by default.
+* It's more complicated to write things taking NativeM@ than a generic M@.
+* It's easy to transition from this generic M@ to some other generic M@ that
+  is more targeted without full native access.
+* Trivial to lift an Io@ function up to a generic M@ function.
+
+Cons:
+* You can fake a key using undefined expressions.
+* Easy to forget to check the key is valid on the native side.
+
+3. Combined approach:
+(String@) { Io@<Maybe@<String@>>; } GetVarIo = @<GetVarIo>|GetVar;
+
+<<@>@ M@>(NativeM@<M@>, String@) { M@<Maybe@<String@>>; }
+GetVar = (NativeM@<M@> n, String@ s) {
+  n.io(GetVarIo(s));
+};
+
+Pros:
+* People write for generic M@ by default.
+* It's more complicated to write things taking NativeM@ than a generic M@.
+* It's easy to transition from this generic M@ to some other generic M@ that
+  is more targeted without full native access.
+* Trivial to lift an Io@ function up to a generic M@ function.
+  - Because the Ffi code has already done that for you.
+* Impossible to forget to check the key, because we do that on the fble side
+  where types force us to do it.
+
+Cons:
+* Tedious to lift an Io@ function up to a generic M@ function.
+
+It's tricky, because I like the idea of forcing the conversion of the fble
+side, but that's exactly what makes approach (3) tedious.
+
+Maybe let's try (3), see how it goes. Maybe it feels okay because we already
+have wrapper functions most places. I feel like that's the case with
+/Core/Stdio/FFI% at least. So yeah. Let's try it out.
+
+But first, I need to come up with better names.
+
+Two names really that I need, which will lead to three types.
+1. The concrete 'locked' type.
+2. The interface for unlocking the locked type.
+
+Conceptually what's going on here is we have side effects that impact the
+outside world. (1) is an outside-world side effecting computation. (2) is our
+interface to the outside world: it lets us run those side effecting
+computations. Like an Io computation and an IoRunner kind of thing.
+
+Maybe Io@ and World@ and WorldM@? Io@ is input output. World@ is the thing you
+are sending that input/output to?
+
+  (String@) { Io@<Maybe@<String@>>; } GetVarIo = @<GetVarIo>|GetVar;
+
+  <<@>@ M@>(WorldM@<M@>, String@) { M@<Maybe@<String@>>; }
+  GetVar = (WorldM@<M@> n, String@ s) {
+    n.run(GetVarIo(s));
+  };
+
+Hm... doesn't feel right to me. Brainstorm of other potential name sets:
+* Io_@, Io@, IoM@
+* Ffi@, Io@, IoM@
+* 'Io!'@, Io@, IoM@
+* IoS@, Io@, IoM@
+* Io@, Cli@, CilM@
+ - Io@, App@, AppM@
+* '!'@, Io@, IoM@
+
+We say IoM is a monad that can perform input/output. Io@ is the input/output
+interface. What do you pass to the input/output interface to effect Io? An
+IoComputation? 
+
+
+  Io@<M@> = *(<@ A@>(Io_@<A@>) { M@<A@>; } run);
+  Io@<M@> = *(<@ A@>(Ffi@<A@>) { M@<A@>; } run);
+  Cli@<M@> = *(<@ A@>(Io@<A@>) { M@<A@>; } run);
+  Io@<M@> = *(<@ A@>('!'@<A@>) { M@<A@>; } run);
+
+I don't know.
+
+---
+
+We better not rely on any arguments to FFI functions. We better have them
+produce something only native can deal with, and have someone else deal with
+them externally. Otherwise too much risk of spoofing.
+
+Proposal:
+
+  External@<A@> = (Unit@) { A@; }.%(@/Std/Io%);
+
+  (String@) { External@<Maybe@<String@>>; } GetVarExt = @<GetVarExt>|GetVar;
+
+  <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<String@>>; }
+  GetVar = (IoM@<M@> n, String@ s) {
+    n.run(GetVarExt(s));
+  };
+
+The FFI function uses the External@ type directly as a function. No need to
+take monad or pretend M@ is something based on Native@ or anything like that.
+
+We don't provide any monad for composing External@, which should strongly
+discourage people from writing stuff directly in the External@ monad.
+
+I like this proposal. How hard to try it out? Should I just dive in and hope
+for the best? Why not? Can we do it incrementally?
+
+I think we can do it incrementally. Something like:
+* Rename Native@ to Io@.
+* Define IoM@ and start using that.
+* Define External@. Add run function to Io@ interface.
+* Migrate FFI over to External@ one by one.
+* Move /Core/Env/Native to /Core/Io/Env?
+
+Easy, no?
+

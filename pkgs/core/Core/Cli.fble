@@ -6,7 +6,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 @ String@ = /Std/String%.String@;
 
@@ -27,10 +27,10 @@ Exit@ Failure = Int|1;
   
 # Main@ function for a command line interface.
 #  @arg[<@>@][M@] Abstract monadic type M@ for computation.
-#  @arg[Native@<M@>][native] Interface for executing native code.
+#  @arg[Io@<M@>][native] Interface for executing native code.
 #  @arg[Monad@<M@>][m] The Monad@ instance for M@.
 #  @arg[List@<String@>][args] The command line arguments.
 #  @returns[M@<Exit@>] The application exit status.
-<<@>@>@ Main@ = <<@>@ M@>(Native@<M@>, Monad@<M@>, List@<String@>) { M@<Exit@>; };
+<<@>@>@ Main@ = <<@>@ M@>(Io@<M@>, Monad@<M@>, List@<String@>) { M@<Exit@>; };
 
 @(Exit@, Main@, Success, Failure);

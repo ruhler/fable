@@ -7,7 +7,7 @@
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 
@@ -15,7 +15,7 @@
 
 <<@>@>@ IO@ = /Fbld/Main%.IO@;
 
-Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> args) {
+Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> args) {
   IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin<M@>(n, m));
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
   Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr<M@>(n, m));

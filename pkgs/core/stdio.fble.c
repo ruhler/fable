@@ -26,7 +26,7 @@
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Native@<M@>, Monad@<M@>, Unit@) { File@; }
+ *   (Io@<M@>, Monad@<M@>, Unit@) { File@; }
  */  
 static FbleValue* GetStdin(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -54,7 +54,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdin = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Native@<M@>, Monad@<M@>, Unit@) { File@; }
+ *   (Io@<M@>, Monad@<M@>, Unit@) { File@; }
  */  
 static FbleValue* GetStdout(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -82,7 +82,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdout = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Native@<M@>, Monad@<M@>, Unit@) { File@; }
+ *   (Io@<M@>, Monad@<M@>, Unit@) { File@; }
  */  
 static FbleValue* GetStderr(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -110,7 +110,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStderr = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Native@<M@>, Monad@<M@>, String@, String@, Unit@) { Maybe@<File@>; }
+ *   (Io@<M@>, Monad@<M@>, String@, String@, Unit@) { Maybe@<File@>; }
  */  
 static FbleValue* Open(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -148,7 +148,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Open = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Native@<M@>, Monad@<M@>, File@, Unit@) { Unit@; }
+ *   (Io@<M@>, Monad@<M@>, File@, Unit@) { Unit@; }
  */  
 static FbleValue* Close(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -177,7 +177,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Close = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Native@<M@>, Monad@<M@>, File@, Unit@) { Maybe@<Char@>; }.
+ *   (Io@<M@>, Monad@<M@>, File@, Unit@) { Maybe@<Char@>; }.
  *
  *  @sideeffects
  *   Reads a character from the give file.
@@ -216,7 +216,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Native@<M@>, Monad@<M@>, File@, Unit@) { Maybe@<Int@>; }.
+ *   (Io@<M@>, Monad@<M@>, File@, Unit@) { Maybe@<Int@>; }.
  *
  *  @sideeffects
  *   Reads a byte from the give file.
@@ -255,7 +255,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetByte = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Native@<M@>, Monad@<M@>, File@, Char@, Unit@) { Unit@; }.
+ *   (Io@<M@>, Monad@<M@>, File@, Char@, Unit@) { Unit@; }.
  *
  *  @sideeffects
  *   Writes a character to the give file.
@@ -289,7 +289,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Native@<M@>, Monad@<M@>, File@, Int@, Unit@) { Unit@; }.
+ *   (Io@<M@>, Monad@<M@>, File@, Int@, Unit@) { Unit@; }.
  *
  *  @sideeffects
  *   Writes a byte to the give file.
@@ -324,7 +324,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutByte = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Native@<M@>, Monad@<M@>, File@, Unit@) { Unit@; }.
+ *   (Io@<M@>, Monad@<M@>, File@, Unit@) { Unit@; }.
  *
  *  @sideeffects
  *   Flushes the given file.

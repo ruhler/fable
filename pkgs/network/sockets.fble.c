@@ -485,7 +485,7 @@ static FbleValue* Server(FbleValueHeap* heap, FbleBlockId module_block_id)
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Native@<M@>, Monad@<M@>, Unit@) { Sockets@<M@>; }
+ *   (Io@<M@>, Monad@<M@>, Unit@) { Sockets@<M@>; }
  */  
 static FbleValue* SocketsImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,

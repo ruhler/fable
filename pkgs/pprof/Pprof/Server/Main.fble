@@ -38,7 +38,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 
@@ -164,7 +164,7 @@ Percent = (Int@ numerator, Int@ denominator) {
   Format|'%s.%s%%'[/Std/Int/Show%.Show(qr.q), fraction];
 };
 
-Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> argv) {
+Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> argv) {
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
   Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr<M@>(n, m));
   (String@) { M@<Maybe@<BinaryIStream@<M@>>>; } read = /Core/Stdio/FFI%.Binary.Read<M@>(n, m);

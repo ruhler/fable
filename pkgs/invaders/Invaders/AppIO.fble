@@ -17,7 +17,7 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 % Success = /Core/Cli%.Success;
 
@@ -36,7 +36,7 @@
 <<@>@,@>@ State@ = /Invaders/App%.State@;
 <<@>@>% Invaders = /Invaders/App%.Invaders;
 
-Main@ Main = <<@>@ M@>(Native@<M@> n, Monad@<M@> m,
+Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m,
   App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
 	Maybe@<String@> home := m.do(/Core/Env/Native%.GetVar<M@>(n, m, Str|'HOME'));
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));

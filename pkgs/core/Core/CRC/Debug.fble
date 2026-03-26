@@ -19,7 +19,7 @@
 @ String@ = /Std/String%.String@;
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Native@ = /Core/Native%.Native@;
+<<@>@>@ Io@ = /Core/Io%.Io@;
 
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
@@ -27,7 +27,7 @@
 @ Unit@ = /Std/Unit%.Unit@;
 
 
-Main@ Debug = <<@>@ M@>(Native@<M@> n, Monad@<M@> m, List@<String@> _args) {
+Main@ Debug = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> _args) {
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
   
   (CRC@, List@<Bit@>) { M@<CRC@>; } DFeeds = (CRC@ crc, List@<Bit@> bits) {
