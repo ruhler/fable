@@ -23,11 +23,11 @@
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Io@<M@>, Monad@<M@>, String@, Unit@) { Maybe@<String@>; }
+ *   (String@, Unit@) { Maybe@<String@>; }
  */
 static FbleValue* GetVarImpl(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* function, FbleValue** args)
 {
-  char* var = FbleStringValueAccess(args[2]);
+  char* var = FbleStringValueAccess(args[0]);
   char* value = getenv(var);
   FbleFree(var);
 
@@ -43,7 +43,7 @@ static FbleValue* GetVarImpl(FbleValueHeap* heap, FbleProfileThread* profile, Fb
 FbleForeignFunction _Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar = {
   .path = "/Core/Env/Native%",
   .name = "GetVar",
-  .num_args = 4,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &GetVarImpl,
 };

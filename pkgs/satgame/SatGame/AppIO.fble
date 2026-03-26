@@ -64,7 +64,7 @@ GetArgs = (List@<String@> args, Args@ default) {
 
 
 Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
-	Maybe@<String@> home := io.m.do(/Core/Env/Native%.GetVar<M@>(io.io, io.m, Str|HOME));
+	Maybe@<String@> home := io.m.do(/Core/Env/Native%.GetVar(io, Str|HOME));
   (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(io);
   (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(io);
 

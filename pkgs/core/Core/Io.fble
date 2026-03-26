@@ -1,18 +1,18 @@
 
 <<@>@>@ Monad@ = /Std/Monad%.Monad@;
 
+@ Unit@ = /Std/Unit%.Unit@;
+
+# External@ --
+#  A computation that impacts external state.
+<@>@ External@ = <@ A@> {
+  # Internally we treat this as a pure function, but make it abstract so
+  # nobody can execute it from pure fble code.
+  (Unit@) { A@; }.%(@/Core/Io/''%);
+};
+
 # Io@ --
-#   Interface for monads that support arbitrary side effects via native code.
-#
-#   You cannot construct an instance of Io@ from fble code. It can only be
-#   constructed from native, where typechecking isn't enforced. We promise we
-#   will only ever construct an instance of Io@<M@> where:
-#
-#       M@ = <@ A@>(Unit@) { A@; }.
-#
-#   That means from native code, if you are given something of type
-#   Io@<M@>, you can assume M@ has the above type. Fble users cannot rely
-#   on that, because they still have to pass type checking.
+#   Interface for running external computations.
 #
 #   The motivation for passing around an argument of type Io@<M@> wherever
 #   you need access to native code, instead of having Io@ be the monad
@@ -21,8 +21,10 @@
 #   than it is to write arbitrary M@ everywhere, but it's harder to pass
 #   Io@<M@> everywhere than it is to write arbitrary M@ everywhere without
 #   passing Io@<M@> everywhere.
-<<@>@>@ Io@ = <<@>@ M@> { *().%(@/Core/Io/''%); };
-
+<<@>@>@ Io@ = <<@>@ M@> { *(
+  <@ A@>(External@<A@>) { M@<A@>; } run
+); };
+  
 # Monadic Io interface.
 <<@>@>@ IoM@ = <<@>@ M@> { *(
   @<M@> M@,
@@ -30,4 +32,4 @@
   Io@<M@> io
 ); };
 
-@(Io@, IoM@);
+@(External@, Io@, IoM@);

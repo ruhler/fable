@@ -1,8 +1,13 @@
 
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Io@ = /Core/Io%.Io@;
+
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
+<@>@ External@ = /Core/Io%.External@;
+
 @ String@ = /Std/String%.String@;
+
+(String@) { External@<Maybe@<String@>>; }
+GetVarExt = @<GetVarExt>|GetVar;
 
 # Gets the value of an environment variable.
 # 
@@ -15,7 +20,9 @@
 #
 # No mechanism is currently provided to list the environment variables. We'll
 # consider adding that in the future when a clear use case presents itself.
-<<@>@ M@>(Io@<M@>, Monad@<M@>, String@) { M@<Maybe@<String@>>; }
-GetVar = @<GetVar>|GetVar;
+<<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<String@>>; }
+GetVar = <<@>@ M@>(IoM@<M@> io, String@ name) {
+  io.io.run(GetVarExt(name));
+};
 
 @(GetVar);
