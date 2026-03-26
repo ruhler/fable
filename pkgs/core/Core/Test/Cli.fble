@@ -6,8 +6,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Io@ = /Core/Io%.Io@;
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
 
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
@@ -27,16 +26,16 @@
 # Result:
 #   A cli Main@ program to run the tests.
 (Test@) { Main@; } Run = (Test@ tests) {
-  <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> args) {
+  <<@>@ M@>(IoM@<M@> io, List@<String@> args) {
     String@ prefix = {
       args.?(empty: Str|'');
       /Std/String/Eq%.Eq(Str|'--prefix', args.items.head).?(false: Str|'');
       args.items.tail.items.head;
     };
 
-    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
-    Bool@ passed := m.do(/Core/Test/Run%.Run<M@>(m, out, prefix, tests));
-    m.return(passed.?(true: Success, false: Failure));
+    Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
+    Bool@ passed := io.m.do(/Core/Test/Run%.Run<M@>(io.m, out, prefix, tests));
+    io.m.return(passed.?(true: Success, false: Failure));
   };
 };
 

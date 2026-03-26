@@ -4,9 +4,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-
-<<@>@>@ Io@ = /Core/Io%.Io@;
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
 
 @ String@ = /Std/String%.String@;
 
@@ -31,6 +29,6 @@ Exit@ Failure = Int|1;
 #  @arg[Monad@<M@>][m] The Monad@ instance for M@.
 #  @arg[List@<String@>][args] The command line arguments.
 #  @returns[M@<Exit@>] The application exit status.
-<<@>@>@ Main@ = <<@>@ M@>(Io@<M@>, Monad@<M@>, List@<String@>) { M@<Exit@>; };
+<<@>@>@ Main@ = <<@>@ M@>(IoM@<M@>, List@<String@>) { M@<Exit@>; };
 
 @(Exit@, Main@, Success, Failure);

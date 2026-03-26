@@ -12,9 +12,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-
-<<@>@>@ Io@ = /Core/Io%.Io@;
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
 
 @ String@ = /Std/String%.String@;
 % StringE = /Std/Char/Ascii/Output%.StringE;
@@ -24,19 +22,19 @@
 # Demo application for cli programs.
 # It exits with success if all arguments have the same value, false otherwise.
 
-Main@ Demo = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
+Main@ Demo = <<@>@ M@>(IoM@<M@> io, List@<String@> args) {
+  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
 
-  Unit@ _ := m.do(out $ StringE|'hello, world\n');
+  Unit@ _ := io.m.do(out $ StringE|'hello, world\n');
 
-  args.?(empty: m.return(Success));
+  args.?(empty: io.m.return(Success));
   String@ head = args.items.head;
   Bool@ matching = /Std/List%.ForEach(args.items.tail, True,
     (String@ arg, Bool@ match) {
       match.?(false: False);
       /Std/String/Eq%.Eq(head, arg);
     });
-  m.return(matching.?(true: Success, false: Failure));
+  io.m.return(matching.?(true: Success, false: Failure));
 };
 
 Demo;

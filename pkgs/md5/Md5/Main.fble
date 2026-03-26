@@ -18,8 +18,7 @@
 <@>% Just = /Std/Maybe%.Just;
 <@>% Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Io@ = /Core/Io%.Io@;
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
 % Failure = /Core/Cli%.Failure;
@@ -41,50 +40,50 @@
 
 # Main --
 #   Main function for fble-md5 program.
-Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> args) {
-  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Binary.Stdin<M@>(n, m));
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
-  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr<M@>(n, m));
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Binary.Read<M@>(n, m);
+Main@ Main = <<@>@ M@>(IoM@<M@> io, List@<String@> args) {
+  IStream@<M@> in := io.m.do(/Core/Stdio/FFI%.Binary.Stdin(io));
+  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
+  Put@<M@, Output@> err := io.m.do(/Core/Stdio/FFI%.Text.Stderr(io));
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Binary.Read(io);
 
   (String@) { M@<Bool@>; } md5 = (String@ filename) {
-    Maybe@<IStream@<M@>> istream := m.do({
-      /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(in)));
+    Maybe@<IStream@<M@>> istream := io.m.do({
+      /Std/String/Eq%.Eq(Str|'-', filename).?(true: io.m.return(Just(in)));
       read(filename);
     });
 
     istream.?(nothing: {
-      Unit@ _ := m.do(err $ FormatE|'fble-md5: unable to open %s\n'[
+      Unit@ _ := io.m.do(err $ FormatE|'fble-md5: unable to open %s\n'[
         String(filename)
       ]);
-      m.return(False);
+      io.m.return(False);
     });
 
     M@<Maybe@<Bit8@>> in = {
-      Maybe@<Int@> b := m.do(istream.just);
-      m.return(b.?(just: Just(ToBits(b.just)), nothing: Nothing<Bit8@>));
+      Maybe@<Int@> b := io.m.do(istream.just);
+      io.m.return(b.?(just: Just(ToBits(b.just)), nothing: Nothing<Bit8@>));
     };
 
-    Hash@ hash := m.do(/Md5/Md5%.Md5(m, in));
+    Hash@ hash := io.m.do(/Md5/Md5%.Md5(io.m, in));
     Output@ line = Format|'%s  %s'[/Md5/Hash%.Show(hash), /Std/Char/Output%.String(filename)];
-    Unit@ _ := m.do(out $ FormatE|'%s\n'[line]);
-    m.return(True);
+    Unit@ _ := io.m.do(out $ FormatE|'%s\n'[line]);
+    io.m.return(True);
   };
 
   (Bool@, List@<String@>) { M@<Bool@>; }
   md5s = (Bool@ all_pass, List@<String@> files) {
-    files.?(empty: m.return(all_pass));
-    Bool@ pass := m.do(md5(files.items.head));
+    files.?(empty: io.m.return(all_pass));
+    Bool@ pass := io.m.do(md5(files.items.head));
     md5s(And(all_pass, pass), files.items.tail);
   };
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(out $ String $ /Md5/Usage%);
-    m.return(Success);
+    Unit@ _ := io.m.do(out $ String $ /Md5/Usage%);
+    io.m.return(Success);
   });
 
-  Bool@ pass := m.do(md5s(True, args.?(empty: List[Str|'-'], : args)));
-  m.return(pass.?(true: Success, false: Failure));
+  Bool@ pass := io.m.do(md5s(True, args.?(empty: List[Str|'-'], : args)));
+  io.m.return(pass.?(true: Success, false: Failure));
 };
 
 Main;

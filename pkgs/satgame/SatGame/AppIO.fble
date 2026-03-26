@@ -12,8 +12,7 @@
 
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Io@ = /Core/Io%.Io@;
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
 
 % Success = /Core/Cli%.Success;
 
@@ -64,39 +63,38 @@ GetArgs = (List@<String@> args, Args@ default) {
 };
 
 
-Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m,
-  App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
-	Maybe@<String@> home := m.do(/Core/Env/Native%.GetVar<M@>(n, m, Str|HOME));
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read<M@>(n, m);
-  (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write<M@>(n, m);
+Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
+	Maybe@<String@> home := io.m.do(/Core/Env/Native%.GetVar<M@>(io.io, io.m, Str|HOME));
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(io);
+  (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(io);
 
   # Read and update the default seed value.
-  Int@ seed := m.do({
-    home.?(nothing: m.return(Int|0));
+  Int@ seed := io.m.do({
+    home.?(nothing: io.m.return(Int|0));
 
     String@ filename = Concat[home.just, Str|'/.fble-satgame'];
-    Maybe@<IStream@<M@>> istream := m.do(read(filename));
+    Maybe@<IStream@<M@>> istream := io.m.do(read(filename));
 
-    Int@ seed := m.do({
-      istream.?(nothing: m.return(Int|0));
-      String@ text := m.do(GetText(istream.just, m));
-      m.return(/Core/Int/Read%.Read(text));
+    Int@ seed := io.m.do({
+      istream.?(nothing: io.m.return(Int|0));
+      String@ text := io.m.do(GetText(istream.just, io.m));
+      io.m.return(/Core/Int/Read%.Read(text));
     });
 
-    Maybe@<OStream@<M@>> ostream := m.do(write(filename));
-    Unit@ _ := m.do $ {
-      ostream.?(nothing: m.return(Unit));
-      Unit@ _ := m.do(ostream.just.put $ /Std/Int/Show%.Show(Incr(seed)));
+    Maybe@<OStream@<M@>> ostream := io.m.do(write(filename));
+    Unit@ _ := io.m.do $ {
+      ostream.?(nothing: io.m.return(Unit));
+      Unit@ _ := io.m.do(ostream.just.put $ /Std/Int/Show%.Show(Incr(seed)));
       ostream.just.close;
     };
 
-    m.return(seed);
+    io.m.return(seed);
   });
 
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
+  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
   Args@ args = GetArgs(argv, DefaultArgs.@(seed));
-  Unit@ _ := m.do(SatGame(m, out, app, width, height, args));
-  m.return(Success);
+  Unit@ _ := io.m.do(SatGame(io.m, out, app, width, height, args));
+  io.m.return(Success);
 };
 
 Main;

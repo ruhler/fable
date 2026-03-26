@@ -11,8 +11,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Io@ = /Core/Io%.Io@;
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
 
 % Success = /Core/Cli%.Success;
 
@@ -55,11 +54,11 @@ Memory@ Memory = Built.memory;
 
 @ Input@ = +(Unit@ quit, Unit@ step);
 
-Main@ Main = <<@>@ M@>(Io@<M@> _n, Monad@<M@> m, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
+Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
   M@<Input@> GetInput = {
-    Event@ e := m.do(app.event);
-    e.?(tick: m.return(Input@(step: Unit)),
-        key_down: e.key_down.?(q: m.return(Input@(quit: Unit)), : GetInput),
+    Event@ e := io.m.do(app.event);
+    e.?(tick: io.m.return(Input@(step: Unit)),
+        key_down: e.key_down.?(q: io.m.return(Input@(quit: Unit)), : GetInput),
         : GetInput);
   };
 
@@ -86,26 +85,26 @@ Main@ Main = <<@>@ M@>(Io@<M@> _n, Monad@<M@> m, App@<M@> app, Int@ width, Int@ 
 
   (Int@, Design@, Memory@) { M@<Unit@>; }
   StepUI = (Int@ n, Design@ design, Memory@ memory) {
-    Unit@ _ := m.do(Output(Effect@(draw: Draw(memory))));
-    Unit@ _ := m.do(Output(Effect@(tick: Int|400)));
-    Input@ x := m.do(GetInput);
-    x.?(quit: m.return(Unit),
+    Unit@ _ := io.m.do(Output(Effect@(draw: Draw(memory))));
+    Unit@ _ := io.m.do(Output(Effect@(tick: Int|400)));
+    Input@ x := io.m.do(GetInput);
+    x.?(quit: io.m.return(Unit),
         step: IsZero(n).?(
-          true: m.return(Unit),
+          true: io.m.return(Unit),
           false: StepUI(Decr(n), design, Apply(design, memory))));
   };
 
   M@<Unit@> WaitForKeyPress = {
-    Event@ e := m.do(app.event);
-    e.?(key_down: m.return(Unit), : WaitForKeyPress);
+    Event@ e := io.m.do(app.event);
+    e.?(key_down: io.m.return(Unit), : WaitForKeyPress);
   };
 
-  Unit@ _ := m.do(Output(Effect@(draw: Draw(Memory))));
-  Unit@ _ := m.do(WaitForKeyPress);
-  Unit@ _ := m.do(StepUI(Int|2000, Design, Memory));
-  Unit@ _ := m.do(WaitForKeyPress);
+  Unit@ _ := io.m.do(Output(Effect@(draw: Draw(Memory))));
+  Unit@ _ := io.m.do(WaitForKeyPress);
+  Unit@ _ := io.m.do(StepUI(Int|2000, Design, Memory));
+  Unit@ _ := io.m.do(WaitForKeyPress);
 
-  m.return(Success);
+  io.m.return(Success);
 };
 
 Main;

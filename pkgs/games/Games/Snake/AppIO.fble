@@ -5,8 +5,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Io@ = /Core/Io%.Io@;
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
 
 @ String@ = /Std/String%.String@;
 
@@ -16,11 +15,10 @@
 <<@>@>@ Main@ = /App/Native%.Main@;
 
 Main@
-Main = <<@>@ M@>(Io@<M@> _n, Monad@<M@> m,
-    App@<M@> app, Int@ width, Int@ height, List@<String@> _args)
+Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> _args)
 {
-  Unit@ _ := m.do $ /Games/Snake%.Main<M@>(m, app, width, height);
-  m.return(Success);
+  Unit@ _ := io.m.do $ /Games/Snake%.Main<M@>(io.m, app, width, height);
+  io.m.return(Success);
 };
 
 Main;

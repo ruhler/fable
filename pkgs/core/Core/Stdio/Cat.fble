@@ -13,9 +13,7 @@
 <@>@ Maybe@ = /Std/Maybe%.Maybe@;
 <@>% Just = /Std/Maybe%.Just;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-
-<<@>@>@ Io@ = /Core/Io%.Io@;
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
 
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 @ Exit@ = /Core/Cli%.Exit@;
@@ -29,35 +27,35 @@
 % Unit = /Std/Unit%.Unit;
 
 # The 'cat' program.
-Main@ Cat = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
-  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin<M@>(n, m));
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read<M@>(n, m);
+Main@ Cat = <<@>@ M@>(IoM@<M@> io, List@<String@> args) {
+  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
+  IStream@<M@> in := io.m.do(/Core/Stdio/FFI%.Text.Stdin(io));
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(io);
 
   (IStream@<M@>) { M@<Unit@>; } cat = (IStream@<M@> input) {
-    String@ line := m.do(GetLine(input, m));
-    line.?(empty: m.return(Unit));
+    String@ line := io.m.do(GetLine(input, io.m));
+    line.?(empty: io.m.return(Unit));
 
-    Unit@ _ := m.do(out $ String(line));
+    Unit@ _ := io.m.do(out $ String(line));
     cat(input);
   };
 
   (List@<String@>) { M@<Exit@>; } cats = (List@<String@> inputs) {
-    inputs.?(empty: m.return(Success));
+    inputs.?(empty: io.m.return(Success));
     String@ filename = inputs.items.head;
 
-    Maybe@<IStream@<M@>> istream := m.do $ {
-      /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(in)));
+    Maybe@<IStream@<M@>> istream := io.m.do $ {
+      /Std/String/Eq%.Eq(Str|'-', filename).?(true: io.m.return(Just(in)));
       read(filename);
     };
 
     istream.?(nothing: {
-      Unit@ _ := m.do(out $
+      Unit@ _ := io.m.do(out $
         FormatE|'fble-cat: Unable to open %s\n'[String(filename)]);
-      m.return(Failure);
+      io.m.return(Failure);
     });
 
-    Unit@ _ := m.do(cat(istream.just));
+    Unit@ _ := io.m.do(cat(istream.just));
     cats(inputs.items.tail);
   };
 

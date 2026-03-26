@@ -13,8 +13,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% Any = /Std/List/Search%.Any;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Io@ = /Core/Io%.Io@;
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
 
 @ String@ = /Std/String%.String@;
 
@@ -24,18 +23,17 @@
 <<@>@>@ Main@ = /App/Native%.Main@;
 
 Main@
-Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m,
-    App@<M@> app, Int@ width, Int@ height, List@<String@> args)
+Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args)
 {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
+  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(out $ String $ /Pinball/Usage%);
-    m.return(Success);
+    Unit@ _ := io.m.do(out $ String $ /Pinball/Usage%);
+    io.m.return(Success);
   });
 
-  Unit@ _ := m.do $ /Pinball/App%.Main<M@>(m, app, width, height);
-  m.return(Success);
+  Unit@ _ := io.m.do $ /Pinball/App%.Main<M@>(io.m, app, width, height);
+  io.m.return(Success);
 };
 
 Main;

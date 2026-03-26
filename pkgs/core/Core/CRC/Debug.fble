@@ -18,8 +18,7 @@
 
 @ String@ = /Std/String%.String@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Io@ = /Core/Io%.Io@;
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
 
 <<@>@>@ Main@ = /Core/Cli%.Main@;
 % Success = /Core/Cli%.Success;
@@ -27,23 +26,23 @@
 @ Unit@ = /Std/Unit%.Unit@;
 
 
-Main@ Debug = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> _args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
+Main@ Debug = <<@>@ M@>(IoM@<M@> io, List@<String@> _args) {
+  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
   
   (CRC@, List@<Bit@>) { M@<CRC@>; } DFeeds = (CRC@ crc, List@<Bit@> bits) {
-    bits.?(empty: m.return(crc));
+    bits.?(empty: io.m.return(crc));
 
     CRC@ ncrc = Feed(crc, bits.items.head);
-    Unit@ _ := m.do(out $ FormatE|'%s\n'[ShowBits(ncrc.checksum)]);
+    Unit@ _ := io.m.do(out $ FormatE|'%s\n'[ShowBits(ncrc.checksum)]);
     DFeeds(ncrc, bits.items.tail);
   };
 
   List@<Bit@> poly = Items(Bit.1, HexToBits|04C11DB7);
   List@<Bit@> init = HexToBits|00000000;
   CRC@ crc = CRC@(poly, init);
-  CRC@ _result := m.do(DFeeds(crc, HexToBits|31323334353637383900000000));
+  CRC@ _result := io.m.do(DFeeds(crc, HexToBits|31323334353637383900000000));
 
-  m.return(Success);
+  io.m.return(Success);
 };
 
 Debug;

@@ -36,9 +36,7 @@
 <@>% Just = /Std/Maybe%.Just;
 <@>% Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-
-<<@>@>@ Io@ = /Core/Io%.Io@;
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
 
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 
@@ -164,12 +162,12 @@ Percent = (Int@ numerator, Int@ denominator) {
   Format|'%s.%s%%'[/Std/Int/Show%.Show(qr.q), fraction];
 };
 
-Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> argv) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
-  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr<M@>(n, m));
-  (String@) { M@<Maybe@<BinaryIStream@<M@>>>; } read = /Core/Stdio/FFI%.Binary.Read<M@>(n, m);
+Main@ Main = <<@>@ M@>(IoM@<M@> io, List@<String@> argv) {
+  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
+  Put@<M@, Output@> err := io.m.do(/Core/Stdio/FFI%.Text.Stderr(io));
+  (String@) { M@<Maybe@<BinaryIStream@<M@>>>; } read = /Core/Stdio/FFI%.Binary.Read(io);
 
-  Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(n, m));
+  Sockets@<M@> sockets := io.m.do(/Network/Sockets/Native%.Sockets<M@>(io.io, io.m));
 
   (Profile@, Table@, Int@, (Sequence@) { Sequence@; }) { Output@; }
   Table = (Profile@ profile, Table@ table, Int@ total, (Sequence@) { Sequence@; } link) {
@@ -231,47 +229,47 @@ Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> argv) {
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Unit@ _ := m.do(out $ String $ /Pprof/Usage%);
-    m.return(Success);
+    Unit@ _ := io.m.do(out $ String $ /Pprof/Usage%);
+    io.m.return(Success);
   });
 
   args.file.?(empty: {
-    Unit@ _ := m.do(err $ StringE|'missing input file');
-    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
-    m.return(Failure);
+    Unit@ _ := io.m.do(err $ StringE|'missing input file');
+    Unit@ _ := io.m.do(err $ StringE|'\ntry --help for help\n');
+    io.m.return(Failure);
   });
 
   args.error.?(just: {
-    Unit@ _ := m.do(err $ args.error.just);
-    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
-    m.return(Failure);
+    Unit@ _ := io.m.do(err $ args.error.just);
+    Unit@ _ := io.m.do(err $ StringE|'\ntry --help for help\n');
+    io.m.return(Failure);
   });
 
-  Maybe@<Server@<M@>> ms := m.do(sockets.server(args.hostname, args.port));
+  Maybe@<Server@<M@>> ms := io.m.do(sockets.server(args.hostname, args.port));
   ms.?(nothing: {
-    Unit@ _ := m.do(err $ StringE|'unable to serve\n');
-    m.return(Failure);
+    Unit@ _ := io.m.do(err $ StringE|'unable to serve\n');
+    io.m.return(Failure);
   });
 
   Server@<M@> s = ms.just;
 
-  Unit@ _ := m.do(out $
+  Unit@ _ := io.m.do(out $
       FormatE|'parsing %s...\n'[/Std/Char/Output%.String(args.file)]);
 
-  Maybe@<BinaryIStream@<M@>> fin := m.do(read(args.file));
+  Maybe@<BinaryIStream@<M@>> fin := io.m.do(read(args.file));
   fin.?(nothing: {
-    Unit@ _ := m.do(err $ FormatE|'unable to open ''%s''\n'[
+    Unit@ _ := io.m.do(err $ FormatE|'unable to open ''%s''\n'[
         /Std/Char/Output%.String(args.file)]);
-    m.return(Failure);
+    io.m.return(Failure);
   });
 
-  Result@<Profile@> parsed := m.do(Parse(fin.just, m));
+  Result@<Profile@> parsed := io.m.do(Parse(fin.just, io.m));
   parsed.?(error: {
-    Unit@ _ := m.do(err $ FormatE|'error: %s\n'[parsed.error]);
-    m.return(Failure);
+    Unit@ _ := io.m.do(err $ FormatE|'error: %s\n'[parsed.error]);
+    io.m.return(Failure);
   });
   
-  Unit@ _ := m.do(out $
+  Unit@ _ := io.m.do(out $
     FormatE|'serving at http://%s:%s\n'[
       /Std/Char/Output%.String(args.hostname),
       /Std/Int/Show%.Show(args.port)
@@ -330,15 +328,15 @@ Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> argv) {
   (CharIStream@<M@>, Put@<M@, Output@>) { M@<Unit@>; }
   HandleConnection = (CharIStream@<M@> is, Put@<M@, Output@> os) {
     # Get the start line
-    String@ start := m.do(GetLine(is, m));
+    String@ start := io.m.do(GetLine(is, io.m));
 
     # Skip past the request headers. We don't care about those.
     M@<Unit@> SkipHeaders = {
-      String@ line := m.do(GetLine(is, m));
-      /Std/String/Eq%.Eq(StrE|'\r\n', line).?(true: m.return(Unit));
+      String@ line := io.m.do(GetLine(is, io.m));
+      /Std/String/Eq%.Eq(StrE|'\r\n', line).?(true: io.m.return(Unit));
       SkipHeaders;
     };
-    Unit@ _ := m.do(SkipHeaders);
+    Unit@ _ := io.m.do(SkipHeaders);
 
     List@<String@> start_split = Split(start, Str|' ');
     String@ method = Get(start_split, Int|0);
@@ -352,13 +350,13 @@ Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> argv) {
       uri_split.items.tail.items.head;
     };
 
-    Unit@ _ := m.do(os $ Lines[
+    Unit@ _ := io.m.do(os $ Lines[
       StringE|'HTTP/1.1 200 OK',
       StringE|'Content-Type: text/html\r',
       StringE|'Cache-Control: no-cache\r',
       StringE|'\r']);
 
-    Unit@ _ := m.do(os $ FormatE|'%s\n'[String $ /Pprof/Server/Menu%.Menu]);
+    Unit@ _ := io.m.do(os $ FormatE|'%s\n'[String $ /Pprof/Server/Menu%.Menu]);
 
     /Std/String/Eq%.Eq(Str|'/', path).?(true: os $ OverviewPage);
     /Std/String/Eq%.Eq(Str|'/overall', path).?(true: os $ OverallPage);
@@ -381,28 +379,28 @@ Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, List@<String@> argv) {
 
   args.benchmark.?(true: {
     # Run through a few different queries to act as a benchmark.
-    Unit@ _ := m.do(out $ OverviewPage);
-    Unit@ _ := m.do(out $ OverallPage);
-    Unit@ _ := m.do(out $ SelfPage);
-    Unit@ _ := m.do(out $ SeqsPage);
+    Unit@ _ := io.m.do(out $ OverviewPage);
+    Unit@ _ := io.m.do(out $ OverallPage);
+    Unit@ _ := io.m.do(out $ SelfPage);
+    Unit@ _ := io.m.do(out $ SeqsPage);
 
-    profile.samples.?(empty: m.return(Success));
+    profile.samples.?(empty: io.m.return(Success));
     Sequence@ seq = List[Last(profile.samples.items.head.sequence)];
-    Unit@ _ := m.do(out $ SeqPage(seq));
-    m.return(Success);
+    Unit@ _ := io.m.do(out $ SeqPage(seq));
+    io.m.return(Success);
   });
 
   M@<Unit@> Serve = {
-    IOStream@<M@> ios := m.do(s);
-    OStream@<M@> os = OStream(ios.out, m);
-    CharIStream@<M@> is = IStream(ios.in, m);
-    Unit@ _ := m.do(HandleConnection(is, os.put));
-    Unit@ _ := m.do(os.close);
+    IOStream@<M@> ios := io.m.do(s);
+    OStream@<M@> os = OStream(ios.out, io.m);
+    CharIStream@<M@> is = IStream(ios.in, io.m);
+    Unit@ _ := io.m.do(HandleConnection(is, os.put));
+    Unit@ _ := io.m.do(os.close);
     Serve;
   };
 
-  Unit@ _ := m.do(Serve);
-  m.return(Success);
+  Unit@ _ := io.m.do(Serve);
+  io.m.return(Success);
 };
 
 Main;

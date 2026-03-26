@@ -19,54 +19,14 @@
 #include "debug.fble.h"         // for /Core/Debug/Builtin%
 #include "env.fble.h"           // for /Core/Env/Native%
 #include "int.fble.h"           // for FbleNewIntValue, FbleIntValueAccess
+#include "io.fble.h"            // for FbleIoM
 #include "stdio.fble.h"         // for /Core/Stdio/FFI%
 #include "string.fble.h"        // for FbleNewStringValue, FbleStringValueAccess
 
 #define LIST_TAGWIDTH 1
 
-static FbleValue* ReturnImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args);
-static FbleValue* DoImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args);
 static FbleValue* Cli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv);
 
-
-/**
- * @func[ReturnImpl] FbleRunFunction for monadic 'return' on a pure monad.
- *  See documentation of FbleRunFunction in fble-function.h
- *
- *  The fble type of the function is @l{(A@, Unit@) { A@; }}.
- *
- *  @sideeffects None.
- */
-static FbleValue* ReturnImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args)
-{
-  return args[0];
-}
-
-/**
- * @func[DoImpl] FbleRunFunction for monadic 'do' on a pure monad.
- *  See documentation of FbleRunFunction in fble-function.h
- *
- *  The fble type of the function is @l{((Unit@) { A@; }, (A@, Unit@) { B@; }, Unit@) { B@; }}.
- *
- *  @sideeffects None.
- */
-static FbleValue* DoImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args)
-{
-  FbleValue* ma = args[0];
-  FbleValue* f = args[1];
-  FbleValue* u = args[2];
-  FbleValue* a = FbleCall(heap, profile, ma, 1, &u);
-  FbleValue* fargs[2] = { a, u };
-  return FbleCall(heap, profile, f, 2, fargs);
-}
 
 /**
  * @func[Cli] Executes a @l{/Core/Cli%.Main@} function.
@@ -96,46 +56,13 @@ static FbleValue* Cli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main
 
   // We apply the main function with:
   //  M@ = <@ A@>(Unit@) { A@; }
-  FbleValue* native = FbleNewStructValue_(heap, 0);     // Io@<M@>
-  FbleValue* monad = FbleCliNativeMonad(heap, profile); // Monad@<M@>
+  FbleValue* iom = FbleIoM(heap, profile);              // IoM@<M@>
   FbleValue* args = FbleCliArgs(heap, argc, argv);      // List@<String@>
   FbleValue* unit = FbleNewStructValue_(heap, 0);       // Unit@
 
-  FbleValue* func_args[4] = { native, monad, args, unit };
-  FbleValue* result = FbleApply(heap, func, 4, func_args, profile);
+  FbleValue* func_args[3] = { iom, args, unit };
+  FbleValue* result = FbleApply(heap, func, 3, func_args, profile);
   return FblePopFrame(heap, result);
-}
-
-// See documentation in cli.fble.h
-FbleValue* FbleCliNativeMonad(FbleValueHeap* heap, FbleProfile* profile)
-{
-  FbleName block_names[2];
-  block_names[0].name = FbleNewString("CliReturn!");
-  block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[1].name = FbleNewString("CliDo!");
-  block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  FbleNameV names = { .size = 2, .xs = block_names };
-  FbleBlockId block_id = FbleAddBlocksToProfile(profile, names);
-  FbleFreeName(block_names[0]);
-  FbleFreeName(block_names[1]);
-
-  static FbleExecutable return_exe = {
-    .num_args = 2,
-    .num_statics = 0,
-    .max_call_args = 0,
-    .run = &ReturnImpl,
-  };
-  FbleValue* monad_return = FbleNewFuncValue(heap, &return_exe, block_id, NULL);
-
-  static FbleExecutable do_exe = {
-    .num_args = 3,
-    .num_statics = 0,
-    .max_call_args = 0,
-    .run = &DoImpl,
-  };
-  FbleValue* monad_do = FbleNewFuncValue(heap, &do_exe, block_id + 1, NULL);
-
-  return FbleNewStructValue_(heap, 2, monad_return, monad_do);
 }
 
 // See documentation in cli.fble.h

@@ -1,4 +1,6 @@
 
+<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+
 # Io@ --
 #   Interface for monads that support arbitrary side effects via native code.
 #
@@ -21,4 +23,11 @@
 #   passing Io@<M@> everywhere.
 <<@>@>@ Io@ = <<@>@ M@> { *().%(@/Core/Io/''%); };
 
-@(Io@);
+# Monadic Io interface.
+<<@>@>@ IoM@ = <<@>@ M@> { *(
+  @<M@> M@,
+  Monad@<M@> m,
+  Io@<M@> io
+); };
+
+@(Io@, IoM@);

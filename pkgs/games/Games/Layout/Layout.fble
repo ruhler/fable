@@ -30,8 +30,7 @@
 <@>% Just = /Std/Maybe%.Just;
 <@>% Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ Io@ = /Core/Io%.Io@;
+<<@>@>@ IoM@ = /Core/Io%.IoM@;
 
 % Map = /Core/Int/Map%.Map;
 
@@ -274,14 +273,14 @@ State@ InitialState = @(
   hovered: Nothing<Pos@>
 );
 
-Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, App@<M@> app, Int@ _width, Int@ height, List@<String@> _args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout<M@>(n, m));
+Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ _width, Int@ height, List@<String@> _args) {
+  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
 
   M@<Event@> FilterEvent = {
-    Event@ e := m.do(app.event);
-    e.?(key_down: m.return(e),
-        mouse_down: m.return(e),
-        mouse_motion: m.return(e),
+    Event@ e := io.m.do(app.event);
+    e.?(key_down: io.m.return(e),
+        mouse_down: io.m.return(e),
+        mouse_motion: io.m.return(e),
         : FilterEvent);
   };
 
@@ -307,11 +306,11 @@ Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, App@<M@> app, Int@ _width, Int@ 
     };
 
     # Update the display.
-    Unit@ _ := m.do(app.effect(Effect@(draw: Affine(a, b, Draw(s)))));
+    Unit@ _ := io.m.do(app.effect(Effect@(draw: Affine(a, b, Draw(s)))));
 
     # Process the next input event.
-    Event@ e := m.do(FilterEvent);
-    e.?(key_down: e.key_down.?(q: m.return(Unit), : StepUI(s)));
+    Event@ e := io.m.do(FilterEvent);
+    e.?(key_down: e.key_down.?(q: io.m.return(Unit), : StepUI(s)));
     e.?(mouse_down: {
       Maybe@<Pos@> mpos = ScreenToPos(e.mouse_down.x, e.mouse_down.y);
 
@@ -324,7 +323,7 @@ Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, App@<M@> app, Int@ _width, Int@ 
       # Print out the score to the user.
       Int@ cost_before = Cost(s.layout, s.edges);
       Int@ cost_after = Cost(layout, s.edges);
-      Unit@ _ := m.do(out $ FormatE|'%s => %s\n'[
+      Unit@ _ := io.m.do(out $ FormatE|'%s => %s\n'[
               /Std/Int/Show%.Show(cost_before),
               /Std/Int/Show%.Show(cost_after)]);
 
@@ -335,11 +334,11 @@ Main@ Main = <<@>@ M@>(Io@<M@> n, Monad@<M@> m, App@<M@> app, Int@ _width, Int@ 
         StepUI(s.@(hovered));
     });
 
-    m.return(Unit);
+    io.m.return(Unit);
   };
 
-  Unit@ _ := m.do(StepUI(InitialState));
-  m.return(Success);
+  Unit@ _ := io.m.do(StepUI(InitialState));
+  io.m.return(Success);
 };
 
 Main;
