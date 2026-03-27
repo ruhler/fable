@@ -1,0 +1,37 @@
+Monad Composition
+=================
+
+This keeps coming up. I've had some thoughts and made some progress, but I'm
+not convinced my current approach scales the way it should. So let's review.
+
+I want to be able to write functions that work for any monad that supports a
+specific interface. For example, any monad that supports random number
+generation. Then I want to be able to reuse those functions with a variety of
+different monad instances easily: a pure state monad, an Io monad, a
+transformed Io monad, a monad that can also do input and output, etc.
+
+See thoughts/fble-0.6/stdlib.random.txt for discussion of various approaches
+and explanation of how I got to where I am today. The progression is roughly:
+
+1. Write the function to use a concrete monad.
+ - But then it doesn't compose well with variations on that monad.
+
+2. Write a function that works forall M@ that have a Monad@ instance and an
+Rng@ instance. Rng@ is separate from Monad@ in this case.
+ - But then type inference doesn't work to infer the type M@ and we have to
+   pass around 3 arguments everywhere: M@, m, r.
+
+3. Write a function that works forall M@ and takes an RngM@ instance, where
+RngM@ has an explicit M@ field to enable type inference of M@ and includes a
+Monad@ subfield so we can pass around one argument for everything we need.
+ - But now any time we want to say m.do or m.return, we now say something like
+   rng.m.do, rng.m.return. Is that better than (2)?
+
+I'm worried this doesn't scale up too well though. Like, what if I want to
+compose an Rng@ with Io@. Am I given RngM@ and IoM@? Or I have to define a new
+RngIoM@? How can I extract easily an RngM@ from this RngIoM@ to pass to a
+function that only wants the Rng@ part of the interface?
+
+Can we include the M@ field in all sub-structures so there is no need to
+distinguish between Rng@ and RngM@? How about the Monad@ field? Any concern
+about having two different named Monad@ subfields?

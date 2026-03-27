@@ -26,7 +26,7 @@
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Io@<M@>, Monad@<M@>, Unit@) { File@; }
+ *   (Unit@, Unit@) { File@; }
  */  
 static FbleValue* GetStdin(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -42,7 +42,7 @@ static FbleValue* GetStdin(
 FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdin = {
   .path = "/Core/Stdio/FFI%",
   .name = "GetStdin",
-  .num_args = 3,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &GetStdin,
 };
@@ -54,7 +54,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdin = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Io@<M@>, Monad@<M@>, Unit@) { File@; }
+ *   (Unit@, Unit@) { File@; }
  */  
 static FbleValue* GetStdout(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -70,7 +70,7 @@ static FbleValue* GetStdout(
 FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdout = {
   .path = "/Core/Stdio/FFI%",
   .name = "GetStdout",
-  .num_args = 3,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &GetStdout,
 };
@@ -82,7 +82,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdout = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Io@<M@>, Monad@<M@>, Unit@) { File@; }
+ *   (Unit@, Unit@) { File@; }
  */  
 static FbleValue* GetStderr(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -98,7 +98,7 @@ static FbleValue* GetStderr(
 FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStderr = {
   .path = "/Core/Stdio/FFI%",
   .name = "GetStderr",
-  .num_args = 3,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &GetStderr,
 };
@@ -110,7 +110,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStderr = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Io@<M@>, Monad@<M@>, String@, String@, Unit@) { Maybe@<File@>; }
+ *   (String@, String@, Unit@) { Maybe@<File@>; }
  */  
 static FbleValue* Open(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -119,8 +119,8 @@ static FbleValue* Open(
   (void)profile;
   (void)args;
 
-  char* file = FbleStringValueAccess(args[2]);
-  char* mode = FbleStringValueAccess(args[3]);
+  char* file = FbleStringValueAccess(args[0]);
+  char* mode = FbleStringValueAccess(args[1]);
   FILE* fout = fopen(file, mode);
   FbleFree(file);
   FbleFree(mode);
@@ -136,7 +136,7 @@ static FbleValue* Open(
 FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Open = {
   .path = "/Core/Stdio/FFI%",
   .name = "Open",
-  .num_args = 5,
+  .num_args = 3,
   .max_call_args = 0,
   .run = &Open,
 };
@@ -148,7 +148,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Open = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Io@<M@>, Monad@<M@>, File@, Unit@) { Unit@; }
+ *   (File@, Unit@) { Unit@; }
  */  
 static FbleValue* Close(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -157,7 +157,7 @@ static FbleValue* Close(
   (void)profile;
   (void)args;
 
-  FILE* file = (FILE*)FbleNativeValueData(args[2]);
+  FILE* file = (FILE*)FbleNativeValueData(args[0]);
   fclose(file);
   return FbleNewStructValue_(heap, 0);
 }
@@ -165,7 +165,7 @@ static FbleValue* Close(
 FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Close = {
   .path = "/Core/Stdio/FFI%",
   .name = "Close",
-  .num_args = 4,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &Close,
 };
@@ -177,7 +177,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Close = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Io@<M@>, Monad@<M@>, File@, Unit@) { Maybe@<Char@>; }.
+ *   (File@, Unit@) { Maybe@<Char@>; }.
  *
  *  @sideeffects
  *   Reads a character from the give file.
@@ -189,7 +189,7 @@ static FbleValue* GetChar(
   (void)profile;
   (void)args;
 
-  FILE* file = (FILE*)FbleNativeValueData(args[2]);
+  FILE* file = (FILE*)FbleNativeValueData(args[0]);
 
   wint_t c = fgetwc(file);
   if (c == WEOF) {
@@ -204,7 +204,7 @@ static FbleValue* GetChar(
 FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar = {
   .path = "/Core/Stdio/FFI%",
   .name = "GetChar",
-  .num_args = 4,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &GetChar,
 };
@@ -216,7 +216,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Io@<M@>, Monad@<M@>, File@, Unit@) { Maybe@<Int@>; }.
+ *   (File@, Unit@) { Maybe@<Int@>; }.
  *
  *  @sideeffects
  *   Reads a byte from the give file.
@@ -228,7 +228,7 @@ static FbleValue* GetByte(
   (void)profile;
   (void)args;
 
-  FILE* file = (FILE*)FbleNativeValueData(args[2]);
+  FILE* file = (FILE*)FbleNativeValueData(args[0]);
 
   int c = fgetc(file);
   if (c == EOF) {
@@ -243,7 +243,7 @@ static FbleValue* GetByte(
 FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetByte = {
   .path = "/Core/Stdio/FFI%",
   .name = "GetByte",
-  .num_args = 4,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &GetByte,
 };
@@ -255,7 +255,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetByte = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Io@<M@>, Monad@<M@>, File@, Char@, Unit@) { Unit@; }.
+ *   (File@, Char@, Unit@) { Unit@; }.
  *
  *  @sideeffects
  *   Writes a character to the give file.
@@ -267,8 +267,8 @@ static FbleValue* PutChar(
   (void)profile;
   (void)args;
 
-  FILE* file = (FILE*)FbleNativeValueData(args[2]);
-  wchar_t c = FbleCharValueAccess(args[3]);
+  FILE* file = (FILE*)FbleNativeValueData(args[0]);
+  wchar_t c = FbleCharValueAccess(args[1]);
   fputwc(c, file);
   return FbleNewStructValue_(heap, 0);
 }
@@ -277,7 +277,7 @@ static FbleValue* PutChar(
 FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar = {
   .path = "/Core/Stdio/FFI%",
   .name = "PutChar",
-  .num_args = 5,
+  .num_args = 3,
   .max_call_args = 0,
   .run = &PutChar,
 };
@@ -289,7 +289,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Io@<M@>, Monad@<M@>, File@, Int@, Unit@) { Unit@; }.
+ *   (File@, Int@, Unit@) { Unit@; }.
  *
  *  @sideeffects
  *   Writes a byte to the give file.
@@ -301,8 +301,8 @@ static FbleValue* PutByte(
   (void)profile;
   (void)args;
 
-  FILE* file = (FILE*)FbleNativeValueData(args[2]);
-  int byte = FbleIntValueAccess(args[3]);
+  FILE* file = (FILE*)FbleNativeValueData(args[0]);
+  int byte = FbleIntValueAccess(args[1]);
   fputc(byte, file);
   return FbleNewStructValue_(heap, 0);
 }
@@ -311,11 +311,10 @@ static FbleValue* PutByte(
 FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutByte = {
   .path = "/Core/Stdio/FFI%",
   .name = "PutByte",
-  .num_args = 5,
+  .num_args = 3,
   .max_call_args = 0,
   .run = &PutByte,
 };
-
 
 /**
  * @func[Flush] FbleRunFunction for Flush foreign function.
@@ -324,7 +323,7 @@ FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutByte = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Io@<M@>, Monad@<M@>, File@, Unit@) { Unit@; }.
+ *   (File@, Unit@) { Unit@; }.
  *
  *  @sideeffects
  *   Flushes the given file.
@@ -336,7 +335,7 @@ static FbleValue* Flush(
   (void)profile;
   (void)args;
 
-  FILE* file = (FILE*)FbleNativeValueData(args[2]);
+  FILE* file = (FILE*)FbleNativeValueData(args[0]);
   fflush(file);
   return FbleNewStructValue_(heap, 0);
 }
@@ -345,7 +344,7 @@ static FbleValue* Flush(
 FbleForeignFunction _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Flush = {
   .path = "/Core/Stdio/FFI%",
   .name = "Flush",
-  .num_args = 4,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &Flush,
 };

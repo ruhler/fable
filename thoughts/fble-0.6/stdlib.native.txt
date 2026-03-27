@@ -163,7 +163,7 @@ for the best? Why not? Can we do it incrementally?
 I think we can do it incrementally. Something like:
 * Rename Native@ to Io@. [DONE]
 * Define IoM@ and start using that. [DONE]
-* Define External@. Add run function to Io@ interface.
+* Define External@. Add run function to Io@ interface. [DONE]
 * Migrate FFI over to External@ one by one.
 * Move /Core/Env/Native to /Core/Io/Env?
 * Move /Core/Cli/* over to /Core/Io/Cli?

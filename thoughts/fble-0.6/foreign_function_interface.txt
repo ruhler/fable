@@ -764,3 +764,28 @@ Let's migrate debug then, shall we?
 Cool. I can start using FFI for the next stdio. Good. I assume I'll come back
 for more discussion when we go to test FFI in detail, but for now, let's call
 that a wrap.
+
+---
+
+An interesting thing happened. I tried to write:
+
+  External@<File@> Stderr = @<Stderr>|Stderr;
+
+Where External@ is an abstract wrapper around function type (Unit@) { A@; }.
+
+This gave me an error, because External@<File@> isn't a function type. Two
+issues here:
+
+1. External@<File@> is a function type. There's no reason we shouldn't be able
+to do FFI on it. It's just that it's abstract, so technically we shouldn't
+know it's a function type.
+
+2. Even if External@<File@> wasn't a function type, why can't we use FFI to
+create it? Have a zero argument function that we call when we instantiate the
+FFI. That way we can define arbitrary values using FFI. What do you think?
+
+It should be implementable: When allocating the FFI function, if the number of
+arguments is zero, execute it right away and return the result.
+
+Maybe generalize 'foreign function interface' to just 'Foreign Interface'?
+
