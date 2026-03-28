@@ -170,3 +170,61 @@ I think we can do it incrementally. Something like:
 
 Easy, no?
 
+---
+
+IoM@ works fine. We need extra wrapper layers internally, but it's not overly
+onerous. This feels much nicer in terms of being unspoofable and simplifying
+the types passed to the C side and not having weird implicit assumptions about
+types used on the C side.
+
+There's still an open question about whether Io@ versus IoM@ is the right
+approach for monad composition. See exploration in
+thoughts/fble-0.6/monad_composition.txt.
+
+Ignoring the monad composition question, how would I like to organize all this
+native code related stuff?
+
+Straw Proposal:
+* /Std/Io%: Io@, IoM@, External@
+* /Std/Io/Env%: GetVar
+ - Environment variables really are an input/output external to this process
+   kind of thing. Otherwise you would pass them internally.
+* /Std/Io/Cli%: Exit@, Main@, Success, Failure
+ - Command line interface also is an IO kind of thing, I think.
+
+Should we include a Demo app in the standard library? Should that live
+elsewhere? Is it just for testing purposes? I kind of feel like we shouldn't
+include a random demo app in the standard library. If it's used for testing,
+it can live in std-test? It is pretty useful to have the demo app in the app
+package though, and that feels less odd to include in that package.
+
+We'll want to decide on the stdio stuff where it might live. Remember the
+different things I expect to have:
+* Definition of IStream@ type.
+* Implementations of GetLine, GetText, IStream.
+* Definition of OStream@ type.
+* Implementation of NullOutput, OStream.
+* FFI implementation of stdin, stdout, stderr, open, read, write, etc.
+* Demo apps.
+* StringO main helper function thing.
+* Conversion between char and byte streams.
+
+Some of those are more clearly Io@ bound. Others not. I think we can organize
+them appropriately once I have more clarity on the actual types involved. No
+need to block moving Io and Cli stuff into /Std.
+
+There is a question of whether std package should avoid all FFI so you can
+reuse it on platforms that don't have FFI. I'm a little torn. We can have the
+Io related interfaces like streams even if we don't have FFI. We could put
+things into std-io package that involve IO. But is that just more effort than
+it's worth right now? I don't have a concrete use case. It's an extra package
+to have to deal with. On the other hand, if I'm going to have C code, it is
+perhaps natural to put that all in the std-io package and have std without any
+C code? Except what about things like Debug, or helper functions for
+converting Int, String, Char, etc?
+
+Let me put this on a todo list, but not worry about it for this release. It
+shouldn't be too bad to separate out and otherwise reorganize packages later
+on. That makes more sense to consider when asking about bringing app package
+and network package into /Std. Let me put a generic todo bullet point to worry
+about it later.

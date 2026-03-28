@@ -77,13 +77,18 @@ Output = <<@>@ M@>(IoM@<M@> io, File@ file, Output@ output) {
 
   <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
   Write = <<@>@ M@>(IoM@<M@> io, String@ path) {
-    Maybe@<File@> file := io.m.do(io.io.run(Open(path, Str|w)));
-    file.?(nothing: io.m.return(Nothing<OStream@<M@>>));
+    <@>% do = io.m.do;
+    <@>% return = io.m.return;
+    <@>% run = io.io.run;
+    % output = Output(io);
+    
+    Maybe@<File@> file := do(run(Open(path, Str|w)));
+    file.?(nothing: return(Nothing<OStream@<M@>>));
     OStream@<M@> ostream = @(
-      put: Output(io, file.just),
-      close: io.io.run(Close(file.just))
+      put: output(file.just),
+      close: run(Close(file.just))
     );
-    io.m.return(Just(ostream));
+    return(Just(ostream));
   };
 
   @(Stdin, Stdout, Stderr, Read, Write);
@@ -107,9 +112,13 @@ Output = <<@>@ M@>(IoM@<M@> io, File@ file, Output@ output) {
 
   <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
   Read = <<@>@ M@>(IoM@<M@> io, String@ path) {
-    Maybe@<File@> file := io.m.do(io.io.run(Open(path, Str|rb)));
-    file.?(nothing: io.m.return(Nothing<IStream@<M@>>));
-    io.m.return(Just(io.io.run(GetByte(file.just))));
+    <@>% do = io.m.do;
+    <@>% return = io.m.return;
+    <@>% run = io.io.run;
+
+    Maybe@<File@> file := do(run(Open(path, Str|rb)));
+    file.?(nothing: return(Nothing<IStream@<M@>>));
+    return(Just(run(GetByte(file.just))));
   };
 
   @(Stdin, Stdout, Read);

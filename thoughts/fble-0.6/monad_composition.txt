@@ -35,3 +35,362 @@ function that only wants the Rng@ part of the interface?
 Can we include the M@ field in all sub-structures so there is no need to
 distinguish between Rng@ and RngM@? How about the Monad@ field? Any concern
 about having two different named Monad@ subfields?
+
+---
+
+There's no problem having M@ everywhere. There's no problem having M@ in just
+those places that we need it. For example, IoM@ doesn't need M@ if it
+references MonadM@ and MonadM@ has M@. The type parameter ensures consistent
+values for M@. No need to worry about the type inference problem.
+
+The Monad@ subfield is more concerning, because how do you make sure it stays
+consistent across different subfields?
+
+Composition is great, except for introduction of extra .foo accessors needed.
+Let's say I didn't care about that extra accessors. How would I structure
+things?
+
+Io has run method, and M@?
+IoM has 'io' and 'monad' subfields.
+ - Ignoring that io.io is annoying.
+
+Rng has random method, and M@?
+RngM has 'rng' and 'monad' subfields.
+
+IoRngM has 'io', 'rng', 'monad' subfields.
+
+What I don't really like here:
+* Requiring an extra top level type to be defined: IoM, RngM, IoRngM.
+* The wordiness of composed subfields. foo.m.return compared to m.return.
+* Extra conversion needed to extra, e.g. RngM from IoRngM field.
+
+These all seem slightly closely related issues.
+
+I know the alternative though. Pass Io@, Rng@, Monad@ around everywhere. Now
+we are passing 3 things at once instead of 1. If I'm really passing things
+everywhere, that's pretty annoying.
+
+It feels like what I want surface level is some notion of interfaces. Where
+they are a list of fields always at the surface level, and we can compose them
+together without intermediate name, or optional intermediate name. And if I
+have an IoRngM, for example, I can pass that directly anywhere an IoM or RngM
+is expected, because the expected methods are there.
+
+It's like we just need a slightly nicer layer to give us something like
+(multiple?) inheritance and this and implicit naming and implicit 'this'
+arguments.
+
+Like, what if we could generalize the concept of 'this' to support multiple
+different this arguments to a function. We pass 'this' implicitly. We
+reference it implicitly. We have some magic to make it all nice. Then you
+don't have to worry about composition at all. You just define what you need,
+it gets given to you, and it gets propagated implicitly anywhere it needs to.
+Unless, of course, you want to provide an alternative explicit argument.
+
+Maybe start thinking about single 'this' first. See if I can understand that.
+And see if that can generalize. Because what is 'this' aside from an implicit
+argument passed to functions?
+
+How nice would it be if we could refer to 'do' and 'return' directly, and they
+inferred the right value for m? And we didn't have to pass m and io and all of
+that everywhere? Is there any reasonable rigorous way to do this?
+
+---
+
+See also discussion in thoughts/fble-0.6/object_oriented.txt, which I feel
+like is trying to address the same underlying challenge.
+
+Here's what I think the challenge is:
+
+We want to define some set of axioms and parameterize a family of separately
+defined functions by those axioms. Sample axioms: do, return, random, run.
+
+To parameterize functions by the axioms, we pass the axioms as arguments to
+the functions. Either individually, or grouped together in structures, or some
+mix of approaches.
+
+It's tedious to pass these things around everywhere:
+* Annoying to have to access the axiom from whatever structure you pass it
+  with, e.g. io.m.return, io.io.run
+* Annoying to have to pass the axioms everywhere we want to call things, 
+  e.g. Range(rng, m, Int|10, Int|20), Range(MkRng(iorng), m, Int|10, Int|20)
+
+You reduce the cost of passing things everywhere by grouping them together
+into one object, but that increases the cost of accessing the axioms.
+
+How can we solve this?
+
+First off, understand that the language as full support for making the names
+of things nicer, if we are willing to use it. It's the same thing we do for
+top level imports. Imagine writing at the top of each function body:
+
+  % return = io.m.return;
+  % do = io.m.do;
+  % run = io.io.run;
+  % Range = /Core/Int/Rand%.Range(rng);
+
+Now the body of the function lets us write exactly what we want to write. The
+only thing missing would be instead of saying things like Foo(a, ...), Foo(b,
+..), we could write a.Foo(...), b.Foo(...), which for whatever reason I don't
+fully understand, feels much nicer.
+
+But top level imports are super tedious. I know it. Look at the above example.
+I didn't bother figuring out the right kinds for things, because it's too much
+effort when the compiler can tell you the right thing anyway.
+
+What makes importing tedious:
+* Having to figure out the kinds of things, when it feels like they don't
+  matter at all in practice.
+* Taking up so many lines: One line for each definition in practice. For a
+  short function, this could easily take up as much space as the content of
+  the function. It often takes up half of a module's definition just importing
+  things.
+* Module paths are long and slightly annoying to write and deal with.
+* Notice how much duplication is in the above example: io is reused 3 times,
+  return, do, run, Range all show up twice.
+
+So here's the first potential solution idea: come up with a much nicer syntax
+for importing things. That could help with monad composition here, but also
+with top level module imports.
+
+One challenge is that I really like the fact that you can search for any
+variable name and jump to the definition. We don't ever define variables
+implicitly. You can always track down where and how something is defined.
+
+Example wild ideas for how to simplify top level definitions. Using the
+examples from above, which capture a decent range of the different things I
+might want:
+
+  ^ io(.m(.return, .do), .io(.run));
+  ^ /Core/Int/Rand%.Range(rng);
+
+Is it much better? I'm not sure. Should I try using the above approach for
+some of my functions, see how it feels? Key ideas:
+* Skip writing the kind. The compiler knows that.
+* Reuse names from the defining expression for the variable.
+* Allow multiple imports from a single item at once.
+
+  ^ @(m: @(return, do), io: @(run)) = io;
+
+An alternative approach is to try to automatically figure out what someone
+means when they refer to some name. Call it compiler magic. What kinds of
+searches should we do?
+
+* See if a name refers to a subfield of a variable in scope.
+  For example, you say 'return'. That's not defined, but there is a local
+  variable 'm', or 'io', where if we search, we find 'm.return' and
+  'io.m.return' options for return.
+* See if you can infer an argument for something.
+  For example, you say 'Range', it takes an RngM@ as an argument, we happen to
+  have an RngM@ in scope, so automatically pass that.
+
+Might be nice, but also very scary to do that kind of magic. How do you figure
+out what things are actually referring to?
+
+Another style of approach could be have an: 'import everything from this
+struct' syntax. Then the user could write helper functions. Actually, that's
+pretty similar to the thing I was trying above.
+
+  ^ io.m;   # Imports return and do fields of io.m.
+  ^ io.io;  # Imports run field.
+  ^ @(Range: /Core/Int/Rand%.Range(rng)); # Imports Range field
+
+But we better provide a nice way to import a subset. And things start to get a
+little messy.
+
+Think about how some other languages do things.
+
+C++:
+* Classes give some fancy magic:
+ - Member fields let you bundle together axioms associated with the class
+   instance.
+ - this.Foo() can be written just Foo: let's you pass all those axioms around
+   implicitly.
+* Essentially we are hiding the axioms in the class state, which is passed
+  around explicitly and used for name resolution. And people can add functions
+  to that class. But it's a closed list. If I was happy with a closed list, I
+  could do everything that way too, pass around a single this option and use,
+  e.g. this.do, this.return, this.random, this.run, this.Range everywhere.
+
+Now I have a pretty good sense when writing a function what I'm taking as
+import that is kind of an interface. I could easily separate out the interface
+arguments from regular arguments. Let's say we have a notion of an interface
+that you pass to a function. This is an environment. A set of name value
+pairs.
+
+When I call a function that expects some environment, let's say it inherits
+from the current environment. And/or I can explicitly modify the environment
+when calling that function if I want to override things.
+
+Is it as simple as that? One key being: I can define more in my environment
+than a callee requires, which is nice for composition. We try to put
+everything at the top level of the environment, so I would have:
+  do, return, random, run
+instead of: m.do, m.return, rng.random, io.run.
+
+When specifying your environment, you have to deal with name conflicts there.
+So environments can maybe hold sub-environments.
+
+In a sense, an environment is like a read only struct value, and we can pass
+any struct value whose type is a superset of what is required by the user.
+
+We could define an environment using a struct type. We could provide helpers
+to inline things. For example:
+
+  Monad@ = *(Do@ do, Return@ return);
+  Io@ = *(Run@ run);
+  Rng@ = *(Random@ random);
+  IoM@ = *(Monad@ *, Io@ *);
+
+Now I can have a function that expects Monad@, and I have an instance of IoM@,
+and I can pass that IoM@ directly do the function where a Monad@ is expected,
+because it has everything we need.
+
+Now imagine we have a nice way to import everything in an environment. And
+imagine we have a nice way to capture everything in the environment, or, we
+pass the environment implicitly. Everything would be solved, right?
+
+  # Generates a random integer uniformly in the range [0, n).
+  <<@>@ M@>(RngM@<M@>, Int@) { M@<Int@>; }
+  Of = <<@>@ M@>(RngM@<M@> ^, Int@ n) {
+
+  # Generates a random integer uniformly in the range [lo, hi]
+  <<@>@ M@>(RngM@<M@>, Int@, Int@) { M@<Int@>; }
+  Range = <<@>@ M@>(RngM@<M@> ^, Int@ lo, Int@ hi) {
+    Int@ x := do $ Of^(Incr(Sub(hi, lo)));
+    return $ Add(lo, x);
+  };
+
+Where here I'm using magic syntax '^' to mean:
+1. When used as a function argument, it says import everything from that
+struct into the current environment.
+2. When used after a function, it means extract everything you need for the
+function argument struct directly from the environment.
+
+That's interesting. This sounds readily doable aside from the fact that it
+implicitly defines variables. Also, not sure how it works with type inference.
+
+Maybe we could have:
+
+  # Generates a random integer uniformly in the range [lo, hi]
+  <<@>@ M@>(RngM@<M@>, Int@, Int@) { M@<Int@>; }
+  Range = <<@>@ M@>(RngM@<M@> rng, Int@ lo, Int@ hi) {
+    ^ rng(do, return, random);
+    Int@ x := do $ Of^(Incr(Sub(hi, lo)));
+    return $ Add(lo, x);
+  };
+
+Hmm... Part of the issue is it would be nice to pass things from rng to Of
+without listing them explicitly. So not going through my current environment.
+
+But it feels like what I'm suggesting is:
+* Have a single interface with everything moved to the top level.
+* Have a convenient way to import from the top level.
+* We already have a convenient way to construct subinterfaces explicitly?
+  @(foo, bar, ...);
+* Maybe need a convenient way to define these flag structs?
+  RngM@<M@> = @(Rng@<M@> *, Monad@<M@> *);
+
+What if instead we had a convenient way to search for sub-sub fields?
+
+  RngM@<M@> = @(Rng@<M@> rng, Monad@<M@> m);
+
+  # Generates a random integer uniformly in the range [lo, hi]
+  <<@>@ M@>(RngM@<M@>, Int@, Int@) { M@<Int@>; }
+  Range = <<@>@ M@>(RngM@<M@> rng, Int@ lo, Int@ hi) {
+    ^ rng(*.do, *.return);
+    Int@ x := do $ Of(rng, Incr(Sub(hi, lo)));
+    return $ Add(lo, x);
+  };
+
+What if we added support for two things:
+1. An easy way to import a list of (sub) fields from a struct.
+2. An easy way to construct a struct from a superset struct.
+
+More simply, is it enough to provide a nice way to import from immediate
+fields of a struct?
+
+  <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
+  Read = <<@>@ M@>(IoM@<M@> io, String@ path) {
+    do, return, run ^= io;
+    Maybe@<File@> file := do(run(Open(path, Str|rb)));
+    file.?(nothing: return(Nothing<IStream@<M@>>));
+    return(Just(run(GetByte(file.just))));
+  };
+
+I guess the example I want should have three things:
+1. Direct use of axioms.
+2. Pass set of axioms to called functions.
+3. Pass subset of axioms to called functions.
+
+Using our imaginary IoRngM:
+
+  <<@>@ M@>(IoRngM@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
+  ReadRand = <<@>@ M@>(IoRngM@<M@> this, String@ path) {
+    do, return, m, rng, run ^= this;                # Import from subfields.
+    String@ pathr := do(StrRand(@(m, rng), path));  # Pass subset of axioms.
+    Maybe@<File@> file := do(run(Open(pathr, Str|rb)));
+    file.?(nothing: return(Nothing<IStream@<M@>>));
+    return(Just(run(GetByte(file.just))));
+  };
+
+Yeah. It's the pass subset of axioms that I don't have a good answer for. I
+could do the nice import syntax maybe. Certainly without nesting. I'm not sure
+about with nesting.
+
+  <<@>@ M@>(IoRngM@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
+  ReadRand = <<@>@ M@>(IoRngM@<M@> this, String@ path) {
+    do, return ^= this.m;    # Import from subfields.
+    run ^= this.io;          # Import from different subfield.
+    String@ pathr := do(StrRand(RngM(this), path));  # Pass subset of axioms.
+    Maybe@<File@> file := do(run(Open(pathr, Str|rb)));
+    file.?(nothing: return(Nothing<IStream@<M@>>));
+    return(Just(run(GetByte(file.just))));
+  };
+
+Not sure. Keep thinking about it. Try out explicit import for now, see if that
+makes things nicer or worse.
+
+---
+
+Let's say I didn't add any new language features. What are the decisions to
+make about how to structure things?
+1. Pass individual objects or structured?
+  Foo(do, return, random, io)
+  Foo(m, rng, io)
+  Foo(iorngm)
+2. Maintain structure, or flatten?
+  iorngm.m.do, iorngm.rng.random
+  iorngm.do, iorngm.random
+3. What name to use for intermediate fields?
+  iorngm.m.do, iorngm.rng.random
+  iorngm.Monad.do, iorngm.Rng.random
+
+In theory if we do all the importing up front, these decisions don't matter
+for the body: we always have direct access to axioms and pre-applied composite
+functions.
+
+My gut feeling is the best way to describe things is with structure and full
+names: iorngm.Monad, iorngm.Rng, etc. Maybe rename it to 'this':
+  this.Monad, this.Rng, etc.
+
+Because that gives us clear names, easy composition. Probably need helper
+functions to decompose iorngm into iom and rngm though.
+
+Which suggests the alternative of no composition might be just fine? Compose
+via multiple arguments?
+
+---
+
+Experience switching /Core/Stdio/FFI% to explicit import style:
+* The body of the function looks much more legible now.
+* The import is just as annoying as I expected. Kinds in particular.
+* I can't import a function under the same name as itself. This doesn't work:
+  % Output = Output(io);
+  Which is tedious. Now I need to come up with a different name.
+  io.Output would be so nice though...
+* I don't know if I should factor out the imports to just after the io arg, or
+  if I should do it in the body every time. Probably it's faster to do it
+  every time to avoid partial function allocation every time.
+
+

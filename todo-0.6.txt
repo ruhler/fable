@@ -2,6 +2,11 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Figure out how to organize std packages
+ - Add network to std package?
+ - Separate io and FFI related stuff into separate std-io package?
+ - Add app to std package?
+
 * Consider generalizing FFI to support normal values too.
  - And use that for Stderr, Stdout, Stdin FFI instead of adding an extra
    unused argument.
@@ -47,15 +52,8 @@ Things to consider doing for the fble-0.6 release.
   OStream@<M@>... but just for the Output@ part? So I don't have to be
   importing both Put@ and Output@ everywhere?
 
-* Figure out why I need to pass M@ everywhere explicitly?
- - Like, why can't type inference figure it out?
- - Because you can't infer generalize M@ from a specific M@<A@> instance?
-
 * Add tests for Output ToString and ToNull
  - Assuming we don't already have them.
-
-* Replace all uses of Core/Monad/State with Core/State/StateM.
-* Find a better home for /Core/State/StateM?
 
 * For complex types with M@ as a type argument, type error messages aren't
   informative.
@@ -72,6 +70,7 @@ Things to consider doing for the fble-0.6 release.
  - Test what happens if you can't find the foreign function?
  - Consider taking this opportunity to move test foreign function definitions
    into a new test/foreign.c file.
+ - Test FFI value (as opposed to function).
 
 * Test unicode for character based native input and output streams.
 * Add tests for /Core/Char/Stream/IStream%.GetLine.
