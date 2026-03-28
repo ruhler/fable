@@ -7,11 +7,6 @@ Things to consider doing for the fble-0.6 release.
  - Separate io and FFI related stuff into separate std-io package?
  - Add app to std package?
 
-* Consider generalizing FFI to support normal values too.
- - Move SpecTests/10.1-ForeignFuncValue to 10.1-ForeignValue.
- - And use that for Stderr, Stdout, Stdin FFI instead of adding an extra
-   unused argument.
-
 * Somethings wrong with the Snake window sizing.
 
 * Debug jank issues in fble-invaders?
@@ -66,6 +61,8 @@ Things to consider doing for the fble-0.6 release.
 * Verify all api is listed in include/build.tcl.
 
 * Test coverage for FFI
+ - Move SpecTests/10.1-ForeignFuncValue to 10.1-ForeignValue.
+ - Add spec test for pure value case.
  - Verify names matter.
  - Verify module paths matter.
  - Test what happens if you can't find the foreign function?

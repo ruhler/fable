@@ -23,9 +23,9 @@
 # Pretend type for FILE*. Only to be accessed from FFI functions.
 @ File@ = *(Unit@ file);
 
-(Unit@) { External@<File@>; } GetStdin = @<GetStdin>|GetStdin;
-(Unit@) { External@<File@>; } GetStdout = @<GetStdout>|GetStdout;
-(Unit@) { External@<File@>; } GetStderr = @<GetStderr>|GetStderr;
+External@<File@> GetStdin = @<GetStdin>|GetStdin;
+External@<File@> GetStdout = @<GetStdout>|GetStdout;
+External@<File@> GetStderr = @<GetStderr>|GetStderr;
 (String@, String@) { External@<Maybe@<File@>>; } Open = @<Open>|Open;
 (File@) { External@<Unit@>; } Close = @<Close>|Close;
 (File@) { External@<Maybe@<Char@>>; } GetChar = @<GetChar>|GetChar;
@@ -52,19 +52,19 @@ Output = <<@>@ M@>(IoM@<M@> io, File@ file, Output@ output) {
 
   <<@>@ M@>(IoM@<M@>) { M@<IStream@<M@>>; }
   Stdin = <<@>@ M@>(IoM@<M@> io) {
-    File@ stdin := io.m.do(io.io.run(GetStdin(Unit)));
+    File@ stdin := io.m.do(io.io.run(GetStdin));
     io.m.return(io.io.run(GetChar(stdin)));
   };
 
   <<@>@ M@>(IoM@<M@>) { M@<Put@<M@, Output@>>; }
   Stdout = <<@>@ M@>(IoM@<M@> io) {
-    File@ stdout := io.m.do(io.io.run(GetStdout(Unit)));
+    File@ stdout := io.m.do(io.io.run(GetStdout));
     io.m.return(Output(io, stdout));
   };
 
   <<@>@ M@>(IoM@<M@>) { M@<Put@<M@, Output@>>; }
   Stderr = <<@>@ M@>(IoM@<M@> io) {
-    File@ stderr := io.m.do(io.io.run(GetStderr(Unit)));
+    File@ stderr := io.m.do(io.io.run(GetStderr));
     io.m.return(Output(io, stderr));
   };
 
@@ -100,13 +100,13 @@ Output = <<@>@ M@>(IoM@<M@> io, File@ file, Output@ output) {
   <<@>@ M@>(IoM@<M@>) { M@<IStream@<M@>>; }
   Stdin = <<@>@ M@>(IoM@<M@> io) {
     # TODO: Re-open stdin in binary mode?
-    File@ stdin := io.m.do(io.io.run(GetStdin(Unit)));
+    File@ stdin := io.m.do(io.io.run(GetStdin));
     io.m.return(io.io.run(GetByte(stdin)));
   };
 
   <<@>@ M@>(IoM@<M@>) { M@<Put@<M@, Int@>>; }
   Stdout = <<@>@ M@>(IoM@<M@> io) {
-    File@ stdout := io.m.do(io.io.run(GetStdout(Unit)));
+    File@ stdout := io.m.do(io.io.run(GetStdout));
     io.m.return((Int@ x) { io.io.run(PutByte(stdout, x)); });
   };
 

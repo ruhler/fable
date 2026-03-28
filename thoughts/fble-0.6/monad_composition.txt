@@ -425,3 +425,21 @@ field name all at once?
 
  .m.do, .m.monad ^= io.m;
  m ^= io.m;
+
+Basically for these two cases, I want to provide my own name and an arbitrary
+expression. No kind, no recursion allowed.
+
+If we allow us to not specify kinds when importing things, why would we ever
+want to specify kinds when importing things?
+
+I've asked this question in the past. I should find what I decided before. But
+also:
+* So we know for some entity Foo if Foo(x) is doing a type inference.
+
+That's the only reason I can think. To distinguish between <@>% and %, so we
+know when type inference is being done. Is that a good reason?
+
+Let me dig up the previous discussion on this if I can.
+
+thoughts/fble-0.5/kinds.txt:
+* 

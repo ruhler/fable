@@ -579,21 +579,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_FOREIGN_VALUE_INSTR: {
         FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
         FbleString* foreign = FbleMangleForeignName(foreign_instr->path, foreign_instr->name->str);
-
-        // TODO: Call FbleNewForeignValue instead.
         fprintf(fout, "  extern FbleForeign %s;\n", foreign->str);
-        fprintf(fout, "  FbleExecutable exe_%zi = {\n", exe_id);
-        fprintf(fout, "    .num_args = %s.num_args,\n", foreign->str);
-        fprintf(fout, "    .num_statics = 0,\n");
-        fprintf(fout, "    .max_call_args = %s.max_call_args,\n", foreign->str);
-        fprintf(fout, "    .run = %s.run,\n", foreign->str);
-        fprintf(fout, "  };\n");
-
+        fprintf(fout, "  l[%zi] = FbleNewForeignValue(heap, profile, &%s, profile_block_id + %zi);\n",
+            foreign_instr->dest, foreign->str, foreign_instr->profile_block_offset);
         FbleFreeString(foreign);
-
-        fprintf(fout, "  l[%zi] = FbleNewFuncValue(heap, &exe_%zi, profile_block_id + %zi, NULL);\n",
-            foreign_instr->dest, exe_id, foreign_instr->profile_block_offset);
-        exe_id++;
         break;
       }
 

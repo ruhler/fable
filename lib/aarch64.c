@@ -1062,36 +1062,17 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
     case FBLE_FOREIGN_VALUE_INSTR: {
       FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
 
-      // TODO: Switch to FbleNewForeignValue for implementation.
-
-      // Get a pointer to the FbleForeign in x0.
+      // Get a pointer to the FbleForeign in x2.
       FbleString* foreign = FbleMangleForeignName(foreign_instr->path, foreign_instr->name->str);
-      GAdr(fout, "x0", "%s", foreign->str);
+      GAdr(fout, "x2", "%s", foreign->str);
       FbleFreeString(foreign);
 
-      // Allocate space for an FbleExecutable on the stack.
-      size_t sp_offset = sizeof(FbleExecutable);
-      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
-
-      // populate the FbleExecutable at SP from the FbleForeign in x0.
-      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleForeign, num_args));
-      fprintf(fout, "  str x1, [SP, #%zi]\n", offsetof(FbleExecutable, num_args));
-      fprintf(fout, "  str xzr, [SP, #%zi]\n", offsetof(FbleExecutable, num_statics));
-      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleForeign, max_call_args));
-      fprintf(fout, "  str x1, [SP, #%zi]\n", offsetof(FbleExecutable, max_call_args));
-      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleForeign, run));
-      fprintf(fout, "  str x1, [SP, #%zi]\n", offsetof(FbleExecutable, run));
-
-      // Call FbleNewFuncValue.
+      // Call FbleNewForeignValue.
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, SP\n");
-      fprintf(fout, "  add x2, R_PROFILE_BLOCK_ID, #%zi\n", foreign_instr->profile_block_offset);
-      fprintf(fout, "  mov x3, xzr\n");
-      fprintf(fout, "  bl FbleNewFuncValue\n");
+      fprintf(fout, "  mov x1, R_PROFILE\n");
+      fprintf(fout, "  add x3, R_PROFILE_BLOCK_ID, #%zi\n", foreign_instr->profile_block_offset);
+      fprintf(fout, "  bl FbleNewForeignValue\n");
       SetFrameVar(fout, "x0", foreign_instr->dest);
-
-      // Free the stack space allocated for the FbleExecutable
-      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       return;
     }
 

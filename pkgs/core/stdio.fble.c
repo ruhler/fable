@@ -26,7 +26,7 @@
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Unit@, Unit@) { File@; }
+ *   (Unit@) { File@; }
  */  
 static FbleValue* GetStdin(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -42,7 +42,7 @@ static FbleValue* GetStdin(
 FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdin = {
   .path = "/Core/Stdio/FFI%",
   .name = "GetStdin",
-  .num_args = 2,
+  .num_args = 1,
   .max_call_args = 0,
   .run = &GetStdin,
 };
@@ -54,7 +54,7 @@ FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdin = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Unit@, Unit@) { File@; }
+ *   (Unit@) { File@; }
  */  
 static FbleValue* GetStdout(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -70,7 +70,7 @@ static FbleValue* GetStdout(
 FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdout = {
   .path = "/Core/Stdio/FFI%",
   .name = "GetStdout",
-  .num_args = 2,
+  .num_args = 1,
   .max_call_args = 0,
   .run = &GetStdout,
 };
@@ -82,7 +82,7 @@ FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdout = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Unit@, Unit@) { File@; }
+ *   (Unit@) { File@; }
  */  
 static FbleValue* GetStderr(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -98,7 +98,7 @@ static FbleValue* GetStderr(
 FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStderr = {
   .path = "/Core/Stdio/FFI%",
   .name = "GetStderr",
-  .num_args = 2,
+  .num_args = 1,
   .max_call_args = 0,
   .run = &GetStderr,
 };

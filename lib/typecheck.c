@@ -1853,17 +1853,8 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleType* valueof = FbleValueOfType(th, normal);
       CleanType(cleaner, valueof);
       if (valueof != NULL) {
-        FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
-        FbleInitVector(*vars);
-        CleanTypeAssignmentV(cleaner, vars);
-
-        FbleFuncType* func_type = (FbleFuncType*)DepolyType(th, valueof, vars);
-        CleanType(cleaner, &func_type->_base);
-        if (func_type->_base.tag != FBLE_FUNC_TYPE) {
-          ReportError(literal_expr->func->loc, "expected a function or function type, but found something of type %t\n", func.type);
-          return TC_FAILED;
-        }
-
+        // This object is a type, which means this is a foreign value
+        // expression.
         FbleForeignValueTc* ffi_tc = FbleNewTc(FbleForeignValueTc, FBLE_FOREIGN_VALUE_TC, expr->loc);
         ffi_tc->path = FbleCopyModulePath(FbleTypeHeapGetContext(th));
         ffi_tc->name_loc = FbleCopyLoc(literal_expr->word_loc);
