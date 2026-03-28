@@ -50,7 +50,7 @@ typedef enum {
   FBLE_FUNC_APPLY_TC,
   FBLE_LIST_TC,
   FBLE_LITERAL_TC,
-  FBLE_FOREIGN_FUNC_VALUE_TC,
+  FBLE_FOREIGN_VALUE_TC,
 } FbleTcTag;
 
 /**
@@ -361,12 +361,12 @@ typedef struct {
 } FbleLiteralTc;
 
 /**
- * @struct[FbleForeignFuncValueTc] FBLE_FOREIGN_FUNC_VALUE_TC
- *  A foreign function value.
+ * @struct[FbleForeignValueTc] FBLE_FOREIGN_VALUE_TC
+ *  A foreign value.
  *
  *  @field[FbleTc][_base] FbleTc base class.
- *  @field[FbleModulePath*][path] The module instantiated the function.
- *  @field[FbleLoc][name_loc] The location of the name of the function.
+ *  @field[FbleModulePath*][path] The module instantiated the value.
+ *  @field[FbleLoc][name_loc] The location of the name of the value.
  *  @field[FbleString*][name] The name of the function.
  */
 typedef struct {
@@ -374,7 +374,7 @@ typedef struct {
   FbleModulePath* path;
   FbleLoc name_loc;
   FbleString* name;
-} FbleForeignFuncValueTc;
+} FbleForeignValueTc;
 
 /**
  * @func[FbleNewTc] Allocates a new tc.

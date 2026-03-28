@@ -40,7 +40,7 @@ static FbleValue* GetVarImpl(FbleValueHeap* heap, FbleProfileThread* profile, Fb
 }
 
 // See documentation in env.fble.h
-FbleForeignFunction _Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar = {
+FbleForeign _Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar = {
   .path = "/Core/Env/Native%",
   .name = "GetVar",
   .num_args = 2,

@@ -24,7 +24,7 @@ static FbleValue* Foreign_Basic_Not_impl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
 
-FbleForeignFunction _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignFuncValue_2f_Basic_2f_Basic_25__2e_Not = {
+FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignFuncValue_2f_Basic_2f_Basic_25__2e_Not = {
   .path = "/SpecTests/'10.1-ForeignFuncValue'/Basic/Basic%",
   .name = "Not",
   .num_args = 1,
@@ -36,7 +36,7 @@ static FbleValue* Foreign_Poly_Nothing_impl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
 
-FbleForeignFunction _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignFuncValue_2f_Basic_2f_Poly_25__2e_Nothing = {
+FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignFuncValue_2f_Basic_2f_Poly_25__2e_Nothing = {
   .path = "/SpecTests/'10.1-ForeignFuncValue'/Basic/Poly%",
   .name = "Nothing",
   .num_args = 1,
@@ -88,8 +88,8 @@ int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   uint64_t profile_sample_period = 0;
   FbleValue* result = NULL;
 
-  FbleRegisterForeignFunction(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignFuncValue_2f_Basic_2f_Basic_25__2e_Not);
-  FbleRegisterForeignFunction(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignFuncValue_2f_Basic_2f_Poly_25__2e_Nothing);
+  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignFuncValue_2f_Basic_2f_Basic_25__2e_Not);
+  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignFuncValue_2f_Basic_2f_Poly_25__2e_Nothing);
 
   FblePreloadedModuleV builtins;
   FbleInitVector(builtins);

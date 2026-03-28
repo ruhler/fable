@@ -68,24 +68,26 @@ typedef struct {
 } FbleExecutable;
 
 /**
- * @struct[FbleForeignFunction] Description of a foreign function.
- *  FbleForeignFunction is intended to be statically allocated so that
+ * @struct[FbleForeign] Implementation of a foreign value.
+ *  FbleForeign is intended to be statically allocated so that
  *  lifetime considerations are not a concern, including the path and name
  *  string pointers. Convention is to use the name mangling of
- *  FbleMangleForeignFunction to determine the symbol name of the statically
- *  allocated FbleForeignFunction. See FbleMangleForeignFunction in
+ *  FbleMangleForeignName to determine the symbol name of the statically
+ *  allocated FbleForeign. See FbleMangleForeignName in
  *  fble-module-path.h for more info.
  *
- *  @field[const char*][path] The module path of the foreign function.
- *  @field[const char*][name] The name of the foreign function.
- *  @field[size_t][num_args] Number of args to the function.
+ *  @field[const char*][path] The module path of the foreign value implementation.
+ *  @field[const char*][name] The name of the foreign value.
+ *  @field[size_t][num_args]
+ *   Number of args to the run function. May be zero to implement a pure
+ *   foreign value as opposed to a foreign function value.
  *  @field[size_t][max_call_args]
  *   Maximum number of args used in a call or tail call by the function. The
  *   tail call buffer is guaranteed to have space for at least this many
  *   arguments in addition to the function to tail call.
  *  @field[FbleRunFunction*][run]
- *   How to run the function. See FbleRunFunction for more info. The run
- *   function must assume there are 0 statics passed to it.
+ *   Implementation of the foreign value. See FbleRunFunction for more info.
+ *   The run function must assume there are 0 statics passed to it.
  */
 typedef struct {
   const char* path;
@@ -93,7 +95,7 @@ typedef struct {
   size_t num_args;
   size_t max_call_args;
   FbleRunFunction* run;
-} FbleForeignFunction;
+} FbleForeign;
 
 /**
  * @struct[FbleFunction] Information about an fble function.

@@ -74,7 +74,7 @@ static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
       case FBLE_TYPE_INSTR: break;
       case FBLE_LIST_INSTR: break;
       case FBLE_LITERAL_INSTR: break;
-      case FBLE_FOREIGN_FUNC_VALUE_INSTR: break;
+      case FBLE_FOREIGN_VALUE_INSTR: break;
       case FBLE_NOP_INSTR: break;
       case FBLE_UNDEF_INSTR: break;
     }
@@ -576,11 +576,12 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         break;
       }
 
-      case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
-        FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
-        FbleString* foreign = FbleMangleForeignFunction(func_instr->path, func_instr->name->str);
+      case FBLE_FOREIGN_VALUE_INSTR: {
+        FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
+        FbleString* foreign = FbleMangleForeignName(foreign_instr->path, foreign_instr->name->str);
 
-        fprintf(fout, "  extern FbleForeignFunction %s;\n", foreign->str);
+        // TODO: Call FbleNewForeignValue instead.
+        fprintf(fout, "  extern FbleForeign %s;\n", foreign->str);
         fprintf(fout, "  FbleExecutable exe_%zi = {\n", exe_id);
         fprintf(fout, "    .num_args = %s.num_args,\n", foreign->str);
         fprintf(fout, "    .num_statics = 0,\n");
@@ -591,7 +592,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         FbleFreeString(foreign);
 
         fprintf(fout, "  l[%zi] = FbleNewFuncValue(heap, &exe_%zi, profile_block_id + %zi, NULL);\n",
-            func_instr->dest, exe_id, func_instr->profile_block_offset);
+            foreign_instr->dest, exe_id, foreign_instr->profile_block_offset);
         exe_id++;
         break;
       }

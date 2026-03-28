@@ -115,9 +115,9 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   uint64_t profile_sample_period = 0;
   FbleValue* main = NULL;
 
-  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Debug_2f_Builtin_25__2e_Trace);
-  FbleRegisterForeignFunction(heap, &_Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar);
-  FbleRegisterStdioForeignFunctions(heap);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Debug_2f_Builtin_25__2e_Trace);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar);
+  FbleRegisterStdioForeignValues(heap);
 
   FblePreloadedModuleV builtins = { .size = 0 };
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-cli", fbldUsageHelpText,

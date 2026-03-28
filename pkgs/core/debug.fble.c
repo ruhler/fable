@@ -14,7 +14,7 @@ static FbleValue* Trace(FbleValueHeap* heap, FbleProfileThread* profile, FbleFun
   return FbleNewStructValue_(heap, 0);
 }
 
-FbleForeignFunction _Fble_2f_Core_2f_Debug_2f_Builtin_25__2e_Trace = {
+FbleForeign _Fble_2f_Core_2f_Debug_2f_Builtin_25__2e_Trace = {
   .path = "/Core/Debug/Builtin%",
   .name = "Trace",
   .num_args = 1,

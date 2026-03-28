@@ -393,4 +393,13 @@ Experience switching /Core/Stdio/FFI% to explicit import style:
   if I should do it in the body every time. Probably it's faster to do it
   every time to avoid partial function allocation every time.
 
+I do feel like things would be much nicer if I could just have a nice import
+syntax. Can I come up with something that works well in general?
+
+Requirements (targeting imports in general):
+* Don't have explicit kinds.
+* Allow multiple vars to be imported in a single statement. e.g. do, return.
+* Allow for overwriting of existing names. e.g. Output: Output(io).
+* Allow for application or other modification of things. e.g. Output(io).
+* Allow for renaming of things. e.g. MyFoo = /Foo%.Foo;
 

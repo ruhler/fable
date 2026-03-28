@@ -8,6 +8,7 @@ Things to consider doing for the fble-0.6 release.
  - Add app to std package?
 
 * Consider generalizing FFI to support normal values too.
+ - Move SpecTests/10.1-ForeignFuncValue to 10.1-ForeignValue.
  - And use that for Stderr, Stdout, Stdin FFI instead of adding an extra
    unused argument.
 

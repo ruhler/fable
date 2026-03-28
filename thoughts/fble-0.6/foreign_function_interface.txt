@@ -789,3 +789,27 @@ arguments is zero, execute it right away and return the result.
 
 Maybe generalize 'foreign function interface' to just 'Foreign Interface'?
 
+---
+
+Let me start from the ground up. How would I implement, work back to the spec.
+If it all makes sense, then switch over to foreign values instead of foreign
+functions.
+
+Assembly, C back ends:
+* Today they call FbleNewFuncValue directly. Change that to
+  FbleNewForeignValue, passing in FbleForeignFunction (renamed
+  FbleForeign) directly.
+
+Interpreter:
+* FbleNewForeignFuncValue should change to:
+  FbleLookupForeign, reuse FbleNewForeignValue.
+
+How to handle the 'value' case: num_args is 0.
+* Create a local FbleFunction, call the run function directly.
+
+Other changes:
+* FOREIGN_VALUE_INSTR
+
+I think it's totally doable and clean. Let's do this. I can do it in small
+steps. We have renames, we have reorganization of helper functions, etc.
+

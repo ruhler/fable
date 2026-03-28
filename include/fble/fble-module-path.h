@@ -176,15 +176,15 @@ void FbleFreeModulePath(FbleModulePath* path);
 FbleString* FbleMangleModulePath(FbleModulePath* path);
 
 /**
- * @func[FbleMangleForeignFunction]
- * @ Creates a mangled name for a foreign function
+ * @func[FbleMangleForeignName]
+ * @ Creates a mangled name for a foreign value
  *  Uses the same convention as module path naming, except adds '.<name>'
- *  after the module path. For example, the foreign function @l{MyFunc} for
+ *  after the module path. For example, the foreign value @l{MyFunc} for
  *  module path @l{/Foo/Bar%} gets mangled to
  *  @l{_Fble_2f_foo_2f_Bar_25__2e_MyFunc}
  *
- *  @arg[FbleModulePath*][path] The module associated with the function.
- *  @arg[const char*][name] The name of the foreign function.
+ *  @arg[FbleModulePath*][path] The module associated with the value.
+ *  @arg[const char*][name] The name of the foreign value.
  *
  *  @returns[FbleString*] The mangled name.
  *
@@ -192,6 +192,6 @@ FbleString* FbleMangleModulePath(FbleModulePath* path);
  *   The caller should call FbleFreeString on the returned string when no
  *   longer needed.
  */
-FbleString* FbleMangleForeignFunction(FbleModulePath* path, const char* name);
+FbleString* FbleMangleForeignName(FbleModulePath* path, const char* name);
 
 #endif // FBLE_MODULE_PATH_H_

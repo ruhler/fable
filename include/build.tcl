@@ -60,7 +60,7 @@ namespace eval "include" {
       FbleCopyModulePath
       FbleFreeModulePath
       FbleMangleModulePath
-      FbleMangleForeignFunction
+      FbleMangleForeignName
     }
     fble-name.h {
       FbleNameSpace FbleName FbleNameV
@@ -91,7 +91,7 @@ namespace eval "include" {
       FbleStructValue FbleUnionValue FbleFuncValue
       FbleNewValueHeap FbleFreeValueHeap
       FblePushFrame FblePopFrame
-      FbleRegisterForeignFunction
+      FbleRegisterForeignValue
       FbleValueV
       FbleGenericTypeValue
       FbleNewStructValue FbleNewStructValue_

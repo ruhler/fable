@@ -520,7 +520,7 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
       return FbleCopyTc(tc);
     }
 
-    case FBLE_FOREIGN_FUNC_VALUE_TC: {
+    case FBLE_FOREIGN_VALUE_TC: {
       return FbleCopyTc(tc);
     }
   }
@@ -1366,12 +1366,12 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       return local;
     }
 
-    case FBLE_FOREIGN_FUNC_VALUE_TC: {
-      FbleForeignFuncValueTc* func_tc = (FbleForeignFuncValueTc*)v;
+    case FBLE_FOREIGN_VALUE_TC: {
+      FbleForeignValueTc* func_tc = (FbleForeignValueTc*)v;
 
       Local* local = NewLocal(scope);
       FbleBlockId block = GetBlock(blocks, func_tc->name_loc);
-      FbleForeignFuncValueInstr* instr = FbleAllocInstr(FbleForeignFuncValueInstr, FBLE_FOREIGN_FUNC_VALUE_INSTR);
+      FbleForeignValueInstr* instr = FbleAllocInstr(FbleForeignValueInstr, FBLE_FOREIGN_VALUE_INSTR);
       instr->loc = FbleCopyLoc(func_tc->name_loc);
       instr->dest = local->var.index;
       instr->profile_block_offset = block - scope->code->profile_block_id;

@@ -18,7 +18,7 @@ static FbleString* Mangle(FbleModulePath* path, const char* name);
 /**
  * @func[Mangle] Performs name mangling.
  *  Shared helper function for FbleMangleModulePath and
- *  FbleMangleForeignFunction depending on whether name is NULL or non-NULL.
+ *  FbleMangleForeignName depending on whether name is NULL or non-NULL.
  *
  *  @arg[FbleModulePath*][path] The module path.
  *  @arg[const char*][name] The name of the foreign function or NULL.
@@ -203,7 +203,7 @@ FbleString* FbleMangleModulePath(FbleModulePath* path)
 }
 
 // See documentation in fble-module-path.h
-FbleString* FbleMangleForeignFunction(FbleModulePath* path, const char* name)
+FbleString* FbleMangleForeignName(FbleModulePath* path, const char* name)
 {
   return Mangle(path, name);
 }

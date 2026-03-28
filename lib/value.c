@@ -392,14 +392,14 @@ typedef struct {
 } Gc;
 
 /**
- * @struct[ForeignFunctionV] Vector of FbleForeignFunction*
+ * @struct[ForeignV] Vector of FbleForeign*
  *  @field[size_t][size] Number of elements.
- *  @field[FbleForeignFunction**][xs] Elements.
+ *  @field[FbleForeign**][xs] Elements.
  */
 typedef struct {
   size_t size;
-  FbleForeignFunction** xs;
-} ForeignFunctionV;
+  FbleForeign** xs;
+} ForeignV;
 
 /**
  * @struct[ValueHeap] The full FbleValueHeap.
@@ -414,7 +414,7 @@ typedef struct {
  *  @field[Chunk*][chunks]
  *   Chunks of allocated stack memory not currently in use.
  *  @field[uintptr_t][ref_id] The next available ref_id.
- *  @field[ForeignFuncV][foreign] List of registered foreign functions.
+ *  @field[ForeignV][foreign] List of registered foreign functions.
  */
 typedef struct {
   FbleValueHeap _base;
@@ -425,7 +425,7 @@ typedef struct {
   Gc gc;
   Chunk* chunks;
   uintptr_t ref_id;
-  ForeignFunctionV foreign;
+  ForeignV foreign;
 } ValueHeap;
 
 static StackAllocatedValue* StackAllocatedValueOf(FbleValue* value);
@@ -1777,7 +1777,7 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap_, FbleExecutable* executable, si
 }
 
 // See documentation in fble-value.h
-void FbleRegisterForeignFunction(FbleValueHeap* heap_, FbleForeignFunction* foreign)
+void FbleRegisterForeignValue(FbleValueHeap* heap_, FbleForeign* foreign)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
   FbleAppendToVector(heap->foreign, foreign);
@@ -1788,7 +1788,7 @@ FbleValue* FbleNewForeignFuncValue(FbleValueHeap* heap_, FbleModulePath* path, c
 {
   ValueHeap* heap = (ValueHeap*)heap_;
   for (size_t i = 0; i < heap->foreign.size; ++i) {
-    FbleForeignFunction* foreign = heap->foreign.xs[i];
+    FbleForeign* foreign = heap->foreign.xs[i];
     if (strcmp(name, foreign->name) == 0) {
       // TODO: It's silly to have to allocate temporary module paths for every
       // module we want to check against. Figure out a better way.

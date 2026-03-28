@@ -108,7 +108,7 @@ typedef enum {
   FBLE_TYPE_INSTR,
   FBLE_LIST_INSTR,
   FBLE_LITERAL_INSTR,
-  FBLE_FOREIGN_FUNC_VALUE_INSTR,
+  FBLE_FOREIGN_VALUE_INSTR,
   FBLE_NOP_INSTR,
   FBLE_UNDEF_INSTR,
 } FbleInstrTag;
@@ -500,8 +500,8 @@ typedef struct {
 } FbleLiteralInstr;
 
 /**
- * @struct[FbleForeignFuncValueInstr] FBLE_FOREIGN_FUNC_VALUE_INSTR
- *  Creates a foreign function value.
+ * @struct[FbleForeignValueInstr] FBLE_FOREIGN_VALUE_INSTR
+ *  Creates a foreign value.
  *
  *  @code[txt] @
  *   *dest = <ffi>
@@ -524,7 +524,7 @@ typedef struct {
   FbleBlockId profile_block_offset;
   FbleModulePath* path;
   FbleString* name;
-} FbleForeignFuncValueInstr;
+} FbleForeignValueInstr;
 
 /**
  * @struct[FbleNopInstr] FBLE_NOP_INSTR: Does nothing.

@@ -205,15 +205,15 @@ void FblePushFrame(FbleValueHeap* heap);
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value);
 
 /**
- * @func[FbleRegisterForeignFunction] Registers a foreign function.
- *  @arg[FbleValueHeap*][heap] The heap to register the function with.
- *  @arg[FbleForeignFunction*][foreign]
- *   The foreign function to register. The lifetime of the foreign function
- *   must persist beyond that of the FbleValueHeap.
+ * @func[FbleRegisterForeignValue] Registers a foreign value.
+ *  @arg[FbleValueHeap*][heap] The heap to register the value with.
+ *  @arg[FbleForeign*][foreign]
+ *   The foreign value implementation to register. The lifetime of the foreign
+ *   value implementation must persist beyond that of the FbleValueHeap.
  *  @sideeffects
- *   Registers the foreign function with the heap.
+ *   Registers the foreign value implementation with the heap.
  */
-void FbleRegisterForeignFunction(FbleValueHeap* heap, FbleForeignFunction* foreign);
+void FbleRegisterForeignValue(FbleValueHeap* heap, FbleForeign* foreign);
 
 /**
  * @value[FbleGenericTypeValue] FbleValue instance for types.

@@ -151,11 +151,11 @@ void FbleFreeInstr(FbleInstr* instr)
       return;
     }
 
-    case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
-      FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
-      FbleFreeLoc(func_instr->loc);
-      FbleFreeModulePath(func_instr->path);
-      FbleFreeString(func_instr->name);
+    case FBLE_FOREIGN_VALUE_INSTR: {
+      FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
+      FbleFreeLoc(foreign_instr->loc);
+      FbleFreeModulePath(foreign_instr->path);
+      FbleFreeString(foreign_instr->name);
       FbleFree(instr);
       return;
     }
@@ -534,13 +534,13 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
           break;
         }
 
-        case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
-          FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
+        case FBLE_FOREIGN_VALUE_INSTR: {
+          FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
-          fprintf(fout, "l%zi = ffi ", func_instr->dest);
-          FblePrintModulePath(fout, func_instr->path);
-          fprintf(fout, " %s;", func_instr->name->str);
-          PrintLoc(fout, func_instr->loc);
+          fprintf(fout, "l%zi = ffi ", foreign_instr->dest);
+          FblePrintModulePath(fout, foreign_instr->path);
+          fprintf(fout, " %s;", foreign_instr->name->str);
+          PrintLoc(fout, foreign_instr->loc);
           break;
         }
 

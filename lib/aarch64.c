@@ -220,8 +220,8 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
       case FBLE_LIST_INSTR: break;
       case FBLE_LITERAL_INSTR: break;
 
-      case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
-        FbleForeignFuncValueInstr* instr = (FbleForeignFuncValueInstr*)code->instrs.xs[i];
+      case FBLE_FOREIGN_VALUE_INSTR: {
+        FbleForeignValueInstr* instr = (FbleForeignValueInstr*)code->instrs.xs[i];
         AddLoc(instr->loc.source->str, locs);
         break;
       }
@@ -1059,11 +1059,13 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
       return;
     }
 
-    case FBLE_FOREIGN_FUNC_VALUE_INSTR: {
-      FbleForeignFuncValueInstr* func_instr = (FbleForeignFuncValueInstr*)instr;
+    case FBLE_FOREIGN_VALUE_INSTR: {
+      FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
 
-      // Get a pointer to the FbleForeignFunction in x0.
-      FbleString* foreign = FbleMangleForeignFunction(func_instr->path, func_instr->name->str);
+      // TODO: Switch to FbleNewForeignValue for implementation.
+
+      // Get a pointer to the FbleForeign in x0.
+      FbleString* foreign = FbleMangleForeignName(foreign_instr->path, foreign_instr->name->str);
       GAdr(fout, "x0", "%s", foreign->str);
       FbleFreeString(foreign);
 
@@ -1071,22 +1073,22 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
       size_t sp_offset = sizeof(FbleExecutable);
       fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
 
-      // populate the FbleExecutable at SP from the FbleForeignFunction in x0.
-      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleForeignFunction, num_args));
+      // populate the FbleExecutable at SP from the FbleForeign in x0.
+      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleForeign, num_args));
       fprintf(fout, "  str x1, [SP, #%zi]\n", offsetof(FbleExecutable, num_args));
       fprintf(fout, "  str xzr, [SP, #%zi]\n", offsetof(FbleExecutable, num_statics));
-      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleForeignFunction, max_call_args));
+      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleForeign, max_call_args));
       fprintf(fout, "  str x1, [SP, #%zi]\n", offsetof(FbleExecutable, max_call_args));
-      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleForeignFunction, run));
+      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleForeign, run));
       fprintf(fout, "  str x1, [SP, #%zi]\n", offsetof(FbleExecutable, run));
 
       // Call FbleNewFuncValue.
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  mov x1, SP\n");
-      fprintf(fout, "  add x2, R_PROFILE_BLOCK_ID, #%zi\n", func_instr->profile_block_offset);
+      fprintf(fout, "  add x2, R_PROFILE_BLOCK_ID, #%zi\n", foreign_instr->profile_block_offset);
       fprintf(fout, "  mov x3, xzr\n");
       fprintf(fout, "  bl FbleNewFuncValue\n");
-      SetFrameVar(fout, "x0", func_instr->dest);
+      SetFrameVar(fout, "x0", foreign_instr->dest);
 
       // Free the stack space allocated for the FbleExecutable
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
@@ -1228,7 +1230,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
     case FBLE_TYPE_INSTR: return;
     case FBLE_LIST_INSTR: return;
     case FBLE_LITERAL_INSTR: return;
-    case FBLE_FOREIGN_FUNC_VALUE_INSTR: return;
+    case FBLE_FOREIGN_VALUE_INSTR: return;
     case FBLE_NOP_INSTR: return;
     case FBLE_UNDEF_INSTR: return;
   }

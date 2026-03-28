@@ -194,11 +194,11 @@ void FbleFreeTc(FbleTc* tc)
       return;
     }
 
-    case FBLE_FOREIGN_FUNC_VALUE_TC: {
-      FbleForeignFuncValueTc* func_tc = (FbleForeignFuncValueTc*)tc;
-      FbleFreeModulePath(func_tc->path);
-      FbleFreeLoc(func_tc->name_loc);
-      FbleFreeString(func_tc->name);
+    case FBLE_FOREIGN_VALUE_TC: {
+      FbleForeignValueTc* foreign_tc = (FbleForeignValueTc*)tc;
+      FbleFreeModulePath(foreign_tc->path);
+      FbleFreeLoc(foreign_tc->name_loc);
+      FbleFreeString(foreign_tc->name);
       FbleFree(tc);
       return;
     }

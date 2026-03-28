@@ -1864,7 +1864,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           return TC_FAILED;
         }
 
-        FbleForeignFuncValueTc* ffi_tc = FbleNewTc(FbleForeignFuncValueTc, FBLE_FOREIGN_FUNC_VALUE_TC, expr->loc);
+        FbleForeignValueTc* ffi_tc = FbleNewTc(FbleForeignValueTc, FBLE_FOREIGN_VALUE_TC, expr->loc);
         ffi_tc->path = FbleCopyModulePath(FbleTypeHeapGetContext(th));
         ffi_tc->name_loc = FbleCopyLoc(literal_expr->word_loc);
         ffi_tc->name = FbleNewString(literal_expr->word);
