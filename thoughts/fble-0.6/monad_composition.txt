@@ -442,4 +442,41 @@ know when type inference is being done. Is that a good reason?
 Let me dig up the previous discussion on this if I can.
 
 thoughts/fble-0.5/kinds.txt:
-* 
+* For let's specifically I suggested better to have explicit kinds because: 
+
+"It's really not that hard. Worse case you mess up, the compiler teaches you
+something. It reinforces everywhere you import something how to think about it
+in terms of polymorphism. If we can provide this extra documentation in code
+without much effort, let's do so. That's consistent with the idea of a
+language that takes advantage of the computer to help you write your code."
+
+The interesting example is this one. Compare:
+
+  @ Bool@ = /Core/Bool%.Bool@;
+  <@>@ List@ = /Core/List%.List@;
+  <<@>@>@ Monad@ = /Core/Monad%.Monad@;
+  <@>@ Maybe@ = /Core/Maybe%.Maybe@;
+  <<@>@>@ IStream@ = /Core/Stream%.IStream@;
+  <<@>@>@ OStream@ = /Core/Stream%.OStream@;
+  @ String@ = /Core/String%.String@;
+
+With:
+
+  @ Bool@ = /Core/Bool%.Bool@;
+  @ List@ = /Core/List%.List@;
+  @ Monad@ = /Core/Monad%.Monad@;
+  @ Maybe@ = /Core/Maybe%.Maybe@;
+  @ IStream@ = /Core/Stream%.IStream@;
+  @ OStream@ = /Core/Stream%.OStream@;
+  @ String@ = /Core/String%.String@;
+
+And I suppose now with something like:
+
+  ^ Bool@ = /Core/Bool%.Bool@;
+  ^ List@ = /Core/List%.List@;
+  ^ Monad@ = /Core/Monad%.Monad@;
+  ^ Maybe@ = /Core/Maybe%.Maybe@;
+  ^ IStream@ = /Core/Stream%.IStream@;
+  ^ OStream@ = /Core/Stream%.OStream@;
+  ^ String@ = /Core/String%.String@;
+

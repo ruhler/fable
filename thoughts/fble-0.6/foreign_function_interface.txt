@@ -813,3 +813,9 @@ Other changes:
 I think it's totally doable and clean. Let's do this. I can do it in small
 steps. We have renames, we have reorganization of helper functions, etc.
 
+---
+
+Transition over to foreign values is done. Looks good to me. Code is more
+consistent and simpler with our FbleNewForeignValue function taking an
+FbleForeign* directly. I like this change.
+

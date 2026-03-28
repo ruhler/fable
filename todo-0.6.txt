@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Remove Builtin from spec and spec tests now that we have FFI?
+ - Like, do we need builtin support anymore? Is there any value for it?
+
 * Figure out how to organize std packages
  - Add network to std package?
  - Separate io and FFI related stuff into separate std-io package?
@@ -61,14 +64,9 @@ Things to consider doing for the fble-0.6 release.
 * Verify all api is listed in include/build.tcl.
 
 * Test coverage for FFI
- - Move SpecTests/10.1-ForeignFuncValue to 10.1-ForeignValue.
- - Add spec test for pure value case.
  - Verify names matter.
  - Verify module paths matter.
  - Test what happens if you can't find the foreign function?
- - Consider taking this opportunity to move test foreign function definitions
-   into a new test/foreign.c file.
- - Test FFI value (as opposed to function).
 
 * Test unicode for character based native input and output streams.
 * Add tests for /Core/Char/Stream/IStream%.GetLine.

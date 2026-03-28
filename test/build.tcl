@@ -29,6 +29,8 @@ namespace eval "test" {
   }
   obj $::b/test/builtin.o $::s/test/builtin.c $cflags
   lappend objs $::b/test/builtin.o
+  obj $::b/test/foreign.o $::s/test/foreign.c $cflags
+  lappend objs $::b/test/foreign.o
   lib $::b/test/libfbletest$::lext $objs
 
   # test binaries
