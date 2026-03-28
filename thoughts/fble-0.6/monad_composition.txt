@@ -403,3 +403,25 @@ Requirements (targeting imports in general):
 * Allow for application or other modification of things. e.g. Output(io).
 * Allow for renaming of things. e.g. MyFoo = /Foo%.Foo;
 
+First attempt:
+
+ name, name, ... ^= <expr>;
+
+Here <expr> is an arbitrary expression of struct type. We bring each name into
+scope from an immediate field of whatever was returned from the expression.
+
+Supports: no explicit kinds, multi vars at once. What about overwriting of
+existing names, modification, and renaming of things?
+
+ Output ^= @(Output: Output(io)); # Not great...
+
+What if we supported generic kind? Like, inferred kind? Non-recursive?
+
+ ^ Output = Output(io);
+ ^ MyFoo = /Foo%.Foo;
+
+Could we have the same syntax support defining a new name and importing a
+field name all at once?
+
+ .m.do, .m.monad ^= io.m;
+ m ^= io.m;

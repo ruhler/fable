@@ -216,6 +216,25 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value);
 void FbleRegisterForeignValue(FbleValueHeap* heap, FbleForeign* foreign);
 
 /**
+ * @func[FbleLookupForeignValue] Looks up a foreign value.
+ *  @arg[FbleValueHeap*] heap
+ *   Heap to look up the value in.
+ *  @arg[FbleModulePath*] path
+ *   Module path associated with the foreign value.
+ *  @arg[const char*] name
+ *   The name of the foreign value.
+ *
+ *  @returns FbleForeign*
+ *   A pointer to the foreign value. NULL if the foreign value could not be
+ *   found. The pointer is borrowed and assumed to have a lifetime at least as
+ *   long as the lifetime of the FbleValueHeap.
+ *
+ *  @sideeffects
+ *   None.
+ */
+FbleForeign* FbleLookupForeignValue(FbleValueHeap* heap, FbleModulePath* path, const char* name);
+
+/**
  * @value[FbleGenericTypeValue] FbleValue instance for types.
  *  Used as an instance of an fble type for those types that don't need any
  *  extra information at runtime.
@@ -432,24 +451,28 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t prgm_len, size_t* prg
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics);
 
 /**
- * @func[FbleNewForeignFuncValue] Creates an fble foreign function value.
+ * @func[FbleNewForeignValue] Creates an fble foreign value.
  *  @arg[FbleValueHeap*] heap
  *   Heap to use for allocations.
- *  @arg[FbleModulePath*] path
- *   Module path associated with the foreign function.
- *  @arg[const char*] name
- *   The name of the foreign function.
+ *  @arg[FbleProfileThread*] profile
+ *   The current profile thread, or NULL if profiling is disabled.
+ *  @arg[FbleForeign*] value
+ *   The foreign value implementation.
  *  @arg[size_t] profile_block_id
- *   The profile block id to use for the function.
+ *   The profile block id to use for the foreign value implementation.
  *
  *  @returns FbleValue*
- *   A newly allocated function value. NULL if the foreign function could not
- *   be found.
+ *   A newly allocated foreign value. If the foreign value implementation
+ *   takes one or more arguments, this returns a function value wrapper around
+ *   the foreign value. If the foreign value implementation takes zero
+ *   arguments, this returns the result of executing that foreign value
+ *   implementation right away.
  *
  *  @sideeffects
- *   Allocates a function value on the heap.
+ *   Allocates a value on the heap. Anything else a zero-argument foreign
+ *   value implementation might do.
  */
-FbleValue* FbleNewForeignFuncValue(FbleValueHeap* heap, FbleModulePath* path, const char* name, size_t profile_block_id);
+FbleValue* FbleNewForeignValue(FbleValueHeap* heap_, FbleProfileThread* profile, FbleForeign* foreign, size_t profile_block_id);
 
 /**
  * @func[FbleEval] Evaluates a linked program.

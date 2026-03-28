@@ -305,14 +305,14 @@ static FbleValue* Interpret(
 
       case FBLE_FOREIGN_VALUE_INSTR: {
         FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
-        // TODO: Switch to FbleLookupForeignValue + FbleNewForeignValue;
-        FbleValue* func = FbleNewForeignFuncValue(heap, foreign_instr->path, foreign_instr->name->str, profile_block_id + foreign_instr->profile_block_offset);
-        if (func == NULL) {
+        FbleForeign* foreign = FbleLookupForeignValue(heap, foreign_instr->path, foreign_instr->name->str);
+        if (foreign == NULL) {
           FbleReportError("foreign value not found\n", foreign_instr->loc);
           return NULL;
         }
 
-        locals[foreign_instr->dest] = func;
+        FbleValue* value = FbleNewForeignValue(heap, profile, foreign, profile_block_id + foreign_instr->profile_block_offset);
+        locals[foreign_instr->dest] = value;
         pc++;
         break;
       }

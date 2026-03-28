@@ -1784,7 +1784,7 @@ void FbleRegisterForeignValue(FbleValueHeap* heap_, FbleForeign* foreign)
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleNewForeignFuncValue(FbleValueHeap* heap_, FbleModulePath* path, const char* name, size_t profile_block_id)
+FbleForeign* FbleLookupForeignValue(FbleValueHeap* heap_, FbleModulePath* path, const char* name)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
   for (size_t i = 0; i < heap->foreign.size; ++i) {
@@ -1796,17 +1796,28 @@ FbleValue* FbleNewForeignFuncValue(FbleValueHeap* heap_, FbleModulePath* path, c
       bool paths_match = foreign_path != NULL && FbleModulePathsEqual(path, foreign_path);
       FbleFreeModulePath(foreign_path);
       if (paths_match) {
-        FbleExecutable exe = {
-          .num_args = foreign->num_args,
-          .num_statics = 0,
-          .max_call_args = foreign->max_call_args,
-          .run = foreign->run
-        };
-        return FbleNewFuncValue(heap_, &exe, profile_block_id, NULL);
+        return foreign;
       }
     }
   }
   return NULL;
+}
+
+// See documentation in fble-value.h.
+FbleValue* FbleNewForeignValue(FbleValueHeap* heap, FbleProfileThread* profile, FbleForeign* foreign, size_t profile_block_id)
+{
+  FbleExecutable exe = {
+    .num_args = foreign->num_args,
+    .num_statics = 0,
+    .max_call_args = foreign->max_call_args,
+    .run = foreign->run
+  };
+  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_id, NULL);
+
+  if (foreign->num_args == 0) {
+    return FbleCall(heap, profile, func, 0, NULL);
+  }
+  return func;
 }
 
 // See documentation in fble-value.h.
