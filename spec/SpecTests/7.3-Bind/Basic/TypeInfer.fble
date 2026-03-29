@@ -1,11 +1,11 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 
 <@ T@>((Unit@) { T@; }) { T@; } Apply = <@ T@>((Unit@) { T@; } f) {
   f(Unit@());
 };
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 
 Bool@ x = {
   # Verify we can use bind syntax with type inference, where the return type is

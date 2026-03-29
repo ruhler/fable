@@ -1,36 +1,36 @@
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Nothing = /Std/Maybe%.Nothing;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% Format = /Std/Char/Ascii/Output%.Format;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+Format = /Std/Char/Ascii/Output%.Format;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Loc@ = /Fbld/Loc%.Loc@;
+Loc@ = /Fbld/Loc%.Loc@;
 
-<@>@ Env@ = /Fbld/Env%.Env@;
+Env@ = /Fbld/Env%.Env@;
 
-<@>@ Result@ = /Fbld/Result%.Result@;
-<@>% Error = /Fbld/Result%.Error;
-% r = /Fbld/Result%.Monad;
+Result@ = /Fbld/Result%.Result@;
+Error = /Fbld/Result%.Error;
+r = /Fbld/Result%.Monad;
 
-@ Text@ = /Fbld/Text%.Text@;
+Text@ = /Fbld/Text%.Text@;
 
 # Fbld marked up text.
-@ Command@ = *(Text@ name, Maybe@<Impl@> impl, List@<Markup@> args),
-@ Sequence@ = *(Markup@ a, Markup@ b),
-@ Markup@ = +(
+Command@ = *(Text@ name, Maybe@<Impl@> impl, List@<Markup@> args),
+Sequence@ = *(Markup@ a, Markup@ b),
+Markup@ = +(
   Unit@ empty,
   Text@ plain,          # non-empty
   Command@ command,
   Sequence@ sequence    # both a and b are non-empty
 ),
-@ Impl@ = (Env@<Impl@>, Command@) { Result@<Markup@>; };
+Impl@ = (Env@<Impl@>, Command@) { Result@<Markup@>; };
 
 Markup@ Empty = Markup@(empty: Unit);
 

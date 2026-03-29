@@ -1,6 +1,6 @@
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
 
 # For --
 #   Repeatedly apply the body of the loop for as long as the index value is

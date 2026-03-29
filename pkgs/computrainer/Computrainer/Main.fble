@@ -1,83 +1,83 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
-<<@>@>@ OStream@ = /Core/Char/Stream%.OStream@;
+IStream@ = /Core/Char/Stream%.IStream@;
+OStream@ = /Core/Char/Stream%.OStream@;
 
-<<@>@>% GetText = /Core/Char/Stream/IStream%.GetText;
+GetText = /Core/Char/Stream/IStream%.GetText;
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
-% Neg = /Std/Int%.Neg;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Mul = /Std/Int%.Mul;
-% Shr = /Std/Int%.Shr;
-% Shl = /Std/Int%.Shl;
-% Max = /Std/Int/Ord%.Max;
-% Quot = /Std/Int/Div%.Quot;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
+Neg = /Std/Int%.Neg;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Mul = /Std/Int%.Mul;
+Shr = /Std/Int%.Shr;
+Shl = /Std/Int%.Shl;
+Max = /Std/Int/Ord%.Max;
+Quot = /Std/Int/Div%.Quot;
 
-% Int = /Std/Int/Lit%.Int;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Get = /Std/List/Index%.Get;
-<@>% Length = /Std/List/Index%.Length;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Get = /Std/List/Index%.Get;
+Length = /Std/List/Index%.Length;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-<<@>@>@ IoM@ = /Core/Io%.IoM@;
+IoM@ = /Core/Io%.IoM@;
 
-% Success = /Core/Cli%.Success;
+Success = /Core/Cli%.Success;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/Native%.Main@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
+App@ = /App/App%.App@;
+Main@ = /App/Native%.Main@;
+Event@ = /App/App%.Event@;
+Effect@ = /App/App%.Effect@;
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Point@ = /App/Drawing%.Point@;
-% Affine = /App/Drawing%.Affine;
-% Blank = /App/Drawing%.Blank;
-% Drawings = /App/Drawing%.Drawings;
-% Over = /App/Drawing%.Over;
-% Rect = /App/Drawing%.Rect;
-% Translate = /App/Drawing%.Translate;
+Drawing@ = /App/Drawing%.Drawing@;
+Point@ = /App/Drawing%.Point@;
+Affine = /App/Drawing%.Affine;
+Blank = /App/Drawing%.Blank;
+Drawings = /App/Drawing%.Drawings;
+Over = /App/Drawing%.Over;
+Rect = /App/Drawing%.Rect;
+Translate = /App/Drawing%.Translate;
 
-% Car = /Computrainer/Car%;
-@ Car@ = Car.Car@;
+Car = /Computrainer/Car%;
+Car@ = Car.Car@;
 
-% Dir = /Computrainer/Dir%;
+Dir = /Computrainer/Dir%;
 
-% Gate = /Computrainer/Gate%;
-@ Gate@ = Gate.Gate@;
+Gate = /Computrainer/Gate%;
+Gate@ = Gate.Gate@;
 
-@ Coord@ = /Computrainer/Grid%.Coord@;
-% Grid = /Computrainer/Grid%.Grid;
+Coord@ = /Computrainer/Grid%.Coord@;
+Grid = /Computrainer/Grid%.Grid;
 
-@ Model@ = /Computrainer/Model%.Model@;
-@ Gates@ = /Computrainer/Model%.Gates@;
-% Model = /Computrainer/Model%.Model;
-% Tick = /Computrainer/Model%.Tick;
+Model@ = /Computrainer/Model%.Model@;
+Gates@ = /Computrainer/Model%.Gates@;
+Model = /Computrainer/Model%.Model;
+Tick = /Computrainer/Model%.Tick;
 
-% DrawCar = /Computrainer/Graphics%.DrawCar;
-% DrawGate = /Computrainer/Graphics%.DrawGate;
-% DrawModel = /Computrainer/Graphics%.DrawModel;
+DrawCar = /Computrainer/Graphics%.DrawCar;
+DrawGate = /Computrainer/Graphics%.DrawGate;
+DrawModel = /Computrainer/Graphics%.DrawModel;
 
-% Colors = /Computrainer/Graphics/Colors%;
-% W = /Computrainer/Graphics/Sprites%.W;
-% Sprites = /Computrainer/Graphics/Sprites%;
+Colors = /Computrainer/Graphics/Colors%;
+W = /Computrainer/Graphics/Sprites%.W;
+Sprites = /Computrainer/Graphics/Sprites%;
 
-@ Selected@ = +(
+Selected@ = +(
     Unit@ nothing,
     Unit@ antigate,
     Gate@ gate,
@@ -95,7 +95,7 @@ SelectCar = (Car@ c) {
     Selected@(car: c);
 };
 
-@ State@ = *(
+State@ = *(
     Model@ model,
     Int@ map_x, # tile x coordinate of tile in the center of the screen.
     Int@ map_y, # tile y coordinate of tile in the center of the screen.

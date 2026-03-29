@@ -1,36 +1,36 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% And = /Std/Bool%.And;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+And = /Std/Bool%.And;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
 
-% IsZero = /Std/Int/Sign%.IsZero;
-% Eq = /Std/Int/Eq%.Eq;
-% Ord = /Core/Int/Ord%.Ord;
+IsZero = /Std/Int/Sign%.IsZero;
+Eq = /Std/Int/Eq%.Eq;
+Ord = /Core/Int/Ord%.Ord;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% ForEach = /Std/List%.ForEach;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+ForEach = /Std/List%.ForEach;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-<@>@ Cmp@ = /Std/Cmp%.Cmp@;
-@ Compared@ = /Std/Cmp%.Compared@;
+Cmp@ = /Std/Cmp%.Cmp@;
+Compared@ = /Std/Cmp%.Compared@;
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Output%.Format;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Coord@ = *(Int@ row, Int@ col);
+Coord@ = *(Int@ row, Int@ col);
 
 Eq@<Coord@> EqCoord = (Coord@ a, Coord@ b) {
   And(Eq(a.row, b.row), Eq(a.col, b.col));
@@ -46,12 +46,12 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 };
 
 # The world is a set of Coord@ where there are live cells.
-% Map = /Core/Map/Tree%.Map(OrdCoord);
-% Set = /Core/Set%.Set(Map);
-@ World@ = Set.Set@;
-% EqWorld = /Core/Set/Eq%.Eq(Map, EqCoord);
-% ShowWorld = /Core/Set/Show%.Show(Map, ShowCoord);
-% W = @(
+Map = /Core/Map/Tree%.Map(OrdCoord);
+Set = /Core/Set%.Set(Map);
+World@ = Set.Set@;
+EqWorld = /Core/Set/Eq%.Eq(Map, EqCoord);
+ShowWorld = /Core/Set/Show%.Show(Map, ShowCoord);
+W = @(
   Empty: Set.Empty,
   Insert: Set.Insert,
   ForEach: Set.ForEach
@@ -65,7 +65,7 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 
 # A count of neighboring cells. 4p stands for anything greater than or equal
 # to 4.
-@ Count@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4p);
+Count@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4p);
 
 (Count@) { Count@; } IncCount = (Count@ c) {
   c.?(0: Count@(1: Unit),
@@ -75,7 +75,7 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
       4p: Count@(4p: Unit));
 };
 
-@ Status@ = *(Bool@ alive, Count@ neighbors);
+Status@ = *(Bool@ alive, Count@ neighbors);
 
 # Returns true if a cell with the given status should be a live cell in the
 # next generation.
@@ -86,8 +86,8 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 };
 
 # Map from Coord to the status of the cell.
-@ Cand@ = Map.Map@<Status@>;
-% C = @(
+Cand@ = Map.Map@<Status@>;
+C = @(
   Empty: Map.Empty<Status@>,
   InsertWith: Map.InsertWith<Status@>,
   ForEach: Map.ForEach<Status@>

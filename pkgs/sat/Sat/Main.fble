@@ -1,38 +1,38 @@
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
-<<@>@>% GetLine = /Core/Char/Stream/IStream%.GetLine;
+Put@ = /Core/Char/Stream%.Put@;
+IStream@ = /Core/Char/Stream%.IStream@;
+GetLine = /Core/Char/Stream/IStream%.GetLine;
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
-% String = /Std/Char/Output%.String;
-% FormatE = /Std/Char/Ascii/Output%.FormatE;
+Output@ = /Std/Char/Output%.Output@;
+String = /Std/Char/Output%.String;
+FormatE = /Std/Char/Ascii/Output%.FormatE;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
-<@>% Reverse = /Std/List%.Reverse;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
+Reverse = /Std/List%.Reverse;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-@ Exit@ = /Core/Cli%.Exit@;
-% Success = /Core/Cli%.Success;
-% Failure = /Core/Cli%.Failure;
+Exit@ = /Core/Cli%.Exit@;
+Success = /Core/Cli%.Success;
+Failure = /Core/Cli%.Failure;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Solver@ = /Sat/Solver%.Solver@;
-@ Result@ = /Sat/Solver%.Result@;
-% NewSolver = /Sat/Solver%.NewSolver;
-% AddClauses = /Sat/Solver%.AddClauses;
+Solver@ = /Sat/Solver%.Solver@;
+Result@ = /Sat/Solver%.Result@;
+NewSolver = /Sat/Solver%.NewSolver;
+AddClauses = /Sat/Solver%.AddClauses;
 
-<<@>@>% Solve = /Sat/Solver%.Solve;
+Solve = /Sat/Solver%.Solve;
 
-@ Formula@ = /Sat/Dimacs%.Formula@;
-<@>@ Parse@ = /Sat/Dimacs%.Parse@;
-% ParseLines = /Sat/Dimacs%.ParseLines;
-% ShowResult = /Sat/Show%.ShowResult;
+Formula@ = /Sat/Dimacs%.Formula@;
+Parse@ = /Sat/Dimacs%.Parse@;
+ParseLines = /Sat/Dimacs%.ParseLines;
+ShowResult = /Sat/Show%.ShowResult;
 
 <<@>@ M@>(Monad@<M@>, IStream@<M@>, Put@<M@, Output@>, Put@<M@, Output@>) { M@<Exit@>; }
 Main = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in, Put@<M@, Output@> out, Put@<M@, Output@> err) {

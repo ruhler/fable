@@ -1,22 +1,22 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-% Bit = /Core/Digits%.Bit;
-% EqBit = /Core/Digits/Eq%.EqBit;
+Bit = /Core/Digits%.Bit;
+EqBit = /Core/Digits/Eq%.EqBit;
 
 
 Test@ Tests = TestSuite(Str|Digits, List<Test@>[

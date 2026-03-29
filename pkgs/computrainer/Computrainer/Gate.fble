@@ -1,31 +1,31 @@
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-% Car = /Computrainer/Car%;
-@ Car@ = Car.Car@;
+Car = /Computrainer/Car%;
+Car@ = Car.Car@;
 
-% Dir = /Computrainer/Dir%;
-@ Dir@ = Dir.Dir@;
-% Dest = Dir.Dest;
+Dir = /Computrainer/Dir%;
+Dir@ = Dir.Dir@;
+Dest = Dir.Dest;
 
-@ Coord@ = /Computrainer/Grid%.Coord@;
-% Grid = /Computrainer/Grid%.Grid;
+Coord@ = /Computrainer/Grid%.Coord@;
+Grid = /Computrainer/Grid%.Grid;
 
-@ State@ = /Computrainer/State%.State@;
-% AddCar = /Computrainer/State%.AddCar;
-% MoveCar = /Computrainer/State%.MoveCar;
-% RemoveCar = /Computrainer/State%.RemoveCar;
-% Routing = /Computrainer/State%.Routing;
-% SetRouting = /Computrainer/State%.SetRouting;
-% ClearRouting = /Computrainer/State%.ClearRouting;
+State@ = /Computrainer/State%.State@;
+AddCar = /Computrainer/State%.AddCar;
+MoveCar = /Computrainer/State%.MoveCar;
+RemoveCar = /Computrainer/State%.RemoveCar;
+Routing = /Computrainer/State%.Routing;
+SetRouting = /Computrainer/State%.SetRouting;
+ClearRouting = /Computrainer/State%.ClearRouting;
 
 # A gate action: updates the state of the world for the gate at the given coordinates.
-@ Action@ = (Coord@, State@) { State@; };
+Action@ = (Coord@, State@) { State@; };
 Action@ NoAction = (Coord@ _, State@ s) { s; };
 
 # What happens when you try to push a car into a gate.
@@ -37,8 +37,8 @@ Action@ NoAction = (Coord@ _, State@ s) { s; };
 #  @returns[Maybe@<State@>]
 #   The new state after clearing space at the gate to push the car into. Or nothing
 #   if you can't push a car into the gate.
-@ PushAt@ = (Coord@, State@) { Maybe@<State@>; };
-@ Push@ = (PushAt@, Coord@, Maybe@<Car@>, State@) { Maybe@<State@>; };
+PushAt@ = (Coord@, State@) { Maybe@<State@>; };
+Push@ = (PushAt@, Coord@, Maybe@<Car@>, State@) { Maybe@<State@>; };
 
 # Common push operation.
 (Dir@) { Push@; }
@@ -74,8 +74,8 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 #
 # * Stops a train permanently.
 # * You can move into it, but then you'll stay there forever.
-@ Stop@ = Unit@;
-% Stop = {
+Stop@ = Unit@;
+Stop = {
     (Stop@) { Action@; } Action = (Stop@ _) { NoAction; };
 
     (Stop@) { Push@; }
@@ -94,8 +94,8 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 #  ###
 #
 # * Cars get pushed out in the direction it points.
-@ Move@ = Dir@;
-% Move = {
+Move@ = Dir@;
+Move = {
     (Move@) { Action@; } Action = (Move@ _) { NoAction; };
     (Move@) { Push@; } Push = PushTo;
     @(Action, Push);
@@ -109,8 +109,8 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 #
 # * Creates a train car when empty.
 # * Cars get pushed out in the direction it points.
-@ Source@ = *(Car@ car, Dir@ dir);
-% Source = {
+Source@ = *(Car@ car, Dir@ dir);
+Source = {
     (Source@) { Action@; }
     Action = (Source@ g, Coord@ c, State@ s) {
         # Place a car if there's nothing there already.
@@ -132,8 +132,8 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 #
 # * Removes the car on the gate.
 # * Cars can go into it, but not get pushed out.
-@ Sink@ = Unit@;
-% Sink = {
+Sink@ = Unit@;
+Sink = {
     (Sink@) { Action@; }
     Action = (Sink@ _, Coord@ c, State@ s) {
         # There may not be a car here, but it's okay to do RemoveCar anyway, it
@@ -158,8 +158,8 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 #  ###
 #
 # * Cars get pushed out in both the direction it points.
-@ Dup@ = *(Dir@ a, Dir@ b);
-% Dup = {
+Dup@ = *(Dir@ a, Dir@ b);
+Dup = {
     (Dup@) { Action@; } Action = (Dup@ _) { NoAction; };
 
     (Dup@) { Push@; }
@@ -181,8 +181,8 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 #
 # * Waits for the output to be occupied by a non-caboose car, then lets 1 train
 #   through.
-@ Wait@ = Dir@;
-% Wait = {
+Wait@ = Dir@;
+Wait = {
     (Wait@) { Action@; } Action = (Wait@ g, Coord@ c, State@ s) {
         Routing(c, s).?(just: s);      # Block for routing to finish.
         Maybe@<Car@> mcar = Grid.Lookup(s.cars, Dest(c, g));
@@ -205,8 +205,8 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 # * Splits the first car off the train one direction, then forwards the rest of
 #   the train on. A train with just a caboose is forwarded on without splitting
 #   anything off.
-@ Split@ = *(Dir@ head, Dir@ tail);
-% Split = {
+Split@ = *(Dir@ head, Dir@ tail);
+Split = {
     (Split@) { Action@; } Action = (Split@ _) { NoAction; };
 
     (Split@) { Push@; }
@@ -227,8 +227,8 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
 #  ###
 #
 # * Trains starting with a target car are redirected to a different direction.
-@ Filter@ = *(Car@ car, Dir@ match, Dir@ default);
-% Filter = {
+Filter@ = *(Car@ car, Dir@ match, Dir@ default);
+Filter = {
     (Filter@) { Action@; } Action = (Filter@ g, Coord@ c, State@ s) {
         Routing(c, s).?(just: s);             # Block for routing to finish.
 
@@ -244,7 +244,7 @@ PushToRoute = (PushAt@ push, Coord@ c, Maybe@<Car@> mv, State@ s) {
     @(Action, Push);
 };
 
-@ Gate@ = +(
+Gate@ = +(
     Stop@ stop,
     Move@ move,
     Source@ source,

@@ -1,8 +1,8 @@
 # @@fble-test@@ compile-error 13:19
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 
-<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 
 <@ T@>(Unit@) { Maybe@<T@>; } Nothing = <@ T@>(Unit@ u) {
   Maybe@<T@>(nothing: u);

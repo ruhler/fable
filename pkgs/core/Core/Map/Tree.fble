@@ -1,23 +1,23 @@
 
 # Implementation of a balanced binary tree-based map.
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>@ Cmp@ = /Std/Cmp%.Cmp@;
-@ Compared@ = /Std/Cmp%.Compared@;
+Cmp@ = /Std/Cmp%.Cmp@;
+Compared@ = /Std/Cmp%.Compared@;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Nothing = /Std/Maybe%.Nothing;
-<@>% Just = /Std/Maybe%.Just;
+Maybe@ = /Std/Maybe%.Maybe@;
+Nothing = /Std/Maybe%.Nothing;
+Just = /Std/Maybe%.Just;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # Balance@ --
 #   Keeps track of how well balanced a map node's children are.
-@ Balance@ = +(
+Balance@ = +(
   Unit@ '-',     # The left subtree has height 1 greater than the right subtree.
   Unit@ '0',     # The heights of the left and right subtrees match.
   Unit@ '+'      # The right subtree has height 1 greater than the left subtree.
@@ -33,7 +33,7 @@ Balance@ '+' = Balance@('+': Unit);
 
 # Sum@ --
 #   Represents the sum of two Balance@.
-@ Sum@ = +(Unit@ '-', Balance@ '0', Unit@ '+');
+Sum@ = +(Unit@ '-', Balance@ '0', Unit@ '+');
 
 # Sum --
 #   Compute the Sum of two Balance@.
@@ -68,20 +68,20 @@ Delta = (Balance@ delta, Balance@ balance) {
 };
 
 # /Core/Map%.Map@ implementation for key types with an Cmp@ interface.
-<@>% Map = <@ K@>(Cmp@<K@> ord) {
-  @ Key@ = K@;
+Map = <@ K@>(Cmp@<K@> ord) {
+  Key@ = K@;
 
-  <@>@ Map@ = <@ V@> {
-    @ M@ = +(Unit@ empty, P@ map),
-    @ P@ = *(K@ key, V@ value, Balance@ balance, M@ left, M@ right);
+  Map@ = <@ V@> {
+    M@ = +(Unit@ empty, P@ map),
+    P@ = *(K@ key, V@ value, Balance@ balance, M@ left, M@ right);
     M@;
   };
     
   # MapP@ --
   #   A non-empty map from K@ to V@.
-  <@>@ MapP@ = <@ V@> {
-    @ M@ = +(Unit@ empty, P@ map),
-    @ P@ = *(K@ key, V@ value, Balance@ balance, M@ left, M@ right);
+  MapP@ = <@ V@> {
+    M@ = +(Unit@ empty, P@ map),
+    P@ = *(K@ key, V@ value, Balance@ balance, M@ left, M@ right);
     P@;
   };
 
@@ -96,7 +96,7 @@ Delta = (Balance@ delta, Balance@ balance) {
     Map@<V@>(empty: Unit);
   };
 
-  <@>@ Entry@ = <@ V@> { *(K@ key, V@ value); };
+  Entry@ = <@ V@> { *(K@ key, V@ value); };
 
   # First --
   #   Get the first (least) value in the map.
@@ -172,7 +172,7 @@ Delta = (Balance@ delta, Balance@ balance) {
   #   delta - '+' if the map grew in height by 1, '0' if the map did not change
   #           height, '-' if the map decreased in height by 1.
   #   map - the modified, rebalanced map.
-  <@>@ Modified@ = <@ V@> { *(Balance@ delta, Map@<V@> map); };
+  Modified@ = <@ V@> { *(Balance@ delta, Map@<V@> map); };
 
   # Rebalance --
   #   Rebalance a potentially unbalanced map.
@@ -481,7 +481,7 @@ Delta = (Balance@ delta, Balance@ balance) {
   #   Delete(map, Str(Chars|foo));
   <@ V@>(Map@<V@>, K@) { Map@<V@>; }
   Delete = <@ V@> {
-    % modify = Modify<V@>;
+    modify = Modify<V@>;
 
     (Map@<V@> map, K@ key) {
       modify(map, key, WithRemove<V@>).map;
@@ -510,7 +510,7 @@ Delta = (Balance@ delta, Balance@ balance) {
   #   };
   <@ V@>(Map@<V@>, K@, (Maybe@<V@>){ V@; }) { Map@<V@>; }
   InsertWith = <@ V@> {
-    % modify = Modify<V@>;
+    modify = Modify<V@>;
     (Map@<V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
       modify(map, key, (Maybe@<V@> v) { Just(with(v)); }).map;
     };
@@ -535,7 +535,7 @@ Delta = (Balance@ delta, Balance@ balance) {
   #   Insert(map, Str(Chars|foo), 4);
   <@ V@>(Map@<V@>, K@, V@) { Map@<V@>; }
   Insert = <@ V@> {
-    % insert = InsertWith<V@>;
+    insert = InsertWith<V@>;
 
     (Map@<V@> map, K@ key, V@ value) {
       insert(map, key, (Maybe@<V@> _) { value; });

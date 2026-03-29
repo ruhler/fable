@@ -1,12 +1,12 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<<@>@>@ IoM@ = /Core/Io%.IoM@;
+IoM@ = /Core/Io%.IoM@;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
 # Program exit status.
 #  0 for success, non-zero for application specific failure status. Not all
@@ -15,7 +15,7 @@
 #  application exit status 1 through N-1, and 1 of those for all other
 #  non-zero application exit codes. In practice this means you should use
 #  smaller positive values for exit codes you want to distinguish between.
-@ Exit@ = Int@;
+Exit@ = Int@;
 
 # Exit status success.
 Exit@ Success = Int|0;
@@ -29,6 +29,6 @@ Exit@ Failure = Int|1;
 #  @arg[Monad@<M@>][m] The Monad@ instance for M@.
 #  @arg[List@<String@>][args] The command line arguments.
 #  @returns[M@<Exit@>] The application exit status.
-<<@>@>@ Main@ = <<@>@ M@>(IoM@<M@>, List@<String@>) { M@<Exit@>; };
+Main@ = <<@>@ M@>(IoM@<M@>, List@<String@>) { M@<Exit@>; };
 
 @(Exit@, Main@, Success, Failure);

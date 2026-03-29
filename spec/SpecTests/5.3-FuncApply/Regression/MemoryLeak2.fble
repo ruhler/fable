@@ -4,9 +4,9 @@
 # Specifically, GC was not finishing during a tight recursive call allocating
 # garbage.
 
-@ Nat@ = /SpecTests/Nat%.Nat@;
-@ S@ = /SpecTests/Nat%.S@;
-% S = /SpecTests/Nat%.S;
+Nat@ = /SpecTests/Nat%.Nat@;
+S@ = /SpecTests/Nat%.S@;
+S = /SpecTests/Nat%.S;
 
 (Nat@, Nat@) { Nat@; } G = (Nat@ a, Nat@ _b) {
   a;

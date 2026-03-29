@@ -1,16 +1,16 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Mul = /Std/Int%.Mul;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Mul = /Std/Int%.Mul;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-@ Var@ = /SatGame/Var%.Var@;
+Var@ = /SatGame/Var%.Var@;
 
 # We convert variables to an integer and then print the integer value.
 Show@<Var@> Show = {

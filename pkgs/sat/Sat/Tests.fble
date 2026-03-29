@@ -1,43 +1,43 @@
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% And = /Std/Bool%.And;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+And = /Std/Bool%.And;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+Eq@ = /Std/Eq%.Eq@;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-% Int = /Std/Int/Lit%.Int;
+Int = /Std/Int/Lit%.Int;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-@ TestResult@ = /Std/Test%.TestResult@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+TestResult@ = /Std/Test%.TestResult@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Clause@ = /Sat/Solver%.Clause@;
-@ VarId@ = /Sat/Solver%.VarId@;
-@ Var@ = /Sat/Solver%.Var@;
-@ Assignment@ = /Sat/Solver%.Assignment@;
-@ Result@ = /Sat/Solver%.Result@;
-% AddClauses = /Sat/Solver%.AddClauses;
-% NewSolver = /Sat/Solver%.NewSolver;
-% EqId = /Sat/Solver%.EqId;
+Clause@ = /Sat/Solver%.Clause@;
+VarId@ = /Sat/Solver%.VarId@;
+Var@ = /Sat/Solver%.Var@;
+Assignment@ = /Sat/Solver%.Assignment@;
+Result@ = /Sat/Solver%.Result@;
+AddClauses = /Sat/Solver%.AddClauses;
+NewSolver = /Sat/Solver%.NewSolver;
+EqId = /Sat/Solver%.EqId;
 
-@ Formula@ = /Sat/Dimacs%.Formula@;
+Formula@ = /Sat/Dimacs%.Formula@;
 
-% ShowResult = /Sat/Show%.ShowResult;
-% ShowParsedFormula = /Sat/Show%.ShowParsedFormula;
+ShowResult = /Sat/Show%.ShowResult;
+ShowParsedFormula = /Sat/Show%.ShowParsedFormula;
 
-<@>@ Parse@ = /Sat/Dimacs%.Parse@;
-% Parse = /Sat/Dimacs%.Parse;
+Parse@ = /Sat/Dimacs%.Parse@;
+Parse = /Sat/Dimacs%.Parse;
 
 
 
@@ -74,9 +74,9 @@ VarId@ Y = Int|2;
 VarId@ Z = Int|3;
 
 (Formula@) { Result@; } Solve = {
-  <@>@ M@ = /Core/Monad/Pure%.Pure@;
+  M@ = /Core/Monad/Pure%.Pure@;
   Monad@<M@> m = /Core/Monad/Pure%.Monad;
-  % solve = /Sat/Solver%.Solve<M@>(m);
+  solve = /Sat/Solver%.Solve<M@>(m);
   (Formula@ formula) {
     solve(AddClauses(NewSolver, formula));
   };
@@ -171,7 +171,7 @@ Test@ Tests = TestSuite(Str|Sat, List[
     ];
 
     # Hack to test that we got a sat result.
-    % eq = (Result@ _wnt, Result@ got) {
+    eq = (Result@ _wnt, Result@ got) {
       got.?(sat: True);
       False;
     };

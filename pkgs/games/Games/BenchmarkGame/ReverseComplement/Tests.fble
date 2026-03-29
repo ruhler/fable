@@ -1,12 +1,12 @@
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-@ Test@ = /Std/Test%.Test@;
+Test@ = /Std/Test%.Test@;
 
-% Test = /Games/BenchmarkGame/Game%.Test;
+Test = /Games/BenchmarkGame/Game%.Test;
 
 String@ input = Str|
 '>ONE

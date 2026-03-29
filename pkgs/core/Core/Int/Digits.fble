@@ -1,12 +1,12 @@
 
-@ Decimal@ = /Core/Digits%.Decimal@;
-% Decimal = /Core/Digits%.Decimal;
+Decimal@ = /Core/Digits%.Decimal@;
+Decimal = /Core/Digits%.Decimal;
 
-@ Int@ = /Std/Int%.Int@;
-% Int = /Std/Int/Lit%.Int;
-% Div = /Std/Int/Div%.Div;
+Int@ = /Std/Int%.Int@;
+Int = /Std/Int/Lit%.Int;
+Div = /Std/Int/Div%.Div;
 
-@ Undef@ = /Std/Undef%.Undef@;
+Undef@ = /Std/Undef%.Undef@;
 
 Undef@ NotADigit;
 

@@ -1,41 +1,41 @@
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>% List = /Std/List%.List;
-<@>% Empty = /Std/List%.Empty;
+List = /Std/List%.List;
+Empty = /Std/List%.Empty;
 
-@ Num@ = /Pinball/Num%.Num@;
-% Neg = /Pinball/Num%.Neg;
-% Int = /Pinball/Num%.Int;
-% Sub = /Pinball/Num%.Sub;
-% Div = /Pinball/Num%.Div;
+Num@ = /Pinball/Num%.Num@;
+Neg = /Pinball/Num%.Neg;
+Int = /Pinball/Num%.Int;
+Sub = /Pinball/Num%.Sub;
+Div = /Pinball/Num%.Div;
 
-@ Ball@ = /Pinball/Ball%.Ball@;
+Ball@ = /Pinball/Ball%.Ball@;
 
-@ Edge@ = /Pinball/Edge%.Edge@;
-% Edge = /Pinball/Edge%.Edge;
+Edge@ = /Pinball/Edge%.Edge@;
+Edge = /Pinball/Edge%.Edge;
 
-@ Paddle@ = /Pinball/Paddle%.Paddle@;
-% Paddle = /Pinball/Paddle%.Paddle;
+Paddle@ = /Pinball/Paddle%.Paddle@;
+Paddle = /Pinball/Paddle%.Paddle;
 
-@ World@ = /Pinball/World%.World@;
-% Tick = /Pinball/World%.Tick;
+World@ = /Pinball/World%.World@;
+Tick = /Pinball/World%.Tick;
 
-@ Vec@ = /Pinball/Vec%.Vec@;
+Vec@ = /Pinball/Vec%.Vec@;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
-% ExpectFails = /Std/Test%.ExpectFails;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
+ExpectFails = /Std/Test%.ExpectFails;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 # Import to test compilation.
-<<@>@>% _ = /Pinball/AppIO%;
-% _ = /Pinball/Bench%;
-% _ = /Pinball/Circle%;
+_ = /Pinball/AppIO%;
+_ = /Pinball/Bench%;
+_ = /Pinball/Circle%;
 
 Test@ Tests = TestSuite(Str|'Pinball', List[
   /Pinball/Rotate/Tests%.Tests,

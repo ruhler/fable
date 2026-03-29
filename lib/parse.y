@@ -691,13 +691,12 @@ let_binding_p:
       binding->name = $2;
       binding->expr = $4;
     }
-  | kind name '=' aexpr {
+  | name '=' aexpr {
       FbleInitVector($$);
       FbleBinding* binding = FbleExtendVector($$);
-      FbleFreeKind($1);
       binding->type = NULL;
-      binding->name = $2;
-      binding->expr = $4;
+      binding->name = $1;
+      binding->expr = $3;
     }
   | let_binding_p ',' expr name '=' aexpr {
       $$ = $1;
@@ -706,13 +705,12 @@ let_binding_p:
       binding->name = $4;
       binding->expr = $6;
     }
-  | let_binding_p ',' kind name '=' aexpr {
+  | let_binding_p ',' name '=' aexpr {
       $$ = $1;
       FbleBinding* binding = FbleExtendVector($$);
-      FbleFreeKind($3);
       binding->type = NULL;
-      binding->name = $4;
-      binding->expr = $6;
+      binding->name = $3;
+      binding->expr = $5;
     }
   ;
 

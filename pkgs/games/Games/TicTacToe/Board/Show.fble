@@ -1,10 +1,10 @@
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Position@ = /Games/TicTacToe/Board%.Position@;
-@ Status@ = /Games/TicTacToe/Board%.Status@;
+Position@ = /Games/TicTacToe/Board%.Position@;
+Status@ = /Games/TicTacToe/Board%.Status@;
 
 Show@<Position@> Position = (Position@ a) {
   a.?(

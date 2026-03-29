@@ -1,72 +1,72 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<@>@ Output@ = /Std/Char/Output%.Output@;
-% FormatE = /Std/Char/Ascii/Output%.FormatE;
+Put@ = /Core/Char/Stream%.Put@;
+Output@ = /Std/Char/Output%.Output@;
+FormatE = /Std/Char/Ascii/Output%.FormatE;
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Neg = /Std/Int%.Neg;
-% Mul = /Std/Int%.Mul;
-% Shr = /Std/Int%.Shr;
-% Int = /Std/Int/Lit%.Int;
-% Max = /Std/Int/Ord%.Max;
-% Min = /Std/Int/Ord%.Min;
-% Abs = /Std/Int/Sign%.Abs;
-@ QR@ = /Std/Int/Div%.QR@;
-% Quot = /Std/Int/Div%.Quot;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Neg = /Std/Int%.Neg;
+Mul = /Std/Int%.Mul;
+Shr = /Std/Int%.Shr;
+Int = /Std/Int/Lit%.Int;
+Max = /Std/Int/Ord%.Max;
+Min = /Std/Int/Ord%.Min;
+Abs = /Std/Int/Sign%.Abs;
+QR@ = /Std/Int/Div%.QR@;
+Quot = /Std/Int/Div%.Quot;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ IoM@ = /Core/Io%.IoM@;
+IoM@ = /Core/Io%.IoM@;
 
-% Map = /Core/Int/Map%.Map;
+Map = /Core/Int/Map%.Map;
 
-% Success = /Core/Cli%.Success;
+Success = /Core/Cli%.Success;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/Native%.Main@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
+App@ = /App/App%.App@;
+Main@ = /App/Native%.Main@;
+Event@ = /App/App%.Event@;
+Effect@ = /App/App%.Effect@;
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Point@ = /App/Drawing%.Point@;
-% Affine = /App/Drawing%.Affine;
-% Blank = /App/Drawing%.Blank;
-% Rect = /App/Drawing%.Rect;
-% Triangle = /App/Drawing%.Triangle;
-% Color = /App/Drawing%.Color;
-% Over = /App/Drawing%.Over;
-% Drawings = /App/Drawing%.Drawings;
+Drawing@ = /App/Drawing%.Drawing@;
+Point@ = /App/Drawing%.Point@;
+Affine = /App/Drawing%.Affine;
+Blank = /App/Drawing%.Blank;
+Rect = /App/Drawing%.Rect;
+Triangle = /App/Drawing%.Triangle;
+Color = /App/Drawing%.Color;
+Over = /App/Drawing%.Over;
+Drawings = /App/Drawing%.Drawings;
 
 # Nodes are identified by integer.
-@ Node@ = Int@;
+Node@ = Int@;
 
 # The position of a node.
-@ Pos@ = *(Int@ x, Int@ y);
+Pos@ = *(Int@ x, Int@ y);
 
 # A layout is the mapping from node id to position.
-@ Layout@ = Map.Map@<Pos@>;
+Layout@ = Map.Map@<Pos@>;
 
 # An edge from node a to node b.
-@ Edge@ = *(Node@ a, Node@ b);
+Edge@ = *(Node@ a, Node@ b);
 
 # Computes the cost of the edges in a given layout.
 # The sum of the squares of the distances of all edges.
@@ -117,10 +117,10 @@ Int@ NumEdges = Int|15;
 # Generates N random edges.
 (Int@) { List@<Edge@>; }
 RandEdges = {
-  <@,@>% Eval = /Core/State/Pure%.Eval;
-  % Prng = /Core/Random/Lfsr%.Lfsr8;
-  % Rng = /Core/Random/Prng/Pure%.Pure(Prng);
-  % Of = /Core/Int/Rand%.Of(Rng);
+  Eval = /Core/State/Pure%.Eval;
+  Prng = /Core/Random/Lfsr%.Lfsr8;
+  Rng = /Core/Random/Prng/Pure%.Pure(Prng);
+  Of = /Core/Int/Rand%.Of(Rng);
 
   (Int@) { Rng.M@<List@<Edge@>>; }
   Gen = (Int@ n) {
@@ -141,7 +141,7 @@ Int@ TileWidth = Int|32;
 Int@ EdgeWidth = Int|2;
 Int@ HalfEdgeWidth = Shr(EdgeWidth, Int|1);
 
-% Colors = @(
+Colors = @(
   Background: Color.Black,
   Selected: Color.Green,
   Hovered: Color.Yellow,
@@ -227,7 +227,7 @@ Drawing@ Background = Rect(
   Colors.Background
 );
 
-@ State@ = *(
+State@ = *(
   Layout@ layout,
   List@<Edge@> edges,
   Maybe@<Pos@> selected,

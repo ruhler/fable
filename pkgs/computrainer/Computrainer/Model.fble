@@ -1,33 +1,33 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ Coord@ = /Computrainer/Grid%.Coord@;
-<@>@ Grid@ = /Computrainer/Grid%.Grid@;
-% Grid = /Computrainer/Grid%.Grid;
+Coord@ = /Computrainer/Grid%.Coord@;
+Grid@ = /Computrainer/Grid%.Grid@;
+Grid = /Computrainer/Grid%.Grid;
 
-% Cars = /Computrainer/Car%;
-@ Car@ = Cars.Car@;
-@ Cars@ = Cars.Cars@;
+Cars = /Computrainer/Car%;
+Car@ = Cars.Car@;
+Cars@ = Cars.Cars@;
 
-% Gate = /Computrainer/Gate%;
-@ Gate@ = /Computrainer/Gate%.Gate@;
+Gate = /Computrainer/Gate%;
+Gate@ = /Computrainer/Gate%.Gate@;
 
-@ State@ = /Computrainer/State%.State@;
-% State = /Computrainer/State%.State;
-% FlipPhase = /Computrainer/State%.FlipPhase;
+State@ = /Computrainer/State%.State@;
+State = /Computrainer/State%.State;
+FlipPhase = /Computrainer/State%.FlipPhase;
 
-@ Gates@ = Grid@<Gate@>;
-@ Model@ = *(Gates@ gates, State@ s);
+Gates@ = Grid@<Gate@>;
+Model@ = *(Gates@ gates, State@ s);
 
 (Gates@, Cars@) { Model@; }
 Model = (Gates@ gates, Cars@ cars) {

@@ -1,39 +1,35 @@
 
-@ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
-% H8 = /Md5/Bits/Bit8%.H8;
+Bit8@ = /Md5/Bits/Bit8%.Bit8@;
+H8 = /Md5/Bits/Bit8%.H8;
 
-@ Hex@ = /Core/Digits%.Hex@;
-% HexStr = /Core/Digits/String%.HexStr;
+Hex@ = /Core/Digits%.Hex@;
+HexStr = /Core/Digits/String%.HexStr;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
-<@>% List = /Std/List%.List;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
+List = /Std/List%.List;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ Hash@ = /Md5/Hash%.Hash@;
-% Eq = /Md5/Hash%.Eq;
-% Show = /Md5/Hash%.Show;
+Hash@ = /Md5/Hash%.Hash@;
+Eq = /Md5/Hash%.Eq;
+Show = /Md5/Hash%.Show;
 
-<<@>@>% Md5 = /Md5/Md5%.Md5;
+Md5 = /Md5/Md5%.Md5;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
-
-# Import to test compilation.
-% _ = /Md5/Bench%;
-<<@>@>% _ = /Md5/Main%;
+Unit@ = /Std/Unit%.Unit@;
 
 # A Hash literal. It should consist of 32 hex digits.
 (List@<Hex@>) { Hash@; } Hash = (List@<Hex@> s00) {
@@ -76,8 +72,8 @@
     h24, h25, h26, h27, h28, h29, h30, h31);
 };
 
-% P = /Core/State/Pure%.Pure<List@<Bit8@>>;
-<@,@>% Eval = /Core/State/Pure%.Eval;
+P = /Core/State/Pure%.Pure<List@<Bit8@>>;
+Eval = /Core/State/Pure%.Eval;
 
 P.M@<Maybe@<Bit8@>> Get = {
   List@<Bit8@> bytes := P.m.do(P.s.get);

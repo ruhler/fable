@@ -1,9 +1,9 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-<@>@ L@ = <@ T@> {
-  @ X@ = +(*(T@ head, X@ tail) cons, Unit@ nil);
+L@ = <@ T@> {
+  X@ = +(*(T@ head, X@ tail) cons, Unit@ nil);
   X@;
 };
 
@@ -11,7 +11,7 @@ Unit@ Unit = Unit@();
   l.cons.tail.cons.tail.cons.head;
 };
 
-@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
+Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
 
 # Use of a list expression with a polymorphic function where type inference is
 # applied.

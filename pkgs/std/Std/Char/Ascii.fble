@@ -1,20 +1,20 @@
 # @module[/Std/Char/Ascii%]
 #  Ascii character and string literals.
 
-@ Char@ = /Std/Char%.Char@;
+Char@ = /Std/Char%.Char@;
 
-<@>@ ToChar@ = /Std/Char/Lit%.ToChar@;
-% U = /Std/Char/Lit%.U;
+ToChar@ = /Std/Char/Lit%.ToChar@;
+U = /Std/Char/Lit%.U;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-@ String@ = /Std/String%.String@;
-<@>% StrLit = /Std/Char/Lit%.StrLit;
+String@ = /Std/String%.String@;
+StrLit = /Std/Char/Lit%.StrLit;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 # @type[Ascii@] The ascii character letter type.
-@ Ascii@ = +(
+Ascii@ = +(
   Unit@ '
 ',
 
@@ -44,7 +44,7 @@
 );
 
 # @value[Ascii] Ascii character values.
-% Ascii = @(
+Ascii = @(
   nl: U|0A, tab: U|09, cr: U|0D,
 
   '	': U|09,  '': U|0D, ' ': U|20,

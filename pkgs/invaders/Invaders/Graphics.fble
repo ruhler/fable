@@ -1,24 +1,24 @@
 
-@ Char@ = /Std/Char%.Char@;
-% Char = /Std/Char/Ascii%.Char;
+Char@ = /Std/Char%.Char@;
+Char = /Std/Char/Ascii%.Char;
 
-@ Decimal@ = /Core/Digits%.Decimal@;
+Decimal@ = /Core/Digits%.Decimal@;
 
-@ Color@ = /App/Drawing%.Color@;
-@ Drawing@ = /App/Drawing%.Drawing@;
-% Blank = /App/Drawing%.Blank;
-% Color = /App/Drawing%.Color;
-% Drawings = /App/Drawing%.Drawings;
-% Over = /App/Drawing%.Over;
-% Rect = /App/Drawing%.Rect;
-% Translate = /App/Drawing%.Translate;
+Color@ = /App/Drawing%.Color@;
+Drawing@ = /App/Drawing%.Drawing@;
+Blank = /App/Drawing%.Blank;
+Color = /App/Drawing%.Color;
+Drawings = /App/Drawing%.Drawings;
+Over = /App/Drawing%.Over;
+Rect = /App/Drawing%.Rect;
+Translate = /App/Drawing%.Translate;
 
-% Int = /Std/Int/Lit%.Int;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
 Color@ white = Color.White;
 Color@ green = Color.Green;
@@ -154,7 +154,7 @@ Drawing@ Alien3B = Drawings[
   Rect(Int|7, Int|3, Int|1, Int|2, white)
 ];
 
-% Aliens = @(Alien1A, Alien1B, Alien2A, Alien2B, Alien3A, Alien3B);
+Aliens = @(Alien1A, Alien1B, Alien2A, Alien2B, Alien3A, Alien3B);
 
 Drawing@ Ufo = Drawings[
   Rect(Int|3, Int|0, Int|1, Int|1, red),

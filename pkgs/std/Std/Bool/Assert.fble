@@ -1,13 +1,13 @@
 # @module[/Std/Bool/Assert%]
 #  Boolean test assertions.
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-@ TestResult@ = /Std/Test%.TestResult@;
+TestResult@ = /Std/Test%.TestResult@;
 
 # @func[AssertTrue] Assert a value is True.
 #  @arg[Bool@][value] The value to check.

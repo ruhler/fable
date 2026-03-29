@@ -1,14 +1,14 @@
 
-<<@>@,@>@ Map@ = /Core/Map%.Map@;
+Map@ = /Core/Map%.Map@;
 
-<@>@ Show@ = /Std/Show%.Show@;
-<@>@ Output@ = /Std/Char/Output%.Output@;
-% Do = /Std/Char/Output%.Do;
+Show@ = /Std/Show%.Show@;
+Output@ = /Std/Char/Output%.Output@;
+Do = /Std/Char/Output%.Do;
 
-% Format = /Std/Char/Ascii/Output%.Format;
-% String = /Std/Char/Ascii/Output%.String;
+Format = /Std/Char/Ascii/Output%.Format;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 <<@>@ M@, @ K@>(Map@<M@, K@>, Show@<K@>)<@ V@>(Show@<V@>) { Show@<M@<V@>>; }
 Show = <<@>@ M@, @ K@>(Map@<M@, K@> m, Show@<K@> show_key)<@ V@>(Show@<V@> show_value, M@<V@> map) {

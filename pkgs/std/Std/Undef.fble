@@ -42,7 +42,7 @@
 # @struct[Undef@] Type used for indicating undefined behavior.
 #  @field[<@ T@> { T@; }][undef]
 #   Field access which results in undefined behavior. 
-@ Undef@ = *(<@ T@> { T@; } undef);
+Undef@ = *(<@ T@> { T@; } undef);
 
 # @value[Undef] An undefined value.
 #  @type[Undef@]

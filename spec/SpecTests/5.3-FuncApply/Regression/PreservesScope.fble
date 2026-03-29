@@ -1,7 +1,7 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
-@ A@ = *(Unit@ x, Unit@ y);
-@ B@ = *(Unit@ w, A@ a, Unit@ z);
+Unit@ = *();
+A@ = *(Unit@ x, Unit@ y);
+B@ = *(Unit@ w, A@ a, Unit@ z);
 
 (Unit@) { A@; } f = (Unit@ v) {
   A@(v, Unit@());

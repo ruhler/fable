@@ -1,12 +1,12 @@
 
-@ Bit@ = /Core/Digits%.Bit@;
-@ Hex@ = /Core/Digits%.Hex@;
+Bit@ = /Core/Digits%.Bit@;
+Hex@ = /Core/Digits%.Hex@;
 
-% HexToBits = /Core/Digits/String%.HexToBits;
+HexToBits = /Core/Digits/String%.HexToBits;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
+Bits@ = /Md5/Bits/Bits%.Bits@;
 
 <@ T@>(Bits@<T@> T) {
   # B_helper --

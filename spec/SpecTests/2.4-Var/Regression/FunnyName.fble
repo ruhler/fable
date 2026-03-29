@@ -1,5 +1,5 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 
 # Use of variables with funny characters in the names.
 Unit@ '"\	

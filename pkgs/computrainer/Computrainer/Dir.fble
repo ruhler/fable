@@ -1,14 +1,14 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Coord@ = /Computrainer/Grid%.Coord@;
+Coord@ = /Computrainer/Grid%.Coord@;
 
-@ Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
+Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
 
 Dir@ Left = Dir@(left: Unit);
 Dir@ Right = Dir@(right: Unit);

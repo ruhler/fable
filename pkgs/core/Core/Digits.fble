@@ -1,24 +1,24 @@
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # Bit@ --
 #   A binary digit.
-@ Bit@ = +(
+Bit@ = +(
   Unit@ 0,
   Unit@ 1
 );
 
 # Bit --
 #   A collection of all the binary digits.
-% Bit = @(
+Bit = @(
   0: Bit@(0: Unit),
   1: Bit@(1: Unit)
 );
 
 # Decimal@ --
 #   A decimal digit.
-@ Decimal@ = +(
+Decimal@ = +(
   Unit@ 0,
   Unit@ 1,
   Unit@ 2,
@@ -33,7 +33,7 @@
 
 # Decimal --
 #   A collection of all the decimal digits.
-% Decimal = @(
+Decimal = @(
   0: Decimal@(0: Unit),
   1: Decimal@(1: Unit),
   2: Decimal@(2: Unit),
@@ -48,7 +48,7 @@
 
 # Hex@ --
 #   A hexidecimal digit.
-@ Hex@ = +(
+Hex@ = +(
   Unit@ 0,
   Unit@ 1,
   Unit@ 2,
@@ -69,7 +69,7 @@
 
 # Hex --
 #   A collection of all the hexidecimal digits.
-% Hex = @(
+Hex = @(
   0: Hex@(0: Unit),
   1: Hex@(1: Unit),
   2: Hex@(2: Unit),

@@ -1,7 +1,7 @@
 # @@fble-test@@ none
 # Builtin module to aid in testing builtin modules.
 
-@ Nat@ = /SpecTests/Nat%.Nat@;
+Nat@ = /SpecTests/Nat%.Nat@;
 
 # Identity function: returns its input.
 <@ A@>(A@) { A@; } Id;

@@ -1,18 +1,18 @@
 
-<@>@ Show@ = /Std/Show%.Show@;
-% Do = /Std/Char/Output%.Do;
-<@>% Return = /Std/Char/Output%.Return;
+Show@ = /Std/Show%.Show@;
+Do = /Std/Char/Output%.Do;
+Return = /Std/Char/Output%.Return;
 
-% String = /Std/Char/Ascii/Output%.String;
-% Format = /Std/Char/Ascii/Output%.Format;
-% FormatE = /Std/Char/Ascii/Output%.FormatE;
+String = /Std/Char/Ascii/Output%.String;
+Format = /Std/Char/Ascii/Output%.Format;
+FormatE = /Std/Char/Ascii/Output%.FormatE;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Literal@ = /SatGame/Puzzle%.Literal@;
-@ Clause@ = /SatGame/Puzzle%.Clause@;
-@ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
-@ Params@ = /SatGame/Puzzle%.Params@;
+Literal@ = /SatGame/Puzzle%.Literal@;
+Clause@ = /SatGame/Puzzle%.Clause@;
+Puzzle@ = /SatGame/Puzzle%.Puzzle@;
+Params@ = /SatGame/Puzzle%.Params@;
 
 Show@<Literal@> Literal = (Literal@ literal) {
   Format|'%s%s'[

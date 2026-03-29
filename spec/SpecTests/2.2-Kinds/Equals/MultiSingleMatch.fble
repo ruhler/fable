@@ -1,7 +1,7 @@
 # @@fble-test@@ no-error
 
-@ Unit@ = *();
+Unit@ = *();
 
 # The kinds <@, @><@> and <@><@>@ are equivalent.
-<<@, @>@>@ Id@ = <<@, @>@ A@> { A@<Unit@, Unit@>; };
+Id@ = <<@, @>@ A@> { A@<Unit@, Unit@>; };
 <<@><@>@ B@> { Id@<B@>; };

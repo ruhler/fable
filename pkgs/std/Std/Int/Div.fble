@@ -1,18 +1,18 @@
 # @module[/Std/Int/Div%]
 #  Division of integers.
 
-@ Int@ = /Std/Int%.Int@;
-% Decr = /Std/Int%.Decr;
-% Neg = /Std/Int%.Neg;
-% Sub = /Std/Int%.Sub;
-% 0 = /Std/Int%.0;
+Int@ = /Std/Int%.Int@;
+Decr = /Std/Int%.Decr;
+Neg = /Std/Int%.Neg;
+Sub = /Std/Int%.Sub;
+0 = /Std/Int%.0;
 
-% P = /Std/Int/IntP/Div%;
+P = /Std/Int/IntP/Div%;
 
 # @struct[QR@] Quotient and remainder.
 #  @field[Int@][q] The quotient of division.
 #  @field[Int@][r] The remainder of division.
-@ QR@ = *(Int@ q, Int@ r);
+QR@ = *(Int@ q, Int@ r);
 
 /Std/Undef%.Undef@ DivideByZero;
 

@@ -3,11 +3,11 @@
 #
 #  This module is for internal use only.
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ IntP@ = /Std/Int/IntP%.IntP@;
+IntP@ = /Std/Int/IntP%.IntP@;
 
 # @func[Eq] The equals operator. a == b.
 #  @arg[IntP@][a] The first operand.

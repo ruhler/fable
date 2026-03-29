@@ -1,10 +1,10 @@
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-@ Loc@ = /Fbld/Loc%.Loc@;
+Loc@ = /Fbld/Loc%.Loc@;
 
 # Text@ is a string with location information.
-@ Text@ = *(Loc@ loc, String@ text);
+Text@ = *(Loc@ loc, String@ text);
 
 (Loc@, String@) { Text@; } Text = (Loc@ loc, String@ text) {
   @(loc, text);

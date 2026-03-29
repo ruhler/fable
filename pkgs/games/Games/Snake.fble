@@ -1,55 +1,55 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% And = /Std/Bool%.And;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+And = /Std/Bool%.And;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Init = /Std/List%.Init;
-<@>% Items = /Std/List%.Items;
-<@>% ForEach = /Std/List%.ForEach;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Init = /Std/List%.Init;
+Items = /Std/List%.Items;
+ForEach = /Std/List%.ForEach;
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
-% Add = /Std/Int%.Add;
-% Neg = /Std/Int%.Neg;
-% Mul = /Std/Int%.Mul;
-% Sub = /Std/Int%.Sub;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
+Add = /Std/Int%.Add;
+Neg = /Std/Int%.Neg;
+Mul = /Std/Int%.Mul;
+Sub = /Std/Int%.Sub;
 
-% Eq = /Std/Int/Eq%.Eq;
-% Lt = /Std/Int/Ord%.Lt;
-% Gt = /Std/Int/Ord%.Gt;
-% Abs = /Std/Int/Sign%.Abs;
+Eq = /Std/Int/Eq%.Eq;
+Lt = /Std/Int/Ord%.Lt;
+Gt = /Std/Int/Ord%.Gt;
+Abs = /Std/Int/Sign%.Abs;
 
-% Int = /Std/Int/Lit%.Int;
+Int = /Std/Int/Lit%.Int;
 
-% Div = /Std/Int/Div%.Div;
+Div = /Std/Int/Div%.Div;
 
-<<@>@>% Range = /Core/Int/Rand%.Range;
+Range = /Core/Int/Rand%.Range;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-<@,@>% Exec = /Core/State/Pure%.Exec;
-<@,@>% Run = /Core/State/Pure%.Run;
+Exec = /Core/State/Pure%.Exec;
+Run = /Core/State/Pure%.Run;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<<@>@>@ App@ = /App/App%.App@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
+App@ = /App/App%.App@;
+Event@ = /App/App%.Event@;
+Effect@ = /App/App%.Effect@;
 
-@ Color@ = /App/Drawing%.Color@;
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Point@ = /App/Drawing%.Point@;
-% Blank = /App/Drawing%.Blank;
-% Color = /App/Drawing%.Color;
-% Drawings = /App/Drawing%.Drawings;
-% Rect = /App/Drawing%.Rect;
-% Over = /App/Drawing%.Over;
-% Affine = /App/Drawing%.Affine;
+Color@ = /App/Drawing%.Color@;
+Drawing@ = /App/Drawing%.Drawing@;
+Point@ = /App/Drawing%.Point@;
+Blank = /App/Drawing%.Blank;
+Color = /App/Drawing%.Color;
+Drawings = /App/Drawing%.Drawings;
+Rect = /App/Drawing%.Rect;
+Over = /App/Drawing%.Over;
+Affine = /App/Drawing%.Affine;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;
@@ -61,17 +61,17 @@ Int@ MinCol = Int|0;    # Inclusive. This is a legal col.
 Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 
 # The pseudo random number generator we are using.
-% Prng = /Core/Random/Lcg%.Rand48;
-% Rng = /Core/Random/Prng/Pure%.Pure(Prng);
+Prng = /Core/Random/Lcg%.Rand48;
+Rng = /Core/Random/Prng/Pure%.Pure(Prng);
 
-@ Pos@ = *(Int@ row, Int@ col);
+Pos@ = *(Int@ row, Int@ col);
 
 (Pos@, Pos@) { Bool@; } EqPos = (Pos@ a, Pos@ b) {
   And(Eq(a.row, b.row), Eq(a.col, b.col));
 };
 
-@ Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
-@ Input@ = +(Dir@ dir, Unit@ quit, Unit@ tick);
+Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
+Input@ = +(Dir@ dir, Unit@ quit, Unit@ tick);
 
 (Dir@, Dir@) { Bool@; } EqDir = (Dir@ a, Dir@ b) {
   a.?(
@@ -82,7 +82,7 @@ Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 };
 
 
-@ Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
+Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
 
 (Pos@, Cell@) { Drawing@; } DrawCell = (Pos@ pos, Cell@ cell) {
   Color@ c = cell.?(
@@ -101,7 +101,7 @@ Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 #   rand - Random bits for use in determining the next food position.
 #   snake - The positions of the snake, in order from head to tail.
 #   speed - The number of milliseconds to wait between each tick.
-@ State@ = *(
+State@ = *(
   Dir@ dir,
   Pos@ food,
   Prng.S@ rand,
@@ -138,7 +138,7 @@ State@ InitialState = {
     Int|40);
 };
 
-@ MoveResultM@ = +(Unit@ dead, State@ state);
+MoveResultM@ = +(Unit@ dead, State@ state);
 
 # Return true if the given position is found in the list of positions.
 (List@<Pos@>, Pos@) { Bool@; } InPosS = (List@<Pos@> l, Pos@ p) {
@@ -185,7 +185,7 @@ GetNextFood = (List@<Pos@> snake) {
 
   EqPos(nhead, s.food).?(true: {
     # TODO: Properly handle the case where the snake eats food at its tail.
-    % mfood = Run(GetNextFood(snake), rand);
+    mfood = Run(GetNextFood(snake), rand);
     Prng.S@ rand = mfood.state;
     Pos@ food = mfood.return;
     Int@ speed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
@@ -200,7 +200,7 @@ GetNextFood = (List@<Pos@> snake) {
   # There are 4 possible next positions. Pick the one closest to the next food
   # that will not kill us. All else equal, keep going the same direction we
   # were going before.
-  @ Choice@ = *(
+  Choice@ = *(
     Dir@ dir,
     Int@ cost
   );

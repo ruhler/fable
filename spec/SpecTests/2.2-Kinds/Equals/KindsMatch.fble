@@ -1,5 +1,5 @@
 # @@fble-test@@ no-error
 #
 # Two basic kinds match.
-<@>@ Id@ = <@ A@> { A@; };
+Id@ = <@ A@> { A@; };
 <@ B@> { Id@<B@>; };

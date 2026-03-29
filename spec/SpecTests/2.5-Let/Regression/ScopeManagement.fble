@@ -1,5 +1,5 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ x = Unit@();
 
 # Regression test for a bug where we mixed up the number of local slots with

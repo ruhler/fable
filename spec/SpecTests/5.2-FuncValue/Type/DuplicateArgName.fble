@@ -1,6 +1,6 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 
 # multi-arg functions do not have to have unique argument names.
 # The last argument with the given name will be used to match what would

@@ -1,6 +1,6 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ true = Bool@(true: Unit@());
 Bool@ false = Bool@(false: Unit@());
 
@@ -8,7 +8,7 @@ Bool@ false = Bool@(false: Unit@());
 Bool@ x = true;
 Bool@ y = false;
 
-@ BoolPair@ = *(@<Bool@> Bool@, Bool@ x, Bool@ y);
+BoolPair@ = *(@<Bool@> Bool@, Bool@ x, Bool@ y);
 BoolPair@ value = @(Bool@, x, y);
 
 Unit@ _tt = value.x.true;

@@ -1,14 +1,14 @@
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-% Drawings = /App/Drawing%.Drawings;
+Drawing@ = /App/Drawing%.Drawing@;
+Drawings = /App/Drawing%.Drawings;
 
-@ Gate@ = /Computrainer/Gate%.Gate@;
-@ Car@ = /Computrainer/Car%.Car@;
+Gate@ = /Computrainer/Gate%.Gate@;
+Car@ = /Computrainer/Car%.Car@;
 
-% Colors = /Computrainer/Graphics/Colors%;
-% Shapes = /Computrainer/Graphics/Shapes%;
+Colors = /Computrainer/Graphics/Colors%;
+Shapes = /Computrainer/Graphics/Shapes%;
 
 Int@ W = Shapes.W;
 

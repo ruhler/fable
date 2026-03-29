@@ -1,5 +1,5 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
 # Regression test for a bug where we were using the wrong generation id to
@@ -9,10 +9,10 @@ Unit@ Unit = Unit@();
 # This happened when gc was interrupted by a PopFrame, and then we did a
 # recursive value declaration.
 
-@ N@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4, Unit@ 5, Unit@ 6, Unit@ 7);
+N@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4, Unit@ 5, Unit@ 6, Unit@ 7);
 
-@ F@ = (Unit@) { Unit@; };
-@ Buffer@ = *(F@ a, F@ b, F@ c, F@ d);
+F@ = (Unit@) { Unit@; };
+Buffer@ = *(F@ a, F@ b, F@ c, F@ d);
 
 (N@) { Buffer@; } Alloc = (N@ n) {
   # Make a bunch of GC allocations to keep GC busy.
@@ -40,7 +40,7 @@ Unit@ Unit = Unit@();
   b;
 };
 
-@ R@ = +(Unit@ nothing, R@ just);
+R@ = +(Unit@ nothing, R@ just);
 
 (Unit@) { Unit@; } F = (Unit@ u) {
   # Allocate a bunch of GC objects on the stack.

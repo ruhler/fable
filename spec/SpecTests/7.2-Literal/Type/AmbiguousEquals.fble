@@ -1,11 +1,11 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
-@ Letter@ = +(Enum@ first, Enum@ second);
+Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
+Letter@ = +(Enum@ first, Enum@ second);
 
-@ L@ = +(*(Letter@ head, L@ tail) cons, Unit@ nil);
+L@ = +(*(Letter@ head, L@ tail) cons, Unit@ nil);
 
 (L@) { Unit@; } f = (L@ l) {
   Unit@ _b = l.cons.head.first.A;

@@ -1,15 +1,15 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit);
 Bool@ False = Bool@(true: Unit);
 
 # It's fine for the element type to be anything, including functions.
-@ E@ = (Bool@) { Bool@; };
+E@ = (Bool@) { Bool@; };
 
-@ L@ = +(*(E@ head, L@ tail) cons, Unit@ nil);
+L@ = +(*(E@ head, L@ tail) cons, Unit@ nil);
 
 (L@) { Unit@; } f = (L@ l) {
   Unit@ _id = l.cons.head(True).true;

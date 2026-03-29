@@ -1,10 +1,10 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ true = Bool@(true: Unit@());
 Bool@ false = Bool@(false: Unit@());
 
-@ Pair@ = *(Bool@ first, Bool@ second);
+Pair@ = *(Bool@ first, Bool@ second);
 
 (Pair@)((Bool@){ Bool@; }) { Pair@; } Map = (Pair@ p)((Bool@){ Bool@; } f) {
   Pair@(f(p.first), f(p.second));

@@ -1,24 +1,24 @@
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Color@ = /App/Drawing%.Color@;
-% Color = /App/Drawing%.Color;
-% Drawings = /App/Drawing%.Drawings;
-% Rect = /App/Drawing%.Rect;
-% Over = /App/Drawing%.Over;
-% Translate = /App/Drawing%.Translate;
+Drawing@ = /App/Drawing%.Drawing@;
+Color@ = /App/Drawing%.Color@;
+Color = /App/Drawing%.Color;
+Drawings = /App/Drawing%.Drawings;
+Rect = /App/Drawing%.Rect;
+Over = /App/Drawing%.Over;
+Translate = /App/Drawing%.Translate;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Mul = /Std/Int%.Mul;
-% Int = /Std/Int/Lit%.Int;
-% CountUpTo = /Core/Int/Iter%.CountUpTo;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Mul = /Std/Int%.Mul;
+Int = /Std/Int/Lit%.Int;
+CountUpTo = /Core/Int/Iter%.CountUpTo;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Empty = /Std/List%.Empty;
-<@>% Items = /Std/List%.Items;
-<@>% List = /Std/List%.List;
+List@ = /Std/List%.List@;
+Empty = /Std/List%.Empty;
+Items = /Std/List%.Items;
+List = /Std/List%.List;
 
-@ ImagePair@ = *(Drawing@ a, Drawing@ b);
+ImagePair@ = *(Drawing@ a, Drawing@ b);
 
 Color@ BackgroundColor = Color@(Int|208, Int|208, Int|208);
 
@@ -109,7 +109,7 @@ Split12 = (List@<ImagePair@> pairs) {
 Drawing@ Screenshot = {
   List@<List@<Drawing@>> images = Split12(ImagePairs);
 
-  @ S@ = *(Int@ x, Drawing@ d);
+  S@ = *(Int@ x, Drawing@ d);
   /Std/List%.ForEach(images, S@(Int|4, Background),
     (List@<Drawing@> drawings, S@ s) {
       Int@ y = s.x;

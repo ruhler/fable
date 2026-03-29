@@ -1,13 +1,13 @@
 # @module[/Std/Bool%]
 #  The boolean type and utilities.
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # @union[Bool@] The boolean type.
 #  @field[Unit@][true] The true value.
 #  @field[Unit@][false] The false value.
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 
 # @value[True] The true value of the boolean type.
 #  @type[Bool@]

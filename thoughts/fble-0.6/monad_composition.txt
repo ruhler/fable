@@ -763,3 +763,18 @@ In summary:
 3. Add struct field .= import syntax.
 
 Do one at a time. See how it feels.
+
+---
+
+So far, removing kinds, I have zero regrets.
+* Language spec is simpler.
+* Implementation is cleaner.
+* fble code looks nicer.
+ - I like how variable definitions put the name in the left column now, no
+   longer indented. That makes the subsequent indents, if any, stand out much
+   better and aligns all the variable definitions much better.
+
+This feels like a good change. It's just a bit on the big side, because now I
+have to rewrite literally all of my code. Oh well. The compiler will help me
+get it done.
+

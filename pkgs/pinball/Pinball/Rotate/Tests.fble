@@ -1,20 +1,20 @@
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-% Neg = /Pinball/Num%.Neg;
-% Int = /Pinball/Num%.Int;
-% Rotate = /Pinball/Rotate%.Rotate;
-@ Vec@ = /Pinball/Vec%.Vec@;
+Neg = /Pinball/Num%.Neg;
+Int = /Pinball/Num%.Int;
+Rotate = /Pinball/Rotate%.Rotate;
+Vec@ = /Pinball/Vec%.Vec@;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 Test@ Tests = TestSuite(Str|'Rotate', List<Test@>[
   Test(Str|'Unrotated Q1', (Unit@ _) {

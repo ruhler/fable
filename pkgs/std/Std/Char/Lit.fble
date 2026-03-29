@@ -1,17 +1,17 @@
 # @module[/Std/Char/Lit%]
 #  Character and string literals.
 
-@ Char@ = /Std/Char%.Char@;
-% Unicode = /Std/Char%.Char;
+Char@ = /Std/Char%.Char@;
+Unicode = /Std/Char%.Char;
 
-@ HexLit@ = /Std/Int/Lit%.HexLit@;
-% Hex = /Std/Int/Lit%.Hex;
+HexLit@ = /Std/Int/Lit%.HexLit@;
+Hex = /Std/Int/Lit%.Hex;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 # @func[U] Unicode character literal.
 #  Example:
@@ -32,10 +32,10 @@ U = (HexLit@ hex) {
 # @type[ToChar@] Interface for types that can be converted to Char@.
 #  Helpful for defining character and string literals of various different
 #  character sets.
-<@>@ ToChar@ = <@ T@>(T@) { Char@; };
+ToChar@ = <@ T@>(T@) { Char@; };
 
 # @type[Composed@] Composed character literal letter type.
-<@,@>@ Composed@ = <@ A@, @ B@> { +(A@ a, B@ b); };
+Composed@ = <@ A@, @ B@> { +(A@ a, B@ b); };
 
 # @func[Compose] Composes two character sets
 #  Example use:

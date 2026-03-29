@@ -1,12 +1,12 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
 # Map@ -- A map interface.
 #  M@<V@> is the type of a map from K@ to V@.
-<<@>@,@>@ Map@ = <<@>@ M@, @ K@> {
-  @ MapI@ = @<{
+Map@ = <<@>@ M@, @ K@> {
+  MapI@ = @<{
     # The empty map.
     <@ V@> { M@<V@>; } Empty;
 

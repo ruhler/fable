@@ -1,11 +1,11 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ true = Bool@(true: Unit@());
 Bool@ false = Bool@(false: Unit@());
 
 # Construct an anonymous struct value with type fields.
-@ BoolPair@ = *(@<Bool@> B@, Bool@ x, Bool@ y);
+BoolPair@ = *(@<Bool@> B@, Bool@ x, Bool@ y);
 BoolPair@ value = @(B@: Bool@, x: true, y: false);
 
 Unit@ _tt = value.x.true;

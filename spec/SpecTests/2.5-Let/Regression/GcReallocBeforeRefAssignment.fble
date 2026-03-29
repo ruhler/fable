@@ -1,20 +1,20 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit);
 Bool@ False = Bool@(false: Unit);
 
-@ Nat@ = /SpecTests/Nat%.Nat@;
-% Nat = /SpecTests/Nat%.Nat;
-@ S@ = /SpecTests/Nat%.S@;
-% S = /SpecTests/Nat%.S;
+Nat@ = /SpecTests/Nat%.Nat@;
+Nat = /SpecTests/Nat%.Nat;
+S@ = /SpecTests/Nat%.S@;
+S = /SpecTests/Nat%.S;
 
 # Regression test for a hypothetical bug where we forget to GcRealloc a value
 # before ref value assignment.
-@ Value@ = +(Unit@ a, Unit@ b, Unit@ c, Unit@ d, Unit@ e, Unit@ f);
-@ List@ = *(Value@ head, List@ tail);
+Value@ = +(Unit@ a, Unit@ b, Unit@ c, Unit@ d, Unit@ e, Unit@ f);
+List@ = *(Value@ head, List@ tail);
 
 (Nat@, List@) { List@; } MakeLongList = (Nat@ n, List@ tail) {
   S@ s = S(n);

@@ -1,5 +1,5 @@
 # @@fble-test@@ compile-error 6:7
-@ Unit@ = *();
+Unit@ = *();
 
 # Single quotes act as delimeters.
 Unit@ hello = Unit@();

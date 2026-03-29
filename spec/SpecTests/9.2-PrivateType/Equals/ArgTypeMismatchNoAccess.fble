@@ -1,9 +1,9 @@
 # @@fble-test@@ compile-error 11:10
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 
-@ A@ = Unit@.%(@/Foo/Bar%);
-@ B@ = Bool@.%(@/Foo/Bar%);
+A@ = Unit@.%(@/Foo/Bar%);
+B@ = Bool@.%(@/Foo/Bar%);
 
 (A@ x) {
   # Type B@ is not equal to A@, because we don't have access to either of them

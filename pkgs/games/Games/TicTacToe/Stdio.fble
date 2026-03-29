@@ -1,43 +1,43 @@
 
-@ Char@ = /Std/Char%.Char@;
-% Char = /Std/Char/Ascii%.Char;
-% String = /Std/Char/Ascii/Output%.String;
-% Format = /Std/Char/Ascii/Output%.Format;
-% FormatE = /Std/Char/Ascii/Output%.FormatE;
+Char@ = /Std/Char%.Char@;
+Char = /Std/Char/Ascii%.Char;
+String = /Std/Char/Ascii/Output%.String;
+Format = /Std/Char/Ascii/Output%.Format;
+FormatE = /Std/Char/Ascii/Output%.FormatE;
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
-<@>@ Output@ = /Std/Char/Output%.Output@;
-<<@>@>% GetLine = /Core/Char/Stream/IStream%.GetLine;
+Put@ = /Core/Char/Stream%.Put@;
+IStream@ = /Core/Char/Stream%.IStream@;
+Output@ = /Std/Char/Output%.Output@;
+GetLine = /Core/Char/Stream/IStream%.GetLine;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ IoM@ = /Core/Io%.IoM@;
+IoM@ = /Core/Io%.IoM@;
 
-<<@>@>@ Main@ = /Core/Cli%.Main@;
-% Success = /Core/Cli%.Success;
+Main@ = /Core/Cli%.Main@;
+Success = /Core/Cli%.Success;
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Square@ = /Games/TicTacToe/Board%.Square@;
-@ Board@ = /Games/TicTacToe/Board%.Board@;
-@ Player@ = /Games/TicTacToe/Board%.Player@;
-@ Position@ = /Games/TicTacToe/Board%.Position@;
+Square@ = /Games/TicTacToe/Board%.Square@;
+Board@ = /Games/TicTacToe/Board%.Board@;
+Player@ = /Games/TicTacToe/Board%.Player@;
+Position@ = /Games/TicTacToe/Board%.Position@;
 
-@ GameStatus@ = /Games/TicTacToe/Game%.GameStatus@;
-@ Move@ = /Games/TicTacToe/Game%.Move@;
-@ Game@ = /Games/TicTacToe/Game%.Game@;
-% Initial = /Games/TicTacToe/Game%.Initial;
-% Play = /Games/TicTacToe/Game%.Play;
+GameStatus@ = /Games/TicTacToe/Game%.GameStatus@;
+Move@ = /Games/TicTacToe/Game%.Move@;
+Game@ = /Games/TicTacToe/Game%.Game@;
+Initial = /Games/TicTacToe/Game%.Initial;
+Play = /Games/TicTacToe/Game%.Play;
 
 Show@<Square@> ShowSquare = (Square@ s) {
   s.?(X: String|X, O: String|O, E: String|_);
@@ -69,7 +69,7 @@ Show@<Game@> ShowGame = (Game@ game) {
     ShowStatus(game.status)];
 };
 
-@ Input@ = +(Unit@ quit, Unit@ reset, Move@ move);
+Input@ = +(Unit@ quit, Unit@ reset, Move@ move);
 
 (String@) { Maybe@<Input@>; } ParseInput = (String@ in) {
   in.?(empty: Nothing<Input@>);

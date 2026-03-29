@@ -1,12 +1,12 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Pkg@ = @/SpecTests/'9.2-PrivateType'/Basic/LiteralWithAccess%;
+Pkg@ = @/SpecTests/'9.2-PrivateType'/Basic/LiteralWithAccess%;
 
-@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C).%(Pkg@);
+Enum@ = +(Unit@ A, Unit@ B, Unit@ C).%(Pkg@);
 
-@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil).%(Pkg@);
+L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil).%(Pkg@);
 
 (L@) { Unit@; }.%(Pkg@) f = (L@ l) {
   Unit@ _b = l.cons.head.B;

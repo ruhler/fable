@@ -1,16 +1,16 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ Bit@ = /Core/Digits%.Bit@;
-<@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
-<@>@ Overflow@ = /Md5/Bits/Bits%.Overflow@;
+Bit@ = /Core/Digits%.Bit@;
+Bits@ = /Md5/Bits/Bits%.Bits@;
+Overflow@ = /Md5/Bits/Bits%.Overflow@;
 
 Bit@ 0 = /Core/Digits%.Bit.0;
 Bit@ 1 = /Core/Digits%.Bit.1;
 
-@ Bit1@ = Bit@;
+Bit1@ = Bit@;
 
 (Bit1@) { Bit1@; } Not = (Bit1@ a) {
   a.?(0: 1, 1: 0);

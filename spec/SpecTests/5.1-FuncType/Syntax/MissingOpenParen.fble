@@ -1,6 +1,6 @@
 # @@fble-test@@ compile-error 7:6
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ true = Bool@(true: Unit@());
 
 # The open paren is missing.

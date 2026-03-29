@@ -1,20 +1,20 @@
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-% Translate = /App/Drawing%.Translate;
+Drawing@ = /App/Drawing%.Drawing@;
+Translate = /App/Drawing%.Translate;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
 
-% Lt = /Std/Int/Ord%.Lt;
-% Gt = /Std/Int/Ord%.Gt;
+Lt = /Std/Int/Ord%.Lt;
+Gt = /Std/Int/Ord%.Gt;
 
-% Int = /Std/Int/Lit%.Int;
+Int = /Std/Int/Lit%.Int;
 
-% Graphics = /Invaders/Graphics%;
+Graphics = /Invaders/Graphics%;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # The ships moves side to side, but not forward or backwards.
 # This is the Y coordinate of the bottom edge of the ship.
@@ -27,19 +27,19 @@ Int@ ShipV = Int|2;
 Int@ MinX = Int|48;
 Int@ MaxX = Int|257;
 
-@ Dir@ = +(
+Dir@ = +(
   Unit@ left,
   Unit@ right,
   Unit@ stopped
 );
 
-@ Status@ = +(
+Status@ = +(
   Dir@ alive,        # Which direction it is going.
   Unit@ dying_a,     # Dying with 'a' animation.
   Unit@ dying_b      # Dying with 'b' animation.
 );
 
-@ Ship@ = *(
+Ship@ = *(
   Int@ x,           # The left edge of the ship
   Status@ status
 );

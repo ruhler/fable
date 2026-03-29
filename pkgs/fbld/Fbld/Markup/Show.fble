@@ -1,14 +1,14 @@
 
-<@>@ Show@ = /Std/Show%.Show@;
-% Do = /Std/Char/Output%.Do;
+Show@ = /Std/Show%.Show@;
+Do = /Std/Char/Output%.Do;
 
-% Format = /Std/Char/Ascii/Output%.Format;
-% String = /Std/Char/Ascii/Output%.String;
+Format = /Std/Char/Ascii/Output%.Format;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Command@ = /Fbld/Markup%.Command@;
-@ Markup@ = /Fbld/Markup%.Markup@;
+Command@ = /Fbld/Markup%.Command@;
+Markup@ = /Fbld/Markup%.Markup@;
 
 Show@<Command@> Command = (Command@ x) {
   Format|'%s%s'[

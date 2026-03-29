@@ -1,35 +1,35 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+Put@ = /Core/Char/Stream%.Put@;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Neg = /Std/Int%.Neg;
-% Mul = /Std/Int%.Mul;
-% Div = /Std/Int/Div%.Div;
-% Eq = /Std/Int/Eq%.Eq;
-% Int = /Std/Int/Lit%.Int;
-% Incr = /Std/Int%.Incr;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Neg = /Std/Int%.Neg;
+Mul = /Std/Int%.Mul;
+Div = /Std/Int/Div%.Div;
+Eq = /Std/Int/Eq%.Eq;
+Int = /Std/Int/Lit%.Int;
+Incr = /Std/Int%.Incr;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Char/Output%.Output@;
 
-<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
+IStream@ = /Core/Char/Stream%.IStream@;
 
-@ String@ = /Std/String%.String@;
-% StringE = /Std/Char/Ascii/Output%.StringE;
+String@ = /Std/String%.String@;
+StringE = /Std/Char/Ascii/Output%.StringE;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<<@>@>@ Main@ = /Games/BenchmarkGame/Game%.Main@;
+Main@ = /Games/BenchmarkGame/Game%.Main@;
 
 
-@ LFT@ = *(Int@ q, Int@ r, Int@ s, Int@ t);
+LFT@ = *(Int@ q, Int@ r, Int@ s, Int@ t);
 
 # State@ --
 #   The state of computation of digits of pi
@@ -37,7 +37,7 @@
 # Fields:
 #   k - The index of the next input to consume.
 #   z - The streaming state.
-@ State@ = *(Int@ k, LFT@ z);
+State@ = *(Int@ k, LFT@ z);
 
 State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
 
@@ -47,7 +47,7 @@ State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
   LFT@(k, Add(Mul(Int|4, k), Int|2), Int|0, Add(Mul(Int|2, k), Int|1));
 };
 
-@ Rational@ = *(Int@ n, Int@ d);
+Rational@ = *(Int@ n, Int@ d);
 
 (LFT@, Int@) { Rational@; } Extract = (LFT@ z, Int@ x) {
   Rational@(Add(Mul(z.q, x), z.r), Add(Mul(z.s, x), z.t));
@@ -92,7 +92,7 @@ State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
 # Fields:
 #   state - the updated computation state.
 #   output - the next output digit.
-@ StreamResult@ = *(State@ state, Int@ output);
+StreamResult@ = *(State@ state, Int@ output);
 
 # Stream --
 #   Get the next output from the streaming computation.

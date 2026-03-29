@@ -1,47 +1,47 @@
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
-<@>% Return = /Std/Char/Output%.Return;
-% ToString = /Std/Char/Output%.ToString;
+Output@ = /Std/Char/Output%.Output@;
+Return = /Std/Char/Output%.Return;
+ToString = /Std/Char/Output%.ToString;
 
-<<@>@, @>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
-<<@>@>% IStream = /Core/Char/Stream/IStream%.IStream;
-<<@>@>% OStream = /Core/Char/Stream/OStream%.OStream;
-<<@>@>% NullOutput = /Core/Char/Stream/OStream%.NullOutput;
+Put@ = /Core/Char/Stream%.Put@;
+IStream@ = /Core/Char/Stream%.IStream@;
+IStream = /Core/Char/Stream/IStream%.IStream;
+OStream = /Core/Char/Stream/OStream%.OStream;
+NullOutput = /Core/Char/Stream/OStream%.NullOutput;
 
-% Success = /Core/Cli%.Success;
+Success = /Core/Cli%.Success;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<<@>@>@ IoM@ = /Core/Io%.IoM@;
+Monad@ = /Std/Monad%.Monad@;
+IoM@ = /Core/Io%.IoM@;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-<@,<@>@>@ State@ = /Core/State%.State@;
-<@,<@>@>@ StateM@ = /Core/State%.StateM@;
+State@ = /Core/State%.State@;
+StateM@ = /Core/State%.StateM@;
 
-<@,@>@ Pure@ = /Core/State/Pure%.Pure@;
-<@>% Pure = /Core/State/Pure%.Pure;
-<@,@>% Eval = /Core/State/Pure%.Eval;
-<@,@>% Exec = /Core/State/Pure%.Exec;
+Pure@ = /Core/State/Pure%.Pure@;
+Pure = /Core/State/Pure%.Pure;
+Eval = /Core/State/Pure%.Eval;
+Exec = /Core/State/Pure%.Exec;
 
-@ Test@ = /Std/Test%.Test@;
-% Pass = /Std/Test%.Pass;
+Test@ = /Std/Test%.Test@;
+Pass = /Std/Test%.Pass;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 # Common interface for benchmark games.
 # You get stdin, stdout, and a list of args.
-<<@>@>@ Main@ = <<@>@ M@>(Monad@<M@>, IStream@<M@>, Put@<M@, Output@>, List@<String@>) { M@<Unit@>; };
+Main@ = <<@>@ M@>(Monad@<M@>, IStream@<M@>, Put@<M@, Output@>, List@<String@>) { M@<Unit@>; };
 
 # Test a benchmark game.
 (String@, Main@, String@, List@<String@>, String@) { Test@; }
 Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ expected_output) {
-  @ S@ = *(String@ in, Output@ out);
-  <@>@ M@ = Pure@<S@>;
+  S@ = *(String@ in, Output@ out);
+  M@ = Pure@<S@>;
   StateM@<S@, M@> p = Pure<S@>;
 
   State@<String@, M@> s_in = @(
@@ -78,7 +78,7 @@ Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ ex
 (String@, Main@, String@, List@<String@>) { Test@; }
 Bench = (String@ name, Main@ game, String@ input, List@<String@> args) {
   /Std/Test%.Test(name, (Unit@ _) {
-    <@>@ M@ = Pure@<String@>;
+    M@ = Pure@<String@>;
     StateM@<String@, M@> p = Pure<String@>;
     IStream@<M@> in = IStream<M@>(p.s, p.m);
     Put@<M@, Output@> out = NullOutput<M@>(p.m);

@@ -1,30 +1,30 @@
 
-% Neg = /Std/Int%.Neg;
+Neg = /Std/Int%.Neg;
 
-@ Int@ = /Std/Int%.Int@;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<<@>@>@ IoM@ = /Core/Io%.IoM@;
+IoM@ = /Core/Io%.IoM@;
 
-% Success = /Core/Cli%.Success;
+Success = /Core/Cli%.Success;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/Native%.Main@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
+App@ = /App/App%.App@;
+Main@ = /App/Native%.Main@;
+Event@ = /App/App%.Event@;
+Effect@ = /App/App%.Effect@;
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Point@ = /App/Drawing%.Point@;
-% Affine = /App/Drawing%.Affine;
+Drawing@ = /App/Drawing%.Drawing@;
+Point@ = /App/Drawing%.Point@;
+Affine = /App/Drawing%.Affine;
 
-% Screenshot = /Invaders/Graphics%.Screenshot;
+Screenshot = /Invaders/Graphics%.Screenshot;
 
 Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ _width, Int@ _height, List@<String@> _args) {
   # Map game coordinates into screen coordinate.

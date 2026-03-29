@@ -1,34 +1,34 @@
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% TestSuite = /Std/Test%.TestSuite;
-% Test = /Std/Test%.Test;
-% Pass = /Std/Test%.Pass;
+Test@ = /Std/Test%.Test@;
+TestSuite = /Std/Test%.TestSuite;
+Test = /Std/Test%.Test;
+Pass = /Std/Test%.Pass;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ AIR@ = /Games/TicTacToe/AI%.AIR@;
-% AI = /Games/TicTacToe/AI%;
+AIR@ = /Games/TicTacToe/AI%.AIR@;
+AI = /Games/TicTacToe/AI%;
 
-@ Board@ = /Games/TicTacToe/Board%.Board@;
-@ Player@ = /Games/TicTacToe/Board%.Player@;
-@ Square@ = /Games/TicTacToe/Board%.Square@;
-@ Status@ = /Games/TicTacToe/Board%.Status@;
-@ Position@ = /Games/TicTacToe/Board%.Position@;
-% BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
-% EmptyBoard = /Games/TicTacToe/Board%.EmptyBoard;
+Board@ = /Games/TicTacToe/Board%.Board@;
+Player@ = /Games/TicTacToe/Board%.Player@;
+Square@ = /Games/TicTacToe/Board%.Square@;
+Status@ = /Games/TicTacToe/Board%.Status@;
+Position@ = /Games/TicTacToe/Board%.Position@;
+BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
+EmptyBoard = /Games/TicTacToe/Board%.EmptyBoard;
 
-% Eq = /Games/TicTacToe/Board/Eq%;
-% Show = /Games/TicTacToe/Board/Show%;
+Eq = /Games/TicTacToe/Board/Eq%;
+Show = /Games/TicTacToe/Board/Show%;
 
 # Import to test compilation.
-<<@>@>% _ = /Games/TicTacToe/Stdio%;
+_ = /Games/TicTacToe/Stdio%;
 
 Test@ Tests = TestSuite(Str|TicTacToe, List[
   Test(Str|TestBoardStatus, (Unit@ _) {

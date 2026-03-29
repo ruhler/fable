@@ -1,31 +1,31 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ IntP@ = /Std/Int/IntP%.IntP@;
-% 1 = /Std/Int/IntP%.1;
+IntP@ = /Std/Int/IntP%.IntP@;
+1 = /Std/Int/IntP%.1;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Key@ = IntP@;
+Key@ = IntP@;
 
 # A Map from IntP@ to V@.
-<@>@ Map@ = <@ V@> {
-  @ M@ = +(Unit@ empty, P@ p),
-  @ P@ = *(Maybe@<V@> 1, M@ 2p0, M@ 2p1);
+Map@ = <@ V@> {
+  M@ = +(Unit@ empty, P@ p),
+  P@ = *(Maybe@<V@> 1, M@ 2p0, M@ 2p1);
   M@;
 };
 
 # A non-empty map from IntP@ to V@.
-<@>@ MapP@ = <@ V@> {
-  @ M@ = +(Unit@ empty, P@ p),
-  @ P@ = *(Maybe@<V@> 1, M@ 2p0, M@ 2p1);
+MapP@ = <@ V@> {
+  M@ = +(Unit@ empty, P@ p),
+  P@ = *(Maybe@<V@> 1, M@ 2p0, M@ 2p1);
   P@;
 };
 

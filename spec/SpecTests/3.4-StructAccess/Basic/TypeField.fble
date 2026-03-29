@@ -1,7 +1,7 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
-@ B@ = +(Unit@ true, Unit@ false);
-@ BoolM@ = *(@<B@> Bool@, B@ True, B@ False);
+Unit@ = *();
+B@ = +(Unit@ true, Unit@ false);
+BoolM@ = *(@<B@> Bool@, B@ True, B@ False);
 BoolM@ BoolM = BoolM@(B@, B@(true: Unit@()), B@(false: Unit@()));
 
 # Access a type field.

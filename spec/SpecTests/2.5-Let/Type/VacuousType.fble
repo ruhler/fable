@@ -1,7 +1,7 @@
-# @@fble-test@@ compile-error 5:3
-@ Unit@ = *();
+# @@fble-test@@ compile-error 5:1
+Unit@ = *();
 
 # The type T@ must not be vacuously defined like this.
-@ T@ = T@;
+T@ = T@;
 
 T@();

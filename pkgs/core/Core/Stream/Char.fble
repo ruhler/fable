@@ -1,19 +1,19 @@
 
-@ Char@ = /Std/Char%.Char@;
-<@>@ Output@ = /Std/Char/Output%.Output@;
-@ Int@ = /Std/Int%.Int@;
+Char@ = /Std/Char%.Char@;
+Output@ = /Std/Char/Output%.Output@;
+Int@ = /Std/Int%.Int@;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-% Byte = /Core/Stream%;
-% Char = /Core/Char/Stream%;
+Byte = /Core/Stream%;
+Char = /Core/Char/Stream%;
 
 # Convert a byte input stream to a character input stream.
 <<@>@ M@>(Byte.IStream@<M@>, Monad@<M@>) { Char.IStream@<M@>; }
@@ -27,7 +27,7 @@ IStream = <<@>@ M@>(Byte.IStream@<M@> s, Monad@<M@> m) {
 # Convert a byte output stream to a character output stream.
 <<@>@ M@>(Byte.OStream@<M@>, Monad@<M@>) { Char.OStream@<M@>; }
 OStream = <<@>@ M@>(Byte.OStream@<M@> s, Monad@<M@> m) {
-  @ S@ = M@<Unit@>;
+  S@ = M@<Unit@>;
   S@ return = m.return(Unit);
   (S@, (Unit@) { S@; }) { S@; }
   do = (S@ ma, (Unit@) { S@; } f) {

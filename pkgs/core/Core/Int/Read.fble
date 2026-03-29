@@ -1,14 +1,14 @@
 
-@ Char@ = /Std/Char%.Char@;
-% Char = /Std/Char/Ascii%.Char;
+Char@ = /Std/Char%.Char@;
+Char = /Std/Char/Ascii%.Char;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Neg = /Std/Int%.Neg;
-% Mul = /Std/Int%.Mul;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Neg = /Std/Int%.Neg;
+Mul = /Std/Int%.Mul;
+Int = /Std/Int/Lit%.Int;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
 (String@) { Int@; } Read = {
   (Char@) { Int@; } Digit = (Char@ c) {

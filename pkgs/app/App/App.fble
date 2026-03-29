@@ -1,33 +1,33 @@
 
-@ Drawing@ = /App/Drawing%.Drawing@;
+Drawing@ = /App/Drawing%.Drawing@;
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Key@ = +(
+Key@ = +(
   Unit@ a, Unit@ d, Unit@ h, Unit@ j, Unit@ k, Unit@ l,
   Unit@ q, Unit@ r, Unit@ s, Unit@ w,
   Unit@ left, Unit@ right, Unit@ up, Unit@ down,
   Unit@ space, Unit@ lshift, Unit@ rshift
 );
 
-@ Resize@ = *(
+Resize@ = *(
   Int@ width,
   Int@ height
 );
 
-@ Button@ = +(Unit@ left, Unit@ right);
-@ MouseButton@ = *(Button@ button, Int@ x, Int@ y);
+Button@ = +(Unit@ left, Unit@ right);
+MouseButton@ = *(Button@ button, Int@ x, Int@ y);
 
-@ MouseMotion@ = *(
+MouseMotion@ = *(
   Int@ x,     # Final x position of mouse in screen coordinates.
   Int@ y,     # Final y position of mouse in screen coordinates.
   Int@ dx,    # Change in x position since previous mouse motion event.
   Int@ dy     # Change in y position since previous mouse motion event.
 );
 
-@ Event@ = +(
+Event@ = +(
   Unit@ tick,      # A tick event has occured in response to a tick request
   Key@ key_down,   # A key was pressed down.
   Key@ key_up,     # A key was released.
@@ -37,7 +37,7 @@
   MouseMotion@ mouse_motion   # The mouse has moved.
 );
 
-@ Effect@ = +(
+Effect@ = +(
   # Request for a tick Event@ to occur after the given number of milliseconds.
   # Time is relative to the time of delivery of the last requested tick event.
   # The tick will be delivered immediately if its delivery time is in the past
@@ -58,7 +58,7 @@
 
 # App@ --
 #   Interface for application input and output operations.
-<<@>@>@ App@ = <<@>@ M@> { *(
+App@ = <<@>@ M@> { *(
   M@<Event@> event,
   (Effect@) { M@<Unit@>; } effect);
 };

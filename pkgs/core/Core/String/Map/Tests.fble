@@ -1,8 +1,8 @@
 
-@ Test@ = /Std/Test%.Test@;
+Test@ = /Std/Test%.Test@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
 # Note: Iteration order isn't what you expect.
 Test@ Tests = /Core/Map/Test%.Test</Core/String/Map%.Map.Map@, String@>(

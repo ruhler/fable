@@ -1,25 +1,25 @@
 
 # Import boolean type and values.
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 Bool@ True = /Std/Bool%.True;
 Bool@ False = /Std/Bool%.False;
 
 # Import character type and values.
-@ Char@ = /Std/Char%.Char@;
-% Char = /Std/Char/Ascii%.Char;
+Char@ = /Std/Char%.Char@;
+Char = /Std/Char/Ascii%.Char;
 
 # Import integer type and literal.
-@ Int@ = /Std/Int%.Int@;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Int = /Std/Int/Lit%.Int;
 
 # Important list function.
-<@>% Concat = /Std/List%.Concat;
+Concat = /Std/List%.Concat;
 
 # Import string type and functions.
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% Lines = /Std/String/Lines%.Lines;
-% ToString = /Std/Char/Output%.ToString;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+Lines = /Std/String/Lines%.Lines;
+ToString = /Std/Char/Output%.ToString;
 
 # Specify the output string.
 Char@ c = Char|A;

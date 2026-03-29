@@ -1,36 +1,36 @@
 
-@ Char@ = /Std/Char%.Char@;
+Char@ = /Std/Char%.Char@;
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 Int@ 0 = /Std/Int%.0;
 Int@ 1 = /Std/Int%.1;
 
-<@>% List = /Std/List%.List;
-<@>% Get = /Std/List/Index%.Get;
+List = /Std/List%.List;
+Get = /Std/List/Index%.Get;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-% Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Output%.Format;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 
-% Eval = /Fbld/Eval%.Eval;
-% AssertArgCount = /Fbld/Eval%.AssertArgCount;
+Eval = /Fbld/Eval%.Eval;
+AssertArgCount = /Fbld/Eval%.AssertArgCount;
 
-@ Markup@ = /Fbld/Markup%.Markup@;
-@ Impl@ = /Fbld/Markup%.Impl@;
-@ Command@ = /Fbld/Markup%.Command@;
-% Plain = /Fbld/Markup%.Plain;
-% Append = /Fbld/Markup%.Append;
+Markup@ = /Fbld/Markup%.Markup@;
+Impl@ = /Fbld/Markup%.Impl@;
+Command@ = /Fbld/Markup%.Command@;
+Plain = /Fbld/Markup%.Plain;
+Append = /Fbld/Markup%.Append;
 
-@ Env@ = /Fbld/Env%.Env@<Impl@>;
+Env@ = /Fbld/Env%.Env@<Impl@>;
 
-<@>@ Result@ = /Fbld/Result%.Result@;
-<@>% Error = /Fbld/Result%.Error;
-% r = /Fbld/Result%.Monad;
+Result@ = /Fbld/Result%.Result@;
+Error = /Fbld/Result%.Error;
+r = /Fbld/Result%.Monad;
 
 (Markup@) { Result@<Maybe@<Char@>>; } HeadOf = (Markup@ markup) {
   markup.?(

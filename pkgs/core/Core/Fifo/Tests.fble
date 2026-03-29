@@ -1,35 +1,35 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% Str = /Std/Char/Ascii%.Str;
-% String = /Std/Char/Ascii/Output%.String;
+Str = /Std/Char/Ascii%.Str;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<@>@ Fifo@ = /Core/Fifo%.Fifo@;
-<@>% Empty = /Core/Fifo%.Empty;
-<@>% First = /Core/Fifo%.First;
-<@>% Put = /Core/Fifo%.Put;
-<@>% Next = /Core/Fifo%.Next;
+Fifo@ = /Core/Fifo%.Fifo@;
+Empty = /Core/Fifo%.Empty;
+First = /Core/Fifo%.First;
+Put = /Core/Fifo%.Put;
+Next = /Core/Fifo%.Next;
 
-@ Elem@ = +(Unit@ A, Unit@ B, Unit@ C);
+Elem@ = +(Unit@ A, Unit@ B, Unit@ C);
 Elem@ A = Elem@(A: Unit);
 Elem@ B = Elem@(A: Unit);
 Elem@ C = Elem@(A: Unit);

@@ -1,10 +1,10 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 
-@ PkgA@ = @/SpecTests/'9.2-PrivateType'/Basic/NestedFullAccess%;
-@ PkgB@ = @/SpecTests/'9.2-PrivateType'%;
+PkgA@ = @/SpecTests/'9.2-PrivateType'/Basic/NestedFullAccess%;
+PkgB@ = @/SpecTests/'9.2-PrivateType'%;
 
 # You can work with nested private types as long as you have access to
 # each layer of the private type.
-@ A@ = Unit@.%(PkgA@).%(PkgB@);
+A@ = Unit@.%(PkgA@).%(PkgB@);
 A@();

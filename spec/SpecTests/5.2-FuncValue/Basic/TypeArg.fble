@@ -2,14 +2,14 @@
 # A function value that passes a type value as an argument.
 # It's hard to think of any reason someone would do this in practice, but
 # technically the spec allows it.
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 
 (@<Bool@>) { @<Bool@>; } F = (@<Bool@> x@) {
   x@;
 };
 
-@ MyBool@ = F(Bool@);
+MyBool@ = F(Bool@);
 
 MyBool@ True = Bool@(true: Unit@());
 True.true;

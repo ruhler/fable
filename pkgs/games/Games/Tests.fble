@@ -1,14 +1,14 @@
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+TestSuite = /Std/Test%.TestSuite;
 
 # Import to test compilation.
-<<@>@>% _ = /Games/Snake/AppIO%;
-% _ = /Games/Snake/Bench%;
+_ = /Games/Snake/AppIO%;
+_ = /Games/Snake/Bench%;
 
 Test@ Tests = TestSuite(Str|Games, List[
   /Games/BenchmarkGame/Tests%.Tests,

@@ -1,13 +1,13 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Mul = /Std/Int%.Mul;
-% Div = /Std/Int/Div%.Div;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Mul = /Std/Int%.Mul;
+Div = /Std/Int/Div%.Div;
 
 # Vec@ --
 #   A 3 element vector.
-@ Vec@ = *(Int@ x, Int@ y, Int@ z);
+Vec@ = *(Int@ x, Int@ y, Int@ z);
 
 # AddV --
 #   Vector addition.
@@ -35,7 +35,7 @@
 
 # Mat@ --
 #   A 3x3 matrix.
-@ Mat@ = *(Vec@ i, Vec@ j, Vec@ k);
+Mat@ = *(Vec@ i, Vec@ j, Vec@ k);
 
 # MulMV --
 #   Multiply a matrix by a vector.

@@ -1,23 +1,23 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Shl = /Std/Int%.Shl;
-% Shr = /Std/Int%.Shr;
-% Le = /Std/Int/Ord%.Le;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Shl = /Std/Int%.Shl;
+Shr = /Std/Int%.Shr;
+Le = /Std/Int/Ord%.Le;
 
-<<@>@>@ Rng@ = /Core/Random/Rng%.Rng@;
-<<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
-<@>@ Prng@ = /Core/Random/Prng%.Prng@;
+Rng@ = /Core/Random/Rng%.Rng@;
+RngM@ = /Core/Random/Rng%.RngM@;
+Prng@ = /Core/Random/Prng%.Prng@;
 
-<@,@>@ Pure@ = /Core/State/Pure%.Pure@;
+Pure@ = /Core/State/Pure%.Pure@;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 # Pure state monad RngM@ implementation of a Prng@.
 <@ S@>(Prng@<S@>) { RngM@<Pure@<S@>>; }
 Pure = <@ S@>(Prng@<S@> prng) {
-  % p = /Core/State/Pure%.Pure<S@>;
+  p = /Core/State/Pure%.Pure<S@>;
 
   (Int@) { p.M@<Int@>; } rand = (Int@ n) {
     S@ s := p.m.do(p.s.get);

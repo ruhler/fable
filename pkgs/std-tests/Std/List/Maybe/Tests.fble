@@ -1,32 +1,32 @@
 
-<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+OnAscii = /Std/Char/Ascii%.OnAscii;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
 
-<@>% Head = /Std/List/Maybe%.Head;
-<@>% Last = /Std/List/Maybe%.Last;
-<@>% Concat = /Std/List/Maybe%.Concat;
+Head = /Std/List/Maybe%.Head;
+Last = /Std/List/Maybe%.Last;
+Concat = /Std/List/Maybe%.Concat;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = OnAscii $ /Std/Test%.Test;
-% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = OnAscii $ /Std/Test%.Test;
+TestSuite = OnAscii $ /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Elem@ = /Std/List/Tests/Elem%.Elem@;
-% Elem = /Std/List/Tests/Elem%.Elem;
-% Elems = /Std/List/Tests/Elem%.Elems;
-% Eq = /Std/List/Tests/Elem%.Eq;
-% Show = /Std/List/Tests/Elem%.Show;
-% Eqs = /Std/List/Tests/Elem%.Eqs;
-% Shows = /Std/List/Tests/Elem%.Shows;
+Elem@ = /Std/List/Tests/Elem%.Elem@;
+Elem = /Std/List/Tests/Elem%.Elem;
+Elems = /Std/List/Tests/Elem%.Elems;
+Eq = /Std/List/Tests/Elem%.Eq;
+Show = /Std/List/Tests/Elem%.Show;
+Eqs = /Std/List/Tests/Elem%.Eqs;
+Shows = /Std/List/Tests/Elem%.Shows;
 
 Test@ Tests = TestSuite|Maybe $ List[
   TestSuite|List $ List[

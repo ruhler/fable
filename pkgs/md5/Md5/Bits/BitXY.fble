@@ -1,13 +1,13 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-<@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
-<@>@ Overflow@ = /Md5/Bits/Bits%.Overflow@;
+Bits@ = /Md5/Bits/Bits%.Bits@;
+Overflow@ = /Md5/Bits/Bits%.Overflow@;
 
 
 <@ X@>(Bits@<X@> X)<@ Y@>(Bits@<Y@> Y) {
 
-  @ BitXY@ = *(X@ hi, Y@ lo);
+  BitXY@ = *(X@ hi, Y@ lo);
 
   (BitXY@) { BitXY@; } Not = (BitXY@ a) {
     BitXY@(X.Not(a.hi), Y.Not(a.lo));

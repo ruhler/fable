@@ -1,13 +1,10 @@
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% TestSuite = /Std/Test%.TestSuite;
-
-# Import to test compilation.
-<<@>@>% _ = /App/Demo%;
+Test@ = /Std/Test%.Test@;
+TestSuite = /Std/Test%.TestSuite;
 
 Test@ Tests = TestSuite(Str|App, List<Test@>[]);
 

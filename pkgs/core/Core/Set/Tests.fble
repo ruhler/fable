@@ -1,40 +1,40 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% And = /Std/Bool%.And;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+And = /Std/Bool%.And;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
-<@>% AssertNotEquals = /Std/Eq/Assert%.AssertNotEquals;
+Eq@ = /Std/Eq%.Eq@;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertNotEquals = /Std/Eq/Assert%.AssertNotEquals;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
 
-<@>@ Cmp@ = /Std/Cmp%.Cmp@;
-@ Compared@ = /Std/Cmp%.Compared@;
-% Less = /Std/Cmp%.Less;
-% Equal = /Std/Cmp%.Equal;
-% Greater = /Std/Cmp%.Greater;
+Cmp@ = /Std/Cmp%.Cmp@;
+Compared@ = /Std/Cmp%.Compared@;
+Less = /Std/Cmp%.Less;
+Equal = /Std/Cmp%.Equal;
+Greater = /Std/Cmp%.Greater;
 
-<@>@ Show@ = /Std/Show%.Show@;
-% Do = /Std/Char/Output%.Do;
-% ToString = /Std/Char/Output%.ToString;
+Show@ = /Std/Show%.Show@;
+Do = /Std/Char/Output%.Do;
+ToString = /Std/Char/Output%.ToString;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% String = /Std/Char/Ascii/Output%.String;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Bit1@ = +(Unit@ 0, Unit@ 1);
-@ Bit2@ = *(Bit1@ h, Bit1@ l);
+Bit1@ = +(Unit@ 0, Unit@ 1);
+Bit2@ = *(Bit1@ h, Bit1@ l);
 
 Bit2@ A = Bit2@(Bit1@(0: Unit), Bit1@(0: Unit));
 Bit2@ B = Bit2@(Bit1@(0: Unit), Bit1@(1: Unit));
@@ -70,18 +70,18 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
   ShowBit1(x.l);
 };
 
-% Map = /Core/Map/Tree%.Map(OrdBit2);
-% Set = /Core/Set%.Set(Map);
+Map = /Core/Map/Tree%.Map(OrdBit2);
+Set = /Core/Set%.Set(Map);
 
-@ Set@ = Set.Set@;
-% Empty = Set.Empty;
-% Contains = Set.Contains;
-% Insert = Set.Insert;
-% Delete = Set.Delete;
-% ForEach = Set.ForEach;
+Set@ = Set.Set@;
+Empty = Set.Empty;
+Contains = Set.Contains;
+Insert = Set.Insert;
+Delete = Set.Delete;
+ForEach = Set.ForEach;
 
-% Eq = /Core/Set/Eq%.Eq(Map, EqBit2);
-% Show = /Core/Set/Show%.Show(Map, ShowBit2);
+Eq = /Core/Set/Eq%.Eq(Map, EqBit2);
+Show = /Core/Set/Show%.Show(Map, ShowBit2);
 
 Test@ Tests = TestSuite(Str|Set, List[
   Test(Str|'empty', (Unit@ _) {

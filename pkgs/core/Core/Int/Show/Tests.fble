@@ -1,22 +1,22 @@
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Int@ = /Std/Int%.Int@;
-% Neg = /Std/Int%.Neg;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Neg = /Std/Int%.Neg;
+Int = /Std/Int/Lit%.Int;
 
-% Read = /Core/Int/Read%.Read;
-% Show = /Std/Int/Show%.Show;
+Read = /Core/Int/Read%.Read;
+Show = /Std/Int/Show%.Show;
 
 Test@ Tests = TestSuite(Str|Show, List[
   Test(Str|Read_Positive, (Unit@ _) {

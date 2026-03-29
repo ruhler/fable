@@ -1,10 +1,10 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Mul = /Std/Int%.Mul;
-% Lt = /Std/Int/Ord%.Lt;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Mul = /Std/Int%.Mul;
+Lt = /Std/Int/Ord%.Lt;
 
 Int@ 0 = /Std/Int%.0;
 Int@ 1 = /Std/Int%.1;
@@ -16,7 +16,7 @@ Int@ 4 = Incr(3);
 #   Square root and remainder from integer square root.
 #
 # This type is the same as used for division, because why not?
-@ QR@ = *(Int@ q, Int@ r);
+QR@ = *(Int@ q, Int@ r);
 
 /Std/Undef%.Undef@ Imaginary;
 

@@ -1,40 +1,40 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% Not = /Std/Bool%.Not;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+Not = /Std/Bool%.Not;
 
-% Incr = /Std/Int%.Incr;
-% Int = /Std/Int/Lit%.Int;
+Incr = /Std/Int%.Incr;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Empty = /Std/List%.Empty;
-<@>% Items = /Std/List%.Items;
-<@>% Append = /Std/List%.Append;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Empty = /Std/List%.Empty;
+Items = /Std/List%.Items;
+Append = /Std/List%.Append;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% Format = /Std/Char/Ascii/Output%.Format;
-% String = /Std/Char/Ascii/Output%.String;
+Format = /Std/Char/Ascii/Output%.Format;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Id@ = /Sat/Id%.Id@;
-% EqId = /Sat/Id%.EqId;
+Id@ = /Sat/Id%.Id@;
+EqId = /Sat/Id%.EqId;
 
-@ VarId@ = Id@;
-@ ClauseId@ = Id@;
+VarId@ = Id@;
+ClauseId@ = Id@;
 
-@ Var@ = *(VarId@ id, Bool@ pos);
-@ Clause@ = List@<Var@>;
+Var@ = *(VarId@ id, Bool@ pos);
+Clause@ = List@<Var@>;
 
 # Imagine two clauses:
 #   (a1 + a2 + ... + v)
@@ -45,28 +45,28 @@
 #
 # Conflict@ describes a pair of conflicting clauses and the variable they
 # conflicted on.
-@ Conflict@ = *(ClauseId@ a, ClauseId@ b, VarId@ var);
+Conflict@ = *(ClauseId@ a, ClauseId@ b, VarId@ var);
 
-% ClauseIds = /Sat/Id%.Set;
-@ ClauseIds@ = ClauseIds.Set@;
+ClauseIds = /Sat/Id%.Set;
+ClauseIds@ = ClauseIds.Set@;
 
 # pos - the set of clauses this variable appears positive in.
 # neg - the set of clauses this variable appears negative in.
-@ VarS@ = *(ClauseIds@ pos, ClauseIds@ neg);
+VarS@ = *(ClauseIds@ pos, ClauseIds@ neg);
 
-% Vars = /Sat/Id%.Map;
-@ Vars@ = Vars.Map@<VarS@>;
+Vars = /Sat/Id%.Map;
+Vars@ = Vars.Map@<VarS@>;
 
-% Clauses = /Sat/Id%.Map;
-@ Clauses@ = Clauses.Map@<Clause@>; 
+Clauses = /Sat/Id%.Map;
+Clauses@ = Clauses.Map@<Clause@>; 
 
-% Conflicts = /Sat/Id%.Map;
-@ Conflicts@ = Conflicts.Map@<Conflict@>;
+Conflicts = /Sat/Id%.Map;
+Conflicts@ = Conflicts.Map@<Conflict@>;
 
 
 # Functions for working with clauses.
 # TODO: Move to a separate module?
-% Clause = {
+Clause = {
   # Adds a variable to a clause, preserving the invariant that each variable
   # appears at most once in a clause.
   #
@@ -107,7 +107,7 @@
 };
 
 # The reasoning behind a variable assignment.
-@ Why@ = +(
+Why@ = +(
   Unit@ pure,         # The variable is a pure literal, so no harm setting it.
   ClauseId@ inferred  # The value was inferred from the given clause.
 );
@@ -115,9 +115,9 @@
 Why@ Pure = Why@(pure: Unit);
 (ClauseId@) { Why@; } Inferred = (ClauseId@ id) { Why@(inferred: id); };
 
-@ Assign@ = *(Var@ var, Why@ why);
+Assign@ = *(Var@ var, Why@ why);
 
-@ Solver@ = *(
+Solver@ = *(
   Bool@ unsat,              # if true, the formula is trivially unsatisfiable.
   ClauseId@ clause_id,
   Vars@ vars,
@@ -292,18 +292,18 @@ RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
   ClauseIds.ForEach(unmatch, match_s, RemoveVarFromClause(var.id));
 };
 
-@ Assignment@ = List@<Var@>;
+Assignment@ = List@<Var@>;
 
-@ SearchResult@ = +(
+SearchResult@ = +(
   Assignment@ sat,
   *(ClauseId@ clause_id, Conflicts@ conflicts) unsat
 );
 
 # Result@ --
 #   The result of trying to solve a sat problem.
-@ Result@ = +(Assignment@ sat, Unit@ unsat);
+Result@ = +(Assignment@ sat, Unit@ unsat);
 
-% _Show = {
+_Show = {
   Show@<Id@> Id = /Std/Int/Show%.Show;
 
   Show@<Var@> Var = (Var@ v) {

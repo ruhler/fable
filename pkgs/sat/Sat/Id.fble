@@ -1,11 +1,11 @@
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
-@ Id@ = Int@;
-% EqId = /Std/Int/Eq%.Eq;
-% OrdId = /Core/Int/Ord%.Ord;
+Id@ = Int@;
+EqId = /Std/Int/Eq%.Eq;
+OrdId = /Core/Int/Ord%.Ord;
 
-% Map = /Core/Map/Tree%.Map(OrdId);
-% Set = /Core/Set%.Set(Map);
+Map = /Core/Map/Tree%.Map(OrdId);
+Set = /Core/Set%.Set(Map);
 
 @(Id@, EqId, Map, Set);

@@ -1,17 +1,17 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit);
 Bool@ False = Bool@(false: Unit);
 
 # Test storing polymorphic values on a generic container type.
 # The spec says we can do this based on compatibility (as opposed to equality)
 # of kinds in poly application.
-<@>@ Maybe@ = <@ T@> { +(Unit@ nothing, T@ just); };
+Maybe@ = <@ T@> { +(Unit@ nothing, T@ just); };
 
-<@>@ Poly@ = <@ A@>(A@, A@) { A@; };
+Poly@ = <@ A@>(A@, A@) { A@; };
 Poly@ First = <@ A@>(A@ a, A@ _b) { a; };
 
 Maybe@<Poly@> mx = Maybe@(just: First);

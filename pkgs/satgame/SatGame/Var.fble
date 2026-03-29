@@ -1,10 +1,10 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
 # The image we generate for a variable is a 3x3 grid of squares where
 # the squares are either present or absent. I'll probably regret this later,
 # but let's define Var@ to use the same representation.
-@ Var@ = *(
+Var@ = *(
   Bool@ ul, Bool@ uc, Bool@ ur,
   Bool@ ml, Bool@ mc, Bool@ mr,
   Bool@ ll, Bool@ lc, Bool@ lr);

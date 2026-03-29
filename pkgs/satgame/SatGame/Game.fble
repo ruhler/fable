@@ -1,39 +1,39 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% Not = /Std/Bool%.Not;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+Not = /Std/Bool%.Not;
 
-@ Int@ = /Std/Int%.Int@;
-% Decr = /Std/Int%.Decr;
-% IsZero = /Std/Int/Sign%.IsZero;
+Int@ = /Std/Int%.Int@;
+Decr = /Std/Int%.Decr;
+IsZero = /Std/Int/Sign%.IsZero;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
-<@>% Any = /Std/List/Search%.Any;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
+Any = /Std/List/Search%.Any;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Literal@ = /SatGame/Puzzle%.Literal@;
-@ Clause@ = /SatGame/Puzzle%.Clause@;
-@ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
+Literal@ = /SatGame/Puzzle%.Literal@;
+Clause@ = /SatGame/Puzzle%.Clause@;
+Puzzle@ = /SatGame/Puzzle%.Puzzle@;
 
-@ Var@ = /SatGame/Var%.Var@;
+Var@ = /SatGame/Var%.Var@;
 
-@ TileState@ = +(
+TileState@ = +(
   Unit@ normal,     # The tile has been neither selected nor dismissed.
   Unit@ selected,   # The user has selected this tile.
   Unit@ dismissed   # The user has crossed off this tile.
 );
 
 # A function to transform a tile state.
-@ Toggle@ = (TileState@) { TileState@; };
+Toggle@ = (TileState@) { TileState@; };
 
 # Toggle function to cycle through states.
 # normal -> selected -> dismissed
@@ -60,9 +60,9 @@ Toggle@ ToggleDismissed = (TileState@ s) {
     dismissed: TileState@(normal: Unit));
 };
 
-@ Tile@ = *(Var@ var, Bool@ pos, TileState@ state);
-@ Group@ = List@<Tile@>;
-@ Game@ = List@<Group@>;
+Tile@ = *(Var@ var, Bool@ pos, TileState@ state);
+Group@ = List@<Tile@>;
+Game@ = List@<Group@>;
 
 (Literal@) { Tile@; } Tile = (Literal@ l) {
   Tile@(l.var, l.pos, TileState@(normal: Unit));

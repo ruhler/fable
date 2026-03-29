@@ -1,10 +1,10 @@
 # @@fble-test@@ none
 # Basic use of a module with corresponding .fble.@ file.
 
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 
-@ Foo@ = *(Bool@ x, Bool@ y);
+Foo@ = *(Bool@ x, Bool@ y);
 
 # In the header, the value of Foo is undefined.
 Foo@ Foo;

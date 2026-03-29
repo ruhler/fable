@@ -1,26 +1,26 @@
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ AI@ = /Games/TicTacToe/AI%.AI@;
-@ AIR@ = /Games/TicTacToe/AI%.AIR@;
-% AI = /Games/TicTacToe/AI%;
+AI@ = /Games/TicTacToe/AI%.AI@;
+AIR@ = /Games/TicTacToe/AI%.AIR@;
+AI = /Games/TicTacToe/AI%;
 
-@ Board@ = /Games/TicTacToe/Board%.Board@;
-@ Position@ = /Games/TicTacToe/Board%.Position@;
-@ Player@ = /Games/TicTacToe/Board%.Player@;
-% BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
-% EmptyBoard = /Games/TicTacToe/Board%.EmptyBoard;
-% Move = /Games/TicTacToe/Board%.Move;
+Board@ = /Games/TicTacToe/Board%.Board@;
+Position@ = /Games/TicTacToe/Board%.Position@;
+Player@ = /Games/TicTacToe/Board%.Player@;
+BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
+EmptyBoard = /Games/TicTacToe/Board%.EmptyBoard;
+Move = /Games/TicTacToe/Board%.Move;
 
 
-@ GameResult@ = +(Player@ win, Unit@ draw);
-@ GameStatus@ = +(Player@ playing, GameResult@ ended); 
-@ Game@ = *(Board@ board, GameStatus@ status, AI@ ai);
+GameResult@ = +(Player@ win, Unit@ draw);
+GameStatus@ = +(Player@ playing, GameResult@ ended); 
+Game@ = *(Board@ board, GameStatus@ status, AI@ ai);
 
-@ Move@ = +(Position@ given, Unit@ ai);
+Move@ = +(Position@ given, Unit@ ai);
 
 Game@ Initial = Game@(
   EmptyBoard,

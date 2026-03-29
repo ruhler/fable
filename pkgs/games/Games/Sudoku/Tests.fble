@@ -1,48 +1,48 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% And = /Std/Bool%.And;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+And = /Std/Bool%.And;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+Eq@ = /Std/Eq%.Eq@;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
-<@>% DoWhile = /Core/Maybe%.DoWhile;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
+DoWhile = /Core/Maybe%.DoWhile;
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
-<@>% Return = /Std/Char/Output%.Return;
+Output@ = /Std/Char/Output%.Output@;
+Return = /Std/Char/Output%.Return;
 
-% Str = /Std/Char/Ascii%.Str;
-% String = /Std/Char/Ascii/Output%.String;
-% StringE = /Std/Char/Ascii/Output%.StringE;
+Str = /Std/Char/Ascii%.Str;
+String = /Std/Char/Ascii/Output%.String;
+StringE = /Std/Char/Ascii/Output%.StringE;
 
-@ Test@ = /Std/Test%.Test@;
-@ TestResult@ = /Std/Test%.TestResult@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
-% Pass = /Std/Test%.Pass;
+Test@ = /Std/Test%.Test@;
+TestResult@ = /Std/Test%.TestResult@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
+Pass = /Std/Test%.Pass;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Symbol@ = /Games/Sudoku%.Symbol@;
-@ Input@ = /Games/Sudoku%.Input@;
-@ Solved@ = /Games/Sudoku%.Solved@;
-% 1 = /Games/Sudoku%.1;
-% 2 = /Games/Sudoku%.2;
-% 3 = /Games/Sudoku%.3;
-% 4 = /Games/Sudoku%.4;
-% 5 = /Games/Sudoku%.5;
-% 6 = /Games/Sudoku%.6;
-% 7 = /Games/Sudoku%.7;
-% 8 = /Games/Sudoku%.8;
-% 9 = /Games/Sudoku%.9;
-% IterateSymbol = /Games/Sudoku%.IterateSymbol;
-% Solve = /Games/Sudoku%.Solve;
+Symbol@ = /Games/Sudoku%.Symbol@;
+Input@ = /Games/Sudoku%.Input@;
+Solved@ = /Games/Sudoku%.Solved@;
+1 = /Games/Sudoku%.1;
+2 = /Games/Sudoku%.2;
+3 = /Games/Sudoku%.3;
+4 = /Games/Sudoku%.4;
+5 = /Games/Sudoku%.5;
+6 = /Games/Sudoku%.6;
+7 = /Games/Sudoku%.7;
+8 = /Games/Sudoku%.8;
+9 = /Games/Sudoku%.9;
+IterateSymbol = /Games/Sudoku%.IterateSymbol;
+Solve = /Games/Sudoku%.Solve;
 
 (Symbol@, Symbol@) { Bool@; } EqSymbol = (Symbol@ a, Symbol@ b) {
   a.?(1: b.?(1: True, : False),
@@ -57,7 +57,7 @@
 };
 
 # An array of elements of type T@, indexed by symbol.
-<@>@ Array@ = <@ T@>(Symbol@){ T@; };
+Array@ = <@ T@>(Symbol@){ T@; };
 
 <@ T@>((T@, T@) { Bool@; }, Array@<T@>, Array@<T@>) { Bool@; }
 EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
@@ -103,7 +103,7 @@ Eq@<Solved@> EqBoard = (Solved@ a, Solved@ b) {
     }, a, b);
 };
 
-% MS = {
+MS = {
   (Symbol@){ Maybe@<Symbol@>; } J = Just<Symbol@>;
   @(1: J(1), 2: J(2), 3: J(3),
     4: J(4), 5: J(5), 6: J(6),
@@ -119,10 +119,10 @@ Array = <@ T@>(T@ 1, T@ 2, T@ 3, T@ 4, T@ 5, T@ 6, T@ 7, T@ 8, T@ 9) {
 };
 
 Input@ SampleInput = {
-  % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
-  % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
-  % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
-  % _ = MS._;
+  1 = MS.1; 2 = MS.2; 3 = MS.3;
+  4 = MS.4; 5 = MS.5; 6 = MS.6;
+  7 = MS.7; 8 = MS.8; 9 = MS.9;
+  _ = MS._;
   Array(
     Array(8,_,_,  _,9,_,  _,_,2),
     Array(7,2,_,  _,_,_,  _,4,9),
@@ -153,10 +153,10 @@ Solved@ SampleSolved = {
 };
 
 Input@ EasyInput = {
-  % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
-  % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
-  % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
-  % _ = MS._;
+  1 = MS.1; 2 = MS.2; 3 = MS.3;
+  4 = MS.4; 5 = MS.5; 6 = MS.6;
+  7 = MS.7; 8 = MS.8; 9 = MS.9;
+  _ = MS._;
   Array(
     Array(5,3,6,  _,_,_,  4,_,7),
     Array(_,_,8,  _,_,5,  _,_,_),
@@ -172,10 +172,10 @@ Input@ EasyInput = {
 };
 
 Input@ MediumInput = {
-  % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
-  % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
-  % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
-  % _ = MS._;
+  1 = MS.1; 2 = MS.2; 3 = MS.3;
+  4 = MS.4; 5 = MS.5; 6 = MS.6;
+  7 = MS.7; 8 = MS.8; 9 = MS.9;
+  _ = MS._;
   Array(
     Array(8,_,_,  _,_,_,  _,_,9),
     Array(9,_,2,  _,6,3,  _,_,_),
@@ -191,10 +191,10 @@ Input@ MediumInput = {
 };
 
 Input@ HardInput = {
-  % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
-  % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
-  % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
-  % _ = MS._;
+  1 = MS.1; 2 = MS.2; 3 = MS.3;
+  4 = MS.4; 5 = MS.5; 6 = MS.6;
+  7 = MS.7; 8 = MS.8; 9 = MS.9;
+  _ = MS._;
   Array(
     Array(_,_,_,  _,3,1,  _,_,_),
     Array(_,_,6,  2,4,_,  7,_,_),
@@ -210,10 +210,10 @@ Input@ HardInput = {
 };
 
 Input@ ExpertInput = {
-  % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
-  % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
-  % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
-  % _ = MS._;
+  1 = MS.1; 2 = MS.2; 3 = MS.3;
+  4 = MS.4; 5 = MS.5; 6 = MS.6;
+  7 = MS.7; 8 = MS.8; 9 = MS.9;
+  _ = MS._;
   Array(
     Array(_,_,_,  _,_,9,  _,2,1),
     Array(_,8,_,  _,_,_,  _,6,_),

@@ -1,14 +1,14 @@
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ Ball@ = /Pinball/Ball%.Ball@;
+Ball@ = /Pinball/Ball%.Ball@;
 
-@ Num@ = /Pinball/Num%.Num@;
-% Lt = /Pinball/Num%.Lt;
+Num@ = /Pinball/Num%.Num@;
+Lt = /Pinball/Num%.Lt;
 
 # Event@ --
 #   An event represents a point in time when something happens.
@@ -18,7 +18,7 @@
 #   * ball update - the state of the ball is updated.
 #
 # TODO: When we get more things, add more kinds of things here.
-@ Event@ = *(Num@ time, Maybe@<Ball@> ball);
+Event@ = *(Num@ time, Maybe@<Ball@> ball);
 
 # Events --
 #   Merge a non-empty collection of events into a single event.

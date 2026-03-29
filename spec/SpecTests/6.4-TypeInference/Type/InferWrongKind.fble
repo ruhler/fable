@@ -1,5 +1,5 @@
 # @@fble-test@@ compile-error 9:1
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
 <<@>@ T@> (T@) { T@; } Poly = <<@>@ T@> (T@ x) { x; };

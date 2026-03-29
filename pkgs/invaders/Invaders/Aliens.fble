@@ -1,63 +1,63 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% Or = /Std/Bool%.Or;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+Or = /Std/Bool%.Or;
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-% Blank = /App/Drawing%.Blank;
-% Over = /App/Drawing%.Over;
-% Translate = /App/Drawing%.Translate;
+Drawing@ = /App/Drawing%.Drawing@;
+Blank = /App/Drawing%.Blank;
+Over = /App/Drawing%.Over;
+Translate = /App/Drawing%.Translate;
 
-@ Bombs@ = /Invaders/Bombs%.Bombs@;
-@ Kind@ = /Invaders/Bombs%.Kind@;
+Bombs@ = /Invaders/Bombs%.Bombs@;
+Kind@ = /Invaders/Bombs%.Kind@;
 
-% Alien1A = /Invaders/Graphics%.Aliens.Alien1A;
-% Alien1B = /Invaders/Graphics%.Aliens.Alien1B;
-% Alien2A = /Invaders/Graphics%.Aliens.Alien2A;
-% Alien2B = /Invaders/Graphics%.Aliens.Alien2B;
-% Alien3A = /Invaders/Graphics%.Aliens.Alien3A;
-% Alien3B = /Invaders/Graphics%.Aliens.Alien3B;
-% DeadAlien = /Invaders/Graphics%.DeadAlien;
+Alien1A = /Invaders/Graphics%.Aliens.Alien1A;
+Alien1B = /Invaders/Graphics%.Aliens.Alien1B;
+Alien2A = /Invaders/Graphics%.Aliens.Alien2A;
+Alien2B = /Invaders/Graphics%.Aliens.Alien2B;
+Alien3A = /Invaders/Graphics%.Aliens.Alien3A;
+Alien3B = /Invaders/Graphics%.Aliens.Alien3B;
+DeadAlien = /Invaders/Graphics%.DeadAlien;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Incr = /Std/Int%.Incr;
-% Mul = /Std/Int%.Mul;
-@ QR@ = /Std/Int/Div%.QR@;
-% Div = /Std/Int/Div%.Div;
-% Eq = /Std/Int/Eq%.Eq;
-% Le = /Std/Int/Ord%.Le;
-% Lt = /Std/Int/Ord%.Lt;
-% Ge = /Std/Int/Ord%.Ge;
-% Gt = /Std/Int/Ord%.Gt;
-% Int = /Std/Int/Lit%.Int;
-% Ord = /Core/Int/Ord%.Ord;
-<<@>@>% Of = /Core/Int/Rand%.Of;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Incr = /Std/Int%.Incr;
+Mul = /Std/Int%.Mul;
+QR@ = /Std/Int/Div%.QR@;
+Div = /Std/Int/Div%.Div;
+Eq = /Std/Int/Eq%.Eq;
+Le = /Std/Int/Ord%.Le;
+Lt = /Std/Int/Ord%.Lt;
+Ge = /Std/Int/Ord%.Ge;
+Gt = /Std/Int/Ord%.Gt;
+Int = /Std/Int/Lit%.Int;
+Ord = /Core/Int/Ord%.Ord;
+Of = /Core/Int/Rand%.Of;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
-<@>% DoWhile = /Core/Maybe%.DoWhile;
-<@>% For = /Core/Maybe%.For;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
+DoWhile = /Core/Maybe%.DoWhile;
+For = /Core/Maybe%.For;
 
-<@,@>% Eval = /Core/State/Pure%.Eval;
-<@,@>% Exec = /Core/State/Pure%.Exec;
+Eval = /Core/State/Pure%.Eval;
+Exec = /Core/State/Pure%.Exec;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;
 Int@ 2 = Int|2;
 
-% Prng = /Core/Random/Lfsr%.Lfsr8;
-% Rng = /Core/Random/Prng/Pure%.Pure(Prng);
+Prng = /Core/Random/Lfsr%.Lfsr8;
+Rng = /Core/Random/Prng/Pure%.Pure(Prng);
 
 (Prng.S@) { Prng.S@; }
 NextRand = (Prng.S@ prng) {
@@ -82,7 +82,7 @@ Int@ NumCols = Int|11;
 # Alien@ --
 #   An alien is identified using it's position in the group.
 #   Row 0 is the bottom row, col 0 is the left column.
-@ Alien@ = *(Int@ row, Int@ col);
+Alien@ = *(Int@ row, Int@ col);
 
 # FirstAlien --
 #   The first alien in the set of all aliens.
@@ -125,9 +125,9 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
 # Set@ --
 #   A set of aliens, to keep track of which aliens are alive or dead.
 # A set of aliens.
-% Map = /Core/Map/Tree%.Map(AlienOrd);
-% Set = /Core/Set%.Set(Map);
-@ Set@ = Set.Set@;
+Map = /Core/Map/Tree%.Map(AlienOrd);
+Set = /Core/Set%.Set(Map);
+Set@ = Set.Set@;
 
 # AllAliens --
 #   The set of all aliens.
@@ -175,7 +175,7 @@ Set@ AllAliens = {
 # Phase@ --
 #   Which graphic to use for the alien. It toggles back and forth between 'a'
 #   and 'b'.
-@ Phase@ = +(Unit@ a, Unit@ b);
+Phase@ = +(Unit@ a, Unit@ b);
 
 # FlipPhase --
 #   Switch to the other phase.
@@ -185,7 +185,7 @@ Set@ AllAliens = {
 
 # Dir@ --
 #   The direction the alien's are currently facing.
-@ Dir@ = +(Unit@ left, Unit@ right);
+Dir@ = +(Unit@ left, Unit@ right);
 
 # FlipDir --
 #   Switch to the other direction.
@@ -238,11 +238,11 @@ Int@ DyingTime = Int|10;
 # Fields:
 #   x, y - The position of the dead alien
 #   wait - how many ticks to wait before the dead alien disappears.
-@ Dying@ = *(Int@ x, Int@ y, Int@ wait);
+Dying@ = *(Int@ x, Int@ y, Int@ wait);
 
 # Aliens@ --
 #   The state of a group of aliens.
-@ Aliens@ = *(
+Aliens@ = *(
   # The (x, y) position of the bottom left edge of the group of aliens,
   # independent of which aliens are alive or dead, for those aliens in the
   # group that have not moved yet.
@@ -470,7 +470,7 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
   phase.?(a: Alien3A, b: Alien3B);
 };
 
-@ Kill@ = *(Int@ points, Aliens@ aliens);
+Kill@ = *(Int@ points, Aliens@ aliens);
 
 (Int@, Int@, Aliens@) { Maybe@<Kill@>; }
 Shoot = (Int@ x, Int@ y, Aliens@ aliens) {

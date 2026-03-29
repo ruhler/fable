@@ -1,15 +1,15 @@
 
-<@>% Concat = /Std/List%.Concat;
+Concat = /Std/List%.Concat;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-% 0 = /Bit%.0;
-% 1 = /Bit%.1;
+0 = /Bit%.0;
+1 = /Bit%.1;
 
-@ Bit4@ = /Bit4%.Bit4@;
-% And = /Bit4%.And;
-% Show = /Bit4/Show%.Show;
+Bit4@ = /Bit4%.Bit4@;
+And = /Bit4%.And;
+Show = /Bit4/Show%.Show;
 
 Bit4@ X = Bit4@(0, 0, 1, 1);
 Bit4@ Y = Bit4@(1, 0, 1, 0);

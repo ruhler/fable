@@ -1,16 +1,16 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit@());
 Bool@ False = Bool@(false: Unit@());
 
-@ Triple@ = *(Bool@ x, Bool@ y, Bool@ z);
+Triple@ = *(Bool@ x, Bool@ y, Bool@ z);
 
-@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
+Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
 
-@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
 
 (L@) { Unit@; } f = (L@ l) {
   Unit@ _b = l.cons.head.B;

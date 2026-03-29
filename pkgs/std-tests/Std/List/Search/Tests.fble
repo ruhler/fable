@@ -1,42 +1,42 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+OnAscii = /Std/Char/Ascii%.OnAscii;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = OnAscii $ /Std/Test%.Test;
-% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = OnAscii $ /Std/Test%.Test;
+TestSuite = OnAscii $ /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
 
-<@>% Any = /Std/List/Search%.Any;
-<@>% Keep = /Std/List/Search%.Keep;
-<@>% Remove = /Std/List/Search%.Remove;
-<@>% Split = /Std/List/Search%.Split;
-<@>% Search = /Std/List/Search%.Search;
-<@>% SearchR = /Std/List/Search%.SearchR;
-<@>% Skip = /Std/List/Search%.Skip;
-<@>% Until = /Std/List/Search%.Until;
-<@>% While = /Std/List/Search%.While;
-<@>% Trim = /Std/List/Search%.Trim;
-<@>% Strip = /Std/List/Search%.Strip;
-<@>% Span = /Std/List/Search%.Span;
-<@>% Break = /Std/List/Search%.Break;
+Any = /Std/List/Search%.Any;
+Keep = /Std/List/Search%.Keep;
+Remove = /Std/List/Search%.Remove;
+Split = /Std/List/Search%.Split;
+Search = /Std/List/Search%.Search;
+SearchR = /Std/List/Search%.SearchR;
+Skip = /Std/List/Search%.Skip;
+Until = /Std/List/Search%.Until;
+While = /Std/List/Search%.While;
+Trim = /Std/List/Search%.Trim;
+Strip = /Std/List/Search%.Strip;
+Span = /Std/List/Search%.Span;
+Break = /Std/List/Search%.Break;
 
-@ Elem@ = /Std/List/Tests/Elem%.Elem@;
-% Elem = /Std/List/Tests/Elem%.Elem;
-% Elems = /Std/List/Tests/Elem%.Elems;
-% Eq = /Std/List/Tests/Elem%.Eq;
-% Ge = /Std/List/Tests/Elem%.Ge;
-% Eqs = /Std/List/Tests/Elem%.Eqs;
-% Shows = /Std/List/Tests/Elem%.Shows;
+Elem@ = /Std/List/Tests/Elem%.Elem@;
+Elem = /Std/List/Tests/Elem%.Elem;
+Elems = /Std/List/Tests/Elem%.Elems;
+Eq = /Std/List/Tests/Elem%.Eq;
+Ge = /Std/List/Tests/Elem%.Ge;
+Eqs = /Std/List/Tests/Elem%.Eqs;
+Shows = /Std/List/Tests/Elem%.Shows;
 
 Test@ Tests = TestSuite|Search $ List[
   TestSuite|Any $ List[

@@ -1,20 +1,20 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% False = /Std/Bool%.False;
-% True = /Std/Bool%.True;
+Bool@ = /Std/Bool%.Bool@;
+False = /Std/Bool%.False;
+True = /Std/Bool%.True;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing; 
-<@>% DoWhile = /Core/Maybe%.DoWhile; 
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing; 
+DoWhile = /Core/Maybe%.DoWhile; 
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # The 9 symbols used in sudoku: 1 through 9.
-@ Symbol@ = +(
+Symbol@ = +(
   Unit@ 1, Unit@ 2, Unit@ 3,
   Unit@ 4, Unit@ 5, Unit@ 6,
   Unit@ 7, Unit@ 8, Unit@ 9);
@@ -39,7 +39,7 @@ Symbol@ 9 = Symbol@(9: Unit);
 };
 
 # An index specifying a row or column of a box group.
-@ BoxIndex@ = +(Unit@ 1, Unit@ 2, Unit@ 3);
+BoxIndex@ = +(Unit@ 1, Unit@ 2, Unit@ 3);
 
 BoxIndex@ B1 = BoxIndex@(1: Unit);
 BoxIndex@ B2 = BoxIndex@(2: Unit);
@@ -70,7 +70,7 @@ BoxIndex@ B3 = BoxIndex@(3: Unit);
 };
 
 # An array of elements of type T@, indexed by symbol.
-<@>@ Array@ = <@ T@>(Symbol@) { T@; };
+Array@ = <@ T@>(Symbol@) { T@; };
 
 # Set the value of a single element of an array.
 #   a[s] = x
@@ -99,7 +99,7 @@ Set2D = (Symbol@ a, Symbol@ b)<@ T@>(T@ x, Array@<Array@<T@>> array) {
 };
 
 # A cell is identified by its row and column.
-@ CellId@ = *(Symbol@ row, Symbol@ col);
+CellId@ = *(Symbol@ row, Symbol@ col);
 
 # Iterate over cell ids, going left to right and top to bottom.
 (CellId@) { Maybe@<CellId@>; } IterateCellId = (CellId@ cell) {
@@ -134,7 +134,7 @@ Set2D = (Symbol@ a, Symbol@ b)<@ T@>(T@ x, Array@<Array@<T@>> array) {
 };
 
 # A set of symbols.
-@ Set@ = Array@<Bool@>;
+Set@ = Array@<Bool@>;
 
 # The set of all possible symbols.
 Set@ FullSet = (Symbol@ _s) { True; };
@@ -142,7 +142,7 @@ Set@ FullSet = (Symbol@ _s) { True; };
 # Return the singleton value of a set, if it is a singleton set. Return
 # Nothing if it is not a singleton set.
 (Set@) { Maybe@<Symbol@>; } Singleton = (Set@ set) {
-  @ State@ = +(Unit@ empty, Symbol@ single, Unit@ multi);
+  State@ = +(Unit@ empty, Symbol@ single, Unit@ multi);
 
   State@ state = DoWhile(1, IterateSymbol, State@(empty: Unit),
     (Symbol@ symbol, State@ state) {
@@ -161,18 +161,18 @@ Set@ FullSet = (Symbol@ _s) { True; };
 
 # For each Cell, we keep track of the set of possible symbols the cell may
 # take on.
-@ Cell@ = Set@;
+Cell@ = Set@;
 
 # 2D array of cells. The first index is the row, the second index is the
 # column.
-@ Board@ = Array@<Array@<Cell@>>;
+Board@ = Array@<Array@<Cell@>>;
 Board@ EmptyBoard = (Symbol@ _r, Symbol@ _c) { FullSet; };
 
 # A constraint specifying that a cell cannot be the given symbol.
-@ X@ = *(CellId@ cell, Symbol@ symbol);
+X@ = *(CellId@ cell, Symbol@ symbol);
 
 # A set of constraints.
-@ XS@ = +(Unit@ empty, X@ single, *(XS@ a, XS@ b) pair);
+XS@ = +(Unit@ empty, X@ single, *(XS@ a, XS@ b) pair);
 
 XS@ EmptyXS = XS@(empty: Unit);
 
@@ -232,7 +232,7 @@ XS@ EmptyXS = XS@(empty: Unit);
 };
 
 # A board and additional constraints.
-@ BoardX@ = *(Board@ board, XS@ xs);
+BoardX@ = *(Board@ board, XS@ xs);
 
 # Apply a constraint to the given board.
 # Produces an updated board and new constraints learned in the process.
@@ -331,7 +331,7 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
     });
 };
 
-@ Input@ = (Symbol@, Symbol@) { Maybe@<Symbol@>; };
+Input@ = (Symbol@, Symbol@) { Maybe@<Symbol@>; };
 
 # Generate constraints based on the given input board.
 (Input@) { XS@; } InputXS = (Input@ board) {
@@ -343,7 +343,7 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
     });
 };
 
-@ Solved@ = (Symbol@, Symbol@) { Symbol@; };
+Solved@ = (Symbol@, Symbol@) { Symbol@; };
 
 # Solve a board.
 (Input@) { Maybe@<Solved@>; } Solve = (Input@ in) {

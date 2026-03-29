@@ -1,18 +1,18 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Shl = /Std/Int%.Shl;
-% Shr = /Std/Int%.Shr;
-% Mul = /Std/Int%.Mul;
-% Mod = /Std/Int/Div%.Mod;
-% Int = /Std/Int/Lit%.Int;
-% Hex = /Std/Int/Lit%.Hex;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Shl = /Std/Int%.Shl;
+Shr = /Std/Int%.Shr;
+Mul = /Std/Int%.Mul;
+Mod = /Std/Int/Div%.Mod;
+Int = /Std/Int/Lit%.Int;
+Hex = /Std/Int/Lit%.Hex;
 
-<@>@ Prng@ = /Core/Random/Prng%.Prng@;
+Prng@ = /Core/Random/Prng%.Prng@;
 
 # Not suitable for cryptography.
 Prng@<Int@> Rand48 = {
-  @ S@ = Int@;
+  S@ = Int@;
 
   Int@ m = Shl(Int|1, Int|48);
   Int@ a = Hex|5DEECE66D;

@@ -1,12 +1,12 @@
 
 
-@ Bit@ = /Core/Digits%.Bit@;
-% Bit = /Core/Digits%.Bit;
+Bit@ = /Core/Digits%.Bit@;
+Bit = /Core/Digits%.Bit;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% List = /Std/List%.List;
-<@>% Append = /Std/List%.Append;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+List = /Std/List%.List;
+Append = /Std/List%.Append;
 
 # CRC@ --
 #   State for a cyclic redundancy check.
@@ -16,7 +16,7 @@
 #          bit, including high and low bits. For an 8 bit CRC, for example,
 #          poly will have 9 bits.
 #   checksum - The checksum, in order of most to least significant bit.
-@ CRC@ = *(List@<Bit@> poly, List@<Bit@> checksum);
+CRC@ = *(List@<Bit@> poly, List@<Bit@> checksum);
 
 (Bit@, Bit@) { Bit@; } Xor = (Bit@ a, Bit@ b) {
   a.?(0: b);

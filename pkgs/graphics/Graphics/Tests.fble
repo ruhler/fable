@@ -1,14 +1,10 @@
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% TestSuite = /Std/Test%.TestSuite;
-
-# Import to test compilation.
-<<@>@>% _ = /Graphics/AppIO%;
-% _ = /Graphics/Bench%;
+Test@ = /Std/Test%.Test@;
+TestSuite = /Std/Test%.TestSuite;
 
 Test@ Tests = TestSuite(Str|Graphics, List[
   /Graphics/2D/Tests%.Tests,

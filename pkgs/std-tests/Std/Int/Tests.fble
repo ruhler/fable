@@ -1,31 +1,31 @@
 
-@ Ascii@ = /Std/Char/Ascii%.Ascii@;
-<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+Ascii@ = /Std/Char/Ascii%.Ascii@;
+OnAscii = /Std/Char/Ascii%.OnAscii;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Neg = /Std/Int%.Neg;
-% Mul = /Std/Int%.Mul;
-% Mul2 = /Std/Int%.Mul2;
-% Exp = /Std/Int%.Exp;
-% Exp2 = /Std/Int%.Exp2;
-% Shl = /Std/Int%.Shl;
-% Shr = /Std/Int%.Shr;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Neg = /Std/Int%.Neg;
+Mul = /Std/Int%.Mul;
+Mul2 = /Std/Int%.Mul2;
+Exp = /Std/Int%.Exp;
+Exp2 = /Std/Int%.Exp2;
+Shl = /Std/Int%.Shl;
+Shr = /Std/Int%.Shr;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = OnAscii $ /Std/Test%.Test;
-% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = OnAscii $ /Std/Test%.Test;
+TestSuite = OnAscii $ /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 (List@<Ascii@>, (Int@) { Int@; }, Int@, Int@) { Test@; }
 Unary = (List@<Ascii@> name, (Int@) { Int@; } f, Int@ a, Int@ z) {

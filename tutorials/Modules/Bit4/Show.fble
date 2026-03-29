@@ -1,11 +1,11 @@
 
-<@>% Concat = /Std/List%.Concat;
+Concat = /Std/List%.Concat;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-% ShowBit = /Bit/Show%.Show;
+ShowBit = /Bit/Show%.Show;
 
-@ Bit4@ = /Bit4%.Bit4@;
+Bit4@ = /Bit4%.Bit4@;
 
 (Bit4@) { String@; } Show = (Bit4@ a) {
   Concat[ShowBit(a.3), ShowBit(a.2), ShowBit(a.1), ShowBit(a.0)];

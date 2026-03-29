@@ -1,21 +1,21 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-% Blank = /App/Drawing%.Blank;
-% Translate = /App/Drawing%.Translate;
+Drawing@ = /App/Drawing%.Drawing@;
+Blank = /App/Drawing%.Blank;
+Translate = /App/Drawing%.Translate;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Lt = /Std/Int/Ord%.Lt;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Lt = /Std/Int/Ord%.Lt;
+Int = /Std/Int/Lit%.Int;
 
-% Graphics = /Invaders/Graphics%;
-@ Ship@ = /Invaders/Ship%.Ship@;
+Graphics = /Invaders/Graphics%;
+Ship@ = /Invaders/Ship%.Ship@;
 
-@ Bullet@ = *(
+Bullet@ = *(
   Int@ x,
   Int@ y,
   Bool@ live      # True if the bullet is on screen, false otherwise.

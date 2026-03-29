@@ -1,10 +1,10 @@
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-@ Test@ = /Std/Test%.Test@;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+TestSuite = /Std/Test%.TestSuite;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
 Test@ Benchmarks = TestSuite(Str|Benchmarks, List[
   /Fbld/Bench%.Bench,

@@ -1,28 +1,26 @@
 
-@ CRC@ = /Core/CRC%.CRC@;
-% Feeds = /Core/CRC%.Feeds;
+CRC@ = /Core/CRC%.CRC@;
+Feeds = /Core/CRC%.Feeds;
 
-@ Bit@ = /Core/Digits%.Bit@;
-% Bit = /Core/Digits%.Bit;
+Bit@ = /Core/Digits%.Bit@;
+Bit = /Core/Digits%.Bit;
 
-% BitStr = /Core/Digits/String%.BitStr;
-% HexToBits = /Core/Digits/String%.HexToBits;
+BitStr = /Core/Digits/String%.BitStr;
+HexToBits = /Core/Digits/String%.HexToBits;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
-
-<<@>@>% _ = /Core/CRC/Debug%;
+Unit@ = /Std/Unit%.Unit@;
 
 Test@ Tests = TestSuite(Str|CRC, List[
   Test(Str|'wiki', (Unit@ _) {

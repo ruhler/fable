@@ -61,7 +61,7 @@
 @@
 
 @define[fbld][file label]
-@ <a href="@ReplaceExt[@file]"><code>@DefLabel[@file][@label]</code></a>
+<a href="@ReplaceExt[@file]"><code>@DefLabel[@file][@label]</code></a>
 @@
 
 @define[label][id text] <a id="@id">@text</a> @@

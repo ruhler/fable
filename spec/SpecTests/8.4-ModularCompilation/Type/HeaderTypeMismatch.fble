@@ -2,16 +2,16 @@
 # Test that the type of a module is checked against its corresponding
 # .fble.@ file.
 
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit);
 Bool@ False = Bool@(true: Unit);
 
 # In the header, the fields are named w and z. In the implementation, they are
 # named x and y.
-@ Foo@ = *(Bool@ x, Bool@ y);
+Foo@ = *(Bool@ x, Bool@ y);
 Foo@ Foo = Foo@(True, False);
 
 Foo;

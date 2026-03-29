@@ -1,38 +1,38 @@
 
-@ Char@ = /Std/Char%.Char@;
-% Char = /Std/Char/Ascii%.Char;
+Char@ = /Std/Char%.Char@;
+Char = /Std/Char/Ascii%.Char;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Mul = /Std/Int%.Mul;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Mul = /Std/Int%.Mul;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
 
-<@>% Run = /Core/Stream/IStream/Pure%.Run;
+Run = /Core/Stream/IStream/Pure%.Run;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ BlockId@ = /Pprof/Profile%.BlockId@;
-@ Block@ = /Pprof/Profile%.Block@;
-@ Blocks@ = /Pprof/Profile%.Blocks@;
-@ Profile@ = /Pprof/Profile%.Profile@;
-% Blocks = /Pprof/Profile%.Blocks;
+BlockId@ = /Pprof/Profile%.BlockId@;
+Block@ = /Pprof/Profile%.Block@;
+Blocks@ = /Pprof/Profile%.Blocks@;
+Profile@ = /Pprof/Profile%.Profile@;
+Blocks = /Pprof/Profile%.Blocks;
 
-<@>@ Result@ = /Pprof/Result%.Result@;
-<@>% Okay = /Pprof/Result%.Okay;
+Result@ = /Pprof/Result%.Result@;
+Okay = /Pprof/Result%.Okay;
 
 # Hex byte encoding of the fble-pprof-test output profile.
 String@ HexEncoded = Str|'
@@ -90,7 +90,7 @@ FromHex = (String@ s) {
 
 List@<Int@> Encoded = FromHex(HexEncoded); 
 
-@ Entry@ = *(BlockId@ id, Block@ block);
+Entry@ = *(BlockId@ id, Block@ block);
 
 (BlockId@, String@, String@, Int@, Int@) { Entry@; }
 B = (BlockId@ id, String@ name, String@ file, Int@ line, Int@ column) {

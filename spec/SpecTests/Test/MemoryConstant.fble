@@ -1,8 +1,8 @@
 # @@fble-test@@ memory-constant
 #
 # Test memory-constant test infrastructure.
-@ Unit@ = *();
-@ Nat@ = /SpecTests/Nat%.Nat@;
+Unit@ = *();
+Nat@ = /SpecTests/Nat%.Nat@;
 
 # f requires O(1) memory.
 (Nat@) { Unit@; } f = (Nat@ _) {

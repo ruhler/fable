@@ -1,8 +1,8 @@
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Bit@ = /Bit%.Bit@;
+Bit@ = /Bit%.Bit@;
 
 (Bit@) { String@; } Show = (Bit@ a) {
   a.?(0: Str|0, 1: Str|1);

@@ -1,11 +1,11 @@
 
-@ Bit@ = /Core/Digits%.Bit@;
-@ Hex@ = /Core/Digits%.Hex@;
+Bit@ = /Core/Digits%.Bit@;
+Hex@ = /Core/Digits%.Hex@;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List ;
-<@>% Concat = /Std/List%.Concat;
-<@>% Map = /Std/List%.Map;
+List@ = /Std/List%.List@;
+List = /Std/List%.List ;
+Concat = /Std/List%.Concat;
+Map = /Std/List%.Map;
 
 # A literal spec for a list of binary digits.
 (List@<Bit@>) { List@<Bit@>; } BitStr = List<Bit@>;

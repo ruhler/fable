@@ -1,12 +1,12 @@
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-@ Markup@ = /Fbld/Markup%.Markup@;
-<@>@ Result@ = /Fbld/Result%.Result@;
-@ Text@ = /Fbld/Text%.Text@;
+Markup@ = /Fbld/Markup%.Markup@;
+Result@ = /Fbld/Result%.Result@;
+Text@ = /Fbld/Text%.Text@;
 
-% Block = /Fbld/Parse/Block%.Block;
-<@>% Run = /Fbld/Parse/M%.Run;
+Block = /Fbld/Parse/Block%.Block;
+Run = /Fbld/Parse/M%.Run;
 
 # Parses fbld markup.
 (List@<Text@>) { Result@<Markup@>; } Parse = (List@<Text@> inputs) {

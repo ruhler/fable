@@ -1,34 +1,34 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ Char@ = /Std/Char%.Char@;
-<@>% Compose = /Std/Char/Lit%.Compose;
+Char@ = /Std/Char%.Char@;
+Compose = /Std/Char/Lit%.Compose;
 
-% Char = /Std/Char/Ascii%.Char;
-% Ascii = /Std/Char/Ascii%.Ascii;
+Char = /Std/Char/Ascii%.Char;
+Ascii = /Std/Char/Ascii%.Ascii;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
 
-% ToString = /Std/Char/Output%.ToString;
+ToString = /Std/Char/Output%.ToString;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% StrE = /Std/Char/Ascii%.StrE;
-% Lines = /Std/String/Lines%.Lines;
-% SplitLines = /Std/String/Lines%.SplitLines;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+StrE = /Std/Char/Ascii%.StrE;
+Lines = /Std/String/Lines%.Lines;
+SplitLines = /Std/String/Lines%.SplitLines;
 
-% Split = /Std/String/Eq%.Split;
+Split = /Std/String/Eq%.Split;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 # Tests --
 #  A test suite to test the /Std/String% module and friends.
@@ -195,17 +195,17 @@ Test@ Tests = TestSuite(Str|String, List[
   }),
 
   Test(Str|Compose, (Unit@ _) {
-    @ Alpha@ = +(Unit@ a, Unit@ b, Unit@ c);
+    Alpha@ = +(Unit@ a, Unit@ b, Unit@ c);
     (Alpha@) { Char@; } AlphaToChar = (Alpha@ a) {
       a.?(a: Char|a, b: Char|b, c: Char|c);
     };
 
-    @ Digit@ = +(Unit@ 0, Unit@ 1, Unit@ 2);
+    Digit@ = +(Unit@ 0, Unit@ 1, Unit@ 2);
     (Digit@) { Char@; } DigitToChar = (Digit@ a) {
       a.?(0: Char|0, 1: Char|1, 2: Char|2);
     };
 
-    % S = /Std/Char/Lit%.Str(Compose(AlphaToChar, DigitToChar));
+    S = /Std/Char/Lit%.Str(Compose(AlphaToChar, DigitToChar));
 
     String@ wnt = Str|'ab01c2';
     String@ got = S|'ab01c2';

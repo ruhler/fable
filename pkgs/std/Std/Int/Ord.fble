@@ -1,16 +1,16 @@
 # @module[/Std/Int/Ord%]
 #  Utilities around ordering of integers.
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
-% LtP = /Std/Int/IntP/Eq%.Lt;
-% LeP = /Std/Int/IntP/Eq%.Le;
-% GtP = /Std/Int/IntP/Eq%.Gt;
-% GeP = /Std/Int/IntP/Eq%.Ge;
+LtP = /Std/Int/IntP/Eq%.Lt;
+LeP = /Std/Int/IntP/Eq%.Le;
+GtP = /Std/Int/IntP/Eq%.Gt;
+GeP = /Std/Int/IntP/Eq%.Ge;
 
 # @func[Lt] Tests if an integer is less than another. a < b.
 #  @arg[Int@][a] The first operand.

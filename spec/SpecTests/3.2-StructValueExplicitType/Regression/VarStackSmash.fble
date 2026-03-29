@@ -1,7 +1,7 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
-@ Foo@ = *(Bool@ a, Bool@ b, Bool@ c, Bool@ d, Bool@ e);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
+Foo@ = *(Bool@ a, Bool@ b, Bool@ c, Bool@ d, Bool@ e);
 
 Bool@ true = Bool@(true: Unit@());
 

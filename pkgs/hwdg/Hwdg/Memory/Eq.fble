@@ -1,9 +1,9 @@
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-% Map = /Core/Map/Tree%.Map(/Hwdg/Addr/Ord%.Ord);
+Map = /Core/Map/Tree%.Map(/Hwdg/Addr/Ord%.Ord);
 
-@ Memory@ = /Hwdg/Memory%.Memory@;
+Memory@ = /Hwdg/Memory%.Memory@;
 
 Eq@<Memory@> Eq = /Core/Map/Eq%.Eq(Map, /Hwdg/Addr/Eq%.Eq, /Hwdg/Data/Eq%.Eq);
 

@@ -1,12 +1,12 @@
 # @@fble-test@@ compile-error 20:25
 
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 
-<@>@ List@ = <@ T@> {
-  @ L@ = +(*(T@ head, L@ tail) cons, Unit@ nil);
+List@ = <@ T@> {
+  L@ = +(*(T@ head, L@ tail) cons, Unit@ nil);
   L@;
 };
 

@@ -1,43 +1,43 @@
 
-@ Char@ = /Std/Char%.Char@;
-% Char = /Std/Char/Ascii%.Char;
-% Ascii = /Std/Char/Ascii%.Ascii;
-% IsNewline = /Core/Char/Type%.IsNewline;
+Char@ = /Std/Char%.Char@;
+Char = /Std/Char/Ascii%.Char;
+Ascii = /Std/Char/Ascii%.Ascii;
+IsNewline = /Core/Char/Type%.IsNewline;
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
-% FormatE = /Std/Char/Ascii/Output%.FormatE;
+Put@ = /Core/Char/Stream%.Put@;
+IStream@ = /Core/Char/Stream%.IStream@;
+FormatE = /Std/Char/Ascii/Output%.FormatE;
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
-% Put = /Std/Char/Output%.Put;
-% Do = /Std/Char/Output%.Do;
-% String = /Std/Char/Output%.String;
+Output@ = /Std/Char/Output%.Output@;
+Put = /Std/Char/Output%.Put;
+Do = /Std/Char/Output%.Do;
+String = /Std/Char/Output%.String;
 
-@ Int@ = /Std/Int%.Int@;
-% Sub = /Std/Int%.Sub;
-% Int = /Std/Int/Lit%.Int;
-% IsZero = /Std/Int/Sign%.IsZero;
+Int@ = /Std/Int%.Int@;
+Sub = /Std/Int%.Sub;
+Int = /Std/Int/Lit%.Int;
+IsZero = /Std/Int/Sign%.IsZero;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Append = /Std/List%.Append;
-<@>% Reverse = /Std/List%.Reverse;
-<@>% Map = /Std/List%.Map;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Append = /Std/List%.Append;
+Reverse = /Std/List%.Reverse;
+Map = /Std/List%.Map;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<<@>@>@ Main@ = /Games/BenchmarkGame/Game%.Main@;
+Main@ = /Games/BenchmarkGame/Game%.Main@;
 
 # Header includes the initial '>' character, for convenience.
-@ Seq@ = *(String@ header, String@ codes);
+Seq@ = *(String@ header, String@ codes);
 
 (Char@) { Char@; } ComplementCode = (Char@ c) {
   /Std/Char/Eq%.Eq(c, Char|A).?(true: Char|T);

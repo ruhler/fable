@@ -1,7 +1,7 @@
 # @@fble-test@@ no-error
 
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit@());
 
 # Take typeof a value.

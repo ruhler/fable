@@ -1,8 +1,8 @@
 # @@fble-test@@ compile-error 10:4
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ t = Bool@(true: Unit);
 
 # The 'expr ; stmt' syntax is only allowed for union select expr, not

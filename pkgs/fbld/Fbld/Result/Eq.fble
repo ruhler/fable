@@ -1,11 +1,11 @@
 
-% False = /Std/Bool%.False;
+False = /Std/Bool%.False;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-% ToString = /Std/Char/Output%.ToString;
+ToString = /Std/Char/Output%.ToString;
 
-<@>@ Result@ = /Fbld/Result%.Result@;
+Result@ = /Fbld/Result%.Result@;
 
 <@ T@>(Eq@<T@>) { Eq@<Result@<T@>>; }
 Eq = <@ T@>(Eq@<T@> eq, Result@<T@> a, Result@<T@> b) {

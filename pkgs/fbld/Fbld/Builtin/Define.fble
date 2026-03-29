@@ -1,8 +1,8 @@
 
-% IsSpace = /Core/Char/Type%.IsSpace;
+IsSpace = /Core/Char/Type%.IsSpace;
 
-@ Int@ = /Std/Int%.Int@;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Int = /Std/Int/Lit%.Int;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;
@@ -10,36 +10,36 @@ Int@ 2 = Int|2;
 Int@ 3 = Int|3;
 Int@ 4 = Int|4;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Length = /Std/List/Index%.Length;
-<@>% Get = /Std/List/Index%.Get;
-<@>% Split = /Std/List/Search%.Split;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Length = /Std/List/Index%.Length;
+Get = /Std/List/Index%.Get;
+Split = /Std/List/Search%.Split;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Impl@ = /Fbld/Markup%.Impl@;
-% Append = /Fbld/Markup%.Append;
+Impl@ = /Fbld/Markup%.Impl@;
+Append = /Fbld/Markup%.Append;
 
-@ Env@ = /Fbld/Env%.Env@<Impl@>;
-% Insert = /Fbld/Env%.Insert<Impl@>;
-% Lookup = /Fbld/Env%.Lookup<Impl@>;
-% Delete = /Fbld/Env%.Delete<Impl@>;
+Env@ = /Fbld/Env%.Env@<Impl@>;
+Insert = /Fbld/Env%.Insert<Impl@>;
+Lookup = /Fbld/Env%.Lookup<Impl@>;
+Delete = /Fbld/Env%.Delete<Impl@>;
 
-% Eval = /Fbld/Eval%.Eval;
-% Evals = /Fbld/Eval%.Evals;
-% AssertArgCount = /Fbld/Eval%.AssertArgCount;
+Eval = /Fbld/Eval%.Eval;
+Evals = /Fbld/Eval%.Evals;
+AssertArgCount = /Fbld/Eval%.AssertArgCount;
 
-@ Markup@ = /Fbld/Markup%.Markup@;
-@ Command@ = /Fbld/Markup%.Command@;
-% ToString = /Fbld/Markup%.ToString;
+Markup@ = /Fbld/Markup%.Markup@;
+Command@ = /Fbld/Markup%.Command@;
+ToString = /Fbld/Markup%.ToString;
 
-% r = /Fbld/Result%.Monad;
+r = /Fbld/Result%.Monad;
 
 (Markup@) { Impl@; } VarImpl = (Markup@ markup, Env@ _, Command@ cmd) {
   Unit@ _ := r.do(AssertArgCount(0, cmd));

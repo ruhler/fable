@@ -1,8 +1,8 @@
 # @@fble-test@@ compile-error 10:10
-@ Unit@ = *();
+Unit@ = *();
 
-@ A@ = Unit@.%(@/Foo/Bar%);
-@ B@ = Unit@.%(@/Foo/Bar/Sludge%);
+A@ = Unit@.%(@/Foo/Bar%);
+B@ = Unit@.%(@/Foo/Bar/Sludge%);
 
 (A@ x) {
   # Type B@ is not equal to A@, because we don't have access to either of them

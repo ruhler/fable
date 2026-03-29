@@ -1,28 +1,28 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% Not = /Std/Bool%.Not;
-% And = /Std/Bool%.And;
-% Or = /Std/Bool%.Or;
-% Xor = /Std/Bool%.Xor;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+Not = /Std/Bool%.Not;
+And = /Std/Bool%.And;
+Or = /Std/Bool%.Or;
+Xor = /Std/Bool%.Xor;
 
-@ Ascii@ = /Std/Char/Ascii%.Ascii@;
-<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
-% String = /Std/Char/Ascii/Output%.String;
+Ascii@ = /Std/Char/Ascii%.Ascii@;
+OnAscii = /Std/Char/Ascii%.OnAscii;
+String = /Std/Char/Ascii/Output%.String;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = OnAscii $ /Std/Test%.Test;
-% TestSuite = OnAscii $ /Std/Test%.TestSuite;
-% Pass = /Std/Test%.Pass;
-% Fail = /Std/Test%.Fail;
+Test@ = /Std/Test%.Test@;
+Test = OnAscii $ /Std/Test%.Test;
+TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Pass = /Std/Test%.Pass;
+Fail = /Std/Test%.Fail;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 (List@<Ascii@>, (Bool@) { Bool@; }, Bool@, Bool@) { Test@; }
 Unary = (List@<Ascii@> name, (Bool@) { Bool@; } f, Bool@ a, Bool@ z) {

@@ -1,32 +1,32 @@
 
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% And = /Std/Bool%.And;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+And = /Std/Bool%.And;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-<@>@ Cmp@ = /Std/Cmp%.Cmp@;
-@ Compared@ = /Std/Cmp%.Compared@;
-% Less = /Std/Cmp%.Less;
-% Equal = /Std/Cmp%.Equal;
-% Greater = /Std/Cmp%.Greater;
+Cmp@ = /Std/Cmp%.Cmp@;
+Compared@ = /Std/Cmp%.Compared@;
+Less = /Std/Cmp%.Less;
+Equal = /Std/Cmp%.Equal;
+Greater = /Std/Cmp%.Greater;
 
-<@>@ Show@ = /Std/Show%.Show@;
-% Do = /Std/Char/Output%.Do;
+Show@ = /Std/Show%.Show@;
+Do = /Std/Char/Output%.Do;
 
-% Str = /Std/Char/Ascii%.Str;
-% String = /Std/Char/Ascii/Output%.String;
+Str = /Std/Char/Ascii%.Str;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Test@ = /Std/Test%.Test@;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Bit1@ = +(Unit@ 0, Unit@ 1);
-@ Bit2@ = *(Bit1@ h, Bit1@ l);
+Bit1@ = +(Unit@ 0, Unit@ 1);
+Bit2@ = *(Bit1@ h, Bit1@ l);
 
 Bit2@ A = Bit2@(Bit1@(0: Unit), Bit1@(0: Unit));
 Bit2@ B = Bit2@(Bit1@(0: Unit), Bit1@(1: Unit));
@@ -62,8 +62,8 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
   ShowBit1(x.l);
 };
 
-% Map = /Core/Map/Tree%.Map<Bit2@>(OrdBit2);
-<@>@ Map@ = Map.Map@;
+Map = /Core/Map/Tree%.Map<Bit2@>(OrdBit2);
+Map@ = Map.Map@;
 
 Test@ Tests = TestSuite(Str|Tree, List[
   /Core/Map/Test%.Test<Map@, Bit2@>(Map, EqBit2, ShowBit2, A, B, C)

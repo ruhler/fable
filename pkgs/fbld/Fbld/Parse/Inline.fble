@@ -1,49 +1,49 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
 
-@ Char@ = /Std/Char%.Char@;
-% Char = /Std/Char/Ascii%.Char;
-% Ascii = /Std/Char/Ascii%.Ascii;
-% IsAlNum = /Core/Char/Type%.IsAlNum;
+Char@ = /Std/Char%.Char@;
+Char = /Std/Char/Ascii%.Char;
+Ascii = /Std/Char/Ascii%.Ascii;
+IsAlNum = /Core/Char/Type%.IsAlNum;
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
-% Int = /Std/Int/Lit%.Int;
-% IsZero = /Std/Int/Sign%.IsZero;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
+Int = /Std/Int/Lit%.Int;
+IsZero = /Std/Int/Sign%.IsZero;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
-<@>% Concat = /Std/List%.Concat;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
+Concat = /Std/List%.Concat;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Loc@ = /Fbld/Loc%.Loc@;
+Loc@ = /Fbld/Loc%.Loc@;
 
-@ Markup@ = /Fbld/Markup%.Markup@;
-% Empty = /Fbld/Markup%.Empty;
-% Plain = /Fbld/Markup%.Plain;
-% Append = /Fbld/Markup%.Append;
+Markup@ = /Fbld/Markup%.Markup@;
+Empty = /Fbld/Markup%.Empty;
+Plain = /Fbld/Markup%.Plain;
+Append = /Fbld/Markup%.Append;
 
-<@>@ M@ = /Fbld/Parse/M%.M@;
-@ CharL@ = /Fbld/Parse/M%.CharL@;
-<@>% Do = /Fbld/Parse/M%.Do;
-<@>% Return = /Fbld/Parse/M%.Return;
-<@>% Error = /Fbld/Parse/M%.Error;
-<@>% Try_ = /Fbld/Parse/M%.Try_;
-<@>% Test = /Fbld/Parse/M%.Test;
-% Loc = /Fbld/Parse/M%.Loc;
-% Get = /Fbld/Parse/M%.Get;
-% GetL = /Fbld/Parse/M%.GetL;
-% String = /Fbld/Parse/M%.String;
+M@ = /Fbld/Parse/M%.M@;
+CharL@ = /Fbld/Parse/M%.CharL@;
+Do = /Fbld/Parse/M%.Do;
+Return = /Fbld/Parse/M%.Return;
+Error = /Fbld/Parse/M%.Error;
+Try_ = /Fbld/Parse/M%.Try_;
+Test = /Fbld/Parse/M%.Test;
+Loc = /Fbld/Parse/M%.Loc;
+Get = /Fbld/Parse/M%.Get;
+GetL = /Fbld/Parse/M%.GetL;
+String = /Fbld/Parse/M%.String;
 
 (Char@) { Bool@; } IsNameChar = (Char@ c) {
   /Std/Char/Eq%.Eq(Char|'_', c).?(true: True);
@@ -76,7 +76,7 @@ M@<String@> Name = {
   Return(Items(head, tail));
 };
 
-@ Markup_@ = *(String@ plain, Markup@ markup);
+Markup_@ = *(String@ plain, Markup@ markup);
 
 # Parses a sequence of zero or more inline args.
 M@<List@<Markup@>> Args = {

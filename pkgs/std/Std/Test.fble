@@ -1,42 +1,42 @@
 # @module[/Std/Test%]
 #  Unit test framework.
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
-% ToString = /Std/Char/Output%.ToString;
+Output@ = /Std/Char/Output%.Output@;
+ToString = /Std/Char/Output%.ToString;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-% String = /Std/Char/Ascii/Output%.String;
-% Format = /Std/Char/Ascii/Output%.Format;
+String = /Std/Char/Ascii/Output%.String;
+Format = /Std/Char/Ascii/Output%.Format;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # @union[TestResult@] The result of running a test.
 #  @field[Unit@][pass] The test passed.
 #  @field[Output@][fail] The test failed with given error message.
 #  @field[Unit@][expected_fail] The test was expected to fail and it did.
 #  @field[Output@][skip] The test was skipped, with explanation as to why.
-@ TestResult@ = +(Unit@ pass, Output@ fail, Unit@ expected_fail, Output@ skip);
+TestResult@ = +(Unit@ pass, Output@ fail, Unit@ expected_fail, Output@ skip);
 
 # @struct[TestCase@] A test case.
 #  @field[String@][name] The name of the test.
 #  @field[(Unit@) { TestResult@; }][test] The test code to run.
-@ TestCase@ = *(String@ name, (Unit@) { TestResult@; } test);
+TestCase@ = *(String@ name, (Unit@) { TestResult@; } test);
 
 # @struct[TestSuite@] A test suite.
 #  @field[String@][name] The name of the test suite.
 #  @field[List@<Test@>][tests] The tests in the test suite.
-@ TestSuite@ = *(String@ name, List@<Test@> tests),
+TestSuite@ = *(String@ name, List@<Test@> tests),
 
 # @union[Test@] A test.
 #  @field[TestCase@][case] An individual test case.
 #  @field[TestSuite@][suite] A suite of tests.
-@ Test@ = +(TestCase@ case, TestSuite@ suite);
+Test@ = +(TestCase@ case, TestSuite@ suite);
 
 # @value[Pass] A passing test result.
 #  @type[TestResult@];

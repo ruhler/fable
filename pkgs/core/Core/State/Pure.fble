@@ -1,17 +1,17 @@
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<@,<@>@>@ State@ = /Core/State%.State@;
-<@,<@>@>@ StateM@ = /Core/State%.StateM@;
+Monad@ = /Std/Monad%.Monad@;
+State@ = /Core/State%.State@;
+StateM@ = /Core/State%.StateM@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<@,@>@ Result@ = <@ S@, @ A@> { *(S@ state, A@ return); };
-<@,@>@ Pure@ = <@ S@, @ A@>(S@) { Result@<S@, A@>; };
+Result@ = <@ S@, @ A@> { *(S@ state, A@ return); };
+Pure@ = <@ S@, @ A@>(S@) { Result@<S@, A@>; };
 
 <@ S@> { StateM@<S@, Pure@<S@>>; }
 Pure = <@ S@> {
-  <@>@ M@ = Pure@<S@>;
+  M@ = Pure@<S@>;
 
   Monad@<M@> m = @(
     return: <@ A@>(A@ x, S@ s) { Result@<S@, A@>(s, x); },

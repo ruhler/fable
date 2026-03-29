@@ -1,13 +1,13 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Pair@ = *(Unit@ first, Unit@ second);
+Pair@ = *(Unit@ first, Unit@ second);
 
 # It's fine if letters contains a bunch of extra unrelated fields.
-@ Enum@ = +(Unit@ A, Pair@ x, Unit@ B, Unit@ C, Pair@ abc);
+Enum@ = +(Unit@ A, Pair@ x, Unit@ B, Unit@ C, Pair@ abc);
 
-@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
 
 (L@) { Unit@; } f = (L@ l) {
   Unit@ _b = l.cons.head.B;

@@ -1,4 +1,4 @@
 # @@fble-test@@ compile-error 4:11
 # The return type does not compile.
-@ Unit@ = *();
+Unit@ = *();
 (Unit@) { zzz@; };

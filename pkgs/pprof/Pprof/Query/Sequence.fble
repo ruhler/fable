@@ -1,30 +1,30 @@
 
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
-<@>% List = /Std/List%.List;
-<@>% Last = /Std/List%.Last;
-<@>% Init = /Std/List%.Init;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
+List = /Std/List%.List;
+Last = /Std/List%.Last;
+Init = /Std/List%.Init;
 
-<@>% StartsWith = /Std/List/Eq%.StartsWith;
+StartsWith = /Std/List/Eq%.StartsWith;
 
-<@>% Drop = /Std/List/Index%.Drop;
-<@>% Length = /Std/List/Index%.Length;
+Drop = /Std/List/Index%.Drop;
+Length = /Std/List/Index%.Length;
 
-@ BlockId@ = /Pprof/Profile%.BlockId@;
-@ Sequence@ = /Pprof/Profile%.Sequence@;
-@ Profile@ = /Pprof/Profile%.Profile@;
+BlockId@ = /Pprof/Profile%.BlockId@;
+Sequence@ = /Pprof/Profile%.Sequence@;
+Profile@ = /Pprof/Profile%.Profile@;
 
-@ Entry@ = /Pprof/Query%.Entry@;
-@ Table@ = /Pprof/Query%.Table@;
-@ Query@ = /Pprof/Query%.Query@;
+Entry@ = /Pprof/Query%.Entry@;
+Table@ = /Pprof/Query%.Table@;
+Query@ = /Pprof/Query%.Query@;
 
-% Total = /Pprof/Query/Total%;
+Total = /Pprof/Query/Total%;
 
-% Eq = /Pprof/Profile/Eq%.BlockId;
+Eq = /Pprof/Profile/Eq%.BlockId;
 
 
 (Sequence@) { Query@; }

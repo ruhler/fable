@@ -1,11 +1,11 @@
 
-<@>@ Cmp@ = /Std/Cmp%.Cmp@;
-@ Compared@ = /Std/Cmp%.Compared@;
-% Less = /Std/Cmp%.Less;
-% Equal = /Std/Cmp%.Equal;
-% Greater = /Std/Cmp%.Greater;
+Cmp@ = /Std/Cmp%.Cmp@;
+Compared@ = /Std/Cmp%.Compared@;
+Less = /Std/Cmp%.Less;
+Equal = /Std/Cmp%.Equal;
+Greater = /Std/Cmp%.Greater;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
 <@ A@>(Cmp@<A@>) { Cmp@<List@<A@>>; }
 Ord = <@ A@>(Cmp@<A@> ord) {

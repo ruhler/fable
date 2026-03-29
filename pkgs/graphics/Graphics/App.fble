@@ -1,43 +1,43 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Neg = /Std/Int%.Neg;
-% Mul = /Std/Int%.Mul;
-% Div = /Std/Int/Div%.Div;
+Int@ = /Std/Int%.Int@;
+Neg = /Std/Int%.Neg;
+Mul = /Std/Int%.Mul;
+Div = /Std/Int/Div%.Div;
 
-% Int = /Std/Int/Lit%.Int;
+Int = /Std/Int/Lit%.Int;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 
-<<@>@>@ App@ = /App/App%.App@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
+App@ = /App/App%.App@;
+Event@ = /App/App%.Event@;
+Effect@ = /App/App%.Effect@;
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Point@ = /App/Drawing%.Point@;
-@ Color@ = /App/Drawing%.Color@;
-% Color = /App/Drawing%.Color;
-% Drawings = /App/Drawing%.Drawings;
-% Over = /App/Drawing%.Over;
-% Rect = /App/Drawing%.Rect;
-% Affine = /App/Drawing%.Affine;
+Drawing@ = /App/Drawing%.Drawing@;
+Point@ = /App/Drawing%.Point@;
+Color@ = /App/Drawing%.Color@;
+Color = /App/Drawing%.Color;
+Drawings = /App/Drawing%.Drawings;
+Over = /App/Drawing%.Over;
+Rect = /App/Drawing%.Rect;
+Affine = /App/Drawing%.Affine;
 
-@ Vec@ = /Graphics/3D%.Vec@;
+Vec@ = /Graphics/3D%.Vec@;
 
-@ Camera@ = /Graphics/Camera%.Camera@;
-@ Rect@ = /Graphics/Camera%.Rect@;
-% Camera = /Graphics/Camera%.Camera;
-% Translate = /Graphics/Camera%.Translate;
-% RotateY = /Graphics/Camera%.RotateY;
-% Focus = /Graphics/Camera%.Focus;
-% Vertex = /Graphics/Camera%.Vertex;
+Camera@ = /Graphics/Camera%.Camera@;
+Rect@ = /Graphics/Camera%.Rect@;
+Camera = /Graphics/Camera%.Camera;
+Translate = /Graphics/Camera%.Translate;
+RotateY = /Graphics/Camera%.RotateY;
+Focus = /Graphics/Camera%.Focus;
+Vertex = /Graphics/Camera%.Vertex;
 
-% Triangle = /Graphics/Triangle%.Triangle;
+Triangle = /Graphics/Triangle%.Triangle;
 
-@ State@ = Camera@;
+State@ = Camera@;
 
 State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48));
 
@@ -50,7 +50,7 @@ State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48))
     Div(Mul(alpha, color.b), Int|256).q);
 };
 
-% Colors = {
+Colors = {
   Color@ wall = Color@(Int|175, Int|175, Int|175);
 
   # Wall lighting is based on light going in direction (3, -6, 2).
@@ -68,7 +68,7 @@ State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48))
   );
 };
 
-% Vertices = {
+Vertices = {
   Int@ xh = Int|20;
   Int@ xl = Neg(xh);
   Int@ yh = Int|6;
@@ -86,7 +86,7 @@ State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48))
 };
 
 (State@) { Drawing@; } Draw = (Camera@ camera) {
-  % vs = @(
+  vs = @(
     000: Vertex(camera, Vertices.000),
     001: Vertex(camera, Vertices.001),
     010: Vertex(camera, Vertices.010),

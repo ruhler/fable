@@ -1,21 +1,21 @@
 # @module[/Std/String/Lines%]
 #  Utilities for working with lines in strings.
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-@ Char@ = /Std/Char%.Char@;
-% U = /Std/Char/Lit%.U;
+Char@ = /Std/Char%.Char@;
+U = /Std/Char/Lit%.U;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
-<@>% Append = /Std/List%.Append;
-<@>% Empty = /Std/List%.Empty;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
+Append = /Std/List%.Append;
+Empty = /Std/List%.Empty;
 
-<@>@ Span@ = /Std/List/Search%.Span@;
-<@>% Break = /Std/List/Search%.Break;
+Span@ = /Std/List/Search%.Span@;
+Break = /Std/List/Search%.Break;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
 # @value[Newline] The newline character.
 #  @type[Char@]

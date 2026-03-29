@@ -1,34 +1,34 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-@ Int@ = /Std/Int%.Int@;
-% AddI = /Std/Int%.Add;
-% SubI = /Std/Int%.Sub;
-% NegI = /Std/Int%.Neg;
-% MulI = /Std/Int%.Mul;
-% DivI = /Std/Int/Div%.Div;
-% GtI = /Std/Int/Ord%.Gt;
-% GeI = /Std/Int/Ord%.Ge;
-% LtI = /Std/Int/Ord%.Lt;
-% LeI = /Std/Int/Ord%.Le;
-% EqI = /Std/Int/Eq%.Eq;
-% AbsI = /Std/Int/Sign%.Abs;
-% ShowI = /Std/Int/Show%.Show;
-% SqrtI = /Std/Int/Sqrt%.Sqrt;
+Int@ = /Std/Int%.Int@;
+AddI = /Std/Int%.Add;
+SubI = /Std/Int%.Sub;
+NegI = /Std/Int%.Neg;
+MulI = /Std/Int%.Mul;
+DivI = /Std/Int/Div%.Div;
+GtI = /Std/Int/Ord%.Gt;
+GeI = /Std/Int/Ord%.Ge;
+LtI = /Std/Int/Ord%.Lt;
+LeI = /Std/Int/Ord%.Le;
+EqI = /Std/Int/Eq%.Eq;
+AbsI = /Std/Int/Sign%.Abs;
+ShowI = /Std/Int/Show%.Show;
+SqrtI = /Std/Int/Sqrt%.Sqrt;
 
-@ IntLit@ = /Std/Int/Lit%.IntLit@;
-% IntI = /Std/Int/Lit%.Int;
+IntLit@ = /Std/Int/Lit%.IntLit@;
+IntI = /Std/Int/Lit%.Int;
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Output%.Format;
 
 # Num@ -- 
 #   A number with sufficient precision for the pinball game.
 #
 # The integer x is used to represent the number x/S.
 # TODO: Make this a private type:
-@ Num@ = Int@.%(@/Pinball/Num%);
+Num@ = Int@.%(@/Pinball/Num%);
 
 # S -- 
 #   Scale factor for converting Int@ to Num@.

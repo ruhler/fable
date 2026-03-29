@@ -1,9 +1,9 @@
 
-@ Test@ = /Std/Test%.Test@;
+Test@ = /Std/Test%.Test@;
 
-@ Int@ = /Std/Int%.Int@;
-% Neg = /Std/Int%.Neg;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Neg = /Std/Int%.Neg;
+Int = /Std/Int/Lit%.Int;
 
 # Note: Iteration order is not quite what you expect.
 # Negative before zero before positive, yes, but evens come before odds.

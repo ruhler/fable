@@ -1,10 +1,10 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-<@>@ Cmp@ = /Std/Cmp%.Cmp@;
-% Less = /Std/Cmp%.Less;
-% Greater = /Std/Cmp%.Greater;
-% Equal = /Std/Cmp%.Equal;
+Cmp@ = /Std/Cmp%.Cmp@;
+Less = /Std/Cmp%.Less;
+Greater = /Std/Cmp%.Greater;
+Equal = /Std/Cmp%.Equal;
 
 Cmp@<Bool@> Ord = (Bool@ a, Bool@ b) {
   a.?(

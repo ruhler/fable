@@ -1,12 +1,12 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% Not = /Std/Bool%.Not;
+Bool@ = /Std/Bool%.Bool@;
+Not = /Std/Bool%.Not;
 
-@ Int@ = /Std/Int%.Int@;
-% IsZero = /Std/Int/Sign%.IsZero;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+IsZero = /Std/Int/Sign%.IsZero;
+Int = /Std/Int/Lit%.Int;
 
-<<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
+RngM@ = /Core/Random/Rng%.RngM@;
 
 # Generates a random boolean.
 <<@>@ M@>(RngM@<M@>) { M@<Bool@>; }

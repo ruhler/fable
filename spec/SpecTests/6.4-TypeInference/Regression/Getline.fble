@@ -8,9 +8,9 @@
 #
 # TODO: Figure out if type inference should be able to handle this case.
 
-@ Unit@ = *();
-<<@>@,@>@ Get@ = <<@>@ M@, @ A@> { M@<A@>; };
-<<@>@>@ IStream@ = <<@>@ M@> { Get@<M@, Unit@>; };
+Unit@ = *();
+Get@ = <<@>@ M@, @ A@> { M@<A@>; };
+IStream@ = <<@>@ M@> { Get@<M@, Unit@>; };
 
 <<@>@ M@>(IStream@<M@>) { M@<Unit@>; }
 GetLine = <<@>@ M@>(IStream@<M@> in) {

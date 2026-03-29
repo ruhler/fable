@@ -1,10 +1,10 @@
 # @@fble-test@@ no-error
 
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-<@>@ List@ = <@ T@> {
-  @ L@ = +(*(T@ head, L@ tail) cons, Unit@ nil);
+List@ = <@ T@> {
+  L@ = +(*(T@ head, L@ tail) cons, Unit@ nil);
   L@;
 };
 
@@ -24,8 +24,8 @@ Concat = <@ T@>(List@<List@<T@>> x) {
     Concat<T@>(Cons<List@<T@>>(x.cons.head.cons.tail, x.cons.tail)));
 };
 
-@ Char@ = +(Unit@ a, Unit@ b, Unit@ c);
-@ String@ = List@<Char@>;
+Char@ = +(Unit@ a, Unit@ b, Unit@ c);
+String@ = List@<Char@>;
 
 List@<String@> EmptyString = Nil<String@>;
 

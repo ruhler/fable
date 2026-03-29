@@ -1,48 +1,48 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Mul = /Std/Int%.Mul;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Mul = /Std/Int%.Mul;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
 
-% Eq = /Std/Int/Eq%.Eq;
-% Lt = /Std/Int/Ord%.Lt;
-% Gt = /Std/Int/Ord%.Gt;
+Eq = /Std/Int/Eq%.Eq;
+Lt = /Std/Int/Ord%.Lt;
+Gt = /Std/Int/Ord%.Gt;
 
-% Int = /Std/Int/Lit%.Int;
-% IsZero = /Std/Int/Sign%.IsZero;
+Int = /Std/Int/Lit%.Int;
+IsZero = /Std/Int/Sign%.IsZero;
 
-@ QR@ = /Std/Int/Div%.QR@;
-% Div = /Std/Int/Div%.Div;
+QR@ = /Std/Int/Div%.QR@;
+Div = /Std/Int/Div%.Div;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Empty = /Std/List%.Empty;
-<@>% Items = /Std/List%.Items;
+List@ = /Std/List%.List@;
+Empty = /Std/List%.Empty;
+Items = /Std/List%.Items;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+IStream@ = /Core/Stream%.IStream@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% Format = /Std/Char/Ascii/Output%.Format;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+Format = /Std/Char/Ascii/Output%.Format;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<@>@ Result@ = /Pprof/Result%.Result@;
-<@>% Okay = /Pprof/Result%.Okay;
-<@>% Error = /Pprof/Result%.Error;
+Result@ = /Pprof/Result%.Result@;
+Okay = /Pprof/Result%.Okay;
+Error = /Pprof/Result%.Error;
 
 Int@ 0 = Int|0;
 Int@ 4 = Int|4;
 Int@ 8 = Int|8;
 Int@ 128 = Int|128;
 
-@ FieldId@ = Int@;
+FieldId@ = Int@;
 
 # @union[Payload@] Stores the payload of a record.
 #  @field[Int@][int] The integer value for a VARINT record.
@@ -50,11 +50,11 @@ Int@ 128 = Int|128;
 #   The length for a LEN record. The remaining @a[length] bytes of the payload
 #   have yet to be parsed from the input stream.
 #  @field[List@<Int@>[bytes] Raw bytes from an I64 or I32 record.
-@ Payload@ = +(Int@ int, Int@ length, List@<Int@> bytes, Unit@ empty);
+Payload@ = +(Int@ int, Int@ length, List@<Int@> bytes, Unit@ empty);
 
-@ Record@ = *(FieldId@ field, Payload@ payload);
+Record@ = *(FieldId@ field, Payload@ payload);
 
-<<@>@>@ Proto@ = <<@>@ M@> {
+Proto@ = <<@>@ M@> {
   # @func[Fail] Reports an error to parse.
   #  @arg[@][A@] Type of the parser.
   #  @arg[String@][msg] The error message.
@@ -105,15 +105,15 @@ Int@ 128 = Int|128;
   @<@(Fail, Skip, String, Ints, Message, Proto)>;
 };
 
-<@, <@>@>@ Parser@ = <@ A@> {
+Parser@ = <@ A@> {
   <<@>@ M@>(Proto@<M@>, Monad@<M@>) { M@<A@>; };
 };
 
 <@ A@>(Parser@<A@>)<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<Result@<A@>>; }
 Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
-  @ S@ = Int@;  # Bytes read so far.
-  <@>@ R@ = <@ T@> { *(S@ s, T@ x); };
-  <@>@ PM@ = <@ T@>(S@) { M@<Result@<R@<T@>>>; };
+  S@ = Int@;  # Bytes read so far.
+  R@ = <@ T@> { *(S@ s, T@ x); };
+  PM@ = <@ T@>(S@) { M@<Result@<R@<T@>>>; };
 
   <@ T@>(T@) { PM@<T@>; }
   Return = <@ T@>(T@ x, S@ s) {

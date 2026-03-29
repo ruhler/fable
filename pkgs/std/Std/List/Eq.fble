@@ -1,17 +1,17 @@
 # @module[/Std/List/Eq%]
 #  Utilities for working with list equality and sublists.
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
-<@>% Concat = /Std/List%.Concat;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
+Concat = /Std/List%.Concat;
 
 # @func[HasItems] Check if a list is non-empty.
 #  @arg[@][T@] The type of element on the list.
@@ -191,7 +191,7 @@ Until = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
 #
 #  @field[List@<T@>][span] A prefix of a list.
 #  @field[List@<T@>][tail] The remainder of the list.
-<@>@ Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
+Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
 
 # @func[Break] Splits the list in two around a given sublist.
 #  @arg[@][T@] The type of element on the list.

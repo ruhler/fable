@@ -1,5 +1,5 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 
 # Regression test for a bug where the escaped quote character wasn't being
 # included in the word, which would cause the following to error out with

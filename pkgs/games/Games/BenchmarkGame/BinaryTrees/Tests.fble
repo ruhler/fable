@@ -1,12 +1,12 @@
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-@ Test@ = /Std/Test%.Test@;
+Test@ = /Std/Test%.Test@;
 
-% Test = /Games/BenchmarkGame/Game%.Test;
-% BinaryTrees = /Games/BenchmarkGame/BinaryTrees%;
+Test = /Games/BenchmarkGame/Game%.Test;
+BinaryTrees = /Games/BenchmarkGame/BinaryTrees%;
 
 Test@ Tests = Test(Str|BinaryTrees, BinaryTrees.Main, Str|'', List[Str|10], Str|
 'stretch tree of depth 11	 check: 4095

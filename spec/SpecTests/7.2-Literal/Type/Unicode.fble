@@ -1,10 +1,10 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Enum@ = +(Unit@ A, Unit@ π, Unit@ C);
+Enum@ = +(Unit@ A, Unit@ π, Unit@ C);
 
-@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
 
 (L@) { Unit@; } f = (L@ l) {
   Unit@ _b = l.cons.head.π;

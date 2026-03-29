@@ -1,32 +1,32 @@
 # @module[/Std/Maybe/Eq/Tests%]
 #  Tests for /Std/Maybe/Eq%.
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+OnAscii = /Std/Char/Ascii%.OnAscii;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+Eq@ = /Std/Eq%.Eq@;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-<@>% IsJust = /Std/Maybe/Eq%.IsJust;
-<@>% IsNothing = /Std/Maybe/Eq%.IsNothing;
+IsJust = /Std/Maybe/Eq%.IsJust;
+IsNothing = /Std/Maybe/Eq%.IsNothing;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = OnAscii $ /Std/Test%.Test;
-% TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = OnAscii $ /Std/Test%.Test;
+TestSuite = OnAscii $ /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 Eq@<Maybe@<String@>> Eq = /Std/Maybe/Eq%.Eq(/Std/String/Eq%.Eq);
 

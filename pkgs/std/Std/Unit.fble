@@ -8,7 +8,7 @@
 #
 #  @code[fble] @
 #   Bool@ = +(Unit@ true, Unit@ false);
-@ Unit@ = *();
+Unit@ = *();
 
 # @value[Unit] The single inhabitant of the @l{Unit@} type.
 #  @type[Unit@]

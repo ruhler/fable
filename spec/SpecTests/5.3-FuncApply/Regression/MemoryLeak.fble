@@ -2,15 +2,15 @@
 #
 # Regression test for function application where we were leaking memory.
 
-@ Nat@ = /SpecTests/Nat%.Nat@;
-@ S@ = /SpecTests/Nat%.S@;
-% S = /SpecTests/Nat%.S;
+Nat@ = /SpecTests/Nat%.Nat@;
+S@ = /SpecTests/Nat%.S@;
+S = /SpecTests/Nat%.S;
 
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ R@ =  { *(Unit@ s, Unit@ x); };
-@ M@ = (Unit@) { R@; };
+R@ =  { *(Unit@ s, Unit@ x); };
+M@ = (Unit@) { R@; };
 
 (Unit@) { M@; }
 Return = (Unit@ x)(Unit@ s) {

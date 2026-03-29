@@ -1,33 +1,33 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
-% H8 = /Md5/Bits/Bit8%.H8;
+Bit8@ = /Md5/Bits/Bit8%.Bit8@;
+H8 = /Md5/Bits/Bit8%.H8;
 
-@ Bit64@ = /Md5/Bits/Bit64%.Bit64@;
-% And = /Md5/Bits/Bit64%.And;
-% Add = /Md5/Bits/Bit64%.Add;
-% Shl1 = /Md5/Bits/Bit64%.Shl1;
-% Inc = /Md5/Bits/Bit64%.Inc;
-% IsZero = /Md5/Bits/Bit64%.IsZero;
-% H64 = /Md5/Bits/Bit64%.H64;
+Bit64@ = /Md5/Bits/Bit64%.Bit64@;
+And = /Md5/Bits/Bit64%.And;
+Add = /Md5/Bits/Bit64%.Add;
+Shl1 = /Md5/Bits/Bit64%.Shl1;
+Inc = /Md5/Bits/Bit64%.Inc;
+IsZero = /Md5/Bits/Bit64%.IsZero;
+H64 = /Md5/Bits/Bit64%.H64;
 
-@ T@ = Bit8@;
+T@ = Bit8@;
 
 Bit64@ 3f_64 = H64|3F;
 Bit64@ 08_64 = H64|08;
 
 <<@>@ M@>(Monad@<M@> m, M@<Maybe@<T@>> get) {
-  % Stream = /Md5/Stream%(m)<T@>;
-  @ Stream@ = Stream.Stream@;
-  % Put = Stream.Put;
-  % End = Stream.End;
+  Stream = /Md5/Stream%(m)<T@>;
+  Stream@ = Stream.Stream@;
+  Put = Stream.Put;
+  End = Stream.End;
 
   # Add zeros as needed, then the final length to the output message.
   (Bit64@, Bit64@) { M@<Stream@>; }

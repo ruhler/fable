@@ -1,17 +1,17 @@
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # A square is either filled with an 'X', filled with an 'O', 
 # or is 'E'mpty.
-@ Square@ = +(Unit@ X, Unit@ O, Unit@ E);
+Square@ = +(Unit@ X, Unit@ O, Unit@ E);
 
 # A board is a 3x3 grid of squares.
-@ Board@ = *(
+Board@ = *(
     Square@ ul, Square@ uc, Square@ ur,    # Upper row.
     Square@ ml, Square@ mc, Square@ mr,    # Middle row.
     Square@ ll, Square@ lc, Square@ lr     # Lower row.
@@ -23,7 +23,7 @@ Board@ EmptyBoard = {
 };
 
 # Position can be used to identify a specific square in the 3x3 grid.
-@ Position@ = +(
+Position@ = +(
     Unit@ UL, Unit@ UC, Unit@ UR,
     Unit@ ML, Unit@ MC, Unit@ MR,
     Unit@ LL, Unit@ LC, Unit@ LR
@@ -51,7 +51,7 @@ Board@ EmptyBoard = {
       LR: Board@(b.ul, b.uc, b.ur, b.ml, b.mc, b.mr, b.ll, b.lc,    s));
   };
 
-@ Player@ = +(Unit@ X, Unit@ O);
+Player@ = +(Unit@ X, Unit@ O);
 
 # Returns the board resulting from player 'x' making a play at position 'p'
 # of board 'b'. Returns Nothing if the square at position 'p' of board 'b' is
@@ -68,7 +68,7 @@ Board@ EmptyBoard = {
 #  O: The player O has won.
 #  D: There is a draw.
 #  E: The board has empty squares.
-@ Status@ = +(Unit@ X, Unit@ O, Unit@ D, Unit@ E);
+Status@ = +(Unit@ X, Unit@ O, Unit@ D, Unit@ E);
 
 # Return the status of a single square.
 (Square@) { Status@; } SquareStatus = (Square@ a) {
@@ -105,7 +105,7 @@ Board@ EmptyBoard = {
         OrStatus(RowStatus(a.ul, a.mc, a.lr), RowStatus(a.ur, a.mc, a.ll))));
 };
 
-@ Result@ = +(Unit@ Win, Unit@ Draw, Unit@ Loss);
+Result@ = +(Unit@ Win, Unit@ Draw, Unit@ Loss);
 
 @(Square@, Board@, Position@, Player@, Result@, Status@,
   BoardStatus, EmptyBoard, Move);

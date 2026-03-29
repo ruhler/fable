@@ -1,13 +1,13 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit@());
 Bool@ False = Bool@(false: Unit@());
 
-@ Function@ = (Bool@) { Bool@; };
+Function@ = (Bool@) { Bool@; };
 
-@ Triple@ = *(Function@ x, Function@ y, Function@ z);
+Triple@ = *(Function@ x, Function@ y, Function@ z);
 Triple@ a = @(
   x: (Bool@ _) { True; },
   y: (Bool@ _) { False; },

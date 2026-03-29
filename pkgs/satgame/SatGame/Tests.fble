@@ -1,38 +1,36 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-@ Int@ = /Std/Int%.Int@;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Int = /Std/Int/Lit%.Int;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Game@ = /SatGame/Game%.Game@;
-% Game = /SatGame/Game%.Game;
-% Solved = /SatGame/Game%.Solved;
-% Toggle = /SatGame/Game%.Toggle;
-% ToggleSelected = /SatGame/Game%.ToggleSelected;
-% ToggleDismissed = /SatGame/Game%.ToggleDismissed;
+Game@ = /SatGame/Game%.Game@;
+Game = /SatGame/Game%.Game;
+Solved = /SatGame/Game%.Solved;
+Toggle = /SatGame/Game%.Toggle;
+ToggleSelected = /SatGame/Game%.ToggleSelected;
+ToggleDismissed = /SatGame/Game%.ToggleDismissed;
 
-@ Params@ = /SatGame/Puzzle%.Params@;
-@ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
+Params@ = /SatGame/Puzzle%.Params@;
+Puzzle@ = /SatGame/Puzzle%.Puzzle@;
 
-% Var = /SatGame/Var/Lit%.Var;
+Var = /SatGame/Var/Lit%.Var;
 
-% Generate = /SatGame/Generate%;
-
-% _ = /SatGame/Graphics%;
+Generate = /SatGame/Generate%;
 
 Puzzle@ puzzle = List[
   List[

@@ -1,5 +1,5 @@
 # @@fble-test@@ compile-error 6:3
-@ Unit@ = *();
+Unit@ = *();
 
 <<@>@ A@> (A@ a){
   # a<Unit@> is not a struct type, so this should not be allowed.

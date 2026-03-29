@@ -1,28 +1,28 @@
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-@ Int@ = /Std/Int%.Int@;
-% Decr = /Std/Int%.Decr;
-% Int = /Std/Int/Lit%.Int;
-% IsZero = /Std/Int/Sign%.IsZero;
+Int@ = /Std/Int%.Int@;
+Decr = /Std/Int%.Decr;
+Int = /Std/Int/Lit%.Int;
+IsZero = /Std/Int/Sign%.IsZero;
 
-@ Coeffs@ = /Core/Random/Lfsr%.Coeffs@;
-@ State@ = /Core/Random/Lfsr%.State@;
-% Next = /Core/Random/Lfsr%.Next;
-% Bits = /Core/Random/Lfsr%.Bits;
+Coeffs@ = /Core/Random/Lfsr%.Coeffs@;
+State@ = /Core/Random/Lfsr%.State@;
+Next = /Core/Random/Lfsr%.Next;
+Bits = /Core/Random/Lfsr%.Bits;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% TestSuite = /Std/Test%.TestSuite;
-% Test = /Std/Test%.Test;
+Test@ = /Std/Test%.Test@;
+TestSuite = /Std/Test%.TestSuite;
+Test = /Std/Test%.Test;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 (Coeffs@, Int@, State@) { List@<State@>; }
 NextN = (Coeffs@ c, Int@ n, State@ s) {

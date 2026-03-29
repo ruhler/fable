@@ -1,5 +1,5 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 
 # Variables have the type they are declared to have.
 Unit@ x = Unit@();

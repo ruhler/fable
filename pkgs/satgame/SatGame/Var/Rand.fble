@@ -1,23 +1,23 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% Not = /Std/Bool%.Not;
-% Or = /Std/Bool%.Or;
-% And = /Std/Bool%.And;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+Not = /Std/Bool%.Not;
+Or = /Std/Bool%.Or;
+And = /Std/Bool%.And;
 
-@ Int@ = /Std/Int%.Int@;
-% Decr = /Std/Int%.Decr;
-% IsZero = /Std/Int/Sign%.IsZero;
+Int@ = /Std/Int%.Int@;
+Decr = /Std/Int%.Decr;
+IsZero = /Std/Int/Sign%.IsZero;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
-<@>% Any = /Std/List/Search%.Any;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
+Any = /Std/List/Search%.Any;
 
-<<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
+RngM@ = /Core/Random/Rng%.RngM@;
 
-@ Var@ = /SatGame/Var%.Var@;
+Var@ = /SatGame/Var%.Var@;
 
 # In some cases two variables may look similar. Prefer to use the canonical
 # variable in that case.

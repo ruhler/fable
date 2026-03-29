@@ -1,31 +1,31 @@
 
-@ Point@ = /App/Drawing%.Point@;
+Point@ = /App/Drawing%.Point@;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Mul = /Std/Int%.Mul;
-% Neg = /Std/Int%.Neg;
-% Lt = /Std/Int/Ord%.Lt;
-% Ge = /Std/Int/Ord%.Ge;
-% Div = /Std/Int/Div%.Div;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Mul = /Std/Int%.Mul;
+Neg = /Std/Int%.Neg;
+Lt = /Std/Int/Ord%.Lt;
+Ge = /Std/Int/Ord%.Ge;
+Div = /Std/Int/Div%.Div;
+Int = /Std/Int/Lit%.Int;
 
-@ Mat@ = /Graphics/3D%.Mat@;
-@ Vec@ = /Graphics/3D%.Vec@;
-% AddV = /Graphics/3D%.AddV;
-% SubV = /Graphics/3D%.SubV;
-% MulMV = /Graphics/3D%.MulMV;
-% DivVS = /Graphics/3D%.DivVS;
-% Transpose = /Graphics/3D%.Transpose;
+Mat@ = /Graphics/3D%.Mat@;
+Vec@ = /Graphics/3D%.Vec@;
+AddV = /Graphics/3D%.AddV;
+SubV = /Graphics/3D%.SubV;
+MulMV = /Graphics/3D%.MulMV;
+DivVS = /Graphics/3D%.DivVS;
+Transpose = /Graphics/3D%.Transpose;
 
-@ SinCos@ = /Graphics/Camera/SinCos%.SinCos@;
-% SinCos = /Graphics/Camera/SinCos%.SinCos;
+SinCos@ = /Graphics/Camera/SinCos%.SinCos@;
+SinCos = /Graphics/Camera/SinCos%.SinCos;
 
 # Rect@ --
 #   Describes a rectangle with the lower left corner at (x, y), of width w and
 #   height h.
-@ Rect@ = *(Int@ x, Int@ y, Int@ w, Int@ h);
+Rect@ = *(Int@ x, Int@ y, Int@ w, Int@ h);
 
 # Camera@ --
 #   Describes the position and direction of the camera.
@@ -53,7 +53,7 @@
 #   clip -
 #     The clipping rectangle. Any points on the focus plane outside the
 #     clip rectangle will not be drawn.
-@ Camera@ = *(Vec@ pos, Int@ angle, Mat@ rot, Int@ focus, Rect@ clip);
+Camera@ = *(Vec@ pos, Int@ angle, Mat@ rot, Int@ focus, Rect@ clip);
 
 # RotF --
 #   The scale factor used for the camera rotation.

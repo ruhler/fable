@@ -1,8 +1,8 @@
 # @@fble-test@@ memory-constant
-@ Unit@ = *();
-@ Nat@ = /SpecTests/Nat%.Nat@;
-@ S@ = /SpecTests/Nat%.S@;
-% S = /SpecTests/Nat%.S;
+Unit@ = *();
+Nat@ = /SpecTests/Nat%.Nat@;
+S@ = /SpecTests/Nat%.S@;
+S = /SpecTests/Nat%.S;
 
 # f should only require O(1) memory, because it is tail recursive.
 # Regression test for a case where tail recursion of a partially applied

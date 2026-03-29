@@ -1,7 +1,7 @@
 # @@fble-test@@ compile-error 7:9
-@ Unit@ = *();
+Unit@ = *();
 
-<<@>@>@ MaybeM@ = <<@>@ M@> { +(M@<Unit@> just, Unit@ nothing); };
+MaybeM@ = <<@>@ M@> { +(M@<Unit@> just, Unit@ nothing); };
 
 # The poly argument to MaybeM@ has type @, when type <@>@ is expected.
 MaybeM@<Unit@>(nothing: Unit@());

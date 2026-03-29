@@ -1,10 +1,10 @@
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-<<@>@>@ IoM@ = /Core/Io%.IoM@;
-<@>@ External@ = /Core/Io%.External@;
+IoM@ = /Core/Io%.IoM@;
+External@ = /Core/Io%.External@;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
 (String@) { External@<Maybe@<String@>>; }
 GetVarExt = @<GetVarExt>|GetVar;

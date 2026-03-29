@@ -1,9 +1,9 @@
 # @@fble-test@@ compile-error 13:11
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
-@ Pair@ = *(Unit@ first, Unit@ second);
-@ Enum@ = +(Unit@ A, Pair@ B, Unit@ C);
-@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+Pair@ = *(Unit@ first, Unit@ second);
+Enum@ = +(Unit@ A, Pair@ B, Unit@ C);
+L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
 (L@) { L@; } f = (L@ l) { l; };
 
 # This use of the literal is fine, because the letter B is not involved:

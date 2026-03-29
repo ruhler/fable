@@ -1,10 +1,10 @@
 
-@ Linear@ = /Pinball/Quadratic%.Linear@;
-@ Quadratic@ = /Pinball/Quadratic%.Quadratic@;
+Linear@ = /Pinball/Quadratic%.Linear@;
+Quadratic@ = /Pinball/Quadratic%.Quadratic@;
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Output%.Format;
 
 Show@<Linear@> ShowLinear = (Linear@ l) {
   Format|'Linear@(%s, %s)'[

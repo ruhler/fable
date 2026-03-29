@@ -1,6 +1,6 @@
 # @@fble-test@@ compile-error 8:14
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false, Unit@ other);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false, Unit@ other);
 Bool@ t = Bool@(true: Unit@());
 Bool@ f = Bool@(false: Unit@());
 

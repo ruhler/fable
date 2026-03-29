@@ -1,18 +1,18 @@
 
-@ Num@ = /Pinball/Num%.Num@;
+Num@ = /Pinball/Num%.Num@;
 
-@ Vec@ = /Pinball/Vec%.Vec@;
-% SubV = /Pinball/Vec%.SubV;
-% Magnitude = /Pinball/Vec%.Magnitude;
-% Normalize = /Pinball/Vec%.Normalize;
+Vec@ = /Pinball/Vec%.Vec@;
+SubV = /Pinball/Vec%.SubV;
+Magnitude = /Pinball/Vec%.Magnitude;
+Normalize = /Pinball/Vec%.Normalize;
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Output%.Format;
 
 # Edge@ --
 #   Internal representation for a stationary edge.
-@ Edge@ = *(
+Edge@ = *(
   Vec@ start,       # The start point of the edge.
   Vec@ end,         # The end point of the edge.
   Num@ restitution, # Fraction of energy preserved during a collision.

@@ -1,11 +1,11 @@
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Int@ = /Std/Int%.Int@;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
 Int@ 1 = Int|1;
 
@@ -13,11 +13,11 @@ Int@ 1 = Int|1;
 #   Represents a color as a combination of red, green, and blue. The value of
 #   these fields is the color intensity out of 256. They should have values
 #   between 0 and 256.
-@ Color@ = *(Int@ r, Int@ g, Int@ b);
+Color@ = *(Int@ r, Int@ g, Int@ b);
 
 # Colors --
 #   Common colors.
-% Color = @(
+Color = @(
   Black: Color@(Int|0, Int|0, Int|0),
   Red: Color@(Int|255, Int|0, Int|0),
   Green: Color@(Int|0, Int|255, Int|0),
@@ -28,9 +28,9 @@ Int@ 1 = Int|1;
   White: Color@(Int|255, Int|255, Int|255)
 );
 
-@ Point@ = *(Int@ x, Int@ y);
+Point@ = *(Int@ x, Int@ y);
 
-@ Drawing@ = +(
+Drawing@ = +(
   # A blank (transparent) drawing.
   Unit@ blank,
 

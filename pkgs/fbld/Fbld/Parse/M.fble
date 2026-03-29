@@ -1,57 +1,57 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ Char@ = /Std/Char%.Char@;
-% Char = /Std/Char/Ascii%.Char;
-% IsNewline = /Core/Char/Type%.IsNewline;
+Char@ = /Std/Char%.Char@;
+Char = /Std/Char/Ascii%.Char;
+IsNewline = /Core/Char/Type%.IsNewline;
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
-<@>% Last = /Std/List%.Last;
-<@>% Concat = /Std/List%.Concat;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
+Last = /Std/List%.Last;
+Concat = /Std/List%.Concat;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% String = /Std/Char/Ascii/Output%.String;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Loc@ = /Fbld/Loc%.Loc@;
-% Advance = /Fbld/Loc%.Advance;
-% Unknown = /Fbld/Loc%.Unknown;
+Loc@ = /Fbld/Loc%.Loc@;
+Advance = /Fbld/Loc%.Advance;
+Unknown = /Fbld/Loc%.Unknown;
 
-<@>@ Result@ = /Fbld/Result%.Result@;
-<@>% Ok = /Fbld/Result%.Ok;
-<@>% Fail = /Fbld/Result%.Fail;
+Result@ = /Fbld/Result%.Result@;
+Ok = /Fbld/Result%.Ok;
+Fail = /Fbld/Result%.Fail;
 
-@ Text@ = /Fbld/Text%.Text@;
+Text@ = /Fbld/Text%.Text@;
 
-@ CharL@ = *(Char@ c, Loc@ l);
+CharL@ = *(Char@ c, Loc@ l);
 
 # S@ - State for parser monad.
-@ S@ = List@<CharL@>;
+S@ = List@<CharL@>;
 
 # R@ - Reader for parser monad.
-@ R@ = *(S@ s, Int@ indent, Bool@ report_errors, Loc@ end_of_input_loc);
+R@ = *(S@ s, Int@ indent, Bool@ report_errors, Loc@ end_of_input_loc);
 
 # State monad for parser monad.
-<@>@ SM@ = <@ T@> { *(S@ s, T@ x); };
+SM@ = <@ T@> { *(S@ s, T@ x); };
 
 # M@ - A parser monad.
-<@>@ M@ = <@ T@>(R@) { Result@<SM@<T@>>; };
+M@ = <@ T@>(R@) { Result@<SM@<T@>>; };
 
 # Return the given value.
 <@ T@>(T@) { M@<T@>; }

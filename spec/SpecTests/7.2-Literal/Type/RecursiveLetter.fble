@@ -1,12 +1,12 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
 # The letter type can be recursive. The recursive field is ignored for the
 # purposes of matching letters.
-@ Letter@ = +(Letter@ recursive, Unit@ A, Unit@ B, Unit@ C);
+Letter@ = +(Letter@ recursive, Unit@ A, Unit@ B, Unit@ C);
 
-@ L@ = +(*(Letter@ head, L@ tail) cons, Unit@ nil);
+L@ = +(*(Letter@ head, L@ tail) cons, Unit@ nil);
 
 (L@) { Unit@; } f = (L@ l) {
   Unit@ _b = l.cons.head.B;

@@ -1,14 +1,14 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Shr = /Std/Int%.Shr;
-% IsZero = /Std/Int/Sign%.IsZero;
-% Lt = /Std/Int/Ord%.Lt;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Shr = /Std/Int%.Shr;
+IsZero = /Std/Int/Sign%.IsZero;
+Lt = /Std/Int/Ord%.Lt;
+Int = /Std/Int/Lit%.Int;
 
-<<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
+RngM@ = /Core/Random/Rng%.RngM@;
 
 # Generates a random integer uniformly in the range [0, n).
 <<@>@ M@>(RngM@<M@>, Int@) { M@<Int@>; }

@@ -1,9 +1,9 @@
 # @@fble-test@@ no-error
 # Test a polymorphic struct type.
-<@>@ Pair@ = <@ T@> { *(T@ first, T@ second); };
+Pair@ = <@ T@> { *(T@ first, T@ second); };
 
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ true = Bool@(true: Unit@());
 Bool@ false = Bool@(false: Unit@());
 

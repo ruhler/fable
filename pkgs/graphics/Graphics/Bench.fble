@@ -1,29 +1,29 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Decr = /Std/Int%.Decr;
-% IsNegative = /Std/Int/Sign%.IsNegative;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Decr = /Std/Int%.Decr;
+IsNegative = /Std/Int/Sign%.IsNegative;
+Int = /Std/Int/Lit%.Int;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-<@,@>% Const = /Std/Func%.Const;
+Const = /Std/Func%.Const;
 
-<@,<@>@>@ StateM@ = /Core/State%.StateM@;
-<@,@>@ Pure@ = /Core/State/Pure%.Pure@;
-<@>% Pure = /Core/State/Pure%.Pure;
-<@,@>% Eval = /Core/State/Pure%.Eval;
+StateM@ = /Core/State%.StateM@;
+Pure@ = /Core/State/Pure%.Pure@;
+Pure = /Core/State/Pure%.Pure;
+Eval = /Core/State/Pure%.Eval;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% Pass = /Std/Test%.Pass;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+Pass = /Std/Test%.Pass;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<<@>@>@ App@ = /App/App%.App@;
-@ Key@ = /App/App%.Key@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
+App@ = /App/App%.App@;
+Key@ = /App/App%.Key@;
+Event@ = /App/App%.Event@;
+Effect@ = /App/App%.Effect@;
 
 # The number of iterations is chosen so that the benchmark takes on the
 # order of 1 minute to run. The target goal is 60 frames a second.
@@ -32,7 +32,7 @@ Test@ Bench = Test(Str|'Graphics', (Unit@ _) {
   Int@ w = Int|640;
   Int@ h = Int|480;
 
-  <@>@ M@ = Pure@<Int@>;
+  M@ = Pure@<Int@>;
   StateM@<Int@, M@> p = Pure<Int@>;
 
   M@<Event@> event = {

@@ -1,14 +1,14 @@
 # @module[/Std/Maybe%]
 #  Maybe type and basic operations.
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # @type[Maybe@] An optional value.
 #  @arg[@][T@] The type of value.
 #  @field[T@][just] The value if present.
 #  @field[Unit@][nothing] Indicates the value is not present.
-<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 
 # @func[Just] Construct a Maybe@ with a value that is present.
 #  @arg[@][T@] The type of value.

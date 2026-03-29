@@ -1,9 +1,9 @@
 # @@fble-test@@ no-error
 # Test a basic use of polymorphic types.
-@ Unit@ = *();
-<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+Unit@ = *();
+Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ true = Bool@(true: Unit@());
 
 Maybe@<Bool@> mb = Maybe@<Bool@>(just: true);

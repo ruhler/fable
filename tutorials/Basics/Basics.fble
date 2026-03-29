@@ -1,14 +1,14 @@
 
 # Imports
-<@>% Concat = /Std/List%.Concat;
+Concat = /Std/List%.Concat;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
 # Types
-@ Unit@ = *();
-@ Bit@ = +(Unit@ 0, Unit@ 1);
-@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
+Unit@ = *();
+Bit@ = +(Unit@ 0, Unit@ 1);
+Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
 
 # Values
 Unit@ Unit = Unit@();

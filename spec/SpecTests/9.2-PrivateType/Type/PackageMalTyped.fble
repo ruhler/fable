@@ -1,6 +1,6 @@
-# @@fble-test@@ compile-error 5:22
-@ Unit@ = *();
+# @@fble-test@@ compile-error 5:20
+Unit@ = *();
 
 # The package part of the private type as maltyped.
-@ Private@ = Unit@.%(Foo@);
+Private@ = Unit@.%(Foo@);
 Private@();

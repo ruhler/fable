@@ -1,20 +1,20 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-@ Char@ = /Std/Char%.Char@;
-% Pos = /Std/Char%.Pos;
-% Char = /Std/Char%.Char;
+Char@ = /Std/Char%.Char@;
+Pos = /Std/Char%.Pos;
+Char = /Std/Char%.Char;
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
 # Char@ to V@ map implemented as Int@ to V@ using ascii value for the Int@.
-% M = /Core/Int/Map%.Map;
+M = /Core/Int/Map%.Map;
 
-@ Key@ = Char@;
+Key@ = Char@;
 
-<@>@ Map@ = M.Map@;
+Map@ = M.Map@;
 Map@ Empty = M.Empty;
 
 <@ V@>(Map@<V@>) { Bool@; } IsEmpty = M.IsEmpty;

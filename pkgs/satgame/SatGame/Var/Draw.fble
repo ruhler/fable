@@ -1,20 +1,20 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Color@ = /App/Drawing%.Color@;
-% Drawings = /App/Drawing%.Drawings;
-% Rect = /App/Drawing%.Rect;
-% Blank = /App/Drawing%.Blank;
-% Translate = /App/Drawing%.Translate;
+Drawing@ = /App/Drawing%.Drawing@;
+Color@ = /App/Drawing%.Color@;
+Drawings = /App/Drawing%.Drawings;
+Rect = /App/Drawing%.Rect;
+Blank = /App/Drawing%.Blank;
+Translate = /App/Drawing%.Translate;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Mul = /Std/Int%.Mul;
-% Int = /Std/Int/Lit%.Int;
-% CountUpTo = /Core/Int/Iter%.CountUpTo;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Mul = /Std/Int%.Mul;
+Int = /Std/Int/Lit%.Int;
+CountUpTo = /Core/Int/Iter%.CountUpTo;
 
-@ Var@ = /SatGame/Var%.Var@;
+Var@ = /SatGame/Var%.Var@;
 
 # Draws a single small box.
 (Bool@, Color@) { Drawing@; }

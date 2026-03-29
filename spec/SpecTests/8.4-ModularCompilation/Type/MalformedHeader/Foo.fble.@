@@ -1,7 +1,7 @@
 # @@fble-test@@ none
 
 # Header file with a parse error.
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit;
 
 # The close parenthesis is missing.

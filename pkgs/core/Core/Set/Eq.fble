@@ -1,10 +1,10 @@
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-<<@>@,@>@ Map@ = /Core/Map%.Map@;
+Map@ = /Core/Map%.Map@;
 
 
-<<@>@, @>% Eq = <<@>@ M@, @ K@>(Map@<M@, K@> m, Eq@<K@> keq) {
+Eq = <<@>@ M@, @ K@>(Map@<M@, K@> m, Eq@<K@> keq) {
   /Core/Map/Eq%.Eq(m, keq, /Std/Unit/Eq%.Eq);
 };
 

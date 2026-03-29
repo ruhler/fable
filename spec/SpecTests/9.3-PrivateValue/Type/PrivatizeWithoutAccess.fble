@@ -1,10 +1,10 @@
 # @@fble-test@@ compile-error 11:1
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Pkg@ = @/Foo/Bar%;
+Pkg@ = @/Foo/Bar%;
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit);
 
 # You can't construct a private value for a type you don't have access to.

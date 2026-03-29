@@ -1,16 +1,16 @@
 # @module[/Std/List/Index%]
 #  Utilities for index based access into lists.
 
-@ Int@ = /Std/Int%.Int@;
-% 0 = /Std/Int%.0;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
-% Le = /Std/Int/Ord%.Le;
-% IsZero = /Std/Int/Sign%.IsZero;
+Int@ = /Std/Int%.Int@;
+0 = /Std/Int%.0;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
+Le = /Std/Int/Ord%.Le;
+IsZero = /Std/Int/Sign%.IsZero;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
 
 # @func[Length] Returns the length of a list.
 #  @arg[@][T@] The type of element on the list.
@@ -103,7 +103,7 @@ Range = <@ T@>(List@<T@> list, Int@ index, Int@ len) {
 #
 #  @field[List@<T@>][span] A prefix of a list.
 #  @field[List@<T@>][tail] The remainder of the list.
-<@>@ Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
+Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
 
 # @func[Span] Splits the list at a given index.
 #  @arg[@][T@] The type of element on the list.

@@ -1,24 +1,24 @@
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Empty = /Std/List%.Empty;
-<@>% Items = /Std/List%.Items;
-<@>% Append = /Std/List%.Append;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Empty = /Std/List%.Empty;
+Items = /Std/List%.Items;
+Append = /Std/List%.Append;
 
-@ Addr@ = /Hwdg/Addr%.Addr@;
+Addr@ = /Hwdg/Addr%.Addr@;
 
-% Data = /Hwdg/Data%;
+Data = /Hwdg/Data%;
 
-@ Design@ = /Hwdg/Design%.Design@;
-% Rule = /Hwdg/Design%.Rule;
-% Designs = /Hwdg/Design%.Designs;
+Design@ = /Hwdg/Design%.Design@;
+Rule = /Hwdg/Design%.Rule;
+Designs = /Hwdg/Design%.Designs;
 
-<@>@ Build@ = /Hwdg/Build%.Build@;
-<@>% Return = /Hwdg/Build%.Return;
-<@>% Do = /Hwdg/Build%.Do;
-% Addr = /Hwdg/Build%.Addr;
+Build@ = /Hwdg/Build%.Build@;
+Return = /Hwdg/Build%.Return;
+Do = /Hwdg/Build%.Do;
+Addr = /Hwdg/Build%.Addr;
 
-@ MAddr@ = *(Addr@ data, Addr@ valid);
+MAddr@ = *(Addr@ data, Addr@ valid);
 
 # Adder interface:
 #  Inputs:
@@ -29,7 +29,7 @@
 #  Outputs:
 #   z - n bits of output
 #   c_out - carry out
-@ Adder@ = *(
+Adder@ = *(
     List@<MAddr@> a,
     List@<MAddr@> b,
     MAddr@ c_in,

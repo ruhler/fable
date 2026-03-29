@@ -1,33 +1,33 @@
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Reverse = /Std/List%.Reverse;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Reverse = /Std/List%.Reverse;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+IStream@ = /Core/Stream%.IStream@;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-% Map = /Core/Int/Map%.Map;
+Map = /Core/Int/Map%.Map;
 
-@ Block@ = /Pprof/Profile%.Block@;
-@ Blocks@ = /Pprof/Profile%.Blocks@;
-@ Sample@ = /Pprof/Profile%.Sample@;
-@ Profile@ = /Pprof/Profile%.Profile@;
+Block@ = /Pprof/Profile%.Block@;
+Blocks@ = /Pprof/Profile%.Blocks@;
+Sample@ = /Pprof/Profile%.Sample@;
+Profile@ = /Pprof/Profile%.Profile@;
 
-@ Function@ = /Pprof/Parser/Profile%.Function@;
-@ Location@ = /Pprof/Parser/Profile%.Location@;
-@ LocationId@ = /Pprof/Parser/Profile%.LocationId@;
-@ StringId@ = /Pprof/Parser/Profile%.StringId@;
-@ ProtoProfile@ = /Pprof/Parser/Profile%.Profile@;
-<<@>@>% ProfileParser = /Pprof/Parser/Profile%.Profile;
+Function@ = /Pprof/Parser/Profile%.Function@;
+Location@ = /Pprof/Parser/Profile%.Location@;
+LocationId@ = /Pprof/Parser/Profile%.LocationId@;
+StringId@ = /Pprof/Parser/Profile%.StringId@;
+ProtoProfile@ = /Pprof/Parser/Profile%.Profile@;
+ProfileParser = /Pprof/Parser/Profile%.Profile;
 
-<@>% Run = /Pprof/Parser/Proto%.Run;
+Run = /Pprof/Parser/Proto%.Run;
 
-<@>@ Result@ = /Pprof/Result%.Result@;
+Result@ = /Pprof/Result%.Result@;
 
 # @func[Metrics] Extracts list of metrics names from parsed profile
 #  @arg[Map@<String@>][strings] The string table

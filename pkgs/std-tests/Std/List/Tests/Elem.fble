@@ -1,31 +1,31 @@
 # @module[/Std/List/Tests/Elem%]
 #  Element type for use in list tests.
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>@ Cmp@ = /Std/Cmp%.Cmp@;
-% Less = /Std/Cmp%.Less;
-% Equal = /Std/Cmp%.Equal;
-% Greater = /Std/Cmp%.Greater;
+Cmp@ = /Std/Cmp%.Cmp@;
+Less = /Std/Cmp%.Less;
+Equal = /Std/Cmp%.Equal;
+Greater = /Std/Cmp%.Greater;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 
-@ Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);
+Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);
 
-% Elem = @(
+Elem = @(
   A: Elem@(A: Unit),
   B: Elem@(B: Unit),
   C: Elem@(C: Unit),

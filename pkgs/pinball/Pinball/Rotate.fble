@@ -1,18 +1,18 @@
 
-@ Num@ = /Pinball/Num%.Num@;
-% Add = /Pinball/Num%.Add;
-% Sub = /Pinball/Num%.Sub;
-% Neg = /Pinball/Num%.Neg;
-% Mul = /Pinball/Num%.Mul;
-% Div = /Pinball/Num%.Div;
-% Eq = /Pinball/Num%.Eq;
-% Gt = /Pinball/Num%.Gt;
-% Lt = /Pinball/Num%.Lt;
-% Abs = /Pinball/Num%.Abs;
-% Int = /Pinball/Num%.Int;
+Num@ = /Pinball/Num%.Num@;
+Add = /Pinball/Num%.Add;
+Sub = /Pinball/Num%.Sub;
+Neg = /Pinball/Num%.Neg;
+Mul = /Pinball/Num%.Mul;
+Div = /Pinball/Num%.Div;
+Eq = /Pinball/Num%.Eq;
+Gt = /Pinball/Num%.Gt;
+Lt = /Pinball/Num%.Lt;
+Abs = /Pinball/Num%.Abs;
+Int = /Pinball/Num%.Int;
 
-@ Vec@ = /Pinball/Vec%.Vec@;
-% Magnitude = /Pinball/Vec%.Magnitude;
+Vec@ = /Pinball/Vec%.Vec@;
+Magnitude = /Pinball/Vec%.Magnitude;
 
 Num@ 0 = Int|0;
 Num@ 2 = Int|2;

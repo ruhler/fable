@@ -1,11 +1,11 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
-@ Nat@ = /SpecTests/Nat%.Nat@;
-@ S@ = /SpecTests/Nat%.S@;
-% S = /SpecTests/Nat%.S;
-% Nat = /SpecTests/Nat%.Nat;
+Unit@ = *();
+Nat@ = /SpecTests/Nat%.Nat@;
+S@ = /SpecTests/Nat%.S@;
+S = /SpecTests/Nat%.S;
+Nat = /SpecTests/Nat%.Nat;
 
-@ Sum@ = +(Sum@ S, Unit@ Z);
+Sum@ = +(Sum@ S, Unit@ Z);
 
 (Nat@){ Sum@; } add = (Nat@ n) {
   S@ s = S(n);

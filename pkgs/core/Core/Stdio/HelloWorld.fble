@@ -1,20 +1,20 @@
 
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+Put@ = /Core/Char/Stream%.Put@;
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Char/Output%.Output@;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<<@>@>@ IoM@ = /Core/Io%.IoM@;
+IoM@ = /Core/Io%.IoM@;
 
-<<@>@>@ Main@ = /Core/Cli%.Main@;
-% Success = /Core/Cli%.Success;
+Main@ = /Core/Cli%.Main@;
+Success = /Core/Cli%.Success;
 
-@ String@ = /Std/String%.String@;
-% StringE = /Std/Char/Ascii/Output%.StringE;
+String@ = /Std/String%.String@;
+StringE = /Std/Char/Ascii/Output%.StringE;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 # A hello world program using the cli interface.
 Main@ Main = <<@>@ M@>(IoM@<M@> io, List@<String@> _args) {

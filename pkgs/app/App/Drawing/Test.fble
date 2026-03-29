@@ -1,33 +1,33 @@
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Color@ = /App/Drawing%.Color@;
-@ Point@ = /App/Drawing%.Point@;
+Drawing@ = /App/Drawing%.Drawing@;
+Color@ = /App/Drawing%.Color@;
+Point@ = /App/Drawing%.Point@;
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Mul = /Std/Int%.Mul;
-% Eq = /Std/Int/Eq%.Eq;
-% Lt = /Std/Int/Ord%.Lt;
-% Int = /Std/Int/Lit%.Int;
-% Range = /Core/Int/Iter%.Range;
-% Ord = /Core/Int/Ord%.Ord;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Mul = /Std/Int%.Mul;
+Eq = /Std/Int/Eq%.Eq;
+Lt = /Std/Int/Ord%.Lt;
+Int = /Std/Int/Lit%.Int;
+Range = /Core/Int/Iter%.Range;
+Ord = /Core/Int/Ord%.Ord;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<@>@ Cmp@ = /Std/Cmp%.Cmp@;
-@ Compared@ = /Std/Cmp%.Compared@;
+Cmp@ = /Std/Cmp%.Cmp@;
+Compared@ = /Std/Cmp%.Compared@;
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Output%.Format;
 
-@ TestResult@ = /Std/Test%.TestResult@;
+TestResult@ = /Std/Test%.TestResult@;
 
 (Point@, Point@) { Bool@; } EqPoint = (Point@ a, Point@ b) {
   Eq(a.x, b.x).?(false: False);
@@ -65,15 +65,15 @@ Show@<Color@> ShowColor = (Color@ c) {
     /Std/Int/Show%.Show(c.b)];
 };
 
-% Map = /Core/Map/Tree%.Map(OrdPoint);
+Map = /Core/Map/Tree%.Map(OrdPoint);
 
-@ Drawn@ = Map.Map@<Color@>;
-% Empty = Map.Empty<Color@>;
-% Insert = Map.Insert<Color@>;
+Drawn@ = Map.Map@<Color@>;
+Empty = Map.Empty<Color@>;
+Insert = Map.Insert<Color@>;
 Eq@<Drawn@> EqDrawn = /Core/Map/Eq%.Eq(Map, EqPoint, EqColor);
 Show@<Drawn@> ShowDrawn = /Core/Map/Show%.Show(Map, ShowPoint, ShowColor);
 
-@ Pixel@ = *(Int@ x, Int@ y, Color@ color);
+Pixel@ = *(Int@ x, Int@ y, Color@ color);
 
 # Drawn --
 #   Create a drawing by listing raw pixels.

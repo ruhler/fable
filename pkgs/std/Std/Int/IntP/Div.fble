@@ -3,17 +3,17 @@
 #
 #  For internal use only.
 
-@ IntP@ = /Std/Int/IntP%.IntP@;
+IntP@ = /Std/Int/IntP%.IntP@;
 
-@ Int@ = /Std/Int%.Int@;
-% Sub = /Std/Int%.Sub;
-% 0 = /Std/Int%.0;
-% 1 = /Std/Int%.1;
+Int@ = /Std/Int%.Int@;
+Sub = /Std/Int%.Sub;
+0 = /Std/Int%.0;
+1 = /Std/Int%.1;
 
 # @struct[QR@] Quotient and remainder.
 #  @field[Int@][q] The quotient of division.
 #  @field[Int@][r] The remainder of division.
-@ QR@ = *(Int@ q, Int@ r);
+QR@ = *(Int@ q, Int@ r);
 
 # @func[IntP] Converts an IntP@ to positive Int@.
 #  @arg[IntP@][x] The integer to convert.

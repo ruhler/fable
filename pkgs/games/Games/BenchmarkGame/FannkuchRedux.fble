@@ -1,31 +1,31 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Eq = /Std/Int/Eq%.Eq;
-% IsZero = /Std/Int/Sign%.IsZero;
-% Max = /Std/Int/Ord%.Max;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Eq = /Std/Int/Eq%.Eq;
+IsZero = /Std/Int/Sign%.IsZero;
+Max = /Std/Int/Ord%.Max;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
-<@>% Append = /Std/List%.Append;
-<@>% Last = /Std/List%.Last;
-<@>% Init = /Std/List%.Init;
-<@>% ForEach = /Std/List%.ForEach;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
+Append = /Std/List%.Append;
+Last = /Std/List%.Last;
+Init = /Std/List%.Init;
+ForEach = /Std/List%.ForEach;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-<@,@>% Exec = /Core/State/Pure%.Exec;
+Exec = /Core/State/Pure%.Exec;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # Reverse the first n elements of the list l.
 # @param n  The number of elements remaining to reverse.
@@ -68,13 +68,13 @@ Permutes = <<@>@ M@>(Monad@<M@> m, List@<Int@> l, (List@<Int@>) { M@<Unit@>; } f
   m.return(Unit);
 };
 
-@ Fannkuch@ = *(
+Fannkuch@ = *(
   Bool@ even,   # True if the permutation_index is even, false otherwise.
   Int@ checksum,
   Int@ max_flips
 );
 
-% P = /Core/State/Pure%.Pure<Fannkuch@>;
+P = /Core/State/Pure%.Pure<Fannkuch@>;
 
 (List@<Int@>) { P.M@<Unit@>;  } DoPermutation = (List@<Int@> l) {
   Fannkuch@ s := P.m.do(P.s.get);

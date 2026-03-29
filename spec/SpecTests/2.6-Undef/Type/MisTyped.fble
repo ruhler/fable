@@ -1,9 +1,9 @@
 # @@fble-test@@ compile-error 11:11
 
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 
 Bool@ undef;
 

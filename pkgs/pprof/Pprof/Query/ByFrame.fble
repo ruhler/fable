@@ -1,28 +1,28 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
-<@>% List = /Std/List%.List;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
+List = /Std/List%.List;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-@ BlockId@ = /Pprof/Profile%.BlockId@;
-@ Profile@ = /Pprof/Profile%.Profile@;
-@ Sequence@ = /Pprof/Profile%.Sequence@;
-@ Sample@ = /Pprof/Profile%.Sample@;
+BlockId@ = /Pprof/Profile%.BlockId@;
+Profile@ = /Pprof/Profile%.Profile@;
+Sequence@ = /Pprof/Profile%.Sequence@;
+Sample@ = /Pprof/Profile%.Sample@;
 
-@ Entry@ = /Pprof/Query%.Entry@;
-@ Query@ = /Pprof/Query%.Query@;
+Entry@ = /Pprof/Query%.Entry@;
+Query@ = /Pprof/Query%.Query@;
 
-% MetricOf = /Pprof/Query/Util%.MetricOf;
-% Sort = /Pprof/Query/Util%.Sort;
+MetricOf = /Pprof/Query/Util%.MetricOf;
+Sort = /Pprof/Query/Util%.Sort;
 
-% M = /Core/Int/Map%.Map;
+M = /Core/Int/Map%.Map;
 
 (List@<BlockId@>, BlockId@) { Bool@; }
 ContainsBlock = (List@<BlockId@> l, BlockId@ id) {

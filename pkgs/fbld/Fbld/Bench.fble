@@ -1,41 +1,41 @@
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Char/Output%.Output@;
 
-<<@>@, @>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
-<<@>@>% IStream = /Core/Char/Stream/IStream%.IStream;
-<<@>@>% NullOutput = /Core/Char/Stream/OStream%.NullOutput;
+Put@ = /Core/Char/Stream%.Put@;
+IStream@ = /Core/Char/Stream%.IStream@;
+IStream = /Core/Char/Stream/IStream%.IStream;
+NullOutput = /Core/Char/Stream/OStream%.NullOutput;
 
-@ Exit@ = /Core/Cli%.Exit@;
-% Success = /Core/Cli%.Success;
+Exit@ = /Core/Cli%.Exit@;
+Success = /Core/Cli%.Success;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Nothing = /Std/Maybe%.Nothing;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-<@,<@>@>@ StateM@ = /Core/State%.StateM@;
+StateM@ = /Core/State%.StateM@;
 
-<@,@>@ Pure@ = /Core/State/Pure%.Pure@;
-<@>% Pure = /Core/State/Pure%.Pure;
-<@,@>% Eval = /Core/State/Pure%.Eval;
+Pure@ = /Core/State/Pure%.Pure@;
+Pure = /Core/State/Pure%.Pure;
+Eval = /Core/State/Pure%.Eval;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-<<@>@>@ IO@ = /Fbld/Main%.IO@;
+IO@ = /Fbld/Main%.IO@;
 
 Test@ Bench = Test(Str|Fbld, (Unit@ _) {
-  <@>@ M@ = Pure@<String@>;
+  M@ = Pure@<String@>;
   StateM@<String@, M@> p = Pure<String@>;
   IStream@<M@> in = IStream<M@>(p.s, p.m);
   Put@<M@, Output@> out = NullOutput<M@>(p.m);

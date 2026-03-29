@@ -1,7 +1,7 @@
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-@ Text@ = /Fbld/Text%.Text@;
+Text@ = /Fbld/Text%.Text@;
 
 Show@<Text@> Show = (Text@ t) {
   /Fbld/Loc%.Report(t.loc, /Std/Char/Output%.String(t.text));

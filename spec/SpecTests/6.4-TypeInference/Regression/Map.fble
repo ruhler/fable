@@ -1,23 +1,23 @@
 # @@fble-test@@ no-error
 
-@ Unit@ = *();
-% Unit = Unit@();
+Unit@ = *();
+Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 
-<<@>@,@>@ S@ = @< <<@>@ M1@, @ K1@> {
+S@ = @< <<@>@ M1@, @ K1@> {
   <@ V1@>(M1@<V1@>) { Bool@; } IsEmpty;
   @(M@: M1@, K@: K1@, IsEmpty);
 }>;
 
-<<@>@,@>% F = <<@>@ M2@, @ K2@>(S@<M2@, K2@> _s) {
+F = <<@>@ M2@, @ K2@>(S@<M2@, K2@> _s) {
   Unit;
 };
 
-% S = {
-  @ K3@ = Unit@;
-  <@>@ M3@ = <@ T@> {
-    @ N@ = +(K3@ k, N@ n);
+S = {
+  K3@ = Unit@;
+  M3@ = <@ T@> {
+    N@ = +(K3@ k, N@ n);
     N@;
   };
   <@ V3@>(M3@<V3@>) { Bool@; } IsEmpty;

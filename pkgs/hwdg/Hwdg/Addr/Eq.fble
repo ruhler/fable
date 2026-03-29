@@ -1,10 +1,10 @@
 
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-@ Addr@ = /Hwdg/Addr%.Addr@;
+Addr@ = /Hwdg/Addr%.Addr@;
 
 Eq@<Addr@> Eq = (Addr@ a, Addr@ b) {
     /Std/Int/Eq%.Eq(a.x, b.x).?(false: False);

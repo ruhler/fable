@@ -1,14 +1,14 @@
 # @module[/Std/Int/Eq%]
 #  Utilities around equality of integers.
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% Not = /Std/Bool%.Not;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+Not = /Std/Bool%.Not;
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
-% EqP = /Std/Int/IntP/Eq%.Eq;
+EqP = /Std/Int/IntP/Eq%.Eq;
 
 # @func[Eq] Tests if two integers are equal. a == b.
 #  @arg[Int@][a] The first operand.

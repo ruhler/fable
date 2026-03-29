@@ -1,15 +1,15 @@
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Output%.Format;
 
-@ BlockId@ = /Pprof/Profile%.BlockId@;
-@ Block@ = /Pprof/Profile%.Block@;
-@ Blocks@ = /Pprof/Profile%.Blocks@;
-@ Sequence@ = /Pprof/Profile%.Sequence@;
-@ Metrics@ = /Pprof/Profile%.Metrics@;
-@ Sample@ = /Pprof/Profile%.Sample@;
-@ Profile@ = /Pprof/Profile%.Profile@;
+BlockId@ = /Pprof/Profile%.BlockId@;
+Block@ = /Pprof/Profile%.Block@;
+Blocks@ = /Pprof/Profile%.Blocks@;
+Sequence@ = /Pprof/Profile%.Sequence@;
+Metrics@ = /Pprof/Profile%.Metrics@;
+Sample@ = /Pprof/Profile%.Sample@;
+Profile@ = /Pprof/Profile%.Profile@;
 
 Show@<BlockId@> BlockId = /Std/Int/Show%.Show;
 

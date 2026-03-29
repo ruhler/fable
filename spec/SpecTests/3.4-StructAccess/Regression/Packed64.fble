@@ -1,5 +1,5 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
 # Regression test for a bug we had with data packing when accessing a field of
@@ -7,13 +7,13 @@ Unit@ Unit = Unit@();
 # were zeroed out accidentally due to 32 bit vs. 64 bit number type mismatch.
 
 # Enum has a 3 bit tag.
-@ Enum@ = +(
+Enum@ = +(
   Unit@ A, Unit@ B, Unit@ C, Unit@ D,
   Unit@ E, Unit@ F, Unit@ G, Unit@ H);
 
 # Each element of the list takes 3 bit tag + 6 bit offset + 1 bit tag.
 # A 5 element list should be plenty to show the issue.
-@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
 
 (L@) { Unit@; } f = (L@ l) {
   Unit@ _x0 = l.cons.head.G;

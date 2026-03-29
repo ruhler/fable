@@ -1,17 +1,17 @@
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-@ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
+Bit8@ = /Md5/Bits/Bit8%.Bit8@;
 
-@ Hash@ = /Md5/Hash%.Hash@;
+Hash@ = /Md5/Hash%.Hash@;
 
 <<@>@ M@>(Monad@<M@>, M@<Maybe@<Bit8@>>) { M@<Hash@>; }
 Md5 = <<@>@ M@>(Monad@<M@> m, M@<Maybe@<Bit8@>> get) {
-  % Stream = /Md5/Stream%(m)<Bit8@>;
-  @ Stream@ = Stream.Stream@;
-  <@>@ StreamM@ = Stream.StreamM@;
+  Stream = /Md5/Stream%(m)<Bit8@>;
+  Stream@ = Stream.Stream@;
+  StreamM@ = Stream.StreamM@;
 
   M@<Stream@> Padded = /Md5/Padder%(m, get).Pad;
   StreamM@<Hash@> Rounds = /Md5/Rounds%<StreamM@>(Stream.StreamM, Stream.Get).Md5;

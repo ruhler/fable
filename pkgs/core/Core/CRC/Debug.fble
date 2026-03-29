@@ -1,29 +1,29 @@
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<@>@ Output@ = /Std/Char/Output%.Output@;
-% FormatE = /Std/Char/Ascii/Output%.FormatE;
+Put@ = /Core/Char/Stream%.Put@;
+Output@ = /Std/Char/Output%.Output@;
+FormatE = /Std/Char/Ascii/Output%.FormatE;
 
-@ CRC@ = /Core/CRC%.CRC@;
-% Feed = /Core/CRC%.Feed;
+CRC@ = /Core/CRC%.CRC@;
+Feed = /Core/CRC%.Feed;
 
-@ Bit@ = /Core/Digits%.Bit@;
-% Bit = /Core/Digits%.Bit;
+Bit@ = /Core/Digits%.Bit@;
+Bit = /Core/Digits%.Bit;
 
-% HexToBits = /Core/Digits/String%.HexToBits;
+HexToBits = /Core/Digits/String%.HexToBits;
 
-% ShowBits = /Core/Digits/Show%.ShowBits;
+ShowBits = /Core/Digits/Show%.ShowBits;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-<<@>@>@ IoM@ = /Core/Io%.IoM@;
+IoM@ = /Core/Io%.IoM@;
 
-<<@>@>@ Main@ = /Core/Cli%.Main@;
-% Success = /Core/Cli%.Success;
+Main@ = /Core/Cli%.Main@;
+Success = /Core/Cli%.Success;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 
 Main@ Debug = <<@>@ M@>(IoM@<M@> io, List@<String@> _args) {

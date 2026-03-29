@@ -1,31 +1,31 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% And = /Std/Bool%.And;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+And = /Std/Bool%.And;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+Eq@ = /Std/Eq%.Eq@;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Empty = /Std/List%.Empty;
-<@>% Items = /Std/List%.Items;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Empty = /Std/List%.Empty;
+Items = /Std/List%.Items;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-<@>@ Show@ = /Std/Show%.Show@;
-% Format = /Std/Char/Ascii/Output%.Format;
+Show@ = /Std/Show%.Show@;
+Format = /Std/Char/Ascii/Output%.Format;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # A test suite for a Map@ implementation.
 # You provide:
@@ -109,7 +109,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       # Note: A < B, we expect the ForEach to iterate in the order A, B. Because
       # we add A to the end of the list before B, we expect the resulting list
       # to be in the order B, A.
-      @ Entry@ = *(K@ key, Bool@ value);
+      Entry@ = *(K@ key, Bool@ value);
       List@<Entry@> wnt = List[Entry@(b, False), Entry@(a, True)];
       List@<Entry@> got = m.ForEach(map, Empty<Entry@>,
         (K@ k, Bool@ v, List@<Entry@> l) {

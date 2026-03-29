@@ -1,12 +1,12 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ Char@ = /Std/Char%.Char@;
+Char@ = /Std/Char%.Char@;
 
-@ Int@ = /Std/Int%.Int@;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Int = /Std/Int/Lit%.Int;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;
@@ -14,28 +14,28 @@ Int@ 2 = Int|2;
 Int@ 3 = Int|3;
 Int@ 4 = Int|4;
 
-<@>% Get = /Std/List/Index%.Get;
+Get = /Std/List/Index%.Get;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-% HeadOf = /Fbld/Builtin/String%.HeadOf;
-% TailOf = /Fbld/Builtin/String%.TailOf;
+HeadOf = /Fbld/Builtin/String%.HeadOf;
+TailOf = /Fbld/Builtin/String%.TailOf;
 
-@ Impl@ = /Fbld/Markup%.Impl@;
-@ Markup@ = /Fbld/Markup%.Markup@;
-@ Command@ = /Fbld/Markup%.Command@;
+Impl@ = /Fbld/Markup%.Impl@;
+Markup@ = /Fbld/Markup%.Markup@;
+Command@ = /Fbld/Markup%.Command@;
 
-@ Env@ = /Fbld/Env%.Env@<Impl@>;
+Env@ = /Fbld/Env%.Env@<Impl@>;
 
-% Eval = /Fbld/Eval%.Eval;
-% AssertArgCount = /Fbld/Eval%.AssertArgCount;
+Eval = /Fbld/Eval%.Eval;
+AssertArgCount = /Fbld/Eval%.AssertArgCount;
 
-<@>@ Result@ = /Fbld/Result%.Result@;
-% r = /Fbld/Result%.Monad;
+Result@ = /Fbld/Result%.Result@;
+r = /Fbld/Result%.Monad;
 
-% EqMaybeChar = /Std/Maybe/Eq%.Eq(/Std/Char/Eq%.Eq);
+EqMaybeChar = /Std/Maybe/Eq%.Eq(/Std/Char/Eq%.Eq);
 
 (Markup@, Markup@) { Result@<Bool@>; }
 Equals = (Markup@ a, Markup@ b) {

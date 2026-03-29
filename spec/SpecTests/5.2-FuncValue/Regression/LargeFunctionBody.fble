@@ -4,9 +4,9 @@
 # many instructions between a check whether a value was undefined and the code
 # to handle that. In other words, lots of instructions needed for a single
 # function.
-@ Unit@ = *();
-@ Enum@ = +(Unit@ a, Unit@ b, Unit@ c, Unit@ d, Unit@ e);
-@ Triple@ = *(Enum@ 0, Enum@ 1, Enum@ 2);
+Unit@ = *();
+Enum@ = +(Unit@ a, Unit@ b, Unit@ c, Unit@ d, Unit@ e);
+Triple@ = *(Enum@ 0, Enum@ 1, Enum@ 2);
 
 (Enum@) { Enum@; } F = (Enum@ x) {
   # Initial access that should check if x is defined or not.

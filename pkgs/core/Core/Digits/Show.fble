@@ -1,17 +1,17 @@
 
-@ Bit@ = /Core/Digits%.Bit@;
-@ Hex@ = /Core/Digits%.Hex@;
+Bit@ = /Core/Digits%.Bit@;
+Hex@ = /Core/Digits%.Hex@;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<@>@ Show@ = /Std/Show%.Show@;
-<@>@ Output@ = /Std/Char/Output%.Output@;
-% Do = /Std/Char/Output%.Do;
-<@>% Return = /Std/Char/Output%.Return;
+Show@ = /Std/Show%.Show@;
+Output@ = /Std/Char/Output%.Output@;
+Do = /Std/Char/Output%.Do;
+Return = /Std/Char/Output%.Return;
 
-% String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 Show@<Bit@> ShowBit = (Bit@ b) {
   b.?(0: String|0, 1: String|1);

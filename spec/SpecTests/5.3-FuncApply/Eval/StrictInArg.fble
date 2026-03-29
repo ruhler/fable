@@ -1,9 +1,9 @@
 # @@fble-test@@ runtime-error 14:7
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ true = Bool@(true: Unit@());
 Bool@ false = Bool@(false: Unit@());
-@ Maybe@ = +(Bool@ just, Unit@ nothing);
+Maybe@ = +(Bool@ just, Unit@ nothing);
 Maybe@ m = Maybe@(nothing: Unit@());
 
 (Bool@) { Bool@; } Not = (Bool@ x) {

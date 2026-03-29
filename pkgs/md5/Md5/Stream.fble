@@ -1,20 +1,20 @@
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 
 # Stream module, parameterized by get monad and stream type T@.
 <<@>@ M@>(Monad@<M@> m)<@ T@> {
   # Stream@ --
   #   Represents a stream of values of type T@, read sequentially.
-  @ Next@ = *(T@ next, M@<Stream@> rest),
-  @ Stream@ = Maybe@<Next@>;
+  Next@ = *(T@ next, M@<Stream@> rest),
+  Stream@ = Maybe@<Next@>;
 
   # Put --
   #   Convenience function for defining a Stream@ of values in terms of a
@@ -30,8 +30,8 @@
 
   # StreamM@ --
   #   A monadic type for getting values from a stream.
-  <@>@ Result@ = <@ A@>{ *(M@<Stream@> s, A@ x); };
-  <@>@ StreamM@ = <@ A@>(M@<Stream@>) { M@<Result@<A@>>; };
+  Result@ = <@ A@>{ *(M@<Stream@> s, A@ x); };
+  StreamM@ = <@ A@>(M@<Stream@>) { M@<Result@<A@>>; };
 
   # StreamM -- The Monad@ instance for StreamM@.
   Monad@<StreamM@> StreamM = @(

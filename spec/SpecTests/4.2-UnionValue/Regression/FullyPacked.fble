@@ -1,8 +1,8 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ true = Bool@(true: Unit@());
 
 # Regression test for a bug where we packed a data value into exactly the
@@ -10,7 +10,7 @@ Bool@ true = Bool@(true: Unit@());
 # signed type instead of unsigned.
 
 # Recursive union type with 3-bit tag.
-@ Choice@ = +(
+Choice@ = +(
   Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3,
   Unit@ 4, Choice@ 5, Unit@ 6, Unit@ 7
 );
@@ -27,7 +27,7 @@ Choice@ z = v.5.5.5.5.5.5.5.5.5.5.5.5.5.5.5.5.5.5;
 
 # Put that in a struct with a zero-tagged union.
 # In the buggy case, it would be overwritten with 1s from the first arg.
-@ Pair@ = *(Choice@ a, Bool@ b);
+Pair@ = *(Choice@ a, Bool@ b);
 Pair@ p = Pair@(z, true);
 
 # Make sure the value of that bool is still true.

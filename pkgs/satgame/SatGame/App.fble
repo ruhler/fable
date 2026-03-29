@@ -1,54 +1,54 @@
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Char/Output%.Output@;
 
-@ Int@ = /Std/Int%.Int@;
-% Sub = /Std/Int%.Sub;
-% Mul = /Std/Int%.Mul;
-% Div = /Std/Int/Div%.Div;
-% Max = /Std/Int/Ord%.Max;
-% Min = /Std/Int/Ord%.Min;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Sub = /Std/Int%.Sub;
+Mul = /Std/Int%.Mul;
+Div = /Std/Int/Div%.Div;
+Max = /Std/Int/Ord%.Max;
+Min = /Std/Int/Ord%.Min;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+Put@ = /Core/Char/Stream%.Put@;
 
-% Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Output%.Format;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<<@>@>@ App@ = /App/App%.App@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
+App@ = /App/App%.App@;
+Event@ = /App/App%.Event@;
+Effect@ = /App/App%.Effect@;
 
-@ Color@ = /App/Drawing%.Color@;
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Point@ = /App/Drawing%.Point@;
-% Color = /App/Drawing%.Color;
-% Rect = /App/Drawing%.Rect;
-% Affine = /App/Drawing%.Affine;
-% Drawings = /App/Drawing%.Drawings;
+Color@ = /App/Drawing%.Color@;
+Drawing@ = /App/Drawing%.Drawing@;
+Point@ = /App/Drawing%.Point@;
+Color = /App/Drawing%.Color;
+Rect = /App/Drawing%.Rect;
+Affine = /App/Drawing%.Affine;
+Drawings = /App/Drawing%.Drawings;
 
-@ Params@ = /SatGame/Puzzle%.Params@;
-@ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
+Params@ = /SatGame/Puzzle%.Params@;
+Puzzle@ = /SatGame/Puzzle%.Puzzle@;
 
-@ Game@ = /SatGame/Game%.Game@;
-@ Toggle@ = /SatGame/Game%.Toggle@;
-% Cycle = /SatGame/Game%.Cycle;
-% ToggleDismissed = /SatGame/Game%.ToggleDismissed;
-% Toggle = /SatGame/Game%.Toggle;
+Game@ = /SatGame/Game%.Game@;
+Toggle@ = /SatGame/Game%.Toggle@;
+Cycle = /SatGame/Game%.Cycle;
+ToggleDismissed = /SatGame/Game%.ToggleDismissed;
+Toggle = /SatGame/Game%.Toggle;
 
-@ Layout@ = /SatGame/Game/Draw%.Layout@;
-@ TileIndex@ = /SatGame/Game/Draw%.TileIndex@;
-% Layout = /SatGame/Game/Draw%.Layout;
-% TileOf = /SatGame/Game/Draw%.TileOf;
+Layout@ = /SatGame/Game/Draw%.Layout@;
+TileIndex@ = /SatGame/Game/Draw%.TileIndex@;
+Layout = /SatGame/Game/Draw%.Layout;
+TileOf = /SatGame/Game/Draw%.TileOf;
 
-% Generate = /SatGame/Generate%;
+Generate = /SatGame/Generate%;
 
-@ Args@ = *(
+Args@ = *(
   Int@ num_vars,
   Int@ num_clauses,
   Int@ num_literals_per_clause,
@@ -62,9 +62,9 @@ Args@ DefaultArgs = @(
   seed: Int|1
 );
 
-@ Transform@ = *(Int@ x, Int@ y, Int@ s);
+Transform@ = *(Int@ x, Int@ y, Int@ s);
 
-@ State@ = *(
+State@ = *(
   Game@ game,
   Int@ mouse_x,
   Int@ mouse_y,

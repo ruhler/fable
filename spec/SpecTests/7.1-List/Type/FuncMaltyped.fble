@@ -1,5 +1,5 @@
 # @@fble-test@@ compile-error 6:1
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
 # The function f is not defined.

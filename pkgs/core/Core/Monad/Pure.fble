@@ -1,9 +1,9 @@
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
 # Pure@ --
 #   An implementation of a pure monad.
-<@>@ Pure@ = <@ T@> { T@; };
+Pure@ = <@ T@> { T@; };
 
 # Monad --
 #   The Monad@ instance for Pure@.

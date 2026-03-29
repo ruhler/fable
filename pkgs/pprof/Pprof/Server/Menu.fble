@@ -1,8 +1,8 @@
 
-<@>% Concat = /Std/List%.Concat;
+Concat = /Std/List%.Concat;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
 String@ Menu = Concat[
   Str|'<table><tr>',

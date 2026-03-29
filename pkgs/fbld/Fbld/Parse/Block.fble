@@ -1,49 +1,49 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-@ Char@ = /Std/Char%.Char@;
+Char@ = /Std/Char%.Char@;
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% List = /Std/List%.List;
-<@>% Concat = /Std/List%.Concat;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+List = /Std/List%.List;
+Concat = /Std/List%.Concat;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% StrE = /Std/Char/Ascii%.StrE;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+StrE = /Std/Char/Ascii%.StrE;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Loc@ = /Fbld/Loc%.Loc@;
+Loc@ = /Fbld/Loc%.Loc@;
 
-@ Markup@ = /Fbld/Markup%.Markup@;
-% Empty = /Fbld/Markup%.Empty;
-% Append = /Fbld/Markup%.Append;
+Markup@ = /Fbld/Markup%.Markup@;
+Empty = /Fbld/Markup%.Empty;
+Append = /Fbld/Markup%.Append;
 
-<@>@ M@ = /Fbld/Parse/M%.M@;
-<@>% Return = /Fbld/Parse/M%.Return;
-<@>% Error = /Fbld/Parse/M%.Error;
-<@>% Do = /Fbld/Parse/M%.Do;
-% Loc = /Fbld/Parse/M%.Loc;
-% Get = /Fbld/Parse/M%.Get;
-% GetIndent = /Fbld/Parse/M%.GetIndent;
-<@>% Try_ = /Fbld/Parse/M%.Try_;
-<@>% Test = /Fbld/Parse/M%.Test;
-<@>% Test_ = /Fbld/Parse/M%.Test_;
-% String = /Fbld/Parse/M%.String;
-% Or = /Fbld/Parse/M%.Or;
-% EndOfInput = /Fbld/Parse/M%.EndOfInput;
-<@>% Indented = /Fbld/Parse/M%.Indented;
+M@ = /Fbld/Parse/M%.M@;
+Return = /Fbld/Parse/M%.Return;
+Error = /Fbld/Parse/M%.Error;
+Do = /Fbld/Parse/M%.Do;
+Loc = /Fbld/Parse/M%.Loc;
+Get = /Fbld/Parse/M%.Get;
+GetIndent = /Fbld/Parse/M%.GetIndent;
+Try_ = /Fbld/Parse/M%.Try_;
+Test = /Fbld/Parse/M%.Test;
+Test_ = /Fbld/Parse/M%.Test_;
+String = /Fbld/Parse/M%.String;
+Or = /Fbld/Parse/M%.Or;
+EndOfInput = /Fbld/Parse/M%.EndOfInput;
+Indented = /Fbld/Parse/M%.Indented;
 
-% Inline = /Fbld/Parse/Inline%.Inline;
-% Name = /Fbld/Parse/Inline%.Name;
-% InlineArgs = /Fbld/Parse/Inline%.Args;
+Inline = /Fbld/Parse/Inline%.Inline;
+Name = /Fbld/Parse/Inline%.Name;
+InlineArgs = /Fbld/Parse/Inline%.Args;
 
 # Parses a blank line. Fails if we aren't at a blank line.
 M@<Unit@> BlankLine = {

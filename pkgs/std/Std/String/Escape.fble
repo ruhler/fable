@@ -1,24 +1,24 @@
 # @module[/Std/String/Escape%]
 #  Support for character escape sequences in strings.
 
-@ Char@ = /Std/Char%.Char@;
-% Char = /Std/Char%.Char;
+Char@ = /Std/Char%.Char@;
+Char = /Std/Char%.Char;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Mul = /Std/Int%.Mul;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Mul = /Std/Int%.Mul;
 
-@ HexLit@ = /Std/Int/Lit%.HexLit@;
-% Int = /Std/Int/Lit%.Int;
-% Hex = /Std/Int/Lit%.Hex;
+HexLit@ = /Std/Int/Lit%.HexLit@;
+Int = /Std/Int/Lit%.Int;
+Hex = /Std/Int/Lit%.Hex;
 
-<@>% Empty = /Std/List%.Empty;
-<@>% Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
+Items = /Std/List%.Items;
 
-<@>@ Span@ = /Std/List/Search%.Span@;
-<@>% Break = /Std/List/Search%.Break;
+Span@ = /Std/List/Search%.Span@;
+Break = /Std/List/Search%.Break;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
 (HexLit@) { Char@; }
 U = (HexLit@ hex) {

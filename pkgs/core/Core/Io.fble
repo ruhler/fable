@@ -1,11 +1,11 @@
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 # External@ --
 #  A computation that impacts external state.
-<@>@ External@ = <@ A@> {
+External@ = <@ A@> {
   # Internally we treat this as a pure function, but make it abstract so
   # nobody can execute it from pure fble code.
   (Unit@) { A@; }.%(@/Core/Io/''%);
@@ -21,12 +21,12 @@
 #   than it is to write arbitrary M@ everywhere, but it's harder to pass
 #   Io@<M@> everywhere than it is to write arbitrary M@ everywhere without
 #   passing Io@<M@> everywhere.
-<<@>@>@ Io@ = <<@>@ M@> { *(
+Io@ = <<@>@ M@> { *(
   <@ A@>(External@<A@>) { M@<A@>; } run
 ); };
   
 # Monadic Io interface.
-<<@>@>@ IoM@ = <<@>@ M@> { *(
+IoM@ = <<@>@ M@> { *(
   @<M@> M@,
   Monad@<M@> m,
   Io@<M@> io

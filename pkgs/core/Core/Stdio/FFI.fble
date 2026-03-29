@@ -1,27 +1,27 @@
 
-@ Char@ = /Std/Char%.Char@;
+Char@ = /Std/Char%.Char@;
 
-% Str = /Std/Char/Ascii%.Str;
-<@>@ Output@ = /Std/Char/Output%.Output@;
+Str = /Std/Char/Ascii%.Str;
+Output@ = /Std/Char/Output%.Output@;
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+Put@ = /Core/Char/Stream%.Put@;
 
-<<@>@>@ IoM@ = /Core/Io%.IoM@;
-<@>@ External@ = /Core/Io%.External@;
+IoM@ = /Core/Io%.IoM@;
+External@ = /Core/Io%.External@;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # Pretend type for FILE*. Only to be accessed from FFI functions.
-@ File@ = *(Unit@ file);
+File@ = *(Unit@ file);
 
 External@<File@> GetStdin = @<GetStdin>|GetStdin;
 External@<File@> GetStdout = @<GetStdout>|GetStdout;
@@ -36,7 +36,7 @@ External@<File@> GetStderr = @<GetStderr>|GetStderr;
 
 <<@>@ M@>(IoM@<M@>, File@, Output@) { M@<Unit@>; }
 Output = <<@>@ M@>(IoM@<M@> io, File@ file, Output@ output) {
-  @ S@ = M@<Unit@>;
+  S@ = M@<Unit@>;
   S@ return = io.m.return(Unit);
   (S@, (Unit@) { S@; }) { S@; } do = (S@ ma, (Unit@) { S@; } f) {
     io.m.do(ma, f);
@@ -46,9 +46,9 @@ Output = <<@>@ M@>(IoM@<M@> io, File@ file, Output@ output) {
   io.io.run(Flush(file));
 };
 
-% Text = {
-  <<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
-  <<@>@>@ OStream@ = /Core/Char/Stream%.OStream@;
+Text = {
+  IStream@ = /Core/Char/Stream%.IStream@;
+  OStream@ = /Core/Char/Stream%.OStream@;
 
   <<@>@ M@>(IoM@<M@>) { M@<IStream@<M@>>; }
   Stdin = <<@>@ M@>(IoM@<M@> io) {
@@ -77,10 +77,10 @@ Output = <<@>@ M@>(IoM@<M@> io, File@ file, Output@ output) {
 
   <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
   Write = <<@>@ M@>(IoM@<M@> io, String@ path) {
-    <@>% do = io.m.do;
-    <@>% return = io.m.return;
-    <@>% run = io.io.run;
-    % output = Output(io);
+    do = io.m.do;
+    return = io.m.return;
+    run = io.io.run;
+    output = Output(io);
     
     Maybe@<File@> file := do(run(Open(path, Str|w)));
     file.?(nothing: return(Nothing<OStream@<M@>>));
@@ -94,8 +94,8 @@ Output = <<@>@ M@>(IoM@<M@> io, File@ file, Output@ output) {
   @(Stdin, Stdout, Stderr, Read, Write);
 };
 
-% Binary = {
-  <<@>@>@ IStream@ = /Core/Stream%.IStream@;
+Binary = {
+  IStream@ = /Core/Stream%.IStream@;
 
   <<@>@ M@>(IoM@<M@>) { M@<IStream@<M@>>; }
   Stdin = <<@>@ M@>(IoM@<M@> io) {
@@ -112,9 +112,9 @@ Output = <<@>@ M@>(IoM@<M@> io, File@ file, Output@ output) {
 
   <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
   Read = <<@>@ M@>(IoM@<M@> io, String@ path) {
-    <@>% do = io.m.do;
-    <@>% return = io.m.return;
-    <@>% run = io.io.run;
+    do = io.m.do;
+    return = io.m.return;
+    run = io.io.run;
 
     Maybe@<File@> file := do(run(Open(path, Str|rb)));
     file.?(nothing: return(Nothing<IStream@<M@>>));

@@ -1,29 +1,29 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% And = /Std/Bool%.And;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+And = /Std/Bool%.And;
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+Put@ = /Core/Char/Stream%.Put@;
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
-% String = /Std/Char/Output%.String;
-% FormatE = /Std/Char/Ascii/Output%.FormatE;
-% StringE = /Std/Char/Ascii/Output%.StringE;
+Output@ = /Std/Char/Output%.Output@;
+String = /Std/Char/Output%.String;
+FormatE = /Std/Char/Ascii/Output%.FormatE;
+StringE = /Std/Char/Ascii/Output%.StringE;
 
-<@>% Concat = /Std/List%.Concat;
-<@>% ForEach = /Std/List%.ForEach;
+Concat = /Std/List%.Concat;
+ForEach = /Std/List%.ForEach;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-@ TestResult@ = /Std/Test%.TestResult@;
+Test@ = /Std/Test%.Test@;
+TestResult@ = /Std/Test%.TestResult@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # Runs a test or test suite, outputting summary information along the way.
 # Returns True if the all the tests pass, false otherwise.

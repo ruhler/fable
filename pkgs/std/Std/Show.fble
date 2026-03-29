@@ -1,7 +1,7 @@
 # @module[/Std/Show%]
 #  Interface for showing data in human readable form.
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Char/Output%.Output@;
 
 # @type[Show@] Interface for types that can be shown in human readable form.
 #  Common facility for converting values to human readable strings. Primarily
@@ -10,6 +10,6 @@
 #  @arg[@][T@] The type that implements the interface.
 #  @arg[T@][x] The value to show.
 #  @returns[Output@] A computation to output the value in human readable form.
-<@>@ Show@ = <@ T@>(T@) { Output@; };
+Show@ = <@ T@>(T@) { Output@; };
 
 @(Show@);

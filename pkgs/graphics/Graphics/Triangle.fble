@@ -1,42 +1,42 @@
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Color@ = /App/Drawing%.Color@;
-@ Point@ = /App/Drawing%.Point@;
-% Blank = /App/Drawing%.Blank;
-% Rect = /App/Drawing%.Rect;
-% Over = /App/Drawing%.Over;
+Drawing@ = /App/Drawing%.Drawing@;
+Color@ = /App/Drawing%.Color@;
+Point@ = /App/Drawing%.Point@;
+Blank = /App/Drawing%.Blank;
+Rect = /App/Drawing%.Rect;
+Over = /App/Drawing%.Over;
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% And = /Std/Bool%.And;
-% Not = /Std/Bool%.Not;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+And = /Std/Bool%.And;
+Not = /Std/Bool%.Not;
 
-@ Vec@ = /Graphics/3D%.Vec@;
-% AddV = /Graphics/3D%.AddV;
-% SubV = /Graphics/3D%.SubV;
-% MulVS = /Graphics/3D%.MulVS;
-% DivVS = /Graphics/3D%.DivVS;
+Vec@ = /Graphics/3D%.Vec@;
+AddV = /Graphics/3D%.AddV;
+SubV = /Graphics/3D%.SubV;
+MulVS = /Graphics/3D%.MulVS;
+DivVS = /Graphics/3D%.DivVS;
 
-@ Camera@ = /Graphics/Camera%.Camera@;
-@ Rect@ = /Graphics/Camera%.Rect@;
-% Perspective = /Graphics/Camera%.Perspective;
+Camera@ = /Graphics/Camera%.Camera@;
+Rect@ = /Graphics/Camera%.Rect@;
+Perspective = /Graphics/Camera%.Perspective;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Mul = /Std/Int%.Mul;
-% Eq = /Std/Int/Eq%.Eq;
-% Le = /Std/Int/Ord%.Le;
-% Ge = /Std/Int/Ord%.Ge;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Mul = /Std/Int%.Mul;
+Eq = /Std/Int/Eq%.Eq;
+Le = /Std/Int/Ord%.Le;
+Ge = /Std/Int/Ord%.Ge;
+Int = /Std/Int/Lit%.Int;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # Draw@ --
 #   A function to draw a triangle in 3D.
-@ Draw@ = (Camera@, Vec@, Vec@, Vec@, Color@) { Drawing@; };
+Draw@ = (Camera@, Vec@, Vec@, Vec@, Color@) { Drawing@; };
 
 # Clipped --
 #   Draw an already clipped triangle.
@@ -74,7 +74,7 @@ LeftOf = (Int@ ax, Int@ ay, Int@ bx, Int@ by) {
   Le(Mul(ax, by), Mul(bx, ay));
 };
 
-@ Sorted@ = *(Vec@ a, Vec@ b, Vec@ c);
+Sorted@ = *(Vec@ a, Vec@ b, Vec@ c);
 
 # Sort --
 #   Sort three vectors based on the predicate p.
@@ -121,17 +121,17 @@ IntersectY = (Int@ y, Int@ z, Vec@ a, Vec@ b) {
 #
 # This is a common routine that can be reused for clipping left, right, top,
 # or bottom edges.
-@ Side@ = +(Unit@ min, Unit@ max);
-@ Axis@ = +(Unit@ x, Unit@ y);
+Side@ = +(Unit@ min, Unit@ max);
+Axis@ = +(Unit@ x, Unit@ y);
 (Side@, Axis@, Draw@) { Draw@; } Clip = (Side@ side, Axis@ axis, Draw@ draw) {
-  % SideOf = side.?(min: RightOf, max: LeftOf);
-  % IntersectXY = axis.?(x: IntersectX, y: IntersectY);
-  % Bound = (Rect@ clip) {
+  SideOf = side.?(min: RightOf, max: LeftOf);
+  IntersectXY = axis.?(x: IntersectX, y: IntersectY);
+  Bound = (Rect@ clip) {
     side.?(
       min: axis.?(x: clip.x, y: clip.y),
       max: axis.?(x: Add(clip.x, clip.w), y: Add(clip.y, clip.h)));
   };
-  % GetXY = axis.?(x: (Vec@ v) { v.x; }, y: (Vec@ v) { v.y; });
+  GetXY = axis.?(x: (Vec@ v) { v.x; }, y: (Vec@ v) { v.y; });
 
   (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
     Int@ bound = Bound(camera.clip);
@@ -140,7 +140,7 @@ IntersectY = (Int@ y, Int@ z, Vec@ a, Vec@ b) {
       SideOf(GetXY(v), v.z, bound, camera.focus);
     };
 
-    % s = Sort(in_bounds, a, b, c);
+    s = Sort(in_bounds, a, b, c);
     Vec@ a = s.a;
     Vec@ b = s.b;
     Vec@ c = s.c;

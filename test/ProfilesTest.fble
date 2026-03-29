@@ -2,10 +2,10 @@
 # This file is used as input to fble-profiles-test to test profiling
 # instrumentation of .fble code.
 
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit);
 Bool@ False = Bool@(false: Unit);
 
@@ -31,6 +31,6 @@ Bool@ f2 = F2(Unit);
 
 # Make sure we don't output blocks per field here, which we used to do in the
 # past.
-% _ = @(t, f, f2);
+_ = @(t, f, f2);
 
 @();

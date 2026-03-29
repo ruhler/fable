@@ -1,19 +1,19 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
 
-<<@>@,@>@ Map@ = /Core/Map%.Map@;
+Map@ = /Core/Map%.Map@;
 
 <<@>@ M@, @ K@>(Map@<M@, K@>, Eq@<K@>)<@ V@>(Eq@<V@>, M@<V@>, M@<V@>) { Bool@; }
 Eq = <<@>@ M@, @ K@>(Map@<M@, K@> m, Eq@<K@> keq)<@ V@>(Eq@<V@> veq) {
-  @ Entry@ = *(K@ key, V@ value);
+  Entry@ = *(K@ key, V@ value);
 
   Eq@<Entry@> EqEntry = (Entry@ a, Entry@ b) {
     keq(a.key, b.key).?(false: False);

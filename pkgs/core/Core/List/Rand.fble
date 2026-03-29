@@ -1,16 +1,16 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Append = /Std/List%.Append;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Append = /Std/List%.Append;
 
-<<@>@>@ RngM@ = /Core/Random/Rng%.RngM@;
+RngM@ = /Core/Random/Rng%.RngM@;
 
 # Shuffles the elements of a list randomly.
 <<@>@ M@>(RngM@<M@>)<@ T@>(List@<T@>) { M@<List@<T@>>; }
 Shuffle = <<@>@ M@>(RngM@<M@> rng)<@ T@> {
-  @ Split@ = *(List@<T@> a, List@<T@> b);
+  Split@ = *(List@<T@> a, List@<T@> b);
   (List@<T@>) { M@<Split@>; } Split = (List@<T@> l) {
     l.?(empty: rng.m.return(Split@(l, l)));
     T@ head = l.items.head;

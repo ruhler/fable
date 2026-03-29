@@ -1,16 +1,16 @@
 # @module[/Std/Int/Lit%]
 #  Integer literals.
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Mul = /Std/Int%.Mul;
-% Incr = /Std/Int%.Incr;
-% 0 = /Std/Int%.0;
-% 1 = /Std/Int%.1;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Mul = /Std/Int%.Mul;
+Incr = /Std/Int%.Incr;
+0 = /Std/Int%.0;
+1 = /Std/Int%.1;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 Int@ 2 = Incr(1);
 Int@ 3 = Incr(2);
@@ -29,25 +29,25 @@ Int@ 15 = Incr(14);
 Int@ 16 = Incr(15);
 
 # Binary digits.
-@ Bin@ = +(Unit@ 0, Unit@ 1);
+Bin@ = +(Unit@ 0, Unit@ 1);
 
 # Octal digits.
-@ Oct@ = +(
+Oct@ = +(
   Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3,
   Unit@ 4, Unit@ 5, Unit@ 6, Unit@ 7
 );
 
 # Decimal digits.
-@ Dec@ = +(Oct@ oct, Unit@ 8, Unit@ 9);
+Dec@ = +(Oct@ oct, Unit@ 8, Unit@ 9);
 
 # Hex digits.
-@ Hex@ = +(Dec@ dec, 
+Hex@ = +(Dec@ dec, 
   Unit@ a, Unit@ b, Unit@ c, Unit@ d, Unit@ e, Unit@ f,
   Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E, Unit@ F
 );
 
 # Adds '_' as a separator to a digits type.
-<@>@ Sep@ = <@ T@> { +(T@ t, Unit@ _); };
+Sep@ = <@ T@> { +(T@ t, Unit@ _); };
 
 # Converts binary to Int@.
 (Bin@) { Int@; } FromBin = (Bin@ x) {
@@ -84,16 +84,16 @@ Literal = <@ T@>((T@) { Int@; } toInt, Int@ radix, Int@ x, List@<Sep@<T@>> str) 
 };
 
 # @type[BinLit@] Type for binary integer literal strings.
-@ BinLit@ = List@<Sep@<Bin@>>;
+BinLit@ = List@<Sep@<Bin@>>;
 
 # @type[OctLit@] Type for octal integer literal strings.
-@ OctLit@ = List@<Sep@<Oct@>>;
+OctLit@ = List@<Sep@<Oct@>>;
 
 # @type[IntLit@] Type for decimal integer literal strings.
-@ IntLit@ = List@<Sep@<Dec@>>;
+IntLit@ = List@<Sep@<Dec@>>;
 
 # @type[HexLit@] Type for hexadecimal integer literal strings.
-@ HexLit@ = List@<Sep@<Hex@>>;
+HexLit@ = List@<Sep@<Hex@>>;
 
 # @func[Bin] Binary integer literal
 #  A binary integer literal consists of a sequence of binary digits '0' and

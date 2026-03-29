@@ -1,8 +1,8 @@
 
-@ Char@ = /Std/Char%.Char@;
-% Pos = /Std/Char%.Pos;
+Char@ = /Std/Char%.Char@;
+Pos = /Std/Char%.Pos;
 
-<@>@ Cmp@ = /Std/Cmp%.Cmp@;
+Cmp@ = /Std/Cmp%.Cmp@;
 
 Cmp@<Char@> Ord = (Char@ a, Char@ b) {
   /Core/Int/Ord%.Ord(Pos(a), Pos(b));

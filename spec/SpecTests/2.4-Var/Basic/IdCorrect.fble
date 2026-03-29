@@ -1,7 +1,7 @@
 # @@fble-test@@ no-error
 
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 
 # Verify that a variable refers to the proper value.
 Bool@ x = Bool@(true: Unit@());

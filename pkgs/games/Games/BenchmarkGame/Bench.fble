@@ -1,15 +1,15 @@
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+TestSuite = /Std/Test%.TestSuite;
 
-% Game = /Games/BenchmarkGame/Game%;
-<<@>@>% BinaryTrees = /Games/BenchmarkGame/BinaryTrees%.Main;
-<<@>@>% FannkuchRedux = /Games/BenchmarkGame/FannkuchRedux/Main%.Main;
-<<@>@>% PiDigits = /Games/BenchmarkGame/PiDigits%.Main;
+Game = /Games/BenchmarkGame/Game%;
+BinaryTrees = /Games/BenchmarkGame/BinaryTrees%.Main;
+FannkuchRedux = /Games/BenchmarkGame/FannkuchRedux/Main%.Main;
+PiDigits = /Games/BenchmarkGame/PiDigits%.Main;
 
 # Benchmark for the benchmark games that takes about 1 minute to run.
 Test@ Bench = TestSuite(Str|BenchmarkGame, List[

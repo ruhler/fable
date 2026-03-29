@@ -1,23 +1,23 @@
 
-@ Num@ = /Pinball/Num%.Num@;
-% Add = /Pinball/Num%.Add;
-% Mul = /Pinball/Num%.Mul;
-% Eq = /Pinball/Num%.Eq;
-% Ge = /Pinball/Num%.Ge;
-% Le = /Pinball/Num%.Le;
-% Lt = /Pinball/Num%.Lt;
-% Int = /Pinball/Num%.Int;
+Num@ = /Pinball/Num%.Num@;
+Add = /Pinball/Num%.Add;
+Mul = /Pinball/Num%.Mul;
+Eq = /Pinball/Num%.Eq;
+Ge = /Pinball/Num%.Ge;
+Le = /Pinball/Num%.Le;
+Lt = /Pinball/Num%.Lt;
+Int = /Pinball/Num%.Int;
 
-@ Vec@ = /Pinball/Vec%.Vec@;
-% SubV = /Pinball/Vec%.SubV;
+Vec@ = /Pinball/Vec%.Vec@;
+SubV = /Pinball/Vec%.SubV;
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Output%.Format;
 
 Num@ 0 = Int|0;
 
-@ Paddle@ = *(
+Paddle@ = *(
   Vec@ center,    # The center of rotation of the paddle.
   Vec@ start,     # The start point of the paddle at angle 0 relative to center.
   Vec@ end,       # The end point of the paddle at angle 0 relative to center.

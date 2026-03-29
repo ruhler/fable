@@ -1,22 +1,22 @@
 
-@ Char@ = /Std/Char%.Char@;
-% IsNewline = /Core/Char/Type%.IsNewline;
+Char@ = /Std/Char%.Char@;
+IsNewline = /Core/Char/Type%.IsNewline;
 
-<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
+IStream@ = /Core/Char/Stream%.IStream@;
 
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
-<@,<@>@>@ State@ = /Core/State%.State@;
+Monad@ = /Std/Monad%.Monad@;
+State@ = /Core/State%.State@;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 # Gets everything up to and including the next newline character from stdin.
 # Returns an empty list in case of end of input.

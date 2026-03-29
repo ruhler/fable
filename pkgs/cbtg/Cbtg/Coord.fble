@@ -1,6 +1,6 @@
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
-@ Coord@ = *(Int@ x, Int@ y);
+Coord@ = *(Int@ x, Int@ y);
 
 @(Coord@);

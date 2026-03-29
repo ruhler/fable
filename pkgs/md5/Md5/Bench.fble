@@ -1,32 +1,32 @@
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-@ Int@ = /Std/Int%.Int@;
-% Sub = /Std/Int%.Sub;
-% Int = /Std/Int/Lit%.Int;
-% IsZero = /Std/Int/Sign%.IsZero;
+Int@ = /Std/Int%.Int@;
+Sub = /Std/Int%.Sub;
+Int = /Std/Int/Lit%.Int;
+IsZero = /Std/Int/Sign%.IsZero;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
-% H8 = /Md5/Bits/Bit8%.H8;
+Bit8@ = /Md5/Bits/Bit8%.Bit8@;
+H8 = /Md5/Bits/Bit8%.H8;
 
-<<@>@>% Md5 = /Md5/Md5%.Md5;
-@ Hash@ = /Md5/Hash%.Hash@;
+Md5 = /Md5/Md5%.Md5;
+Hash@ = /Md5/Hash%.Hash@;
 
 Int@ 1 = Int|1;
 
-% P = /Core/State/Pure%.Pure<Int@>;
-<@,@>% Eval = /Core/State/Pure%.Eval;
+P = /Core/State/Pure%.Pure<Int@>;
+Eval = /Core/State/Pure%.Eval;
 
 Maybe@<Bit8@> A5 = Just(H8|A5);
 

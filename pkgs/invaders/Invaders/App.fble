@@ -1,32 +1,32 @@
 
-@ Int@ = /Std/Int%.Int@;
-% 0 = /Std/Int%.0;
-% Neg = /Std/Int%.Neg;
-% Max = /Std/Int/Ord%.Max;
+Int@ = /Std/Int%.Int@;
+0 = /Std/Int%.0;
+Neg = /Std/Int%.Neg;
+Max = /Std/Int/Ord%.Max;
 
-% Int = /Std/Int/Lit%.Int;
+Int = /Std/Int/Lit%.Int;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<<@>@>@ App@ = /App/App%.App@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
+App@ = /App/App%.App@;
+Event@ = /App/App%.Event@;
+Effect@ = /App/App%.Effect@;
 
-@ Point@ = /App/Drawing%.Point@;
-% Color = /App/Drawing%.Color;
-% Over = /App/Drawing%.Over;
-% Rect = /App/Drawing%.Rect;
-% Affine = /App/Drawing%.Affine;
+Point@ = /App/Drawing%.Point@;
+Color = /App/Drawing%.Color;
+Over = /App/Drawing%.Over;
+Rect = /App/Drawing%.Rect;
+Affine = /App/Drawing%.Affine;
 
-% Game = /Invaders/Game%;
-@ Game@ = Game.Game@;
+Game = /Invaders/Game%;
+Game@ = Game.Game@;
 
-@ Dir@ = /Invaders/Ship%.Dir@;
+Dir@ = /Invaders/Ship%.Dir@;
 
-@ Input@ = +(
+Input@ = +(
   Unit@ tick,
   Unit@ quit,
   Game.Input@ game
@@ -37,9 +37,9 @@ Input@ Right = Input@(game: Game.Input@(dir: Dir@(right: Unit)));
 Input@ Stopped = Input@(game: Game.Input@(dir: Dir@(stopped: Unit)));
 Input@ Fire = Input@(game: Game.Input@(fire: Unit));
 
-<<@>@,@>@ Put@ = <<@>@ M@, @ A@>(A@) { M@<Unit@>; };
-<<@>@,@>@ Get@ = <<@>@ M@, @ A@> { M@<A@>; };
-<<@>@,@>@ State@ = <<@>@ M@, @ A@> { *(Get@<M@, A@> get, Put@<M@, A@> put); };
+Put@ = <<@>@ M@, @ A@>(A@) { M@<Unit@>; };
+Get@ = <<@>@ M@, @ A@> { M@<A@>; };
+State@ = <<@>@ M@, @ A@> { *(Get@<M@, A@> get, Put@<M@, A@> put); };
 
 <<@>@ M@>(Monad@<M@>, State@<M@, Int@>, App@<M@>, Int@, Int@) { M@<Unit@>; }
 Invaders = <<@>@ M@>(Monad@<M@> m, State@<M@, Int@> high_score_s, App@<M@> app, Int@ width, Int@ height) {

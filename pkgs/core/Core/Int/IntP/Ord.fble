@@ -1,11 +1,11 @@
 
-<@>@ Cmp@ = /Std/Cmp%.Cmp@;
-@ Compared@ = /Std/Cmp%.Compared@;
-% Less = /Std/Cmp%.Less;
-% Equal = /Std/Cmp%.Equal;
-% Greater = /Std/Cmp%.Greater;
+Cmp@ = /Std/Cmp%.Cmp@;
+Compared@ = /Std/Cmp%.Compared@;
+Less = /Std/Cmp%.Less;
+Equal = /Std/Cmp%.Equal;
+Greater = /Std/Cmp%.Greater;
 
-@ IntP@ = /Std/Int/IntP%.IntP@;
+IntP@ = /Std/Int/IntP%.IntP@;
 
 (Compared@) { Compared@; } RoundLt = (Compared@ x) {
   x.?(equal: Less, : x);

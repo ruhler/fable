@@ -1,8 +1,8 @@
 # @module[/Std/Char/Eq%]
 #  The Eq@ instance for Char@.
 
-@ Char@ = /Std/Char%.Char@;
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Char@ = /Std/Char%.Char@;
+Eq@ = /Std/Eq%.Eq@;
 
 # @func[Eq] Check two characters for equality.
 #  @arg[Char@][a] The first operand.

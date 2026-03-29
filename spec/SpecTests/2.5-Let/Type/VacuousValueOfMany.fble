@@ -1,8 +1,8 @@
 # @@fble-test@@ runtime-error 9:36
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 
 # The value y must not be vacuously defined like this, even if it is one of
 # multiple assignments going on here.

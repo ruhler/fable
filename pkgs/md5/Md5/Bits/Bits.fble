@@ -1,14 +1,14 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-@ Bit@ = /Core/Digits%.Bit@;
+Bool@ = /Std/Bool%.Bool@;
+Bit@ = /Core/Digits%.Bit@;
 
 # Overflow@ --
 #   A result with overflow bit.
-<@>@ Overflow@ = <@ T@> { *(T@ x, Bit@ out); };
+Overflow@ = <@ T@> { *(T@ x, Bit@ out); };
 
 # Bits@ --
 #   Interface for a fixed-width bit vector.
-<@>@ Bits@ = <@ T@> {
+Bits@ = <@ T@> {
   *(
     (T@) { T@; } Not,          # !a
     (T@, T@) { T@; } And,      # a & b

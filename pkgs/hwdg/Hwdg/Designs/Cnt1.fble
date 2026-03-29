@@ -1,18 +1,18 @@
 
-@ Addr@ = /Hwdg/Addr%.Addr@;
+Addr@ = /Hwdg/Addr%.Addr@;
 
-% Data = /Hwdg/Data%;
+Data = /Hwdg/Data%;
 
-@ Design@ = /Hwdg/Design%.Design@;
-% Designs = /Hwdg/Design%.Designs;
+Design@ = /Hwdg/Design%.Design@;
+Designs = /Hwdg/Design%.Designs;
 
-<@>@ Build@ = /Hwdg/Build%.Build@;
-<@>% Return = /Hwdg/Build%.Return;
-<@>% Do = /Hwdg/Build%.Do;
-% Addr = /Hwdg/Build%.Addr;
+Build@ = /Hwdg/Build%.Build@;
+Return = /Hwdg/Build%.Return;
+Do = /Hwdg/Build%.Do;
+Addr = /Hwdg/Build%.Addr;
 
-% Not = /Hwdg/Designs/Not%.Not;
-% Wire = /Hwdg/Designs/Wire%.Wire;
+Not = /Hwdg/Designs/Not%.Not;
+Wire = /Hwdg/Designs/Wire%.Wire;
 
 # A 1 bit counter.
 # A NOT gate without output connected to input via a wire.

@@ -1,5 +1,5 @@
 # @@fble-test@@ compile-error 6:1
-@ Unit@ = *();
+Unit@ = *();
 
 # The semicolon after the declaration is missing.
 Unit@ x = Unit@()

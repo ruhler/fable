@@ -1,18 +1,18 @@
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Nothing = /Std/Maybe%.Nothing;
-<@>% Just = /Std/Maybe%.Just;
+Maybe@ = /Std/Maybe%.Maybe@;
+Nothing = /Std/Maybe%.Nothing;
+Just = /Std/Maybe%.Just;
 
-@ Num@ = /Pinball/Num%.Num@;
-% Add = /Pinball/Num%.Add;
-% Sub = /Pinball/Num%.Sub;
-% Mul = /Pinball/Num%.Mul;
-% Neg = /Pinball/Num%.Neg;
-% Div = /Pinball/Num%.Div;
-% Sqrt = /Pinball/Num%.Sqrt;
-% Int = /Pinball/Num%.Int;
-% Eq = /Pinball/Num%.Eq;
-% Lt = /Pinball/Num%.Lt;
+Num@ = /Pinball/Num%.Num@;
+Add = /Pinball/Num%.Add;
+Sub = /Pinball/Num%.Sub;
+Mul = /Pinball/Num%.Mul;
+Neg = /Pinball/Num%.Neg;
+Div = /Pinball/Num%.Div;
+Sqrt = /Pinball/Num%.Sqrt;
+Int = /Pinball/Num%.Int;
+Eq = /Pinball/Num%.Eq;
+Lt = /Pinball/Num%.Lt;
 
 Num@ 0 = Int|0;
 Num@ 2 = Int|2;
@@ -21,12 +21,12 @@ Num@ 4 = Int|4;
 # Linear@ --
 #   Describe a function of the form:
 #     f(x) = a*x + b
-@ Linear@ = *(Num@ a, Num@ b);
+Linear@ = *(Num@ a, Num@ b);
 
 # Quadratic@ --
 #   Describe a function of the form:
 #     f(x) = a*x^2 + b*x + c
-@ Quadratic@ = *(Num@ a, Num@ b, Num@ c);
+Quadratic@ = *(Num@ a, Num@ b, Num@ c);
 
 # AddQQ -- 
 #   f(x) + g(x)
@@ -63,7 +63,7 @@ MulLL = (Linear@ f, Linear@ g) {
 #   Used to store the two roots of a quadratic equation.
 #
 # first is less than or equal to second.
-@ Roots@ = *(Num@ first, Num@ second);
+Roots@ = *(Num@ first, Num@ second);
 
 # Roots --
 #   Compute the roots of a quadratic equation.

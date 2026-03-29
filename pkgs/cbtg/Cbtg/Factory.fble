@@ -1,5 +1,5 @@
 
-@ Type@ = +(Unit@ house, Unit@ factory, Unit@ export);
+Type@ = +(Unit@ house, Unit@ factory, Unit@ export);
 
 # Returns the length of one of the square sides of the factory.
 (Type@) { Int@; }
@@ -8,15 +8,15 @@ Size = (Type@ type) {
 };
 
 
-@ TBag@ = *(Bag@ bag, Int@ time);
+TBag@ = *(Bag@ bag, Int@ time);
 
-@ Metrics@ = *(
+Metrics@ = *(
     Bag@ inputs,        # Count of inputs provided in last N ticks.
     Bag@ outputs,       # Count of outputs provided in last N ticks.
     List@<TBag@> recent # Recent inputs/outputs included in counts.
 );
 
-@ Factory@ = *(
+Factory@ = *(
     Type@ type,     # Type of factory.
     Bag@ inputs,    # Current space occupied by inputs.
     Bag@ outputs,   # Current space occupied by outputs.

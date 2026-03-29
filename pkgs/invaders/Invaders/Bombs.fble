@@ -1,43 +1,43 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-% Blank = /App/Drawing%.Blank;
-% Over = /App/Drawing%.Over;
-% Translate = /App/Drawing%.Translate;
+Drawing@ = /App/Drawing%.Drawing@;
+Blank = /App/Drawing%.Blank;
+Over = /App/Drawing%.Over;
+Translate = /App/Drawing%.Translate;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Lt = /Std/Int/Ord%.Lt;
-% Gt = /Std/Int/Ord%.Gt;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Lt = /Std/Int/Ord%.Lt;
+Gt = /Std/Int/Ord%.Gt;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
-<@>% ForEach = /Std/List%.ForEach;
-<@>% Length = /Std/List/Index%.Length;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
+ForEach = /Std/List%.ForEach;
+Length = /Std/List/Index%.Length;
 
-% Bases = /Invaders/Bases%;
-@ Bases@ = Bases.Bases@;
+Bases = /Invaders/Bases%;
+Bases@ = Bases.Bases@;
 
-% Graphics = /Invaders/Graphics%;
+Graphics = /Invaders/Graphics%;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Kind@ = +(Unit@ bomb, Unit@ squiggle);
+Kind@ = +(Unit@ bomb, Unit@ squiggle);
 
 Int@ BombVelocity = Int|1;
 Int@ SquiggleVelocity = Int|3;
 Int@ MinY = Int|2;
 Int@ MaxBombs = Int|20;
 
-@ Bomb@ = *(Int@ x, Int@ y, Kind@ kind);
+Bomb@ = *(Int@ x, Int@ y, Kind@ kind);
 
-@ Bombs@ = List@<Bomb@>;
+Bombs@ = List@<Bomb@>;
 
 Bombs@ Initial = Empty<Bomb@>;
 
@@ -53,7 +53,7 @@ Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
 # Fields:
 #   hit - true if hit, false otherwise.
 #   bombs - the bombs after removing the bomb that hit the ship.
-@ HitResult@ = *(Bool@ hit, Bombs@ bombs);
+HitResult@ = *(Bool@ hit, Bombs@ bombs);
 
 # HitShip -- 
 #   Returns just if any of the bombs are currently hitting the ship, with the
@@ -76,7 +76,7 @@ Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
   @(hit: True, bombs: bombs.items.tail);
 };
 
-@ HitBasesResult@ = *(Bombs@ bombs, Bases@ bases);
+HitBasesResult@ = *(Bombs@ bombs, Bases@ bases);
 
 # HitBases --
 #   Update Bombs@ and Bases@ for any collisions between the two.

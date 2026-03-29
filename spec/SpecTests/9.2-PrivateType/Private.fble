@@ -2,12 +2,12 @@
 
 # Module defining various values of private types for use in other spec tests.
 
-@ Pkg@ = @/SpecTests/'9.2-PrivateType'/Private%;
+Pkg@ = @/SpecTests/'9.2-PrivateType'/Private%;
 
-@ Unit@ = *().%(Pkg@);
+Unit@ = *().%(Pkg@);
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false).%(Pkg@);
+Bool@ = +(Unit@ true, Unit@ false).%(Pkg@);
 Bool@ True = Bool@(true: Unit);
 Bool@ False = Bool@(false: Unit);
 
@@ -15,23 +15,23 @@ Bool@ False = Bool@(false: Unit);
   x.?(true: False, false: True);
 };
 
-% Not2 = (Bool@ x) {
+Not2 = (Bool@ x) {
   x.?(true: False, false: True);
 }.%(Pkg@);
 
-@ Pair@ = *(Bool@ a, Bool@ b).%(Pkg@);
+Pair@ = *(Bool@ a, Bool@ b).%(Pkg@);
 Pair@ Pair = Pair@(True, True);
 
-<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); }.%(Pkg@);
+Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); }.%(Pkg@);
 Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
 <@ T@>(T@) { Maybe@<T@>; } Just = <@ T@>(T@ x) { Maybe@<T@>(just: x); };
 
-@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C).%(Pkg@);
+Enum@ = +(Unit@ A, Unit@ B, Unit@ C).%(Pkg@);
 Enum@ A = Enum@(A: Unit);
 Enum@ B = Enum@(B: Unit);
 Enum@ C = Enum@(C: Unit);
 
-@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil).%(Pkg@);
+L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil).%(Pkg@);
 
 (L@) { Unit@; }.%(Pkg@) F = (L@ l) {
   Unit@ _b = l.cons.head.B;

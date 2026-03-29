@@ -1,31 +1,31 @@
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-@ Int@ = /Std/Int%.Int@;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Empty = /Std/List%.Empty;
-<@>% Append = /Std/List%.Append;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Empty = /Std/List%.Empty;
+Append = /Std/List%.Append;
 
-% Str = /Std/Char/Ascii%.Str;
-% StrE = /Std/Char/Ascii%.StrE;
+Str = /Std/Char/Ascii%.Str;
+StrE = /Std/Char/Ascii%.StrE;
 
-<@,@>% Exec = /Core/State/Pure%.Exec;
+Exec = /Core/State/Pure%.Exec;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Fannkuch@ = /Games/BenchmarkGame/FannkuchRedux%.Fannkuch@;
-% FannkuchRedux = /Games/BenchmarkGame/FannkuchRedux%.FannkuchRedux;
-% Flip = /Games/BenchmarkGame/FannkuchRedux%.Flip;
-% Flips = /Games/BenchmarkGame/FannkuchRedux%.Flips;
-% RotateRight = /Games/BenchmarkGame/FannkuchRedux%.RotateRight;
-<<@>@>% Permutes = /Games/BenchmarkGame/FannkuchRedux%.Permutes;
+Fannkuch@ = /Games/BenchmarkGame/FannkuchRedux%.Fannkuch@;
+FannkuchRedux = /Games/BenchmarkGame/FannkuchRedux%.FannkuchRedux;
+Flip = /Games/BenchmarkGame/FannkuchRedux%.Flip;
+Flips = /Games/BenchmarkGame/FannkuchRedux%.Flips;
+RotateRight = /Games/BenchmarkGame/FannkuchRedux%.RotateRight;
+Permutes = /Games/BenchmarkGame/FannkuchRedux%.Permutes;
 
 Test@ Tests = TestSuite(Str|FannkuchRedux, List[
   Test(Str|Flip, (Unit@ _) {
@@ -65,8 +65,8 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
       List[Int|3, Int|1, Int|2],
       List[Int|1, Int|3, Int|2]];
 
-    @ S@ = List@<List@<Int@>>;
-    % p = /Core/State/Pure%.Pure<S@>;
+    S@ = List@<List@<Int@>>;
+    p = /Core/State/Pure%.Pure<S@>;
     (List@<Int@>) { p.M@<Unit@>; } F = (List@<Int@> l) {
       S@ s := p.m.do(p.s.get);
       p.s.put(Append(s, List[l]));

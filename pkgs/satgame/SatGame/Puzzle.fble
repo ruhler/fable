@@ -1,18 +1,18 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-@ Var@ = /SatGame/Var%.Var@;
+Var@ = /SatGame/Var%.Var@;
 
-@ Literal@ = *(Var@ var, Bool@ pos);
-@ Clause@ = List@<Literal@>;
-@ Puzzle@ = List@<Clause@>;
+Literal@ = *(Var@ var, Bool@ pos);
+Clause@ = List@<Literal@>;
+Puzzle@ = List@<Clause@>;
 
 # Parameters describing the shape and size of a puzzle.
-@ Params@ = *(
+Params@ = *(
   Int@ num_vars,
   Int@ num_clauses,
   Int@ num_literals_per_clause

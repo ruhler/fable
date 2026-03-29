@@ -1,13 +1,13 @@
 
-<@>% Empty = /Std/List%.Empty;
+Empty = /Std/List%.Empty;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-@ Test@ = /Std/Test%.Test@;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+TestSuite = /Std/Test%.TestSuite;
 
 # Import to test compilation.
-<<@>@>% _ = /Hwdg/App%;
+_ = /Hwdg/App%;
 
 Test@ Tests = TestSuite(Str|Hwdg, Empty<Test@>);
 

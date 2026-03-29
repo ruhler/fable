@@ -1,11 +1,11 @@
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
 # A unique identifier for a location.
 # For convenience when mapping to a 2d grid for graphics, we specify an address
 # as a location in a 2d grid. That is not intended to imply any structure for
 # the purposes of computation.
-@ Addr@ = *(Int@ x, Int@ y);
+Addr@ = *(Int@ x, Int@ y);
 
 
 @(Addr@);

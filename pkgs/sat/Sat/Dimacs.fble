@@ -1,35 +1,35 @@
 
-@ Char@ = /Std/Char%.Char@;
-% Char = /Std/Char/Ascii%.Char;
-% Ascii = /Std/Char/Ascii%.Ascii;
-% IsSpace = /Core/Char/Type%.IsSpace;
+Char@ = /Std/Char%.Char@;
+Char = /Std/Char/Ascii%.Char;
+Ascii = /Std/Char/Ascii%.Ascii;
+IsSpace = /Core/Char/Type%.IsSpace;
 
-@ Int@ = /Std/Int%.Int@;
-% Abs = /Std/Int/Sign%.Abs;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Abs = /Std/Int/Sign%.Abs;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
-<@>% Reverse = /Std/List%.Reverse;
-<@>% Concat = /Std/List%.Concat;
-<@>% Length = /Std/List/Index%.Length;
-<@>% Split = /Std/List/Search%.Split;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
+Reverse = /Std/List%.Reverse;
+Concat = /Std/List%.Concat;
+Length = /Std/List/Index%.Length;
+Split = /Std/List/Search%.Split;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Var@ = /Sat/Solver%.Var@;
-@ Clause@ = /Sat/Solver%.Clause@;
+Var@ = /Sat/Solver%.Var@;
+Clause@ = /Sat/Solver%.Clause@;
 
-@ Formula@ = List@<Clause@>;
+Formula@ = List@<Clause@>;
 
 # DIMACS cnf parser.
 # http://www.satcompetition.org/2009/format-benchmarks2009.html
@@ -44,10 +44,10 @@
 # -3 -4 0
 
 # Parse@ monad definition.
-@ ParseState@ = *(List@<String@> lines, Formula@ formula);
-<@>@ ParseResult@ = <@ T@> { *(ParseState@ state, T@ result); };
-<@>@ ParseStatus@ = <@ T@> { +(String@ error, ParseResult@<T@> parsed); };
-<@>@ ParseM@ = <@ T@> { (ParseState@) { ParseStatus@<T@>; }; };
+ParseState@ = *(List@<String@> lines, Formula@ formula);
+ParseResult@ = <@ T@> { *(ParseState@ state, T@ result); };
+ParseStatus@ = <@ T@> { +(String@ error, ParseResult@<T@> parsed); };
+ParseM@ = <@ T@> { (ParseState@) { ParseStatus@<T@>; }; };
 
 <@ T@>(T@) { ParseM@<T@>; } Return = <@ T@>(T@ x, ParseState@ s) {
   ParseStatus@<T@>(parsed: ParseResult@(s, x));
@@ -138,7 +138,7 @@ ParseM@<Unit@> ParseFromStart = {
   Error<Unit@>(Concat[Str|'invalid line: ', line.just]);
 };
 
-<@>@ Parse@ = <@ T@> { +(String@ error, T@ parsed); };
+Parse@ = <@ T@> { +(String@ error, T@ parsed); };
 
 (List@<String@>) { Parse@<Formula@>; } ParseLines = (List@<String@> lines) {
   ParseStatus@<Unit@> ps = ParseFromStart(ParseState@(lines, List<Clause@>[]));

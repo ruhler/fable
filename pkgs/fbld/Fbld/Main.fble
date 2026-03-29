@@ -1,47 +1,47 @@
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-<<@>@>@ IStream@ = /Core/Char/Stream%.IStream@;
-<<@>@>% GetText = /Core/Char/Stream/IStream%.GetText;
-% String = /Std/Char/Output%.String;
+Put@ = /Core/Char/Stream%.Put@;
+IStream@ = /Core/Char/Stream%.IStream@;
+GetText = /Core/Char/Stream/IStream%.GetText;
+String = /Std/Char/Output%.String;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% Empty = /Std/List%.Empty;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
 
-<<@>@>@ Monad@ = /Std/Monad%.Monad@;
+Monad@ = /Std/Monad%.Monad@;
 
-@ Exit@ = /Core/Cli%.Exit@;
-% Success = /Core/Cli%.Success;
-% Failure = /Core/Cli%.Failure;
+Exit@ = /Core/Cli%.Exit@;
+Success = /Core/Cli%.Success;
+Failure = /Core/Cli%.Failure;
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
-% Format = /Std/Char/Ascii/Output%.Format;
+Output@ = /Std/Char/Output%.Output@;
+Format = /Std/Char/Ascii/Output%.Format;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Unit@ = /Std/Unit%.Unit@;
-
-
-% Start = /Fbld/Loc%.Start;
-% Unknown = /Fbld/Loc%.Unknown;
-
-@ Markup@ = /Fbld/Markup%.Markup@;
-
-<@>@ Result@ = /Fbld/Result%.Result@;
-<@>% Ok = /Fbld/Result%.Ok;
-<@>% Error = /Fbld/Result%.Error;
-% r = /Fbld/Result%.Monad;
-<@>% ShowErrors = /Fbld/Result/Show%.ShowErrors;
-
-@ Text@ = /Fbld/Text%.Text@;
-% Text = /Fbld/Text%.Text;
+Unit@ = /Std/Unit%.Unit@;
 
 
-<<@>@>@ IO@ = <<@>@ M@> { *(
+Start = /Fbld/Loc%.Start;
+Unknown = /Fbld/Loc%.Unknown;
+
+Markup@ = /Fbld/Markup%.Markup@;
+
+Result@ = /Fbld/Result%.Result@;
+Ok = /Fbld/Result%.Ok;
+Error = /Fbld/Result%.Error;
+r = /Fbld/Result%.Monad;
+ShowErrors = /Fbld/Result/Show%.ShowErrors;
+
+Text@ = /Fbld/Text%.Text@;
+Text = /Fbld/Text%.Text;
+
+
+IO@ = <<@>@ M@> { *(
   IStream@<M@> in,
   Put@<M@, Output@> out,
   Put@<M@, Output@> err,

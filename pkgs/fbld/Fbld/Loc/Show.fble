@@ -1,9 +1,9 @@
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Output%.Format;
 
-@ Loc@ = /Fbld/Loc%.Loc@;
+Loc@ = /Fbld/Loc%.Loc@;
 
 Show@<Loc@> Show = (Loc@ x) {
   Format|'%s:%s:%s'[

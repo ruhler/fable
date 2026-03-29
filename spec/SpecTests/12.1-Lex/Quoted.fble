@@ -1,5 +1,5 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 
 # unit and 'unit' refer to the same entity. We should be able to use them
 # interchangeably.

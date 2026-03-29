@@ -1,45 +1,45 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Mul = /Std/Int%.Mul;
-% Gt = /Std/Int/Ord%.Gt;
-% Lt = /Std/Int/Ord%.Lt;
-@ QR@ = /Std/Int/Div%.QR@;
-% Div = /Std/Int/Div%.Div;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Mul = /Std/Int%.Mul;
+Gt = /Std/Int/Ord%.Gt;
+Lt = /Std/Int/Ord%.Lt;
+QR@ = /Std/Int/Div%.QR@;
+Div = /Std/Int/Div%.Div;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Take = /Std/List/Index%.Take;
-<@>% Drop = /Std/List/Index%.Drop;
+List@ = /Std/List%.List@;
+Take = /Std/List/Index%.Take;
+Drop = /Std/List/Index%.Drop;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Color@ = /App/Drawing%.Color@;
-% Color = /App/Drawing%.Color;
-% Drawings = /App/Drawing%.Drawings;
-% Rect = /App/Drawing%.Rect;
-% Blank = /App/Drawing%.Blank;
-% Translate = /App/Drawing%.Translate;
+Drawing@ = /App/Drawing%.Drawing@;
+Color@ = /App/Drawing%.Color@;
+Color = /App/Drawing%.Color;
+Drawings = /App/Drawing%.Drawings;
+Rect = /App/Drawing%.Rect;
+Blank = /App/Drawing%.Blank;
+Translate = /App/Drawing%.Translate;
 
-@ Game@ = /SatGame/Game%.Game@;
-@ Group@ = /SatGame/Game%.Group@;
-@ Tile@ = /SatGame/Game%.Tile@;
-% Solved = /SatGame/Game%.Solved;
+Game@ = /SatGame/Game%.Game@;
+Group@ = /SatGame/Game%.Group@;
+Tile@ = /SatGame/Game%.Tile@;
+Solved = /SatGame/Game%.Solved;
 
-@ Params@ = /SatGame/Puzzle%.Params@;
+Params@ = /SatGame/Puzzle%.Params@;
 
 Int@ VarWidth = Int|32;
 Int@ TileWidth = Int|48;
 Int@ GroupPad = Int|4;
 Int@ VarShift = Div(Sub(TileWidth, VarWidth), Int|2).q;
 
-@ Layout@ = *(
+Layout@ = *(
   Int@ cols,              # Number of group columns.
   Int@ rows,              # Number of rows.
   Int@ group_width,       # Width of a group, including one group pad.
@@ -118,7 +118,7 @@ Draw = (Layout@ layout, Game@ game) {
   Drawings[background, rows];
 };
 
-@ TileIndex@ = *(Int@ group, Int@ tile);
+TileIndex@ = *(Int@ group, Int@ tile);
 
 # Returns the tile associated with the given (x, y) coordinate, if any.
 (Layout@, Int@, Int@) { Maybe@<TileIndex@>; }

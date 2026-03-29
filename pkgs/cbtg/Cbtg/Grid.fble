@@ -1,26 +1,26 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
 
-% Ord = /Core/Int/Ord%.Ord;
+Ord = /Core/Int/Ord%.Ord;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-@ Coord@ = *(Int@ x, Int@ y);
+Coord@ = *(Int@ x, Int@ y);
 
 /Std/Cmp%.Cmp@<Coord@> CoordOrd = (Coord@ a, Coord@ b) {
   Ord(a.x, b.x).?(less: /Std/Cmp%.Less, greater: /Std/Cmp%.Greater);
   Ord(a.y, b.y);
 };
 
-% Grid = /Core/Map/Tree%.Map(CoordOrd);
+Grid = /Core/Map/Tree%.Map(CoordOrd);
 
-<@>@ Grid@ = <@ T@> { Grid.Map@<T@>; };
+Grid@ = <@ T@> { Grid.Map@<T@>; };
 
-<@>@ Entry@ = <@ T@> { *(Int@ x, Int@ y, T@ v); };
+Entry@ = <@ T@> { *(Int@ x, Int@ y, T@ v); };
 
 <@ T@>(List@<Entry@<T@>>) { Grid@<T@>; }
 Entries = <@ T@>(List@<Entry@<T@>> xs) {

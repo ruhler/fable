@@ -1,26 +1,26 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-@ Addr@ = /Hwdg/Addr%.Addr@;
-@ Data@ = /Hwdg/Data%.Data@;
+Addr@ = /Hwdg/Addr%.Addr@;
+Data@ = /Hwdg/Data%.Data@;
 
-@ Memory@ = /Hwdg/Memory%.Memory@;
-% Memory = /Hwdg/Memory%.Memory;
-% Empty = /Hwdg/Memory%.Empty;
-% Contains = /Hwdg/Memory%.Contains;
-% Disjoint = /Hwdg/Memory%.Disjoint;
-% Override = /Hwdg/Memory%.Override;
+Memory@ = /Hwdg/Memory%.Memory@;
+Memory = /Hwdg/Memory%.Memory;
+Empty = /Hwdg/Memory%.Empty;
+Contains = /Hwdg/Memory%.Contains;
+Disjoint = /Hwdg/Memory%.Disjoint;
+Override = /Hwdg/Memory%.Override;
 
 # A rule fires when the memory state is consistent with 'input'. The result of
 # firing a rule is to make the memory state consistent with 'output'
-@ Rule@ = *(Memory@ input, Memory@ output);
+Rule@ = *(Memory@ input, Memory@ output);
 
 # A design is a hierarchical composition of rules.
-@ Design@ = +(Rule@ rule, List@<Design@> designs);
+Design@ = +(Rule@ rule, List@<Design@> designs);
 
 # Helper for constructing a design which is a single rule. For example:
 #   Rule[a, b, c]|001[d, e][11];

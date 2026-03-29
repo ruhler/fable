@@ -1,35 +1,35 @@
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-% Int = /Std/Int/Lit%.Int;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% String = /Std/Char/Ascii/Output%.String;
-% Lines = /Std/String/Lines%.Lines;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+String = /Std/Char/Ascii/Output%.String;
+Lines = /Std/String/Lines%.Lines;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Loc@ = /Fbld/Loc%.Loc@;
-% Start = /Fbld/Loc%.Start;
+Loc@ = /Fbld/Loc%.Loc@;
+Start = /Fbld/Loc%.Start;
 
-@ Markup@ = /Fbld/Markup%.Markup@;
-% ToString = /Fbld/Markup%.ToString;
+Markup@ = /Fbld/Markup%.Markup@;
+ToString = /Fbld/Markup%.ToString;
 
-% Text = /Fbld/Text%.Text;
+Text = /Fbld/Text%.Text;
 
-<@>@ Result@ = /Fbld/Result%.Result@;
-<@>% Ok = /Fbld/Result%.Ok;
-<@>% Error = /Fbld/Result%.Error;
-% r = /Fbld/Result%.Monad;
-<@>% ShowErrors = /Fbld/Result/Show%.ShowErrors;
+Result@ = /Fbld/Result%.Result@;
+Ok = /Fbld/Result%.Ok;
+Error = /Fbld/Result%.Error;
+r = /Fbld/Result%.Monad;
+ShowErrors = /Fbld/Result/Show%.ShowErrors;
 
 (List@<String@>) { Result@<String@>; } Run = (List@<String@> lines) {
   String@ text = Lines(lines);

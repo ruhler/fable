@@ -1,43 +1,43 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
-% IsZero = /Std/Int/Sign%.IsZero;
-% Le = /Std/Int/Ord%.Le;
-% Div = /Std/Int/Div%.Div;
-% Range = /Core/Int/Iter%.Range;
-% CountUpTo = /Core/Int/Iter%.CountUpTo;
-% Int = /Std/Int/Lit%.Int;
-<<@>@>% Of = /Core/Int/Rand%.Of;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
+IsZero = /Std/Int/Sign%.IsZero;
+Le = /Std/Int/Ord%.Le;
+Div = /Std/Int/Div%.Div;
+Range = /Core/Int/Iter%.Range;
+CountUpTo = /Core/Int/Iter%.CountUpTo;
+Int = /Std/Int/Lit%.Int;
+Of = /Core/Int/Rand%.Of;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Items = /Std/List%.Items;
-<@>% List = /Std/List%.List;
-<@>% Take = /Std/List/Index%.Take;
+List@ = /Std/List%.List@;
+Items = /Std/List%.Items;
+List = /Std/List%.List;
+Take = /Std/List/Index%.Take;
 
-@ Literal@ = /SatGame/Puzzle%.Literal@;
-@ Clause@ = /SatGame/Puzzle%.Clause@;
-@ Params@ = /SatGame/Puzzle%.Params@;
-@ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
-@ Var@ = /SatGame/Var%.Var@;
+Literal@ = /SatGame/Puzzle%.Literal@;
+Clause@ = /SatGame/Puzzle%.Clause@;
+Params@ = /SatGame/Puzzle%.Params@;
+Puzzle@ = /SatGame/Puzzle%.Puzzle@;
+Var@ = /SatGame/Var%.Var@;
 
-<<@>@>% Shuffle = /Core/List/Rand%.Shuffle;
+Shuffle = /Core/List/Rand%.Shuffle;
 
-@ Map@ = /Core/Int/Map%.Map.Map@<Var@>;
-% Empty = /Core/Int/Map%.Map.Empty<Var@>;
-% Lookup = /Core/Int/Map%.Map.Lookup<Var@>;
-% Insert = /Core/Int/Map%.Map.Insert<Var@>;
+Map@ = /Core/Int/Map%.Map.Map@<Var@>;
+Empty = /Core/Int/Map%.Map.Empty<Var@>;
+Lookup = /Core/Int/Map%.Map.Lookup<Var@>;
+Insert = /Core/Int/Map%.Map.Insert<Var@>;
 
-% Prng = /Core/Random/Lfsr%.Lfsr24;
-% Rng = /Core/Random/Prng/Pure%.Pure(Prng);
+Prng = /Core/Random/Lfsr%.Lfsr24;
+Rng = /Core/Random/Prng/Pure%.Pure(Prng);
 
-<@,@>% Eval = /Core/State/Pure%.Eval;
+Eval = /Core/State/Pure%.Eval;
 
 # @func[Generate] Generates a random satgame puzzle.
 #  @arg[Params@][params] Parameters for the puzzle to generate.
@@ -54,7 +54,7 @@
   Rng.M@<Puzzle@> puzzle = {
     Map@ vars := Rng.m.do $ {
       List@<Var@> list := Rng.m.do(/SatGame/Var/Rand%.Vars(Rng, params.num_vars));
-      @ S@ = *(Int@ i, Map@ map);
+      S@ = *(Int@ i, Map@ map);
       Map@ map = /Std/List%.ForEach(list, S@(Int|0, Empty),
         (Var@ vid, S@ s) {
           S@(Incr(s.i), Insert(s.map, s.i, vid));

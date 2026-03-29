@@ -1,8 +1,8 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
-@ BoolF@ = (Bool@) { Bool@; };
-@ Bools@ = *(BoolF@ head, Bools@ tail);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
+BoolF@ = (Bool@) { Bool@; };
+Bools@ = *(BoolF@ head, Bools@ tail);
 Unit@ Unit = Unit@();
 Bool@ True = Bool@(true: Unit);
 Bool@ False = Bool@(false: Unit);

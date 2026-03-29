@@ -1,21 +1,21 @@
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Color@ = /App/Drawing%.Color@;
-@ Point@ = /App/Drawing%.Point@;
-% Blank = /App/Drawing%.Blank;
-% Drawings = /App/Drawing%.Drawings;
-% Over = /App/Drawing%.Over;
-% Rect = /App/Drawing%.Rect;
-% Translate = /App/Drawing%.Translate;
+Drawing@ = /App/Drawing%.Drawing@;
+Color@ = /App/Drawing%.Color@;
+Point@ = /App/Drawing%.Point@;
+Blank = /App/Drawing%.Blank;
+Drawings = /App/Drawing%.Drawings;
+Over = /App/Drawing%.Over;
+Rect = /App/Drawing%.Rect;
+Translate = /App/Drawing%.Translate;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Incr = /Std/Int%.Incr;
-% Decr = /Std/Int%.Decr;
-% Neg = /Std/Int%.Neg;
-% Mul = /Std/Int%.Mul;
-% Int = /Std/Int/Lit%.Int;
-% Lt = /Std/Int/Ord%.Lt;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Incr = /Std/Int%.Incr;
+Decr = /Std/Int%.Decr;
+Neg = /Std/Int%.Neg;
+Mul = /Std/Int%.Mul;
+Int = /Std/Int/Lit%.Int;
+Lt = /Std/Int/Ord%.Lt;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;
@@ -29,7 +29,7 @@ Int@ 2 = Int|2;
 #   y - the current y position.
 #   r2 - the square of the desired radius.
 #   color - the desired color.
-@ State@ = *(Int@ x, Int@ y, Int@ r2, Color@ color);
+State@ = *(Int@ x, Int@ y, Int@ r2, Color@ color);
 
 # CircleS --
 #   Helper function for drawing a circle about the origin.

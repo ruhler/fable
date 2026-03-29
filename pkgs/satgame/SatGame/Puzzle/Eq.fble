@@ -1,9 +1,9 @@
 
-% False = /Std/Bool%.False;
+False = /Std/Bool%.False;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-@ Literal@ = /SatGame/Puzzle%.Literal@;
+Literal@ = /SatGame/Puzzle%.Literal@;
 
 Eq@<Literal@> Literal = (Literal@ a, Literal@ b) {
   /SatGame/Var/Eq%.Eq(a.var, b.var).?(false: False);

@@ -1,49 +1,49 @@
 
-<@>@ List@ = /Std/List%.List@;
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+List@ = /Std/List%.List@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-@ Event@ = /Pinball/Event%.Event@;
-% Events = /Pinball/Event%.Events;
-% BallEvent = /Pinball/Event%.BallEvent;
-% TimeEvent = /Pinball/Event%.TimeEvent;
+Event@ = /Pinball/Event%.Event@;
+Events = /Pinball/Event%.Events;
+BallEvent = /Pinball/Event%.BallEvent;
+TimeEvent = /Pinball/Event%.TimeEvent;
 
-@ Num@ = /Pinball/Num%.Num@;
-% Add = /Pinball/Num%.Add;
-% Sub = /Pinball/Num%.Sub;
-% Neg = /Pinball/Num%.Neg;
-% Mul = /Pinball/Num%.Mul;
-% Div = /Pinball/Num%.Div;
-% Eq = /Pinball/Num%.Eq;
-% Gt = /Pinball/Num%.Gt;
-% Ge = /Pinball/Num%.Ge;
-% Lt = /Pinball/Num%.Lt;
-% Le = /Pinball/Num%.Le;
-% Int = /Pinball/Num%.Int;
+Num@ = /Pinball/Num%.Num@;
+Add = /Pinball/Num%.Add;
+Sub = /Pinball/Num%.Sub;
+Neg = /Pinball/Num%.Neg;
+Mul = /Pinball/Num%.Mul;
+Div = /Pinball/Num%.Div;
+Eq = /Pinball/Num%.Eq;
+Gt = /Pinball/Num%.Gt;
+Ge = /Pinball/Num%.Ge;
+Lt = /Pinball/Num%.Lt;
+Le = /Pinball/Num%.Le;
+Int = /Pinball/Num%.Int;
 
-@ Ball@ = /Pinball/Ball%.Ball@;
+Ball@ = /Pinball/Ball%.Ball@;
 
-@ Edge@ = /Pinball/Edge%.Edge@;
+Edge@ = /Pinball/Edge%.Edge@;
 
-@ Paddle@ = /Pinball/Paddle%.Paddle@;
+Paddle@ = /Pinball/Paddle%.Paddle@;
 
-% Rotate = /Pinball/Rotate%.Rotate;
+Rotate = /Pinball/Rotate%.Rotate;
 
-@ Linear@ = /Pinball/Quadratic%.Linear@;
-@ Quadratic@ = /Pinball/Quadratic%.Quadratic@;
-@ Roots@ = /Pinball/Quadratic%.Roots@;
-% SubQQ = /Pinball/Quadratic%.SubQQ;
-% SubLL = /Pinball/Quadratic%.SubLL;
-% MulLL = /Pinball/Quadratic%.MulLL;
-% Roots = /Pinball/Quadratic%.Roots;
+Linear@ = /Pinball/Quadratic%.Linear@;
+Quadratic@ = /Pinball/Quadratic%.Quadratic@;
+Roots@ = /Pinball/Quadratic%.Roots@;
+SubQQ = /Pinball/Quadratic%.SubQQ;
+SubLL = /Pinball/Quadratic%.SubLL;
+MulLL = /Pinball/Quadratic%.MulLL;
+Roots = /Pinball/Quadratic%.Roots;
 
-@ Vec@ = /Pinball/Vec%.Vec@;
-% AddV = /Pinball/Vec%.AddV;
-% SubV = /Pinball/Vec%.SubV;
-% MulVS = /Pinball/Vec%.MulVS;
-% RotateTo = /Pinball/Vec%.RotateTo;
-% RotateFrom = /Pinball/Vec%.RotateFrom;
-% Magnitude = /Pinball/Vec%.Magnitude;
-% Normalize = /Pinball/Vec%.Normalize;
+Vec@ = /Pinball/Vec%.Vec@;
+AddV = /Pinball/Vec%.AddV;
+SubV = /Pinball/Vec%.SubV;
+MulVS = /Pinball/Vec%.MulVS;
+RotateTo = /Pinball/Vec%.RotateTo;
+RotateFrom = /Pinball/Vec%.RotateFrom;
+Magnitude = /Pinball/Vec%.Magnitude;
+Normalize = /Pinball/Vec%.Normalize;
 
 Num@ 0 = Int|0;
 
@@ -53,7 +53,7 @@ Num@ 0 = Int|0;
 # Returns a time event if there is no collision within the given time.
 # If there is a collision, return the ball in the state just after the
 # collision at the time of collision.
-<@>@ BallCollider@ = <@ T@>(Ball@, T@, Num@) { Event@; };
+BallCollider@ = <@ T@>(Ball@, T@, Num@) { Event@; };
 
 # BallEdge --
 #   Check for and return collision results between a ball and an edge.

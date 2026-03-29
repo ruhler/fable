@@ -1,13 +1,13 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% Or = /Std/Bool%.Or;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+Or = /Std/Bool%.Or;
 
-@ Char@ = /Std/Char%.Char@;
-% Pos = /Std/Char%.Pos;
-% Char = /Std/Char/Ascii%.Char;
-% Ascii = /Std/Char/Ascii%.Ascii;
+Char@ = /Std/Char%.Char@;
+Pos = /Std/Char%.Pos;
+Char = /Std/Char/Ascii%.Char;
+Ascii = /Std/Char/Ascii%.Ascii;
 
 (Char@) { Bool@; } IsUpper = (Char@ c) {
   /Std/Int/Ord%.Lt(Pos(c), Pos(Char|'A')).?(true: False);

@@ -1,11 +1,11 @@
 # @@fble-test@@ compile-error 13:10
-@ Unit@ = *();
+Unit@ = *();
 
-@ PkgA@ = @/SpecTests/'9.2-PrivateType'/Equals/PackageTypeMismatchWithSingleAccess%;
-@ PkgB@ = @/Foo/Bar%;
+PkgA@ = @/SpecTests/'9.2-PrivateType'/Equals/PackageTypeMismatchWithSingleAccess%;
+PkgB@ = @/Foo/Bar%;
 
-@ A@ = Unit@.%(PkgA@);
-@ B@ = Unit@.%(PkgB@);
+A@ = Unit@.%(PkgA@);
+B@ = Unit@.%(PkgB@);
 
 (A@ x) {
   # Type B@ is not equal to A@, because we don't have access to B@ to be able

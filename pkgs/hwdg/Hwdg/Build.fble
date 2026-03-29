@@ -1,18 +1,18 @@
 
-% Incr = /Std/Int%.Incr;
-% Int = /Std/Int/Lit%.Int;
+Incr = /Std/Int%.Incr;
+Int = /Std/Int/Lit%.Int;
 
-@ Addr@ = /Hwdg/Addr%.Addr@;
-@ Data@ = /Hwdg/Data%.Data@;
+Addr@ = /Hwdg/Addr%.Addr@;
+Data@ = /Hwdg/Data%.Data@;
 
-@ Memory@ = /Hwdg/Memory%.Memory@;
-% Memory = /Hwdg/Memory%.Memory;
-% Empty = /Hwdg/Memory%.Empty;
-% Override = /Hwdg/Memory%.Override;
+Memory@ = /Hwdg/Memory%.Memory@;
+Memory = /Hwdg/Memory%.Memory;
+Empty = /Hwdg/Memory%.Empty;
+Override = /Hwdg/Memory%.Override;
 
-@ S@ = *(Addr@ next, Memory@ init);
-<@>@ R@ = <@ A@> { *(S@ s, A@ x); };
-<@>@ Build@ = <@ A@>(S@) { R@<A@>; };
+S@ = *(Addr@ next, Memory@ init);
+R@ = <@ A@> { *(S@ s, A@ x); };
+Build@ = <@ A@>(S@) { R@<A@>; };
 
 <@ A@>(A@) { Build@<A@>; }
 Return = <@ A@>(A@ x, S@ s) {

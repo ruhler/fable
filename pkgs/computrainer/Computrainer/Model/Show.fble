@@ -1,18 +1,18 @@
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
-% String = /Std/Char/Ascii/Output%.String;
-% Format = /Std/Char/Ascii/Output%.Format;
+String = /Std/Char/Ascii/Output%.String;
+Format = /Std/Char/Ascii/Output%.Format;
 
-@ Coord@ = /Computrainer/Grid%.Coord@;
-% Grid = /Computrainer/Grid%.Grid;
+Coord@ = /Computrainer/Grid%.Coord@;
+Grid = /Computrainer/Grid%.Grid;
 
-@ Car@ = /Computrainer/Car%.Car@;
-@ Cars@ = /Computrainer/Car%.Cars@;
+Car@ = /Computrainer/Car%.Car@;
+Cars@ = /Computrainer/Car%.Cars@;
 
-@ Gates@ = /Computrainer/Model%.Gates@;
-@ Model@ = /Computrainer/Model%.Model@;
-@ State@ = /Computrainer/State%.State@;
+Gates@ = /Computrainer/Model%.Gates@;
+Model@ = /Computrainer/Model%.Model@;
+State@ = /Computrainer/State%.State@;
 
 Show@<Coord@> Coord = (Coord@ x) {
     Format|'(%s, %s)'[/Std/Int/Show%.Show(x.x), /Std/Int/Show%.Show(x.y)];

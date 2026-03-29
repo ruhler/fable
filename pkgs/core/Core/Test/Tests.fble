@@ -1,30 +1,30 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
+Output@ = /Std/Char/Output%.Output@;
+Put@ = /Core/Char/Stream%.Put@;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-<@>@ Pure@ = /Core/Monad/Pure%.Pure@;
+Pure@ = /Core/Monad/Pure%.Pure@;
 
-% Str = /Std/Char/Ascii%.Str;
+Str = /Std/Char/Ascii%.Str;
 
-% String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
-% Pass = /Std/Test%.Pass;
-% Fail = /Std/Test%.Fail;
-% ExpectFails = /Std/Test%.ExpectFails;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
+Pass = /Std/Test%.Pass;
+Fail = /Std/Test%.Fail;
+ExpectFails = /Std/Test%.ExpectFails;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # Run a test with the test runner, for testing purposes.
 # Returns whether the test passed or failed.

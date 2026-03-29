@@ -1,13 +1,13 @@
 
 # This fble program is used to help test gdb debuggability of fble.
 
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit);
 
-@ Light@ = +(Unit@ red, Unit@ yellow, Unit@ green);
+Light@ = +(Unit@ red, Unit@ yellow, Unit@ green);
 
 (Light@) { Light@; } Next = (Light@ light) {
   # Add a let statement to test setting breakpoints after assignment.

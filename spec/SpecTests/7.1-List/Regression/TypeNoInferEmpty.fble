@@ -1,11 +1,11 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 
-<@>@ L@ = <@ T@> {
-  @ X@ = +(*(T@ head, X@ tail) cons, Unit@ nil);
+L@ = <@ T@> {
+  X@ = +(*(T@ head, X@ tail) cons, Unit@ nil);
   X@;
 };
 
@@ -13,7 +13,7 @@ Unit@ Unit = Unit@();
   Maybe@<T@>(nothing: Unit);
 };
 
-@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
+Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
 
 # Regression test of specifying types explicitly while not providing arguments
 # to a list expression. This caused an internal assertion to be triggered in

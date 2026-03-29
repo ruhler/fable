@@ -1,5 +1,5 @@
 
-@ Model@ = *(
+Model@ = *(
     Grid.Map@<Train@> trains,
     Grid.Map@<Rail@> rails,
 

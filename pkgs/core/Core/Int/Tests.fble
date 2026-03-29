@@ -1,45 +1,45 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% Not = /Std/Bool%.Not;
+Bool@ = /Std/Bool%.Bool@;
+Not = /Std/Bool%.Not;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-% Ord = /Std/Cmp%;
-@ Compared@ = Ord.Compared@;
+Ord = /Std/Cmp%;
+Compared@ = Ord.Compared@;
 
-<@>% List = /Std/List%.List;
+List = /Std/List%.List;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% String = /Std/Char/Ascii/Output%.String;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
-% Pass = /Std/Test%.Pass;
-% Fail = /Std/Test%.Fail;
+Test@ = /Std/Test%.Test@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
+Pass = /Std/Test%.Pass;
+Fail = /Std/Test%.Fail;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Int@ = /Std/Int%.Int@;
-% Neg = /Std/Int%.Neg;
+Int@ = /Std/Int%.Int@;
+Neg = /Std/Int%.Neg;
 
-% Sqrt = /Std/Int/Sqrt%.Sqrt;
+Sqrt = /Std/Int/Sqrt%.Sqrt;
 
-% Lt = /Std/Int/Ord%.Lt;
-% Le = /Std/Int/Ord%.Le;
-% Gt = /Std/Int/Ord%.Gt;
-% Ge = /Std/Int/Ord%.Ge;
-% Min = /Std/Int/Ord%.Min;
-% Max = /Std/Int/Ord%.Max;
-% IOrd = /Core/Int/Ord%.Ord;
-% IsZero = /Std/Int/Sign%.IsZero;
-% Abs = /Std/Int/Sign%.Abs;
+Lt = /Std/Int/Ord%.Lt;
+Le = /Std/Int/Ord%.Le;
+Gt = /Std/Int/Ord%.Gt;
+Ge = /Std/Int/Ord%.Ge;
+Min = /Std/Int/Ord%.Min;
+Max = /Std/Int/Ord%.Max;
+IOrd = /Core/Int/Ord%.Ord;
+IsZero = /Std/Int/Sign%.IsZero;
+Abs = /Std/Int/Sign%.Abs;
 
-% Bin = /Std/Int/Lit%.Bin;
-% Oct = /Std/Int/Lit%.Oct;
-% Int = /Std/Int/Lit%.Int;
-% Hex = /Std/Int/Lit%.Hex;
+Bin = /Std/Int/Lit%.Bin;
+Oct = /Std/Int/Lit%.Oct;
+Int = /Std/Int/Lit%.Int;
+Hex = /Std/Int/Lit%.Hex;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;

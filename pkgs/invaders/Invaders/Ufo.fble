@@ -1,32 +1,32 @@
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ Decimal@ = /Core/Digits%.Decimal@;
+Decimal@ = /Core/Digits%.Decimal@;
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-% Blank = /App/Drawing%.Blank;
-% Translate = /App/Drawing%.Translate;
+Drawing@ = /App/Drawing%.Drawing@;
+Blank = /App/Drawing%.Blank;
+Translate = /App/Drawing%.Translate;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Neg = /Std/Int%.Neg;
-% Div = /Std/Int/Div%.Div;
-% Eq = /Std/Int/Eq%.Eq;
-% Lt = /Std/Int/Ord%.Lt;
-% Gt = /Std/Int/Ord%.Gt;
-% Int = /Std/Int/Lit%.Int;
-% LeastSignificantDigit = /Core/Int/Digits%.LeastSignificantDigit;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Neg = /Std/Int%.Neg;
+Div = /Std/Int/Div%.Div;
+Eq = /Std/Int/Eq%.Eq;
+Lt = /Std/Int/Ord%.Lt;
+Gt = /Std/Int/Ord%.Gt;
+Int = /Std/Int/Lit%.Int;
+LeastSignificantDigit = /Core/Int/Digits%.LeastSignificantDigit;
 
-% Graphics = /Invaders/Graphics%;
+Graphics = /Invaders/Graphics%;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # DirState@ --
 #   State keeping track of which direction the ufo will fly in from.
@@ -34,7 +34,7 @@
 # The intention is to repeat the cycle: LLRLRR, which hopefully will make it
 # seem random, or at least hard for a player to remember where in the cycle
 # we are.
-@ DirState@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4, Unit@ 5);
+DirState@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4, Unit@ 5);
 
 DirState@ InitialDirState = DirState@(0: Unit);
 
@@ -54,11 +54,11 @@ DirState@ InitialDirState = DirState@(0: Unit);
 # Fields:
 #   x - the x coordinate of the UFO.
 #   v - the x velocity of the UFO.
-@ Flying@ = *(Int@ x, Int@ v);
+Flying@ = *(Int@ x, Int@ v);
 
 # Points@ -- 
 #   The number of points for hitting the ufo.
-@ Points@ = +(Unit@ 50, Unit@ 100, Unit@ 150, Unit@ 300);
+Points@ = +(Unit@ 50, Unit@ 100, Unit@ 150, Unit@ 300);
 
 # PointsValue --
 #   Converts Points@ to Int@.
@@ -82,25 +82,25 @@ DirState@ InitialDirState = DirState@(0: Unit);
 #   time - the number of ticks left for the ufo to be dying.
 #   x - the position of the ufo when it died.
 #   points - the points for killing the ufo.
-@ Dying@ = *(Int@ time, Int@ x, Points@ points);
+Dying@ = *(Int@ time, Int@ x, Points@ points);
 
 # Hiding@ --
 #   State of a hiding ufo.
 #
 # Fields:
 #   time - the number of ticks left for the ufo to be hiding.
-@ Hiding@ = *(Int@ time);
+Hiding@ = *(Int@ time);
 
 # State@ --
 #   The state of the ufo.
-@ State@ = +(Flying@ flying, Dying@ dying, Hiding@ hiding);
+State@ = +(Flying@ flying, Dying@ dying, Hiding@ hiding);
 
 # Ufo@ -- 
 # 
 # Fields:
 #   state - the current state of the ufo (flying, dying, or hiding) 
 #   dir - the state tracking the direction to fly in from next.
-@ Ufo@ = *(State@ state, DirState@ dir);
+Ufo@ = *(State@ state, DirState@ dir);
 
 Int@ MinX = Int|40;
 Int@ MaxX = Int|264;
@@ -160,7 +160,7 @@ Ufo@ Initial = Ufo@(State@(hiding: Hiding@(HidingTime)), InitialDirState);
     });
 };
 
-@ Kill@ = *(Int@ points, Ufo@ ufo);
+Kill@ = *(Int@ points, Ufo@ ufo);
 
 # Points --
 #   Choose the number of points to get for shooting the ufo.

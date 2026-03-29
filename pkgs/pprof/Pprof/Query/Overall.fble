@@ -1,7 +1,7 @@
 
-@ Sequence@ = /Pprof/Profile%.Sequence@;
+Sequence@ = /Pprof/Profile%.Sequence@;
 
-@ Query@ = /Pprof/Query%.Query@;
+Query@ = /Pprof/Query%.Query@;
 
 # @func[Query] Get blocks by overall time.
 #  @arg[Profile@][profile] The profile to query.

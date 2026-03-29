@@ -1,8 +1,8 @@
 # @@fble-test@@ runtime-error 10:15
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit);
 
 (Bool@) { Unit@; } G = (Bool@ x) {

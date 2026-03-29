@@ -1,17 +1,17 @@
 # @module[/Std/Char/Output%]
 #  Utilities for outputting characters.
 
-@ Char@ = /Std/Char%.Char@;
-% U = /Std/Char/Lit%.U;
+Char@ = /Std/Char%.Char@;
+U = /Std/Char/Lit%.U;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Empty = /Std/List%.Empty;
-<@>% Items = /Std/List%.Items;
+List@ = /Std/List%.List@;
+Empty = /Std/List%.Empty;
+Items = /Std/List%.Items;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # @struct[Stream@] Interface of stream types S@ that you can output to.
 #  @field[@][S@] The type that the interface applies to.
@@ -20,14 +20,14 @@
 #   Output one thing followed by another.
 #  @field[(Char@) { S@; }][put]
 #   Output a single character.
-<@>@ Stream@ = <@ S@> { *(
+Stream@ = <@ S@> { *(
   S@ return,
   (S@, (Unit@) { S@; }) { S@; } do,
   (Char@) { S@; } put
 );};
 
 # @type@[Output@] A computation that outputs characters to a stream.
-<@>@ Output@ = <@ S@>(Stream@<S@>) { S@; };
+Output@ = <@ S@>(Stream@<S@>) { S@; };
 
 # @value[Return] A computation that outputs nothing.
 #  @type[Output@]
@@ -141,7 +141,7 @@ Format = (String@ fmt, List@<Output@> args)<@ S@>(Stream@<S@> s) {
 };
 
 # Output a string given the tail of the string.
-@ StringStream@ = (String@) { String@; };
+StringStream@ = (String@) { String@; };
 
 # Implementation of Stream@ for StringStream@.
 Stream@<StringStream@> StringStream = @(

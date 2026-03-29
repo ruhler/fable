@@ -1,12 +1,12 @@
 
-<@>@ Cmp@ = /Std/Cmp%.Cmp@;
-% Less = /Std/Cmp%.Less;
-% Equal = /Std/Cmp%.Equal;
-% Greater = /Std/Cmp%.Greater;
+Cmp@ = /Std/Cmp%.Cmp@;
+Less = /Std/Cmp%.Less;
+Equal = /Std/Cmp%.Equal;
+Greater = /Std/Cmp%.Greater;
 
-% OrdP = /Core/Int/IntP/Ord%.Ord;
+OrdP = /Core/Int/IntP/Ord%.Ord;
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
 Cmp@<Int@> Ord = (Int@ a, Int@ b) {
   a.?(

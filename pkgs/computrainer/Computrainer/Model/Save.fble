@@ -1,21 +1,21 @@
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
-<@>% Return = /Std/Char/Output%.Return;
-% Concat = /Std/Char/Output%.Concat;
-% Format = /Std/Char/Ascii/Output%.Format;
-% FormatE = /Std/Char/Ascii/Output%.FormatE;
-% String = /Std/Char/Ascii/Output%.String;
+Output@ = /Std/Char/Output%.Output@;
+Return = /Std/Char/Output%.Return;
+Concat = /Std/Char/Output%.Concat;
+Format = /Std/Char/Ascii/Output%.Format;
+FormatE = /Std/Char/Ascii/Output%.FormatE;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Car@ = /Computrainer/Car%.Car@;
-@ Cars@ = /Computrainer/Car%.Cars@;
-@ Dir@ = /Computrainer/Dir%.Dir@;
-@ Coord@ = /Computrainer/Grid%.Coord@;
-<@>@ Grid@ = /Computrainer/Grid%.Grid@;
-% Grid = /Computrainer/Grid%.Grid;
-@ Gate@ = /Computrainer/Gate%.Gate@;
-@ Gates@ = /Computrainer/Model%.Gates@;
-@ Model@ = /Computrainer/Model%.Model@;
-@ Phase@ = /Computrainer/State%.Phase@;
+Car@ = /Computrainer/Car%.Car@;
+Cars@ = /Computrainer/Car%.Cars@;
+Dir@ = /Computrainer/Dir%.Dir@;
+Coord@ = /Computrainer/Grid%.Coord@;
+Grid@ = /Computrainer/Grid%.Grid@;
+Grid = /Computrainer/Grid%.Grid;
+Gate@ = /Computrainer/Gate%.Gate@;
+Gates@ = /Computrainer/Model%.Gates@;
+Model@ = /Computrainer/Model%.Model@;
+Phase@ = /Computrainer/State%.Phase@;
 
 (Car@) { Output@; }
 Car = (Car@ c) {

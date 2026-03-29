@@ -20,7 +20,7 @@
 #    Int@ ascii = ToAscii(c);
 #    Unit@ _ := m.do(stdio.PutString(Show(ascii));
 #    m.return(True)
-<<@>@>@ Monad@ = <<@>@ M@> {
+Monad@ = <<@>@ M@> {
   *(
     <@ A@>(A@) { M@<A@>; } return,
     <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } do

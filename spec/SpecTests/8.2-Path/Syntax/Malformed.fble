@@ -1,4 +1,4 @@
-# @@fble-test@@ compile-error 3:25
+# @@fble-test@@ compile-error 3:23
 # The module path is not well formed.
-% Unit = /SpecTests/Unit.Unit;
+Unit = /SpecTests/Unit.Unit;
 Unit;

@@ -2,15 +2,15 @@
 #  Utilities for working with string equality and substrings. This is a
 #  specialization of /Std/List/Eq% for strings.
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-@ Char@ = /Std/Char%.Char@;
-% CharEq = /Std/Char/Eq%.Eq;
+Char@ = /Std/Char%.Char@;
+CharEq = /Std/Char/Eq%.Eq;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
-@ String@ = /Std/String%.String@;
+Eq@ = /Std/Eq%.Eq@;
+String@ = /Std/String%.String@;
 
 # @func[Eq] Check if two strings are equal.
 #  @arg[String@][a] The first string.
@@ -92,7 +92,7 @@ Eq@<String@> Eq = /Std/List/Eq%.Eq(CharEq);
 #
 #  @field[String@][span] A prefix of a string.
 #  @field[String@][tail] The remainder of the string.
-@ Span@ = /Std/List/Eq%.Span@<Char@>;
+Span@ = /Std/List/Eq%.Span@<Char@>;
 
 # @func[Break] Splits the string in two around a given substring.
 #  @arg[String@][string] The string to check.

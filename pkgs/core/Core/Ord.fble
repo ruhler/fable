@@ -1,11 +1,11 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ Compared@ = /Std/Cmp%.Compared@;
+Compared@ = /Std/Cmp%.Compared@;
 
-<@>@ Order@ = <@ T@> { *(
+Order@ = <@ T@> { *(
   (T@, T@) { Compared@; } cmp,
   (T@, T@) { Bool@; } eq,
   (T@, T@) { Bool@; } ne,

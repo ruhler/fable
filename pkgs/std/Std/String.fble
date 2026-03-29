@@ -1,12 +1,12 @@
 # @module[/Std/String%]
 #  The string type.
 
-@ Char@ = /Std/Char%.Char@;
+Char@ = /Std/Char%.Char@;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
 # @type[String@] The string type.
 #   A character string, represented as a list of Char@.
-@ String@ = List@<Char@>;
+String@ = List@<Char@>;
 
 @(String@);

@@ -1,8 +1,8 @@
 # @@fble-test@@ no-error
 
-@ Unit@ = *();
+Unit@ = *();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 
 # Basic use of a non-function foreign value.
 # The foreign value 'False' for this module must be supplied by the test

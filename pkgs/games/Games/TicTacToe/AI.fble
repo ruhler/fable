@@ -1,26 +1,26 @@
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% ForEach = /Std/List%.ForEach;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+ForEach = /Std/List%.ForEach;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
-<@>% DoWhile = /Core/Maybe%.DoWhile;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
+DoWhile = /Core/Maybe%.DoWhile;
 
-% Less = /Std/Cmp%.Less;
-% Equal = /Std/Cmp%.Equal;
-% Greater = /Std/Cmp%.Greater;
+Less = /Std/Cmp%.Less;
+Equal = /Std/Cmp%.Equal;
+Greater = /Std/Cmp%.Greater;
 
-% Unit = /Std/Unit%.Unit;
+Unit = /Std/Unit%.Unit;
 
-@ Board@ = /Games/TicTacToe/Board%.Board@;
-@ Player@ = /Games/TicTacToe/Board%.Player@;
-@ Position@ = /Games/TicTacToe/Board%.Position@;
-@ Result@ = /Games/TicTacToe/Board%.Result@;
-@ Square@ = /Games/TicTacToe/Board%.Square@;
-% BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
-% Move = /Games/TicTacToe/Board%.Move;
+Board@ = /Games/TicTacToe/Board%.Board@;
+Player@ = /Games/TicTacToe/Board%.Player@;
+Position@ = /Games/TicTacToe/Board%.Position@;
+Result@ = /Games/TicTacToe/Board%.Result@;
+Square@ = /Games/TicTacToe/Board%.Square@;
+BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
+Move = /Games/TicTacToe/Board%.Move;
 
 /Std/Cmp%.Cmp@<Square@> SquareOrd = (Square@ a, Square@ b) {
   a.?(
@@ -92,8 +92,8 @@
       Loss: Result@(Win: Unit));
 };
 
-@ PositionResult@ = *(Position@ position, Result@ result);
-@ BoardPositionResult@ = *(Board@ board, PositionResult@ pr);
+PositionResult@ = *(Position@ position, Result@ result);
+BoardPositionResult@ = *(Board@ board, PositionResult@ pr);
 
 (BoardPositionResult@) { BoardPositionResult@; }
 RotateBPR = (BoardPositionResult@ bpr) {
@@ -140,13 +140,13 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
-% Map = /Core/Map/Tree%.Map(BoardOrd);
-@ MemoTable@ = Map.Map@<PositionResult@>;
-% Empty = Map.Empty<PositionResult@>;
-% Lookup = Map.Lookup<PositionResult@>;
-% Insert = Map.Insert<PositionResult@>;
+Map = /Core/Map/Tree%.Map(BoardOrd);
+MemoTable@ = Map.Map@<PositionResult@>;
+Empty = Map.Empty<PositionResult@>;
+Lookup = Map.Lookup<PositionResult@>;
+Insert = Map.Insert<PositionResult@>;
 
-<@>@ MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
+MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
 
 # Return the expected result of the game for player 'x', assuming player 'x'
 # has just moved and that both players play optimally.
@@ -209,7 +209,7 @@ ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
 
 # AI@ --
 #   Internal state for the AI.
-@ AI@ = MemoTable@;
+AI@ = MemoTable@;
 
 # Initial --
 #   An initial value to use for AI@.
@@ -222,7 +222,7 @@ AI@ Initial = {
 
 # AIR@ --
 #   Result of running the AI.
-@ AIR@ = *(AI@ ai, Position@ position);
+AIR@ = *(AI@ ai, Position@ position);
 
 # Move --
 #   Make a move by AI@.

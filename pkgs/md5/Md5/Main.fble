@@ -1,40 +1,40 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
-% And = /Std/Bool%.And;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+And = /Std/Bool%.And;
 
-<<@>@,@>@ Put@ = /Core/Char/Stream%.Put@;
-% String = /Std/Char/Output%.String;
-% FormatE = /Std/Char/Ascii/Output%.FormatE;
+Put@ = /Core/Char/Stream%.Put@;
+String = /Std/Char/Output%.String;
+FormatE = /Std/Char/Ascii/Output%.FormatE;
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Any = /Std/List/Search%.Any;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Any = /Std/List/Search%.Any;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-<<@>@>@ IoM@ = /Core/Io%.IoM@;
-<<@>@>@ Main@ = /Core/Cli%.Main@;
-% Success = /Core/Cli%.Success;
-% Failure = /Core/Cli%.Failure;
+IoM@ = /Core/Io%.IoM@;
+Main@ = /Core/Cli%.Main@;
+Success = /Core/Cli%.Success;
+Failure = /Core/Cli%.Failure;
 
-<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+IStream@ = /Core/Stream%.IStream@;
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Char/Output%.Output@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% Format = /Std/Char/Ascii/Output%.Format;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+Format = /Std/Char/Ascii/Output%.Format;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
-@ Hash@ = /Md5/Hash%.Hash@;
+Bit8@ = /Md5/Bits/Bit8%.Bit8@;
+Hash@ = /Md5/Hash%.Hash@;
 
 (Int@) { Bit8@; } ToBits = /Md5/Bits/Int%.ToBits(/Md5/Bits/Bit8%.Bits);
 

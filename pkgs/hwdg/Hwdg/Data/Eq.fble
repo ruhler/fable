@@ -1,10 +1,10 @@
 
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-@ Data@ = /Hwdg/Data%.Data@;
+Data@ = /Hwdg/Data%.Data@;
 
 Eq@<Data@> Eq = (Data@ a, Data@ b) {
   a.?(

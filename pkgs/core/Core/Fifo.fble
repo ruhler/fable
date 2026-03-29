@@ -1,14 +1,14 @@
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
-<@>% Reverse = /Std/List%.Reverse;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
+Reverse = /Std/List%.Reverse;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 # First in first out fifo.
 #  @field[List@<T@>][front] Elements at the front of the fifo, oldest first.
@@ -17,7 +17,7 @@
 #  Invariant: if the fifo is not empty, the front field is not empty. In other
 #  words, if the front of the fifo is empty, the back of the fifo must be
 #  empty.
-<@>@ Fifo@ = <@ T@> { *(List@<T@> front, List@<T@> back); };
+Fifo@ = <@ T@> { *(List@<T@> front, List@<T@> back); };
 
 Fifo@ Empty = <@ T@> { Fifo@(/Std/List%.Empty<T@>, /Std/List%.Empty<T@>); };
 

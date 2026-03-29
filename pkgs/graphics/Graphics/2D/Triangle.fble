@@ -1,27 +1,27 @@
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Color@ = /App/Drawing%.Color@;
-@ Point@ = /App/Drawing%.Point@;
-% Blank = /App/Drawing%.Blank;
-% Over = /App/Drawing%.Over;
-% Rect = /App/Drawing%.Rect;
+Drawing@ = /App/Drawing%.Drawing@;
+Color@ = /App/Drawing%.Color@;
+Point@ = /App/Drawing%.Point@;
+Blank = /App/Drawing%.Blank;
+Over = /App/Drawing%.Over;
+Rect = /App/Drawing%.Rect;
 
-@ Int@ = /Std/Int%.Int@;
-% Add = /Std/Int%.Add;
-% Sub = /Std/Int%.Sub;
-% Int = /Std/Int/Lit%.Int;
-% Le = /Std/Int/Ord%.Le;
-% Max = /Std/Int/Ord%.Max;
-% Min = /Std/Int/Ord%.Min;
-% IsNegative = /Std/Int/Sign%.IsNegative;
-% Range = /Core/Int/Iter%.Range;
+Int@ = /Std/Int%.Int@;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Int = /Std/Int/Lit%.Int;
+Le = /Std/Int/Ord%.Le;
+Max = /Std/Int/Ord%.Max;
+Min = /Std/Int/Ord%.Min;
+IsNegative = /Std/Int/Sign%.IsNegative;
+Range = /Core/Int/Iter%.Range;
 
-<@>% For = /Core/Iter%.For;
+For = /Core/Iter%.For;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;
 
-@ Sorted@ = *(Point@ 0, Point@ 1, Point@ 2);
+Sorted@ = *(Point@ 0, Point@ 1, Point@ 2);
 
 (Point@, Point@, Point@) { Sorted@; }
 SortByY = (Point@ a, Point@ b, Point@ c) {
@@ -42,7 +42,7 @@ SortByY = (Point@ a, Point@ b, Point@ c) {
 #   A fixed point number.
 #
 # i = x + r/S, r ∊ [0, S), for some constant S given by the context.
-@ Fixed@ = *(Int@ x, Int@ r);
+Fixed@ = *(Int@ x, Int@ r);
 
 # Fixed --
 #   Produce a fixed point number from integer x, remainder r, and scale s.
@@ -72,7 +72,7 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
 
   # Draw horizontal lines between line segments ab and ac starting from the
   # bottom point a and going up to the middle point b.
-  @ State@ = *(Drawing@ drawing, Fixed@ xb, Fixed@ xc);
+  State@ = *(Drawing@ drawing, Fixed@ xb, Fixed@ xc);
   State@ initial = @(
     drawing: Blank,
     xb: Fixed@(a.x, 0),

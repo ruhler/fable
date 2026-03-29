@@ -1,7 +1,7 @@
 # @@fble-test@@ no-error
 
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ False = Bool@(false: Unit@());
 
 <@ A@>(A@)<@ B@>(B@) { B@; } Poly = <@ A@>(A@ _a)<@ B@>(B@ b) { b; };

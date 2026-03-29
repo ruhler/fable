@@ -1,8 +1,8 @@
 
-@ Int@ = /Std/Int%.Int@;
+Int@ = /Std/Int%.Int@;
 
 # Interface for a pseudo-random number generator.
-<@>@ Prng@ = <@ S@> { *(
+Prng@ = <@ S@> { *(
     @<S@> S@,               # State of the Prng@.
     (S@) { S@; } next,      # State transition function.
     Int@ n,                 # Number of random bits you get per state.

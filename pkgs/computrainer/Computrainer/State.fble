@@ -1,25 +1,25 @@
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-@ Coord@ = /Computrainer/Grid%.Coord@;
-<@>@ Grid@ = /Computrainer/Grid%.Grid@;
-% Grid = /Computrainer/Grid%.Grid;
+Coord@ = /Computrainer/Grid%.Coord@;
+Grid@ = /Computrainer/Grid%.Grid@;
+Grid = /Computrainer/Grid%.Grid;
 
-@ Dir@ = /Computrainer/Dir%.Dir@;
+Dir@ = /Computrainer/Dir%.Dir@;
 
-% Cars = /Computrainer/Car%;
-@ Car@ = Cars.Car@;
-@ Cars@ = Cars.Cars@;
+Cars = /Computrainer/Car%;
+Car@ = Cars.Car@;
+Cars@ = Cars.Cars@;
 
 # Whether the next thing to go is the engines or the gates.
-@ Phase@ = +(Unit@ engines, Unit@ gates);
+Phase@ = +(Unit@ engines, Unit@ gates);
 
 # State is made up of cars and the set of gates that are currently routing
 # trains through.
-@ State@ = *(Cars@ cars, Grid@<Dir@> routing, Phase@ phase);
+State@ = *(Cars@ cars, Grid@<Dir@> routing, Phase@ phase);
 
 (Cars@) { State@; }
 State = (Cars@ cars) {

@@ -1,11 +1,11 @@
 
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-@ Entry@ = /Pprof/Query%.Entry@;
-@ Table@ = /Pprof/Query%.Table@;
+Entry@ = /Pprof/Query%.Entry@;
+Table@ = /Pprof/Query%.Table@;
 
 Eq@<Entry@> Entry = (Entry@ a, Entry@ b) {
   /Pprof/Profile/Eq%.Sequence(a.seq, b.seq).?(false: False);

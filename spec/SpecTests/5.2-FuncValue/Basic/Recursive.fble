@@ -1,6 +1,6 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
-@ Int@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3);
+Unit@ = *();
+Int@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3);
 
 # Recursive functions are allowed.
 (Int@) { Int@; } zeroify = (Int@ x) {

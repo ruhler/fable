@@ -1,7 +1,7 @@
-# @@fble-test@@ compile-error 5:3
-@ Unit@ = *();
+# @@fble-test@@ compile-error 5:1
+Unit@ = *();
 
 # Foo@ should be a type given its name, but it is assigned to a value.
-@ Foo@ = Unit@();
+Foo@ = Unit@();
 
 Unit@();

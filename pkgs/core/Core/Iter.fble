@@ -1,27 +1,27 @@
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
-<@>% Types = <@ T@> {
+Types = <@ T@> {
   # IterH@ --
   #   An iterator that points to a value.
-  @ H@ = *(T@ value, I@ next),
+  H@ = *(T@ value, I@ next),
 
   # IterM@ --
   #   An iterator that may point to a value or may have reached the end of the
   #   sequence.
-  @ M@ = +(H@ has, Unit@ end),
+  M@ = +(H@ has, Unit@ end),
 
   # Iter@ --
   #   An iterator over a sequence of values.
-  @ I@ = (Unit@) { M@; };
+  I@ = (Unit@) { M@; };
 
   @(H@, M@, I@);
 };
 
-<@>@ IterH@ = <@ T@> { Types<T@>.H@; };
-<@>@ IterM@ = <@ T@> { Types<T@>.M@; };
-<@>@ Iter@ = <@ T@> { Types<T@>.I@; };
+IterH@ = <@ T@> { Types<T@>.H@; };
+IterM@ = <@ T@> { Types<T@>.M@; };
+Iter@ = <@ T@> { Types<T@>.I@; };
 
 <@ T@>(T@, Iter@<T@>) { IterM@<T@>; } Has = <@ T@>(T@ value, Iter@<T@> next) {
   IterM@(has: IterH@(value, next));

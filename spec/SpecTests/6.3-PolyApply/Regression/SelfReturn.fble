@@ -1,9 +1,9 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 
-<@>@ S@ = <@ T@> {
-  @ P@ = *(T@ head, X@ tail),
-  @ X@ = +(P@ cons, Unit@ nil);
+S@ = <@ T@> {
+  P@ = *(T@ head, X@ tail),
+  X@ = +(P@ cons, Unit@ nil);
   X@;
 };
 

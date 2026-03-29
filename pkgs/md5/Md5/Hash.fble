@@ -1,26 +1,26 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% And = /Std/Bool%.And;
-% True = /Std/Bool%.True;
+Bool@ = /Std/Bool%.Bool@;
+And = /Std/Bool%.And;
+True = /Std/Bool%.True;
 
-% String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Hex@ = /Core/Digits%.Hex@;
+Hex@ = /Core/Digits%.Hex@;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% ForEach = /Std/List%.ForEach;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+ForEach = /Std/List%.ForEach;
 
-<@>@ Show@ = /Std/Show%.Show@;
-<@>@ Output@ = /Std/Char/Output%.Output@;
-% Do = /Std/Char/Output%.Do;
-<@>% Return = /Std/Char/Output%.Return;
+Show@ = /Std/Show%.Show@;
+Output@ = /Std/Char/Output%.Output@;
+Do = /Std/Char/Output%.Do;
+Return = /Std/Char/Output%.Return;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-% H8 = /Md5/Bits/Bit8%.H8;
+H8 = /Md5/Bits/Bit8%.H8;
 
-@ Hash@ = *(
+Hash@ = *(
   Hex@  0, Hex@  1, Hex@  2, Hex@  3, Hex@  4, Hex@  5, Hex@  6, Hex@  7,
   Hex@  8, Hex@  9, Hex@ 10, Hex@ 11, Hex@ 12, Hex@ 13, Hex@ 14, Hex@ 15,
   Hex@ 16, Hex@ 17, Hex@ 18, Hex@ 19, Hex@ 20, Hex@ 21, Hex@ 22, Hex@ 23,

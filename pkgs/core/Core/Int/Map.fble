@@ -1,23 +1,23 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-@ Int@ = /Std/Int%.Int@;
-% 0 = /Std/Int%.0;
+Int@ = /Std/Int%.Int@;
+0 = /Std/Int%.0;
 
-@ IntP@ = /Std/Int/IntP%.IntP@;
+IntP@ = /Std/Int/IntP%.IntP@;
 
-% P = /Core/Int/IntP/Map%.Map;
+P = /Core/Int/IntP/Map%.Map;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
 
-@ Key@ = Int@;
+Key@ = Int@;
 
 # A Map from Int@ to V@.
-<@>@ Map@ = <@ V@> { *(P.Map@<V@> n, Maybe@<V@> 0, P.Map@<V@> p); };
+Map@ = <@ V@> { *(P.Map@<V@> n, Maybe@<V@> 0, P.Map@<V@> p); };
 
 Map@ Empty = <@ V@> {
   Map@(P.Empty<V@>, Nothing<V@>, P.Empty<V@>);

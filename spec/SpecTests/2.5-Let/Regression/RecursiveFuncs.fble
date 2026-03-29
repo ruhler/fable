@@ -1,9 +1,9 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 
-@ P@ = *(Bool@ head, S@ tail),
-@ S@ = +(Unit@ nil, P@ cons);
+P@ = *(Bool@ head, S@ tail),
+S@ = +(Unit@ nil, P@ cons);
 
 # Regression test for when mutually recursive functions like this led to a
 # memory leak.

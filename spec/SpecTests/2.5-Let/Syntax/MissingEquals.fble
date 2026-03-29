@@ -1,5 +1,5 @@
 # @@fble-test@@ compile-error 5:9
-@ Unit@ = *();
+Unit@ = *();
 
 # The equals sign is missing.
 Unit@ x Unit@();

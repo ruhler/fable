@@ -1,28 +1,28 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Neg = /Std/Int%.Neg;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Neg = /Std/Int%.Neg;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
 
 # SinCos@ --
 #   Stores a pair of Sin and Cos values for a particular angle, scaled by the
 #   factor RotF.
-@ SinCos@ = *(Int@ sin, Int@ cos);
+SinCos@ = *(Int@ sin, Int@ cos);
 
 # Table@ --
 #   Mapping from angle to sin and cosing of that angle.
-@ Table@ = /Core/Int/Map%.Map.Map@<SinCos@>;
+Table@ = /Core/Int/Map%.Map.Map@<SinCos@>;
 
 Table@ Table = {
-  @ Entry@ = *(Int@ angle, SinCos@ sincos);
+  Entry@ = *(Int@ angle, SinCos@ sincos);
 
   (Int@, Int@, Int@) { Entry@; } E = (Int@ a, Int@ sin, Int@ cos) {
     Entry@(a, SinCos@(sin, cos));
   };
 
-  % Insert = /Core/Int/Map%.Map.Insert<SinCos@>;
+  Insert = /Core/Int/Map%.Map.Insert<SinCos@>;
 
   (Table@, List@<Entry@>) { Table@; }
   Inserts = (Table@ table, List@<Entry@> entries) {
@@ -295,7 +295,7 @@ Table@ Table = {
   ]);
 };
 
-% Lookup = /Core/Int/Map%.Map.Lookup<SinCos@>;
+Lookup = /Core/Int/Map%.Map.Lookup<SinCos@>;
 
 # SinCos --
 #   Compute the sin and cos values for a given angle.

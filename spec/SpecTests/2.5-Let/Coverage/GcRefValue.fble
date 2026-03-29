@@ -1,13 +1,13 @@
 # @@fble-test@@ no-error
-@ Nat@ = /SpecTests/Nat%.Nat@;
-@ S@ = /SpecTests/Nat%.S@;
-% S = /SpecTests/Nat%.S;
-% Nat = /SpecTests/Nat%.Nat;
+Nat@ = /SpecTests/Nat%.Nat@;
+S@ = /SpecTests/Nat%.S@;
+S = /SpecTests/Nat%.S;
+Nat = /SpecTests/Nat%.Nat;
 
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
-@ BoolF@ = (Bool@) { Bool@; };
-@ Bools@ = *(BoolF@ head, Bools@ tail);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
+BoolF@ = (Bool@) { Bool@; };
+Bools@ = *(BoolF@ head, Bools@ tail);
 Unit@ Unit = Unit@();
 Bool@ True = Bool@(true: Unit);
 Bool@ False = Bool@(false: Unit);

@@ -1,10 +1,10 @@
 # @@fble-test@@ memory-constant
-@ Unit@ = *();
-@ Nat@ = /SpecTests/Nat%.Nat@;
-@ S@ = /SpecTests/Nat%.S@;
-% S = /SpecTests/Nat%.S;
+Unit@ = *();
+Nat@ = /SpecTests/Nat%.Nat@;
+S@ = /SpecTests/Nat%.S@;
+S = /SpecTests/Nat%.S;
 
-@ Func@ = (Unit@) { Unit@; };
+Func@ = (Unit@) { Unit@; };
 
 (Func@, Nat@){ Func@; } f = (Func@ x, Nat@ n) {
   # The variable x is not captured by the function g, because x is

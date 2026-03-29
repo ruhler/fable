@@ -1,8 +1,8 @@
 # @@fble-test@@ no-error
-@ Unit@ = *();
+Unit@ = *();
 
 # We can use any letter type we want if it's an empty literal.
-@ Letter@ = (Unit@) { Unit@; };
-@ L@ = +(*(Letter@ head, L@ tail) cons, Unit@ nil);
+Letter@ = (Unit@) { Unit@; };
+L@ = +(*(Letter@ head, L@ tail) cons, Unit@ nil);
 (L@) { L@; } f = (L@ l) { l; };
 f|''; 

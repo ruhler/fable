@@ -1,41 +1,41 @@
 
-@ Ascii@ = /Std/Char/Ascii%.Ascii@;
+Ascii@ = /Std/Char/Ascii%.Ascii@;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-@ IntLit@ = /Std/Int/Lit%.IntLit@;
+IntLit@ = /Std/Int/Lit%.IntLit@;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Concat = /Std/List%.Concat;
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Concat = /Std/List%.Concat;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% StrE = /Std/Char/Ascii%.StrE;
-% String = /Std/Char/Ascii/Output%.String;
-% Lines = /Std/String/Lines%.Lines;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+StrE = /Std/Char/Ascii%.StrE;
+String = /Std/Char/Ascii/Output%.String;
+Lines = /Std/String/Lines%.Lines;
 
-@ Test@ = /Std/Test%.Test@;
-@ TestResult@ = /Std/Test%.TestResult@;
-% Test = /Std/Test%.Test;
-% TestSuite = /Std/Test%.TestSuite;
+Test@ = /Std/Test%.Test@;
+TestResult@ = /Std/Test%.TestResult@;
+Test = /Std/Test%.Test;
+TestSuite = /Std/Test%.TestSuite;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
-@ Loc@ = /Fbld/Loc%.Loc@;
+Loc@ = /Fbld/Loc%.Loc@;
 
-@ Markup@ = /Fbld/Markup%.Markup@;
-% Command = /Fbld/Markup%.Command;
-% Plain = /Fbld/Markup%.Plain;
-% M = /Fbld/Markup%.Markups;
+Markup@ = /Fbld/Markup%.Markup@;
+Command = /Fbld/Markup%.Command;
+Plain = /Fbld/Markup%.Plain;
+M = /Fbld/Markup%.Markups;
 
-<@>@ Result@ = /Fbld/Result%.Result@;
-<@>% Ok = /Fbld/Result%.Ok;
-<@>% Error = /Fbld/Result%.Error;
+Result@ = /Fbld/Result%.Result@;
+Ok = /Fbld/Result%.Ok;
+Error = /Fbld/Result%.Error;
 
-% Parse = /Fbld/Parse%.Parse;
+Parse = /Fbld/Parse%.Parse;
 
-@ Text@ = /Fbld/Text%.Text@;
+Text@ = /Fbld/Text%.Text@;
 
 (IntLit@, IntLit@) { Loc@; }
 L = (IntLit@ line, IntLit@ col) {

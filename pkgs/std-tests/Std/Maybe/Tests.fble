@@ -1,40 +1,40 @@
 # @module[/Std/Maybe/Tests%]
 #  Tests for /Std/Maybe%.
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
 
-@ Char@ = /Std/Char%.Char@;
+Char@ = /Std/Char%.Char@;
 
-<@>% OnAscii = /Std/Char/Ascii%.OnAscii;
+OnAscii = /Std/Char/Ascii%.OnAscii;
 
-<@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-<@>% List = /Std/List%.List;
-<@>% Tail = /Std/List%.Tail;
-<@>% Append = /Std/List%.Append;
+List = /Std/List%.List;
+Tail = /Std/List%.Tail;
+Append = /Std/List%.Append;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
-<@>% Just = /Std/Maybe%.Just;
-<@>% Nothing = /Std/Maybe%.Nothing;
-<@>% Get = /Std/Maybe%.Get;
-<@>% JustGet = /Std/Maybe%.JustGet;
-<@>% Default = /Std/Maybe%.Default;
-<@>% ForEach = /Std/Maybe%.ForEach;
-<@>% Map = /Std/Maybe%.Map;
-<@>% Do = /Std/Maybe%.Do;
+Maybe@ = /Std/Maybe%.Maybe@;
+Just = /Std/Maybe%.Just;
+Nothing = /Std/Maybe%.Nothing;
+Get = /Std/Maybe%.Get;
+JustGet = /Std/Maybe%.JustGet;
+Default = /Std/Maybe%.Default;
+ForEach = /Std/Maybe%.ForEach;
+Map = /Std/Maybe%.Map;
+Do = /Std/Maybe%.Do;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% String = /Std/Char/Ascii/Output%.String;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Test@ = /Std/Test%.Test@;
-% Test = OnAscii $ /Std/Test%.Test;
-% TestSuite = OnAscii $ /Std/Test%.TestSuite;
-% Pass = /Std/Test%.Pass;
-% Fail = /Std/Test%.Fail;
+Test@ = /Std/Test%.Test@;
+Test = OnAscii $ /Std/Test%.Test;
+TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Pass = /Std/Test%.Pass;
+Fail = /Std/Test%.Fail;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 # @value[Tests] Test suite for /Std/Maybe%
 #  @type[Test@]

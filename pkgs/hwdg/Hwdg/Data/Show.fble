@@ -1,9 +1,9 @@
 
-% String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Output%.String;
 
-@ Data@ = /Hwdg/Data%.Data@;
+Data@ = /Hwdg/Data%.Data@;
 
-<@>@ Show@ = /Std/Show%.Show@;
+Show@ = /Std/Show%.Show@;
 
 Show@<Data@> Show = (Data@ x) {
   x.?(0: String|0, 1: String|1);

@@ -1,37 +1,37 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-@ Ascii@ = /Std/Char/Ascii%.Ascii@;
-% Str = /Std/Char/Ascii%.Str;
+Ascii@ = /Std/Char/Ascii%.Ascii@;
+Str = /Std/Char/Ascii%.Str;
 
-% IsSpace = /Core/Char/Type%.IsSpace;
+IsSpace = /Core/Char/Type%.IsSpace;
 
-@ Int@ = /Std/Int%.Int@;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
-<@>% Get = /Std/List/Index%.Get;
-<@>% Split = /Std/List/Search%.Split;
+List@ = /Std/List%.List@;
+Get = /Std/List/Index%.Get;
+Split = /Std/List/Search%.Split;
 
-@ String@ = /Std/String%.String@;
-% SplitLines = /Std/String/Lines%.SplitLines;
+String@ = /Std/String%.String@;
+SplitLines = /Std/String/Lines%.SplitLines;
 
-% Unit = /Std/Unit%.Unit;
+Unit = /Std/Unit%.Unit;
 
-% Car = /Computrainer/Car%;
-@ Car@ = Car.Car@;
+Car = /Computrainer/Car%;
+Car@ = Car.Car@;
 
-% Dir = /Computrainer/Dir%;
-@ Dir@ = Dir.Dir@;
+Dir = /Computrainer/Dir%;
+Dir@ = Dir.Dir@;
 
-@ Coord@ = /Computrainer/Grid%.Coord@;
-% Grid = /Computrainer/Grid%.Grid;
+Coord@ = /Computrainer/Grid%.Coord@;
+Grid = /Computrainer/Grid%.Grid;
 
-% Gate = /Computrainer/Gate%;
-@ Gate@ = Gate.Gate@;
+Gate = /Computrainer/Gate%;
+Gate@ = Gate.Gate@;
 
-@ Phase@ = /Computrainer/State%.Phase@;
-@ Model@ = /Computrainer/Model%.Model@;
+Phase@ = /Computrainer/State%.Phase@;
+Model@ = /Computrainer/Model%.Model@;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;

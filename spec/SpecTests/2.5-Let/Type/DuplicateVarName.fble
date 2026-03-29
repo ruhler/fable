@@ -1,6 +1,6 @@
 # @@fble-test@@ compile-error 7:7
-@ Unit@ = *();
-@ Bool@ = +(Unit@ true, Unit@ false);
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
 
 # Duplicate variable names are not allowed in a let expression.
 Bool@ x = Bool@(true: Unit@()),

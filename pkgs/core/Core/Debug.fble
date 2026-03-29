@@ -1,15 +1,15 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
+Bool@ = /Std/Bool%.Bool@;
 
-% Ascii = /Std/Char/Ascii%.Ascii;
+Ascii = /Std/Char/Ascii%.Ascii;
 
-<@>% List = /Std/List%.List;
-<@>% Append = /Std/List%.Append;
+List = /Std/List%.List;
+Append = /Std/List%.Append;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # Trace function for printf-like debugging.
 # The string argument is printed to stderr.
@@ -49,7 +49,7 @@ TraceLnDisabled = ((Unit@) { String@; } _f) {
 #   ...
 #   Unit@ _ := Trace;
 #   Str|'There is something you should know...';
-% Enable = (Bool@ enable) {
+Enable = (Bool@ enable) {
   enable.?(
     true: @(Trace: TraceEnabled, TraceLn: TraceLnEnabled),
     false: @(Trace: TraceDisabled, TraceLn: TraceLnDisabled));

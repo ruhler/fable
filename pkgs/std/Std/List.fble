@@ -1,8 +1,8 @@
 # @module[/Std/List%]
 #  List type and basic operations.
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # @type[List@] A list of items.
 #  The data structure layout provides constant time access to the first
@@ -16,8 +16,8 @@
 #
 #  @field[@][items] A non-empty list.
 #  @field[Unit@][empty] An empty list.
-<@>@ List@ = <@ T@> {
-  @ L@ = +(*(T@ head, L@ tail) items, Unit@ empty);
+List@ = <@ T@> {
+  L@ = +(*(T@ head, L@ tail) items, Unit@ empty);
   L@;
 };
 

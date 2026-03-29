@@ -1,10 +1,10 @@
 
-<@>% List = /Std/List%.List;
-<@>% Last = /Std/List%.Last;
+List = /Std/List%.List;
+Last = /Std/List%.Last;
 
-@ Sequence@ = /Pprof/Profile%.Sequence@;
+Sequence@ = /Pprof/Profile%.Sequence@;
 
-@ Query@ = /Pprof/Query%.Query@;
+Query@ = /Pprof/Query%.Query@;
 
 # @func[Query] Get blocks by self time.
 #  @arg[Profile@][profile] The profile to query.

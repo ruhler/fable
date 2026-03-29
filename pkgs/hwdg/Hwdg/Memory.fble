@@ -1,18 +1,18 @@
 
-@ Bool@ = /Std/Bool%.Bool@;
-% True = /Std/Bool%.True;
-% False = /Std/Bool%.False;
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<@>@ Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ = /Std/Maybe%.Maybe@;
 
-@ Addr@ = /Hwdg/Addr%.Addr@;
-@ Data@ = /Hwdg/Data%.Data@;
+Addr@ = /Hwdg/Addr%.Addr@;
+Data@ = /Hwdg/Data%.Data@;
 
-% Map = /Core/Map/Tree%.Map(/Hwdg/Addr/Ord%.Ord);
+Map = /Core/Map/Tree%.Map(/Hwdg/Addr/Ord%.Ord);
 
-@ Memory@ = Map.Map@<Data@>;
+Memory@ = Map.Map@<Data@>;
 
 # Empty -- 
 #   A completely empty memory.

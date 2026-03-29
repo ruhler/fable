@@ -1,11 +1,11 @@
 # @module[/Std/Unit/Eq%]
 #  The Eq@ instance for Unit@.
 
-% True = /Std/Bool%.True;
+True = /Std/Bool%.True;
 
-<@>@ Eq@ = /Std/Eq%.Eq@;
+Eq@ = /Std/Eq%.Eq@;
 
-@ Unit@ = /Std/Unit%.Unit@;
+Unit@ = /Std/Unit%.Unit@;
 
 # @func[Eq] Check two units for equality.
 #  @arg[Unit@][a] The first operand.

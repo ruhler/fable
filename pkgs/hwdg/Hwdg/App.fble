@@ -1,58 +1,58 @@
 
-@ Int@ = /Std/Int%.Int@;
-% Decr = /Std/Int%.Decr;
-% Neg = /Std/Int%.Neg;
-% Sub = /Std/Int%.Sub;
-% Mul = /Std/Int%.Mul;
+Int@ = /Std/Int%.Int@;
+Decr = /Std/Int%.Decr;
+Neg = /Std/Int%.Neg;
+Sub = /Std/Int%.Sub;
+Mul = /Std/Int%.Mul;
 
-% IsZero = /Std/Int/Sign%.IsZero;
+IsZero = /Std/Int/Sign%.IsZero;
 
-% Int = /Std/Int/Lit%.Int;
+Int = /Std/Int/Lit%.Int;
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-<<@>@>@ IoM@ = /Core/Io%.IoM@;
+IoM@ = /Core/Io%.IoM@;
 
-% Success = /Core/Cli%.Success;
+Success = /Core/Cli%.Success;
 
-@ String@ = /Std/String%.String@;
+String@ = /Std/String%.String@;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 
-<<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/Native%.Main@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
+App@ = /App/App%.App@;
+Main@ = /App/Native%.Main@;
+Event@ = /App/App%.Event@;
+Effect@ = /App/App%.Effect@;
 
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Color@ = /App/Drawing%.Color@;
-@ Point@ = /App/Drawing%.Point@;
-% Color = /App/Drawing%.Color;
-% Rect = /App/Drawing%.Rect;
-% Over = /App/Drawing%.Over;
-% Affine = /App/Drawing%.Affine;
+Drawing@ = /App/Drawing%.Drawing@;
+Color@ = /App/Drawing%.Color@;
+Point@ = /App/Drawing%.Point@;
+Color = /App/Drawing%.Color;
+Rect = /App/Drawing%.Rect;
+Over = /App/Drawing%.Over;
+Affine = /App/Drawing%.Affine;
 
-@ Addr@ = /Hwdg/Addr%.Addr@;
+Addr@ = /Hwdg/Addr%.Addr@;
 
-@ Data@ = /Hwdg/Data%.Data@;
+Data@ = /Hwdg/Data%.Data@;
 
-@ Design@ = /Hwdg/Design%.Design@;
-% Apply = /Hwdg/Design%.Apply;
+Design@ = /Hwdg/Design%.Design@;
+Apply = /Hwdg/Design%.Apply;
 
-@ Memory@ = /Hwdg/Memory%.Memory@;
+Memory@ = /Hwdg/Memory%.Memory@;
 
 # Width and height of an individual cell.
 Int@ W = Int|8;
 
 # Design --
 #   The design to simulate.
-% Built = /Hwdg/Build%.Run(/Hwdg/Designs/Adder%.Demo);
+Built = /Hwdg/Build%.Run(/Hwdg/Designs/Adder%.Demo);
 Design@ Design = Built.x;
 Memory@ Memory = Built.memory;
 
-@ Input@ = +(Unit@ quit, Unit@ step);
+Input@ = +(Unit@ quit, Unit@ step);
 
 Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
   M@<Input@> GetInput = {

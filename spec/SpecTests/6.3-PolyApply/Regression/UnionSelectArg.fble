@@ -1,10 +1,10 @@
 # @@fble-test@@ no-error
 # Regression test for passing an applied polymorphic type as an argument to
 # a condition.
-@ Unit@ = *();
-<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+Unit@ = *();
+Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 Bool@ true = Bool@(true: Unit@());
 Bool@ false = Bool@(false: Unit@());
 

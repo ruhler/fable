@@ -1,8 +1,8 @@
-# @@fble-test@@ compile-error 6:5
-@ Unit@ = *();
+# @@fble-test@@ compile-error 6:3
+Unit@ = *();
 
 <@ T@> (T@ t) {
   # Kind mismatch: expected type, but got abstract value.
-  @ Foo@ = t;
+  Foo@ = t;
   Unit@();
 };

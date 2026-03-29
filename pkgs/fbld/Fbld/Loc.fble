@@ -1,20 +1,20 @@
 
-@ Char@ = /Std/Char%.Char@;
-% IsNewline = /Core/Char/Type%.IsNewline;
+Char@ = /Std/Char%.Char@;
+IsNewline = /Core/Char/Type%.IsNewline;
 
-@ Int@ = /Std/Int%.Int@;
-% Incr = /Std/Int%.Incr;
-% Int = /Std/Int/Lit%.Int;
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Int = /Std/Int/Lit%.Int;
 Int@ 1 = Int|1;
 
-<@>@ Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Char/Output%.Output@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
-% Format = /Std/Char/Ascii/Output%.Format;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
+Format = /Std/Char/Ascii/Output%.Format;
 
 # Location information used for error messages.
-@ Loc@ = *(String@ file, Int@ line, Int@ col);
+Loc@ = *(String@ file, Int@ line, Int@ col);
 
 # Location representing the start of a file.
 (String@) { Loc@; } Start = (String@ file) {

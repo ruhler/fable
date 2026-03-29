@@ -1,17 +1,17 @@
 
-# @@fble-test@@ compile-error 14:36
+# @@fble-test@@ compile-error 14:31
 
-@ Unit@ = *();
+Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ = +(Unit@ true, Unit@ false);
 
 # The following poly type is 'exploding' in the sense that it describes a type
 # that can't be represented as a poly of a non-poly recursive type. This led to
 # infinite recursion in the type equality operation.
 # This is no longer allowed by the language specification, because L@ has kind
 # @ in its own definition.
-<@>@ L@ = <@ T@> { +(*(T@ head, L@<L@<T@>> tail) cons, Unit@ nil); };
+L@ = <@ T@> { +(*(T@ head, L@<L@<T@>> tail) cons, Unit@ nil); };
 
 L@ Nil = <@ T@> {
   L@<T@>(nil: Unit);

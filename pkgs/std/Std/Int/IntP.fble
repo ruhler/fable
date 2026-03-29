@@ -3,14 +3,14 @@
 #
 #  This module is for internal use only.
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
 
 # @union[IntP@] Type of positive integers.
 #  @field[Unit@][1] The value 1.
 #  @field[IntP@][2p0] The value 2*x.
 #  @field[IntP@][2p1] The value 2*x+1.
-@ IntP@ = +(
+IntP@ = +(
   Unit@ 1, 
   IntP@ 2p0,
   IntP@ 2p1

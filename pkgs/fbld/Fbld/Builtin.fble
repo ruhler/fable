@@ -1,16 +1,16 @@
 
-<@>@ List@ = /Std/List%.List@;
+List@ = /Std/List%.List@;
 
-@ String@ = /Std/String%.String@;
-% Str = /Std/Char/Ascii%.Str;
+String@ = /Std/String%.String@;
+Str = /Std/Char/Ascii%.Str;
 
-@ Impl@ = /Fbld/Markup%.Impl@;
+Impl@ = /Fbld/Markup%.Impl@;
 
-@ Env@ = /Fbld/Env%.Env@<Impl@>;
-% Empty = /Fbld/Env%.Empty<Impl@>;
-% Insert = /Fbld/Env%.Insert<Impl@>;
+Env@ = /Fbld/Env%.Env@<Impl@>;
+Empty = /Fbld/Env%.Empty<Impl@>;
+Insert = /Fbld/Env%.Insert<Impl@>;
 
-@ Builtin@ = *(String@ name, Impl@ impl);
+Builtin@ = *(String@ name, Impl@ impl);
 
 (List@<Builtin@>) { Env@; } Builtins = (List@<Builtin@> builtins) {
   /Std/List%.ForEach(builtins, Empty, (Builtin@ x, Env@ e) {
