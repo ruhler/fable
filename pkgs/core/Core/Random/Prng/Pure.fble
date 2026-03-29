@@ -7,19 +7,19 @@ Shr = /Std/Int%.Shr;
 Le = /Std/Int/Ord%.Le;
 
 Rng@ = /Core/Random/Rng%.Rng@;
-RngM@ = /Core/Random/Rng%.RngM@;
 Prng@ = /Core/Random/Prng%.Prng@;
 
 Pure@ = /Core/State/Pure%.Pure@;
 
 Unit@ = /Std/Unit%.Unit@;
 
-# Pure state monad RngM@ implementation of a Prng@.
-<@ S@>(Prng@<S@>) { RngM@<Pure@<S@>>; }
+# Pure state monad Rng@ implementation of a Prng@.
+<@ S@>(Prng@<S@>) { Rng@<Pure@<S@>>; }
 Pure = <@ S@>(Prng@<S@> prng) {
   p = /Core/State/Pure%.Pure<S@>;
+  M@ = p.M@;
 
-  (Int@) { p.M@<Int@>; } rand = (Int@ n) {
+  (Int@) { M@<Int@>; } rand = (Int@ n) {
     S@ s := p.m.do(p.s.get);
     S@ next = prng.next(s);
     Unit@ _ := p.m.do(p.s.put(next));
@@ -33,14 +33,12 @@ Pure = <@ S@>(Prng@<S@> prng) {
     p.m.return $ Add(Shl(hi, prng.n), lo);
   };
 
-  (Int@, Int@) { p.M@<Unit@>; } feed = (Int@ n, Int@ x) {
+  (Int@, Int@) { M@<Unit@>; } feed = (Int@ n, Int@ x) {
     S@ s := p.m.do(p.s.get);
     p.s.put(prng.feed(n, x, s));
   };
 
-  Rng@<p.M@> r = @(rand, feed);
-
-  RngM@<p.M@>(p.M@, p.m, r);
+  Rng@(M@, p.m.return, p.m.do, rand, feed);
 };
 
 @(Pure);

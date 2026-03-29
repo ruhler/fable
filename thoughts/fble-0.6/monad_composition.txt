@@ -778,3 +778,36 @@ This feels like a good change. It's just a bit on the big side, because now I
 have to rewrite literally all of my code. Oh well. The compiler will help me
 get it done.
 
+---
+
+The kind transition is done. Still no concerns, but I also feel like I need to
+do a bunch of fble programming before I can really evaluate any potential
+negative impacts of the change. I don't want to introduce multiline import
+yet. I need more space before making another language change. Maybe
+tentatively punt multiline import to a future release. See what I can
+accomplish without it for now.
+
+Which means, regrouping, next thing to try is, perhaps, get rid of distinction
+between RngM and Rng, IoM and Io. Try it out. See how it feels. See if it
+feels better or worse. See how painful it is. Primary goal is to find
+something that I feel good about to include in the standard library.
+
+---
+
+Experiment 1:
+* Change RngM + Rng to just Rng with everything at top level.
+* Reference methods via m.foo everywhere.
+
+Experience report:
+* Consider State vs. StateM too, in addition to Rng and Io.
+* It's not particularly harder to construct an Rng than the previous RngM.
+ - Just have to remember what order do and return are declared in.
+* As a user of Rng, feels pretty nice.
+* Biggest issue so far is annoyance of having to copy paste do and return
+  declarations from Monad@.
+* It's nice use Rng@ directly instead of RngM@.
+
+I would say, for Rng@, this feels like an improvement. It's much nicer to use.
+It's not any harder to construct. It's only very slightly annoying to define
+because of duplicating do and return declarations.
+

@@ -329,25 +329,25 @@ Vanguard = (Aliens@ aliens, Int@ col) {
   (Aliens@, Bombs@) { Rng.M@<Bombs@>; }
   Fire = (Aliens@ aliens, Bombs@ bombs) {
     # We launch bombs once all aliens have completed their move.
-    aliens.next.?(just: Rng.m.return(bombs));
+    aliens.next.?(just: Rng.return(bombs));
 
-    /Core/Iter%.For(/Core/Int/Iter%.Range(Int|0, NumCols), Rng.m.return(bombs)) $
+    /Core/Iter%.For(/Core/Int/Iter%.Range(Int|0, NumCols), Rng.return(bombs)) $
       (Int@ col, Rng.M@<Bombs@> mbombs) {
         Maybe@<Alien@> alien = Vanguard(aliens, col);
         alien.?(nothing: mbombs);
 
-        Bombs@ bombs := Rng.m.do(mbombs);
-        Int@ r := Rng.m.do(Of(Rng, Int|100));
-        Lt(r, Int|15).?(false: Rng.m.return(bombs));
+        Bombs@ bombs := Rng.do(mbombs);
+        Int@ r := Rng.do(Of(Rng, Int|100));
+        Lt(r, Int|15).?(false: Rng.return(bombs));
 
-        Int@ x_shift := Rng.m.do(Of(Rng, MoveX));
+        Int@ x_shift := Rng.do(Of(Rng, MoveX));
         Int@ x = Add(Add(Int|4, x_shift),
           Add(aliens.dst_x, Mul(StrideX, alien.just.col)));
         Int@ y = Sub(Add(aliens.dst_y, Mul(StrideY, alien.just.row)), Int|6);
         Kind@ kind = Lt(r, Int|2).?(
           true: Kind@(squiggle: Unit),
           false: Kind@(bomb: Unit));
-        Rng.m.return(/Invaders/Bombs%.Fire(x, y, kind, bombs));
+        Rng.return(/Invaders/Bombs%.Fire(x, y, kind, bombs));
       };
   };
 

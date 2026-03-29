@@ -124,11 +124,11 @@ RandEdges = {
 
   (Int@) { Rng.M@<List@<Edge@>>; }
   Gen = (Int@ n) {
-    /Std/Int/Eq%.Eq(Int|0, n).?(true: Rng.m.return(Empty<Edge@>));
-    Node@ a := Rng.m.do(Of(NumNodes));
-    Node@ b := Rng.m.do(Of(NumNodes));
-    List@<Edge@> tail := Rng.m.do(Gen(Decr(n)));
-    Rng.m.return $ Items(Edge@(a, b), tail);
+    /Std/Int/Eq%.Eq(Int|0, n).?(true: Rng.return(Empty<Edge@>));
+    Node@ a := Rng.do(Of(NumNodes));
+    Node@ b := Rng.do(Of(NumNodes));
+    List@<Edge@> tail := Rng.do(Gen(Decr(n)));
+    Rng.return $ Items(Edge@(a, b), tail);
   };
 
   (Int@ n) {

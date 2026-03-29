@@ -1,22 +1,19 @@
 
 Int@ = /Std/Int%.Int@;
 
-Monad@ = /Std/Monad%.Monad@;
-
 Unit@ = /Std/Unit%.Unit@;
 
 # Standard interface for a random number generator.
 Rng@ = <<@>@ M@> { *(
+  # standard monadic interface:
+  @<M@> M@,
+  <@ A@>(A@) { M@<A@>; } return,
+  <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } do,
+
+  # rng interface:
   (Int@) { M@<Int@>; } rand,        # returns a random n-bit integer.
   (Int@, Int@) { M@<Unit@>; } feed  # feed n bits of entropy into the generator.
 ); };
 
-# Monadic interface for generating random numbers.
-RngM@ = <<@>@ M@> { *(
-  @<M@> M@,
-  Monad@<M@> m,
-  Rng@<M@> r
-); };
-
-@(Rng@, RngM@);
+@(Rng@);
 

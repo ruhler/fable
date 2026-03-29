@@ -15,7 +15,7 @@ Items = /Std/List%.Items;
 Empty = /Std/List%.Empty;
 Any = /Std/List/Search%.Any;
 
-RngM@ = /Core/Random/Rng%.RngM@;
+Rng@ = /Core/Random/Rng%.Rng@;
 
 Var@ = /SatGame/Var%.Var@;
 
@@ -46,38 +46,38 @@ IsCanonical = (Var@ v) {
 };
 
 # Generate a random variable.
-<<@>@ M@>(RngM@<M@>) { M@<Var@>; }
-Var = <<@>@ M@>(RngM@<M@> rng) {
+<<@>@ M@>(Rng@<M@>) { M@<Var@>; }
+Var = <<@>@ M@>(Rng@<M@> m) {
   /Std/Unit%.Unit@ _ = /Core/Debug%.TraceLn(/Std/Char/Ascii%.Str|'Var');
-  Bool@ ul := rng.m.do(/Core/Bool/Rand%.Rand(rng));
-  Bool@ uc := rng.m.do(/Core/Bool/Rand%.Rand(rng));
-  Bool@ ur := rng.m.do(/Core/Bool/Rand%.Rand(rng));
-  Bool@ ml := rng.m.do(/Core/Bool/Rand%.Rand(rng));
-  Bool@ mc := rng.m.do(/Core/Bool/Rand%.Rand(rng));
-  Bool@ mr := rng.m.do(/Core/Bool/Rand%.Rand(rng));
-  Bool@ ll := rng.m.do(/Core/Bool/Rand%.Rand(rng));
-  Bool@ lc := rng.m.do(/Core/Bool/Rand%.Rand(rng));
-  Bool@ lr := rng.m.do(/Core/Bool/Rand%.Rand(rng));
+  Bool@ ul := m.do(/Core/Bool/Rand%.Rand(m));
+  Bool@ uc := m.do(/Core/Bool/Rand%.Rand(m));
+  Bool@ ur := m.do(/Core/Bool/Rand%.Rand(m));
+  Bool@ ml := m.do(/Core/Bool/Rand%.Rand(m));
+  Bool@ mc := m.do(/Core/Bool/Rand%.Rand(m));
+  Bool@ mr := m.do(/Core/Bool/Rand%.Rand(m));
+  Bool@ ll := m.do(/Core/Bool/Rand%.Rand(m));
+  Bool@ lc := m.do(/Core/Bool/Rand%.Rand(m));
+  Bool@ lr := m.do(/Core/Bool/Rand%.Rand(m));
   Var@ var = @(ul, uc, ur, ml, mc, mr, ll, lc, lr);
-  IsCanonical(var).?(true: rng.m.return(var));
-  Var(rng);
+  IsCanonical(var).?(true: m.return(var));
+  Var(m);
 };
 
 # Generates a random variable distinct from the given list of variables.
-<<@>@ M@>(RngM@<M@>, List@<Var@>) { M@<Var@>; }
-DistinctVar = <<@>@ M@>(RngM@<M@> rng, List@<Var@> vars) {
-  Var@ x := rng.m.do(Var(rng));
-  Any(vars, /SatGame/Var/Eq%.Eq(x)).?(false: rng.m.return(x));
-  DistinctVar(rng, vars);
+<<@>@ M@>(Rng@<M@>, List@<Var@>) { M@<Var@>; }
+DistinctVar = <<@>@ M@>(Rng@<M@> m, List@<Var@> vars) {
+  Var@ x := m.do(Var(m));
+  Any(vars, /SatGame/Var/Eq%.Eq(x)).?(false: m.return(x));
+  DistinctVar(m, vars);
 };
 
 # Generate N distinct random variables.
-<<@>@ M@>(RngM@<M@>, Int@) { M@<List@<Var@>>; }
-Vars = <<@>@ M@>(RngM@<M@> rng, Int@ n) {
-  IsZero(n).?(true: rng.m.return(Empty<Var@>));
-  List@<Var@> tail := rng.m.do(Vars(rng, Decr(n)));
-  Var@ head := rng.m.do(DistinctVar(rng, tail));
-  rng.m.return(Items(head, tail));
+<<@>@ M@>(Rng@<M@>, Int@) { M@<List@<Var@>>; }
+Vars = <<@>@ M@>(Rng@<M@> m, Int@ n) {
+  IsZero(n).?(true: m.return(Empty<Var@>));
+  List@<Var@> tail := m.do(Vars(m, Decr(n)));
+  Var@ head := m.do(DistinctVar(m, tail));
+  m.return(Items(head, tail));
 };
 
 @(Var, Vars);

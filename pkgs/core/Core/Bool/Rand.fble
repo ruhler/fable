@@ -6,13 +6,13 @@ Int@ = /Std/Int%.Int@;
 IsZero = /Std/Int/Sign%.IsZero;
 Int = /Std/Int/Lit%.Int;
 
-RngM@ = /Core/Random/Rng%.RngM@;
+Rng@ = /Core/Random/Rng%.Rng@;
 
 # Generates a random boolean.
-<<@>@ M@>(RngM@<M@>) { M@<Bool@>; }
-Rand = <<@>@ M@>(RngM@<M@> rng) {
-  Int@ x := rng.m.do(rng.r.rand(Int|1));
-  rng.m.return $ Not(IsZero(x));
+<<@>@ M@>(Rng@<M@>) { M@<Bool@>; }
+Rand = <<@>@ M@>(Rng@<M@> m) {
+  Int@ x := m.do(m.rand(Int|1));
+  m.return $ Not(IsZero(x));
 };
 
 @(Rand);

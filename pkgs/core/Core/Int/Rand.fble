@@ -8,11 +8,11 @@ IsZero = /Std/Int/Sign%.IsZero;
 Lt = /Std/Int/Ord%.Lt;
 Int = /Std/Int/Lit%.Int;
 
-RngM@ = /Core/Random/Rng%.RngM@;
+Rng@ = /Core/Random/Rng%.Rng@;
 
 # Generates a random integer uniformly in the range [0, n).
-<<@>@ M@>(RngM@<M@>, Int@) { M@<Int@>; }
-Of = <<@>@ M@>(RngM@<M@> rng, Int@ n) {
+<<@>@ M@>(Rng@<M@>, Int@) { M@<Int@>; }
+Of = <<@>@ M@>(Rng@<M@> m, Int@ n) {
   # Find the smallest k such that n < 2^k
   (Int@) { Int@; }
   FindK = (Int@ n) {
@@ -22,8 +22,8 @@ Of = <<@>@ M@>(RngM@<M@> rng, Int@ n) {
   Int@ k = FindK(n);
 
   M@<Int@> Try = {
-    Int@ x := rng.m.do(rng.r.rand(k));
-    Lt(x, n).?(true: rng.m.return(x));
+    Int@ x := m.do(m.rand(k));
+    Lt(x, n).?(true: m.return(x));
     Try;
   };
 
@@ -31,10 +31,10 @@ Of = <<@>@ M@>(RngM@<M@> rng, Int@ n) {
 };
 
 # Generates a random integer uniformly in the range [lo, hi]
-<<@>@ M@>(RngM@<M@>, Int@, Int@) { M@<Int@>; }
-Range = <<@>@ M@>(RngM@<M@> rng, Int@ lo, Int@ hi) {
-  Int@ x := rng.m.do $ Of(rng, Incr(Sub(hi, lo)));
-  rng.m.return $ Add(lo, x);
+<<@>@ M@>(Rng@<M@>, Int@, Int@) { M@<Int@>; }
+Range = <<@>@ M@>(Rng@<M@> m, Int@ lo, Int@ hi) {
+  Int@ x := m.do $ Of(m, Incr(Sub(hi, lo)));
+  m.return $ Add(lo, x);
 };
 
 @(Of, Range);

@@ -151,17 +151,17 @@ MoveResultM@ = +(Unit@ dead, State@ state);
 (Dir@) { Rng.M@<Unit@>; }
 StepRand = (Dir@ d) {
   Int@ x = d.?(up: Int|0, down: Int|1, left: Int|2, right: Int|3);
-  Rng.r.feed(Int|2, x);
+  Rng.feed(Int|2, x);
 };
 
 # Pick the position of the next food randomly, given the random bits and the
 # snakes position.
 (List@<Pos@>) { Rng.M@<Pos@>; }
 GetNextFood = (List@<Pos@> snake) {
-  Int@ row := Rng.m.do(Range(Rng, MinRow, MaxRow));
-  Int@ col := Rng.m.do(Range(Rng, MinCol, MaxCol));
+  Int@ row := Rng.do(Range(Rng, MinRow, MaxRow));
+  Int@ col := Rng.do(Range(Rng, MinCol, MaxCol));
   Pos@ pos = Pos@(row, col);
-  InPosS(snake, pos).?(false: Rng.m.return(pos));
+  InPosS(snake, pos).?(false: Rng.return(pos));
   GetNextFood(snake);
 };
 
