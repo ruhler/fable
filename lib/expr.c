@@ -38,7 +38,6 @@ void FbleFreeExpr(FbleExpr* expr)
       FbleLetExpr* e = (FbleLetExpr*)expr;
       for (size_t i = 0; i < e->bindings.size; ++i) {
         FbleBinding* binding = e->bindings.xs + i;
-        FbleFreeKind(binding->kind);
         FbleFreeExpr(binding->type);
         FbleFreeName(binding->name);
         FbleFreeExpr(binding->expr);

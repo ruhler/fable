@@ -224,17 +224,14 @@ typedef struct {
 
 /**
  * @struct[FbleBinding] Info about a variable binding.
- *  Used in let expressions. Exactly one of Kind or Type should be NULL. If
- *  the Kind is NULL, it is inferred from the given Type. If the Type is NULL,
+ *  Used in let expressions. The type is optional. If the Type is NULL,
  *  it is inferred from the given Expr.
  *
- *  @field[FbleKind*][kind] The kind of the variable. May be NULL.
  *  @field[FbleTypeExpr*][type] The type of the variable. May be NULL.
  *  @field[FbleName][name] The name of the variable.
  *  @field[FbleExpr*][expr] The value of the variable.
  */
 typedef struct {
-  FbleKind* kind;
   FbleTypeExpr* type;
   FbleName name;
   FbleExpr* expr;

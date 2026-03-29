@@ -179,7 +179,6 @@ while (0)
 
 %destructor {
   for (size_t i = 0; i < $$.size; ++i) {
-    FbleFreeKind($$.xs[i].kind);
     FbleFreeExpr($$.xs[i].type);
     FbleFreeName($$.xs[i].name);
     FbleFreeExpr($$.xs[i].expr);
@@ -688,7 +687,6 @@ let_binding_p:
   expr name '=' aexpr {
       FbleInitVector($$);
       FbleBinding* binding = FbleExtendVector($$);
-      binding->kind = NULL;
       binding->type = $1;
       binding->name = $2;
       binding->expr = $4;
@@ -696,7 +694,7 @@ let_binding_p:
   | kind name '=' aexpr {
       FbleInitVector($$);
       FbleBinding* binding = FbleExtendVector($$);
-      binding->kind = $1;
+      FbleFreeKind($1);
       binding->type = NULL;
       binding->name = $2;
       binding->expr = $4;
@@ -704,7 +702,6 @@ let_binding_p:
   | let_binding_p ',' expr name '=' aexpr {
       $$ = $1;
       FbleBinding* binding = FbleExtendVector($$);
-      binding->kind = NULL;
       binding->type = $3;
       binding->name = $4;
       binding->expr = $6;
@@ -712,7 +709,7 @@ let_binding_p:
   | let_binding_p ',' kind name '=' aexpr {
       $$ = $1;
       FbleBinding* binding = FbleExtendVector($$);
-      binding->kind = $3;
+      FbleFreeKind($3);
       binding->type = NULL;
       binding->name = $4;
       binding->expr = $6;

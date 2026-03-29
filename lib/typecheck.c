@@ -1156,8 +1156,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         FbleBinding* binding = let_expr->bindings.xs + i;
 
         if (binding->type == NULL) {
-          assert(binding->kind != NULL);
-
           // We don't know the type, so create an abstract type variable to
           // represent the type. If it's an abstract type, such as
           //   @ Unit@ = ...
@@ -1170,7 +1168,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           // very confusing to show the type of True as True@.
           char renamed[strlen(binding->name.name->str) + 3];
           renamed[0] = '\0';
-          size_t kind_level = FbleGetKindLevel(binding->kind);
+          size_t kind_level = (binding->name.space == FBLE_NORMAL_NAME_SPACE) ? 0 : 1;
           if (kind_level == 0) {
             strcat(renamed, "__");
           } 
@@ -1182,20 +1180,15 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             .loc = binding->name.loc,
           };
 
-          FbleKind* kind = FbleNewBasicKind(binding->kind->loc, kind_level);
+          FbleKind* kind = FbleNewBasicKind(binding->name.loc, kind_level);
           types[i] = FbleNewVarType(th, binding->name.loc, kind, type_name);
           FbleFreeKind(kind);
           FbleFreeString(type_name.name);
         } else {
-          assert(binding->kind == NULL);
           types[i] = TypeCheckType(th, scope, binding->type);
           error = error || (types[i] == NULL);
         }
         
-        if (types[i] != NULL && !CheckNameSpace(binding->name, types[i])) {
-          error = true;
-        }
-
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(let_expr->bindings.xs[i].name, let_expr->bindings.xs[j].name)) {
             ReportError(let_expr->bindings.xs[i].name.loc,
@@ -1223,6 +1216,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         }
         error = error || (defs[i].type == NULL);
 
+        if (!error && !CheckNameSpace(binding->name, defs[i].type)) {
+          error = true;
+        }
+
         if (!error && binding->type != NULL && !FbleTypesEqual(th, types[i], defs[i].type)) {
           error = true;
           ReportError(binding->expr->loc,
@@ -1230,17 +1227,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
               types[i], defs[i].type);
           ReportError(types[i]->loc, "(%t from here)\n", types[i]);
           ReportError(defs[i].type->loc, "(%t from here)\n", defs[i].type);
-        } else if (!error && binding->type == NULL) {
-          FbleKind* expected_kind = FbleCopyKind(binding->kind);
-          FbleKind* actual_kind = FbleGetKind(scope->module, defs[i].type);
-          if (!FbleKindsEqual(expected_kind, actual_kind)) {
-            ReportError(binding->expr->loc,
-                "expected kind %k, but found something of kind %k\n",
-                expected_kind, actual_kind);
-            error = true;
-          }
-          FbleFreeKind(expected_kind);
-          FbleFreeKind(actual_kind);
         }
       }
 
@@ -1258,14 +1244,14 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
           // Here we pick the name for the type to use in error messages.
           // For normal type definitions, such as
-          //   @ Foo@ = ...
+          //   Foo@ = ...
           // We want to use the simple name 'Foo@'.
           //
           // For value definitions, such as
-          //   % Foo = ...
+          //   Foo = ...
           // We want to use the inferred type, not the made up abstract type
           // name '__Foo@'.
-          if (FbleGetKindLevel(let_expr->bindings.xs[i].kind) == 0) {
+          if (let_expr->bindings.xs[i].name.space == FBLE_NORMAL_NAME_SPACE) {
             vars[i]->type = defs[i].type;
             defs[i].type = types[i];
             types[i] = vars[i]->type;

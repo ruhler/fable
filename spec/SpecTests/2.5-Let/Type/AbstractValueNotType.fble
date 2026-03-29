@@ -1,4 +1,4 @@
-# @@fble-test@@ compile-error 6:12
+# @@fble-test@@ compile-error 6:5
 @ Unit@ = *();
 
 <@ T@> (T@ t) {

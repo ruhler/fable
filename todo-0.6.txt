@@ -2,6 +2,13 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Remove kinds in let expressions.
+ - Update all the examples in the spec and tutorials and everywhere for the
+   new syntax.
+ - Add test that kind is level 0 or level 1 and not greater.
+ - Make sure we are checking the namespace still.
+ - Remove kind from concrete syntax in parser.
+
 * Remove Builtin from spec and spec tests now that we have FFI?
  - Like, do we need builtin support anymore? Is there any value for it?
 

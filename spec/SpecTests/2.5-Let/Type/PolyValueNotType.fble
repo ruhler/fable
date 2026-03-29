@@ -1,4 +1,4 @@
-# @@fble-test@@ compile-error 6:13
+# @@fble-test@@ compile-error 6:6
 @ Unit@ = *();
 <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 

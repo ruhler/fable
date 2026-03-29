@@ -1,8 +1,0 @@
-# @@fble-test@@ compile-error 6:8
-@ Unit@ = *();
-
-# The kind @ is different from <@>@
-<@>@ Maybe@ = <@ T@> { +(Unit@ nothing, T@ just); };
-@ B@ = Maybe@;
-
-B@;

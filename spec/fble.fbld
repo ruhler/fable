@@ -180,18 +180,14 @@
   
   @subsection 2.5 Let
    @AbstractSyntax @
-    Spec: kind_spec (kind : Kind)
-    Spec: type_spec (type : Type)
-    Expr: let (bindings : [(Spec, Name, Expr)]) (body : Expr)
+    Expr: let (bindings : [(Type, Name, Expr)]) (body : Expr)
   
    @ConcreteSyntax @
-    spec = kind
-    spec = type
-    stmt = spec, name, '=', expr, {',', spec, name, '=', expr}, ';', stmt       
+    stmt = [type], name, '=', expr, {',', [type], name, '=', expr}, ';', stmt       
   
    @Example @
     Int@ x = mul(3, 3); mul(x, x)
-    @ Bool@ = +(Unit@ true, Unit@ false); ...
+    Bool@ = +(Unit@ true, Unit@ false); ...
   
    Let expressions can be used to define local variables that allow values to
    be reused in multiple places in a program. Let expressions support
@@ -213,42 +209,35 @@
    The value of the let expression is the value of its body. The type of the
    let expression is the type of its body.
   
-   When defining a variable, ether a kind or a type can be used to specify the
-   operations supported by the value of the variable.
-  
-   If a kind is used, the type of the variable is abstract in the bindings
-   expressions. The actual type of the variable will be inferred from its
-   definition for use in the body of the let expression. It is a type error if
-   the kind of the value of the variable is not equal to the kind specified
-   for the variable. As a restriction to ensure type checking is possible, the
-   kind of the variable is treated as a basic kind in the bindings
-   expressions. This restricts the set of recursive types that can be
-   described to ones that the type checker can handle without difficulty. The
-   rationale for requiring the full kind of the variable instead of just
-   whether it is a type or a value, and for requiring the kind of the value be
-   equal to the kind specified for the variable instead of compatible with, is
-   that it helps to document the kinds of values being defined in a machine
-   checkable way.
-  
+   When defining a variable, the type is used to specify the operations
+   supported by the value of the variable.
+
+   The type may optionally be omitted, in which case the type of the value is
+   inferred from its definition for use in the body of the let expression. As
+   a restriction to ensure type checking is possible, the kind of the variable
+   is treated as a basic kind in the bindings expressions. This restricts the
+   set of recursive types that can be described to ones that the type checker
+   can handle without difficulty.  
+
    If a type is used when defining a variable, that type is used for the type
    of the variable in the binding expressions. It must match the type of the
    variable inferred from the variable's definition.
   
-   It is recommended that a type specifications be preferred over kind
-   specifications for normal values whose types are relatively easy to
-   describe, to better document types for readers of the code.
+   It is recommended that a type be specified for normal values whose types
+   are relatively easy to describe, to better document types for readers of
+   the code.
   
    Recursively defined values must not be vacuously recursive. For example,
    the following definition is not allowed:
   
    @code[fble] @
-    @ T@ = T@; ...
+    T@ = T@; ...
   
    But it is okay to define recursive types and values that involve a
    constructor somewhere, such as:
   
    @code[fble] @
-    @ T@ = +(T@ x);
+    T@ = +(T@ x);
 
    Vacuously defined types are reported as compile time errors. Vacuously
    defined values are reported as runtime errors.
@@ -877,7 +866,7 @@
    type @L{L@}:
   
    @code[fble] @
-    @ L@ = +(*(E@ head, L@ tail) cons, *() nil);
+    L@ = +(*(E@ head, L@ tail) cons, *() nil);
   
    The fields can be named anything, but the order of the fields must match
    that shown above. Any type @L{E@} of list elements may be used.
@@ -944,7 +933,7 @@
    For example, the element type for an octal literal might look like:
   
    @code[fble] @
-    @Octal = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
+    Octal@ = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
   
    The literal expression @L{f|077}, assuming the element type for the list
    argument to @L{f} is @L{Octal@}, is conceptually desugared to:
@@ -962,9 +951,9 @@
    belong directly or indirectly to a subfield of a union type. For example:
 
    @code[fble] @
-    @Num = +(*() 0, *() 1, *() 2);
-    @Alpha = +(*() A, *() B, *() C);
-    @AlNum@ = +(Num@ num, Alpha@ alpha);
+    Num@ = +(*() 0, *() 1, *() 2);
+    Alpha@ = +(*() A, *() B, *() C);
+    AlNum@ = +(Num@ num, Alpha@ alpha);
 
    In this case, the literal expression @L{f|0B2}, assuming the element type
    for the list argument to @L{f} is @L{AlNum@}, is conceptually desugared to:
@@ -995,13 +984,13 @@
     The type of letter is a bit:
   
     @code[fble] @
-     @ Unit@ = *();
-     @ Bit@ = +(Unit@ 0, Unit@ 1);
+     Unit@ = *();
+     Bit@ = +(Unit@ 0, Unit@ 1);
   
     The literal will be formed of lists of bits:
   
     @code[fble] @
-     @ Bits@ = +(*(Bit@ head, Bits@ tail) cons, Unit@ nil);
+     Bits@ = +(*(Bit@ head, Bits@ tail) cons, Unit@ nil);
   
     The function specifies how to transform a list of bits into an integer,
     assuming some int type @L{Int@}:
@@ -1272,7 +1261,7 @@
    like:
 
    @code[fble] @
-    @ Bool@ = +(Unit@ true, Unit@ false);
+    Bool@ = +(Unit@ true, Unit@ false);
     Bool@ True;
     Bool@ False;
     (Bool@) { Bool@; } Not;
@@ -1301,7 +1290,7 @@
     expr = '@', path
   
    @Example @
-    @ FooBar@ = @/Foo/Bar%;
+    FooBar@ = @/Foo/Bar%;
   
    The package type describes a set of modules under the same location in the
    module hierarchy by using what is called a package path. A module belongs
@@ -1329,7 +1318,7 @@
     type = type, '.%(', type, ')'
   
    @Example @
-    @ PrivateBool@ = +(Unit@ true, Unit@ false).%(@/Foo/Bar%);
+    PrivateBool@ = +(Unit@ true, Unit@ false).%(@/Foo/Bar%);
 
    The private type behaves exactly like the given underlying type for
    modules with access, and as an abstract non-polymorphic type otherwise. The
@@ -1346,8 +1335,8 @@
    @L{/Foo/Bar/Sludge%}:
 
    @code[fble] @
-    @ Bool@ = +(Unit@ true, Unit@ false);
-    @ PrivateBool@ = Bool@.%(@/Foo/Bar%);
+    Bool@ = +(Unit@ true, Unit@ false);
+    PrivateBool@ = Bool@.%(@/Foo/Bar%);
     
     Bool@ true = Bool@(true: Unit);
     PrivateBool@ private_true = true;
@@ -1414,8 +1403,8 @@
    private. For example, consider a module @L{/Foo/Internal%}:
   
    @code[fble] @
-    @ X@ = ...;
-    @ Y@ = ...;
+    X@ = ...;
+    Y@ = ...;
     X@ X = ...;
     Y@.%(@/Foo/Internal%) Y = ...;
     
@@ -1493,15 +1482,10 @@
    
    Type: Synonym for Expr where a type is expected.
    
-   Spec:
-      kind_spec (kind : Kind)
-    | type_spec (type : Type)
-    ;
-        
    Expr:
       typeof (expr : Expr)
     | var (name : Name)
-    | let (bindings : [(Spec, Name, Expr)]) (body : Expr)
+    | let (bindings : [(Type, Name, Expr)]) (body : Expr)
     | undef (name: Name) (type: Type) (body: Expr)
     | module_path (path : Path)
    
@@ -1596,11 +1580,6 @@
     
     type = expr ;
     
-    spec = 
-       kind                                            (* kind_spec *)
-     | type                                            (* type_spec *)
-     ;
-
     field_arg = name, [':', expr] ;                    (* implicit tagged expr *)
     
     expr = 
@@ -1646,8 +1625,8 @@
     
     stmt =
        expr, ';'
-     | spec, name, '=', expr,                          (* let *)
-       {',', spec, name, '=', expr}, ';', stmt       
+     | [type], name, '=', expr,                        (* let *)
+       {',', [type], name, '=', expr}, ';', stmt       
      | stmt = type, name, ';', stmt                    (* undef *)
      | expr, '$', stmt                                 (* func_apply *)
      | expr, '.?(', name, ':', expr,                   (* union_select *)

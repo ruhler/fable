@@ -472,11 +472,294 @@ With:
 
 And I suppose now with something like:
 
-  ^ Bool@ = /Core/Bool%.Bool@;
-  ^ List@ = /Core/List%.List@;
-  ^ Monad@ = /Core/Monad%.Monad@;
-  ^ Maybe@ = /Core/Maybe%.Maybe@;
-  ^ IStream@ = /Core/Stream%.IStream@;
-  ^ OStream@ = /Core/Stream%.OStream@;
-  ^ String@ = /Core/String%.String@;
+  Bool@ ^= /Core/Bool%;
+  List@ ^= /Core/List%;
+  Monad@ ^= /Core/Monad%;
+  Maybe@ ^= /Core/Maybe%;
+  IStream@, OStream@ ^= /Core/Stream%;
+  String@ ^= /Core/String%;
 
+It's okay. I think it's okay. Nicer without anything than with % versus @. We
+know that info from the name. No reason to put something else there.
+
+Do we ever need an explicit kind in a let expression? How about just get rid
+of that entirely, always infer the kind?
+
+But we do need a way to have recursive non-typed definition like:
+
+  @ L@ = +(*(T@ head, L@ tail) items, Unit@ empty);
+
+I'm fine writing it without the kind:
+
+  L@ = +(*(T@ head, L@ tail) items, Unit@ empty);
+
+But it means we have legitimate use case with and without recursion. That's
+the case in general, right? Like, the case where I want to shadow, versus the
+case where I don't. That comes up in practice when making modifications to
+things.
+
+I suppose I'm suggesting we support the following. See if this is enough:
+1. Recursive, explicit type.
+  e.g.  (Int@) { Int@; } Factorial = (Int@ n) { Mul(n, Factorial(Decr(n))); };
+2. Non-recursive, explicit type.
+  e.g.  State@ s &= s.@(dir);
+3. Recursive, implicit type.
+  e.g. L@ = +(*(T@ head, L@ tail) items, Unit@ empty);
+4. Non-recursive, implicit type.
+  e.g. Output &= Output(io);
+5. Multi struct field import.
+  e.g.
+  do, return ^= Monad;
+6. Function bind syntax.
+  e.g.  Int@ x := do(...); ...;
+
+For example:
+
+  <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(IoM@<M@> io, String@ path) {
+    <@>% do = io.m.do;
+    <@>% return = io.m.return;
+    <@>% run = io.io.run;
+    % output = Output(io);
+    
+    Maybe@<File@> file := do(run(Open(path, Str|w)));
+    file.?(nothing: return(Nothing<OStream@<M@>>));
+    OStream@<M@> ostream = @(
+      put: output(file.just),
+      close: run(Close(file.just))
+    );
+    return(Just(ostream));
+  };
+
+Becomes:
+
+  <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(IoM@<M@> io, String@ path) {
+    do, return ^= io.m;
+    run ^= io.io;
+    Output &= Output(io);
+    
+    Maybe@<File@> file := do(run(Open(path, Str|w)));
+    file.?(nothing: return(Nothing<OStream@<M@>>));
+    OStream@<M@> ostream = @(
+      put: output(file.just),
+      close: run(Close(file.just))
+    );
+    return(Just(ostream));
+  };
+
+You know? I'm not convinced that's any better. It's still almost four lines of
+code that I'm going to ignore as a reader. But now it has funny ^= and &=
+which is not really intuitive at all for me.
+
+How about instead:
+
+  <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(IoM@<M@> io, String@ path) {
+    do = io.m.do, return = io.m.return, run = io.io.run, output = Output(io);
+    
+    Maybe@<File@> file := do(run(Open(path, Str|w)));
+    file.?(nothing: return(Nothing<OStream@<M@>>));
+    OStream@<M@> ostream = @(
+      put: output(file.just),
+      close: run(Close(file.just))
+    );
+    return(Just(ostream));
+  };
+
+Hmm... Anyway, one thing coming out of this: Think how much nicer it would be
+to not write explicit kinds at all? Except... does it hide polymorphism, which
+we really ought not to hide?
+
+---
+
+Getting rid of kinds in let feels like it makes sense to me. The compiler
+clearly doesn't need them. I clearly have no notion when writing code what the
+actual kinds of things are. The only possible use for them is documentation,
+but I ignore that anyway. I don't think it's worth it.
+
+Think how much simpler let expressions would be from a language point of view
+if we said the type is optional? Not: type or kind. Just optional type. Think
+how much nicer it would be to include things? No more tedious reliance on the
+compiler to tell me the kind of things. I think it's worth a try. See how it
+feels. See if I think I'm missing something or not.
+
+Now then, consider if we flattened the hierarchy for all my interfaces. Monad@
+is M@, do, return. Rng@ is M@, do, return, random. Io@ is M@, do, return, run.
+If we had that, it would be convenient to define things like:
+
+  <<@>@ M@>(Io@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(Io@<M@> m, String@ path) {
+    Maybe@<File@> file := m.do(m.run(Open(path, Str|w)));
+    file.?(nothing: m.return(Nothing<OStream@<M@>>));
+    OStream@<M@> ostream = @(
+      put: output(m, file.just),
+      close: m.run(Close(file.just))
+    );
+    m.return(Just(ostream));
+  };
+
+We just need helper functions when defining the Io@ interface type to
+construct it from sub components and deconstruct it if desired. If we wanted
+to, we could have Rng@ be M@, do, return, random, and Monad. Thought that
+feels a bit excessive to me.
+
+Another idea: use of function bind syntax to import things in a single line.
+If we have a common set of functions, we could do, for example:
+
+Uh... I guess we need explicit types for that. So nevermind.
+
+I just can't convince myself on multi struct import. It feels too limited.
+
+Well, let's see. Here are the imports for /Core/Int/Tests%, for example:
+
+
+  @ Bool@ = /Std/Bool%.Bool@;
+  % Not = /Std/Bool%.Not;
+
+  <@>% AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+  % Ord = /Std/Cmp%;
+  @ Compared@ = Ord.Compared@;
+
+  <@>% List = /Std/List%.List;
+
+  @ String@ = /Std/String%.String@;
+  % Str = /Std/Char/Ascii%.Str;
+  % String = /Std/Char/Ascii/Output%.String;
+
+  @ Test@ = /Std/Test%.Test@;
+  % Test = /Std/Test%.Test;
+  % TestSuite = /Std/Test%.TestSuite;
+  % Pass = /Std/Test%.Pass;
+  % Fail = /Std/Test%.Fail;
+
+  @ Unit@ = /Std/Unit%.Unit@;
+
+  @ Int@ = /Std/Int%.Int@;
+  % Neg = /Std/Int%.Neg;
+
+  % Sqrt = /Std/Int/Sqrt%.Sqrt;
+
+  % Lt = /Std/Int/Ord%.Lt;
+  % Le = /Std/Int/Ord%.Le;
+  % Gt = /Std/Int/Ord%.Gt;
+  % Ge = /Std/Int/Ord%.Ge;
+  % Min = /Std/Int/Ord%.Min;
+  % Max = /Std/Int/Ord%.Max;
+  % IOrd = /Core/Int/Ord%.Ord;
+  % IsZero = /Std/Int/Sign%.IsZero;
+  % Abs = /Std/Int/Sign%.Abs;
+
+  % Bin = /Std/Int/Lit%.Bin;
+  % Oct = /Std/Int/Lit%.Oct;
+  % Int = /Std/Int/Lit%.Int;
+  % Hex = /Std/Int/Lit%.Hex;
+
+That's 42 lines of imports. If we get rid of kinds, it's as many lines, but
+now looks like:
+
+  Bool@ = /Std/Bool%.Bool@;
+  Not = /Std/Bool%.Not;
+
+  AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+  Ord = /Std/Cmp%;
+  Compared@ = Ord.Compared@;
+
+  List = /Std/List%.List;
+
+  String@ = /Std/String%.String@;
+  Str = /Std/Char/Ascii%.Str;
+  String = /Std/Char/Ascii/Output%.String;
+
+  Test@ = /Std/Test%.Test@;
+  Test = /Std/Test%.Test;
+  TestSuite = /Std/Test%.TestSuite;
+  Pass = /Std/Test%.Pass;
+  Fail = /Std/Test%.Fail;
+
+  Unit@ = /Std/Unit%.Unit@;
+
+  Int@ = /Std/Int%.Int@;
+  Neg = /Std/Int%.Neg;
+
+  Sqrt = /Std/Int/Sqrt%.Sqrt;
+
+  Lt = /Std/Int/Ord%.Lt;
+  Le = /Std/Int/Ord%.Le;
+  Gt = /Std/Int/Ord%.Gt;
+  Ge = /Std/Int/Ord%.Ge;
+  Min = /Std/Int/Ord%.Min;
+  Max = /Std/Int/Ord%.Max;
+  IOrd = /Core/Int/Ord%.Ord;
+  IsZero = /Std/Int/Sign%.IsZero;
+  Abs = /Std/Int/Sign%.Abs;
+
+  Bin = /Std/Int/Lit%.Bin;
+  Oct = /Std/Int/Lit%.Oct;
+  Int = /Std/Int/Lit%.Int;
+  Hex = /Std/Int/Lit%.Hex;
+
+If I had multi import, it might look something like:
+
+  Bool@, Not .= /Std/Bool%;
+  AssertEquals .= /Std/Eq/Assert%;
+  Ord = /Std/Cmp%;
+  Compared@ .= Ord;
+  List .= /Std/List%;
+  String@ .= /Std/String%;
+  Str .= /Std/Char/Ascii%;
+  String .= /Std/Char/Ascii/Output%;
+  Test@, Test, TestSuite, Pass, Fail .= /Std/Test%;
+  Unit@ .= /Std/Unit%;
+  Int@, Neg .= /Std/Int%;
+  Sqrt .= /Std/Int/Sqrt%;
+  Lt, Le, Gt, Ge, Min, Max .= /Std/Int/Ord%;
+  IOrd = /Core/Int/Ord%.Ord;
+  IsZero, Abs .= /Std/Int/Sign%;
+  Bin, Oct, Int, Hex .= /Std/Int/Lit%;
+
+Not bad, right? 16 lines only. No need for lines in between things. A little
+bit dense to parse? Actually, looks much harder for me to parse without the
+kinds for some reason.
+
+  <<@>@ M@>(Io@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(Io@<M@> m, String@ path) {
+    do, return, run .= m;
+
+    Maybe@<File@> file := do(run(Open(path, Str|w)));
+    file.?(nothing: return(Nothing<OStream@<M@>>));
+    OStream@<M@> ostream = @(
+      put: Output(m, file.just),
+      close: run(Close(file.just))
+    );
+    return(Just(ostream));
+  };
+
+I think, somehow, I like the indicator at the beginning of the line to
+indicate a definition of something. Or some syntax highlighting of .= to make
+it stand out a little more.
+
+  <<@>@ M@>(Io@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(Io@<M@> m, String@ path) {
+    do, return, run, Output .= Import(m);
+
+    Maybe@<File@> file := do(run(Open(path, Str|w)));
+    file.?(nothing: return(Nothing<OStream@<M@>>));
+    OStream@<M@> ostream = @(
+      put: Output(file.just),
+      close: run(Close(file.just))
+    );
+    return(Just(ostream));
+  };
+
+Anyway, I think this gets us real close, without sacrificing my goal of
+explicit variable definitions.
+
+In summary:
+1. Remove kinds from let expressions.
+2. Inline interfaces to top level for Io@, Rng@, etc.
+3. Add struct field .= import syntax.
+
+Do one at a time. See how it feels.
