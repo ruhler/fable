@@ -38,15 +38,15 @@ Test@ Bench = Test(Str|Fbld, (Unit@ _) {
   M@ = Pure@<String@>;
   StateM@<String@, M@> p = Pure<String@>;
   IStream@<M@> in = IStream<M@>(p.s, p.m);
-  Put@<M@, Output@> out = NullOutput<M@>(p.m);
-  Put@<M@, Output@> err = NullOutput<M@>(p.m);
+  Put@<M@, Output@> out = NullOutput(p.m);
+  Put@<M@, Output@> err = NullOutput(p.m);
   (String@) { M@<Maybe@<IStream@<M@>>>; } read = (String@ _) {
     p.m.return(Nothing<IStream@<M@>>);
   };
   IO@<M@> io = @(in, out, err, read);
   List@<String@> args = List[Str|'-'];
   Exit@ wnt = Success;
-  Exit@ got = Eval(/Fbld/Main%.Main<M@>(p.m, io, args), /Fbld/Bench/Input%);
+  Exit@ got = Eval(/Fbld/Main%.Main(p.m, io, args), /Fbld/Bench/Input%);
   AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
 });
 

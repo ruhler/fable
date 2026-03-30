@@ -28,8 +28,8 @@ Unit@ = /Std/Unit%.Unit@;
 Test@ Bench = Test(Str|Sat, (Unit@ _) {
   M@ = Pure@<String@>;
   StateM@<String@, M@> p = Pure<String@>;
-  Put@<M@, Output@> null = NullOutput<M@>(p.m);
-  M@<Exit@> go = /Sat/Main%.Main<M@>(p.m, IStream<M@>(p.s, p.m), null, null);
+  Put@<M@, Output@> null = NullOutput(p.m);
+  M@<Exit@> go = /Sat/Main%.Main(p.m, IStream<M@>(p.s, p.m), null, null);
   Exit@ got = Eval(go, /Sat/Bench/Input%);
   Exit@ wnt = Success;
   AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);

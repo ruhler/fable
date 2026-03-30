@@ -67,7 +67,7 @@ Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ ex
   /Std/Test%.Test(name, (Unit@ _) {
     IStream@<M@> in = IStream<M@>(s_in, p.m);
     Put@<M@, Output@> out = OStream<M@>(s_out, p.m);
-    M@<Unit@> go = game<M@>(p.m, in, out, args);
+    M@<Unit@> go = game(p.m, in, out, args);
     String@ got = ToString $ Exec(go, S@(input, Return)).out;
     String@ wnt = expected_output;
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
@@ -81,8 +81,8 @@ Bench = (String@ name, Main@ game, String@ input, List@<String@> args) {
     M@ = Pure@<String@>;
     StateM@<String@, M@> p = Pure<String@>;
     IStream@<M@> in = IStream<M@>(p.s, p.m);
-    Put@<M@, Output@> out = NullOutput<M@>(p.m);
-    Unit@ _ = Eval(game<M@>(p.m, in, out, args), input);
+    Put@<M@, Output@> out = NullOutput(p.m);
+    Unit@ _ = Eval(game(p.m, in, out, args), input);
     Pass;
   });
 };

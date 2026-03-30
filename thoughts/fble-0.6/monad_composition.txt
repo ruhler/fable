@@ -844,3 +844,27 @@ I'm going to back out this change. Go back to the drawing board. Use StateM@
 as my driving example, because I clearly do more interesting things with that
 than with Rng@.
 
+---
+
+Let's think conceptually. Conceptually Monad@, M@ give us composition of side
+effects. State@, Rng@, Io@ give us the side effects. Any one of State@, Rng@,
+Io@ is really useless without the Monad@, because we can't compose things
+together.
+
+What if we go the other direction. Get rid of StateM@. Always pass things
+separately? But I often want to return State@ + Monad@.
+
+Let's review:
+* Problem with just State@ - awkward to return that plus Monad@.
+* Problem with just StateM@ - feels like it doesn't compose well.
+* Problem with combined - s.m prefixes everywhere.
+
+/Games/BenchmarkGame/Game% is the interesting one. Where I make a StateM@,
+then provide two alternative State@ and bundle those separately to IStream and
+OStream.
+
+The Istream and OStream functions are interesting, because they currently take
+State@ before Monad@, so type inference fails. That could be fixed by
+switching order, or add M@ to State@ interface too.
+
+

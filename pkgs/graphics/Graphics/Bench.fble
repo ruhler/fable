@@ -46,7 +46,7 @@ Test@ Bench = Test(Str|'Graphics', (Unit@ _) {
 
   App@<M@> app = App@<M@>(event, effect);
 
-  Unit@ _ = Eval(/Graphics/App%.Main<M@>(p.m, app, w, h), n);
+  Unit@ _ = Eval(/Graphics/App%.Main(p.m, app, w, h), n);
   Pass;
 });
 

@@ -47,7 +47,7 @@ Test@ Bench = Test(Str|'Snake', (Unit@ _) {
 
   App@<M@> app = App@<M@>(event, effect);
 
-  Unit@ _ = Eval(/Games/Snake%.Main<M@>(p.m, app, w, h), n);
+  Unit@ _ = Eval(/Games/Snake%.Main(p.m, app, w, h), n);
   Pass;
 });
 
