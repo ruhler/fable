@@ -35,6 +35,7 @@ Unit = /Std/Unit%.Unit;
 
   # StreamM -- The Monad@ instance for StreamM@.
   Monad@<StreamM@> StreamM = @(
+    M@: StreamM@,
     return: <@ A@>(A@ x, M@<Stream@> s) { m.return(Result@<A@>(s, x)); },
     do: <@ A@>(StreamM@<A@> ma)<@ B@>((A@ ) { StreamM@<B@>; } f, M@<Stream@> s) {
       Result@<A@> r := m.do(ma(s));

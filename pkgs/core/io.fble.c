@@ -113,7 +113,7 @@ FbleValue* FbleIoM(FbleValueHeap* heap, FbleProfile* profile)
   FbleValue* run = FbleNewFuncValue(heap, &run_exe, block_id + 2, NULL);
 
   FbleValue* type = FbleGenericTypeValue;
-  FbleValue* monad = FbleNewStructValue_(heap, 2, monad_return, monad_do);
+  FbleValue* monad = FbleNewStructValue_(heap, 3, type, monad_return, monad_do);
   FbleValue* io = FbleNewStructValue_(heap, 1, run);
   return FbleNewStructValue_(heap, 3, type, monad, io);
 }

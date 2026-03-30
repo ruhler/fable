@@ -127,7 +127,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
     f(r.ok.x, r.ok.s);
   };
 
-  Monad@<PM@> Monad = Monad@<PM@>(Return, Do);
+  Monad@<PM@> Monad = Monad@(PM@, Return, Do);
 
   Proto@<PM@> proto = {
     <@ A@>(String@) { PM@<A@>; }

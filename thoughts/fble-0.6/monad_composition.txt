@@ -811,3 +811,36 @@ I would say, for Rng@, this feels like an improvement. It's much nicer to use.
 It's not any harder to construct. It's only very slightly annoying to define
 because of duplicating do and return declarations.
 
+---
+
+Experiment 2:
+* Change StateM + State to just State with everything at the top level.
+* Reference methods via m.foo everywhere.
+
+Experience report:
+* Defining pure state monad instance is actually easier without the extra
+  layers of indirection.
+* 'P' is a weird variable name to use for a pure state monad.
+* Maybe IStream@<M@> should include do, return too?
+ - Which starts to get trickier, because I expect to have access to the monad
+   type separately for that...
+* I'm doing @(P.return, P.do) a bunch to extract the Monad@ implementation
+  from a State@. Is that something I should be concerned about?
+ - Actually, it needs to be Monad@(P.return, P.do).
+ - Actually, it needs to be Monad@<P.M@>(P.return, P.do)
+* Now I see cases where having M@ as part of Monad@ would be nice.
+* When I want to create two separate state views for the same monad, in
+  /Games/BenchmarkGame/Game%, things are getting messy.
+
+Unlike the Rng case, I'm not at all convinced this is an improvement. What's
+bad is, the Rng case would run into the same issues if it was used via as much
+composition as StateM is being used in. For Rng@, it's like there's one
+interface that everyone uses, and so it's fine. For State@, it's like we are
+passing around lots of different variations of views of state monads to
+different things, so we have lots of different instances that we want to
+construct and pass around. That's making things unpleasant.
+
+I'm going to back out this change. Go back to the drawing board. Use StateM@
+as my driving example, because I clearly do more interesting things with that
+than with Rng@.
+

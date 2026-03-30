@@ -8,6 +8,8 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
+Monad@ = /Std/Monad%.Monad@;
+
 Output@ = /Std/Char/Output%.Output@;
 
 FormatE = /Std/Char/Ascii/Output%.FormatE;
@@ -77,6 +79,6 @@ Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
   Result@(errors, Or(ra.failed, rb.failed), rb.value);
 };
 
-/Std/Monad%.Monad@<Result@> Monad = @(return: Return, do: Do);
+/Std/Monad%.Monad@<Result@> Monad = Monad@(Result@, Return, Do);
 
 @(Result@, Monad, Ok, Error, Fail, Raise, Try);

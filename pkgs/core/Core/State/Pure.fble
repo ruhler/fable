@@ -14,6 +14,7 @@ Pure = <@ S@> {
   M@ = Pure@<S@>;
 
   Monad@<M@> m = @(
+    M@,
     return: <@ A@>(A@ x, S@ s) { Result@<S@, A@>(s, x); },
     do: <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f, S@ s) {
       Result@<S@, A@> ra = ma(s);

@@ -22,6 +22,7 @@
 #    m.return(True)
 Monad@ = <<@>@ M@> {
   *(
+    @<M@> M@,
     <@ A@>(A@) { M@<A@>; } return,
     <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } do
   );
