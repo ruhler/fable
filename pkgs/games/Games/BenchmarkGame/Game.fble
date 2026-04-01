@@ -16,7 +16,7 @@ AssertEquals = /Std/Eq/Assert%.AssertEquals;
 List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
-IoM@ = /Core/Io%.IoM@;
+Io@ = /Core/Io%.Io@;
 
 String@ = /Std/String%.String@;
 
@@ -89,11 +89,11 @@ Bench = (String@ name, Main@ game, String@ input, List@<String@> args) {
 
 # Run a benchmark game via command line.
 (Main@) { /Core/Cli%.Main@; }
-Run = (Main@ game)<<@>@ M@>(IoM@<M@> io, List@<String@> args) {
-  IStream@<M@> in := io.m.do(/Core/Stdio/FFI%.Text.Stdin(io));
-  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
-  Unit@ _ := io.m.do(game(io.m, in, out, args));
-  io.m.return(Success);
+Run = (Main@ game)<<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Unit@ _ := m.do(game(m, in, out, args));
+  m.return(Success);
 };
 
 @(Main@, Test, Bench, Run);

@@ -10,7 +10,8 @@ List@ = /Std/List%.List@;
 Main@ = /Core/Cli%.Main@;
 Success = /Core/Cli%.Success;
 
-IoM@ = /Core/Io%.IoM@;
+Monad@ = /Std/Monad%.Monad@;
+Io@ = /Core/Io%.Io@;
 
 String@ = /Std/String%.String@;
 
@@ -19,10 +20,10 @@ Unit@ = /Std/Unit%.Unit@;
 # Run --
 #   A cli main function that outputs a single string.
 (String@) { Main@; } Run = (String@ str) {
-  <<@>@ M@>(IoM@<M@> io, List@<String@> _args) {
-    Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
-    Unit@ _ := io.m.do(out $ Format|'%s\n'[String(str)]);
-    io.m.return(Success);
+  <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
+    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+    Unit@ _ := m.do(out $ Format|'%s\n'[String(str)]);
+    m.return(Success);
   };
 };
 

@@ -10,9 +10,11 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
+Monad@ = /Std/Monad%.Monad@;
+
 Put@ = /Core/Char/Stream%.Put@;
 
-IoM@ = /Core/Io%.IoM@;
+Io@ = /Core/Io%.Io@;
 External@ = /Core/Io%.External@;
 
 String@ = /Std/String%.String@;
@@ -34,61 +36,56 @@ External@<File@> GetStderr = @<GetStderr>|GetStderr;
 (File@, Int@) { External@<Unit@>; } PutByte = @<PutByte>|PutByte;
 (File@) { External@<Unit@>; } Flush = @<Flush>|Flush;
 
-<<@>@ M@>(IoM@<M@>, File@, Output@) { M@<Unit@>; }
-Output = <<@>@ M@>(IoM@<M@> io, File@ file, Output@ output) {
+<<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Output@) { M@<Unit@>; }
+Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Output@ output) {
   S@ = M@<Unit@>;
-  S@ return = io.m.return(Unit);
+  S@ return = m.return(Unit);
   (S@, (Unit@) { S@; }) { S@; } do = (S@ ma, (Unit@) { S@; } f) {
-    io.m.do(ma, f);
+    m.do(ma, f);
   };
-  (Char@) { S@; } put = (Char@ c) { io.io.run(PutChar(file, c)); };
-  Unit@ _ := io.m.do(output(@(return, do, put)));
-  io.io.run(Flush(file));
+  (Char@) { S@; } put = (Char@ c) { io.run(PutChar(file, c)); };
+  Unit@ _ := m.do(output(@(return, do, put)));
+  io.run(Flush(file));
 };
 
 Text = {
   IStream@ = /Core/Char/Stream%.IStream@;
   OStream@ = /Core/Char/Stream%.OStream@;
 
-  <<@>@ M@>(IoM@<M@>) { M@<IStream@<M@>>; }
-  Stdin = <<@>@ M@>(IoM@<M@> io) {
-    File@ stdin := io.m.do(io.io.run(GetStdin));
-    io.m.return(io.io.run(GetChar(stdin)));
+  <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<IStream@<M@>>; }
+  Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
+    File@ stdin := m.do(io.run(GetStdin));
+    m.return(io.run(GetChar(stdin)));
   };
 
-  <<@>@ M@>(IoM@<M@>) { M@<Put@<M@, Output@>>; }
-  Stdout = <<@>@ M@>(IoM@<M@> io) {
-    File@ stdout := io.m.do(io.io.run(GetStdout));
-    io.m.return(Output(io, stdout));
+  <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Put@<M@, Output@>>; }
+  Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
+    File@ stdout := m.do(io.run(GetStdout));
+    m.return(Output(m, io, stdout));
   };
 
-  <<@>@ M@>(IoM@<M@>) { M@<Put@<M@, Output@>>; }
-  Stderr = <<@>@ M@>(IoM@<M@> io) {
-    File@ stderr := io.m.do(io.io.run(GetStderr));
-    io.m.return(Output(io, stderr));
+  <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Put@<M@, Output@>>; }
+  Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
+    File@ stderr := m.do(io.run(GetStderr));
+    m.return(Output(m, io, stderr));
   };
 
-  <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
-  Read = <<@>@ M@>(IoM@<M@> io, String@ path) {
-    Maybe@<File@> file := io.m.do(io.io.run(Open(path, Str|r)));
-    file.?(nothing: io.m.return(Nothing<IStream@<M@>>));
-    io.m.return(Just(io.io.run(GetChar(file.just))));
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
+  Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
+    Maybe@<File@> file := m.do(io.run(Open(path, Str|r)));
+    file.?(nothing: m.return(Nothing<IStream@<M@>>));
+    m.return(Just(io.run(GetChar(file.just))));
   };
 
-  <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
-  Write = <<@>@ M@>(IoM@<M@> io, String@ path) {
-    do = io.m.do;
-    return = io.m.return;
-    run = io.io.run;
-    output = Output(io);
-    
-    Maybe@<File@> file := do(run(Open(path, Str|w)));
-    file.?(nothing: return(Nothing<OStream@<M@>>));
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
+    Maybe@<File@> file := m.do(io.run(Open(path, Str|w)));
+    file.?(nothing: m.return(Nothing<OStream@<M@>>));
     OStream@<M@> ostream = @(
-      put: output(file.just),
-      close: run(Close(file.just))
+      put: Output(m, io, file.just),
+      close: io.run(Close(file.just))
     );
-    return(Just(ostream));
+    m.return(Just(ostream));
   };
 
   @(Stdin, Stdout, Stderr, Read, Write);
@@ -97,28 +94,24 @@ Text = {
 Binary = {
   IStream@ = /Core/Stream%.IStream@;
 
-  <<@>@ M@>(IoM@<M@>) { M@<IStream@<M@>>; }
-  Stdin = <<@>@ M@>(IoM@<M@> io) {
+  <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<IStream@<M@>>; }
+  Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
     # TODO: Re-open stdin in binary mode?
-    File@ stdin := io.m.do(io.io.run(GetStdin));
-    io.m.return(io.io.run(GetByte(stdin)));
+    File@ stdin := m.do(io.run(GetStdin));
+    m.return(io.run(GetByte(stdin)));
   };
 
-  <<@>@ M@>(IoM@<M@>) { M@<Put@<M@, Int@>>; }
-  Stdout = <<@>@ M@>(IoM@<M@> io) {
-    File@ stdout := io.m.do(io.io.run(GetStdout));
-    io.m.return((Int@ x) { io.io.run(PutByte(stdout, x)); });
+  <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Put@<M@, Int@>>; }
+  Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
+    File@ stdout := m.do(io.run(GetStdout));
+    m.return((Int@ x) { io.run(PutByte(stdout, x)); });
   };
 
-  <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
-  Read = <<@>@ M@>(IoM@<M@> io, String@ path) {
-    do = io.m.do;
-    return = io.m.return;
-    run = io.io.run;
-
-    Maybe@<File@> file := do(run(Open(path, Str|rb)));
-    file.?(nothing: return(Nothing<IStream@<M@>>));
-    return(Just(run(GetByte(file.just))));
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
+  Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
+    Maybe@<File@> file := m.do(io.run(Open(path, Str|rb)));
+    file.?(nothing: m.return(Nothing<IStream@<M@>>));
+    m.return(Just(io.run(GetByte(file.just))));
   };
 
   @(Stdin, Stdout, Read);

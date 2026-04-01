@@ -20,7 +20,8 @@ Concat = /Std/List%.Concat;
 
 Maybe@ = /Std/Maybe%.Maybe@;
 
-IoM@ = /Core/Io%.IoM@;
+Monad@ = /Std/Monad%.Monad@;
+Io@ = /Core/Io%.Io@;
 
 IStream@ = /Core/Stream%.IStream@;
 OStream@ = /Core/Stream%.OStream@;
@@ -101,48 +102,48 @@ GetArgs = (List@<String@> args, Args@ default) {
   GetArgs(nargv, nargs);
 };
 
-Main@ Main = <<@>@ M@>(IoM@<M@> io, List@<String@> argv) {
-  Put@<M@, Output@> err := io.m.do(/Core/Stdio/FFI%.Text.Stderr(io));
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
+  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr(m, io));
 
-  Sockets@<M@> sockets := io.m.do(/Network/Sockets/Native%.Sockets<M@>(io.io, io.m));
+  Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(io, m));
 
   (Int@, IStream@<M@>, OStream@<M@>) { M@<Unit@>; }
   ForwardN = (Int@ n, IStream@<M@> in, OStream@<M@> out) {
-    IsZero(n).?(true: io.m.return(Unit));
+    IsZero(n).?(true: m.return(Unit));
     Int@ nn = /Std/Int/Ord%.Gt(n, Int|0).?(true: Decr(n), false: n);
 
-    Maybe@<Int@> mb := io.m.do(in);
-    mb.?(nothing: io.m.return(Unit));
-    Unit@ _ := io.m.do(out(mb.just));
+    Maybe@<Int@> mb := m.do(in);
+    mb.?(nothing: m.return(Unit));
+    Unit@ _ := m.do(out(mb.just));
     ForwardN(nn, in, out);
   };
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
-    Unit@ _ := io.m.do(out $ String $ /Network/Apps/Echo/Usage%);
-    io.m.return(Success);
+    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+    Unit@ _ := m.do(out $ String $ /Network/Apps/Echo/Usage%);
+    m.return(Success);
   });
 
   args.error.?(items: {
-    Unit@ _ := io.m.do(err $ String $ args.error);
-    Unit@ _ := io.m.do(err $ StringE|'\ntry --help for help\n');
-    io.m.return(Failure);
+    Unit@ _ := m.do(err $ String $ args.error);
+    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
+    m.return(Failure);
   });
 
-  Maybe@<IOStream@<M@>> mios := io.m.do(sockets.client(args.hostname, args.port));
+  Maybe@<IOStream@<M@>> mios := m.do(sockets.client(args.hostname, args.port));
   mios.?(nothing: {
-    Unit@ _ := io.m.do(err $ StringE|'unable to connect\n');
-    io.m.return(Failure);
+    Unit@ _ := m.do(err $ StringE|'unable to connect\n');
+    m.return(Failure);
   });
 
   IOStream@<M@> ios = mios.just;
-  Put@<M@, Output@> os = OStream(ios.out, io.m).put;
-  Put@<M@, Int@> out := io.m.do(/Core/Stdio/FFI%.Binary.Stdout(io));
+  Put@<M@, Output@> os = OStream(ios.out, m).put;
+  Put@<M@, Int@> out := m.do(/Core/Stdio/FFI%.Binary.Stdout(m, io));
 
-  Unit@ _ := io.m.do(os $ String $ args.message);
-  Unit@ _ := io.m.do(ForwardN(args.num_bytes, ios.in, out));
-  io.m.return(Success);
+  Unit@ _ := m.do(os $ String $ args.message);
+  Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, out));
+  m.return(Success);
 };
 
 Main;

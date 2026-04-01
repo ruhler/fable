@@ -6,7 +6,8 @@ Int = /Std/Int/Lit%.Int;
 
 List@ = /Std/List%.List@;
 
-IoM@ = /Core/Io%.IoM@;
+Monad@ = /Std/Monad%.Monad@;
+Io@ = /Core/Io%.Io@;
 
 Success = /Core/Cli%.Success;
 
@@ -26,21 +27,21 @@ Affine = /App/Drawing%.Affine;
 
 Screenshot = /Invaders/Graphics%.Screenshot;
 
-Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ _width, Int@ _height, List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> _, App@<M@> app, Int@ _width, Int@ _height, List@<String@> _args) {
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Int|2, y: Neg(Int|2));
   Point@ b = @(x: Int|0, y: Int|480);
 
   Drawing@ screenshot = Screenshot;
-  Unit@ _ := io.m.do(app.effect(Effect@(draw: Affine(a, b, screenshot))));
+  Unit@ _ := m.do(app.effect(Effect@(draw: Affine(a, b, screenshot))));
 
   M@<Unit@> WaitForKeyPress = {
-    Event@ e := io.m.do(app.event);
-    e.?(key_down: io.m.return(Unit), : WaitForKeyPress);
+    Event@ e := m.do(app.event);
+    e.?(key_down: m.return(Unit), : WaitForKeyPress);
   };
-  Unit@ _ := io.m.do(WaitForKeyPress);
+  Unit@ _ := m.do(WaitForKeyPress);
 
-  io.m.return(Success);
+  m.return(Success);
 };
 
 Main;

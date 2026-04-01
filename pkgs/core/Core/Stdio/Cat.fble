@@ -13,7 +13,8 @@ List = /Std/List%.List;
 Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 
-IoM@ = /Core/Io%.IoM@;
+Monad@ = /Std/Monad%.Monad@;
+Io@ = /Core/Io%.Io@;
 
 Main@ = /Core/Cli%.Main@;
 Exit@ = /Core/Cli%.Exit@;
@@ -27,35 +28,35 @@ Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
 
 # The 'cat' program.
-Main@ Cat = <<@>@ M@>(IoM@<M@> io, List@<String@> args) {
-  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
-  IStream@<M@> in := io.m.do(/Core/Stdio/FFI%.Text.Stdin(io));
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(io);
+Main@ Cat = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
 
   (IStream@<M@>) { M@<Unit@>; } cat = (IStream@<M@> input) {
-    String@ line := io.m.do(GetLine(input, io.m));
-    line.?(empty: io.m.return(Unit));
+    String@ line := m.do(GetLine(input, m));
+    line.?(empty: m.return(Unit));
 
-    Unit@ _ := io.m.do(out $ String(line));
+    Unit@ _ := m.do(out $ String(line));
     cat(input);
   };
 
   (List@<String@>) { M@<Exit@>; } cats = (List@<String@> inputs) {
-    inputs.?(empty: io.m.return(Success));
+    inputs.?(empty: m.return(Success));
     String@ filename = inputs.items.head;
 
-    Maybe@<IStream@<M@>> istream := io.m.do $ {
-      /Std/String/Eq%.Eq(Str|'-', filename).?(true: io.m.return(Just(in)));
+    Maybe@<IStream@<M@>> istream := m.do $ {
+      /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(in)));
       read(filename);
     };
 
     istream.?(nothing: {
-      Unit@ _ := io.m.do(out $
+      Unit@ _ := m.do(out $
         FormatE|'fble-cat: Unable to open %s\n'[String(filename)]);
-      io.m.return(Failure);
+      m.return(Failure);
     });
 
-    Unit@ _ := io.m.do(cat(istream.just));
+    Unit@ _ := m.do(cat(istream.just));
     cats(inputs.items.tail);
   };
 

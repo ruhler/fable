@@ -1,6 +1,4 @@
 
-Monad@ = /Std/Monad%.Monad@;
-
 Unit@ = /Std/Unit%.Unit@;
 
 # External@ --
@@ -25,11 +23,4 @@ Io@ = <<@>@ M@> { *(
   <@ A@>(External@<A@>) { M@<A@>; } run
 ); };
   
-# Monadic Io interface.
-IoM@ = <<@>@ M@> { *(
-  @<M@> M@,
-  Monad@<M@> m,
-  Io@<M@> io
-); };
-
-@(External@, Io@, IoM@);
+@(External@, Io@);

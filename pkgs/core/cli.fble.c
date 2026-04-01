@@ -56,12 +56,13 @@ static FbleValue* Cli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main
 
   // We apply the main function with:
   //  M@ = <@ A@>(Unit@) { A@; }
-  FbleValue* iom = FbleIoM(heap, profile);              // IoM@<M@>
+  FbleValue* m = FbleIoMonad(heap, profile);            // Monad@<M@>
+  FbleValue* io = FbleIo(heap, profile);                // Io@<M@>
   FbleValue* args = FbleCliArgs(heap, argc, argv);      // List@<String@>
   FbleValue* unit = FbleNewStructValue_(heap, 0);       // Unit@
 
-  FbleValue* func_args[3] = { iom, args, unit };
-  FbleValue* result = FbleApply(heap, func, 3, func_args, profile);
+  FbleValue* func_args[4] = { m, io, args, unit };
+  FbleValue* result = FbleApply(heap, func, 4, func_args, profile);
   return FblePopFrame(heap, result);
 }
 

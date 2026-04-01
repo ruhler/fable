@@ -6,18 +6,19 @@ IStream@ = /Core/Char/Stream%.IStream@;
 List@ = /Std/List%.List@;
 Maybe@ = /Std/Maybe%.Maybe@;
 
-IoM@ = /Core/Io%.IoM@;
+Monad@ = /Std/Monad%.Monad@;
+Io@ = /Core/Io%.Io@;
 
 Main@ = /Core/Cli%.Main@;
 
 String@ = /Std/String%.String@;
 
-Main@ Main = <<@>@ M@>(IoM@<M@> io, List@<String@> args) {
-  IStream@<M@> in := io.m.do(/Core/Stdio/FFI%.Text.Stdin(io));
-  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
-  Put@<M@, Output@> err := io.m.do(/Core/Stdio/FFI%.Text.Stderr(io));
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(io);
-  /Fbld/Main%.Main(io.m, @(in, out, err, read), args);
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr(m, io));
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
+  /Fbld/Main%.Main(m, @(in, out, err, read), args);
 };
 
 Main;

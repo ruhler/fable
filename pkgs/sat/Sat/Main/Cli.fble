@@ -8,7 +8,8 @@ String = /Std/Char/Output%.String;
 List@ = /Std/List%.List@;
 Any = /Std/List/Search%.Any;
 
-IoM@ = /Core/Io%.IoM@;
+Monad@ = /Std/Monad%.Monad@;
+Io@ = /Core/Io%.Io@;
 
 Main@ = /Core/Cli%.Main@;
 Success = /Core/Cli%.Success;
@@ -18,17 +19,17 @@ Str = /Std/Char/Ascii%.Str;
 
 Unit@ = /Std/Unit%.Unit@;
 
-Main@ Main = <<@>@ M@>(IoM@<M@> io, List@<String@> args) {
-  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
-  Put@<M@, Output@> err := io.m.do(/Core/Stdio/FFI%.Text.Stderr(io));
-  IStream@<M@> in := io.m.do(/Core/Stdio/FFI%.Text.Stdin(io));
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr(m, io));
+  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := io.m.do(out $ String $ /Sat/Usage%);
-    io.m.return(Success);
+    Unit@ _ := m.do(out $ String $ /Sat/Usage%);
+    m.return(Success);
   });
 
-  /Sat/Main%.Main<M@>(io.m, in, out, err);
+  /Sat/Main%.Main(m, in, out, err);
 };
 
 Main;

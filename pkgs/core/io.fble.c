@@ -73,20 +73,38 @@ static FbleValue* RunImpl(
 }
 
 // See documentation in io.fble.h
-FbleValue* FbleIoM(FbleValueHeap* heap, FbleProfile* profile)
+FbleValue* FbleIo(FbleValueHeap* heap, FbleProfile* profile)
 {
-  FbleName block_names[3];
+  FbleName block_names[1];
+  block_names[0].name = FbleNewString("IoRun!");
+  block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  FbleNameV names = { .size = 1, .xs = block_names };
+  FbleBlockId block_id = FbleAddBlocksToProfile(profile, names);
+  FbleFreeName(block_names[0]);
+
+  static FbleExecutable run_exe = {
+    .num_args = 1,
+    .num_statics = 0,
+    .max_call_args = 0,
+    .run = &RunImpl,
+  };
+  FbleValue* run = FbleNewFuncValue(heap, &run_exe, block_id, NULL);
+
+  return FbleNewStructValue_(heap, 1, run);
+}
+
+// See documentation in io.fble.h
+FbleValue* FbleIoMonad(FbleValueHeap* heap, FbleProfile* profile)
+{
+  FbleName block_names[2];
   block_names[0].name = FbleNewString("IoReturn!");
   block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   block_names[1].name = FbleNewString("IoDo!");
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[2].name = FbleNewString("IoRun!");
-  block_names[2].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  FbleNameV names = { .size = 3, .xs = block_names };
+  FbleNameV names = { .size = 2, .xs = block_names };
   FbleBlockId block_id = FbleAddBlocksToProfile(profile, names);
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
-  FbleFreeName(block_names[2]);
 
   static FbleExecutable return_exe = {
     .num_args = 2,
@@ -104,16 +122,6 @@ FbleValue* FbleIoM(FbleValueHeap* heap, FbleProfile* profile)
   };
   FbleValue* monad_do = FbleNewFuncValue(heap, &do_exe, block_id + 1, NULL);
 
-  static FbleExecutable run_exe = {
-    .num_args = 1,
-    .num_statics = 0,
-    .max_call_args = 0,
-    .run = &RunImpl,
-  };
-  FbleValue* run = FbleNewFuncValue(heap, &run_exe, block_id + 2, NULL);
-
   FbleValue* type = FbleGenericTypeValue;
-  FbleValue* monad = FbleNewStructValue_(heap, 3, type, monad_return, monad_do);
-  FbleValue* io = FbleNewStructValue_(heap, 1, run);
-  return FbleNewStructValue_(heap, 3, type, monad, io);
+  return FbleNewStructValue_(heap, 3, type, monad_return, monad_do);
 }

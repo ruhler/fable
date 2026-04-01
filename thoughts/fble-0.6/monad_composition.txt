@@ -867,4 +867,275 @@ The Istream and OStream functions are interesting, because they currently take
 State@ before Monad@, so type inference fails. That could be fixed by
 switching order, or add M@ to State@ interface too.
 
+What would be best for the /Games/BenchmarkGame/Game% case?
+* Define a pure state monad: Monad@ + State@
+* Define State@ variations for in, out
+ - Bundled with Monad@ or not though?
 
+I want the best of all worlds:
+* Grouped together, so we can return as a single thing.
+* Everything top level, so we can access without p.m layers.
+* Easy to extract and build from Monad@ so we can recompose easily.
+
+Straw Proposal:
+* Have separate Foo@, FooM@
+ - Foo@ is the raw interface without Monad@
+ - FooM@ is Foo@ + Monad@
+* Have functions consume FooM@
+ - But what if they don't want to define a special FooM@ to consume?
+* Have FooM@ put all methods at top level.
+* Provide helper functions to construct/deconstruct FooM from parts.
+
+That doesn't feel right. What really feels right to me is have separate
+Monad@, Foo@ only. Don't define top level interfaces. Pass as separate
+arguments to functions. Include M@ in all the interfaces to help with type
+inference. But define top level things for things like StateM@ if we are
+returning it?
+
+There seems to be a conflict between: "group together because it always goes
+together" and "keep separate, so we can easily recombine things separately".
+
+Random idea I want to get in the notes: We could provide a constructor for,
+e.g. StateM@, that takes a Monad@ and has put/get undefined. Then to
+recombine, we use something like:
+
+  StateM(m).@(put: ..., get: ...);
+
+---
+
+I'm feeling stuck here. Let's step back, try again, see where we are.
+
+Immediate goal: be able to start transferring things like IoM@, Rng@ over to
+/Std.
+
+Monadic classes I anticipate having in /Std for this release:
+* Monad(do, return)
+* State(get, put)
+* Rng(random)
+* Io(run)
+* IStream(get)
+* OStream(put, close)
+
+For the most part, I expect to have all the combinations with Monad:
+* Monad, State + Monad, Rng + Monad, Io + Monad, IStream + Monad, OStream +
+  Monad.
+
+I can imagine having more complicated compositions, like OStream + OStream +
+Monad for stdout, stderr. I'm not sure if I currently use something like that.
+I guess Invaders game uses Monad + State + App. The benchmark games use 
+Monad + IStream + Put.
+
+I know I want to be able to construct, for example, Rng + Monad, and State +
+Monad and return those from functions. It's not clear to me how important /
+convenient it is to be able to pass Rng + Monad, State + Monad as single
+arguments as opposed to two separate arguments to a function. But I'm sure as
+things scale up I'll want to be able to collect interfaces into a top level
+type and pass that all at once.
+
+My gut tells me:
+* I should preserve hierarchy. Monad is a thing. State is a thing.
+  Treat Monad + State as Monad + State, not do + return + get + put.
+
+My goal here is about coming up with a standard convention used in the
+standard library for how to do these kinds of compositions. Conventions in
+terms of:
+* How to name types. e.g. State@ versus StateM@.
+* How to name fields. e.g. m versus Monad.
+* When to group multiple things into a single type
+  e.g. StateM versus State, Monad
+
+I'm pretty sure I want to have raw interfaces pre combination:
+* State, Rng, Io, IStream, OStream?
+* StateI, RngI, IoI, IStreamI, OStreamI?
+* I think I like the first better. Without the 'I'.
+
+I know there are cases where I need to group things into a single type.
+Specifically when constructing and returning composite Monad + State, Monad +
+Rng.
+* StateM, RngM sound decent to me?
+* MonadicState, MonadicRng are too long
+* MState@, MRng@? Doesn't feel as good as StateM@, and RngM@.
+
+For more complex types, perhaps it makes sense to avoid a convention and just
+go with what works. For example, instead of IStreamOStreamOStreamM, we have
+something like StdioM@. In this case, Stdio@ should be a collection of
+interfaces without Monad? Which suggests the following convention:
+* Foo@ is the name of a collection of interfaces without Monad@.
+* FooM@ adds Monad@ to that collection of interfaces.
+
+In terms of naming fields, that relates partly to how I anticipate importing
+things into the local scope.
+
+Let's consider the case where we pass the composite thing to start.
+
+A. Reference composite arg everywhere:
+
+  <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(IoM@<M@> io, String@ path) {
+    Maybe@<File@> file := io.Monad.do(io.Io.run(Open(path, Str|w)));
+    file.?(nothing: io.Monad.return(Nothing<OStream@<M@>>));
+    OStream@<M@> ostream = @(
+      put: Output(io, file.just),
+      close: io.Io.run(Close(file.just))
+    );
+    io.Monad.return(Just(ostream));
+  };
+
+B. Import first:
+
+  <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(IoM@<M@> io, String@ path) {
+    do = io.Monad.do;
+    return = io.Monad.return;
+    run = io.Io.run;
+    output = Output(io);
+
+    Maybe@<File@> file := do(run(Open(path, Str|w)));
+    file.?(nothing: return(Nothing<OStream@<M@>>));
+    OStream@<M@> ostream = @(
+      put: output(file.just),
+      close: run(Close(file.just))
+    );
+    return(Just(ostream));
+  };
+
+C. Bring into top level?
+
+  <<@>@ M@>(IoM@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(IoM@<M@> io, String@ path) {
+    m = @(
+      do: io.Monad.do, return: io.Monad.return,
+      run: io.Io.run,
+      Output: Output(io));
+
+    Maybe@<File@> file := m.do(m.run(Open(path, Str|w)));
+    file.?(nothing: m.return(Nothing<OStream@<M@>>));
+    OStream@<M@> ostream = @(
+      put: m.Output(file.just),
+      close: m.run(Close(file.just))
+    );
+    m.return(Just(ostream));
+  };
+
+
+(C) is interesting because it seems to sort of solve the multiple import
+desire and renaming all at once? Sort of? The downside is we have to construct
+a new object every time we call the function, which doesn't sound great from a
+performance point of view.
+
+D. Don't pass composite argument:
+
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
+    output = Output(m, io);
+
+    Maybe@<File@> file := m.do(io.run(Open(path, Str|w)));
+    file.?(nothing: m.return(Nothing<OStream@<M@>>));
+    OStream@<M@> ostream = @(
+      put: output(file.just),
+      close: io.run(Close(file.just))
+    );
+    m.return(Just(ostream));
+  };
+
+What's nice about (D) is we can use full field names for composite types like
+StateM@ at construction time, and then the function can use whatever short
+name it likes.
+
+For performance, it would be nice if we could pass all the interfaces
+separately. If we did it consistently, then that should be effective.
+Something like:
+
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
+    output = Output(m, io);
+
+    (String@ path) {
+      Maybe@<File@> file := m.do(io.run(Open(path, Str|w)));
+      file.?(nothing: m.return(Nothing<OStream@<M@>>));
+      OStream@<M@> ostream = @(
+        put: output(file.just),
+        close: io.run(Close(file.just))
+      );
+      m.return(Just(ostream));
+    };
+  };
+
+That way we do all the rebinding once rather than for every call to a
+function. We need to be consistent about it for it to work though.
+
+Contrast this with the other option, which I've tried in the past, to pass the
+interfaces to the modules. Like, the modules are functions which take the
+interface as input. That definitely forces us to pass things ahead of time and
+let's us simplify lots of code, but it was awkward to use in the past because
+you would have to re-import a module for every separate function where it was
+used. It has a contagion like thing, where it forces every module to take the
+interfaces it needs as input before you can get anything out of the module.
+
+I vote next thing to try is change Rng@ back to Rng@ + RngM@(Monad, Rng),
+restructure code as above to propagate interfaces all first, separately from
+other arguments, and see how it feels. Consider renaming RngM@ to PureRng@ or
+whatever better name I can find for Pure and associate it with the
+construction function instead of the interface. Pass Rng@ and Monad@ around
+everywhere separately. Get a solid feel for it.
+
+---
+
+Proposal:
+* Foo@ does not include Monad@.
+* Pass Monad@ separately from other interfaces.
+* We can group together FooA@, FooB@, etc. however we like, using whatever
+  field names we like. In practice I don't expect to want to do so for
+  anything in the standard library.
+* Do not inline anything to the top level.
+* Always pass Monad@ as the first argument to a function, then any other
+  interfaces FooA@, FooB@.
+  - We pass Monad@ first because I expect FooA@, FooB@ are all tied to the
+    specific Monad@ instance, but not the other way around. For example, I
+    would expect to call Output(m, stdio.err, ...) and
+    Output(m, stdio.out, ...), but not Output(n, stdio.err) for that same
+    stdio instance.
+  - We pass other interfaces next so that we can instantiate and capture
+    anything we need as static values rather than have to pass things around
+    every time a function is called.
+* Monad@ will have M@ as a field. The other interfaces don't need to.
+* Cli Main@ should separate Monad@ and Io@ args to follow this convention,
+  even if it is a tiny bit more effort on the c side.
+* Do whatever you like best in terms of passing things around when you
+  implement a function. It's implementation detail, easy to change any time,
+  not something I bake into the spec.
+* There is no such thing as FooM@ type.
+* For returning a pure state monad instance or a pure rng monad instance, we
+  can define a helper type that combines Monad@ with State@/Rng@, but that's
+  just to return the value. Pass it to any functions in split argument form.
+  If it's convenient, don't even define a name for that composite type.
+
+I think this gives us the best we can hope for:
+* Composition that scales up without concern.
+* Avoid ambiguity in naming between Foo@ and FooM@.
+
+The cost is just the (hopefully minor?) tediousness of passing two arguments
+everywhere instead of potentially one. But I'm hoping function level imports
+and defines can help there.
+
+Let's try this out. Start migrating things over to use it. See how it feels in
+practice. What I like, what I don't like.
+
+I guess let's go from the ground up?
+* IoM ==> Io@.
+* State@ cleanup.
+* Rng@ cleanup.
+* IStream@, OStream@ cleanup.
+
+There is some tedious backpedaling to do, but don't worry too much about that.
+
+---
+
+Experience:
+* It doesn't feel so bad going back to Monad@ + Io@.
+* It's nicer to do m.return, m.do than io.m.return and io.m.do.
+* Concern with Cli Main@ putting Monad@ first: does it make it harder to apply
+  io and get to a pure monad function thing? Or doesn't matter at all?
+* I honestly think the benefits of m.do instead of io.m.do outweight the costs
+  of Stdout(m, io) versus Stdout(io). Since we tend to call m.do a lot and
+  Stdout(m, io) rarely.

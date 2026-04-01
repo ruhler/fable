@@ -16,7 +16,8 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
-IoM@ = /Core/Io%.IoM@;
+Monad@ = /Std/Monad%.Monad@;
+Io@ = /Core/Io%.Io@;
 
 Main@ = /Core/Cli%.Main@;
 Success = /Core/Cli%.Success;
@@ -110,32 +111,32 @@ Input@ = +(Unit@ quit, Unit@ reset, Move@ move);
 };
 
 # Play a game of tic-tac-toe.
-Main@ Main = <<@>@ M@>(IoM@<M@> io, List@<String@> _args) {
-  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
 
-  IStream@<M@> in := io.m.do(/Core/Stdio/FFI%.Text.Stdin(io));
+  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
-    Unit@ _ := io.m.do(out $ ShowGame(game));
+    Unit@ _ := m.do(out $ ShowGame(game));
 
-    String@ line := io.m.do(GetLine(in, io.m));
-    line.?(empty: io.m.return(Unit));
+    String@ line := m.do(GetLine(in, m));
+    line.?(empty: m.return(Unit));
 
     Maybe@<Input@> mi = ParseInput(line);
     mi.?(nothing: {
-      Unit@ _ := io.m.do(out $ FormatE|'%s%s\n'[
+      Unit@ _ := m.do(out $ FormatE|'%s%s\n'[
         String|'invalid input: ',
         String|'expected {A,B,C}{1,2,3}, P, Q, or R']);
       TicTacToe(game);
     });
 
-    mi.just.?(quit: io.m.return(Unit));
+    mi.just.?(quit: m.return(Unit));
     mi.just.?(reset: TicTacToe(Initial));
     TicTacToe(Play(mi.just.move, game));
   };
 
-  Unit@ _ := io.m.do(TicTacToe(Initial));
-  io.m.return(Success);
+  Unit@ _ := m.do(TicTacToe(Initial));
+  m.return(Success);
 };
 
 Main;

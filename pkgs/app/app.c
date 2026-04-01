@@ -557,18 +557,19 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleValue* app_value = FbleNewNativeValue(heap, &app, NULL);
   FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe, block_id + 1, &app_value);
 
-  FbleValue* iom = FbleIoM(heap, profile);              // IoM@<M@>
+  FbleValue* m = FbleIoMonad(heap, profile);            // Monad@<M@>
+  FbleValue* io = FbleIo(heap, profile);                // Io@<M@>
   FbleValue* fble_app = FbleNewStructValue_(heap, 2, fble_event, fble_effect);
   FbleValue* fble_width = FbleNewIntValue(heap, width);
   FbleValue* fble_height = FbleNewIntValue(heap, height);
   FbleValue* args = FbleCliArgs(heap, argc, argv);      // List@<String@>
   FbleValue* unit = FbleNewStructValue_(heap, 0);       // Unit@
 
-  FbleValue* func_args[6] = {
-    iom, fble_app, fble_width, fble_height, args, unit
+  FbleValue* func_args[7] = {
+    m, io, fble_app, fble_width, fble_height, args, unit
   };
 
-  FbleValue* result = FbleApply(heap, func, 6, func_args, profile);
+  FbleValue* result = FbleApply(heap, func, 7, func_args, profile);
 
   if (app_args.fps) {
     fprintf(stderr, "FPS Histogram:\n");

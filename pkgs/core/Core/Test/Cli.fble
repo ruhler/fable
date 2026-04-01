@@ -6,7 +6,8 @@ Put@ = /Core/Char/Stream%.Put@;
 
 List@ = /Std/List%.List@;
 
-IoM@ = /Core/Io%.IoM@;
+Monad@ = /Std/Monad%.Monad@;
+Io@ = /Core/Io%.Io@;
 
 Main@ = /Core/Cli%.Main@;
 Success = /Core/Cli%.Success;
@@ -26,16 +27,16 @@ Test@ = /Std/Test%.Test@;
 # Result:
 #   A cli Main@ program to run the tests.
 (Test@) { Main@; } Run = (Test@ tests) {
-  <<@>@ M@>(IoM@<M@> io, List@<String@> args) {
+  <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     String@ prefix = {
       args.?(empty: Str|'');
       /Std/String/Eq%.Eq(Str|'--prefix', args.items.head).?(false: Str|'');
       args.items.tail.items.head;
     };
 
-    Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
-    Bool@ passed := io.m.do(/Core/Test/Run%.Run<M@>(io.m, out, prefix, tests));
-    io.m.return(passed.?(true: Success, false: Failure));
+    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+    Bool@ passed := m.do(/Core/Test/Run%.Run(m, out, prefix, tests));
+    m.return(passed.?(true: Success, false: Failure));
   };
 };
 

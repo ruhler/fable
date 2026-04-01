@@ -15,7 +15,8 @@ Any = /Std/List/Search%.Any;
 
 Maybe@ = /Std/Maybe%.Maybe@;
 
-IoM@ = /Core/Io%.IoM@;
+Monad@ = /Std/Monad%.Monad@;
+Io@ = /Core/Io%.Io@;
 
 Success = /Core/Cli%.Success;
 
@@ -34,43 +35,43 @@ Get@ = /Invaders/App%.Get@;
 State@ = /Invaders/App%.State@;
 Invaders = /Invaders/App%.Invaders;
 
-Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
-	Maybe@<String@> home := io.m.do(/Core/Env/Native%.GetVar(io, Str|'HOME'));
-  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(io);
-  (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(io);
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
+	Maybe@<String@> home := m.do(/Core/Env/Native%.GetVar(m, io, Str|'HOME'));
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
+  (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(m, io);
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := io.m.do(out $ String $ /Invaders/Usage%);
-    io.m.return(Success);
+    Unit@ _ := m.do(out $ String $ /Invaders/Usage%);
+    m.return(Success);
   });
 
   Get@<M@, Int@> get_high_score = {
-    home.?(nothing: io.m.return(Int|0));
+    home.?(nothing: m.return(Int|0));
 
     String@ filename = Append(home.just, Str|'/.fble-invaders');
-    Maybe@<IStream@<M@>> istream := io.m.do(read(filename));
-    istream.?(nothing: io.m.return(Int|0));
+    Maybe@<IStream@<M@>> istream := m.do(read(filename));
+    istream.?(nothing: m.return(Int|0));
 
-    String@ text := io.m.do(GetText(istream.just, io.m));
-    io.m.return(/Core/Int/Read%.Read(text));
+    String@ text := m.do(GetText(istream.just, m));
+    m.return(/Core/Int/Read%.Read(text));
   };
 
   Put@<M@, Int@> put_high_score = (Int@ score) {
-    home.?(nothing: io.m.return(Unit));
+    home.?(nothing: m.return(Unit));
 
     String@ filename = Append(home.just, Str|'/.fble-invaders');
-    Maybe@<OStream@<M@>> ostream := io.m.do(write(filename));
-    ostream.?(nothing: io.m.return(Unit));
+    Maybe@<OStream@<M@>> ostream := m.do(write(filename));
+    ostream.?(nothing: m.return(Unit));
 
-    Unit@ _ := io.m.do(ostream.just.put $ /Std/Int/Show%.Show(score));
+    Unit@ _ := m.do(ostream.just.put $ /Std/Int/Show%.Show(score));
     ostream.just.close;
   };
 
   State@<M@, Int@> high_score_s = State@<M@, Int@>(get_high_score, put_high_score);
 
-  Unit@ _ := io.m.do(Invaders(io.m, high_score_s, app, width, height));
-  io.m.return(Success);
+  Unit@ _ := m.do(Invaders(m, high_score_s, app, width, height));
+  m.return(Success);
 };
 
 Main;

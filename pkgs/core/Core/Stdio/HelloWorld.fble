@@ -6,7 +6,8 @@ Output@ = /Std/Char/Output%.Output@;
 
 List@ = /Std/List%.List@;
 
-IoM@ = /Core/Io%.IoM@;
+Monad@ = /Std/Monad%.Monad@;
+Io@ = /Core/Io%.Io@;
 
 Main@ = /Core/Cli%.Main@;
 Success = /Core/Cli%.Success;
@@ -17,10 +18,10 @@ StringE = /Std/Char/Ascii/Output%.StringE;
 Unit@ = /Std/Unit%.Unit@;
 
 # A hello world program using the cli interface.
-Main@ Main = <<@>@ M@>(IoM@<M@> io, List@<String@> _args) {
-  Put@<M@, Output@> out := io.m.do(/Core/Stdio/FFI%.Text.Stdout(io));
-  Unit@ _ := io.m.do(out $ StringE|'hello, world\n');
-  io.m.return(Success);
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
+  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Unit@ _ := m.do(out $ StringE|'hello, world\n');
+  m.return(Success);
 };
 
 Main;

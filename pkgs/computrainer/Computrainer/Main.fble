@@ -29,7 +29,8 @@ Length = /Std/List/Index%.Length;
 
 Maybe@ = /Std/Maybe%.Maybe@;
 
-IoM@ = /Core/Io%.IoM@;
+Monad@ = /Std/Monad%.Monad@;
+Io@ = /Core/Io%.Io@;
 
 Success = /Core/Cli%.Success;
 
@@ -108,9 +109,9 @@ State@ = *(
     Bool@ paused
 );
 
-Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(io);
-  (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(io);
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
+  (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(m, io);
 
   Int@ MenuScale = Int|8;
   Int@ MenuHeight = Add(Mul(MenuScale, W), Int|8);
@@ -172,12 +173,12 @@ Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@
   };
 
   M@<Event@> FilterEvent = {
-    Event@ e := io.m.do(app.event);
-    e.?(tick: io.m.return(e),
-        key_down: io.m.return(e),
-        key_up: io.m.return(e),
-        mouse_down: io.m.return(e),
-        mouse_motion: io.m.return(e),
+    Event@ e := m.do(app.event);
+    e.?(tick: m.return(e),
+        key_down: m.return(e),
+        key_up: m.return(e),
+        mouse_down: m.return(e),
+        mouse_motion: m.return(e),
         : FilterEvent);
   };
 
@@ -221,12 +222,12 @@ Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@
     });
 
     Drawing@ mouse = Rect(Sub(s.mouse_x, Int|2), Sub(s.mouse_y, Int|2), Int|4, Int|4, Colors.Mouse);
-    Unit@ _ := io.m.do(app.effect(Effect@(draw: Drawings[clear, map, Menu, mouse])));
+    Unit@ _ := m.do(app.effect(Effect@(draw: Drawings[clear, map, Menu, mouse])));
 
-    Event@ e := io.m.do(FilterEvent);
+    Event@ e := m.do(FilterEvent);
     e.?(tick: {
         s.paused.?(true: StepUI(s));
-        Unit@ _ := io.m.do(app.effect(Effect@(tick: Int|200)));
+        Unit@ _ := m.do(app.effect(Effect@(tick: Int|200)));
         StepUI(s.@(model: Tick(s.model)));
     });
 
@@ -236,7 +237,7 @@ Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@
             d: StepUI(s.@(map_x: Incr(s.map_x))),
             j: StepUI(s.@(scale: Max(Shr(s.scale, Int|1), Int|1))),
             k: StepUI(s.@(scale: Shl(s.scale, Int|1))),
-            q: io.m.return(s),
+            q: m.return(s),
             r: StepUI({
                 (Gate@) { Gate@; } rotate = {
                     s.lshift.?(true: Gate.Rotate2);
@@ -262,7 +263,7 @@ Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@
             w: StepUI(s.@(map_y: Incr(s.map_y))),
             space: {
               s.paused.?(false: StepUI(s.@(paused: True)));
-              Unit@ _ := io.m.do(app.effect(Effect@(tick: Int|0)));
+              Unit@ _ := m.do(app.effect(Effect@(tick: Int|0)));
               StepUI(s.@(paused: False));
             },
             lshift: StepUI(s.@(lshift: True)),
@@ -315,15 +316,15 @@ Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@
         StepUI(s.@(mouse_x, mouse_y));
     });
 
-    io.m.return(s);
+    m.return(s);
   };
 
   String@ file = args.?(items: args.items.head, empty: Str|'model.ct');
-  Maybe@<IStream@<M@>> istream := io.m.do(read(file));
-  Model@ model := io.m.do({
-      istream.?(nothing: io.m.return(Model(Grid.Empty<Gate@>, Grid.Empty<Car@>)));
-      String@ text := io.m.do(GetText(istream.just, io.m));
-      io.m.return(/Computrainer/Model/Load%.Model(text));
+  Maybe@<IStream@<M@>> istream := m.do(read(file));
+  Model@ model := m.do({
+      istream.?(nothing: m.return(Model(Grid.Empty<Gate@>, Grid.Empty<Car@>)));
+      String@ text := m.do(GetText(istream.just, m));
+      m.return(/Computrainer/Model/Load%.Model(text));
   });
 
   State@ initial = @(
@@ -339,15 +340,15 @@ Main@ Main = <<@>@ M@>(IoM@<M@> io, App@<M@> app, Int@ width, Int@ height, List@
       paused: True
   );
 
-  State@ final := io.m.do(StepUI(initial));
+  State@ final := m.do(StepUI(initial));
 
-  Maybe@<OStream@<M@>> mostream := io.m.do(write(file));
-  mostream.?(nothing: io.m.return(Success));
+  Maybe@<OStream@<M@>> mostream := m.do(write(file));
+  mostream.?(nothing: m.return(Success));
   OStream@<M@> ostream = mostream.just;
-  Unit@ _ := io.m.do(ostream.put $ /Computrainer/Model/Save%.Model(final.model));
-  Unit@ _ := io.m.do(ostream.close);
+  Unit@ _ := m.do(ostream.put $ /Computrainer/Model/Save%.Model(final.model));
+  Unit@ _ := m.do(ostream.close);
 
-  io.m.return(Success);
+  m.return(Success);
 };
 
 Main;
