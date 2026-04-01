@@ -21,9 +21,6 @@ Nothing = /Std/Maybe%.Nothing;
 
 String@ = /Std/String%.String@;
 
-StateM@ = /Core/State%.StateM@;
-
-Pure@ = /Core/State/Pure%.Pure@;
 Pure = /Core/State/Pure%.Pure;
 Eval = /Core/State/Pure%.Eval;
 
@@ -35,18 +32,21 @@ Unit@ = /Std/Unit%.Unit@;
 IO@ = /Fbld/Main%.IO@;
 
 Test@ Bench = Test(Str|Fbld, (Unit@ _) {
-  M@ = Pure@<String@>;
-  StateM@<String@, M@> p = Pure<String@>;
-  IStream@<M@> in = IStream<M@>(p.s, p.m);
-  Put@<M@, Output@> out = NullOutput(p.m);
-  Put@<M@, Output@> err = NullOutput(p.m);
+  P = Pure<String@>;
+  M@ = P.M@;
+  M = P.Monad;
+  S = P.State;
+
+  IStream@<M@> in = IStream(M, S);
+  Put@<M@, Output@> out = NullOutput(M);
+  Put@<M@, Output@> err = NullOutput(M);
   (String@) { M@<Maybe@<IStream@<M@>>>; } read = (String@ _) {
-    p.m.return(Nothing<IStream@<M@>>);
+    M.return(Nothing<IStream@<M@>>);
   };
   IO@<M@> io = @(in, out, err, read);
   List@<String@> args = List[Str|'-'];
   Exit@ wnt = Success;
-  Exit@ got = Eval(/Fbld/Main%.Main(p.m, io, args), /Fbld/Bench/Input%);
+  Exit@ got = Eval(/Fbld/Main%.Main(M, io, args), /Fbld/Bench/Input%);
   AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
 });
 

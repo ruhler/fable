@@ -264,7 +264,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
     m.return(Failure);
   });
 
-  Result@<Profile@> parsed := m.do(Parse(fin.just, m));
+  Result@<Profile@> parsed := m.do(Parse(m, fin.just));
   parsed.?(error: {
     Unit@ _ := m.do(err $ FormatE|'error: %s\n'[parsed.error]);
     m.return(Failure);

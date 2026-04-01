@@ -21,9 +21,7 @@ Io@ = /Core/Io%.Io@;
 String@ = /Std/String%.String@;
 
 State@ = /Core/State%.State@;
-StateM@ = /Core/State%.StateM@;
 
-Pure@ = /Core/State/Pure%.Pure@;
 Pure = /Core/State/Pure%.Pure;
 Eval = /Core/State/Pure%.Eval;
 Exec = /Core/State/Pure%.Exec;
@@ -41,33 +39,35 @@ Main@ = <<@>@ M@>(Monad@<M@>, IStream@<M@>, Put@<M@, Output@>, List@<String@>) {
 (String@, Main@, String@, List@<String@>, String@) { Test@; }
 Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ expected_output) {
   S@ = *(String@ in, Output@ out);
-  M@ = Pure@<S@>;
-  StateM@<S@, M@> p = Pure<S@>;
+  P = Pure<S@>;
+  M@ = P.M@;
+  M = P.Monad;
+  S = P.State;
 
   State@<String@, M@> s_in = @(
     get: {
-      S@ x := p.m.do(p.s.get);
-      p.m.return(x.in);
+      S@ x := M.do(S.get);
+      M.return(x.in);
     },
     put: (String@ str) {
-      S@ x := p.m.do(p.s.get);
-      p.s.put(x.@(in: str));
+      S@ x := M.do(S.get);
+      S.put(x.@(in: str));
     });
 
   State@<Output@, M@> s_out = @(
     get: {
-      S@ x := p.m.do(p.s.get);
-      p.m.return(x.out);
+      S@ x := M.do(S.get);
+      M.return(x.out);
     },
     put: (Output@ str) {
-      S@ x := p.m.do(p.s.get);
-      p.s.put(x.@(out: str));
+      S@ x := M.do(S.get);
+      S.put(x.@(out: str));
     });
 
   /Std/Test%.Test(name, (Unit@ _) {
-    IStream@<M@> in = IStream<M@>(s_in, p.m);
-    Put@<M@, Output@> out = OStream<M@>(s_out, p.m);
-    M@<Unit@> go = game(p.m, in, out, args);
+    IStream@<M@> in = IStream(M, s_in);
+    Put@<M@, Output@> out = OStream(M, s_out);
+    M@<Unit@> go = game(M, in, out, args);
     String@ got = ToString $ Exec(go, S@(input, Return)).out;
     String@ wnt = expected_output;
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
@@ -78,11 +78,14 @@ Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ ex
 (String@, Main@, String@, List@<String@>) { Test@; }
 Bench = (String@ name, Main@ game, String@ input, List@<String@> args) {
   /Std/Test%.Test(name, (Unit@ _) {
-    M@ = Pure@<String@>;
-    StateM@<String@, M@> p = Pure<String@>;
-    IStream@<M@> in = IStream<M@>(p.s, p.m);
-    Put@<M@, Output@> out = NullOutput(p.m);
-    Unit@ _ = Eval(game(p.m, in, out, args), input);
+    P = Pure<String@>;
+    M@ = P.M@;
+    M = P.Monad;
+    S = P.State;
+
+    IStream@<M@> in = IStream(M, S);
+    Put@<M@, Output@> out = NullOutput(M);
+    Unit@ _ = Eval(game(M, in, out, args), input);
     Pass;
   });
 };

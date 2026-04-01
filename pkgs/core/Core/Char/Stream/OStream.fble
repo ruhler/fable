@@ -21,8 +21,8 @@ NullOutput = <<@>@ M@>(Monad@<M@> m, Output@ output) {
 
 # Make an output stream from an Output@ state monad.
 # TODO: Move this to a different module to avoid false dependency on State@?
-<<@>@ M@>(State@<Output@, M@>, Monad@<M@>) { Put@<M@, Output@>; }
-OStream = <<@>@ M@>(State@<Output@, M@> s, Monad@<M@> m, Output@ output) {
+<<@>@ M@>(Monad@<M@>, State@<Output@, M@>) { Put@<M@, Output@>; }
+OStream = <<@>@ M@>(Monad@<M@> m, State@<Output@, M@> s, Output@ output) {
   Output@ prev := m.do(s.get);
   s.put(Do(prev, (Unit@ _) { output; }));
 };

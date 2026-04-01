@@ -2,6 +2,10 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Consider adding a multi import expression
+  a, b, c .= <expr>;
+ - For example, use it any time we use /Core/State/Pure%.Pure;
+
 * Remove kinds in let expressions.
  - Update all the examples in the spec and tutorials and everywhere for the
    new syntax.

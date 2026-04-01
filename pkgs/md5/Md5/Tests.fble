@@ -72,19 +72,23 @@ Unit@ = /Std/Unit%.Unit@;
     h24, h25, h26, h27, h28, h29, h30, h31);
 };
 
-P = /Core/State/Pure%.Pure<List@<Bit8@>>;
+Pure = /Core/State/Pure%.Pure<List@<Bit8@>>;
+M@ = Pure.M@;
+M = Pure.Monad;
+S = Pure.State;
+
 Eval = /Core/State/Pure%.Eval;
 
-P.M@<Maybe@<Bit8@>> Get = {
-  List@<Bit8@> bytes := P.m.do(P.s.get);
-  bytes.?(empty: P.m.return(Nothing<Bit8@>));
-  Unit@ _ := P.m.do(P.s.put(bytes.items.tail));
-  P.m.return(Just(bytes.items.head));
+M@<Maybe@<Bit8@>> Get = {
+  List@<Bit8@> bytes := M.do(S.get);
+  bytes.?(empty: M.return(Nothing<Bit8@>));
+  Unit@ _ := M.do(S.put(bytes.items.tail));
+  M.return(Just(bytes.items.head));
 };
 
 # Compute the md5 hash for a string of bytes.
 (List@<Bit8@>) { Hash@; } Md5Str = (List@<Bit8@> bytes) {
-  Eval(Md5<P.M@>(P.m, Get), bytes);
+  Eval(Md5<M@>(M, Get), bytes);
 };
 
 (List@<Hex@>) { List@<Bit8@>; } Hex2Bytes = (List@<Hex@> hex) {

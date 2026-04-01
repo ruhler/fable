@@ -80,8 +80,8 @@ ProfileFromParsed = (ProtoProfile@ parsed) {
   @(metrics, blocks, samples);
 };
 
-<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<Result@<Profile@>>; }
-Parse = <<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
+<<@>@ M@>(Monad@<M@>, IStream@<M@>) { M@<Result@<Profile@>>; }
+Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in) {
   Result@<ProtoProfile@> parsed := m.do(Run(ProfileParser, in, m));
   m.return(/Pprof/Result%.Apply(ProfileFromParsed, parsed));
 };

@@ -42,8 +42,8 @@ GetText = <<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
 
 # Make an IStream from a String@ state monad.
 # TODO: Move this to a different module to avoid false dependency on State@?
-<<@>@ M@>(State@<String@, M@>, Monad@<M@>) { IStream@<M@>; }
-IStream = <<@>@ M@>(State@<String@, M@> s, Monad@<M@> m) {
+<<@>@ M@>(Monad@<M@>, State@<String@, M@>) { IStream@<M@>; }
+IStream = <<@>@ M@>(Monad@<M@> m, State@<String@, M@> s) {
   String@ str := m.do(s.get);
   str.?(empty: m.return(Nothing<Char@>));
   Unit@ _ := m.do(s.put(str.items.tail));

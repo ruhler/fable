@@ -8,8 +8,6 @@ Str = /Std/Char/Ascii%.Str;
 
 Const = /Std/Func%.Const;
 
-StateM@ = /Core/State%.StateM@;
-Pure@ = /Core/State/Pure%.Pure@;
 Pure = /Core/State/Pure%.Pure;
 Eval = /Core/State/Pure%.Eval;
 
@@ -32,21 +30,23 @@ Test@ Bench = Test(Str|'Graphics', (Unit@ _) {
   Int@ w = Int|640;
   Int@ h = Int|480;
 
-  M@ = Pure@<Int@>;
-  StateM@<Int@, M@> p = Pure<Int@>;
+  P = Pure<Int@>;
+  M@ = P.M@;
+  M = P.Monad;
+  S = P.State;
 
   M@<Event@> event = {
-    Int@ n := p.m.do(p.s.get);
-    IsNegative(n).?(true: p.m.return(Event@(key_down: Key@(q: Unit))));
-    Unit@ _ := p.m.do(p.s.put(Decr(n)));
-    p.m.return(Event@(tick: Unit));
+    Int@ n := M.do(S.get);
+    IsNegative(n).?(true: M.return(Event@(key_down: Key@(q: Unit))));
+    Unit@ _ := M.do(S.put(Decr(n)));
+    M.return(Event@(tick: Unit));
   };
 
-  (Effect@) { M@<Unit@>; } effect = Const<Effect@> $ p.m.return(Unit);
+  (Effect@) { M@<Unit@>; } effect = Const<Effect@> $ M.return(Unit);
 
   App@<M@> app = App@<M@>(event, effect);
 
-  Unit@ _ = Eval(/Graphics/App%.Main(p.m, app, w, h), n);
+  Unit@ _ = Eval(/Graphics/App%.Main(M, app, w, h), n);
   Pass;
 });
 

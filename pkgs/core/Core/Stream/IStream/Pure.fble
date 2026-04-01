@@ -15,19 +15,22 @@ IStream@ = /Core/Stream%.IStream@;
 
 Unit@ = /Std/Unit%.Unit@;
 
-P = /Core/State/Pure%.Pure<List@<Int@>>;
+Pure = /Core/State/Pure%.Pure<List@<Int@>>;
+M@ = Pure.M@;
+M = Pure.Monad;
+S = Pure.State;
 
-P.M@<Maybe@<Int@>> In = {
-  List@<Int@> s := P.m.do(P.s.get);
-  s.?(empty: P.m.return(Nothing<Int@>));
-  Unit@ _ := P.m.do(P.s.put(s.items.tail));
-  P.m.return(Just(s.items.head));
+M@<Maybe@<Int@>> In = {
+  List@<Int@> s := M.do(S.get);
+  s.?(empty: M.return(Nothing<Int@>));
+  Unit@ _ := M.do(S.put(s.items.tail));
+  M.return(Just(s.items.head));
 };
 
 # Runs a monadic computation involving an IStream as a pure function.
-<@ A@>(<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<A@>; }, List@<Int@>) { A@; }
-Run = <@ A@>(<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<A@>; } f, List@<Int@> input) {
-  Eval(f<P.M@>(In, P.m), input);
+<@ A@>(<<@>@ M@>(Monad@<M@>, IStream@<M@>) { M@<A@>; }, List@<Int@>) { A@; }
+Run = <@ A@>(<<@>@ M@>(Monad@<M@>, IStream@<M@>) { M@<A@>; } f, List@<Int@> input) {
+  Eval(f(M, In), input);
 };
 
 @(Run);

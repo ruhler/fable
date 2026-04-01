@@ -24,8 +24,12 @@ Get@ = /Invaders/App%.Get@;
 State@ = /Invaders/App%.State@;
 Invaders = /Invaders/App%.Invaders;
 
-P = /Core/State/Pure%.Pure<Int@>;
 Eval = /Core/State/Pure%.Eval;
+
+P = /Core/State/Pure%.Pure<Int@>;
+M@ = P.M@;
+M = P.Monad;
+S = P.State;
 
 # The number of iterations is chosen so that the benchmark takes on the
 # order of 1 minute to run. The target goal for invaders is 60 frames a
@@ -37,22 +41,22 @@ Test@ Bench = Test(Str|Invaders, (Unit@ _) {
 
   Event@ quit = Event@(key_down: Key@(q: Unit));
 
-  P.M@<Event@> Event = {
-    Int@ n := P.m.do(P.s.get);
-    IsNegative(n).?(true: P.m.return(quit));
-    Unit@ _ := P.m.do(P.s.put(Decr(n)));
-    P.m.return(Event@(tick: Unit));
+  M@<Event@> Event = {
+    Int@ n := M.do(S.get);
+    IsNegative(n).?(true: M.return(quit));
+    Unit@ _ := M.do(S.put(Decr(n)));
+    M.return(Event@(tick: Unit));
   };
 
-  (Effect@) { P.M@<Unit@>; } Effect = (Effect@ _) {
-    P.m.return(Unit);
+  (Effect@) { M@<Unit@>; } Effect = (Effect@ _) {
+    M.return(Unit);
   };
 
-  Get@<P.M@, Int@> get_high_score = P.m.return(Int|0);
-  Put@<P.M@, Int@> put_high_score = (Int@ _) { P.m.return(Unit); };
-  State@<P.M@, Int@> high_score_s = State@<P.M@, Int@>(get_high_score, put_high_score);
+  Get@<M@, Int@> get_high_score = M.return(Int|0);
+  Put@<M@, Int@> put_high_score = (Int@ _) { M.return(Unit); };
+  State@<M@, Int@> high_score_s = State@<M@, Int@>(get_high_score, put_high_score);
 
-  Unit@ u = Eval(Invaders<P.M@>(P.m, high_score_s, App@<P.M@>(Event, Effect), w, h), n);
+  Unit@ u = Eval(Invaders(M, high_score_s, App@<M@>(Event, Effect), w, h), n);
   AssertEquals(/Std/Unit/Eq%.Eq, /Std/Unit/Show%.Show, Unit, u);
 });
 

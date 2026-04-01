@@ -1139,3 +1139,28 @@ Experience:
 * I honestly think the benefits of m.do instead of io.m.do outweight the costs
   of Stdout(m, io) versus Stdout(io). Since we tend to call m.do a lot and
   Stdout(m, io) rarely.
+
+Yeah, I see no issue going back to Monad@ + Io@. Let's keep going on aligning
+things all with the new convention.
+
+---
+
+For pure state monad, I'm ending up doing something like this to import
+things:
+
+  P = Pure<String@>;
+  M@ = P.M@;
+  M = P.Monad;
+  S = P.State;
+
+Seems okay? I end up doing this a lot. I think it's better than returning a
+single object and then using P.M@, P.Monad, and P.State directly?
+
+Is this where I should try a helper monadic bind thing? But that would require
+I write down the types explicitly, which I don't want to do.
+
+This might be where multi import helps. I could do just:
+
+  M@, M, S .= Pure<String@>;
+
+How nice would that be?

@@ -1,32 +1,35 @@
 
 Monad@ = /Std/Monad%.Monad@;
 State@ = /Core/State%.State@;
-StateM@ = /Core/State%.StateM@;
 
-Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
 
 Result@ = <@ S@, @ A@> { *(S@ state, A@ return); };
 Pure@ = <@ S@, @ A@>(S@) { Result@<S@, A@>; };
 
-<@ S@> { StateM@<S@, Pure@<S@>>; }
-Pure = <@ S@> {
+Monad = <@ S@> {
   M@ = Pure@<S@>;
 
-  Monad@<M@> m = @(
-    M@,
-    return: <@ A@>(A@ x, S@ s) { Result@<S@, A@>(s, x); },
-    do: <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f, S@ s) {
-      Result@<S@, A@> ra = ma(s);
-      f(ra.return, ra.state);
-    });
+  Return = <@ A@>(A@ x, S@ s) {
+    Result@(s, x);
+  };
 
-  State@<S@, M@> s = @(
-    get: (S@ s) { Result@<S@, S@>(s, s); },
-    put: (S@ s, S@ _) { Result@<S@, Unit@>(s, Unit); }
-  );
+  Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f, S@ s) {
+    Result@<S@, A@> ra = ma(s);
+    f(ra.return, ra.state);
+  };
 
-  @(S@, M@, m, s);
+  Monad@(M@, Return, Do);
+};
+
+<@ S@> { State@<S@, Pure@<S@>>; }
+State = <@ S@> {
+  @(get: (S@ s) { Result@(s, s); },
+    put: (S@ s, S@ _) { Result@(s, Unit); });
+};
+
+Pure = <@ S@> {
+  @(M@: Pure@<S@>, Monad: Monad<S@>, State: State<S@>);
 };
 
 <@ S@, @ A@>(Pure@<S@, A@>, S@) { Result@<S@, A@>; }
@@ -44,4 +47,4 @@ Exec = <@ S@, @ A@>(Pure@<S@, A@> ma, S@ s) {
   ma(s).state;
 };
 
-@(Pure@, Result@, Pure, Run, Eval, Exec);
+@(Pure@, Result@, Monad, State, Pure, Run, Eval, Exec);
