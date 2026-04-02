@@ -5,17 +5,18 @@ List@ = /Std/List%.List@;
 Items = /Std/List%.Items;
 Append = /Std/List%.Append;
 
+Monad@ = /Std/Monad%.Monad@;
 Rng@ = /Core/Random/Rng%.Rng@;
 
 # Shuffles the elements of a list randomly.
-<<@>@ M@>(Rng@<M@>)<@ T@>(List@<T@>) { M@<List@<T@>>; }
-Shuffle = <<@>@ M@>(Rng@<M@> m)<@ T@> {
+<<@>@ M@>(Monad@<M@>, Rng@<M@>)<@ T@>(List@<T@>) { M@<List@<T@>>; }
+Shuffle = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng)<@ T@> {
   Split@ = *(List@<T@> a, List@<T@> b);
   (List@<T@>) { M@<Split@>; } Split = (List@<T@> l) {
     l.?(empty: m.return(Split@(l, l)));
     T@ head = l.items.head;
     Split@ s := m.do(Split(l.items.tail));
-    Bool@ p := m.do(/Core/Bool/Rand%.Rand(m));
+    Bool@ p := m.do(/Core/Bool/Rand%.Rand(m, rng));
     m.return(p.?(
       true: Split@(Items(head, s.a), s.b),
       false: Split@(s.a, Items(head, s.b))));
@@ -25,8 +26,8 @@ Shuffle = <<@>@ M@>(Rng@<M@> m)<@ T@> {
     l.?(empty: m.return(l));
     l.items.tail.?(empty: m.return(l));
     Split@ s := m.do(Split(l));
-    List@<T@> a := m.do(Shuffle(m, s.a));
-    List@<T@> b := m.do(Shuffle(m, s.b));
+    List@<T@> a := m.do(Shuffle(m, rng, s.a));
+    List@<T@> b := m.do(Shuffle(m, rng, s.b));
     m.return(Append(a, b));
   };
 };

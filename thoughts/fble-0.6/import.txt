@@ -1,0 +1,57 @@
+Import Expression
+=================
+
+See background context in thoughts/fble-0.6/monad_composition.txt.
+
+The goal is to be able to import multiple variables at once from a single
+structure, to make things more convenient than they already are.
+
+Anyway, long story short, proposal is:
+
+  [type] name [':' name, [',' ...]] '.=' expr ';' expr
+
+Examples:
+
+Instead of:
+
+   Pure = /Core/Random/Prng/Pure%.Pure(Prng);
+   M@ = Pure.M@;
+   M = Pure.Monad;
+   Rng = Pure.Rng; 
+
+We could write:
+  
+   M@, M:Monad, Rng .= /Core/Random/Prng/Pure%.Pure(Prng);
+
+Instead of:
+
+   Bool@ = /Std/Bool%.Bool@;
+   True = /Std/Bool%.True;
+   False = /Std/Bool%.False; 
+
+We could write:
+
+   Bool@, True, False .= /Std/Bool%;
+
+Instead of: 
+            
+  QR@ qr = /Std/Int/Div%.Div(n, Cols);
+  Pos@ pos = @(x: qr.r, y: qr.q);
+
+We could write:
+            
+  Int@ q, Int@ r .= /Std/Int/Div%.Div(n, Cols);
+  Pos@ pos = @(x: r, y: q);
+
+Or:
+
+  Int@ x:q, Int@ y:q .= /Std/Int/Div%.Div(n, Cols);
+  Pos@ pos = @(x, y);
+
+Key points:
+* We still explicitly name all variables being defined, which is important to
+  me.
+* The definer has full control over what variables are named, not the struct
+  they are coming from. With shorthand for the common(?) case where you want
+  the names the same.
+

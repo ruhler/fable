@@ -120,16 +120,18 @@ Int@ NumEdges = Int|15;
 RandEdges = {
   Eval = /Core/State/Pure%.Eval;
   Prng = /Core/Random/Lfsr%.Lfsr8;
-  Rng = /Core/Random/Prng/Pure%.Pure(Prng);
-  Of = /Core/Int/Rand%.Of(Rng);
+  Pure = /Core/Random/Prng/Pure%.Pure(Prng);
+  M@ = Pure.M@;
+  M = Pure.Monad;
+  Of = /Core/Int/Rand%.Of(M, Pure.Rng);
 
-  (Int@) { Rng.M@<List@<Edge@>>; }
+  (Int@) { M@<List@<Edge@>>; }
   Gen = (Int@ n) {
-    /Std/Int/Eq%.Eq(Int|0, n).?(true: Rng.return(Empty<Edge@>));
-    Node@ a := Rng.do(Of(NumNodes));
-    Node@ b := Rng.do(Of(NumNodes));
-    List@<Edge@> tail := Rng.do(Gen(Decr(n)));
-    Rng.return $ Items(Edge@(a, b), tail);
+    /Std/Int/Eq%.Eq(Int|0, n).?(true: M.return(Empty<Edge@>));
+    Node@ a := M.do(Of(NumNodes));
+    Node@ b := M.do(Of(NumNodes));
+    List@<Edge@> tail := M.do(Gen(Decr(n)));
+    M.return $ Items(Edge@(a, b), tail);
   };
 
   (Int@ n) {

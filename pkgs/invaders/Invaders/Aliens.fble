@@ -57,13 +57,16 @@ Int@ 1 = Int|1;
 Int@ 2 = Int|2;
 
 Prng = /Core/Random/Lfsr%.Lfsr8;
-Rng = /Core/Random/Prng/Pure%.Pure(Prng);
+Pure = /Core/Random/Prng/Pure%.Pure(Prng);
+M@ = Pure.M@;
+M = Pure.Monad;
+Rng = Pure.Rng;
 
 (Prng.S@) { Prng.S@; }
 NextRand = (Prng.S@ prng) {
   # Go to the next random number by getting (and ignoring) a random boolean
   # value.
-  Exec(/Core/Bool/Rand%.Rand(Rng), prng);
+  Exec(/Core/Bool/Rand%.Rand(M, Rng), prng);
 };
 
 # Aliens move together in a group of rows and columns. They decide which
@@ -326,28 +329,28 @@ Vanguard = (Aliens@ aliens, Int@ col) {
 # FireBombs --
 #   Launch bombs at the ship if appropriate.
 (Aliens@, Bombs@) { Bombs@; } FireBombs = {
-  (Aliens@, Bombs@) { Rng.M@<Bombs@>; }
+  (Aliens@, Bombs@) { M@<Bombs@>; }
   Fire = (Aliens@ aliens, Bombs@ bombs) {
     # We launch bombs once all aliens have completed their move.
-    aliens.next.?(just: Rng.return(bombs));
+    aliens.next.?(just: M.return(bombs));
 
-    /Core/Iter%.For(/Core/Int/Iter%.Range(Int|0, NumCols), Rng.return(bombs)) $
-      (Int@ col, Rng.M@<Bombs@> mbombs) {
+    /Core/Iter%.For(/Core/Int/Iter%.Range(Int|0, NumCols), M.return(bombs)) $
+      (Int@ col, M@<Bombs@> mbombs) {
         Maybe@<Alien@> alien = Vanguard(aliens, col);
         alien.?(nothing: mbombs);
 
-        Bombs@ bombs := Rng.do(mbombs);
-        Int@ r := Rng.do(Of(Rng, Int|100));
-        Lt(r, Int|15).?(false: Rng.return(bombs));
+        Bombs@ bombs := M.do(mbombs);
+        Int@ r := M.do(Of(M, Rng, Int|100));
+        Lt(r, Int|15).?(false: M.return(bombs));
 
-        Int@ x_shift := Rng.do(Of(Rng, MoveX));
+        Int@ x_shift := M.do(Of(M, Rng, MoveX));
         Int@ x = Add(Add(Int|4, x_shift),
           Add(aliens.dst_x, Mul(StrideX, alien.just.col)));
         Int@ y = Sub(Add(aliens.dst_y, Mul(StrideY, alien.just.row)), Int|6);
         Kind@ kind = Lt(r, Int|2).?(
           true: Kind@(squiggle: Unit),
           false: Kind@(bomb: Unit));
-        Rng.return(/Invaders/Bombs%.Fire(x, y, kind, bombs));
+        M.return(/Invaders/Bombs%.Fire(x, y, kind, bombs));
       };
   };
 

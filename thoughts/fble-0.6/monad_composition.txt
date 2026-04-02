@@ -1164,3 +1164,6 @@ This might be where multi import helps. I could do just:
   M@, M, S .= Pure<String@>;
 
 How nice would that be?
+
+Anyway, I don't feel too bad about having switched state over to the new
+conventions. What's next? Rng@?

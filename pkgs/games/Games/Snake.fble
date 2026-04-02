@@ -62,7 +62,10 @@ Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 
 # The pseudo random number generator we are using.
 Prng = /Core/Random/Lcg%.Rand48;
-Rng = /Core/Random/Prng/Pure%.Pure(Prng);
+Pure = /Core/Random/Prng/Pure%.Pure(Prng);
+M@ = Pure.M@;
+M = Pure.Monad;
+Rng = Pure.Rng;
 
 Pos@ = *(Int@ row, Int@ col);
 
@@ -148,7 +151,7 @@ MoveResultM@ = +(Unit@ dead, State@ state);
 # Update the random number for where the next food will be generate.
 # Takes the current direction of the snake to add some randomness to the
 # update.
-(Dir@) { Rng.M@<Unit@>; }
+(Dir@) { M@<Unit@>; }
 StepRand = (Dir@ d) {
   Int@ x = d.?(up: Int|0, down: Int|1, left: Int|2, right: Int|3);
   Rng.feed(Int|2, x);
@@ -156,12 +159,12 @@ StepRand = (Dir@ d) {
 
 # Pick the position of the next food randomly, given the random bits and the
 # snakes position.
-(List@<Pos@>) { Rng.M@<Pos@>; }
+(List@<Pos@>) { M@<Pos@>; }
 GetNextFood = (List@<Pos@> snake) {
-  Int@ row := Rng.do(Range(Rng, MinRow, MaxRow));
-  Int@ col := Rng.do(Range(Rng, MinCol, MaxCol));
+  Int@ row := M.do(Range(M, Rng, MinRow, MaxRow));
+  Int@ col := M.do(Range(M, Rng, MinCol, MaxCol));
   Pos@ pos = Pos@(row, col);
-  InPosS(snake, pos).?(false: Rng.return(pos));
+  InPosS(snake, pos).?(false: M.return(pos));
   GetNextFood(snake);
 };
 

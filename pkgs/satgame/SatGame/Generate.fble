@@ -35,7 +35,10 @@ Lookup = /Core/Int/Map%.Map.Lookup<Var@>;
 Insert = /Core/Int/Map%.Map.Insert<Var@>;
 
 Prng = /Core/Random/Lfsr%.Lfsr24;
-Rng = /Core/Random/Prng/Pure%.Pure(Prng);
+Pure = /Core/Random/Prng/Pure%.Pure(Prng);
+M@ = Pure.M@;
+M = Pure.Monad;
+Rng = Pure.Rng;
 
 Eval = /Core/State/Pure%.Eval;
 
@@ -51,26 +54,26 @@ Eval = /Core/State/Pure%.Eval;
     TooFewVars.undef<Puzzle@>;
   });
 
-  Rng.M@<Puzzle@> puzzle = {
-    Map@ vars := Rng.do $ {
-      List@<Var@> list := Rng.do(/SatGame/Var/Rand%.Vars(Rng, params.num_vars));
+  M@<Puzzle@> puzzle = {
+    Map@ vars := M.do $ {
+      List@<Var@> list := M.do(/SatGame/Var/Rand%.Vars(M, Rng, params.num_vars));
       S@ = *(Int@ i, Map@ map);
       Map@ map = /Std/List%.ForEach(list, S@(Int|0, Empty),
         (Var@ vid, S@ s) {
           S@(Incr(s.i), Insert(s.map, s.i, vid));
         }).map;
-      Rng.return(map);
+      M.return(map);
     };
 
-    (Int@) { Rng.M@<Var@>; } RandVar = (Int@ max) {
-      Int@ index := Rng.do(Of(Rng, max));
-      Rng.return(Lookup(vars, index).just);
+    (Int@) { M@<Var@>; } RandVar = (Int@ max) {
+      Int@ index := M.do(Of(M, Rng, max));
+      M.return(Lookup(vars, index).just);
     };
 
-    (Int@) { Rng.M@<Literal@>; } RandLiteral = (Int@ max) {
-      Bool@ pos := Rng.do(/Core/Bool/Rand%.Rand(Rng));
-      Var@ var := Rng.do(RandVar(max));
-      Rng.return(Literal@(var, pos));
+    (Int@) { M@<Literal@>; } RandLiteral = (Int@ max) {
+      Bool@ pos := M.do(/Core/Bool/Rand%.Rand(M, Rng));
+      Var@ var := M.do(RandVar(max));
+      M.return(Literal@(var, pos));
     };
 
     (Clause@, Var@) { Bool@; }
@@ -82,37 +85,37 @@ Eval = /Core/State/Pure%.Eval;
 
     # Generates a random clause with variable v and other variables with index
     # less than max.
-    (Params@, Int@, Literal@) { Rng.M@<Clause@>; } GenClause = (Params@ params, Int@ max, Literal@ v) {
+    (Params@, Int@, Literal@) { M@<Clause@>; } GenClause = (Params@ params, Int@ max, Literal@ v) {
       # Adds N random literals with var id less than max to the given clause.
-      (Int@, Clause@) { Rng.M@<Clause@>; } AddLiterals = (Int@ n, Clause@ c) {
-        IsZero(n).?(true: Rng.return(c));
+      (Int@, Clause@) { M@<Clause@>; } AddLiterals = (Int@ n, Clause@ c) {
+        IsZero(n).?(true: M.return(c));
 
-        Literal@ literal := Rng.do(RandLiteral(max));
+        Literal@ literal := M.do(RandLiteral(max));
         ContainsVar(c, literal.var).?(true: AddLiterals(n, c));
         AddLiterals(Decr(n), Items(literal, c));
       };
 
-      Clause@ clause := Rng.do(AddLiterals(Decr(params.num_literals_per_clause), List[v]));
-      Shuffle(Rng, clause);
+      Clause@ clause := M.do(AddLiterals(Decr(params.num_literals_per_clause), List[v]));
+      Shuffle(M, Rng, clause);
     };
       
     Int@ num_free_vars = Sub(params.num_vars, params.num_literals_per_clause);
     Int@ clauses_per_variable = Div(Decr(Add(params.num_clauses, num_free_vars)), num_free_vars).q;
 
-    Puzzle@ puzzle := Rng.do(/Core/Iter%.For(
-      Range(params.num_literals_per_clause, params.num_vars), Rng.return(/Std/List%.Empty<Clause@>),
-      (Int@ i, Rng.M@<Puzzle@> mp) {
-        Bool@ pos := Rng.do(/Core/Bool/Rand%.Rand(Rng));
+    Puzzle@ puzzle := M.do(/Core/Iter%.For(
+      Range(params.num_literals_per_clause, params.num_vars), M.return(/Std/List%.Empty<Clause@>),
+      (Int@ i, M@<Puzzle@> mp) {
+        Bool@ pos := M.do(/Core/Bool/Rand%.Rand(M, Rng));
         Literal@ var = Literal@(Lookup(vars, i).just, pos);
         /Core/Iter%.For(CountUpTo(clauses_per_variable), mp,
-          (Int@ _, Rng.M@<Puzzle@> mp) {
-            Puzzle@ tail := Rng.do(mp);
-            Clause@ clause := Rng.do(GenClause(params, i, var));
-            Rng.return(Items(clause, tail));
+          (Int@ _, M@<Puzzle@> mp) {
+            Puzzle@ tail := M.do(mp);
+            Clause@ clause := M.do(GenClause(params, i, var));
+            M.return(Items(clause, tail));
           });
       }));
-    Puzzle@ shuffled := Rng.do(Shuffle(Rng, puzzle));
-    Rng.return(Take(shuffled, params.num_clauses));
+    Puzzle@ shuffled := M.do(Shuffle(M, Rng, puzzle));
+    M.return(Take(shuffled, params.num_clauses));
   };
 
   Eval(puzzle, Prng.seed(seed));
