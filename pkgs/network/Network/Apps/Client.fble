@@ -138,7 +138,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   });
 
   IOStream@<M@> ios = mios.just;
-  Put@<M@, Output@> os = OStream(ios.out, m).put;
+  Put@<M@, Output@> os = OStream(m, ios.out).put;
   Put@<M@, Int@> out := m.do(/Core/Stdio/FFI%.Binary.Stdout(m, io));
 
   Unit@ _ := m.do(os $ String $ args.message);

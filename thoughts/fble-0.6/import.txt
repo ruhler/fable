@@ -54,4 +54,23 @@ Key points:
 * The definer has full control over what variables are named, not the struct
   they are coming from. With shorthand for the common(?) case where you want
   the names the same.
+* It's not position based, because it's just too hard to keep track of
+  positions of things, and too risky when positions change.
 
+The question is: does this new syntax provide enough value to justify the
+added complexity? It doesn't let you do anything you can't already do, for
+example. But then again, neither does case select statements, and those are a
+huge improvement in the language.
+
+Some other related things just to note:
+
+* Non-recursive let workaround:
+  State@ s := ApplyTo(s.@(...));
+  
+  instead of:
+
+  State@ ns = s.@(...);
+  s = ns;
+
+* Or, I suppose:
+  State@ s .= @(s: s.@(...));

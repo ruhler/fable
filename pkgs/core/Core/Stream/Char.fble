@@ -16,8 +16,8 @@ Byte = /Core/Stream%;
 Char = /Core/Char/Stream%;
 
 # Convert a byte input stream to a character input stream.
-<<@>@ M@>(Byte.IStream@<M@>, Monad@<M@>) { Char.IStream@<M@>; }
-IStream = <<@>@ M@>(Byte.IStream@<M@> s, Monad@<M@> m) {
+<<@>@ M@>(Monad@<M@>, Byte.IStream@<M@>) { Char.IStream@<M@>; }
+IStream = <<@>@ M@>(Monad@<M@> m, Byte.IStream@<M@> s) {
   # TODO: Handle unicode characters.
   Maybe@<Int@> mbyte := m.do(s);
   mbyte.?(nothing: m.return(Nothing<Char@>));
@@ -25,8 +25,8 @@ IStream = <<@>@ M@>(Byte.IStream@<M@> s, Monad@<M@> m) {
 };
 
 # Convert a byte output stream to a character output stream.
-<<@>@ M@>(Byte.OStream@<M@>, Monad@<M@>) { Char.OStream@<M@>; }
-OStream = <<@>@ M@>(Byte.OStream@<M@> s, Monad@<M@> m) {
+<<@>@ M@>(Monad@<M@>, Byte.OStream@<M@>) { Char.OStream@<M@>; }
+OStream = <<@>@ M@>(Monad@<M@> m, Byte.OStream@<M@> s) {
   S@ = M@<Unit@>;
   S@ return = m.return(Unit);
   (S@, (Unit@) { S@; }) { S@; }
