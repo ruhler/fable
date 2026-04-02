@@ -13,9 +13,9 @@ Concat = /Std/List%.Concat;
 Maybe@ = /Std/Maybe%.Maybe@;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
-Success = /Core/Cli%.Success;
+Success = /Std/Io/Cli%.Success;
 
 IStream@ = /Core/Char/Stream%.IStream@;
 OStream@ = /Core/Char/Stream%.OStream@;
@@ -65,7 +65,7 @@ GetArgs = (List@<String@> args, Args@ default) {
 
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
-	Maybe@<String@> home := m.do(/Core/Env/Native%.GetVar(m, io, Str|HOME));
+	Maybe@<String@> home := m.do(/Std/Io/Env%.GetVar(m, io, Str|HOME));
   (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
   (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(m, io);
 

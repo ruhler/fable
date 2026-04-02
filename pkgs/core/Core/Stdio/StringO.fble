@@ -7,11 +7,11 @@ Format = /Std/Char/Ascii/Output%.Format;
 
 List@ = /Std/List%.List@;
 
-Main@ = /Core/Cli%.Main@;
-Success = /Core/Cli%.Success;
+Main@ = /Std/Io/Cli%.Main@;
+Success = /Std/Io/Cli%.Success;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
 String@ = /Std/String%.String@;
 

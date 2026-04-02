@@ -1,12 +1,12 @@
 
-Success = /Core/Cli%.Success;
+Success = /Std/Io/Cli%.Success;
 
 Int@ = /Std/Int%.Int@;
 
 List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
 String@ = /Std/String%.String@;
 

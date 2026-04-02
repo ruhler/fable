@@ -1,6 +1,6 @@
 /**
  * @file fble-cli.c
- *  A program to run interpreted fble programs with a @l{/Core/Cli%.Main@}
+ *  A program to run interpreted fble programs with a @l{/Std/Io/Cli%.Main@}
  *  interface.
  */
 

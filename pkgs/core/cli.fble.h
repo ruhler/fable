@@ -1,6 +1,6 @@
 /**
  * @file cli.fble.h
- *  Routines for interacting with @l{/Core/Cli%}.
+ *  Routines for interacting with @l{/Std/Io/Cli%}.
  */
 
 #ifndef FBLE_CORE_CLI_FBLE_H_
@@ -13,7 +13,7 @@
 
 /**
  * @type[FbleCliMainStatus]
- *  Status code from running a /Core/Cli%.Main@ application.
+ *  Status code from running a /Std/Io/Cli%.Main@ application.
  *
  *  @i 0 for successful execution, app returned exit status 0.
  *  @i 1 through 111 for app returned exit status 1 through 111.
@@ -37,16 +37,16 @@ FbleCliMainStatus FbleCliMainOtherStatus(FbleMainStatus status);
 FbleCliMainStatus FbleCliMainAppStatus(FbleValue* result);
 
 /**
- * @func[FbleCliMain] A main function for a @l{/Core/Cli%.Main@} program.
+ * @func[FbleCliMain] A main function for a @l{/Std/Io/Cli%.Main@} program.
  *  @arg[int][argc] The number of args.
  *  @arg[const char**][argv] The args.
  *  @arg[FblePreloadedModule*][preloaded]
- *   The preloaded module to use as the @l{/Core/Cli%.Main@} program to run,
+ *   The preloaded module to use as the @l{/Std/Io/Cli%.Main@} program to run,
  *   or NULL to determine the module based on command line options.
  *  @returns[FbleCliMainStatus] The exit status.
  *
  *  @sideeffects
- *   @i Application side effects from running the @l{/Core/Cli%.Main@} program.
+ *   @i Application side effects from running the @l{/Std/Io/Cli%.Main@} program.
  *   @i Writes to a profile if specified by the command line options.
  */
 FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* preloaded);

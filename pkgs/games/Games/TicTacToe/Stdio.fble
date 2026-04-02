@@ -17,10 +17,10 @@ Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
-Main@ = /Core/Cli%.Main@;
-Success = /Core/Cli%.Success;
+Main@ = /Std/Io/Cli%.Main@;
+Success = /Std/Io/Cli%.Success;
 
 Show@ = /Std/Show%.Show@;
 

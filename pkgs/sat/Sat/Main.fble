@@ -14,9 +14,9 @@ Reverse = /Std/List%.Reverse;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Exit@ = /Core/Cli%.Exit@;
-Success = /Core/Cli%.Success;
-Failure = /Core/Cli%.Failure;
+Exit@ = /Std/Io/Cli%.Exit@;
+Success = /Std/Io/Cli%.Success;
+Failure = /Std/Io/Cli%.Failure;
 
 String@ = /Std/String%.String@;
 

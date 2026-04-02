@@ -17,7 +17,7 @@
 
 #include "char.fble.h"          // for FbleCharValueAccess
 #include "debug.fble.h"         // for /Core/Debug/Builtin%
-#include "env.fble.h"           // for /Core/Env/Native%
+#include "env.fble.h"           // for /Std/Io/Env%
 #include "int.fble.h"           // for FbleNewIntValue, FbleIntValueAccess
 #include "io.fble.h"            // for FbleIoM
 #include "stdio.fble.h"         // for /Core/Stdio/FFI%
@@ -29,7 +29,7 @@ static FbleValue* Cli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main
 
 
 /**
- * @func[Cli] Executes a @l{/Core/Cli%.Main@} function.
+ * @func[Cli] Executes a @l{/Std/Io/Cli%.Main@} function.
  *  @arg[FbleValueHeap*][heap] The value heap.
  *  @arg[FbleProfile*][profile] Profile to store execution results to.
  *  @arg[FbleValue*][main] The main program to execute. Borrowed.
@@ -117,7 +117,7 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   FbleValue* main = NULL;
 
   FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Debug_2f_Builtin_25__2e_Trace);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_Env_25__2e_GetVar);
   FbleRegisterStdioForeignValues(heap);
 
   FblePreloadedModuleV builtins = { .size = 0 };

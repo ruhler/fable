@@ -1,0 +1,29 @@
+# @module[/Std/Io%]
+#  Types for running computations that interact with the outside world.
+
+Unit@ = /Std/Unit%.Unit@;
+
+# @type[External@] A computation that impacts external state.
+#  @arg[@][A@] The result type of the computation.
+#
+#  An @l{Io@} interface is needed to run the computation.
+External@ = <@ A@> {
+  # Internally we treat this as a pure function, but we make it abstract so
+  # nobody can execute it from pure fble code.
+  (Unit@) { A@; }.%(@/Std/Io/''%);
+};
+
+# @type[Io@] Interface for running external computations.
+#  A monadic interface for running external computations. Typically this will
+#  be provided as an argument to the top level main function associated with
+#  an abstract monadic type M@ that globally sequences all side effects.
+#
+#  @arg[<@>@][M@] The monadic type for use with the interface.
+#  @field[<@ A@>(External@<A@>) { M@<A@>;}][run]
+#   Converts an external computation to a computation in the monad M@
+#   associated with the Io@ interface.
+Io@ = <<@>@ M@> { *(
+  <@ A@>(External@<A@>) { M@<A@>; } run
+); };
+ 
+@(External@, Io@);

@@ -14,8 +14,8 @@ Monad@ = /Std/Monad%.Monad@;
 
 Put@ = /Core/Char/Stream%.Put@;
 
-Io@ = /Core/Io%.Io@;
-External@ = /Core/Io%.External@;
+Io@ = /Std/Io%.Io@;
+External@ = /Std/Io%.External@;
 
 String@ = /Std/String%.String@;
 

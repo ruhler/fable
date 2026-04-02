@@ -1,6 +1,6 @@
 /**
  * @file io.fble.h
- *  Routines for interacting with @l{/Core/Io%}.
+ *  Routines for interacting with @l{/Std/Io%}.
  */
 
 #ifndef FBLE_CORE_IO_FBLE_H_
@@ -12,7 +12,7 @@
 #include <fble/fble-value.h>     // for FbleValue
 
 /**
- * @func[FbleIo] Helper for creating a /Core/Io%.Io@<M@> instance.
+ * @func[FbleIo] Helper for creating a /Std/Io%.Io@<M@> instance.
  *  @arg[FbleValueHeap*][heap] The value heap.
  *  @arg[FbleProfile*][profile] Profile to add blocks to.
  *  @returns[FbleValue*] An instance of Io@.

@@ -228,3 +228,25 @@ shouldn't be too bad to separate out and otherwise reorganize packages later
 on. That makes more sense to consider when asking about bringing app package
 and network package into /Std. Let me put a generic todo bullet point to worry
 about it later.
+
+---
+
+I'm happy with monad composition now. Are we ready to migrate the Io stuff to
+std? Here's what it would look like:
+* /Std/Io%: External@, Io@
+* /Std/Io/Env%: GetVar
+* /Std/Io/Cli%: Exit@, Main@, Success, Failure
+
+Let's not worry about the demo for now. We would want to do standard output at
+least in the demo app, so we can wait until after sorting out the interfaces
+for that.
+
+When I move Io over, I should also move native code:
+* io.fble.{h,c}
+* cli.fblie.{h,c}
+* char, env, int, string
+
+But I'm not sure I'm ready to move these over yet. So maybe keep them with the
+core package for now, move them over later.
+ 
+Let's move over those three modules now, get that out and done with.

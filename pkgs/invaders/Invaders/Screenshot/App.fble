@@ -7,9 +7,9 @@ Int = /Std/Int/Lit%.Int;
 List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
-Success = /Core/Cli%.Success;
+Success = /Std/Io/Cli%.Success;
 
 String@ = /Std/String%.String@;
 

@@ -19,10 +19,10 @@ Items = /Std/List%.Items;
 String@ = /Std/String%.String@;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
-Main@ = /Core/Cli%.Main@;
-Success = /Core/Cli%.Success;
+Main@ = /Std/Io/Cli%.Main@;
+Success = /Std/Io/Cli%.Success;
 
 Unit@ = /Std/Unit%.Unit@;
 

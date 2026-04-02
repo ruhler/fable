@@ -7,9 +7,9 @@ List@ = /Std/List%.List@;
 Maybe@ = /Std/Maybe%.Maybe@;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
-Main@ = /Core/Cli%.Main@;
+Main@ = /Std/Io/Cli%.Main@;
 
 String@ = /Std/String%.String@;
 

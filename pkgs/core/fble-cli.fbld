@@ -5,7 +5,7 @@
  @description
   Runs an fble cli program.
  
-  The fble program should have type @l{/Core/Cli%.Main@}. Otherwise behavior
+  The fble program should have type @l{/Std/Io/Cli%.Main@}. Otherwise behavior
   is undefined.
  
  @options

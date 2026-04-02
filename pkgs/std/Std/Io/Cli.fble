@@ -1,16 +1,15 @@
+# @module[/Std/Io/Cli%]
+#  Main function type for command line interfaces.
 
 Int@ = /Std/Int%.Int@;
 Int = /Std/Int/Lit%.Int;
 
+Io@ = /Std/Io%.Io@;
 List@ = /Std/List%.List@;
-
-Io@ = /Core/Io%.Io@;
-
 Monad@ = /Std/Monad%.Monad@;
-
 String@ = /Std/String%.String@;
 
-# Program exit status.
+# @type[Exit] Program exit status.
 #  0 for success, non-zero for application specific failure status. Not all
 #  platforms support the same range of failure status codes. If a platform
 #  supports N different failure status codes, it should use N-1 of those for
@@ -19,13 +18,15 @@ String@ = /Std/String%.String@;
 #  smaller positive values for exit codes you want to distinguish between.
 Exit@ = Int@;
 
-# Exit status success.
+# @value[Success] Exit status success.
+#  @type[Exit@]
 Exit@ Success = Int|0;
 
-# Exit status failure.
+# @value[Failure] Exit status failure.
+#  @type[Exit@]
 Exit@ Failure = Int|1;
   
-# Main@ function for a command line interface.
+# @type[Main@] The main function type for command line interfaces.
 #  @arg[<@>@][M@] Abstract monadic type M@ for computation.
 #  @arg[Monad@<M@>][m] The Monad@ instance for M@.
 #  @arg[Io@<M@>][native] Interface for executing native code.

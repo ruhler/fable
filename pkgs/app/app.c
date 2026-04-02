@@ -20,7 +20,7 @@
 
 #include "char.fble.h"             // for FbleCharValueAccess
 #include "debug.fble.h"            // for /Core/Debug/Builtin%
-#include "env.fble.h"              // for /Core/Env/Native%.GetEnv
+#include "env.fble.h"              // for /Std/Io/Env%.GetEnv
 #include "int.fble.h"              // for FbleNewIntValue, FbleIntValueAccess
 #include "io.fble.h"               // for FbleIoM
 #include "string.fble.h"           // for FbleStringValueAccess
@@ -463,7 +463,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleValue* func = NULL;
 
   FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Debug_2f_Builtin_25__2e_Trace);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_Env_25__2e_GetVar);
   FbleRegisterStdioForeignValues(heap);
 
   FblePreloadedModuleV builtins = { .size = 0 };

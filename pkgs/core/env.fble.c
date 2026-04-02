@@ -1,6 +1,6 @@
 /**
  * @file env.fble.c
- *  Implementation of /Core/Env/Native% foreign functions.
+ *  Implementation of /Std/Io/Env% foreign functions.
  */
 
 #include "env.fble.h"
@@ -40,8 +40,8 @@ static FbleValue* GetVarImpl(FbleValueHeap* heap, FbleProfileThread* profile, Fb
 }
 
 // See documentation in env.fble.h
-FbleForeign _Fble_2f_Core_2f_Env_2f_Native_25__2e_GetVar = {
-  .path = "/Core/Env/Native%",
+FbleForeign _Fble_2f_Std_2f_Io_2f_Env_25__2e_GetVar = {
+  .path = "/Std/Io/Env%",
   .name = "GetVar",
   .num_args = 2,
   .max_call_args = 0,

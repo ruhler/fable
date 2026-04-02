@@ -1167,3 +1167,7 @@ How nice would that be?
 
 Anyway, I don't feel too bad about having switched state over to the new
 conventions. What's next? Rng@?
+
+---
+
+I feel like this approach works. Let's run with it.

@@ -10,9 +10,9 @@ OStream = /Core/Stream/Char%.OStream;
 IStream = /Core/Stream/Char%.IStream;
 GetLine = /Core/Char/Stream/IStream%.GetLine;
 
-Main@ = /Core/Cli%.Main@;
-Success = /Core/Cli%.Success;
-Failure = /Core/Cli%.Failure;
+Main@ = /Std/Io/Cli%.Main@;
+Success = /Std/Io/Cli%.Success;
+Failure = /Std/Io/Cli%.Failure;
 
 Int@ = /Std/Int%.Int@;
 Mul = /Std/Int%.Mul;
@@ -37,7 +37,7 @@ Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
 IOStream@ = /Core/Stream%.IOStream@;
 

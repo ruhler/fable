@@ -31,11 +31,11 @@ Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
 Map = /Core/Int/Map%.Map;
 
-Success = /Core/Cli%.Success;
+Success = /Std/Io/Cli%.Success;
 
 String@ = /Std/String%.String@;
 

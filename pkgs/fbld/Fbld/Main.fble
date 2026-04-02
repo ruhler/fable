@@ -13,9 +13,9 @@ Just = /Std/Maybe%.Just;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Exit@ = /Core/Cli%.Exit@;
-Success = /Core/Cli%.Success;
-Failure = /Core/Cli%.Failure;
+Exit@ = /Std/Io/Cli%.Exit@;
+Success = /Std/Io/Cli%.Success;
+Failure = /Std/Io/Cli%.Failure;
 
 Output@ = /Std/Char/Output%.Output@;
 Format = /Std/Char/Ascii/Output%.Format;

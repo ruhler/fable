@@ -14,12 +14,12 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
-Main@ = /Core/Cli%.Main@;
-Exit@ = /Core/Cli%.Exit@;
-Success = /Core/Cli%.Success;
-Failure = /Core/Cli%.Failure;
+Main@ = /Std/Io/Cli%.Main@;
+Exit@ = /Std/Io/Cli%.Exit@;
+Success = /Std/Io/Cli%.Success;
+Failure = /Std/Io/Cli%.Failure;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

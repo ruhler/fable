@@ -11,7 +11,7 @@ Output@ = /Std/Char/Output%.Output@;
 String = /Std/Char/Output%.String;
 StringE = /Std/Char/Ascii/Output%.StringE;
 
-Main@ = /Core/Cli%.Main@;
+Main@ = /Std/Io/Cli%.Main@;
 
 Int@ = /Std/Int%.Int@;
 Neg = /Std/Int%.Neg;
@@ -27,14 +27,14 @@ Any = /Std/List/Search%.Any;
 Maybe@ = /Std/Maybe%.Maybe@;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
 IStream@ = /Core/Stream%.IStream@;
 OStream@ = /Core/Stream%.OStream@;
 IOStream@ = /Core/Stream%.IOStream@;
 
-Success = /Core/Cli%.Success;
-Failure = /Core/Cli%.Failure;
+Success = /Std/Io/Cli%.Success;
+Failure = /Std/Io/Cli%.Failure;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

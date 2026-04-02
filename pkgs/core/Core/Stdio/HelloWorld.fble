@@ -7,10 +7,10 @@ Output@ = /Std/Char/Output%.Output@;
 List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
 
-Main@ = /Core/Cli%.Main@;
-Success = /Core/Cli%.Success;
+Io@ = /Std/Io%.Io@;
+Main@ = /Std/Io/Cli%.Main@;
+Success = /Std/Io/Cli%.Success;
 
 String@ = /Std/String%.String@;
 StringE = /Std/Char/Ascii/Output%.StringE;

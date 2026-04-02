@@ -1,9 +1,9 @@
 
-Exit@ = /Core/Cli%.Exit@;
+Exit@ = /Std/Io/Cli%.Exit@;
 Int@ = /Std/Int%.Int@;
 List@ = /Std/List%.List@;
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 String@ = /Std/String%.String@;
 
 App@ = /App/App%.App@;

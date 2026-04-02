@@ -8,8 +8,8 @@ IStream@ = /Core/Char/Stream%.IStream@;
 IStream = /Core/Char/Stream/IStream%.IStream;
 NullOutput = /Core/Char/Stream/OStream%.NullOutput;
 
-Exit@ = /Core/Cli%.Exit@;
-Success = /Core/Cli%.Success;
+Exit@ = /Std/Io/Cli%.Exit@;
+Success = /Std/Io/Cli%.Success;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 

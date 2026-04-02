@@ -11,8 +11,8 @@ NullOutput = /Core/Char/Stream/OStream%.NullOutput;
 Pure = /Core/State/Pure%.Pure;
 Eval = /Core/State/Pure%.Eval;
 
-Exit@ = /Core/Cli%.Exit@;
-Success = /Core/Cli%.Success;
+Exit@ = /Std/Io/Cli%.Exit@;
+Success = /Std/Io/Cli%.Success;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

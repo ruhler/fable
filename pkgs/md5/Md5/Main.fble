@@ -19,11 +19,11 @@ Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
-Main@ = /Core/Cli%.Main@;
-Success = /Core/Cli%.Success;
-Failure = /Core/Cli%.Failure;
+Main@ = /Std/Io/Cli%.Main@;
+Success = /Std/Io/Cli%.Success;
+Failure = /Std/Io/Cli%.Failure;
 
 IStream@ = /Core/Stream%.IStream@;
 

@@ -30,9 +30,9 @@ Length = /Std/List/Index%.Length;
 Maybe@ = /Std/Maybe%.Maybe@;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
-Success = /Core/Cli%.Success;
+Success = /Std/Io/Cli%.Success;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

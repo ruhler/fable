@@ -21,14 +21,14 @@ Concat = /Std/List%.Concat;
 Maybe@ = /Std/Maybe%.Maybe@;
 
 Monad@ = /Std/Monad%.Monad@;
-Io@ = /Core/Io%.Io@;
+Io@ = /Std/Io%.Io@;
 
 IStream@ = /Core/Stream%.IStream@;
 OStream@ = /Core/Stream%.OStream@;
 IOStream@ = /Core/Stream%.IOStream@;
 
-Success = /Core/Cli%.Success;
-Failure = /Core/Cli%.Failure;
+Success = /Std/Io/Cli%.Success;
+Failure = /Std/Io/Cli%.Failure;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -36,7 +36,7 @@ Str = /Std/Char/Ascii%.Str;
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
 
-Main@ = /Core/Cli%.Main@;
+Main@ = /Std/Io/Cli%.Main@;
 Sockets@ = /Network/Sockets%.Sockets@;
 
 Args@ = *(

@@ -80,9 +80,9 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/State.fble
 * Next round of formalization/cleanup of native APIs
   - pkgs/core/Core/Cli/Demo.fble
-  - pkgs/core/Core/Cli.fble
-  - pkgs/core/Core/Env/Native.fble
-  - pkgs/core/Core/Native.fble
+  - pkgs/core/Core/Cli.fble        ==> /Std/Io/Cli% [DONE]
+  - pkgs/core/Core/Env/Native.fble ==> /Std/Io/Env% [DONE]
+  - pkgs/core/Core/Native.fble     ==> /Std/Io%     [DONE]
 * Finish porting test cases over to std-test
   - pkgs/core/Core/Char/Tests.fble
   - pkgs/core/Core/Int/Show/Tests.fble
