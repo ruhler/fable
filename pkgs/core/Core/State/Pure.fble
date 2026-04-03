@@ -2,6 +2,7 @@
 Monad@ = /Std/Monad%.Monad@;
 State@ = /Core/State%.State@;
 
+Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
 
 Result@ = <@ S@, @ A@> { *(S@ state, A@ return); };
@@ -47,4 +48,13 @@ Exec = <@ S@, @ A@>(Pure@<S@, A@> ma, S@ s) {
   ma(s).state;
 };
 
-@(Pure@, Result@, Monad, State, Pure, Run, Eval, Exec);
+# Lifts a pure state computation into a generic state monad.
+<@ S@, <@>@ M@>(Monad@<M@>, State@<S@, M@>)<@ A@>(Pure@<S@, A@>) { M@<A@>; }
+Lift = <@ S@, <@>@ M@>(Monad@<M@> m, State@<S@, M@> s)<@ A@>(Pure@<S@, A@> p) {
+  S@ x := m.do(s.get);
+  Result@<S@, A@> r = Run(p, x);
+  Unit@ _ := m.do(s.put(r.state));
+  m.return(r.return);
+};
+
+@(Pure@, Result@, Monad, State, Pure, Run, Eval, Exec, Lift);

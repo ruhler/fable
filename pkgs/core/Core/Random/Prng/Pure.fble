@@ -9,6 +9,8 @@ Le = /Std/Int/Ord%.Le;
 Rng@ = /Core/Random/Rng%.Rng@;
 Prng@ = /Core/Random/Prng%.Prng@;
 
+Modify = /Core/State%.Modify;
+
 Pure@ = /Core/State/Pure%.Pure@;
 Monad = /Core/State/Pure%.Monad;
 State = /Core/State/Pure%.State;
@@ -37,8 +39,7 @@ Rng = <@ S@> (Prng@<S@> prng) {
   };
 
   (Int@, Int@) { M@<Unit@>; } feed = (Int@ n, Int@ x) {
-    S@ s := M.do(S.get);
-    S.put(prng.feed(n, x, s));
+    Modify(M, S, prng.feed(n, x));
   };
 
   @(rand, feed);

@@ -1,0 +1,131 @@
+Standard library for State Monad
+================================
+
+What I have today:
+* /Core/State%: State@(get, put)
+* /Core/State/Pure%: Pure@, Result@, Monad, State, Pure, Run, Eval, Exec
+
+What changes or additions should I consider?
+* Change the underlying impl to modify?
+* Provide top level Get, Put functions?
+* Add Exec, Run, Eval as members of Pure?
+
+What does Haskell have for state?
+* get, put, modify, gets (returns function view on state)
+* run, eval, exec
+* mapState: applies a map over both state and result.
+* withState: applies a map over the state itself.
+
+In the past a few time's I've asked if we should change get/put to modify or
+some such. Seems like we can certainly have top level APIs with
+Get,Put,Modify, regardless of what the underlying axiom is.
+
+What should the underlying thing be? I guess we want to pick something easy to
+implement that doesn't do too much unnecessary work in the special cases of get
+and put and modify. Maybe keep composition in mind: how to easily create a
+subview of State?
+
+I don't know. get/put seem like simple, direct operations. How about we just
+build up on top of those?
+
+---
+
+Sample cases where I combine get/put that might want helper functions:
+* /Core/Char/Stream/IStream%:
+  Get a list value, put the tail if one.
+  I don't see a way to improve this case.
+* /Core/Char/Stream/OStream%:
+  get followed immediately by put. aka Modify.
+
+  Output@ prev := m.do(s.get);
+  s.put(Do(prev, (Unit@ _) { output; }));
+
+  Turns into:
+
+  Output@ prev := Modify(m, s);
+  Do(prev, (Unit@ _) { output; });
+* /Core/Random/Prng/Pure%
+  Calls get. Computes the next value. Calls put. But also uses the next value
+  that was computed. So like, ModifyAndFetch. Because why return Unit@ if you
+  can return the computed state value or the prior state value?
+
+  The feed function does straight up modify:
+  
+    S@ s := M.do(S.get);
+    S.put(prng.feed(n, x, s));
+
+  Turns into:
+
+    Modify(M, S, prng.feed(n, x));
+
+* /Games/BenchmarkGame/FannkuchRedux/Tests%
+  Straight up modify:
+
+      S@ s := M.do(S.get);
+      S.put(Append(s, List[l]));
+
+  Turns into:
+
+      S@ s := Modify(M, S);
+      Append(s, List[l]);
+* Same module, this time get applied to a function:
+
+      S@ x := M.do(S.get);
+      M.return(x.in);
+
+  Turns into:
+      
+      S@ x := Gets(M, S);
+      x.in;
+
+  And:
+      S@ x := M.do(S.get);
+      S.put(x.@(in: str));
+
+  Turns into:
+      S@ x := Modify(M, S);
+      x.@(in: str);
+
+Do these helper functions actually improve things?
+
+---
+
+Should we define Get@ and Put@ interfaces in /Std/State%? Reuse them for
+State@ too?
+
+---
+
+Don't worry about Get@ and Put@ for now. We can add those later if needed.
+
+Add Get, Put, Modify, Gets to /Std/State%.
+
+Don't worry about ModifyAndGet, GetAndModify, or a wrapper around pre-applied
+Get, Put, Modify, Gets. We can add those later if needed. I think the
+pre-applied wrapper struct is more likely to want to add later than the
+ModifyAndGet/GetAndModify.
+
+Let me take advantage of the one place where direct Modify works. Otherwise
+fine to keep reusing get/put. No need to reuse Modify if it doesn't make the
+code any simpler. But I can play around with it a little first just in case.
+
+No need to add mapState or withState - we can't implement those without
+providing a whole new implementation of State anyway, right? In which case,
+this is the same as just State@(...) and doesn't need to be redefined.
+
+Add Run, Eval, Exec to 'Pure' for the pure monad.
+
+Okay? Let's do this. Step 1 is to add the extra methods (unused? partly
+used?), then to ... actually, no need to add Run, Eval, Exec to 'Pure',
+because type inference works perfectly well on those.
+
+Okay? Let's do this. Step 1:
+* Add Get, Put, Modify, Gets, make use of them where reasonable.
+
+Step 2:
+* Move everything over to /Std and document it.
+
+Another idea I had: if you have a Pure state monad, you can lift that into any
+generic State@ interface by getting the state, running the pure state monad,
+putting the final state and returning the final result. Let's add that too.
+
+Call it, um... Lift?

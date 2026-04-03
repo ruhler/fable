@@ -1,8 +1,32 @@
 
+Monad@ = /Std/Monad%.Monad@;
 Unit@ = /Std/Unit%.Unit@;
 
-State@ = <@ S@, <@>@ M@> {
-  *(M@<S@> get, (S@) { M@<Unit@>; } put);
+State@ = <@ S@, <@>@ M@> { *(
+  M@<S@> get,
+  (S@) { M@<Unit@>; } put
+); };
+
+<<@>@ M@>(Monad@<M@>)<@ S@>(State@<S@, M@>) { M@<S@>;}
+Get = <<@>@ M@>(Monad@<M@> _)<@ S@>(State@<S@, M@> s) {
+  s.get;
 };
 
-@(State@);
+<<@>@ M@>(Monad@<M@>)<@ S@>(State@<S@, M@>, S@) { M@<Unit@>;}
+Put = <<@>@ M@>(Monad@<M@> _)<@ S@>(State@<S@, M@> s) {
+  s.put;
+};
+
+<<@>@ M@>(Monad@<M@>)<@ S@>(State@<S@, M@>)<@ A@>((S@) { A@; }) { M@<A@>;}
+Gets = <<@>@ M@>(Monad@<M@> m)<@ S@>(State@<S@, M@> s)<@ A@>((S@) { A@; } f) {
+  S@ x := m.do(s.get);
+  m.return(f(x));
+};
+
+<<@>@ M@>(Monad@<M@>)<@ S@>(State@<S@, M@>, (S@) { S@; }) { M@<Unit@>;}
+Modify = <<@>@ M@>(Monad@<M@> m)<@ S@>(State@<S@, M@> s, (S@) { S@; } f) {
+  S@ x := m.do(Gets(m, s, f));
+  s.put(x);
+};
+
+@(State@, Get, Put, Gets, Modify);
