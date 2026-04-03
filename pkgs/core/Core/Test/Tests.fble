@@ -31,7 +31,7 @@ Unit = /Std/Unit%.Unit;
 (Test@) { Bool@; }
 Run = (Test@ test) {
   Put@<Pure@, Output@> out = (Output@ _) { Unit; };
-  /Core/Test/Run%.Run<Pure@>(/Core/Monad/Pure%.Monad, out, Str|TestTest, test);
+  /Core/Test/Run%.Run(/Core/Monad/Pure%.Monad, out, Str|TestTest, test);
 };
 
 Test@ pass = Test(Str|pass, (Unit@ _) { Pass; });

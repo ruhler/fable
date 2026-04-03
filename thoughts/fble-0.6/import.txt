@@ -21,7 +21,7 @@ Instead of:
 
 We could write:
   
-   M@, M:Monad, Rng .= /Core/Random/Prng/Pure%.Pure(Prng);
+   M@, M: Monad, Rng .= /Core/Random/Prng/Pure%.Pure(Prng);
 
 Instead of:
 
@@ -45,7 +45,7 @@ We could write:
 
 Or:
 
-  Int@ x:q, Int@ y:q .= /Std/Int/Div%.Div(n, Cols);
+  Int@ x:q, Int@ y:r .= /Std/Int/Div%.Div(n, Cols);
   Pos@ pos = @(x, y);
 
 Key points:
@@ -74,3 +74,61 @@ Some other related things just to note:
 
 * Or, I suppose:
   State@ s .= @(s: s.@(...));
+
+More exploration of syntax:
+
+   Pure = /Core/Random/Prng/Pure%.Pure(Prng);
+   M@ = Pure.M@;
+   M = Pure.Monad;
+   Rng = Pure.Rng; 
+
+Or
+  
+   M@, M: Monad, Rng .= /Core/Random/Prng/Pure%.Pure(Prng);
+
+   ^ /Core/Random/Prng/Pure%.Pure(Prng).^(M@, M: Monad, Rng);
+
+   (M@, M: Monad, Rng) .= /Core/Random/Prng/Pure%.Pure(Prng);
+
+   M@, M, Rng .= /Core/Random/Prng/Pure%.Pure(Prng).^(M@, Monad, Rng);
+
+   .M@, M: .Monad, .Rng .= /Core/Random/Prng/Pure%.Pure(Prng);
+
+   M@, M: Monad, Rng := /Core/Random/Prng/Pure%.Pure(Prng);
+
+   ^ /Core/Random/Prng/Pure%.Pure(Prng).^(M@, Monad(M), Rng);
+
+   do, return .= Monad<S@>;
+
+   M@, M(.Monad), Rng .= /Core/Random/Prng/Pure%.Pure(Prng);
+
+   M@, M(Monad), Rng .= /Core/Random/Prng/Pure%.Pure(Prng);
+
+Syntax wise, this still feels best to me:
+
+   M@, M: Monad, Rng .= /Core/Random/Prng/Pure%.Pure(Prng);
+
+---
+
+It should be fine to punt this to a later release because:
+* It's not backwards incompatible to add later, so no reason to take advantage
+  of this clearly backwards incompatible release to do it.
+* It doesn't make things easier enough to change how I would design the
+  standard library.
+
+I think the syntax I have is the best I can hope for with my requirement of
+explicitly naming everything we import.
+
+I think it's worth trying at some point, in case it makes a significant
+difference. It doesn't really unlock anything new. We can always desugar to
+something like:
+
+   _ = /Core/Random/Prng/Pure%.Pure(Prng);
+   M@ = _.M@;
+   M = _.Monad;
+   Rng = _.Rng;
+
+If I want to justify it from a "fundamentals" point of view, I suppose closest
+we could come is to say this is the best we can do to provide abstractions for
+importing things. You write a function to return the struct with what you
+want, let the user import what they need from that under the names they want.

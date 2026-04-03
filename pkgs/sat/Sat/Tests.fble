@@ -76,7 +76,7 @@ VarId@ Z = Int|3;
 (Formula@) { Result@; } Solve = {
   M@ = /Core/Monad/Pure%.Pure@;
   Monad@<M@> m = /Core/Monad/Pure%.Monad;
-  solve = /Sat/Solver%.Solve<M@>(m);
+  solve = /Sat/Solver%.Solve(m);
   (Formula@ formula) {
     solve(AddClauses(NewSolver, formula));
   };
