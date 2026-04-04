@@ -1303,3 +1303,17 @@ Rand48 is not fast enough. Don't get rid of LFSR.
 Okay? All the questions resolved. Let's just clean things up, port it over to
 Std and be done with it.
 
+What do I expect Rand48 test sequence to be? Maybe start at 0 for simplicity?
+
+ 0
+ (0x5DEECE66D * 0 + 0xB) mod 2^48 = 0xB
+ (0x5DEECE66D * 0xB + 0xB) mod 2^48 = 0x40942de6ba
+
+Good. That's what the lrand48 is giving me. But the output bits are a little
+unexpected?
+
+Output bits associated with the state 0x40942de6ba are 000000204A16. That's
+shifted by 17 bits, not 16 bits? Oh, not it's fine. Use jrand48 instead of
+nrand48.
+
+
