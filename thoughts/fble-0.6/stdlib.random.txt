@@ -1262,3 +1262,44 @@ Okay? Sounds slightly better anyway. Let's see how it feels:
   Of ==> UpTo
 
 Yeah, I like 'UpTo' much better than 'Of'.
+
+---
+
+Are there any other rand library functions I want? Let's keep things simple
+for now and limit it to what I have. You can do a whole lot with what we have.
+I want to try and narrow the scope of this release as much as I can.
+
+If we were to add things, it would be like:
+* Rand%.Uniform for all the various types: Char, Maybe, etc.
+ - But is that really useful? It depends on the application.
+* A weighted random drawing thing:
+ - Map from value to weight, draw randomly based on that.
+ - So, a list of (A@, Int@). But where does this live? With List maybe?
+* Any of the different kinds of distributions.
+
+No. Let's let those wait for later. I should be able to add them backwards
+compatibly. Maybe call this the first round for this API. Worry about the rest
+another time when I actually have concrete use cases for them.
+
+---
+
+Should we generalize Lcg and add support for more?
+
+If we add something other than Rand48, there should be a reason. I have a
+clear reason for LFSR and the various sizes. Those are my: don't care about
+random properties go as fast as you can options. The Rand48 is my: This is a
+realistic random number generator. It's super slow.
+
+I don't see much value adding another super slow generator that's not Rand48.
+
+Let's just stick with Rand48. But I should test to make sure it works
+correctly. I can make a common helper function for testing Prng: you provide a
+sequence, it verifies that's the sequence it produces.
+
+---
+
+Rand48 is not fast enough. Don't get rid of LFSR.
+
+Okay? All the questions resolved. Let's just clean things up, port it over to
+Std and be done with it.
+

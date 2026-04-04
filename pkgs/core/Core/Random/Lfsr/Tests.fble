@@ -1,20 +1,13 @@
 
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
+Bool@ = /Std/Bool%.Bool@;
 
-Int@ = /Std/Int%.Int@;
-Decr = /Std/Int%.Decr;
-Int = /Std/Int/Lit%.Int;
-IsZero = /Std/Int/Sign%.IsZero;
-
-Coeffs@ = /Core/Random/Lfsr%.Coeffs@;
-State@ = /Core/Random/Lfsr%.State@;
-Next = /Core/Random/Lfsr%.Next;
+Lfsr = /Core/Random/Lfsr%.Lfsr;
 Bits = /Core/Random/Lfsr%.Bits;
 
 List@ = /Std/List%.List@;
 List = /Std/List%.List;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
+
+Prng@ = /Core/Random/Prng%.Prng@;
 
 Str = /Std/Char/Ascii%.Str;
 
@@ -22,29 +15,19 @@ Test@ = /Std/Test%.Test@;
 TestSuite = /Std/Test%.TestSuite;
 Test = /Std/Test%.Test;
 
-Unit@ = /Std/Unit%.Unit@;
+AssertSequence = /Core/Random/Prng/Assert%.AssertSequence;
 
-(Coeffs@, Int@, State@) { List@<State@>; }
-NextN = (Coeffs@ c, Int@ n, State@ s) {
-  IsZero(n).?(true: Empty<State@>);
-  State@ next = Next(c, s);
-  Items(next, NextN(c, Decr(n), next));
-};
+Unit@ = /Std/Unit%.Unit@;
 
 Test@ Tests = TestSuite(Str|Lfsr, List[
   Test(Str|Basic, (Unit@ _) {
-    # A 3 bit LFSR.
-    Coeffs@ coeffs = Bits|110;
-    State@ state = Bits|001;
-    List@<State@> got = NextN(coeffs, Int|8, state);
-    List@<State@> wnt = List[
-      Bits|010, Bits|101, Bits|011, Bits|111,
-      Bits|110, Bits|100, Bits|001, Bits|010];
-
-    AssertEquals(
-      /Std/List/Eq%.Eq(/Std/List/Eq%.Eq(/Std/Bool/Eq%.Eq)),
-      /Std/List/Show%.Show(/Std/List/Show%.Show(/Std/Bool/Show%.Show)),
-      wnt, got);
+    # Validate the full sequence of a 3 bit LFSR.
+    Prng@<List@<Bool@>> prng = Lfsr(Bits|110);
+    AssertSequence(
+      /Std/List/Eq%.Eq(/Std/Bool/Eq%.Eq),
+      /Std/List/Show%.Show(/Std/Bool/Show%.Show), prng)[
+        Bits|010, Bits|101, Bits|011, Bits|111,
+        Bits|110, Bits|100, Bits|001, Bits|010];
   })
 ]);
 

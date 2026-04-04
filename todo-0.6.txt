@@ -4,6 +4,11 @@ Things to consider doing for the fble-0.6 release.
 
 * Add test that LSFR won't seed itself to 0.
 
+* Why is the invaders ship dying animation so messed up on linux console?
+
+* Why don't interpreted cli tests output when running them during build?
+ - I have to go to the generated file to see the outputs?
+
 * Consider adding a multi import expression
   a, b, c .= <expr>;
  - For example, use it any time we use /Core/State/Pure%.Pure;
