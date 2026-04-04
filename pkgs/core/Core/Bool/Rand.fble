@@ -9,11 +9,11 @@ Int = /Std/Int/Lit%.Int;
 Monad@ = /Std/Monad%.Monad@;
 Rng@ = /Core/Random/Rng%.Rng@;
 
-# Generates a random boolean.
+# Generates a uniform random boolean value.
 <<@>@ M@>(Monad@<M@>, Rng@<M@>) { M@<Bool@>; }
-Rand = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng) {
+Uniform = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng) {
   Int@ x := m.do(rng.rand(Int|1));
   m.return $ Not(IsZero(x));
 };
 
-@(Rand);
+@(Uniform);

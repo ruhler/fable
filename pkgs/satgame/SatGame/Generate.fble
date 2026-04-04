@@ -14,7 +14,7 @@ Div = /Std/Int/Div%.Div;
 Range = /Core/Int/Iter%.Range;
 CountUpTo = /Core/Int/Iter%.CountUpTo;
 Int = /Std/Int/Lit%.Int;
-Of = /Core/Int/Rand%.Of;
+UpTo = /Core/Int/Rand%.UpTo;
 
 List@ = /Std/List%.List@;
 Items = /Std/List%.Items;
@@ -66,12 +66,12 @@ Eval = /Std/State/Pure%.Eval;
     };
 
     (Int@) { M@<Var@>; } RandVar = (Int@ max) {
-      Int@ index := M.do(Of(M, Rng, max));
+      Int@ index := M.do(UpTo(M, Rng, max));
       M.return(Lookup(vars, index).just);
     };
 
     (Int@) { M@<Literal@>; } RandLiteral = (Int@ max) {
-      Bool@ pos := M.do(/Core/Bool/Rand%.Rand(M, Rng));
+      Bool@ pos := M.do(/Core/Bool/Rand%.Uniform(M, Rng));
       Var@ var := M.do(RandVar(max));
       M.return(Literal@(var, pos));
     };
@@ -105,7 +105,7 @@ Eval = /Std/State/Pure%.Eval;
     Puzzle@ puzzle := M.do(/Core/Iter%.For(
       Range(params.num_literals_per_clause, params.num_vars), M.return(/Std/List%.Empty<Clause@>),
       (Int@ i, M@<Puzzle@> mp) {
-        Bool@ pos := M.do(/Core/Bool/Rand%.Rand(M, Rng));
+        Bool@ pos := M.do(/Core/Bool/Rand%.Uniform(M, Rng));
         Literal@ var = Literal@(Lookup(vars, i).just, pos);
         /Core/Iter%.For(CountUpTo(clauses_per_variable), mp,
           (Int@ _, M@<Puzzle@> mp) {

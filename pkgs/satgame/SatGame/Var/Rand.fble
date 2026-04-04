@@ -49,7 +49,7 @@ IsCanonical = (Var@ v) {
 # Generate a random variable.
 <<@>@ M@>(Monad@<M@>, Rng@<M@>) { M@<Var@>; }
 Var = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng) {
-  Rand = /Core/Bool/Rand%.Rand(m, rng);
+  Rand = /Core/Bool/Rand%.Uniform(m, rng);
 
   Bool@ ul := m.do(Rand);
   Bool@ uc := m.do(Rand);

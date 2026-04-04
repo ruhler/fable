@@ -123,13 +123,13 @@ RandEdges = {
   Pure = /Core/Random/Prng/Pure%.Pure(Prng);
   M@ = Pure.M@;
   M = Pure.Monad;
-  Of = /Core/Int/Rand%.Of(M, Pure.Rng);
+  UpTo = /Core/Int/Rand%.UpTo(M, Pure.Rng);
 
   (Int@) { M@<List@<Edge@>>; }
   Gen = (Int@ n) {
     /Std/Int/Eq%.Eq(Int|0, n).?(true: M.return(Empty<Edge@>));
-    Node@ a := M.do(Of(NumNodes));
-    Node@ b := M.do(Of(NumNodes));
+    Node@ a := M.do(UpTo(NumNodes));
+    Node@ b := M.do(UpTo(NumNodes));
     List@<Edge@> tail := M.do(Gen(Decr(n)));
     M.return $ Items(Edge@(a, b), tail);
   };

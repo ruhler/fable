@@ -13,7 +13,7 @@ Rng@ = /Core/Random/Rng%.Rng@;
 
 # Generates a random integer uniformly in the range [0, n).
 <<@>@ M@>(Monad@<M@>, Rng@<M@>, Int@) { M@<Int@>; }
-Of = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng, Int@ n) {
+UpTo = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng, Int@ n) {
   # Find the smallest k such that n < 2^k
   (Int@) { Int@; }
   FindK = (Int@ n) {
@@ -34,8 +34,8 @@ Of = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng, Int@ n) {
 # Generates a random integer uniformly in the range [lo, hi]
 <<@>@ M@>(Monad@<M@>, Rng@<M@>, Int@, Int@) { M@<Int@>; }
 Range = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng, Int@ lo, Int@ hi) {
-  Int@ x := m.do $ Of(m, rng, Incr(Sub(hi, lo)));
+  Int@ x := m.do $ UpTo(m, rng, Incr(Sub(hi, lo)));
   m.return $ Add(lo, x);
 };
 
-@(Of, Range);
+@(UpTo, Range);

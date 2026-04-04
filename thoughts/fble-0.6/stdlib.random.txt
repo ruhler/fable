@@ -1164,3 +1164,101 @@ Surely it would be simpler to not add that extra bit. Let me try that. It's
 easy to test.
 
 In my implementation, left is head, last is tail.
+
+---
+
+What better name can I pick instead of 'Of'? This is me trying to pick a
+random number in [0, n).
+
+How about: 'OneOf'? As in, OneOf(Int|100), or OneOf(Int|6)?
+
+Or, UpTo(Int|100)?
+
+Or just Int?
+
+Our other functions are things like: Rand, Range.
+
+What about: ZeroTo?
+
+  Int@ r := M.do(Of(Int|100));
+  Int@ r := M.do(ZeroTo(Int|100));
+  Int@ r := M.do(OneOf(Int|100));
+  Int@ r := M.do(OutOf(Int|100));
+  Int@ r := M.do(Int(Int|100));
+  Int@ r := M.do(Natural(Int|100));
+  Int@ r := M.do(Range(Int|0, Int|100));
+  Int@ r := M.do(From(Int|0, Int|100));
+  Int@ r := M.do(To(Int|100));
+
+Stepping back, what is the space of kinds of random functions we can have?
+Like, in general?
+
+Discrete or continuous distributions. We are dealing with discrete, clearly,
+because integers, booleans, etc. are discrete types.
+
+You need to specify the type of thing you are after. That's clear from the
+context of where the function is coming from. /Std/Bool/Rand% means you want a
+Bool@. /Std/Int/Rand% means you want an Int@.
+
+Next you need to specify the distribution you want to draw from. There are
+some different variations on how we could specify this. Examples:
+* Uniform over the entire space: {true, false}, {..., -2, -1, 0, 1, 2, ...}
+* Uniform over a specific range: {0, 1, ..., n}, {m, m+1, m+2, ... n}
+* Non-uniform: {70% true, 30% false}, etc.
+
+I suppose, most generally, you could give a list of weighted values for a
+discrete distribution:
+  [(True, 1), (False, 1)] is uniform bool
+  [(True, 7), (False, 3)] is 70/30 split bool
+
+Assume anything you don't mention gets weight 0.
+
+I could implement everything on top of an interface like this. It's probably
+an integer interface. I think python has an API like that. Maybe we should
+consider adding it. But for performance and ease of calling, I would prefer an
+API function for the common cases we care about:
+* Uniform Bool
+* Uniform Int in [0, n)
+* Uniform Int in [lo, hi]
+
+I don't think it makes sense to do uniform random integer over the entire
+(infinite) range of possible integers. I don't even know if that's possible or
+what it means.
+
+I normally think of 'rand' to mean uniformly randomly distributed over the
+entire range.
+
+Current list of APIs above the Rng@ line:
+* Bool: Rand
+* Int: Of, Range
+* List: Shuffle
+
+Standard notation for a uniform random variable is something like U(lo, hi),
+normally treated as a continuous distribution.
+
+Shuffle is like an operation on a list. That feels okay. It's like a different
+category of things.
+
+If we assume it's obvious from the module that we are dealing with randomness
+and the appropriate type, then I would name things like:
+* Shuffle 
+* Uniform
+
+    Bool@ p := m.do(/Core/Bool/Rand%.Uniform(m, rng));
+
+I think Uniform sounds a little better to me than Rand for Bool.
+
+I like the name 'Range' for that function. That's a noun describing the set of
+integers to uniformly draw from. How about 'UpTo' for from zero?
+
+        Int@ r := M.do(UpTo(M, Rng, Int|100));
+        Lt(r, Int|15).?(false: M.return(bombs));
+
+        Int@ r := M.do(Range(M, Rng, Int|0, Int|100));
+        Lt(r, Int|15).?(false: M.return(bombs));
+
+Okay? Sounds slightly better anyway. Let's see how it feels:
+  Rand ==> Uniform
+  Of ==> UpTo
+
+Yeah, I like 'UpTo' much better than 'Of'.

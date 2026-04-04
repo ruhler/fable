@@ -34,7 +34,7 @@ Ge = /Std/Int/Ord%.Ge;
 Gt = /Std/Int/Ord%.Gt;
 Int = /Std/Int/Lit%.Int;
 Ord = /Core/Int/Ord%.Ord;
-Of = /Core/Int/Rand%.Of;
+UpTo = /Core/Int/Rand%.UpTo;
 
 List@ = /Std/List%.List@;
 Items = /Std/List%.Items;
@@ -47,7 +47,6 @@ DoWhile = /Core/Maybe%.DoWhile;
 For = /Core/Maybe%.For;
 
 Eval = /Std/State/Pure%.Eval;
-Exec = /Std/State/Pure%.Exec;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
@@ -61,13 +60,6 @@ Pure = /Core/Random/Prng/Pure%.Pure(Prng);
 M@ = Pure.M@;
 M = Pure.Monad;
 Rng = Pure.Rng;
-
-(Prng.S@) { Prng.S@; }
-NextRand = (Prng.S@ prng) {
-  # Go to the next random number by getting (and ignoring) a random boolean
-  # value.
-  Exec(/Core/Bool/Rand%.Rand(M, Rng), prng);
-};
 
 # Aliens move together in a group of rows and columns. They decide which
 # direction to move. Then each live alien, in turn, makes a move. After a full
@@ -340,10 +332,10 @@ Vanguard = (Aliens@ aliens, Int@ col) {
         alien.?(nothing: mbombs);
 
         Bombs@ bombs := M.do(mbombs);
-        Int@ r := M.do(Of(M, Rng, Int|100));
+        Int@ r := M.do(UpTo(M, Rng, Int|100));
         Lt(r, Int|15).?(false: M.return(bombs));
 
-        Int@ x_shift := M.do(Of(M, Rng, MoveX));
+        Int@ x_shift := M.do(UpTo(M, Rng, MoveX));
         Int@ x = Add(Add(Int|4, x_shift),
           Add(aliens.dst_x, Mul(StrideX, alien.just.col)));
         Int@ y = Sub(Add(aliens.dst_y, Mul(StrideY, alien.just.row)), Int|6);
@@ -363,7 +355,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
 #   Advance the aliens by one unit of time tick.
 (Aliens@) { Aliens@; } Tick = (Aliens@ a) {
   List@<Dying@> dying = TickDying(a.dying);
-  Prng.S@ prng = NextRand(a.prng);
+  Prng.S@ prng = Prng.next(a.prng);
   a.next.?(
     just: {
       Int@ left = Add(a.dst_x, Mul(StrideX, a.next.just.col));

@@ -16,7 +16,7 @@ Shuffle = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng)<@ T@> {
     l.?(empty: m.return(Split@(l, l)));
     T@ head = l.items.head;
     Split@ s := m.do(Split(l.items.tail));
-    Bool@ p := m.do(/Core/Bool/Rand%.Rand(m, rng));
+    Bool@ p := m.do(/Core/Bool/Rand%.Uniform(m, rng));
     m.return(p.?(
       true: Split@(Items(head, s.a), s.b),
       false: Split@(s.a, Items(head, s.b))));
