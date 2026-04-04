@@ -35,11 +35,11 @@ Test@ Tests = TestSuite(Str|Lfsr, List[
   Test(Str|Basic, (Unit@ _) {
     # A 3 bit LFSR.
     Coeffs@ coeffs = Bits|110;
-    State@ state = Bits|000;
+    State@ state = Bits|001;
     List@<State@> got = NextN(coeffs, Int|8, state);
     List@<State@> wnt = List[
-      Bits|001, Bits|011, Bits|110, Bits|101,
-      Bits|010, Bits|100, Bits|000, Bits|001];
+      Bits|010, Bits|101, Bits|011, Bits|111,
+      Bits|110, Bits|100, Bits|001, Bits|010];
 
     AssertEquals(
       /Std/List/Eq%.Eq(/Std/List/Eq%.Eq(/Std/Bool/Eq%.Eq)),

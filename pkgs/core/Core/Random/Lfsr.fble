@@ -48,7 +48,7 @@ State@ = List@<Bool@>;
 # undefined.
 (Coeffs@, State@) { State@; }
 Next = (Coeffs@ coeffs, State@ state) {
-  Bool@ in = Sum(Items(True, Prod(coeffs, state)));
+  Bool@ in = Sum(Prod(coeffs, state));
   Append(state.items.tail, List[in]);
 };
 
@@ -74,7 +74,15 @@ IntToBits = (Int@ n, Int@ x) {
     s.items.head.?(true: Int|1, false: Int|0);
   };
 
-  (Int@) { S@; } seed = IntToBits(len);
+  (Int@) { S@; } seed = (Int@ x) {
+    S@ bits = IntToBits(len, x);
+
+    # Make sure there is at least one bit set, otherwise the LFSR won't work.
+    /Std/List/Search%.Any(bits, (Bool@ bit) { bit; }).?(false: {
+      Items(True, bits.items.tail);
+    });
+    bits;
+  };
 
   (Int@, Int@, S@) { S@; } feed = (Int@ n, Int@ x, S@ s) {
     List@<Bool@> bits = IntToBits(n, x);

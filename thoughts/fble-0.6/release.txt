@@ -76,8 +76,8 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Stream.fble
 * Revise state monad based on random numbers api design?
   - pkgs/core/Core/Monad/State.fble [Removed]
-  - pkgs/core/Core/State/Pure.fble
-  - pkgs/core/Core/State.fble
+  - pkgs/core/Core/State/Pure.fble ==> /Std/State/Pure% [DONE]
+  - pkgs/core/Core/State.fble      ==> /Std/State%      [DONE]
 * Next round of formalization/cleanup of native APIs
   - pkgs/core/Core/Cli/Demo.fble
   - pkgs/core/Core/Cli.fble        ==> /Std/Io/Cli% [DONE]

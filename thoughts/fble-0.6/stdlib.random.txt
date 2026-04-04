@@ -1107,3 +1107,60 @@ Things that I'm hesitant about before moving this to std library:
 * 'Of' is a bad name for that function.
 * Double check if there are any other Rand library functions I want.
 
+---
+
+Pure is a decent name. Read it as: this does the least possible to satisfy the
+needs for what you are looking for, and it is a pure fble computation.
+
+Let me read about LFSR again with an eye for:
+* How to seed it properly.
+* Any other good/bad properties that users ought to know about.
+
+In terms of seeding, for XOR based, 0 is illegal. For XNOR based, -1 is
+illegal. I must be using XNOR based? Then -1 should be illegal, and I should
+figure out when I seed things myself how to avoid that.
+
+What matters to get maximum length is the polynomial, not the seed. As long as
+you exclude the one special seed value.
+
+My implementation of LFSR is saying:
+  x = XOR(1:AND(coeffs, bits))
+
+That extra 1 must be what makes it XNOR.
+
+Can I bring up my notes from when I originally implemented LFSR?
+
+Apparently I didn't record my notes.
+
+Should I try to re-implement it with the XOR approach and avoid seed 0? Or
+avoid seed -1? It's not any more difficult one way or another. It would be
+nice to use the simplest most standardized implementation.
+
+From wikipedia:
+* Input bit is XOR of tap bits.
+
+Example: taps 110
+
+  000 ==> 000
+  001 ==> 010
+  010 ==> 101
+  011 ==> 111
+  100 ==> 001
+  101 ==> 011
+  110 ==> 100
+  111 ==> 110
+
+Whereas my implementation has:
+
+  001 ==> 011
+  011 ==> 110
+  110 ==> 101
+  101 ==> 010
+  010 ==> 100
+  100 ==> 000
+  000 ==> 001
+  
+Surely it would be simpler to not add that extra bit. Let me try that. It's
+easy to test.
+
+In my implementation, left is head, last is tail.
