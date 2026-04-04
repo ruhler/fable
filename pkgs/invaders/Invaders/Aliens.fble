@@ -46,8 +46,8 @@ Nothing = /Std/Maybe%.Nothing;
 DoWhile = /Core/Maybe%.DoWhile;
 For = /Core/Maybe%.For;
 
-Eval = /Core/State/Pure%.Eval;
-Exec = /Core/State/Pure%.Exec;
+Eval = /Std/State/Pure%.Eval;
+Exec = /Std/State/Pure%.Exec;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;

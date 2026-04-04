@@ -1,0 +1,75 @@
+# @module[/Std/State%]
+#  The state monadic interface and utilities.
+
+Monad@ = /Std/Monad%.Monad@;
+Unit@ = /Std/Unit%.Unit@;
+
+# @type[Io@] Interface for running stateful computations.
+#  A mondic interface for running computations that have read and write access
+#  to state.
+#
+#  @arg[@][S@] The type of state.
+#  @arg[<@>@][M@] The monadic type for use with the interface.
+#  @field[M@<S@>][get] Gets the value of the state.
+#  @field[(S@) { M@<Unit@>; }][put] Updates the value of the state.
+State@ = <@ S@, <@>@ M@> { *(
+  M@<S@> get,
+  (S@) { M@<Unit@>; } put
+); };
+
+# @func[Get] Gets the value of the state from a monadic state interface.
+#  @arg[<@>@][M@] The monadic type.
+#  @arg[Monad@<M@>][m] The monad instance.
+#  @arg[@][S@] The state type.
+#  @arg[State@<S@, M@>][s] The state interface.
+#  @returns[M@<S@>] A computation that returns the current state value.
+<<@>@ M@>(Monad@<M@>)<@ S@>(State@<S@, M@>) { M@<S@>;}
+Get = <<@>@ M@>(Monad@<M@> _)<@ S@>(State@<S@, M@> s) {
+  s.get;
+};
+
+# @func[Put] Updates the value of the state in a monadic state interface.
+#  @arg[<@>@][M@] The monadic type.
+#  @arg[Monad@<M@>][m] The monad instance.
+#  @arg[@][S@] The state type.
+#  @arg[State@<S@, M@>][s] The state interface.
+#  @arg[S@][x] The new value for the state.
+#  @returns[M@<Unit@>]
+#   A computation that sets the state to the given value.
+<<@>@ M@>(Monad@<M@>)<@ S@>(State@<S@, M@>, S@) { M@<Unit@>;}
+Put = <<@>@ M@>(Monad@<M@> _)<@ S@>(State@<S@, M@> s) {
+  s.put;
+};
+
+# @func[Gets] Gets a view of the state from a monadic state interface.
+#  @arg[<@>@][M@] The monadic type.
+#  @arg[Monad@<M@>][m] The monad instance.
+#  @arg[@][S@] The state type.
+#  @arg[State@<S@, M@>][s] The state interface.
+#  @arg[@][A@] The result type.
+#  @arg[(S@) { A@; }][f] Function describing the view of the state you want.
+#  @returns[M@<A@>]
+#   A computation that returns the result of applying the function f to the
+#   current state value.
+<<@>@ M@>(Monad@<M@>)<@ S@>(State@<S@, M@>)<@ A@>((S@) { A@; }) { M@<A@>;}
+Gets = <<@>@ M@>(Monad@<M@> m)<@ S@>(State@<S@, M@> s)<@ A@>((S@) { A@; } f) {
+  S@ x := m.do(s.get);
+  m.return(f(x));
+};
+
+# @func[Modify] Modifies the value of the state in a monadic state interface.
+#  @arg[<@>@][M@] The monadic type.
+#  @arg[Monad@<M@>][m] The monad instance.
+#  @arg[@][S@] The state type.
+#  @arg[State@<S@, M@>][s] The state interface.
+#  @arg[(S@) { S@; }][f] The function to modify the state.
+#  @returns[M@<Unit@>]
+#   A computation that modifies the current value of the state by applying the
+#   function f to it.
+<<@>@ M@>(Monad@<M@>)<@ S@>(State@<S@, M@>, (S@) { S@; }) { M@<Unit@>;}
+Modify = <<@>@ M@>(Monad@<M@> m)<@ S@>(State@<S@, M@> s, (S@) { S@; } f) {
+  S@ x := m.do(Gets(m, s, f));
+  s.put(x);
+};
+
+@(State@, Get, Put, Gets, Modify);

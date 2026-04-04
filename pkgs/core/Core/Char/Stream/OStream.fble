@@ -6,7 +6,7 @@ ToNull = /Std/Char/Output%.ToNull;
 Do = /Std/Char/Output%.Do;
 
 Monad@ = /Std/Monad%.Monad@;
-State@ = /Core/State%.State@;
+State@ = /Std/State%.State@;
 
 Unit@ = /Std/Unit%.Unit@;
 

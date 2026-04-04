@@ -31,8 +31,8 @@ Range = /Core/Int/Rand%.Range;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Exec = /Core/State/Pure%.Exec;
-Run = /Core/State/Pure%.Run;
+Exec = /Std/State/Pure%.Exec;
+Run = /Std/State/Pure%.Run;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;

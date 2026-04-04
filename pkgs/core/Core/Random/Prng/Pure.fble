@@ -9,11 +9,11 @@ Le = /Std/Int/Ord%.Le;
 Rng@ = /Core/Random/Rng%.Rng@;
 Prng@ = /Core/Random/Prng%.Prng@;
 
-Modify = /Core/State%.Modify;
+Modify = /Std/State%.Modify;
 
-Pure@ = /Core/State/Pure%.Pure@;
-Monad = /Core/State/Pure%.Monad;
-State = /Core/State/Pure%.State;
+Pure@ = /Std/State/Pure%.Pure@;
+Monad = /Std/State/Pure%.Monad;
+State = /Std/State/Pure%.State;
 
 Unit@ = /Std/Unit%.Unit@;
 

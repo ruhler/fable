@@ -12,7 +12,7 @@ Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
-State@ = /Core/State%.State@;
+State@ = /Std/State%.State@;
 
 String@ = /Std/String%.String@;
 

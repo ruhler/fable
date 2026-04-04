@@ -25,12 +25,12 @@ Hash@ = /Md5/Hash%.Hash@;
 
 Int@ 1 = Int|1;
 
-Pure = /Core/State/Pure%.Pure<Int@>;
+Pure = /Std/State/Pure%.Pure<Int@>;
 M@ = Pure.M@;
 M = Pure.Monad;
 S = Pure.State;
 
-Eval = /Core/State/Pure%.Eval;
+Eval = /Std/State/Pure%.Eval;
 
 Maybe@<Bit8@> A5 = Just(H8|A5);
 

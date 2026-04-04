@@ -21,8 +21,8 @@ Nothing = /Std/Maybe%.Nothing;
 
 String@ = /Std/String%.String@;
 
-Pure = /Core/State/Pure%.Pure;
-Eval = /Core/State/Pure%.Eval;
+Pure = /Std/State/Pure%.Pure;
+Eval = /Std/State/Pure%.Eval;
 
 Test@ = /Std/Test%.Test@;
 Test = /Std/Test%.Test;

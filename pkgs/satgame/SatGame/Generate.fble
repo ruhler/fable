@@ -40,7 +40,7 @@ M@ = Pure.M@;
 M = Pure.Monad;
 Rng = Pure.Rng;
 
-Eval = /Core/State/Pure%.Eval;
+Eval = /Std/State/Pure%.Eval;
 
 # @func[Generate] Generates a random satgame puzzle.
 #  @arg[Params@][params] Parameters for the puzzle to generate.

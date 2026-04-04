@@ -118,7 +118,7 @@ Int@ NumEdges = Int|15;
 # Generates N random edges.
 (Int@) { List@<Edge@>; }
 RandEdges = {
-  Eval = /Core/State/Pure%.Eval;
+  Eval = /Std/State/Pure%.Eval;
   Prng = /Core/Random/Lfsr%.Lfsr8;
   Pure = /Core/Random/Prng/Pure%.Pure(Prng);
   M@ = Pure.M@;

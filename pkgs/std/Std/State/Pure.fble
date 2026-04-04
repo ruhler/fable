@@ -1,0 +1,102 @@
+# @module[/Std/State/Pure%]
+#  A pure implementation of the state monadic interface.
+
+Monad@ = /Std/Monad%.Monad@;
+State@ = /Std/State%.State@;
+
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
+
+Result@ = <@ S@, @ A@> { *(S@ state, A@ return); };
+Pure@ = <@ S@, @ A@>(S@) { Result@<S@, A@>; };
+
+# @func[Monad] The monad instance for a pure state monad.
+#  @arg[@][S@] The type of state.
+#  @returns[Monad@<Pure@<S@>>] The monad instance for a pure state monad.
+<@ S@> { Monad@<Pure@<S@>>; }
+Monad = <@ S@> {
+  M@ = Pure@<S@>;
+
+  Return = <@ A@>(A@ x, S@ s) {
+    Result@(s, x);
+  };
+
+  Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f, S@ s) {
+    Result@<S@, A@> ra = ma(s);
+    f(ra.return, ra.state);
+  };
+
+  Monad@(M@, Return, Do);
+};
+
+# @func[State] The state interface for a pure state monad.
+#  @arg[@][S@] The type of state.
+#  @returns[State@<S@, Pure@<S@>>] The state interface for a pure state monad.
+<@ S@> { State@<S@, Pure@<S@>>; }
+State = <@ S@> {
+  @(get: (S@ s) { Result@(s, s); },
+    put: (S@ s, S@ _) { Result@(s, Unit); });
+};
+
+# @func[Pure] Implementation of a pure state monad.
+#  @arg[@][S@] The type of state.
+#  @returns[...]
+#   The monad type M@, monad instance Monad, and state interface State
+#   implementing the pure state monad for state type S@.
+Pure = <@ S@> {
+  @(M@: Pure@<S@>, Monad: Monad<S@>, State: State<S@>);
+};
+
+# @func[Run] Runs a pure state computation.
+#  @arg[@][S@] The state type.
+#  @arg[@][A@] The result type.
+#  @arg[Pure@<S@, A@>][ma] The computation to run.
+#  @arg[S@][s] The initial state to use.
+#  @returns[Result@<S@, A@>]
+#   The result of the computation along with the final state value.
+<@ S@, @ A@>(Pure@<S@, A@>, S@) { Result@<S@, A@>; }
+Run = <@ S@, @ A@>(Pure@<S@, A@> ma, S@ s) {
+  ma(s);
+};
+
+# @func[Eval] Runs a pure state computation for its result.
+#  @arg[@][S@] The state type.
+#  @arg[@][A@] The result type.
+#  @arg[Pure@<S@, A@>][ma] The computation to run.
+#  @arg[S@][s] The initial state to use.
+#  @returns[A@] The result of the computation.
+<@ S@, @ A@>(Pure@<S@, A@>, S@) { A@; }
+Eval = <@ S@, @ A@>(Pure@<S@, A@> ma, S@ s) {
+  ma(s).return;
+};
+
+# @func[Exec] Runs a pure state computation for its final state.
+#  @arg[@][S@] The state type.
+#  @arg[@][A@] The result type.
+#  @arg[Pure@<S@, A@>][ma] The computation to run.
+#  @arg[S@][s] The initial state to use.
+#  @returns[S@] The final state value after the computation.
+<@ S@, @ A@>(Pure@<S@, A@>, S@) { S@; }
+Exec = <@ S@, @ A@>(Pure@<S@, A@> ma, S@ s) {
+  ma(s).state;
+};
+
+# @func[Lift] Runs a pure state computation as a generic state monad.
+#  @arg[@][S@] The state type.
+#  @arg[<@>@][M@] The monad type to run the state computation in.
+#  @arg[Monad@<M@>][m] The monad instance run the state computation in.
+#  @arg[State@<S@, A@>][s] The state interface for the state monad.
+#  @arg[@][A@] The result type.
+#  @arg[Pure@<S@, A@>][p] The pure state computation to run.
+#  @returns[M@<A@>]
+#   A computation to run the pure state computation with the provided generic
+#   state monad interface.
+<@ S@, <@>@ M@>(Monad@<M@>, State@<S@, M@>)<@ A@>(Pure@<S@, A@>) { M@<A@>; }
+Lift = <@ S@, <@>@ M@>(Monad@<M@> m, State@<S@, M@> s)<@ A@>(Pure@<S@, A@> p) {
+  S@ x := m.do(s.get);
+  Result@<S@, A@> r = Run(p, x);
+  Unit@ _ := m.do(s.put(r.state));
+  m.return(r.return);
+};
+
+@(Pure@, Result@, Monad, State, Pure, Run, Eval, Exec, Lift);

@@ -12,7 +12,7 @@ Append = /Std/List%.Append;
 Str = /Std/Char/Ascii%.Str;
 StrE = /Std/Char/Ascii%.StrE;
 
-Exec = /Core/State/Pure%.Exec;
+Exec = /Std/State/Pure%.Exec;
 
 Test@ = /Std/Test%.Test@;
 Test = /Std/Test%.Test;
@@ -66,7 +66,7 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
       List[Int|1, Int|3, Int|2]];
 
     S@ = List@<List@<Int@>>;
-    P = /Core/State/Pure%.Pure<S@>;
+    P = /Std/State/Pure%.Pure<S@>;
     M@ = P.M@;
     M = P.Monad;
     S = P.State;

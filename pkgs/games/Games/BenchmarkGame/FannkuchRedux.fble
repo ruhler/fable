@@ -22,7 +22,7 @@ ForEach = /Std/List%.ForEach;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Exec = /Core/State/Pure%.Exec;
+Exec = /Std/State/Pure%.Exec;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
@@ -74,7 +74,7 @@ Fannkuch@ = *(
   Int@ max_flips
 );
 
-P = /Core/State/Pure%.Pure<Fannkuch@>;
+P = /Std/State/Pure%.Pure<Fannkuch@>;
 M@ = P.M@;
 M = P.Monad;
 S = P.State;
