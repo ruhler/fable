@@ -1,3 +1,5 @@
+# @module[/Std/Random/Lcg%]
+#  Linear congruential pseudo random number generator.
 
 Int@ = /Std/Int%.Int@;
 Add = /Std/Int%.Add;
@@ -8,9 +10,15 @@ Mod = /Std/Int/Div%.Mod;
 Int = /Std/Int/Lit%.Int;
 Hex = /Std/Int/Lit%.Hex;
 
-Prng@ = /Core/Random/Prng%.Prng@;
+Prng@ = /Std/Random/Prng%.Prng@;
 
-# Not suitable for cryptography.
+# @value[Rand48] Implementation of the Rand48 psuedo random number generator.
+#  @type[Prng@<Int@>]
+#
+#  This generates a sequence of random numbers using the same 48 bit linear
+#  congruential generator as Java java.util.Random and POSIX [ln]rand48.
+#
+#  Not suitable for cryptographic use cases.
 Prng@<Int@> Rand48 = {
   S@ = Int@;
 

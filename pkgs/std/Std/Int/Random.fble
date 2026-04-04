@@ -1,0 +1,56 @@
+# @module[/Std/Int/Random%]
+#  Generation of random integer values.
+
+Int@ = /Std/Int%.Int@;
+Incr = /Std/Int%.Incr;
+Add = /Std/Int%.Add;
+Sub = /Std/Int%.Sub;
+Shr = /Std/Int%.Shr;
+IsZero = /Std/Int/Sign%.IsZero;
+Lt = /Std/Int/Ord%.Lt;
+Int = /Std/Int/Lit%.Int;
+
+Monad@ = /Std/Monad%.Monad@;
+Rng@ = /Std/Random/Rng%.Rng@;
+
+# @func[UpTo] Generates a random integer uniformly in the range [0, n).
+#  @arg[<@>@][M@] Monadic type of the random generator interface.
+#  @arg[Monad@<M@>][m] Monad implementation of the random generator interface.
+#  @arg[Rng@<M@>][rng] The random number generator to use.
+#  @arg[Int@][n] Exclusive upper bound on the integer value to generate.
+#  @returns[M@<Int@>]
+#   A random integer value uniformly distributed in the range [0, n).
+<<@>@ M@>(Monad@<M@>, Rng@<M@>, Int@) { M@<Int@>; }
+UpTo = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng, Int@ n) {
+  # Find the smallest k such that n < 2^k
+  (Int@) { Int@; }
+  FindK = (Int@ n) {
+    IsZero(n).?(true: Int|1);
+    Incr(FindK(Shr(n, Int|1)));
+  };
+  Int@ k = FindK(n);
+
+  M@<Int@> Try = {
+    Int@ x := m.do(rng.rand(k));
+    Lt(x, n).?(true: m.return(x));
+    Try;
+  };
+
+  Try;
+};
+
+# @func[Range] Generates a random integer uniformly in the range [lo, hi].
+#  @arg[<@>@][M@] Monadic type of the random generator interface.
+#  @arg[Monad@<M@>][m] Monad implementation of the random generator interface.
+#  @arg[Rng@<M@>][rng] The random number generator to use.
+#  @arg[Int@][lo] Inclusive lower bound on the integer value to generate.
+#  @arg[Int@][hi] Inclusive upper bound on the integer value to generate.
+#  @returns[M@<Int@>]
+#   A random integer value uniformly distributed in the range [lo, hi].
+<<@>@ M@>(Monad@<M@>, Rng@<M@>, Int@, Int@) { M@<Int@>; }
+Range = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng, Int@ lo, Int@ hi) {
+  Int@ x := m.do $ UpTo(m, rng, Incr(Sub(hi, lo)));
+  m.return $ Add(lo, x);
+};
+
+@(UpTo, Range);

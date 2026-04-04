@@ -1,0 +1,33 @@
+# @module[/Std/Random/Prng%]
+#  Pure pseudo random number generator interface.
+
+Int@ = /Std/Int%.Int@;
+
+# @type[Prng@] Interface for a pseudo random number generator.
+#  @arg[@][S@] The type of the state used by the random number generator.
+#  @field[(S@) { S@;}][next] The state transition function.
+#  @field[Int@][n] The number of random bits of output you get per state.
+#  @field[(S@) { Int@; }][bits]
+#   Function to extract the n output bits from the given state. The result is
+#   an integer value in the range [0, 2^n).
+#  @field[(Int@) { S@; }][seed]
+#   Function to produce a state value from an integer value used as seed.
+#   Different integer values will tend to produce different states, but
+#   otherwise you shouldn't assume anything about the relationship between the
+#   integer and the state value.
+#  @field[(Int@, Int@, S@) { S@; }][feed]
+#   Function to feed n random bits into the state. The first argument
+#   specifies the number of bits, the second argument should be an integer
+#   value in the range [0, 2^n) with the contents of the bits. The third value
+#   is the current state. This produces a new state that is some function of
+#   the previous state and the random bits.
+Prng@ = <@ S@> { *(
+    @<S@> S@,
+    (S@) { S@; } next,
+    Int@ n,
+    (S@) { Int@; } bits,
+    (Int@) { S@; } seed,
+    (Int@, Int@, S@) { S@; } feed
+); };
+
+@(Prng@);

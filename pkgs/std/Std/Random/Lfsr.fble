@@ -1,0 +1,159 @@
+# @module[/Std/Random/Lfsr%]
+#  Linear feedback shift register based random number generator.
+#
+#  The linear feedback shift register implementations provided for bit length
+#  n have period 2^n-1. They are relatively fast to implement in fble, but
+#  depending on the bit length can have very short periods. Good for games
+#  where you want unpredictable behavior that's fast to compute.
+#
+#  If you don't care about performance, consider using the more standard
+#  /Std/Random/Lcg%.Rand48 random number generator.
+
+Bool@ = /Std/Bool%.Bool@;
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+And = /Std/Bool%.And;
+Xor = /Std/Bool%.Xor;
+
+Int@ = /Std/Int%.Int@;
+Decr = /Std/Int%.Decr;
+QR@ = /Std/Int/Div%.QR@;
+Div = /Std/Int/Div%.Div;
+IsZero = /Std/Int/Sign%.IsZero;
+Int = /Std/Int/Lit%.Int;
+
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
+Empty = /Std/List%.Empty;
+Append = /Std/List%.Append;
+Drop = /Std/List/Index%.Drop;
+
+Prng@ = /Std/Random/Prng%.Prng@;
+
+Unit@ = /Std/Unit%.Unit@;
+
+# Prod --
+#   Compute the element wise product of bits in the given lists.
+(List@<Bool@>, List@<Bool@>) { List@<Bool@>; }
+Prod = (List@<Bool@> a, List@<Bool@> b) {
+  a.?(empty: a);
+
+  List@<Bool@> tail = Prod(a.items.tail, b.items.tail);
+  Items(And(a.items.head, b.items.head), tail);
+};
+
+# Sum --
+#   Compute the sum over all bits in the given list.
+(List@<Bool@>) { Bool@; } Sum = (List@<Bool@> xs) {
+  xs.?(empty: False);
+  Xor(xs.items.head, Sum(xs.items.tail));
+};
+
+# type[Coeffs@] The coefficiencts of the linear feedback shift register.
+Coeffs@ = List@<Bool@>;
+
+# @type[S@] The state of the linear feedback shift register.
+S@ = List@<Bool@>;
+
+# func[Next] Transition function for a linear feedback shift register.
+#  @arg[Coeffs@][coeffs] The coefficients to use.
+#  @arg[S@][state] The current state value.
+#  @returns[S@] The next state value.
+#
+#  The number of coefficients must match the state size, otherwise behavior is
+#  undefined.
+(Coeffs@, S@) { S@; }
+Next = (Coeffs@ coeffs, S@ state) {
+  Bool@ in = Sum(Prod(coeffs, state));
+  Append(state.items.tail, List[in]);
+};
+
+# Extracts n bits from the given integer.
+(Int@, Int@) { List@<Bool@>; }
+IntToBits = (Int@ n, Int@ x) {
+  IsZero(n).?(true: Empty<Bool@>);
+
+  QR@ qr = Div(x, Int|2);
+  Bool@ bit = /Std/Int/Eq%.Eq(Int|1, qr.r);
+  Items(bit, IntToBits(Decr(n), qr.q));
+};
+
+# func[Lfsr] Generic implementation of a linear feedback shift register.
+#  @arg[Coeffs@][coeffs] The coefficients to use.
+#  @returns[Prng@<S@>]
+#   A pseudo random number generator derived a linear feedback shift register
+#   with the given coefficients.
+(Coeffs@) { Prng@<S@>; } Lfsr = (Coeffs@ coeffs) {
+  Int@ len = /Std/List/Index%.Length(coeffs);
+
+  (S@) { S@; } next = Next(coeffs);
+  Int@ n = Int|1;
+
+  (S@) { Int@; } bits = (S@ s) {
+    s.items.head.?(true: Int|1, false: Int|0);
+  };
+
+  (Int@) { S@; } seed = (Int@ x) {
+    S@ bits = IntToBits(len, x);
+
+    # Make sure there is at least one bit set, otherwise the LFSR won't work.
+    /Std/List/Search%.Any(bits, (Bool@ bit) { bit; }).?(false: {
+      Items(True, bits.items.tail);
+    });
+    bits;
+  };
+
+  (Int@, Int@, S@) { S@; } feed = (Int@ n, Int@ x, S@ s) {
+    List@<Bool@> bits = IntToBits(n, x);
+    Drop(Append(s, bits), n);
+  };
+
+  @(S@, next, n, bits, seed, feed);
+};
+
+Bit@ = +(Unit@ 0, Unit@ 1);
+
+(List@<Bit@>) { List@<Bool@>; }
+S = (List@<Bit@> xs) {
+  Bit@ bit := /Std/List%.Map(xs);
+  bit.?(0: False, 1: True);
+};
+
+# @value[Lfsr3] Implementation of a 3 bit linear feedback shift register.
+#  @type[Prng@<S@>]
+#
+#  This generates a sequence of random numbers using a 3 bit linear feedback
+#  shift register with period 2^3-1, primarily to facilitate testing.
+#
+#  Not suitable for cryptographic use cases.
+Prng@<S@> Lfsr3 = Lfsr(S|110);
+
+# @value[Lfsr8] Implementation of an 8 bit linear feedback shift register.
+#  @type[Prng@<S@>]
+#
+#  This generates a sequence of random numbers using an 8 bit linear feedback
+#  shift register with period 2^8-1.
+#
+#  Not suitable for cryptographic use cases.
+Prng@<S@> Lfsr8 = Lfsr(S|10111000);
+
+# @value[Lfsr16] Implementation of a 16 bit linear feedback shift register.
+#  @type[Prng@<S@>]
+#
+#  This generates a sequence of random numbers using an 8 bit linear feedback
+#  shift register with period 2^16-1.
+#
+#  Not suitable for cryptographic use cases.
+Prng@<S@> Lfsr16 = Lfsr(S|1101000000001000);
+
+# @value[Lfsr24] Implementation of a 24 bit linear feedback shift register.
+#  @type[Prng@<S@>]
+#
+#  This generates a sequence of random numbers using an 8 bit linear feedback
+#  shift register with period 2^24-1.
+#
+#  Not suitable for cryptographic use cases.
+Prng@<S@> Lfsr24 = Lfsr(S|111000010000000000000000);
+
+@(S@, Lfsr3, Lfsr8, Lfsr16, Lfsr24);

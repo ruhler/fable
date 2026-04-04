@@ -16,7 +16,7 @@ Empty = /Std/List%.Empty;
 Any = /Std/List/Search%.Any;
 
 Monad@ = /Std/Monad%.Monad@;
-Rng@ = /Core/Random/Rng%.Rng@;
+Rng@ = /Std/Random/Rng%.Rng@;
 
 Var@ = /SatGame/Var%.Var@;
 
@@ -49,7 +49,7 @@ IsCanonical = (Var@ v) {
 # Generate a random variable.
 <<@>@ M@>(Monad@<M@>, Rng@<M@>) { M@<Var@>; }
 Var = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng) {
-  Rand = /Core/Bool/Rand%.Uniform(m, rng);
+  Rand = /Std/Bool/Random%.Uniform(m, rng);
 
   Bool@ ul := m.do(Rand);
   Bool@ uc := m.do(Rand);

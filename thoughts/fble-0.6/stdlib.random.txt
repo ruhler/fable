@@ -1316,4 +1316,16 @@ Output bits associated with the state 0x40942de6ba are 000000204A16. That's
 shifted by 17 bits, not 16 bits? Oh, not it's fine. Use jrand48 instead of
 nrand48.
 
+Cool. Ready to document and port over to /Std and be done with it for this
+release.
 
+---
+
+Um, I think I shouldn't expose the internals of LFRS. I should provide some
+standard existing ones and have people use those. Otherwise it feels too
+risky?
+
+Done.
+
+I still need to migrate over the test cases, but for now let's tentatively
+mark standardization of random number generation done.

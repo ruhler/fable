@@ -27,7 +27,7 @@ Int = /Std/Int/Lit%.Int;
 
 Div = /Std/Int/Div%.Div;
 
-Range = /Core/Int/Rand%.Range;
+Range = /Std/Int/Random%.Range;
 
 Monad@ = /Std/Monad%.Monad@;
 
@@ -61,8 +61,8 @@ Int@ MinCol = Int|0;    # Inclusive. This is a legal col.
 Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 
 # The pseudo random number generator we are using.
-Prng = /Core/Random/Lcg%.Rand48;
-Pure = /Core/Random/Prng/Pure%.Pure(Prng);
+Prng = /Std/Random/Lcg%.Rand48;
+Pure = /Std/Random/Prng/Pure%.Pure(Prng);
 M@ = Pure.M@;
 M = Pure.Monad;
 Rng = Pure.Rng;

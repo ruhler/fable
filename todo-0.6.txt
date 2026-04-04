@@ -2,6 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Make Coeffs@, Lfsr, Next internal functions?
+
 * Add test that LSFR won't seed itself to 0.
 
 * Why is the invaders ship dying animation so messed up on linux console?

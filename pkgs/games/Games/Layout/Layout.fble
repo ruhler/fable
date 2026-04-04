@@ -119,11 +119,11 @@ Int@ NumEdges = Int|15;
 (Int@) { List@<Edge@>; }
 RandEdges = {
   Eval = /Std/State/Pure%.Eval;
-  Prng = /Core/Random/Lfsr%.Lfsr8;
-  Pure = /Core/Random/Prng/Pure%.Pure(Prng);
+  Prng = /Std/Random/Lfsr%.Lfsr8;
+  Pure = /Std/Random/Prng/Pure%.Pure(Prng);
   M@ = Pure.M@;
   M = Pure.Monad;
-  UpTo = /Core/Int/Rand%.UpTo(M, Pure.Rng);
+  UpTo = /Std/Int/Random%.UpTo(M, Pure.Rng);
 
   (Int@) { M@<List@<Edge@>>; }
   Gen = (Int@ n) {

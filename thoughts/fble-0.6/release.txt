@@ -20,15 +20,15 @@ I fear I'll have to give up at some point. Anyway, status is something like:
 
 * Random numbers, API worked out in some detail. Needs next round of review
   and cleanup.
-  - pkgs/core/Core/Bool/Rand.fble
-  - pkgs/core/Core/Int/Rand.fble
-  - pkgs/core/Core/List/Rand.fble
-  - pkgs/core/Core/Random/Lcg.fble
+  - pkgs/core/Core/Bool/Rand.fble   ==> /Std/Bool/Random% [DONE]
+  - pkgs/core/Core/Int/Rand.fble    ==> /Std/Int/Random% [DONE]
+  - pkgs/core/Core/List/Rand.fble   ==> /Std/List/Random% [DONE]
+  - pkgs/core/Core/Random/Lcg.fble  ==> /Std/Random/Lcg% [DONE]
   - pkgs/core/Core/Random/Lfsr/Tests.fble
-  - pkgs/core/Core/Random/Lfsr.fble
-  - pkgs/core/Core/Random/Prng/Pure.fble
-  - pkgs/core/Core/Random/Prng.fble
-  - pkgs/core/Core/Random/Rng.fble
+  - pkgs/core/Core/Random/Lfsr.fble ==> /Std/Random/Lfsr% [DONE]
+  - pkgs/core/Core/Random/Prng/Pure.fble ==> /Std/Random/Prng/Pure% [DONE]
+  - pkgs/core/Core/Random/Prng.fble ==> /Std/Random/Prng% [DONE]
+  - pkgs/core/Core/Random/Rng.fble ==> /Std/Random/Rng% [DONE]
 * Cleanup standard Cmp/Ord interfaces.
   - pkgs/core/Core/Bool/Ord.fble
   - pkgs/core/Core/Char/Ord.fble

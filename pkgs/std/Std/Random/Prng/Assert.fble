@@ -1,0 +1,45 @@
+# @module[/Std/Random/Prng/Assert%]
+#  Assertions to facilitate testing pseudo random number generators.
+
+Eq@ = /Std/Eq%.Eq@;
+
+List@ = /Std/List%.List@;
+List = /Std/List%.List;
+Items = /Std/List%.Items;
+
+Prng@ = /Std/Random/Prng%.Prng@;
+Show@ = /Std/Show%.Show@;
+
+TestResult@ = /Std/Test%.TestResult@;
+Pass = /Std/Test%.Pass;
+AssertEquals = /Std/Eq/Assert%.AssertEquals;
+
+# @func[AssertSequences]
+# @ Asserts that the given prng produces the given sequence of states.
+#  @arg[@][S@] The type of state of the random number generator.
+#  @arg[Eq@<S@>][eq] How to compare states for equality.
+#  @arg[Show@<S@>][show] How to show state values.
+#  @arg[Prng@<S@>][prng] The random number generator to test.
+#  @arg[List<S@>][states]
+#   A sequence of states the pseudo random number generator is expected to
+#   generate, assuming it starts from the inital state in the list.
+#  @returns[TestResult@]
+#   A passing test result if the pseudo random number generator generates the
+#   same sequence of states as provided. A failing result otherwise.
+<@ S@>(Eq@<S@>, Show@<S@>, Prng@<S@>, List@<S@>) { TestResult@; }
+AssertSequence = <@ S@>(Eq@<S@> eq, Show@<S@> show, Prng@<S@> prng) {
+  (S@, List@<S@>) { List@<S@>; }
+  Generate = (S@ head, List@<S@> tail_size) {
+    tail_size.?(empty: List[head]);
+    S@ next = prng.next(head);
+    Items(head, Generate(next, tail_size.items.tail));
+  };
+  
+  (List@<S@> states) {
+    states.?(empty: Pass);
+    List@<S@> got = Generate(states.items.head, states.items.tail);
+    AssertEquals(/Std/List/Eq%.Eq(eq), /Std/List/Show%.Show(show), states, got);
+  };
+};
+
+@(AssertSequence);

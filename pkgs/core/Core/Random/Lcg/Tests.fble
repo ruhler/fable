@@ -4,8 +4,8 @@ Hex = /Std/Int/Lit%.Hex;
 
 List = /Std/List%.List;
 
-Prng@ = /Core/Random/Prng%.Prng@;
-Rand48 = /Core/Random/Lcg%.Rand48;
+Prng@ = /Std/Random/Prng%.Prng@;
+Rand48 = /Std/Random/Lcg%.Rand48;
 
 Str = /Std/Char/Ascii%.Str;
 
@@ -13,7 +13,7 @@ Test@ = /Std/Test%.Test@;
 TestSuite = /Std/Test%.TestSuite;
 Test = /Std/Test%.Test;
 
-AssertSequence = /Core/Random/Prng/Assert%.AssertSequence;
+AssertSequence = /Std/Random/Prng/Assert%.AssertSequence;
 
 Unit@ = /Std/Unit%.Unit@;
 

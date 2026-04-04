@@ -34,7 +34,7 @@ Ge = /Std/Int/Ord%.Ge;
 Gt = /Std/Int/Ord%.Gt;
 Int = /Std/Int/Lit%.Int;
 Ord = /Core/Int/Ord%.Ord;
-UpTo = /Core/Int/Rand%.UpTo;
+UpTo = /Std/Int/Random%.UpTo;
 
 List@ = /Std/List%.List@;
 Items = /Std/List%.Items;
@@ -55,8 +55,8 @@ Int@ 0 = Int|0;
 Int@ 1 = Int|1;
 Int@ 2 = Int|2;
 
-Prng = /Core/Random/Lfsr%.Lfsr8;
-Pure = /Core/Random/Prng/Pure%.Pure(Prng);
+Prng = /Std/Random/Lfsr%.Lfsr8;
+Pure = /Std/Random/Prng/Pure%.Pure(Prng);
 M@ = Pure.M@;
 M = Pure.Monad;
 Rng = Pure.Rng;

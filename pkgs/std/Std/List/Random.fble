@@ -1,3 +1,5 @@
+# @module[/Std/List/Random%]
+#  Generation of random lists.
 
 Bool@ = /Std/Bool%.Bool@;
 
@@ -6,9 +8,16 @@ Items = /Std/List%.Items;
 Append = /Std/List%.Append;
 
 Monad@ = /Std/Monad%.Monad@;
-Rng@ = /Core/Random/Rng%.Rng@;
+Rng@ = /Std/Random/Rng%.Rng@;
 
-# Shuffles the elements of a list randomly.
+# 
+# @func[Shuffle] Shuffles the elements of a list randomly.
+#  @arg[<@>@][M@] Monadic type of the random generator interface.
+#  @arg[Monad@<M@>][m] Monad implementation of the random generator interface.
+#  @arg[Rng@<M@>][rng] The random number generator to use.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to shuffle.
+#  @returns[M@<List@<T@>>] The randomly shuffled list.
 <<@>@ M@>(Monad@<M@>, Rng@<M@>)<@ T@>(List@<T@>) { M@<List@<T@>>; }
 Shuffle = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng)<@ T@> {
   Split@ = *(List@<T@> a, List@<T@> b);
@@ -16,7 +25,7 @@ Shuffle = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng)<@ T@> {
     l.?(empty: m.return(Split@(l, l)));
     T@ head = l.items.head;
     Split@ s := m.do(Split(l.items.tail));
-    Bool@ p := m.do(/Core/Bool/Rand%.Uniform(m, rng));
+    Bool@ p := m.do(/Std/Bool/Random%.Uniform(m, rng));
     m.return(p.?(
       true: Split@(Items(head, s.a), s.b),
       false: Split@(s.a, Items(head, s.b))));

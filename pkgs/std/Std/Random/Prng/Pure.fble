@@ -1,3 +1,5 @@
+# @module[/Std/Random/Prng/Pure%]
+#  Rng@ instance for pseudo random number generators.
 
 Int@ = /Std/Int%.Int@;
 Add = /Std/Int%.Add;
@@ -6,8 +8,8 @@ Shl = /Std/Int%.Shl;
 Shr = /Std/Int%.Shr;
 Le = /Std/Int/Ord%.Le;
 
-Rng@ = /Core/Random/Rng%.Rng@;
-Prng@ = /Core/Random/Prng%.Prng@;
+Rng@ = /Std/Random/Rng%.Rng@;
+Prng@ = /Std/Random/Prng%.Prng@;
 
 Modify = /Std/State%.Modify;
 
@@ -17,7 +19,12 @@ State = /Std/State/Pure%.State;
 
 Unit@ = /Std/Unit%.Unit@;
 
-# Pure state monad Rng@ implementation of a Prng@.
+# @func[Rng] Pure state monad Rng@ implementation of a Prng@.
+#  @arg[@][S@] The state type for the pseudo random number generator.
+#  @arg[Prng@<S@>][prng] Implementation of the pseudo random number generator.
+#  @returns[Rng@<Pure@<S@>>]
+#   A pure state monad based implementation of the Rng@ interface for the
+#   pseudo random number generator.
 <@ S@>(Prng@<S@>) { Rng@<Pure@<S@>>; }
 Rng = <@ S@> (Prng@<S@> prng) {
   M@ = Pure@<S@>;
@@ -45,6 +52,13 @@ Rng = <@ S@> (Prng@<S@> prng) {
   @(rand, feed);
 };
 
+# @func[Pure] Stand alone implementation of pseudo random number generator.
+#  @arg[@][S@] The state type for the pseudo random number generator.
+#  @arg[Prng@<S@>][prng] Implementation of the pseudo random number generator.
+#  @returns[...]
+#   A collection monadic type M@, monad instance, state instance, and Rng
+#   instance for the pure state monad implementation of the pseudo random
+#   number generator.
 Pure = <@ S@>(Prng@<S@> prng) {
   @(M@: Pure@<S@>, Monad: Monad<S@>, State: State<S@>, Rng: Rng(prng));
 };
