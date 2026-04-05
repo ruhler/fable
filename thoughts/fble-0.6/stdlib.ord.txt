@@ -538,3 +538,21 @@ Okay, I think I want to separate compare and ord. Let's go that approach.
 Re-organize Int as above. Try it out, see how it feels, and move on. I may not
 get any immediate feedback. If it's too painful, be prepared to revisit.
 
+---
+
+Coming back to this after a while, what all is left to clean up? Where are we?
+
+* I have /Std/Cmp% defined, with: Compared, Less, Equal, Greater, Cmp@.
+* I have /Std/Int/Ord% implemented with: Lt, Le, Gt, Ge, Max, Min.
+* List sort takes Cmp@ as input, but we have no instances of it.
+* We have various uses of int Le, Lt, etc.
+
+If I had an instance of Cmp@, I could implement Lt, Le, Gt, Ge, Max, Min, etc.
+I should provide that high level helper function somewhere.
+
+If I didn't care at all about performance, why not define Lt, Le, Gt, Ge, Max,
+Min to be generic and take Cmp@ as input?
+
+I must say, having Cmp@ and Ord% as separate things feels pretty awkward to
+me.
+

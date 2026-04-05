@@ -132,3 +132,187 @@ If I want to justify it from a "fundamentals" point of view, I suppose closest
 we could come is to say this is the best we can do to provide abstractions for
 importing things. You write a function to return the struct with what you
 want, let the user import what they need from that under the names they want.
+
+---
+
+Think how nice it would be to add a new import to an existing module import
+if I had this syntax. Instead of: copy paste the line, rename the variable in
+two places, I can simply add the name of the extra thing I want to import.
+
+---
+
+Maybe this syntax would help with concerns in
+thoughts/fble-0.6/stdlib.ord.txt, about whether we should import something at
+the top level or as a subfield at a module?
+
+Consider for example:
+
+  Le = /Std/Int/Ord%.Le;
+  Lt = /Std/Int/Ord%.Lt;
+
+Versus:
+
+  Le = /Std/Int/Ord%.Ord.Le;
+  Lt = /Std/Int/Ord%.Ord.Lt;
+
+Versus:
+
+  Le, Lt = /Std/Int/Ord%;
+
+Versus:
+
+  Le, Lt = /Std/Int/Ord%.Ord;
+
+It feels like there's much less impact to the organization if we have the
+import expression.
+
+I think, maybe, it's time to draft up an implementation of the import
+statement, try it out, and see how it feels for real.
+
+I know how to draft it to start, as a syntactic sugar hopefully handled at the
+type level. Maybe eventually we want it to go all the way to back ends, maybe
+not.
+
+I suppose if I'm going to do this, I may as well do it thoroughly and start
+with the spec level.
+
+One minor(?) question about semantics: can we do something like:
+
+  Bool@, Bool@ True, Bool@ False .= /Std/Bool%;
+
+Or the types take from before we've imported anything? I think the types
+should take from before we've imported anything, so this should give a type
+error on use of Bool@ as the type of True.
+
+It wouldn't be hard to change later if we wanted to.
+
+Where does this go in the spec?
+* Variables is too early, we don't know about structs yet.
+* Structs maybe.
+* Syntactic Sugar seems more suitable though.
+
+---
+
+I'm getting parser conflicts. Let's see if it's fundamental or I just wrote it
+up wrong in the parser.
+
+First conflict: 'name.' is either the start of a type, as in
+  'P.M@', or the start of a name, as in 'P .= ...'
+
+Next conflict, when we get to the ':' character:
+      Foo@ x := y;
+  vs. Foo@ x :a, ...
+
+Next conflict:
+      Foo@ x, Foo@ y := z;
+      Foo@ x, Foo@ y .= z;
+
+Yeah. So... that looks pretty fundamental about the syntax. I'll need to come
+up with a better way to express it.
+
+Use '.=' feels out of the question, unless I'm willing to make that a special
+token distinct from '.'.
+
+Using something similar but not the same as bind syntax is maybe less
+fundamental. I can share the FbleImport between bind and import expressions,
+just ignore the name or make sure it is always absent in the bind case as part
+of type check? And that the type is always present for bind?
+
+Could we allow you to drop the type from a bind expression? Could we infer it
+from the function value, based on the type of arguments expected? It seems
+like we could. You just don't get type inference that way.
+
+The weird thing is the alternate field name. Otherwise maybe we can re-use
+bind syntax for import? Feels a little dangerous though, to be honest. But it
+shouldn't be too hard to make ':=' and '.=' separate syntax in the parser.
+Maybe I also want to do that for other things? Not sure.
+
+Any better way to handle the alternate field name?
+
+Instead of:
+
+   M@, M: Monad, S: State .= Pure<Int@>;
+
+Well, natural thing to do would be to not allow renaming. But that seems like
+a pretty severe limitation.
+
+  M@, M, S .= Pure<Int@>(.M@, .Monad, .State)
+
+Easy work around would be put something up front to distinguish things.
+
+  ^ M@, M: Monad, S: State .= Pure<Int@>;
+
+Maybe use some totally different syntax like pattern matching or some such?
+
+  ^ @(M@, M: .Monad, S: .State) .= Pure<Int@>;
+
+  ^ Pure<Int@>.(M@, M: Monad, S: State);
+
+Or do the rename separately, provide convenient syntax for that?
+
+The important point to the feature is that I be able to refer to field names
+in the context of a particular struct.
+
+  Pure<Int@>.(M@, M: Monad, S: State);
+
+  @(M@, M: Monad, S: State) .= Pure<Int@>;
+
+But that's just the same as having a special character in front.
+
+  M@, M: Monad, S: State := ...;
+
+  M@, M(Monad), S(State) .= Pure<Int@>;
+  M@, M[Monad], S[State] .= Pure<Int@>;
+
+  @(Int@ q, Int@ r) .= Pure<Int@>;
+
+  Int@ x(q), Int@ y(r) .= Div(a, b);
+
+  Int@ x = .q, Int@ y = .r ?? Div(a,b);
+
+  M@, M = .Monad, S = .State ?= ...;
+
+If we drop the type requirement from bind, we need to process it in the type
+checker instead of in the parser.
+
+We could check in the parser that no type is missing when we process it, and
+that no field name is provided. That's actually fairly doable, right?
+
+I will say, this looks weird though:
+
+  M@, M: Monad, S: State := ...;
+
+If we were going to use ':=' as the syntax... is there a nicer syntax I can
+use for rename? I like the use of '.' to make it clear which is the variable
+name and which is the field name. Other conflicts with that aside.
+
+  _ = Pure<Int@>;
+  M@ = _.M@; M = _.Monad; S = _.State;
+
+
+  M@, M: Monad, S: State .= ...;
+  M@, M(.Monad), S(.State) .= ...;
+
+This maybe feels a little better:
+
+  M@, M(.Monad), S(.State) .= ...;
+
+  Int@ x(.q), Int@ y(.r) .=  Div(a,b);
+
+Okay, but even if that feels better, it doesn't help at all with the syntax
+conflicts. I guess the best suggestion I have at the moment is:
+* Switch from "Foo: bar" to "Foo(.bar)", for aesthetics and to make the
+  distinction between variable name and field name more obvious.
+* Make ':=' and '.=' separate syntactic tokens in the lexer, to avoid conflict
+  with '.'.
+* Parse bind syntax as if it were import syntax. Check after parsing that we
+  have all the types we need and no extra field names.
+
+Reasonable? Seems reasonable? Maybe? Like, honestly, what's the difference
+between putting some magic marker first to change the parser subsequent
+behavior compared to reporting the error after parsing further into things?
+
+I can at least try these suggests and see how they feel.
+
+  M@, M (.Monad), S (.State) .= ...;
+  Int@ x (.q), Int@ y (.r) .=  Div(a,b);

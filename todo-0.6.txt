@@ -2,6 +2,13 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Add %destructor for import expression.
+* Add spec tests for import expressions.
+ - Add tests for unused warnings.
+
+* Clean up bnf syntax in spec.
+ - What do I use for list versus optional? Why sometimes [] sometimes {}?
+
 * Make Coeffs@, Lfsr, Next internal functions?
 
 * Add test that LSFR won't seed itself to 0.

@@ -177,6 +177,19 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
+    case FBLE_IMPORT_EXPR: {
+      FbleImportExpr* e = (FbleImportExpr*)expr;
+      for (size_t i = 0; i < e->imports.size; ++i) {
+        FbleFreeExpr(e->imports.xs[i].type);
+        FbleFreeName(e->imports.xs[i].name);
+        FbleFreeName(e->imports.xs[i].field);
+      }
+      FbleFreeVector(e->imports);
+      FbleFreeExpr(e->def);
+      FbleFreeExpr(e->body);
+      return;
+    }
+
     case FBLE_MODULE_PATH_EXPR: {
       FbleModulePathExpr* e = (FbleModulePathExpr*)expr;
       FbleFreeModulePath(e->path);

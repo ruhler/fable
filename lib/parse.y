@@ -65,6 +65,8 @@ while (0)
   FbleTaggedExpr tagged_expr;
   FbleTaggedExprV tagged_exprs;
   FbleBindingV bindings;
+  FbleImport import;
+  FbleImportV imports;
 }
 
 %{
@@ -100,6 +102,8 @@ while (0)
 %type <tagged_expr> implicit_tagged_expr tagged_expr
 %type <tagged_exprs> implicit_tagged_expr_p implicit_tagged_expr_s tagged_expr_p
 %type <bindings> let_binding_p
+%type <import> import
+%type <imports> import_p
 
 %destructor {
   FbleFree((char*)$$);
@@ -564,6 +568,15 @@ stmt:
       FbleAppendToVector(apply_expr->args, expr);
       $$ = &apply_expr->_base;
     }
+  | import_p '.' '=' aexpr ';' stmt {
+      FbleImportExpr* import_expr = FbleAlloc(FbleImportExpr);
+      import_expr->_base.tag = FBLE_IMPORT_EXPR;
+      import_expr->_base.loc = FbleCopyLoc(@$);
+      import_expr->imports = $1;
+      import_expr->def = $4;
+      import_expr->body = $6;
+      $$ = &import_expr->_base;
+    }
   | expr '$' stmt {
       FbleApplyExpr* apply_expr = FbleAlloc(FbleApplyExpr);
       apply_expr->_base.tag = FBLE_MISC_APPLY_EXPR;
@@ -713,6 +726,40 @@ let_binding_p:
       binding->expr = $5;
     }
   ;
+
+import:
+   name {
+     $$.type = NULL;
+     $$.name = $1;
+     $$.field = FbleCopyName($1);
+   }
+ | expr name {
+     $$.type = $1;
+     $$.name = $2;
+     $$.field = FbleCopyName($2);
+   }
+ | name ':' name {
+     $$.type = NULL;
+     $$.name = $1;
+     $$.field = $3;
+   }
+ | expr name ':' name {
+     $$.type = $1;
+     $$.name = $2;
+     $$.field = $4;
+   }
+ ;
+
+import_p:
+ import {
+   FbleInitVector($$);
+   FbleAppendToVector($$, $1);
+ }
+ | import_p ',' import {
+     $$ = $1;
+     FbleAppendToVector($$, $3);
+   }
+ ;
 
 %%
 /**

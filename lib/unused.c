@@ -219,6 +219,11 @@ static void Expr(FbleExpr* expr, Vars* vars)
       return;
     }
 
+    case FBLE_IMPORT_EXPR: {
+      assert(false && "TODO");
+      return;
+    }
+
     case FBLE_MODULE_PATH_EXPR: return;
 
     case FBLE_DATA_ACCESS_EXPR: {

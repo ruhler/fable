@@ -41,6 +41,7 @@ typedef enum {
 
   FBLE_LIST_EXPR,
   FBLE_LITERAL_EXPR,
+  FBLE_IMPORT_EXPR,
 
   FBLE_MODULE_PATH_EXPR,
 
@@ -288,6 +289,30 @@ typedef struct {
   FbleName name;
   FbleExpr* body;
 } FbleUndefExpr;
+
+/**
+ * @struct[FbleImport] Info about a variable import.
+ *  Used in import expressions. The type is optional.
+ *
+ *  @field[FbleTypeExpr*][type] The type of the variable. May be NULL.
+ *  @field[FbleName][name] The name of the variable to define.
+ *  @field[FbleName][field] The name of the field to import from.
+ */
+typedef struct {
+  FbleTypeExpr* type;
+  FbleName name;
+  FbleName field;
+} FbleImport;
+
+/**
+ * @struct[FbleImportV] Vector of FbleImport.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleImport*][xs] The elements.
+ */
+typedef struct {
+  size_t size;
+  FbleImport* xs;
+} FbleImportV;
 
 /**
  * @struct[FbleModulePathExpr] FBLE_MODULE_PATH_EXPR
