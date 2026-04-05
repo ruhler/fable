@@ -5,6 +5,8 @@ Things to consider doing for the fble-0.6 release.
 * Add %destructor for import expression.
 * Add spec tests for import expressions.
  - Add tests for unused warnings.
+ - Add test for missing type in bind expression.
+ - Add test for extra (.field) in bind expression.
 
 * Clean up bnf syntax in spec.
  - What do I use for list versus optional? Why sometimes [] sometimes {}?

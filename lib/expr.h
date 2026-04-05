@@ -315,10 +315,26 @@ typedef struct {
 } FbleImportV;
 
 /**
+ * @struct[FbleImportExpr] FBLE_IMPORT_EXPR
+ *  An import expression.
+ *
+ *  @field[FbleExpr][_base] FbleExpr base class.
+ *  @field[FbleImportV][import] Variable import specifications.
+ *  @field[FbleExpr*][def] The struct value to import from.
+ *  @field[FbleExpr*][body] The body of the import expression.
+ */
+typedef struct {
+  FbleExpr _base;
+  FbleImportV imports;
+  FbleExpr* def;
+  FbleExpr* body;
+} FbleImportExpr;
+
+/**
  * @struct[FbleModulePathExpr] FBLE_MODULE_PATH_EXPR
  *  A module path expression.
  *
- *  @field[FbleTypeExpr][_base] FbleExpr base class.
+ *  @field[FbleExpr][_base] FbleExpr base class.
  *  @field[FbleModulePath*][path] The module path.
  */
 typedef struct {

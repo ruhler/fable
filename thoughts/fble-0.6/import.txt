@@ -316,3 +316,20 @@ I can at least try these suggests and see how they feel.
 
   M@, M (.Monad), S (.State) .= ...;
   Int@ x (.q), Int@ y (.r) .=  Div(a,b);
+
+---
+
+I'm still getting parse conflicts. This time:
+ * x(.q) .= ...; versus x(q).M@ a := ...
+ * x(.q) .= ...; versus x(q);
+
+  Int@ x:.q, Int@ y:.r .=  Div(a,b);
+  Int@ x(.q), Int@ y(.r) .=  Div(a,b);
+
+I guess I could special case '(.' too for this? Sigh.
+
+That get's us past the last of the parser conflicts. I'm a little sad that:
+* "(." now means something different than "( ."
+* Special casing lookahead for "(.", ":=", and ".=".
+* Hackiness for reusing FbleImport for bind type, name.
+  - And awkwardness of how we manage memory for the field names in that case.

@@ -1112,12 +1112,12 @@
     Expr: import (imports : [(Type, Name, Name)]) (def : Expr) (body : Expr)
 
    @ConcreteSyntax @
-    stmt = [type], name, [':' name] {', [type], name, [':' name]}, '.=', expr, ';', stmt 
+    stmt = [type], name, ['(.' name ')'] {', [type], name, ['(.' name ')']}, '.=', expr, ';', stmt 
 
    @Example @
     Bool@, True, False .= /Std/Bool%;
     Int@ q, Int@ r .= Div(x, y);
-    M@, M: Monad, S: State .= /Std/State/Pure%.Pure<Int@>;
+    M@, M(.Monad), S(.State) .= /Std/State/Pure%.Pure<Int@>;
 
    The import expression is short hand for a let expression that brings into
    scope multiple fields of a struct value.
@@ -1150,7 +1150,7 @@
    example, the struct import:
 
    @code[fble] @
-    M@, M: Monad, S: State .= /Std/State/Pure%.Pure<Int@>;
+    M@, M(.Monad), S(.State) .= /Std/State/Pure%.Pure<Int@>;
     ...
 
    Is desugard to:

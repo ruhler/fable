@@ -86,6 +86,9 @@ while (0)
 %parse-param {FbleExpr** result} {FbleModulePathV* deps}
 
 %token END 0 "end of file"
+%token DOT_EQUALS ".="
+%token COLON_EQUALS ":="
+%token OPEN_PAREN_DOT "(."
 %token PARSE_PROGRAM
 %token PARSE_MODULE_PATH
 %token <word> WORD
@@ -189,6 +192,25 @@ while (0)
   }
   FbleFreeVector($$);
 } <bindings>
+
+%destructor {
+  FbleFreeExpr($$.type);
+  FbleFreeName($$.name);
+  if ($$.field.name != NULL) {
+    FbleFreeName($$.field);
+  }
+} <import>
+
+%destructor {
+  for (size_t i = 0; i < $$.size; ++i) {
+    FbleFreeExpr($$.xs[i].type);
+    FbleFreeName($$.xs[i].name);
+    if ($$.xs[i].field.name != NULL) {
+      FbleFreeName($$.xs[i].field);
+    }
+  }
+  FbleFreeVector($$);
+} <imports>
 
 %%
 
@@ -547,13 +569,24 @@ stmt:
       undef_expr->body = $4;
       $$ = &undef_expr->_base;
     }
-  | tagged_type_p ':' '=' aexpr ';' stmt {
-      FbleExpr* expr = $6;
+  | import_p ":=" aexpr ';' stmt {
+      FbleExpr* expr = $5;
       for (size_t i = 0; i < $1.size; ++i) {
+        FbleImport* import = $1.xs + $1.size - 1 - i;
+        if (import->type == NULL) {
+          FbleReportError("missing type\n", import->name.loc);
+          YYERROR;
+        }
+        if (import->field.name != NULL) {
+          FbleReportError("field name not allowed in bind declaration\n", import->field.loc);
+          YYERROR;
+        }
+
         FbleFuncValueExpr* func_value_expr = FbleAlloc(FbleFuncValueExpr);
         func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
         func_value_expr->_base.loc = FbleCopyLoc(@$);
-        func_value_expr->arg = $1.xs[$1.size - 1 - i];
+        func_value_expr->arg.type = import->type;
+        func_value_expr->arg.name = import->name;
         func_value_expr->body = expr;
         expr = &func_value_expr->_base;
       }
@@ -562,19 +595,25 @@ stmt:
       FbleApplyExpr* apply_expr = FbleAlloc(FbleApplyExpr);
       apply_expr->_base.tag = FBLE_MISC_APPLY_EXPR;
       apply_expr->_base.loc = FbleCopyLoc(@$);
-      apply_expr->misc = $4;
+      apply_expr->misc = $3;
       apply_expr->bind = true;
       FbleInitVector(apply_expr->args);
       FbleAppendToVector(apply_expr->args, expr);
       $$ = &apply_expr->_base;
     }
-  | import_p '.' '=' aexpr ';' stmt {
+  | import_p ".=" aexpr ';' stmt {
+      for (size_t i = 0; i < $1.size; ++i) {
+        if ($1.xs[i].field.name == NULL) {
+          $1.xs[i].field = FbleCopyName($1.xs[i].name);
+        }
+      }
+
       FbleImportExpr* import_expr = FbleAlloc(FbleImportExpr);
       import_expr->_base.tag = FBLE_IMPORT_EXPR;
       import_expr->_base.loc = FbleCopyLoc(@$);
       import_expr->imports = $1;
-      import_expr->def = $4;
-      import_expr->body = $6;
+      import_expr->def = $3;
+      import_expr->body = $5;
       $$ = &import_expr->_base;
     }
   | expr '$' stmt {
@@ -731,19 +770,19 @@ import:
    name {
      $$.type = NULL;
      $$.name = $1;
-     $$.field = FbleCopyName($1);
+     $$.field.name = NULL;
    }
  | expr name {
      $$.type = $1;
      $$.name = $2;
-     $$.field = FbleCopyName($2);
+     $$.field.name = NULL;
    }
- | name ':' name {
+ | name "(." name ')' {
      $$.type = NULL;
      $$.name = $1;
      $$.field = $3;
    }
- | expr name ':' name {
+ | expr name "(." name ')' {
      $$.type = $1;
      $$.name = $2;
      $$.field = $4;
@@ -918,6 +957,22 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex)
   if (IsPunctuationChar(lex->c)) {
     int c = lex->c;
     ReadNextChar(lex);
+
+    if (c == '.' && lex->c == '=') {
+      ReadNextChar(lex);
+      return DOT_EQUALS;
+    }
+
+    if (c == ':' && lex->c == '=') {
+      ReadNextChar(lex);
+      return COLON_EQUALS;
+    }
+
+    if (c == '(' && lex->c == '.') {
+      ReadNextChar(lex);
+      return OPEN_PAREN_DOT;
+    }
+    
     return c;
   };
 
