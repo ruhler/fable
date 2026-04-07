@@ -333,3 +333,38 @@ That get's us past the last of the parser conflicts. I'm a little sad that:
 * Special casing lookahead for "(.", ":=", and ".=".
 * Hackiness for reusing FbleImport for bind type, name.
   - And awkwardness of how we manage memory for the field names in that case.
+
+---
+
+Now to implement support for this. How will I express this as an FbleTc?
+
+  let def;
+    let ?.a, ?.b, ...;
+      body;
+
+But I want an anonymous var to use for def. And I'm not sure if it needs to be
+declared for while def is executing or something about non-recursive let means
+we don't have to do that?
+
+I don't think TC currently supports non-recursive. But it's fine if we can
+truly make an anonymous variable somehow. Just make sure nobody can refer to
+it in the body of def. We only need the one anonymous variable.
+
+Except, we need to specify some name for the variable for use in debugging and
+code and stuff. How do I avoid shadowing the name of an existing variable?
+
+Or, will it be easier to pass import through to TC level? An ImportTc will
+have:
+* FbleTc* def, FbleTc* body, list of bindings without corresponding tcs?
+
+Why not reuse LET_TC for this though?
+
+---
+
+It will be much better to pass through to TC level. No need for a named
+variable that way. Let me do that.
+
+I finished the sketch of the code for passing through to Tc. It's not too bad.
+It's just a fair amount of code involved that is duplicating bits from LET and
+from ACCESS. Oh well. Let's see how it goes and decide later if it's worth it
+or not.

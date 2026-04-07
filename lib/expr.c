@@ -187,6 +187,7 @@ void FbleFreeExpr(FbleExpr* expr)
       FbleFreeVector(e->imports);
       FbleFreeExpr(e->def);
       FbleFreeExpr(e->body);
+      FbleFree(expr);
       return;
     }
 

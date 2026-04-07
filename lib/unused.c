@@ -220,7 +220,28 @@ static void Expr(FbleExpr* expr, Vars* vars)
     }
 
     case FBLE_IMPORT_EXPR: {
-      assert(false && "TODO");
+      FbleImportExpr* import_expr = (FbleImportExpr*)expr;
+      Expr(import_expr->def, vars);
+
+      size_t varc = import_expr->imports.size;
+      Vars nvars[varc];
+      for (size_t i = 0; i < varc; ++i) {
+        Expr(import_expr->imports.xs[i].type, vars);
+        nvars[i].name = import_expr->imports.xs[i].name;
+        nvars[i].used = import_expr->imports.xs[i].name.name->str[0] == '_';
+        nvars[i].next = (i == 0) ? vars : (nvars + i - 1);
+      }
+
+      Expr(import_expr->body, nvars + varc - 1);
+
+      for (size_t i = 0; i < varc; ++i) {
+        if(!nvars[i].used) {
+          FbleReportWarning("variable '", nvars[i].name.loc);
+          FblePrintName(stderr, nvars[i].name);
+          fprintf(stderr, "' defined but not used\n");
+        }
+      }
+
       return;
     }
 

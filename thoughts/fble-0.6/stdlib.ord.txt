@@ -556,3 +556,39 @@ Min to be generic and take Cmp@ as input?
 I must say, having Cmp@ and Ord% as separate things feels pretty awkward to
 me.
 
+---
+
+Proposal:
+* /Std/Eq% is as we have it today.
+* /Std/Foo/Eq% is as we have it today
+ - Eq implements Eq@, it's the equality function.
+ - Optional Ne implements not equals, only for types we think we'll want to
+   call it fairly often from the top level like Int@.
+* /Std/Cmp% defines Cmp@ as it does today: the comparison function only.
+ - But also defines generic Lt, Le, Gt, Ge, Max, and Min functions.
+ - And also a helper function (named 'Cmp'?) from Cmp@ to the set of
+   functions: Cmp, Eq, Ne, Lt, Le, Gt, Ge, Max, Min.
+* /Std/Foo/Cmp% implements Cmp@
+ - And exports as much of the top level Lt, Le, Gt, Ge, Min, Max that we might
+   want for the type, such as Int@.
+* If a function wants fast equality, it should take Eq@ as an argument.
+* If a function wants Cmp/Lt/Le/Gt/Ge/Max/Min, it should take Cmp@ as an
+  argument.
+* If a function wants Cmp and fast equality, it should take both Eq@ and Cmp@
+  as arguments.
+  - Because Eq@ implementations can be fundamentally faster if implemented
+    directly than via Cmp, because we only need to find one difference rather
+    than traverse the entire value.
+
+Miscellaneous thoughts:
+* Don't worry about /Std/Int/Sign% type. It can be separate. That's fine.
+* Fundamentally, Cmp is a total order, whereas Lt/Le/... could be partial
+  orders. Don't bother with the distinction. We can make everything totally
+  ordered. Probably better aligns with expectations that way anyway.
+* Xor is Boolean Ne. XNor is boolean Eq.
+  But it's probably still worth defining Xor, because that's a common name to
+  want to use.
+* Import expressions should make it more convenient to define and re-export
+  wrapper functions like Lt/Le/Gt/Ge/...
+
+Let's try this new proposal. I think it's a good direction.

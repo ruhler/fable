@@ -2,11 +2,22 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Add %destructor for import expression.
+* Rename FbleImportTc.fields to FbleImportTc.imports.
+
 * Add spec tests for import expressions.
  - Add tests for unused warnings.
  - Add test for missing type in bind expression.
  - Add test for extra (.field) in bind expression.
+ - Add test for duplicate variable names.
+ - Add test for duplicate field names.
+
+* See if there is more opportunity to typecheck more stuff before erroring
+  out?
+
+* Document/test/do something with the fact that "(.", ":=", and ".=" are
+  treated specially in the parser, but other such constructs aren't.
+  - And it makes a difference in what whitespace you can or cannot use in an
+    fble program.
 
 * Clean up bnf syntax in spec.
  - What do I use for list versus optional? Why sometimes [] sometimes {}?

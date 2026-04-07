@@ -194,6 +194,18 @@ void FbleFreeTc(FbleTc* tc)
       return;
     }
 
+    case FBLE_IMPORT_TC: {
+      FbleImportTc* import_tc = (FbleImportTc*)tc;
+      FbleFreeTc(import_tc->def);
+      for (size_t i = 0; i < import_tc->fields.size; ++i) {
+        FbleFreeName(import_tc->fields.xs[i].name);
+      }
+      FbleFreeVector(import_tc->fields);
+      FbleFreeTc(import_tc->body);
+      FbleFree(tc);
+      return;
+    }
+
     case FBLE_FOREIGN_VALUE_TC: {
       FbleForeignValueTc* foreign_tc = (FbleForeignValueTc*)tc;
       FbleFreeModulePath(foreign_tc->path);
