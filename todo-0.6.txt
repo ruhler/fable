@@ -4,6 +4,8 @@ Things to consider doing for the fble-0.6 release.
 
 * Rename FbleImportTc.fields to FbleImportTc.imports.
 
+* Syntax highlighting for '.='?
+
 * Add spec tests for import expressions.
  - Add tests for unused warnings.
  - Add test for missing type in bind expression.
