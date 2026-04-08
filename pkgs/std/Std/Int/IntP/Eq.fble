@@ -45,4 +45,4 @@ Cmp@<IntP@> Cmp = {
 # Standard comparison operations.
 Lt, Le, Gt, Ge .= /Std/Cmp%.Cmp(Cmp);
 
-@(Eq, Lt, Le, Gt, Ge).%(@/Std/Int%);
+@(Cmp, Eq, Lt, Le, Gt, Ge).%(@/Std/Int%);

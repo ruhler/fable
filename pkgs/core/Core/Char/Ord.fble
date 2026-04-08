@@ -5,7 +5,7 @@ Pos = /Std/Char%.Pos;
 Cmp@ = /Std/Cmp%.Cmp@;
 
 Cmp@<Char@> Ord = (Char@ a, Char@ b) {
-  /Core/Int/Ord%.Ord(Pos(a), Pos(b));
+  /Std/Int/Ord%.Cmp(Pos(a), Pos(b));
 };
 
 @(Ord);

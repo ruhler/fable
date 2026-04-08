@@ -32,7 +32,7 @@ Gt = /Std/Int/Ord%.Gt;
 Ge = /Std/Int/Ord%.Ge;
 Min = /Std/Int/Ord%.Min;
 Max = /Std/Int/Ord%.Max;
-IOrd = /Core/Int/Ord%.Ord;
+IOrd = /Std/Int/Ord%.Cmp;
 IsZero = /Std/Int/Sign%.IsZero;
 Abs = /Std/Int/Sign%.Abs;
 

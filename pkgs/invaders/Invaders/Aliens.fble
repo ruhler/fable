@@ -33,7 +33,7 @@ Lt = /Std/Int/Ord%.Lt;
 Ge = /Std/Int/Ord%.Ge;
 Gt = /Std/Int/Ord%.Gt;
 Int = /Std/Int/Lit%.Int;
-Ord = /Core/Int/Ord%.Ord;
+Ord = /Std/Int/Ord%.Cmp;
 UpTo = /Std/Int/Random%.UpTo;
 
 List@ = /Std/List%.List@;
