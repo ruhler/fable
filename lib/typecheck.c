@@ -2035,9 +2035,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       import_tc->def = FbleCopyTc(def.tc);
       import_tc->fieldc = fields->size;
 
-      FbleInitVector(import_tc->fields);
+      FbleInitVector(import_tc->imports);
       for (size_t i = 0; i < import_expr->imports.size; ++i) {
-        FbleTcImport* import = FbleExtendVector(import_tc->fields);
+        FbleTcImport* import = FbleExtendVector(import_tc->imports);
         import->name = FbleCopyName(import_expr->imports.xs[i].name);
         import->field = field_ids[i];
       }

@@ -392,14 +392,14 @@ typedef struct {
  *  @field[FbleTc][_base] FbleTc base class.
  *  @field[FbleTc*][def] The object to import fields from.
  *  @field[size_t][fieldc] The number of fields in the type.
- *  @field[FbleTcIMportV][fields] The fields to import.
+ *  @field[FbleTcImportV][imports] The fields to import.
  *  @field[FbleTc*][body] The body of the import.
  */
 typedef struct {
   FbleTc _base;
   FbleTc* def;
   size_t fieldc;
-  FbleTcImportV fields;
+  FbleTcImportV imports;
   FbleTc* body;
 } FbleImportTc;
 

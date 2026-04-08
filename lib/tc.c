@@ -197,10 +197,10 @@ void FbleFreeTc(FbleTc* tc)
     case FBLE_IMPORT_TC: {
       FbleImportTc* import_tc = (FbleImportTc*)tc;
       FbleFreeTc(import_tc->def);
-      for (size_t i = 0; i < import_tc->fields.size; ++i) {
-        FbleFreeName(import_tc->fields.xs[i].name);
+      for (size_t i = 0; i < import_tc->imports.size; ++i) {
+        FbleFreeName(import_tc->imports.xs[i].name);
       }
-      FbleFreeVector(import_tc->fields);
+      FbleFreeVector(import_tc->imports);
       FbleFreeTc(import_tc->body);
       FbleFree(tc);
       return;

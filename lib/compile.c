@@ -525,11 +525,11 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
 
       FbleImportTc* ntc = FbleNewTc(FbleImportTc, FBLE_IMPORT_TC, tc->loc);
       ntc->def = RewriteVars(statics, arg_offset, import_tc->def);
-      FbleInitVector(ntc->fields);
-      for (size_t i = 0; i < import_tc->fields.size; ++i) {
-        FbleTcImport* import = FbleExtendVector(ntc->fields);
-        import->name = FbleCopyName(import_tc->fields.xs[i].name);
-        import->field = import_tc->fields.xs[i].field;
+      FbleInitVector(ntc->imports);
+      for (size_t i = 0; i < import_tc->imports.size; ++i) {
+        FbleTcImport* import = FbleExtendVector(ntc->imports);
+        import->name = FbleCopyName(import_tc->imports.xs[i].name);
+        import->field = import_tc->imports.xs[i].field;
       }
       ntc->body = RewriteVars(statics, arg_offset, import_tc->body);
       return &ntc->_base;
@@ -1385,23 +1385,23 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleImportTc* import_tc = (FbleImportTc*)v;
       Local* def = CompileExpr(blocks, false, false, scope, import_tc->def);
 
-      for (size_t i = 0; i < import_tc->fields.size; ++i) {
+      for (size_t i = 0; i < import_tc->imports.size; ++i) {
         Local* var = NewLocal(scope);
 
         FbleStructAccessInstr* access = FbleAllocInstr(FbleStructAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
         access->obj = def->var;
         access->fieldc = import_tc->fieldc;
-        access->field = import_tc->fields.xs[i].field;
-        access->loc = FbleCopyLoc(import_tc->fields.xs[i].name.loc);
+        access->field = import_tc->imports.xs[i].field;
+        access->loc = FbleCopyLoc(import_tc->imports.xs[i].name.loc);
         access->dest = var->var.index;
         AppendInstr(scope, &access->_base);
 
-        PushVar(scope, import_tc->fields.xs[i].name, var);
+        PushVar(scope, import_tc->imports.xs[i].name, var);
       }
 
       Local* body = CompileExpr(blocks, true, exit, scope, import_tc->body);
 
-      for (size_t i = 0; i < import_tc->fields.size; ++i) {
+      for (size_t i = 0; i < import_tc->imports.size; ++i) {
         PopVar(scope, exit);
       }
       ReleaseLocal(scope, def, exit);

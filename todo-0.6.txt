@@ -2,9 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Rename FbleImportTc.fields to FbleImportTc.imports.
-
 * Syntax highlighting for '.='?
+
+* Migrate all of /Std% over to using import expression where we can?
 
 * Add spec tests for import expressions.
  - Add tests for unused warnings.
@@ -24,8 +24,6 @@ Things to consider doing for the fble-0.6 release.
 * Clean up bnf syntax in spec.
  - What do I use for list versus optional? Why sometimes [] sometimes {}?
 
-* Make Coeffs@, Lfsr, Next internal functions?
-
 * Add test that LSFR won't seed itself to 0.
 
 * Why is the invaders ship dying animation so messed up on linux console?
@@ -33,13 +31,8 @@ Things to consider doing for the fble-0.6 release.
 * Why don't interpreted cli tests output when running them during build?
  - I have to go to the generated file to see the outputs?
 
-* Consider adding a multi import expression
-  a, b, c .= <expr>;
- - For example, use it any time we use /Core/State/Pure%.Pure;
-
-* Remove kinds in let expressions.
- - Update all the examples in the spec and tutorials and everywhere for the
-   new syntax.
+* Remove kinds from let expressions in all the examples in the spec and
+  tutorials and everywhere for the new syntax.
 
 * Remove Builtin from spec and spec tests now that we have FFI?
  - Like, do we need builtin support anymore? Is there any value for it?
@@ -65,12 +58,6 @@ Things to consider doing for the fble-0.6 release.
 * Double check benchmark deadlock conditions
   - for example, for snake, now that we changed the random number generator
     used.
-
-* Change State@ to be:
-  ((A@) { A@; }) { M@<A@>; }
-  Which modifies in place and then returns either the initial or final value?
-  Feels more natural to how I use things in practice, and get/put are easy to
-  implement on top of this using Const and Id?
 
 * Write a script to help find unused modules?
  - Because I suspect I have some unused modules in my packages...
