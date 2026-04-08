@@ -32,12 +32,12 @@ I fear I'll have to give up at some point. Anyway, status is something like:
 * Cleanup standard Cmp/Ord interfaces.
   - pkgs/core/Core/Bool/Ord.fble
   - pkgs/core/Core/Char/Ord.fble
-  - pkgs/core/Core/Int/IntP/Ord.fble
-  - pkgs/core/Core/Int/Ord.fble
+  - pkgs/core/Core/Int/IntP/Ord.fble    ==> /Std/Int/IntP/Cmp% [DONE]
+  - pkgs/core/Core/Int/Ord.fble         ==> /Std/Int/Cmp% [DONE]
   - pkgs/core/Core/List/Ord.fble
   - pkgs/core/Core/Ord/Eq.fble
   - pkgs/core/Core/Ord/Show.fble
-  - pkgs/core/Core/Ord.fble
+  - pkgs/core/Core/Ord.fble            [REMOVED]
   - pkgs/core/Core/String/Ord.fble
 * Start work on Map cleanup
   - pkgs/core/Core/Char/Map/Tests.fble
