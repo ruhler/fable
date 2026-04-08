@@ -603,4 +603,10 @@ Let's just add the Bool@ dependency. It's really not that big?
 
 I don't know.
 
+---
+
+I added the Bool@ dependency. Still feels a little weird, but at least the
+rest of /Std/Cmp% and its uses feels nice to me now. I've ported definitions
+over from Ord% to Cmp%. There are a bunch of lingering references to Ord where
+it's used outside of the standard library still. Oh well.
 

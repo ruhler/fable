@@ -35,8 +35,8 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Int/IntP/Ord.fble    ==> /Std/Int/IntP/Cmp% [DONE]
   - pkgs/core/Core/Int/Ord.fble         ==> /Std/Int/Cmp% [DONE]
   - pkgs/core/Core/List/Ord.fble        ==> /Std/List/Cmp% [DONE]
-  - pkgs/core/Core/Ord/Eq.fble
-  - pkgs/core/Core/Ord/Show.fble
+  - pkgs/core/Core/Ord/Eq.fble          ==> /Std/Cmp/Eq% [DONE]
+  - pkgs/core/Core/Ord/Show.fble        ==> /Std/Cmp/Show% [DONE]
   - pkgs/core/Core/Ord.fble             [REMOVED]
   - pkgs/core/Core/String/Ord.fble      ==> /Std/String/Cmp% [DONE]
 * Start work on Map cleanup

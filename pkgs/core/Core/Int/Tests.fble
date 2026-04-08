@@ -74,7 +74,7 @@ TEq = (String@ name, Int@ a, (Unit@) { Int@; } b) {
 (String@, Compared@, (Unit@) { Compared@; }) { Test@; }
 TOrd = (String@ name, Compared@ a, (Unit@) { Compared@; } b) {
   Test(name, (Unit@ u) {
-    AssertEquals(/Core/Ord/Eq%.Eq, /Core/Ord/Show%.Show, a, b(u));
+    AssertEquals(/Std/Cmp/Eq%.Eq, /Std/Cmp/Show%.Show, a, b(u));
   });
 };
 

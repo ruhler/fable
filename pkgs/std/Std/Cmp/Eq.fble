@@ -1,0 +1,18 @@
+# @module[/Std/Cmp/Eq%]
+#  The Eq@ instance for Compared@.
+
+True, False .= /Std/Bool%;
+Compared@ .= /Std/Cmp%;
+Eq@ .= /Std/Eq%;
+
+# @value[Eq] Eq@ instance for Compared@.
+#  @type[Eq@<Compared@>]
+Eq@<Compared@>
+Eq = (Compared@ a, Compared@ b) {
+  a.?(
+    less: b.?(less: True, : False),
+    equal: b.?(equal: True, : False),
+    greater: b.?(greater: True, : False));
+};
+
+@(Eq);
