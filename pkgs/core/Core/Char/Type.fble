@@ -10,13 +10,13 @@ Char = /Std/Char/Ascii%.Char;
 Ascii = /Std/Char/Ascii%.Ascii;
 
 (Char@) { Bool@; } IsUpper = (Char@ c) {
-  /Std/Int/Ord%.Lt(Pos(c), Pos(Char|'A')).?(true: False);
-  /Std/Int/Ord%.Le(Pos(c), Pos(Char|'Z'));
+  /Std/Int/Cmp%.Lt(Pos(c), Pos(Char|'A')).?(true: False);
+  /Std/Int/Cmp%.Le(Pos(c), Pos(Char|'Z'));
 };
       
 (Char@) { Bool@; } IsLower = (Char@ c) {
-  /Std/Int/Ord%.Lt(Pos(c), Pos(Char|'a')).?(true: False);
-  /Std/Int/Ord%.Le(Pos(c), Pos(Char|'z'));
+  /Std/Int/Cmp%.Lt(Pos(c), Pos(Char|'a')).?(true: False);
+  /Std/Int/Cmp%.Le(Pos(c), Pos(Char|'z'));
 };
 
 (Char@) { Bool@; } IsAlpha = (Char@ c) {
@@ -24,8 +24,8 @@ Ascii = /Std/Char/Ascii%.Ascii;
 };
 
 (Char@) { Bool@; } IsDigit = (Char@ c) {
-  /Std/Int/Ord%.Lt(Pos(c), Pos(Char|'0')).?(true: False);
-  /Std/Int/Ord%.Le(Pos(c), Pos(Char|'9'));
+  /Std/Int/Cmp%.Lt(Pos(c), Pos(Char|'0')).?(true: False);
+  /Std/Int/Cmp%.Le(Pos(c), Pos(Char|'9'));
 };
 
 (Char@) { Bool@; } IsAlNum = (Char@ c) {

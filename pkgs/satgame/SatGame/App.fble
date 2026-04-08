@@ -5,8 +5,8 @@ Int@ = /Std/Int%.Int@;
 Sub = /Std/Int%.Sub;
 Mul = /Std/Int%.Mul;
 Div = /Std/Int/Div%.Div;
-Max = /Std/Int/Ord%.Max;
-Min = /Std/Int/Ord%.Min;
+Max = /Std/Int/Cmp%.Max;
+Min = /Std/Int/Cmp%.Min;
 Int = /Std/Int/Lit%.Int;
 
 Maybe@ = /Std/Maybe%.Maybe@;

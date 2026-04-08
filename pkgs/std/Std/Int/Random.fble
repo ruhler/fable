@@ -7,7 +7,7 @@ Add = /Std/Int%.Add;
 Sub = /Std/Int%.Sub;
 Shr = /Std/Int%.Shr;
 IsZero = /Std/Int/Sign%.IsZero;
-Lt = /Std/Int/Ord%.Lt;
+Lt = /Std/Int/Cmp%.Lt;
 Int = /Std/Int/Lit%.Int;
 
 Monad@ = /Std/Monad%.Monad@;

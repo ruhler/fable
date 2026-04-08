@@ -17,7 +17,7 @@ Sub = /Std/Int%.Sub;
 Mul = /Std/Int%.Mul;
 Shr = /Std/Int%.Shr;
 Shl = /Std/Int%.Shl;
-Max = /Std/Int/Ord%.Max;
+Max = /Std/Int/Cmp%.Max;
 Quot = /Std/Int/Div%.Quot;
 
 Int = /Std/Int/Lit%.Int;
@@ -118,7 +118,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
 
   # Returns true if the given screen coordinates are in the menu region.
   (Coord@) { Bool@; } InMenu = (Coord@ c) {
-      /Std/Int/Ord%.Gt(c.y, Sub(height, MenuHeight));
+      /Std/Int/Cmp%.Gt(c.y, Sub(height, MenuHeight));
   };
 
   List@<Selected@> MenuTiles = List[
@@ -285,7 +285,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
         InMenu(Coord@(s.mouse_x, s.mouse_y)).?(true: {
             Int@ col = MenuCol(s.mouse_x);
             /Std/Int/Sign%.IsNegative(col).?(true: StepUI(s));
-            /Std/Int/Ord%.Lt(col, Length(MenuTiles)).?(false: StepUI(s));
+            /Std/Int/Cmp%.Lt(col, Length(MenuTiles)).?(false: StepUI(s));
             StepUI(s.@(selected: Get(MenuTiles, col)));
         });
 

@@ -13,10 +13,10 @@ Int@ = /Std/Int%.Int@;
 Add = /Std/Int%.Add;
 Mul = /Std/Int%.Mul;
 Eq = /Std/Int/Eq%.Eq;
-Lt = /Std/Int/Ord%.Lt;
+Lt = /Std/Int/Cmp%.Lt;
 Int = /Std/Int/Lit%.Int;
 Range = /Core/Int/Iter%.Range;
-Ord = /Std/Int/Ord%.Cmp;
+Ord = /Std/Int/Cmp%.Cmp;
 
 List@ = /Std/List%.List@;
 

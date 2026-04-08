@@ -16,8 +16,8 @@ Neg = /Std/Int%.Neg;
 Mul = /Std/Int%.Mul;
 Shr = /Std/Int%.Shr;
 Int = /Std/Int/Lit%.Int;
-Max = /Std/Int/Ord%.Max;
-Min = /Std/Int/Ord%.Min;
+Max = /Std/Int/Cmp%.Max;
+Min = /Std/Int/Cmp%.Min;
 Abs = /Std/Int/Sign%.Abs;
 QR@ = /Std/Int/Div%.QR@;
 Quot = /Std/Int/Div%.Quot;
@@ -167,7 +167,7 @@ Colors = @(
 (Pos@, Pos@) { Drawing@; }
 DrawEdge = (Pos@ a, Pos@ b) {
   # Make 'a' the left most node.
-  /Std/Int/Ord%.Lt(b.x, a.x).?(true: DrawEdge(b, a));
+  /Std/Int/Cmp%.Lt(b.x, a.x).?(true: DrawEdge(b, a));
 
   # The center points of a and b when drawn:
   Int@ ax = Add(Mul(TileWidth, a.x), Shr(TileWidth, Int|1));
@@ -188,7 +188,7 @@ DrawEdge = (Pos@ a, Pos@ b) {
     Rect(ax, y, Sub(bx, ax), EdgeWidth, Colors.Edge);
   });
 
-  /Std/Int/Ord%.Lt(a.y, b.y).?(true: {
+  /Std/Int/Cmp%.Lt(a.y, b.y).?(true: {
     # Slopes up to the right.
     Point@ ul = @(x: Sub(ax, HalfEdgeWidth),
                   y: Add(Min(ay, by), HalfEdgeWidth));
@@ -301,10 +301,10 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ _width, Int@
       Int@ game_y = Quot(Sub(Sub(height, offset), screen_y), scale);
       Pos@ pos = Pos@(Quot(game_x, TileWidth), Quot(game_y, TileWidth));
 
-      /Std/Int/Ord%.Lt(pos.x, Int|0).?(true: Nothing<Pos@>);
-      /Std/Int/Ord%.Lt(pos.y, Int|0).?(true: Nothing<Pos@>);
-      /Std/Int/Ord%.Ge(pos.x, Cols).?(true: Nothing<Pos@>);
-      /Std/Int/Ord%.Ge(pos.y, Rows).?(true: Nothing<Pos@>);
+      /Std/Int/Cmp%.Lt(pos.x, Int|0).?(true: Nothing<Pos@>);
+      /Std/Int/Cmp%.Lt(pos.y, Int|0).?(true: Nothing<Pos@>);
+      /Std/Int/Cmp%.Ge(pos.x, Cols).?(true: Nothing<Pos@>);
+      /Std/Int/Cmp%.Ge(pos.y, Rows).?(true: Nothing<Pos@>);
       Just(pos);
     };
 

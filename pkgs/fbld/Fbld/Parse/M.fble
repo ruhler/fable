@@ -148,7 +148,7 @@ M@<CharL@> GetL = {
   CharL@ cl := Do(GetL_);
   Int@ indent := Do(GetIndent);
 
-  /Std/Int/Ord%.Le(cl.l.col, indent).?(true: {
+  /Std/Int/Cmp%.Le(cl.l.col, indent).?(true: {
     IsNewline(cl.c).?(true: Return(cl));
     /Std/Char/Eq%.Eq(Char|' ', cl.c).?(true: GetL);
     Error<CharL@>(cl.l, Str|'end of indented block');

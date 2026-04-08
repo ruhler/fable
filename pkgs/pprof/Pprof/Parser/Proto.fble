@@ -7,8 +7,8 @@ Incr = /Std/Int%.Incr;
 Decr = /Std/Int%.Decr;
 
 Eq = /Std/Int/Eq%.Eq;
-Lt = /Std/Int/Ord%.Lt;
-Gt = /Std/Int/Ord%.Gt;
+Lt = /Std/Int/Cmp%.Lt;
+Gt = /Std/Int/Cmp%.Gt;
 
 Int = /Std/Int/Lit%.Int;
 IsZero = /Std/Int/Sign%.IsZero;

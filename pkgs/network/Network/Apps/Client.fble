@@ -110,7 +110,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   (Int@, IStream@<M@>, OStream@<M@>) { M@<Unit@>; }
   ForwardN = (Int@ n, IStream@<M@> in, OStream@<M@> out) {
     IsZero(n).?(true: m.return(Unit));
-    Int@ nn = /Std/Int/Ord%.Gt(n, Int|0).?(true: Decr(n), false: n);
+    Int@ nn = /Std/Int/Cmp%.Gt(n, Int|0).?(true: Decr(n), false: n);
 
     Maybe@<Int@> mb := m.do(in);
     mb.?(nothing: m.return(Unit));

@@ -49,7 +49,7 @@ InlineArgs = /Fbld/Parse/Inline%.Args;
 M@<Unit@> BlankLine = {
   Loc@ l := Do(Loc);
   Int@ indent := Do(GetIndent);
-  /Std/Int/Ord%.Lt(Incr(indent), l.col).?(true: {
+  /Std/Int/Cmp%.Lt(Incr(indent), l.col).?(true: {
     Error<Unit@>(l, Str|'not a blank line');
   });
   String(StrE|'\n');

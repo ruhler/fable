@@ -6,7 +6,7 @@ Add = /Std/Int%.Add;
 Sub = /Std/Int%.Sub;
 Shl = /Std/Int%.Shl;
 Shr = /Std/Int%.Shr;
-Le = /Std/Int/Ord%.Le;
+Le = /Std/Int/Cmp%.Le;
 
 Rng@ = /Std/Random/Rng%.Rng@;
 Prng@ = /Std/Random/Prng%.Prng@;

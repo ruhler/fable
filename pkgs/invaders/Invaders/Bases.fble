@@ -12,8 +12,8 @@ Rect = /App/Drawing%.Rect;
 Int@ = /Std/Int%.Int@;
 Add = /Std/Int%.Add;
 Sub = /Std/Int%.Sub;
-Lt = /Std/Int/Ord%.Lt;
-Ge = /Std/Int/Ord%.Ge;
+Lt = /Std/Int/Cmp%.Lt;
+Ge = /Std/Int/Cmp%.Ge;
 Int = /Std/Int/Lit%.Int;
 
 List@ = /Std/List%.List@;

@@ -5,8 +5,8 @@ Compared@ = /Std/Cmp%.Compared@;
 Addr@ = /Hwdg/Addr%.Addr@;
 
 Cmp@<Addr@> Ord = (Addr@ a, Addr@ b) {
-    Compared@ r = /Std/Int/Ord%.Cmp(a.x, b.x);
-    r.?(equal: /Std/Int/Ord%.Cmp(a.y, b.y));
+    Compared@ r = /Std/Int/Cmp%.Cmp(a.x, b.x);
+    r.?(equal: /Std/Int/Cmp%.Cmp(a.y, b.y));
     r;
 };
 

@@ -12,7 +12,7 @@ Decr = /Std/Int%.Decr;
 
 IsZero = /Std/Int/Sign%.IsZero;
 Eq = /Std/Int/Eq%.Eq;
-Ord = /Std/Int/Ord%.Cmp;
+Ord = /Std/Int/Cmp%.Cmp;
 
 List@ = /Std/List%.List@;
 List = /Std/List%.List;

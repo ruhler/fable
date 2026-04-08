@@ -1,9 +1,9 @@
-# @module[/Std/Int/Ord%]
-#  Utilities around ordering of integers.
+# @module[/Std/Int/Cmp%]
+#  Comparison operators for integers.
 
 Cmp@, Less, Equal, Greater .= /Std/Cmp%;
 Int@ .= /Std/Int%;
-CmpP(.Cmp) .= /Std/Int/IntP/Eq%;
+CmpP(.Cmp) .= /Std/Int/IntP/Cmp%;
 
 # @func[Cmp] The comparison operation.
 #  @arg[Int@][a] The first operand.

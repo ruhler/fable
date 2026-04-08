@@ -6,8 +6,8 @@ Int@ = /Std/Int%.Int@;
 Add = /Std/Int%.Add;
 Sub = /Std/Int%.Sub;
 
-Lt = /Std/Int/Ord%.Lt;
-Gt = /Std/Int/Ord%.Gt;
+Lt = /Std/Int/Cmp%.Lt;
+Gt = /Std/Int/Cmp%.Gt;
 
 Int = /Std/Int/Lit%.Int;
 

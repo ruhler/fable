@@ -28,12 +28,12 @@ Mul = /Std/Int%.Mul;
 QR@ = /Std/Int/Div%.QR@;
 Div = /Std/Int/Div%.Div;
 Eq = /Std/Int/Eq%.Eq;
-Le = /Std/Int/Ord%.Le;
-Lt = /Std/Int/Ord%.Lt;
-Ge = /Std/Int/Ord%.Ge;
-Gt = /Std/Int/Ord%.Gt;
+Le = /Std/Int/Cmp%.Le;
+Lt = /Std/Int/Cmp%.Lt;
+Ge = /Std/Int/Cmp%.Ge;
+Gt = /Std/Int/Cmp%.Gt;
 Int = /Std/Int/Lit%.Int;
-Ord = /Std/Int/Ord%.Cmp;
+Ord = /Std/Int/Cmp%.Cmp;
 UpTo = /Std/Int/Random%.UpTo;
 
 List@ = /Std/List%.List@;

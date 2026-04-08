@@ -1,0 +1,33 @@
+# @module[/Std/Int/IntP/Cmp%]
+#  Comparison of positive integers.
+#
+#  This module is for internal use only.
+
+Cmp@, Compared@, Less, Equal, Greater .= /Std/Cmp%;
+IntP@ .= /Std/Int/IntP%;
+
+# @func[Cmp] The comparison operation.
+#  @arg[IntP@][a] The first operand.
+#  @arg[IntP@][b] The second operand.
+#  @returns[Compared@] The result of comparing a to b.
+Cmp@<IntP@> Cmp = {
+  (Compared@) { Compared@; }
+  RoundLt = (Compared@ x) {
+    x.?(equal: Less, : x);
+  };
+
+  (Compared@) { Compared@; }
+  RoundGt = (Compared@ x) {
+    x.?(equal: Greater, : x);
+  };
+
+  Cmp@<IntP@> Cmp = (IntP@ a, IntP@ b) {
+    a.?(1: b.?(1: Equal, 2p0: Less, 2p1: Less),
+        2p0: b.?(1: Greater, 2p0: Cmp(a.2p0, b.2p0), 2p1: RoundLt(Cmp(a.2p0, b.2p1))),
+        2p1: b.?(1: Greater, 2p0: RoundGt(Cmp(a.2p1, b.2p0)), 2p1: Cmp(a.2p1, b.2p1)));
+  };
+
+  Cmp;
+};
+
+@(Cmp).%(@/Std/Int%);

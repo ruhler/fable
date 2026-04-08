@@ -17,7 +17,7 @@ Failure = /Std/Io/Cli%.Failure;
 Int@ = /Std/Int%.Int@;
 Mul = /Std/Int%.Mul;
 
-Ge = /Std/Int/Ord%.Ge;
+Ge = /Std/Int/Cmp%.Ge;
 
 QR@ = /Std/Int/Div%.QR@;
 Div = /Std/Int/Div%.Div;

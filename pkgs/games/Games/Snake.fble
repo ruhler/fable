@@ -19,8 +19,8 @@ Mul = /Std/Int%.Mul;
 Sub = /Std/Int%.Sub;
 
 Eq = /Std/Int/Eq%.Eq;
-Lt = /Std/Int/Ord%.Lt;
-Gt = /Std/Int/Ord%.Gt;
+Lt = /Std/Int/Cmp%.Lt;
+Gt = /Std/Int/Cmp%.Gt;
 Abs = /Std/Int/Sign%.Abs;
 
 Int = /Std/Int/Lit%.Int;

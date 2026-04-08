@@ -26,13 +26,13 @@ Neg = /Std/Int%.Neg;
 
 Sqrt = /Std/Int/Sqrt%.Sqrt;
 
-Lt = /Std/Int/Ord%.Lt;
-Le = /Std/Int/Ord%.Le;
-Gt = /Std/Int/Ord%.Gt;
-Ge = /Std/Int/Ord%.Ge;
-Min = /Std/Int/Ord%.Min;
-Max = /Std/Int/Ord%.Max;
-IOrd = /Std/Int/Ord%.Cmp;
+Lt = /Std/Int/Cmp%.Lt;
+Le = /Std/Int/Cmp%.Le;
+Gt = /Std/Int/Cmp%.Gt;
+Ge = /Std/Int/Cmp%.Ge;
+Min = /Std/Int/Cmp%.Min;
+Max = /Std/Int/Cmp%.Max;
+IOrd = /Std/Int/Cmp%.Cmp;
 IsZero = /Std/Int/Sign%.IsZero;
 Abs = /Std/Int/Sign%.Abs;
 

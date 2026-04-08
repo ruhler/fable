@@ -2,7 +2,7 @@
 Int@ = /Std/Int%.Int@;
 0 = /Std/Int%.0;
 Neg = /Std/Int%.Neg;
-Max = /Std/Int/Ord%.Max;
+Max = /Std/Int/Cmp%.Max;
 
 Int = /Std/Int/Lit%.Int;
 

@@ -8,7 +8,7 @@ Add = /Std/Int%.Add;
 Sub = /Std/Int%.Sub;
 Eq = /Std/Int/Eq%.Eq;
 IsZero = /Std/Int/Sign%.IsZero;
-Max = /Std/Int/Ord%.Max;
+Max = /Std/Int/Cmp%.Max;
 Int = /Std/Int/Lit%.Int;
 
 List@ = /Std/List%.List@;

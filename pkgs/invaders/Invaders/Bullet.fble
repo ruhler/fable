@@ -9,7 +9,7 @@ Translate = /App/Drawing%.Translate;
 
 Int@ = /Std/Int%.Int@;
 Add = /Std/Int%.Add;
-Lt = /Std/Int/Ord%.Lt;
+Lt = /Std/Int/Cmp%.Lt;
 Int = /Std/Int/Lit%.Int;
 
 Graphics = /Invaders/Graphics%;

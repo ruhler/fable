@@ -17,7 +17,7 @@ Table@ = /Pprof/Query%.Table@;
 # Sort a query results table.
 (Table@) { Table@; } Sort = /Std/List/Sort%.Sort(
   (Entry@ a, Entry@ b) {
-    /Std/Int/Ord%.Cmp(b.value, a.value);
+    /Std/Int/Cmp%.Cmp(b.value, a.value);
   });
 
 @(MetricOf, Sort);

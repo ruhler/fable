@@ -3,7 +3,7 @@ Int@ = /Std/Int%.Int@;
 Incr = /Std/Int%.Incr;
 Decr = /Std/Int%.Decr;
 
-Ord = /Std/Int/Ord%.Cmp;
+Ord = /Std/Int/Cmp%.Cmp;
 
 Maybe@ = /Std/Maybe%.Maybe@;
 

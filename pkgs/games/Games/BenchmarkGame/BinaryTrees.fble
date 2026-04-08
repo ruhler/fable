@@ -10,7 +10,7 @@ Sub = /Std/Int%.Sub;
 Mul = /Std/Int%.Mul;
 Int = /Std/Int/Lit%.Int;
 Eq = /Std/Int/Eq%.Eq;
-Gt = /Std/Int/Ord%.Gt;
+Gt = /Std/Int/Cmp%.Gt;
 
 List@ = /Std/List%.List@;
 
