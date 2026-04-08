@@ -1,23 +1,17 @@
 # @module[/Std/Int/Ord%]
 #  Utilities around ordering of integers.
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
-Int@ = /Std/Int%.Int@;
-
-LtP = /Std/Int/IntP/Eq%.Lt;
-LeP = /Std/Int/IntP/Eq%.Le;
-GtP = /Std/Int/IntP/Eq%.Gt;
-GeP = /Std/Int/IntP/Eq%.Ge;
+Bool@, True, False .= /Std/Bool%;
+Int@ .= /Std/Int%;
+LtP(.Lt), LeP(.Le), GtP(.Gt), GeP(.Ge) .= /Std/Int/IntP/Eq%;
 
 # @func[Lt] Tests if an integer is less than another. a < b.
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Bool@]
 #   True if the first operand is less than the second, false otherwise.
-(Int@, Int@) { Bool@; } Lt = (Int@ a, Int@ b) {
+(Int@, Int@) { Bool@; }
+Lt = (Int@ a, Int@ b) {
   a.?(
       n: b.?(n: LtP(b.n, a.n), 0: True, p: True),
       0: b.?(n: False, 0: False, p: True),
@@ -30,7 +24,8 @@ GeP = /Std/Int/IntP/Eq%.Ge;
 #  @returns[Bool@]
 #   True if the first operand is less than or equal to the second, false
 #   otherwise.
-(Int@, Int@){ Bool@; } Le = (Int@ a, Int@ b) {
+(Int@, Int@) { Bool@; }
+Le = (Int@ a, Int@ b) {
   a.?(
       n: b.?(n: LeP(b.n, a.n), 0: True, p: True),
       0: b.?(n: False, 0: True, p: True),
@@ -42,7 +37,8 @@ GeP = /Std/Int/IntP/Eq%.Ge;
 #  @arg[Int@][b] The second operand.
 #  @returns[Bool@]
 #   True if the first operand is greater than the second, false otherwise.
-(Int@, Int@){ Bool@; } Gt = (Int@ a, Int@ b) {
+(Int@, Int@) { Bool@; }
+Gt = (Int@ a, Int@ b) {
   a.?(
       n: b.?(n: GtP(b.n, a.n), 0: False, p: False),
       0: b.?(n: True, 0: False, p: False),
@@ -55,7 +51,8 @@ GeP = /Std/Int/IntP/Eq%.Ge;
 #  @returns[Bool@]
 #   True if the first operand is greater than or equal to the second, false
 #   otherwise.
-(Int@, Int@){ Bool@; } Ge = (Int@ a, Int@ b) {
+(Int@, Int@) { Bool@; }
+Ge = (Int@ a, Int@ b) {
   a.?(
       n: b.?(n: GeP(b.n, a.n), 0: False, p: False),
       0: b.?(n: True, 0: True, p: False),
@@ -66,7 +63,8 @@ GeP = /Std/Int/IntP/Eq%.Ge;
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Int@] The larger of the two operands.
-(Int@, Int@) { Int@; } Max = (Int@ a, Int@ b) {
+(Int@, Int@) { Int@; }
+Max = (Int@ a, Int@ b) {
   Lt(a, b).?(true: b, false: a);
 };
 
@@ -74,7 +72,8 @@ GeP = /Std/Int/IntP/Eq%.Ge;
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Int@] The smaller of the two operands.
-(Int@, Int@) { Int@; } Min = (Int@ a, Int@ b) {
+(Int@, Int@) { Int@; }
+Min = (Int@ a, Int@ b) {
   Lt(a, b).?(true: a, false: b);
 };
 

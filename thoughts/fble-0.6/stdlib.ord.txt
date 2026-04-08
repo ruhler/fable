@@ -592,3 +592,15 @@ Miscellaneous thoughts:
   wrapper functions like Lt/Le/Gt/Ge/...
 
 Let's try this new proposal. I think it's a good direction.
+
+---
+
+Where to define Cmp and general Eq, etc?
+- /Std/Cmp% might be nice, but then we add the Bool@ dependency?
+- /Std/Cmp/Ord%? But then we introduce the term 'Ord' again?
+
+Let's just add the Bool@ dependency. It's really not that big?
+
+I don't know.
+
+
