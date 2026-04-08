@@ -1,0 +1,18 @@
+# @@fble-test@@ no-error
+
+B@(.Bool@), T(.True), F(.False) .= {
+  Unit@ = *();
+  Unit = Unit@();
+
+  Bool@ = +(Unit@ true, Unit@ false);
+  True = Bool@(true: Unit);
+  False = Bool@(false: Unit);
+
+  @(Bool@, True, False);
+};
+
+(B@) { B@; } Not = (B@ x) {
+  x.?(true: F, false: T);
+};
+
+Not(F).true;
