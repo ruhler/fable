@@ -10,6 +10,7 @@ TestSuite = /Std/Test%.TestSuite;
 #  @type[Test@]
 Test@ Tests = TestSuite(Str|Std, List[
   /Std/Bool/Tests%.Tests,
+  /Std/Char/Tests%.Tests,
   /Std/List/Tests%.Tests,
   /Std/Maybe/Tests%.Tests,
   /Std/Int/Tests%.Tests,

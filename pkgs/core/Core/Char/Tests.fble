@@ -26,16 +26,6 @@ TestSuite = /Std/Test%.TestSuite;
 Unit@ = /Std/Unit%.Unit@;
 
 Test@ Tests = TestSuite(Str|Char, List[
-  Test(Str|'Char', (Unit@ _) {
-    AssertEquals(/Std/Char/Eq%.Eq, /Std/Char/Show%.Show,
-      Char|A, Chr(Int|65));
-  }),
-
-  Test(Str|'Pos', (Unit@ _) {
-    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show,
-      Int|65, Pos(Char|A));
-  }),
-
   Test(Str|'IsLower', (Unit@ _) {
     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show,
       True, IsLower(Char|e));

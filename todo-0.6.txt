@@ -89,6 +89,8 @@ Things to consider doing for the fble-0.6 release.
 
 * Verify all api is listed in include/build.tcl.
 
+* Add spec tests for full test coverage.
+
 * Test coverage for FFI
  - Verify names matter.
  - Verify module paths matter.
