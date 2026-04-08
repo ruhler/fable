@@ -368,3 +368,9 @@ I finished the sketch of the code for passing through to Tc. It's not too bad.
 It's just a fair amount of code involved that is duplicating bits from LET and
 from ACCESS. Oh well. Let's see how it goes and decide later if it's worth it
 or not.
+
+---
+
+Experience report:
+* I think import highlight dependencies between modules than you would have
+  otherwise.

@@ -3,63 +3,46 @@
 #
 #  This module is for internal use only.
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
-IntP@ = /Std/Int/IntP%.IntP@;
+True, False .= /Std/Bool%;
+Cmp@, Compared@, Less, Equal, Greater .= /Std/Cmp%;
+Eq@ .= /Std/Eq%;
+IntP@ .= /Std/Int/IntP%;
 
 # @func[Eq] The equals operator. a == b.
 #  @arg[IntP@][a] The first operand.
 #  @arg[IntP@][b] The second operand.
 #  @returns[Bool@] True if the operands are equal, false otherwise.
-(IntP@, IntP@) { Bool@; } Eq = (IntP@ a, IntP@ b) {
+Eq@<IntP@> Eq = (IntP@ a, IntP@ b) {
   a.?(1: b.?(1: True, 2p0: False, 2p1: False),
       2p0: b.?(1: False, 2p0: Eq(a.2p0, b.2p0), 2p1: False),
       2p1: b.?(1: False, 2p0: False, 2p1: Eq(a.2p1, b.2p1)));
 };
 
-# @func[Lt] The less-than operator. a < b.
+# @func[Cmp] The comparison operation.
 #  @arg[IntP@][a] The first operand.
 #  @arg[IntP@][b] The second operand.
-#  @returns[Bool@] True if @a[a] is less than @a[b], false otherwise.
-(IntP@, IntP@) { Bool@; } Lt = (IntP@ a, IntP@ b) {
-  a.?(1: b.?(1: False, 2p0: True, 2p1: True),
-      2p0: b.?(1: False, 2p0: Lt(a.2p0, b.2p0), 2p1: Le(a.2p0, b.2p1)),
-      2p1: b.?(1: False, 2p0: Lt(a.2p1, b.2p0), 2p1: Lt(a.2p1, b.2p1)));
-},
+#  @returns[Compared@] The result of comparing a to b.
+Cmp@<IntP@> Cmp = {
+  (Compared@) { Compared@; }
+  RoundLt = (Compared@ x) {
+    x.?(equal: Less, : x);
+  };
 
-# @func[Le] The less-than-or-equal operator. a <= b.
-#  @arg[IntP@][a] The first operand.
-#  @arg[IntP@][b] The second operand.
-#  @returns[Bool@]
-#   True if @a[a] is less than or equal to @a[b], false otherwise.
-(IntP@, IntP@) { Bool@; } Le = (IntP@ a, IntP@ b) {
-  a.?(1: True,
-      2p0: b.?(1: False, 2p0: Le(a.2p0, b.2p0), 2p1: Le(a.2p0, b.2p1)),
-      2p1: b.?(1: False, 2p0: Lt(a.2p1, b.2p0), 2p1: Le(a.2p1, b.2p1)));
+  (Compared@) { Compared@; }
+  RoundGt = (Compared@ x) {
+    x.?(equal: Greater, : x);
+  };
+
+  Cmp@<IntP@> Cmp = (IntP@ a, IntP@ b) {
+    a.?(1: b.?(1: Equal, 2p0: Less, 2p1: Less),
+        2p0: b.?(1: Greater, 2p0: Cmp(a.2p0, b.2p0), 2p1: RoundLt(Cmp(a.2p0, b.2p1))),
+        2p1: b.?(1: Greater, 2p0: RoundGt(Cmp(a.2p1, b.2p0)), 2p1: Cmp(a.2p1, b.2p1)));
+  };
+
+  Cmp;
 };
 
-# @func[Gt] The greater-than operator. a > b.
-#  @arg[IntP@][a] The first operand.
-#  @arg[IntP@][b] The second operand.
-#  @returns[Bool@]
-#   True if @a[a] is greater than @a[b], false otherwise.
-(IntP@, IntP@) { Bool@; } Gt = (IntP@ a, IntP@ b) {
-  a.?(1: False,
-      2p0: b.?(1: True, 2p0: Gt(a.2p0, b.2p0), 2p1: Gt(a.2p0, b.2p1)),
-      2p1: b.?(1: True, 2p0: Ge(a.2p1, b.2p0), 2p1: Gt(a.2p1, b.2p1)));
-},
-
-# @func[Ge] The greater-than-or-equal operator. a >= b.
-#  @arg[IntP@][a] The first operand.
-#  @arg[IntP@][b] The second operand.
-#  @returns[Bool@]
-#   True if @a[a] is greater than or equalt to @a[b], false otherwise.
-(IntP@, IntP@) { Bool@; } Ge = (IntP@ a, IntP@ b) {
-  a.?(1: b.?(1: True, 2p0: False, 2p1: False),
-      2p0: b.?(1: True, 2p0: Ge(a.2p0, b.2p0), 2p1: Gt(a.2p0, b.2p1)),
-      2p1: b.?(1: True, 2p0: Ge(a.2p1, b.2p0), 2p1: Ge(a.2p1, b.2p1)));
-};
+# Standard comparison operations.
+Lt, Le, Gt, Ge .= /Std/Cmp%.Cmp(Cmp);
 
 @(Eq, Lt, Le, Gt, Ge).%(@/Std/Int%);

@@ -1,7 +1,7 @@
 # @module[/Std/Eq%]
 #  Defines the Eq@ interface for comparing two objects for equality.
 
-Bool@ = /Std/Bool%.Bool@;
+Bool@, Not .= /Std/Bool%;
 
 # @type[Eq@] Compare two values for equality.
 #  @arg[@][T@] The type of values to compare.
@@ -10,4 +10,17 @@ Bool@ = /Std/Bool%.Bool@;
 #  @returns[Bool@] True if the operands are equal, false otherwise.
 Eq@ = <@ T@>(T@, T@) { Bool@; };
 
-@(Eq@);
+# @func[Eq] Return standard equality operators.
+#  @arg[@][T@] The type of values to compare.
+#  @arg[Eq@<T@>][eq] equality instance.
+Eq = <@ T@>(Eq@<T@> eq) {
+  (T@, T@) { Bool@; } Eq = eq;
+
+  (T@, T@) { Bool@; } Ne = (T@ a, T@ b) {
+    Not(eq(a, b));
+  };
+
+  @(Eq, Ne);
+};
+
+@(Eq@, Eq);

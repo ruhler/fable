@@ -1,8 +1,8 @@
 # @module[/Std/Cmp%]
 #  Defines the Cmp@ interface for comparing two objects.
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Bool@, True, False .= /Std/Bool%;
+Unit@, Unit .= /Std/Unit%;
 
 # @struct[Compared@] The result of a comparison check.
 #  @field[Unit@][less] The first value is less than the second value.
@@ -29,4 +29,116 @@ Compared@ Greater = Compared@(greater: Unit);
 #  @returns[Compared@] The result of comparison.
 Cmp@ = <@ T@>(T@, T@) { Compared@; };
 
-@(Compared@, Cmp@, Less, Equal, Greater);
+# @func[Eq] Equality operator.
+#  Note: This generic implementation of equality based on the Cmp@ interface
+#  is likely not as efficient an implementation as you could get from a direct
+#  implementation of the Eq@ interface. Consider using or providing a direct
+#  implementation of Eq@ instead if performance is a concern.
+#
+#  @arg[@][T@] The type of values to compare.
+#  @arg[Cmp@<T>][cmp] The compare instance to use.
+#  @arg[T@][a] The first operand.
+#  @arg[T@][b] The second operand.
+#  @returns[Bool@] True if a is equal to b, false otherwise.
+<@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
+Eq = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
+  cmp(a, b).?(equal: True, : False);
+};
+
+# @func[Ne] Inequality operator.
+#  Note: This generic implementation of (in)equality based on the Cmp@
+#  interface is likely not as efficient an implementation as you could get
+#  from a direct implementation of the Eq@ interface. Consider using or
+#  providing a direct implementation of Eq@ instead if performance is a
+#  concern.
+#
+#  @arg[@][T@] The type of values to compare.
+#  @arg[Cmp@<T>][cmp] The compare instance to use.
+#  @arg[T@][a] The first operand.
+#  @arg[T@][b] The second operand.
+#  @returns[Bool@] True if a is not equal to b, false otherwise.
+<@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
+Ne = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
+  cmp(a, b).?(equal: False, : True);
+};
+
+# @func[Lt] Less than operator.
+#  @arg[@][T@] The type of values to compare.
+#  @arg[Cmp@<T>][cmp] The compare instance to use.
+#  @arg[T@][a] The first operand.
+#  @arg[T@][b] The second operand.
+#  @returns[Bool@] True if a is less than b, false otherwise.
+<@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
+Lt = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
+  cmp(a, b).?(less: True, : False);
+};
+
+# @func[Le] Less than or equal operator.
+#  @arg[@][T@] The type of values to compare.
+#  @arg[Cmp@<T>][cmp] The compare instance to use.
+#  @arg[T@][a] The first operand.
+#  @arg[T@][b] The second operand.
+#  @returns[Bool@] True if a is less than or equal to b, false otherwise.
+<@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
+Le = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
+  cmp(a, b).?(greater: False, : True);
+};
+
+# @func[Gt] Greater than operator.
+#  @arg[@][T@] The type of values to compare.
+#  @arg[Cmp@<T>][cmp] The compare instance to use.
+#  @arg[T@][a] The first operand.
+#  @arg[T@][b] The second operand.
+#  @returns[Bool@] True if a is greater than b, false otherwise.
+<@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
+Gt = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
+  cmp(a, b).?(greater: True, : False);
+};
+
+# @func[Ge] Greater than or equal operator.
+#  @arg[@][T@] The type of values to compare.
+#  @arg[Cmp@<T>][cmp] The compare instance to use.
+#  @arg[T@][a] The first operand.
+#  @arg[T@][b] The second operand.
+#  @returns[Bool@] True if a is greater than or equal to b, false otherwise.
+<@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
+Ge = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
+  cmp(a, b).?(less: False, : True);
+};
+
+# @func[Min] Minimum operator.
+#  @arg[@][T@] The type of values to compare.
+#  @arg[Cmp@<T>][cmp] The compare instance to use.
+#  @arg[T@][a] The first operand.
+#  @arg[T@][b] The second operand.
+#  @returns[T@] The smaller of a and b.
+<@ T@>(Cmp@<T@>, T@, T@) { T@; }
+Min = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
+  cmp(a, b).?(less: a, : b);
+};
+
+# @func[Max] Maximum operator.
+#  @arg[@][T@] The type of values to compare.
+#  @arg[Cmp@<T>][cmp] The compare instance to use.
+#  @arg[T@][a] The first operand.
+#  @arg[T@][b] The second operand.
+#  @returns[T@] The greater of a and b.
+<@ T@>(Cmp@<T@>, T@, T@) { T@; }
+Max = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
+  cmp(a, b).?(greater: a, : b);
+};
+
+# @func[Cmp] Collection of comparison operators for a given type.
+#  @arg[@][T@] The type of values to compare.
+#  @arg[Cmp@<T>][cmp] The compare instance to use.
+#  @returns[...] Comparison operators for the given type.
+Cmp = <@ T@>(Cmp@<T@> cmp) {
+  @(Cmp: cmp,
+    Eq: Eq(cmp), Ne: Ne(cmp),
+    Lt: Lt(cmp), Le: Le(cmp),
+    Gt: Gt(cmp), Ge: Ge(cmp),
+    Min: Min(cmp), Max: Max(cmp));
+};
+
+@(Compared@, Cmp@, Less, Equal, Greater,
+  Eq, Ne, Lt, Le, Gt, Ge, Min, Max, Cmp);
