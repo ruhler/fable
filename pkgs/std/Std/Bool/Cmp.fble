@@ -1,0 +1,18 @@
+# @module[/Std/Bool/Cmp%]
+#  The Cmp@ instance for Bool@.
+
+Bool@ .= /Std/Bool%;
+Cmp@, Less, Greater, Equal .= /Std/Cmp%;
+
+# @value[Cmp] The Cmp@ instance for Bool@.
+#  @type[Cmp@<Bool@>]
+#
+#  We use the order false < true.
+Cmp@<Bool@>
+Cmp = (Bool@ a, Bool@ b) {
+  a.?(
+    true: b.?(true: Equal, false: Greater),
+    false: b.?(true: Less, false: Equal));
+};
+
+@(Cmp);

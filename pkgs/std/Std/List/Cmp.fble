@@ -1,0 +1,25 @@
+# @module[/Std/List/Cmp%]
+#  The Cmp@ instance for List@.
+
+Cmp@, Compared@, Less, Equal, Greater .= /Std/Cmp%;
+List@ .= /Std/List%;
+
+# @func[Cmp] Provides a Cmp@ instance for lists.
+#  @arg[@][A@] The type of element on the list.
+#  @arg[Cmp@<A@>][cmp] How to compare list elements.
+#  @returns[Cmp@<List@<A@>>] How to compare lists.
+<@ A@>(Cmp@<A@>) { Cmp@<List@<A@>>; }
+Cmp = <@ A@>(Cmp@<A@> cmp) {
+  Cmp@<List@<A@>>
+  Cmp = (List@<A@> a, List@<A@> b) {
+    a.?(empty: b.?(items: Less, empty: Equal));
+    b.?(empty: Greater);
+
+    Compared@ compared = cmp(a.items.head, b.items.head);
+    compared.?(equal: Cmp(a.items.tail, b.items.tail));
+    compared;
+  };
+  Cmp;
+};
+
+@(Cmp);

@@ -1,8 +1,0 @@
-
-Cmp@ = /Std/Cmp%.Cmp@;
-
-String@ = /Std/String%.String@;
-
-Cmp@<String@> Ord = /Core/List/Ord%.Ord(/Core/Char/Ord%.Ord);
-
-@(Ord);

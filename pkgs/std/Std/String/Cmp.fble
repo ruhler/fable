@@ -1,0 +1,12 @@
+# @module[/Std/String/Cmp%]
+#  The Cmp@ instance for String@.
+
+Cmp@ = /Std/Cmp%.Cmp@;
+
+String@ = /Std/String%.String@;
+
+# @value[Cmp] Comparison for strings.
+#  @type[Cmp@<String@>]
+Cmp@<String@> Cmp = /Std/List/Cmp%.Cmp(/Std/Char/Cmp%.Cmp);
+
+@(Cmp);

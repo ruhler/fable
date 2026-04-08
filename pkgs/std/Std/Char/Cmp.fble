@@ -1,0 +1,14 @@
+# @module[/Std/Char/Cmp%]
+#  The Cmp@ instance for Char@.
+
+Char@, Pos .= /Std/Char%;
+Cmp@ .= /Std/Cmp%;
+On .= /Std/Func%;
+
+# @value[Cmp] The Cmp@ instance for Char@.
+#  @type[Cmp@<Char@>]
+#
+#  Characters are ordered by their unicode code point.
+Cmp@<Char@> Cmp = On(/Std/Int/Cmp%.Cmp, Pos);
+
+@(Cmp);

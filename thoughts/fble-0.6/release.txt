@@ -30,15 +30,15 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Random/Prng.fble ==> /Std/Random/Prng% [DONE]
   - pkgs/core/Core/Random/Rng.fble ==> /Std/Random/Rng% [DONE]
 * Cleanup standard Cmp/Ord interfaces.
-  - pkgs/core/Core/Bool/Ord.fble
-  - pkgs/core/Core/Char/Ord.fble
+  - pkgs/core/Core/Bool/Ord.fble        ==> /Std/Bool/Cmp% [DONE]
+  - pkgs/core/Core/Char/Ord.fble        ==> /Std/Char/Cmp% [DONE]
   - pkgs/core/Core/Int/IntP/Ord.fble    ==> /Std/Int/IntP/Cmp% [DONE]
   - pkgs/core/Core/Int/Ord.fble         ==> /Std/Int/Cmp% [DONE]
-  - pkgs/core/Core/List/Ord.fble
+  - pkgs/core/Core/List/Ord.fble        ==> /Std/List/Cmp% [DONE]
   - pkgs/core/Core/Ord/Eq.fble
   - pkgs/core/Core/Ord/Show.fble
-  - pkgs/core/Core/Ord.fble            [REMOVED]
-  - pkgs/core/Core/String/Ord.fble
+  - pkgs/core/Core/Ord.fble             [REMOVED]
+  - pkgs/core/Core/String/Ord.fble      ==> /Std/String/Cmp% [DONE]
 * Start work on Map cleanup
   - pkgs/core/Core/Char/Map/Tests.fble
   - pkgs/core/Core/Char/Map.fble

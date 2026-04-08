@@ -1,21 +1,19 @@
 
-Cmp@ = /Std/Cmp%.Cmp@;
-Less = /Std/Cmp%.Less;
-Greater = /Std/Cmp%.Greater;
-Equal = /Std/Cmp%.Equal;
+Cmp@, Less, Greater, Equal .= /Std/Cmp%;
+BoolCmp(.Cmp) .= /Std/Bool/Cmp%;
 
 Var@ = /SatGame/Var%.Var@;
 
 Cmp@<Var@> Ord = (Var@ a, Var@ b) {
-  /Core/Bool/Ord%.Ord(a.ul, b.ul).?(less: Less, greater: Greater);
-  /Core/Bool/Ord%.Ord(a.uc, b.uc).?(less: Less, greater: Greater);
-  /Core/Bool/Ord%.Ord(a.ur, b.ur).?(less: Less, greater: Greater);
-  /Core/Bool/Ord%.Ord(a.ml, b.ml).?(less: Less, greater: Greater);
-  /Core/Bool/Ord%.Ord(a.mc, b.mc).?(less: Less, greater: Greater);
-  /Core/Bool/Ord%.Ord(a.mr, b.mr).?(less: Less, greater: Greater);
-  /Core/Bool/Ord%.Ord(a.ll, b.ll).?(less: Less, greater: Greater);
-  /Core/Bool/Ord%.Ord(a.lc, b.lc).?(less: Less, greater: Greater);
-  /Core/Bool/Ord%.Ord(a.lr, b.lr).?(less: Less, greater: Greater);
+  BoolCmp(a.ul, b.ul).?(less: Less, greater: Greater);
+  BoolCmp(a.uc, b.uc).?(less: Less, greater: Greater);
+  BoolCmp(a.ur, b.ur).?(less: Less, greater: Greater);
+  BoolCmp(a.ml, b.ml).?(less: Less, greater: Greater);
+  BoolCmp(a.mc, b.mc).?(less: Less, greater: Greater);
+  BoolCmp(a.mr, b.mr).?(less: Less, greater: Greater);
+  BoolCmp(a.ll, b.ll).?(less: Less, greater: Greater);
+  BoolCmp(a.lc, b.lc).?(less: Less, greater: Greater);
+  BoolCmp(a.lr, b.lr).?(less: Less, greater: Greater);
   Equal;
 };
 
