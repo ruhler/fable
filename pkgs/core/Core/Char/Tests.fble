@@ -4,16 +4,11 @@ False = /Std/Bool%.False;
 
 Char = /Std/Char/Ascii%.Char;
 
-Chr = /Std/Char%.Char;
-Pos = /Std/Char%.Pos;
-
 IsAlNum = /Core/Char/Type%.IsAlNum;
 IsAlpha = /Core/Char/Type%.IsAlpha;
 IsLower = /Core/Char/Type%.IsLower;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-Int = /Std/Int/Lit%.Int;
 
 List = /Std/List%.List;
 

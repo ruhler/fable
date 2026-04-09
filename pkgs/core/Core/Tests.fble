@@ -12,7 +12,6 @@ Test@ Tests = TestSuite(Str|Core, List[
   /Core/Digits/Tests%.Tests,
   /Core/Debug/Tests%.Tests,
   /Core/Int/Tests%.Tests,
-  /Core/Fifo/Tests%.Tests,
   /Core/Random/Lcg/Tests%.Tests,
   /Core/Random/Lfsr/Tests%.Tests,
   /Core/Map/Tests%.Tests,

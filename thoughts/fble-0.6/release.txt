@@ -83,15 +83,16 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Cli.fble        ==> /Std/Io/Cli% [DONE]
   - pkgs/core/Core/Env/Native.fble ==> /Std/Io/Env% [DONE]
   - pkgs/core/Core/Native.fble     ==> /Std/Io%     [DONE]
-* Finish porting test cases over to std-test
+* Character type classes:
+  - pkgs/core/Core/Char/Type.fble
   - pkgs/core/Core/Char/Tests.fble
+* Finish porting test cases over to std-test
   - pkgs/core/Core/Int/Show/Tests.fble
   - pkgs/core/Core/Int/Tests.fble
   - pkgs/core/Core/String/Tests.fble
   - pkgs/core/Core/Test/Tests.fble
   - pkgs/core/Core/Tests.fble
 * Figure out what to do with all the other miscellaneous stuff.
-  - pkgs/core/Core/Char/Type.fble
   - pkgs/core/Core/CRC/Debug.fble
   - pkgs/core/Core/CRC/Tests.fble
   - pkgs/core/Core/CRC.fble
@@ -103,8 +104,8 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Digits/String.fble
   - pkgs/core/Core/Digits/Tests.fble
   - pkgs/core/Core/Digits.fble
-  - pkgs/core/Core/Fifo/Tests.fble
-  - pkgs/core/Core/Fifo.fble
+  - pkgs/core/Core/Fifo/Tests.fble  [Removed]
+  - pkgs/core/Core/Fifo.fble        [Removed]
   - pkgs/core/Core/Int/Digits.fble
   - pkgs/core/Core/Int/Iter.fble
   - pkgs/core/Core/Int/Read.fble

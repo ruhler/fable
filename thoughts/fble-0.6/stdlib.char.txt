@@ -425,3 +425,9 @@ Char, CharE, Str, StrE, as well as any desired character classes.
 Anyway, /Std/Char/Lit% will depend on /Std/String%. Maybe rename Lit to
 Literal, since we don't expect to be naming it explicitly that often?
 
+---
+
+What to do about character type classes like isalnum? Where should those live?
+What all classes should I support? On which character sets should I support
+these?
+
