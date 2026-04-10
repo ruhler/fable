@@ -1,0 +1,79 @@
+CRC
+===
+
+I have an implementation of CRC in core. I know I want CRC for things like
+png, maybe deflate or something. But my implementation seems kind of basic.
+What do I want to do?
+
+Options:
+1. Clean it up and standardize it.
+2. Remove it for now. Worry about it later.
+3. Move it out of core to some other non standard package.
+
+Let's review current API for my CRC:
+* CRC@, based on Bit@. You feed a bit at a time.
+* We don't have a specific polynomial defined anywhere.
+
+Python API for CRC:
+* Python has md5 and such things in hashlib.
+* Python doesn't have standard module for CRC?
+* zlib.crc32? binascii.crc32?
+
+Seems like binascii has predefined crc polynomials that it uses. You provide a
+sequence of bytes, an optional initial checksum, and it returns the updated
+checksum as an integer.
+
+'crc_hqx' is CRC-CCITT. crc32 is the one used in ZIP.
+
+zlib has things like: adler32, crc32. Same kind of general interface.
+
+Seems like it would be useful to have CRC defined and implemented somewhere in
+the standard library. I'm not sure the interface to use though. Existing
+examples are byte oriented. Fble isn't naturally byte oriented. Do I want to
+do things bit oriented, or arbitrary size oriented?
+
+It feels similar to linear feedback shift registers.
+
+Also, feels like the same kind of interface we would use for something like
+md5hash? Or other hashes? A sequence of data (bits? bytes?) that results in a
+checksum. Maybe I should provide it under a standardized interface for hash
+functions that way?
+
+With random number generation, I have precedent for storing bits as a pair of
+Int@: number of bits and bit contents. If we want to support bytes but not
+bias towards them, maybe we use that same approach? Something like:
+
+ (Int@ n, Int@ x, Hash@ hash) { Hash@; } Hash;
+
+Where n is number of bits in x. The value x is the actual bits. You take the
+incoming hash and compute the outgoing hash. We could build up libraries of
+ways of interacting with hash functions on top of this interface?
+
+md5sum works on blocks of 512 bits at a time. I'm not sure my proposed
+interface works with that. Not unless we allow intermediate state. That
+suggests an API more like... monadic?
+
+ @<Hash@> Hash@;
+ @<S@> State@;
+ (Int@, Int@) { M@<Unit@>; } Feed;
+ M@<Hash@> Compute;
+
+You use Feed to feed in a ... stream? Anyway, you feed in a bunch of bits, it
+aggregates them as needed. When you are done, you tell it to give you the
+result. It pads if/as needed and returns the final result.
+
+Without the monad part, I suppose it would be something like:
+
+ (Int@, Int@, S@) { S@; } Feed;
+ (S@) { Hash@; } Compute;
+
+And we could build up whatever we want on top of that.
+
+Unfortunately I don't have any users of CRC right now to test out an API
+change like this. I could update md5 to use this new interface. I wish CRC was
+somewhere else so I could punt this question to a future release.
+
+I could throw it into md5 for now if I don't want to deal with it.
+
+It's simple enough. Let's just get rid of it for now. Add it back when I have
+a concrete use case and better sense of the general API that would be useful.

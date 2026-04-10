@@ -1,0 +1,111 @@
+Map
+===
+We want the standard library to include a map data structure that efficiently
+maps from keys to values.
+
+I suppose you could use a pure fble function for this, but that's not
+efficient if you want to do inserts and removals without ending up with a
+linear search for lookup.
+
+You could also use a list of key value pairs if you're okay with linear
+search.
+
+I have an implementation of a balanced binary tree map which should give more
+efficient lookups.
+
+And you can imagine fancier structures based on the structure of key types or
+hash map like things.
+
+What I need to decide is:
+* The API for interacting with the map.
+* The approach for defining the map:
+ - Use balanced binary tree map? Or a small number of predefined map types
+   (e.g. std::map, std::unordered_map)
+ - Or let people define their own maps based on the key type.
+
+How Map looks for me today:
+* Map@, Key@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
+* We have custom map implementations per key type:
+  Char@, IntP@, Int@, List@, String@
+* We have a generic balanced tree map implementation.
+* We have a Set@ wrapper around Map@.
+
+The custom map implementations are essentially hard coded generic data type
+based implementations.
+
+Specifically:
+ Map@<Unit@> is implemented as Maybe@<Value@>
+ Map@<+(A@, B@)> is *(Map@<A@>, Map@<B@>)
+ Map@<*(A@, B@)> is Map@<A@, Map@<B@>> (in theory, do I actually have it?)
+
+In practice it's tedious enough to implement a map that I use my generic Cmp@
+based tree map for anything that isn't a performance concern.
+
+I should think I could provide helper functions to define these generic maps
+as compositions of things. It's a question of whether the performance
+overheads of that kind of composition are worth the performance improvements
+of not using a generic tree map.
+
+From an API point of view, the ideal thing would be to have a single
+implementation of Map@ that works for any key and value type and that is fast
+enough for what you want.
+
+Consider an Int@ type though. If we use a tree map, we are doing comparisons
+between int values. The cost to traverse the entire Int@ value for a single
+comparison is probably comparable to the cost of traversing the map to find
+the associated value. That makes me think tree map is always going to be
+slower and algorithmically more complex than a custom map implementation.
+
+The implementation of Char@ map I have today is instructive, because we are
+implementing a Char@ map in terms of an Int@ map. What we need for that to
+work is a way to convert the Char@ key to an Int@ key and back. We need a way
+to go back for ForEach.
+
+For a shallow conversion from Char@ to Int@, that's probably not any concern.
+But for something like Int@ or List@ converting to the equivalent generic type
+recursively? Maybe it's not so bad actually? If we define our maps
+recursively?
+
+I suppose what I'm getting at is, maybe I can start by rewriting my existing
+generic map implementations using generic map composition functions. See how
+that feels. Based on the idea that union becomes a pair, pair becomes a nested
+map.
+
+If I'm going to do that, why make this map specific? Why not have a generic
+'Data' type that you can convert any generic data type like things into, and
+then provide an implementation of map that works on anything you can convert
+into Data?
+
+If we want to allow for shallow wrapping and unwrapping of data, maybe Data@
+looks something like:
+
+ Data@ = ...?
+
+I'm not sure how it would work. Full unrolling would be something like:
+
+ Data@ = +(Unit@ unit, +(Data@ a, Data@ b) union, *(Data@ a, Data@ b) struct);
+
+I guess shallow would be something like:
+
+ Data@ = <@ A@, @ B@, @ C@, @ D@> { +(
+   Unit@ unit, +(A@ a, B@ b) union, *(C@ a, D@ b) struct
+ ); };
+
+Or skip declaration of a Data@ type, and have direct helpers:
+
+ UnionMap is a function that takes as input:
+
+   Map@<A@>, Map@<B@>, (T@ -> +(A@, B@)), +(A@, B@) -> T@)
+
+ And returns a map of type Map@<T@>.
+
+Should Map@ be a builtin type? Think of it like an array?
+
+Depends how you want to define it. I suppose you provide a default value?
+Inserting into the map will be expensive, but we could make lookups fast?
+
+Or, wouldn't it be nice if we had a way to write a function that generates
+code for us based on the structure of a type? I've wanted that before for
+other use cases too. Essentially what you could do with a Data@ class, but
+hopefully magically without the overhead cost of converting to/from Data@.
+

@@ -93,9 +93,9 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Test/Tests.fble
   - pkgs/core/Core/Tests.fble
 * Figure out what to do with all the other miscellaneous stuff.
-  - pkgs/core/Core/CRC/Debug.fble
-  - pkgs/core/Core/CRC/Tests.fble
-  - pkgs/core/Core/CRC.fble
+  - pkgs/core/Core/CRC/Debug.fble   [Removed]
+  - pkgs/core/Core/CRC/Tests.fble   [Removed]
+  - pkgs/core/Core/CRC.fble         [Removed]
   - pkgs/core/Core/Debug/Builtin.fble
   - pkgs/core/Core/Debug/Tests.fble
   - pkgs/core/Core/Debug.fble
