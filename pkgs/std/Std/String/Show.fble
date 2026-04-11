@@ -1,19 +1,13 @@
 # @module[/Std/String/Show%]
 #  The Show@ instance for String@.
 
-Char@ = /Std/Char%.Char@;
-U = /Std/Char/Lit%.U;
-
-Do = /Std/Char/Output%.Do;
-Return = /Std/Char/Output%.Return;
-String = /Std/Char/Output%.String;
-
-FormatE = /Std/Char/Ascii/Output%.FormatE;
-
-Show@ = /Std/Show%.Show@;
-String@ = /Std/String%.String@;
-
-Unit@ = /Std/Unit%.Unit@;
+Char@ .= /Std/Char%;
+FormatE .= /Std/Char/Ascii/Output%;
+U .= /Std/Char/Lit%;
+Do, Return, String .= /Std/Char/Output%;
+Show@ .= /Std/Show%;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
 
 Char@ single_quote = U|27;
 

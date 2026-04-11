@@ -1,17 +1,9 @@
 # @module[/Std/List/Eq%]
 #  Utilities for working with list equality and sublists.
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
-Eq@ = /Std/Eq%.Eq@;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-Concat = /Std/List%.Concat;
+Bool@, True, False .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
+List@, List, Items, Empty, Concat .= /Std/List%;
 
 # @func[HasItems] Check if a list is non-empty.
 #  @arg[@][T@] The type of element on the list.

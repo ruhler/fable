@@ -1,7 +1,7 @@
 # @module[/Std/Char%]
 #  The character type.
 
-Int@ = /Std/Int%.Int@;
+Int@ .= /Std/Int%;
 
 # @type[Char@] The character type.
 #  The character type corresponds to unicode code points.

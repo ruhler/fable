@@ -1,17 +1,11 @@
 # @module[/Std/Char/Ascii%]
 #  Ascii character and string literals.
 
-Char@ = /Std/Char%.Char@;
-
-ToChar@ = /Std/Char/Lit%.ToChar@;
-U = /Std/Char/Lit%.U;
-
-List@ = /Std/List%.List@;
-
-String@ = /Std/String%.String@;
-StrLit = /Std/Char/Lit%.StrLit;
-
-Unit@ = /Std/Unit%.Unit@;
+Char@ .= /Std/Char%;
+ToChar@, U, StrLit .= /Std/Char/Lit%;
+List@ .= /Std/List%;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
 
 # @type[Ascii@] The ascii character letter type.
 Ascii@ = +(

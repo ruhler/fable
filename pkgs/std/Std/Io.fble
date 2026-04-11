@@ -1,7 +1,7 @@
 # @module[/Std/Io%]
 #  Types for running computations that interact with the outside world.
 
-Unit@ = /Std/Unit%.Unit@;
+Unit@ .= /Std/Unit%;
 
 # @type[External@] A computation that impacts external state.
 #  @arg[@][A@] The result type of the computation.

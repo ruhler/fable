@@ -1,13 +1,12 @@
 # @module[/Std/Io/Cli%]
 #  Main function type for command line interfaces.
 
-Int@ = /Std/Int%.Int@;
-Int = /Std/Int/Lit%.Int;
-
-Io@ = /Std/Io%.Io@;
-List@ = /Std/List%.List@;
-Monad@ = /Std/Monad%.Monad@;
-String@ = /Std/String%.String@;
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Io@ .= /Std/Io%;
+List@ .= /Std/List%;
+Monad@ .= /Std/Monad%;
+String@ .= /Std/String%;
 
 # @type[Exit] Program exit status.
 #  0 for success, non-zero for application specific failure status. Not all

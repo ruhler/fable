@@ -1,28 +1,30 @@
+# @module[/Std/Int/Sqrt%]
+#  Integer square root.
 
-Int@ = /Std/Int%.Int@;
-Incr = /Std/Int%.Incr;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Mul = /Std/Int%.Mul;
-Lt = /Std/Int/Cmp%.Lt;
+Int@, Incr, Add, Sub, Mul, 0, 1 .= /Std/Int%;
+Lt .= /Std/Int/Cmp%;
 
-Int@ 0 = /Std/Int%.0;
-Int@ 1 = /Std/Int%.1;
 Int@ 2 = Incr(1);
 Int@ 3 = Incr(2);
 Int@ 4 = Incr(3);
 
-# QR@ --
-#   Square root and remainder from integer square root.
-#
-# This type is the same as used for division, because why not?
+# @struct[QR@] Quotient and remainder.
+#  @field[Int@][q] The quotient of division.
+#  @field[Int@][r] The remainder of division.
 QR@ = *(Int@ q, Int@ r);
 
 /Std/Undef%.Undef@ Imaginary;
 
-# Sqrt --
+# @func[Sqrt] Integer square root.
+#  @code[txt] @
 #   a = q*q + r, r < 2q + 1
-(Int@) { QR@; } Sqrt = (Int@ a) {
+#
+#  Behavior is undefined if the argument is negative.
+#
+#  @arg[IntP@][a] The argument.
+#  @returns[QR@] The quotient and remainder of the square root.
+(Int@) { QR@; }
+Sqrt = (Int@ a) {
   a.?(n: Imaginary.undef<QR@>, 0: @(q: 0, r: 0));
   QR@ qr = a.p.?(
     1: @(q: 1, r: 0),

@@ -1,8 +1,7 @@
 # @module[/Std/Maybe%]
 #  Maybe type and basic operations.
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Unit@, Unit .= /Std/Unit%;
 
 # @type[Maybe@] An optional value.
 #  @arg[@][T@] The type of value.

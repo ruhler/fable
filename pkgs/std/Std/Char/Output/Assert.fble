@@ -1,14 +1,10 @@
 # @module[/Std/Char/Output/Assert%]
 #  Test assertions related to Output@.
 
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-Output@ = /Std/Char/Output%.Output@;
-ToString = /Std/Char/Output%.ToString;
-
-String@ = /Std/String%.String@;
-
-TestResult@ = /Std/Test%.TestResult@;
+Output@, ToString .= /Std/Char/Output%;
+AssertEquals .= /Std/Eq/Assert%;
+String@ .= /Std/String%;
+TestResult@ .= /Std/Test%;
 
 # @func[AssertOutput] Assert an output has the expected value.
 #  @arg[String@][expected] The expected output.

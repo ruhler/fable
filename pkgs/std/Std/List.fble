@@ -1,8 +1,7 @@
 # @module[/Std/List%]
 #  List type and basic operations.
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Unit@, Unit .= /Std/Unit%;
 
 # @type[List@] A list of items.
 #  The data structure layout provides constant time access to the first

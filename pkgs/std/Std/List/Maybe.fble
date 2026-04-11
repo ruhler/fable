@@ -1,13 +1,8 @@
 # @module[/Std/List/Maybe%]
 #  Utilities for converting between List@ and Maybe@ types.
 
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
+List@, Items, Empty .= /Std/List%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
 
 # @func[List] Convert a Maybe@ to a List@.
 #  @arg[@][A@] The type of element.

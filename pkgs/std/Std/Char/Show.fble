@@ -1,9 +1,8 @@
 # @module[/Std/Char/Show%]
 #  The Show@ instance for Char@.
 
-Char@ = /Std/Char%.Char@;
-
-Show@ = /Std/Show%.Show@;
+Char@ .= /Std/Char%;
+Show@ .= /Std/Show%;
 
 # @func[Show] Show a Char@ value.
 #  @arg[Char@][x] The value to show.

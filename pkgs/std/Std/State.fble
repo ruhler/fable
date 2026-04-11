@@ -1,8 +1,8 @@
 # @module[/Std/State%]
 #  The state monadic interface and utilities.
 
-Monad@ = /Std/Monad%.Monad@;
-Unit@ = /Std/Unit%.Unit@;
+Monad@ .= /Std/Monad%;
+Unit@ .= /Std/Unit%;
 
 # @type[Io@] Interface for running stateful computations.
 #  A mondic interface for running computations that have read and write access

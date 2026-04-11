@@ -1,9 +1,8 @@
 # @module[/Std/Random/Rng%]
 #  Interface for random number generators.
 
-Int@ = /Std/Int%.Int@;
-
-Unit@ = /Std/Unit%.Unit@;
+Int@ .= /Std/Int%;
+Unit@ .= /Std/Unit%;
 
 # @type[Rng@] Interface for random number generators.
 #  @arg[<@>@][M@] The monadic type for the interface.

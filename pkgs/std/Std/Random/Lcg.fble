@@ -1,16 +1,11 @@
 # @module[/Std/Random/Lcg%]
 #  Linear congruential pseudo random number generator.
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Shl = /Std/Int%.Shl;
-Shr = /Std/Int%.Shr;
-Mul = /Std/Int%.Mul;
-Mod = /Std/Int/Div%.Mod;
-Int = /Std/Int/Lit%.Int;
-Hex = /Std/Int/Lit%.Hex;
+Int@, Add, Shl, Shr, Mul .= /Std/Int%;
+Mod .= /Std/Int/Div%;
+Int, Hex .= /Std/Int/Lit%;
 
-Prng@ = /Std/Random/Prng%.Prng@;
+Prng@ .= /Std/Random/Prng%;
 
 # @value[Rand48] Implementation of the Rand48 psuedo random number generator.
 #  @type[Prng@<Int@>]

@@ -1,11 +1,8 @@
 # @module[/Std/List/Sort%]
 #  Utilities for sorting lists.
 
-Cmp@ = /Std/Cmp%.Cmp@;
-
-List@ = /Std/List%.List@;
-Empty = /Std/List%.Empty;
-Items = /Std/List%.Items;
+Cmp@ .= /Std/Cmp%;
+List@, Empty, Items .= /Std/List%;
 
 # @func[Insert] Insert an element into a sorted list.
 #  @arg[@][T@] The type of element on the list.

@@ -1,16 +1,10 @@
 # @module[/Std/List/Index%]
 #  Utilities for index based access into lists.
 
-Int@ = /Std/Int%.Int@;
-0 = /Std/Int%.0;
-Incr = /Std/Int%.Incr;
-Decr = /Std/Int%.Decr;
-Le = /Std/Int/Cmp%.Le;
-IsZero = /Std/Int/Sign%.IsZero;
-
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
+Int@, 0, Incr, Decr .= /Std/Int%;
+Le .= /Std/Int/Cmp%;
+IsZero .= /Std/Int/Sign%;
+List@, Items, Empty .= /Std/List%;
 
 # @func[Length] Returns the length of a list.
 #  @arg[@][T@] The type of element on the list.

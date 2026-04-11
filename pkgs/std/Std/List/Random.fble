@@ -1,16 +1,11 @@
 # @module[/Std/List/Random%]
 #  Generation of random lists.
 
-Bool@ = /Std/Bool%.Bool@;
+Bool@ .= /Std/Bool%;
+List@, Items, Append .= /Std/List%;
+Monad@ .= /Std/Monad%;
+Rng@ .= /Std/Random/Rng%;
 
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Append = /Std/List%.Append;
-
-Monad@ = /Std/Monad%.Monad@;
-Rng@ = /Std/Random/Rng%.Rng@;
-
-# 
 # @func[Shuffle] Shuffles the elements of a list randomly.
 #  @arg[<@>@][M@] Monadic type of the random generator interface.
 #  @arg[Monad@<M@>][m] Monad implementation of the random generator interface.

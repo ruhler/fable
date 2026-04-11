@@ -9,29 +9,15 @@
 #  If you don't care about performance, consider using the more standard
 #  /Std/Random/Lcg%.Rand48 random number generator.
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-And = /Std/Bool%.And;
-Xor = /Std/Bool%.Xor;
-
-Int@ = /Std/Int%.Int@;
-Decr = /Std/Int%.Decr;
-QR@ = /Std/Int/Div%.QR@;
-Div = /Std/Int/Div%.Div;
-IsZero = /Std/Int/Sign%.IsZero;
-Int = /Std/Int/Lit%.Int;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-Append = /Std/List%.Append;
-Drop = /Std/List/Index%.Drop;
-
-Prng@ = /Std/Random/Prng%.Prng@;
-
-Unit@ = /Std/Unit%.Unit@;
+Bool@, True, False, And, Xor .= /Std/Bool%;
+Int@, Decr .= /Std/Int%;
+QR@, Div .= /Std/Int/Div%;
+IsZero .= /Std/Int/Sign%;
+Int .= /Std/Int/Lit%;
+List@, List, Items, Empty, Append .= /Std/List%;
+Drop .= /Std/List/Index%;
+Prng@ .= /Std/Random/Prng%;
+Unit@ .= /Std/Unit%;
 
 # Prod --
 #   Compute the element wise product of bits in the given lists.

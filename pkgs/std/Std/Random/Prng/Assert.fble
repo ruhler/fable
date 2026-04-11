@@ -1,18 +1,12 @@
 # @module[/Std/Random/Prng/Assert%]
 #  Assertions to facilitate testing pseudo random number generators.
 
-Eq@ = /Std/Eq%.Eq@;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Items = /Std/List%.Items;
-
-Prng@ = /Std/Random/Prng%.Prng@;
-Show@ = /Std/Show%.Show@;
-
-TestResult@ = /Std/Test%.TestResult@;
-Pass = /Std/Test%.Pass;
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
+Eq@ .= /Std/Eq%;
+AssertEquals .= /Std/Eq/Assert%;
+List@, List, Items .= /Std/List%;
+Prng@ .= /Std/Random/Prng%;
+Show@ .= /Std/Show%;
+TestResult@, Pass .= /Std/Test%;
 
 # @func[AssertSequences]
 # @ Asserts that the given prng produces the given sequence of states.

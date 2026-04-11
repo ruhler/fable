@@ -1,9 +1,9 @@
 # @module[/Std/Bool/Show%]
 #  The Show@ instance for Bool@.
 
-Bool@ = /Std/Bool%.Bool@;
-Show@ = /Std/Show%.Show@;
-String = /Std/Char/Ascii/Output%.String;
+Bool@ .= /Std/Bool%;
+String .= /Std/Char/Ascii/Output%;
+Show@ .= /Std/Show%;
 
 # @func[Show] Show a Bool@ value.
 #  @arg[Bool@][x] The value to show.

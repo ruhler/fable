@@ -1,9 +1,8 @@
 # @module[/Std/String%]
 #  The string type.
 
-Char@ = /Std/Char%.Char@;
-
-List@ = /Std/List%.List@;
+Char@ .= /Std/Char%;
+List@ .= /Std/List%;
 
 # @type[String@] The string type.
 #   A character string, represented as a list of Char@.

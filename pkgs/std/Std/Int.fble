@@ -2,13 +2,8 @@
 #  Signed unbounded integer type and basic operations.
 
 IntP = /Std/Int/IntP%;
-IntP@ = IntP.IntP@;
-AddP = IntP.Add;
-MulP = IntP.Mul;
-Exp2P = IntP.Exp2;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+IntP@, AddP(.Add), MulP(.Mul), Exp2P(.Exp2) .= IntP;
+Unit@, Unit .= /Std/Unit%;
 
 # @type[Int@] The integer type.
 #  A type for abitrarily sized signed integers.

@@ -1,7 +1,7 @@
 # @module[/Std/Random/Prng%]
 #  Pure pseudo random number generator interface.
 
-Int@ = /Std/Int%.Int@;
+Int@ .= /Std/Int%;
 
 # @type[Prng@] Interface for a pseudo random number generator.
 #  @arg[@][S@] The type of the state used by the random number generator.

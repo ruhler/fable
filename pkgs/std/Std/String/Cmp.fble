@@ -1,9 +1,8 @@
 # @module[/Std/String/Cmp%]
 #  The Cmp@ instance for String@.
 
-Cmp@ = /Std/Cmp%.Cmp@;
-
-String@ = /Std/String%.String@;
+Cmp@ .= /Std/Cmp%;
+String@ .= /Std/String%;
 
 # @value[Cmp] Comparison for strings.
 #  @type[Cmp@<String@>]

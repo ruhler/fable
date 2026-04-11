@@ -4,8 +4,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Syntax highlighting for '.='?
 
-* Migrate all of /Std% over to using import expression where we can?
-
 * Add spec tests for import expressions.
  - Add tests for unused warnings.
  - Add test for missing type in bind expression.

@@ -1,15 +1,9 @@
 # @module[/Std/Int/Sign%]
 #  Utilities for checking the sign of an Int@.
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
-Int@ = /Std/Int%.Int@;
-Neg = /Std/Int%.Neg;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Bool@, True, False .= /Std/Bool%;
+Int@, Neg .= /Std/Int%;
+Unit@, Unit .= /Std/Unit%;
 
 # @union[Sign@] The sign of an integer.
 #  @field[Unit@]['-'] Negative sign.

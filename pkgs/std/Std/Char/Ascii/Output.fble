@@ -1,15 +1,10 @@
 # @module[/Std/Char/Ascii/Output%]
 #  Ascii string and formatting output.
 
-StrLit = /Std/Char/Lit%.StrLit;
-
-Ascii@ = /Std/Char/Ascii%.Ascii@;
-ToChar = /Std/Char/Ascii%.ToChar;
-StrE = /Std/Char/Ascii%.StrE;
-
-List@ = /Std/List%.List@;
-
-Output@ = /Std/Char/Output%.Output@;
+Ascii@, ToChar, StrE .= /Std/Char/Ascii%;
+StrLit .= /Std/Char/Lit%;
+Output@ .= /Std/Char/Output%;
+List@ .= /Std/List%;
 
 # @func[String] Output a string.
 #  @arg[List<Ascii@>][str] The string to output.

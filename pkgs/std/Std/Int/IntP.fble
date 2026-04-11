@@ -3,8 +3,7 @@
 #
 #  This module is for internal use only.
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Unit@, Unit .= /Std/Unit%;
 
 # @union[IntP@] Type of positive integers.
 #  @field[Unit@][1] The value 1.

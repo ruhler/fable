@@ -1,15 +1,11 @@
 # @module[/Std/List/Show%]
 #  The Show@ instance for List@.
 
-String = /Std/Char/Ascii/Output%.String;
-Format = /Std/Char/Ascii/Output%.Format;
-
-List@ = /Std/List%.List@;
-
-Show@ = /Std/Show%.Show@;
-Do = /Std/Char/Output%.Do;
-
-Unit@ = /Std/Unit%.Unit@;
+String, Format .= /Std/Char/Ascii/Output%;
+Do .= /Std/Char/Output%;
+List@ .= /Std/List%;
+Show@ .= /Std/Show%;
+Unit@ .= /Std/Unit%;
 
 # Tail --
 #   Shows the tail part of a list.

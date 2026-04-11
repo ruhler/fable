@@ -1,15 +1,10 @@
 # @module[/Std/Eq/Assert%]
 #  Equality based test assertions.
 
-Eq@ = /Std/Eq%.Eq@;
-
-Show@ = /Std/Show%.Show@;
-
-Format = /Std/Char/Ascii/Output%.Format;
-
-TestResult@ = /Std/Test%.TestResult@;
-Pass = /Std/Test%.Pass;
-Fail = /Std/Test%.Fail;
+Format .= /Std/Char/Ascii/Output%;
+Eq@ .= /Std/Eq%;
+Show@ .= /Std/Show%;
+TestResult@, Pass, Fail .= /Std/Test%;
 
 # @func[AssertEquals] Assert two values are equal.
 #  @arg[@][T@] The type of value to compare.

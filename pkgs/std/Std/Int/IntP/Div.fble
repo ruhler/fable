@@ -4,11 +4,7 @@
 #  For internal use only.
 
 IntP@ = /Std/Int/IntP%.IntP@;
-
-Int@ = /Std/Int%.Int@;
-Sub = /Std/Int%.Sub;
-0 = /Std/Int%.0;
-1 = /Std/Int%.1;
+Int@, Sub, 0, 1 .= /Std/Int%;
 
 # @struct[QR@] Quotient and remainder.
 #  @field[Int@][q] The quotient of division.

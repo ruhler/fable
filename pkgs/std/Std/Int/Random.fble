@@ -1,17 +1,13 @@
 # @module[/Std/Int/Random%]
 #  Generation of random integer values.
 
-Int@ = /Std/Int%.Int@;
-Incr = /Std/Int%.Incr;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Shr = /Std/Int%.Shr;
-IsZero = /Std/Int/Sign%.IsZero;
-Lt = /Std/Int/Cmp%.Lt;
-Int = /Std/Int/Lit%.Int;
+Int@, Incr, Add, Sub, Shr .= /Std/Int%;
+IsZero .= /Std/Int/Sign%;
+Lt .= /Std/Int/Cmp%;
+Int .= /Std/Int/Lit%;
 
-Monad@ = /Std/Monad%.Monad@;
-Rng@ = /Std/Random/Rng%.Rng@;
+Monad@ .= /Std/Monad%;
+Rng@ .= /Std/Random/Rng%;
 
 # @func[UpTo] Generates a random integer uniformly in the range [0, n).
 #  @arg[<@>@][M@] Monadic type of the random generator interface.

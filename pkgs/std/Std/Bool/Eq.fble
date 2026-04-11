@@ -1,10 +1,8 @@
 # @module[/Std/Bool/Eq%]
 #  The Eq@ instance for Bool@.
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-
-Eq@ = /Std/Eq%.Eq@;
+Bool@, True .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
 
 # @func[Eq] Check two booleans for equality.
 #  @arg[Bool@][a] The first operand.

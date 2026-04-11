@@ -1,16 +1,9 @@
 # @module[/Std/Int/Lit%]
 #  Integer literals.
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Mul = /Std/Int%.Mul;
-Incr = /Std/Int%.Incr;
-0 = /Std/Int%.0;
-1 = /Std/Int%.1;
-
-List@ = /Std/List%.List@;
-
-Unit@ = /Std/Unit%.Unit@;
+Int@, Add, Mul, Incr, 0, 1 .= /Std/Int%;
+List@ .= /Std/List%;
+Unit@ .= /Std/Unit%;
 
 Int@ 2 = Incr(1);
 Int@ 3 = Incr(2);

@@ -1,17 +1,11 @@
 # @module[/Std/Char/Lit%]
 #  Character and string literals.
 
-Char@ = /Std/Char%.Char@;
-Unicode = /Std/Char%.Char;
-
-HexLit@ = /Std/Int/Lit%.HexLit@;
-Hex = /Std/Int/Lit%.Hex;
-
-List@ = /Std/List%.List@;
-
-String@ = /Std/String%.String@;
-
-Unit@ = /Std/Unit%.Unit@;
+Char@, Unicode(.Char) .= /Std/Char%;
+HexLit@, Hex .= /Std/Int/Lit%;
+List@ .= /Std/List%;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
 
 # @func[U] Unicode character literal.
 #  Example:

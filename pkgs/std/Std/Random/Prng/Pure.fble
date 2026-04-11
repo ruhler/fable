@@ -1,23 +1,13 @@
 # @module[/Std/Random/Prng/Pure%]
 #  Rng@ instance for pseudo random number generators.
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Shl = /Std/Int%.Shl;
-Shr = /Std/Int%.Shr;
-Le = /Std/Int/Cmp%.Le;
-
-Rng@ = /Std/Random/Rng%.Rng@;
-Prng@ = /Std/Random/Prng%.Prng@;
-
-Modify = /Std/State%.Modify;
-
-Pure@ = /Std/State/Pure%.Pure@;
-Monad = /Std/State/Pure%.Monad;
-State = /Std/State/Pure%.State;
-
-Unit@ = /Std/Unit%.Unit@;
+Int@, Add, Sub, Shl, Shr .= /Std/Int%;
+Le .= /Std/Int/Cmp%;
+Rng@ .= /Std/Random/Rng%;
+Prng@ .= /Std/Random/Prng%;
+Modify .= /Std/State%;
+Pure@, Monad, State .= /Std/State/Pure%;
+Unit@ .= /Std/Unit%;
 
 # @func[Rng] Pure state monad Rng@ implementation of a Prng@.
 #  @arg[@][S@] The state type for the pseudo random number generator.

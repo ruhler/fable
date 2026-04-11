@@ -1,11 +1,9 @@
 # @module[/Std/State/Pure%]
 #  A pure implementation of the state monadic interface.
 
-Monad@ = /Std/Monad%.Monad@;
-State@ = /Std/State%.State@;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Monad@ .= /Std/Monad%;
+State@ .= /Std/State%;
+Unit@, Unit .= /Std/Unit%;
 
 Result@ = <@ S@, @ A@> { *(S@ state, A@ return); };
 Pure@ = <@ S@, @ A@>(S@) { Result@<S@, A@>; };

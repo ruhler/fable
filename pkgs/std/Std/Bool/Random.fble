@@ -1,15 +1,14 @@
 # @module[/Std/Bool/Random%]
 #  Generation of random boolean values.
 
-Bool@ = /Std/Bool%.Bool@;
-Not = /Std/Bool%.Not;
+Bool@, Not .= /Std/Bool%;
 
-Int@ = /Std/Int%.Int@;
-IsZero = /Std/Int/Sign%.IsZero;
-Int = /Std/Int/Lit%.Int;
+Int@ .= /Std/Int%;
+IsZero .= /Std/Int/Sign%;
+Int .= /Std/Int/Lit%;
 
-Monad@ = /Std/Monad%.Monad@;
-Rng@ = /Std/Random/Rng%.Rng@;
+Monad@ .= /Std/Monad%;
+Rng@ .= /Std/Random/Rng%;
 
 # @func[Uniform] Generates a uniform random boolean value.
 #  @arg[<@>@][M@] Monadic type of the random generator interface.

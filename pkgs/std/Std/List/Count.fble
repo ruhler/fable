@@ -4,13 +4,9 @@
 #  This is kept separate from @l{/Std/List/Search%} because it has an extra
 #  dependency on @l{Int@}.
 
-Bool@ = /Std/Bool%.Bool@;
-
-Int@ = /Std/Int%.Int@;
-0 = /Std/Int%.0;
-Incr = /Std/Int%.Incr;
-
-List@ = /Std/List%.List@;
+Bool@ .= /Std/Bool%;
+Int@, 0, Incr .= /Std/Int%;
+List@ .= /Std/List%;
 
 # @func[Count] Counts elements on the list that satisfy a condition.
 #  @arg[@][T@] The type of element on the list.

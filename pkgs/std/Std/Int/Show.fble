@@ -1,25 +1,17 @@
 # @module[/Std/Int/Show%]
 #  The Show@ instance for Int@.
 
-Output@ = /Std/Char/Output%.Output@;
-Do = /Std/Char/Output%.Do;
-Return = /Std/Char/Output%.Return;
+Output@, Do, Return .= /Std/Char/Output%;
+Format, String .= /Std/Char/Ascii/Output%;
 
-Int@ = /Std/Int%.Int@;
-Neg = /Std/Int%.Neg;
-Eq = /Std/Int/Eq%.Eq;
-Int = /Std/Int/Lit%.Int;
-Sgn = /Std/Int/Sign%.Sgn;
+Int@, Neg .= /Std/Int%;
+Eq .= /Std/Int/Eq%;
+Int .= /Std/Int/Lit%;
+Sgn .= /Std/Int/Sign%;
 
-QR@ = /Std/Int/Div%.QR@;
-Div = /Std/Int/Div%.Div;
-
-Show@ = /Std/Show%.Show@;
-
-Format = /Std/Char/Ascii/Output%.Format;
-String = /Std/Char/Ascii/Output%.String;
-
-Unit@ = /Std/Unit%.Unit@;
+QR@, Div .= /Std/Int/Div%;
+Show@ .= /Std/Show%;
+Unit@ .= /Std/Unit%;
 
 # Show an int value in the range [0-9].
 Show@<Int@> Digit = (Int@ x) {

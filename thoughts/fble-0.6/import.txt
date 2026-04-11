@@ -374,3 +374,8 @@ or not.
 Experience report:
 * I think import highlight dependencies between modules than you would have
   otherwise.
+* Having migrated all of the standard library over to import, I certainly
+  don't mind having import expression. It's much more compact. Keeps the
+  imports small and out of the way. Feels like it makes renaming on import
+  more obvious and explicit than it was before. Does especially well when
+  importing a lot from the same module, like for lists.

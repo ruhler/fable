@@ -1,14 +1,8 @@
 # @module[/Std/List/Search%]
 #  Utilities for finding elements of a list that satisfy a given condition.
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
+Bool@, True, False .= /Std/Bool%;
+List@, List, Items, Empty .= /Std/List%;
 
 # @func[Any] Check if any element in the list satisfies a condition.
 #  @arg[@][T@] The type of element on the list.
