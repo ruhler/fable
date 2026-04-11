@@ -1,18 +1,18 @@
 
 Bool@, True, False .= /Std/Bool%;
-Drawing@, Blank, Translate .= /App/Drawing%;
-
+Str .= /Std/Char/Ascii%;
 Int@, Add, Sub, Neg .= /Std/Int%;
 Quot, Mod .= /Std/Int/Div%;
 Eq .= /Std/Int/Eq%;
 Lt, Gt .= /Std/Int/Cmp%;
 Int .= /Std/Int/Lit%;
-
-Graphics = /Invaders/Graphics%;
-
 List@, List .= /Std/List%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
+
+Drawing@, Blank, Translate .= /App/Drawing%;
+
+Graphics = /Invaders/Graphics%;
 
 # DirState@ --
 #   State keeping track of which direction the ufo will fly in from.
@@ -55,10 +55,10 @@ Points@ = +(Unit@ 50, Unit@ 100, Unit@ 150, Unit@ 300);
 # DrawPoints --
 (Points@) { Drawing@; } DrawPoints = (Points@ points) {
   points.?(
-    50: Graphics.Digits|50,
-    100: Graphics.Digits|100,
-    150: Graphics.Digits|150,
-    300: Graphics.Digits|300);
+    50: Graphics.String(Str|50),
+    100: Graphics.String(Str|100),
+    150: Graphics.String(Str|150),
+    300: Graphics.String(Str|300));
 };
 
 # Dying@ --

@@ -1,52 +1,37 @@
 
-Decimal@ = /Core/Digits%.Decimal@;
+Str .= /Std/Char/Ascii%;
+ToString .= /Std/Char/Output%;
+Int@, Add, Sub .= /Std/Int%;
+Mod .= /Std/Int/Div%;
+Eq .= /Std/Int/Eq%;
+Gt .= /Std/Int/Cmp%;
+Int .= /Std/Int/Lit%;
+List, Concat .= /Std/List%;
+Maybe@ .= /Std/Maybe%;
+String@ .= /Std/String%;
+Unit@, Unit .= /Std/Unit%;
 
-Drawing@ = /App/Drawing%.Drawing@;
-Blank = /App/Drawing%.Blank;
-Drawings = /App/Drawing%.Drawings;
-Translate = /App/Drawing%.Translate;
-
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Div = /Std/Int/Div%.Div;
-Eq = /Std/Int/Eq%.Eq;
-Gt = /Std/Int/Cmp%.Gt;
-LeastSignificantDigit = /Core/Int/Digits%.LeastSignificantDigit;
-
-Int = /Std/Int/Lit%.Int;
-
-List = /Std/List%.List;
-Concat = /Std/List%.Concat;
+Drawing@, Blank, Drawings, Translate .= /App/Drawing%;
 
 Graphics = /Invaders/Graphics%;
 
 Aliens = /Invaders/Aliens%;
-Aliens@ = Aliens.Aliens@;
+Aliens@ .= Aliens;
 
 Bases = /Invaders/Bases%;
-Bases@ = Bases.Bases@;
+Bases@ .= Bases;
 
 Bombs = /Invaders/Bombs%;
-Bombs@ = Bombs.Bombs@;
+Bombs@ .= Bombs;
 
 Bullet = /Invaders/Bullet%;
-Bullet@ = Bullet.Bullet@;
+Bullet@ .= Bullet;
 
 Ship = /Invaders/Ship%;
-Dir@ = Ship.Dir@;
-Ship@ = Ship.Ship@;
+Dir@, Ship@ .= Ship;
 
 Ufo = /Invaders/Ufo%;
-Ufo@ = Ufo.Ufo@;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Ufo@ .= Ufo;
 
 Lives@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3);
 
@@ -250,19 +235,12 @@ Input@ = +(Dir@ dir, Unit@ fire);
 };
 
 (Int@) { Drawing@; } DrawScore = {
-  Int@ 10 = Int|10;
+  Int@ 10000 = Int|10000;
 
   (Int@ score) {
-    # We only print 4 digits for the score.
-    Int@ s1000 = score;
-    Int@ s100 = Div(s1000, 10).q;
-    Int@ s10 = Div(s100, 10).q;
-    Int@ s1 = Div(s10, 10).q;
-    Decimal@ d0 = LeastSignificantDigit(s1000);
-    Decimal@ d1 = LeastSignificantDigit(s100);
-    Decimal@ d2 = LeastSignificantDigit(s10);
-    Decimal@ d3 = LeastSignificantDigit(s1);
-    Translate(Int|40, Int|220, Graphics.Digits[d3, d2, d1, d0]);
+    # Print exactly 4 digits for the score.
+    String@ digits = ToString $ /Std/Int/Show%.Show(Add(10000, Mod(score, 10000)));
+    Translate(Int|40, Int|220, Graphics.String(digits.items.tail));
   };
 };
 

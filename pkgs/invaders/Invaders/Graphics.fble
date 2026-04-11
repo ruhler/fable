@@ -2,8 +2,6 @@
 Char@ = /Std/Char%.Char@;
 Char = /Std/Char/Ascii%.Char;
 
-Decimal@ = /Core/Digits%.Decimal@;
-
 Color@ = /App/Drawing%.Color@;
 Drawing@ = /App/Drawing%.Drawing@;
 Blank = /App/Drawing%.Blank;
@@ -14,8 +12,6 @@ Rect = /App/Drawing%.Rect;
 Translate = /App/Drawing%.Translate;
 
 Int = /Std/Int/Lit%.Int;
-
-List@ = /Std/List%.List@;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -259,17 +255,6 @@ Drawing@ Digit9 = Drawings[
   Rect(Int|4, Int|1, Int|1, Int|5, white)
 ];
 
-# Digits --
-#   Draw a string of decimal digits.
-(List@<Decimal@>) { Drawing@; } Digits = (List@<Decimal@> digits) {
-  digits.?(empty: Blank);
-  Drawing@ first = digits.items.head.?(
-    0: Digit0, 1: Digit1, 2: Digit2, 3: Digit3,
-    4: Digit4, 5: Digit5, 6: Digit6, 7: Digit7,
-    8: Digit8, 9: Digit9);
-  Over(first, Translate(Int|8, Int|0, Digits(digits.items.tail)));
-};
-
 Drawing@ LetterA = Drawings[
   Rect(Int|0, Int|0, Int|1, Int|5, white),
   Rect(Int|4, Int|0, Int|1, Int|5, white),
@@ -508,5 +493,5 @@ Drawing@ Screenshot = Drawings[
   Translate(Int|148, Int|11, DeadShipB)
 ];
 
-@(Ship, Aliens, Ufo, DeadAlien, Background, Digits, String, Screenshot, Bullet,
+@(Ship, Aliens, Ufo, DeadAlien, Background, String, Screenshot, Bullet,
   Bomb, Squiggle, DeadShipA, DeadShipB);

@@ -106,7 +106,7 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Digits.fble
   - pkgs/core/Core/Fifo/Tests.fble  [Removed]
   - pkgs/core/Core/Fifo.fble        [Removed]
-  - pkgs/core/Core/Int/Digits.fble
+  - pkgs/core/Core/Int/Digits.fble  [Removed]
   - pkgs/core/Core/Int/Iter.fble
   - pkgs/core/Core/Int/Read.fble
   - pkgs/core/Core/Iter.fble
