@@ -1,32 +1,18 @@
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
 
-Decimal@ = /Core/Digits%.Decimal@;
+Bool@, True, False .= /Std/Bool%;
+Drawing@, Blank, Translate .= /App/Drawing%;
 
-Drawing@ = /App/Drawing%.Drawing@;
-Blank = /App/Drawing%.Blank;
-Translate = /App/Drawing%.Translate;
-
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Neg = /Std/Int%.Neg;
-Div = /Std/Int/Div%.Div;
-Eq = /Std/Int/Eq%.Eq;
-Lt = /Std/Int/Cmp%.Lt;
-Gt = /Std/Int/Cmp%.Gt;
-Int = /Std/Int/Lit%.Int;
-LeastSignificantDigit = /Core/Int/Digits%.LeastSignificantDigit;
+Int@, Add, Sub, Neg .= /Std/Int%;
+Quot, Mod .= /Std/Int/Div%;
+Eq .= /Std/Int/Eq%;
+Lt, Gt .= /Std/Int/Cmp%;
+Int .= /Std/Int/Lit%;
 
 Graphics = /Invaders/Graphics%;
 
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+List@, List .= /Std/List%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Unit@, Unit .= /Std/Unit%;
 
 # DirState@ --
 #   State keeping track of which direction the ufo will fly in from.
@@ -164,21 +150,19 @@ Kill@ = *(Int@ points, Ufo@ ufo);
 
 # Points --
 #   Choose the number of points to get for shooting the ufo.
-(Int@) { Points@; } Points = (Int@ ufo_x) {
+(Int@) { Points@; } Points = {
   # We treat the x position of the ufo as effectively random, then draw points
   # from the distrubtion with 10% 300, 20% 150, 30% 100, and 40% 50.
-  Decimal@ d = LeastSignificantDigit(Div(ufo_x, Velocity).q);
-  d.?(
-    0: Points@(100: Unit),
-    1: Points@(50: Unit),
-    2: Points@(150: Unit),
-    3: Points@(100: Unit),
-    4: Points@(50: Unit),
-    5: Points@(300: Unit),
-    6: Points@(50: Unit),
-    7: Points@(100: Unit),
-    8: Points@(150: Unit),
-    9: Points@(50: Unit));
+  List@<Points@> distribution = List[
+    Points@(100: Unit), Points@(50: Unit), Points@(150: Unit),
+    Points@(100: Unit), Points@(50: Unit), Points@(300: Unit),
+    Points@(50: Unit), Points@(100: Unit), Points@(150: Unit),
+    Points@(50: Unit)
+  ];
+  
+  (Int@ ufo_x) {
+    /Std/List/Index%.Get(distribution, Mod(Quot(ufo_x, Velocity), Int|10));
+  };
 };
 
 (Int@, Int@, Ufo@) { Maybe@<Kill@>; } Shoot = (Int@ x, Int@ y, Ufo@ ufo) {
