@@ -16,16 +16,15 @@ Unit@, Unit .= /Std/Unit%;
 #   Output a single character.
 Stream@ = <@ S@> { *(
   S@ return,
-  (S@, (Unit@) { S@; }) { S@; } do,
-  (Char@) { S@; } put
+  (S@, (Unit@) { S@; }) { S@; } do
 );};
 
 # @type@[Output@] A computation that outputs characters to a stream.
-Output@ = <@ S@>(Stream@<S@>) { S@; };
+Output@ = <@ S@>(Stream@<S@>, (Char@) { S@; }) { S@; };
 
 # @value[Return] A computation that outputs nothing.
 #  @type[Output@]
-Output@ Return = <@ S@>(Stream@<S@> s) {
+Output@ Return = <@ S@>(Stream@<S@> s, (Char@) { S@; } _) {
   s.return;
 };
 
@@ -36,25 +35,25 @@ Output@ Return = <@ S@>(Stream@<S@> s) {
 #   A computation that outputs the first thing, then calls the function f to
 #   get the second thing to output, then outputs the second thing.
 (Output@, (Unit@) { Output@; }) { Output@; }
-Do = (Output@ ma, (Unit@) { Output@; } f)<@ S@>(Stream@<S@> s) {
-  s.do(ma(s), (Unit@ _) { f(Unit, s); });
+Do = (Output@ ma, (Unit@) { Output@; } f)<@ S@>(Stream@<S@> s, (Char@) { S@; } put) {
+  s.do(ma(s, put), (Unit@ _) { f(Unit, s, put); });
 };
 
 # @func[Put] Output a single character.
 #  @arg[Char@][c] The character to output.
 #  @returns[Output@] A computation that outputs the character.
-(Char@) { Output@; } Put = (Char@ c)<@ S@>(Stream@<S@> s) {
-  s.put(c);
+(Char@) { Output@; } Put = (Char@ c)<@ S@>(Stream@<S@> _, (Char@) { S@; } put) {
+  put(c);
 };
 
 # @func[String] Output a string.
 #  @arg[String@][str] The string to output.
 #  @returns[Output] A computation that outputs the string.
 (String@) { Output@; }
-String = (String@ str)<@ S@>(Stream@<S@> s) {
+String = (String@ str)<@ S@>(Stream@<S@> s, (Char@) { S@; } put) {
   str.?(empty: s.return);
-  Unit@ _ := s.do(s.put(str.items.head));
-  String(str.items.tail, s);
+  Unit@ _ := s.do(put(str.items.head));
+  String(str.items.tail, s, put);
 };
 
 # @func[Concat] Output a sequence of computations.
@@ -110,7 +109,7 @@ Char@ '%s' = U|73;
 #  @arg[List@<Output@>[args] Format args.
 #  @return[Output@] The formatted output.
 (String@, List@<Output@>) { Output@; }
-Format = (String@ fmt, List@<Output@> args)<@ S@>(Stream@<S@> s) {
+Format = (String@ fmt, List@<Output@> args)<@ S@>(Stream@<S@> s, (Char@) { S@; } put) {
   fmt.?(empty: s.return);
   Char@ c = fmt.items.head;
   /Std/Char/Eq%.Eq('%%', c).?(true: {
@@ -118,20 +117,20 @@ Format = (String@ fmt, List@<Output@> args)<@ S@>(Stream@<S@> s) {
     Char@ e = fmt.items.tail.items.head;
 
     /Std/Char/Eq%.Eq('%%', e).?(true: {
-      Unit@ _ := s.do(s.put(c));
-      Format(fmt.items.tail.items.tail, args, s);
+      Unit@ _ := s.do(put(c));
+      Format(fmt.items.tail.items.tail, args, s, put);
     });
 
     /Std/Char/Eq%.Eq('%s', e).?(true: {
-      Unit@ _ := s.do(args.items.head(s));
-      Format(fmt.items.tail.items.tail, args.items.tail, s);
+      Unit@ _ := s.do(args.items.head(s, put));
+      Format(fmt.items.tail.items.tail, args.items.tail, s, put);
     });
 
     /Std/Undef%.Undef.undef<S@>;
   });
 
-  Unit@ _ := s.do(s.put(c));
-  Format(fmt.items.tail, args, s);
+  Unit@ _ := s.do(put(c));
+  Format(fmt.items.tail, args, s, put);
 };
 
 # Output a string given the tail of the string.
@@ -142,8 +141,7 @@ Stream@<StringStream@> StringStream = @(
   return: (String@ tail) { tail; },
   do: (StringStream@ a, (Unit@) { StringStream@; } fb, String@ tail) {
     a(fb(Unit, tail));
-  },
-  put: (Char@ c, String@ tail) { Items(c, tail); }
+  }
 );
 
 # @func[ToString] Output to a String@.
@@ -151,15 +149,14 @@ Stream@<StringStream@> StringStream = @(
 #  @returns[String@] A string with the output characters.
 (Output@) { String@; }
 ToString = (Output@ show) {
-  show(StringStream, Empty<Char@>);
+  show(StringStream, Items<Char@>, Empty<Char@>);
 };
 
 # Null output stream that goes through the output but ignores the characters
 # output.
 Stream@<Unit@> NullStream = @(
   return: Unit,
-  do: (Unit@ u, (Unit@) { Unit@; } f) { f(u); },
-  put: (Char@ _) { Unit; }
+  do: (Unit@ u, (Unit@) { Unit@; } f) { f(u); }
 );
 
 # @func[ToNull] Output to a Unit@.
@@ -172,7 +169,7 @@ Stream@<Unit@> NullStream = @(
 #  @returns[Unit@] Nothing interesting.
 (Output@) { Unit@; }
 ToNull = (Output@ show) {
-  show(NullStream);
+  show(NullStream, (Char@ _) { Unit; });
 };
 
 @(Output@, Stream@,

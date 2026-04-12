@@ -34,16 +34,11 @@ OStream = <<@>@ M@>(Monad@<M@> m, Byte.OStream@<M@> s) {
     m.do(ma, f);
   };
 
-  (Char@) { S@; }
-  put = (Char@ c) {
-    # TODO: Handle unicode properly.
-    s(/Std/Char%.Pos(c));
-  };
-
-  /Std/Char/Output%.Stream@<M@<Unit@>> stream = @(return, do, put);
+  /Std/Char/Output%.Stream@<M@<Unit@>> stream = @(return, do);
 
   Char.Put@<M@, Output@> put = (Output@ output) {
-    output(stream);
+    # TODO: Handle unicode properly.
+    output(stream, (Char@ c) { s(/Std/Char%.Pos(c)); });
   };
 
   M@<Unit@> close = s(Byte.End);

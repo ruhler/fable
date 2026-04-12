@@ -109,3 +109,37 @@ code for us based on the structure of a type? I've wanted that before for
 other use cases too. Essentially what you could do with a Data@ class, but
 hopefully magically without the overhead cost of converting to/from Data@.
 
+---
+
+I don't want users to have to write their own map implementation for custom
+data types. Or at least, they shouldn't have to know the general approach of
+union to struct, struct to map of map.
+
+Options are:
+* I provide helper functions to make it easy to define their own map.
+* I provide a hash map implementation of Map, if you provide a way to hash and
+  compare your types.
+* I provide a 'data' implementation of Map, if you provide a way to convert
+  your types to data.
+* Optionally you could provide a way to go back to your type from data, then
+  we don't have to save the key on the map, we can have it encoded
+  implicitly in the structure of the map. Without sharing though.
+
+I haven't thought of a reasonable way to describe generic code in fble yet
+that could let you write a generic implementation of customized Map (or Eq, or
+Data, or Has) that works for any use provided data type.
+
+We could probably do a lot of sketchy but powerful stuff if we had a standard
+way of serializing a data type. For example, say we provide a way to represent
+any data type is a sequence of Int@. When you define a data type, you provide
+functions to/from a sequence of Int@. We can make the API a lazy one, so we
+don't have to traverse the entire object to get the initial part of the
+sequence.
+
+That sounds so dangerous though. Like it subverts type checking. Also, tedious
+because the runtime knows all the information it needs to do the conversion
+automatically. It's annoying the user would have to write all that code. I
+really wish we could write code that operates on the native representation of
+the data type, and be able to reuse the same code for any purely data data
+type.
+

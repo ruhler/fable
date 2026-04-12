@@ -3834,7 +3834,7 @@ around 3 separate things everywhere.
 
 Going back to foundations of IO, we have:
 * Untyped data interchange between different programs in different languages.
- - Binary / Text as approaches for untyped data
+ - Binary / Text as appropriate for untyped data
 * Batching is important for performance.
  - Semantically batching means: reader doesn't need to read the first element
    in a batch until the last element in the batch is ready.
@@ -3869,3 +3869,574 @@ help transition between typed and untyped data types. Like, we generate a
 typed Foo@ stream (batchable, closeable), and then add an adapter to convert
 each Foo@ to text or binary while preserving the batch boundaries.
 
+---
+
+Saying end of file is to avoid deadlock is a little weird. Is it not better to
+say explicit "hang up" to avoid deadlock? Like, why would we ever want to
+treat breaking deadlock as end of file?
+
+There is end of file when talking about files. There is explicit end of stream
+when talking about two processes deciding to explicitly end their
+communications. Maybe it's not a good idea to conflate these three different
+scenarios.
+
+If we separate end of file from out of band hang up error, does it make sense
+to consider a stream of maybe instead of a stream that returns nothing at the
+end?
+
+This brings me back too to the question about how this relates to an monadic
+iterator approach. It seems like in one case we have a 'get' function we can
+call after the stream is closed. In the other case, once the stream is at an
+end, there's not even a get function you can call. Isn't that a better way to
+represent it?
+
+Get is a destructive operation. Once you get that particular value, you can't
+get it ever again.
+
+How about I try again for abstract IO interface:
+* Make it work for any arbitrary type
+ - Binary / Text at the lowest level for going outside the language.
+ - Typed internally to allow for composition and abstractions.
+* Batching is important on output.
+ - A B C ... E F G. We want a way to say: A need not be delivered before E is
+   ready. Batching doesn't nest.
+
+See what happens if we try to nest batching:
+
+  A { B { C D E } F G} H
+
+This says we need not deliver C until E is ready. We need not deliver B until
+G is ready. But the outer implies the inner, because if we don't need to
+deliver B until G is ready, we don't need to deliver C until G is ready. And
+if we don't need to deliver C until G is ready, we also don't need to deliver
+it before E is ready.
+
+Anyway, I like my current approach to batching anyway. Define a type Output@
+which is an atomic stream of data. Atomic in the sense that once you start
+streaming, you get all the way to the end before you perform any other side
+effects. Stream because we don't return a big list in memory, we give you the
+data only on demand.
+
+Conceptually an Output@ stream for some type A@ is:
+* empty
+* A value of type A@ followed by an output stream.
+* Some notion of laziness / demand to say when you are ready for the next
+  element on the stream.
+
+If we didn't have laziness, we may as well just use a list. But I explicitly
+want it to be a stream. Are there other ways to encode laziness?
+
+A. Output@ is List@
+* Easy to consume on demand.
+* Easy ish to produce, but careful about composition and quadratic blowup.
+* Forces the entire thing in memory at once.
+
+B. Output@ is a lazy list
+  Output@ = Lazy@<+(Unit@ empty, *(A@, Output@) items)>;
+Where lazy just means you have to pass Unit@ to get the next thing on demand.
+  Output@ = (Unit@) { +(Unit@ empty, *(A@, Output@) items); };
+* Easy to consume on demand.
+* Doesn't force the entire thing in memory at once.
+* Doesn't really compose well. You can add to the front, but not two things
+  together.
+
+C. Output@ is a write monad thing.
+  Output@ = <@ A@> {
+    <<@>@ M@>(Monad@<M@>, (A@) { M@<Unit>@}) { M@<Unit@>;}
+  }
+* You have to write it all out before you can start to consume.
+  But you can write it in whatever format you want for easy consumption.
+* Easy composition.
+* Doesn't force the whole thing in memory at once, until you want to start
+  consuming it.
+* Let's you interleave side effects in output unknowingly?
+
+D. Output@ is a monoid like thing.
+  Output@ = <@ A@> {
+    <@ M@>(Monoid@<M@>, (A@) { M@; }) { M@; }
+  }
+  Where Monoid@<M@> is M@ identity and (M@, M@) { M@; } operator.
+* Easy composition.
+* Doesn't force the whole thing in memory at once.
+* Doesn't allow you to interleave side effects.
+
+E. Output@ is our current thing.
+Same as (D), but instead of (M@, M@) { M@; } operator, we have
+  (M@, (Unit@) { M@; }) { M@; }
+
+Does that suggest that (D) forces the whole thing in memory at once? Or that
+depends on your implementation of M@?
+
+For example:
+  
+  Monoid@<String@> StrMonoid = {
+    identity = Str|'';
+    operator = Append;
+  };
+
+If I now write something like:
+  
+  MPlus(Foo(x), Foo(y));
+
+Then we compute the full string for both arguments, append, it's not good.
+
+How can I sequence then? How can we ensure this is safe? Can MPlus take care
+of that for us?
+
+  Unit@ _ := Do $ Foo(x);
+  Foo(y);
+
+That ensures laziness at the caller. I don't think we can do it in the
+implementation, because otherwise Foo(y) is called and traversed in its
+entirety.
+
+But could Foo(y) not return a function that just captures y? No. It can't.
+Because we are going to traverse all of y whatever that may be.
+
+Thus I think my current approach is the right way to do it. Output@ takes a
+stream type S@ as input. That stream type allows composition, but only with
+direct ordering requirement in the composition to say it's up to the stream
+when to continue executing the user's code, not up to the user. That needs
+cooperation with the user, which a generic Monoid@ interface does not allow.
+  
+Thus, proposal is to generalize existing Output@ type. return, do, put seem
+reasonable to me still. But we generalize by data type.
+
+ .../Output%:
+    Output@, Stream@, Return, Do, Put, Puts, Concat, Join,
+    ToList, ToNull
+ 
+This gives us our ability to stream, and the structure we need to be able to
+batch.
+
+So far I don't have a notion for output error. But we should be able to handle
+that just fine. The key point being, whoever is writing the Output@ doesn't
+care about errors. It's the person who is putting the Output@ that cares about
+errors. They won't be able to recover though. If there's an error in the
+middle of outputting the stream, you won't know where.
+
+Next is what we build on top of Output@ for streams. I want to interleave with
+other side effects now. I want a single 'Put' thing that takes an Output@ to
+put into the stream. That gives us out batch definition.
+
+What can happen when you put into a stream?
+* Successful put.
+* Error.
+
+If there is an error, there's not really anything you can do about it except:
+* Notify someone. Assume the entire stream output is corrupted, and start the
+  whole thing over again. I don't mean the put. I mean the entire program
+  writing to the stream.
+
+I suppose you could imagine a very lucky and special case where nothing was
+written and it's a temporary failure, so you can retry the put and continue.
+That seems too unlikely and obscure to me though.
+
+Any particular stream could have all sorts of different kinds of errors. Can I
+imagine any examples where the error is more than just an identifier with a
+human readable string? Like, any time we would want to provide extra
+information of various types in the error message?
+* Perhaps nested errors. Like, you encountered an error while ???
+* Maybe out of space wants to provide how much quota you had. That's a decent
+  enough example.
+
+Maybe we say a stream has an error type E@. If you want to do something with
+E@, or to be able to, that needs to be part of your interface and something to
+do with the monad M@.
+
+For example, if you want to print out the error, you need a way to convert
+E@ to String@. Otherwise all you can do is know about and propagate the error
+some how.
+
+OStream@ = <<@>@ M@, @ A@, @ E@> { *(
+  (A@) { M@<Maybe@<E@>>; } put,
+  ...
+); };
+  
+Perhaps we want to define Result@<E@> as a different way to say Maybe@<E@>
+with names 'ok' and 'err' instead of 'nothing' and 'just'?
+
+Now then, then '...' is for the question of how to indicate end of stream.
+
+There are really only two choices: in band or out of band.
+
+In band means we have some value for A@ that we use to tell the consumer to
+stop reading because there is no more information. For stdio, maybe that's
+nul or some special control code in the unicode space. For byte output, maybe
+that's -1 or 256. Or maybe instead of having a stream of Char@, we have a
+stream of A@ = Maybe@<Char@> and Nothing is the special value.
+
+Out of band means we have some separate explicit close api M@<Unit@>, which we
+either pass as part of OStream@ type or separately.
+
+Previously I had said we want it to be out of band. But that was when I was
+saying because we want to send it for breaking deadlock. If we think of
+breaking deadlock as an error condition instead of a close condition, then
+that argument no longer applies.
+
+A related question: should anyone with access to write data to the stream be
+able to close it? Or you need special permission to be allowed to close a data
+stream?
+
+An interesting thing about using in band, is maybe we don't have to have a
+notion of an open or closed stream. The stream just is. If you read a value
+from the stream saying end of file, well, that doesn't prevent you from
+reading again and maybe getting some useful subsequent data from the stream.
+It doesn't make this weird state of a stream where you are writing to a closed
+stream or reading from a closed stream. It's just a stream. Potentially
+infinite. That maybe you will wait forever for the next data, and maybe the OS
+can detect that and save you, or maybe it can't.
+
+The reader of a stream has to be able to handle end of stream regardless of
+whether it's in band or out of band. They have to know when to stop reading
+the next element of the stream. Same with handling errors.
+
+  IStream@<M@, A@, E@> = M@<Either@<A@, E@>>;
+
+This Either@ thing is interesting. We could reuse that for put with Unit@.
+That could be a reasonable way to distinguish between Result@ and Maybe@.
+
+Again, you can do whatever you can with E@ depending on what interface you are
+provided for working with E@.
+
+Which gives me the rough sketch proposal now, from the ground up, to support
+input output streams of arbitrary types with support for streaming, batching,
+closing, and error detection.
+
+  # A possibly failing result of a computation.
+  # You get an ok result or an error.
+  Result@ = <@ A@, @ E@> { +(A@ ok, E@ err); };
+
+  # An interface for types that can be sequenced one after the other.
+  Stream@ = <@ S@> { *(S@ return, (S@, (Unit@) { S@; }) { S@; } do); };
+
+  # A computation that outputs values of type A@ to whatever stream is
+  # provided.
+  Output@ = <@ A@, @ S@>(Stream@<S@>, (A@) { S@; }) { S@; };
+
+  # An interface for outputting output.
+  Out@ = <<@>@ M@, @ A@, @ E@>(Output@<A@>) { M@<Result@<Unit@, E@>>; };
+
+  # An interface for getting input.
+  In@ = <<@>@ M@, @ A@, @ E@> { M@<Result@<A@, E@>>; };
+
+For text streams, A@ is Char@, and we pick a special END value, for example
+using -1 as the unicode code point. For binary streams, A@ is Int@, and we
+pick a special END value, -1, as the end of stream indicator.
+
+There are no special semantics for interpreting end values in the In@, or Out@
+interfaces. That's entirely up to the user to encode and manage.
+
+Uh, except, I don't have a way to pass -1 as a character or int over a stdio
+stream to the other process. I can convert end of file to -1 on input. I can
+convert -1 to end of file on output. It's not going to perfectly convey the
+stream though, because what happens if you write data after -1?
+
+Also, ask yourself what's more convenient and safer to write:
+
+  Maybe@<Char@> mc := m.do(Get);
+  mc.?(nothing: ...);
+  f(mc.just);
+
+  Char@ c := m.do(Get);
+  IsEof(c).?(true: ...);
+  f(c);
+
+I suppose now it would be something like:
+
+  Result@<Char@, E@> mc := m.do(Get);
+  mc.?(err: ...);
+  IsEof(mc.ok).?(true: ...);
+  f(mc.ok);
+
+In other words, if we expect the code to diverge significantly at end of file,
+it seems worth it to encode that explicitly in the type of value being read
+instead of implicitly.
+
+It's not like the EOF character is part of the content.
+
+Another option is to treat end of file like an error condition. But that's a
+special kind of error condition we probably want to be explicit about.
+
+  Result@<Maybe@<Char@>, E@> c := m.do(Get);
+  c.?(err: ...);
+  c.ok.nothing.?(true: ...);
+  f(c.ok.just);
+
+  Result@<Char@, Maybe@<E@>> c := m.do(Get);
+  c.?(err: {
+    c.err.?(nothing: ... # end of file
+    ...
+  });
+  f(c.ok);
+
+  GetResult@<Char@, E@> c := m.do(Get);
+  c.?(err: ...);
+  c.?(eof: ...);
+  f(c.ok);
+
+The last feels most explicit, direct to code. It just needs a custom type for
+getting the result.
+
+It's pretty normal to read until end of file when reading a file. Not read
+until err. Not read until the character value is x. Read until end of file.
+
+Purely from a user point of view, I'm pretty sure I want to be able to
+explicitly distinguish between reading a value, having reached the end of the
+file, and an error of some kind or another.
+
+Let's step back and review:
+* Output@ gives you streaming.
+* Putting Output@ in M@ gives you batching, interaction.
+* Close / end of file let's you know when a file ends.
+* Error on put / read let's you deal with errors.
+
+We already have reason to generalize Output@ and reuse it for Show.
+
+Do I ever want the ability to put/get from streams without close/end of file?
+Without the possibility of error?
+
+There's not really such a thing as an endless stream, right? stdin/stdout
+might be closest. You could just stop reading and writing the stream though.
+
+Ascii has lots of 'end of...' characters. End of text. End of transmission.
+End of medium.
+
+---
+
+When I write C code, or Java code, I don't worry about errors writing files.
+Certainly I worry about errors opening files, sockets, etc. I use perror()
+until I figure out what's wrong with my code, then usually delete it. I
+suppose in Java you would get an exception, so that takes care of allowing me
+to ignore things there.
+
+I don't even know what fgetc returns if the file is in an error state. It must
+be EOF, right? I never call ferror.
+
+That may not be good practice, but it suggests maybe for reading and writing
+having errors be a prominent part of the interface isn't necessary?
+
+The thought of closing/ending files is a little weird too. Let's consider some
+use cases:
+* I'm writing out a file all at once.
+ - I have everything I need in memory to write it out.
+ - A single Output@ should suffice to write it all.
+* I'm logging stuff out to a file.
+ - I do periodic small writes as time goes by.
+ - Probably I should flush and close the log when I'm done.
+* Generating a file in a streaming fashion from input
+ - For example, encrypting a file.
+ - I mix writes to the output with reads from the input.
+ - Close the file when it's done.
+* Interacting with the user
+ - I switch between waiting for input and writing output.
+ - There's not much notion of closing the input/output streams.
+
+The general case is pretty clear though:
+* You write a sequence of Output@, with interaction or other side effects in
+  between, and then you close the stream.
+
+Next straw proposal:
+* Stream@ = <@ S@> { *(S@ return, (S@, (Unit@) { S@; }) { S@; } do); };
+* Output@ = <@ A@, @ S@>(Stream@<S@>, (A@) { S@; }) { S@; };
+* Out@ = <<@>@ M@, @ A@> { *((Output@<A@>) { M@<Unit@>; } put, M@<Unit@> close); };
+* In@ = <<@>@ M@, @ A@> { M@<Maybe@<A@>>; };
+
+In other words:
+* No errors for reading/writing. Maybe add those out of band later.
+* Explicit close passed with Out@.
+* Use Maybe@ to distinguish between end of stuff to read and otherwise.
+
+It's a fair question if we want to split the Out@ interface into:
+1. That which just lets you write Output@.
+2. Control methods for closing, testing for end of file or error, or some such.
+
+If we have generic Put@ and Get@ types, maybe we do it as:
+
+* Stream@ = <@ S@> { *(S@ return, (S@, (Unit@) { S@; }) { S@; } do); };
+* Output@ = <@ A@, @ S@>(Stream@<S@>, (A@) { S@; }) { S@; };
+* Put@ = <<@>@ M@, @ A@> { (A@) { M@<Unit@>; }; };
+* Get@ = <<@>@ M@, @ A@> { M@<A@>; };
+* Out@ = <<@>@ M@, @ A@> { Put@<Output@<A@>>; };
+* In@ = <<@>@ M@, @ A@> { Get@<Maybe@<A@>>; };
+* OStream@ = <<@>@ M@, @ A@> { *(
+    Out@<M@, A@> put,
+    M@<Unit@> close,
+    ...
+  };
+* IStream@ = <<@>@ M@, @ A@> { *(
+    In@<M@, A@> get
+    M@<Bool@> eof
+    ...
+  };
+
+Uh, functions should typically take Put@<Output@<A@>>, Get@<Maybe@<A@>> if they
+don't need other control. Maybe call those Out@<A@> and In@<A@>. But what do I
+call the control functions to allow you to check status and other things?
+OStream@ and IStream@ maybe?
+
+Okay? That's quite the handful. But it gives you the distinctions you might
+care about.
+
+Do I want to restrict what things you can close or test for end of file on?
+Why not inline In@ and Out@ into OStream@ and IStream@? Do we have any helper
+functions we are already putting into Output@ that we might want, and if so,
+do they take the In@ and Out@ interfaces, or the IStream@ and OStream@
+interfaces?
+
+I don't think it makes sense to restrict or separate In@/Out@ from
+IStream@/OStream@. Sure some functions may not want to close or check for end
+of file explicitly. But In@ has the concept of a stream that gets closed, so
+Out@ should have the concept of a closeable stream?
+
+Speaking of concepts:
+* Get@/Put@
+ - you can get or put an object of the given type.
+ - no notion of end.
+ - no notion of batching beyond a single element put.
+* In@/Out@
+ - Let's you output a batched stream of elements.
+ - Has a notion of a start and end.
+
+I think 'input stream' / 'output stream' is the right concept to use for a
+closeable stream that supports batching of streamed elements. So, IStream@ and
+OStream@ maybe make sense for names, though those are a little tedious to
+write out. Stream.In@, Stream.Out@? Maybe we can use In@ and Out@ and have the
+stream be implicit from the context? I do like the names In@ and Out@ for
+brevity.
+
+In terms of naming, Get@/Put@ feel more like one off occurrences. Where
+In@/Out@ feel like direction or flow of data. So naming wise I think that
+works.
+
+* Stream@ = <@ S@> { *(S@ return, (S@, (Unit@) { S@; }) { S@; } do); };
+* Output@ = <@ A@, @ S@>(Stream@<S@>, (A@) { S@; }) { S@; };
+* Put@ = <<@>@ M@, @ A@> { (A@) { M@<Unit@>; }; };
+* Get@ = <<@>@ M@, @ A@> { M@<A@>; };
+* In@ = <<@>@ M@, @ A@> { Get@<Maybe@<A@>>; };
+* Out@ = <<@>@ M@, @ A@> { *(
+    Put@<M@, Output@<A@>> put,
+    M@<Unit@> close,
+    ...
+  };
+* In@ = <<@>@ M@, @ A@> { *(
+    Get@<M@, Maybe@<A@>> get
+    M@<Bool@> eof
+    ...
+  };
+
+Maybe avoid passing just the put part or just the get part of In@ and Out@?
+
+But let's do think about what close and eof actually mean. eof is telling you
+if you already read past the end of the file, not if the next thing you read
+is the end?
+
+Also, 'file' isn't a great name to use. How about just end? Maybe reuse that
+for Out@ too?
+
+* Out@ = <<@>@ M@, @ A@> { *(
+    Put@<M@, Output@<A@>> put,
+    M@<Unit@> end,
+    ...
+  };
+* In@ = <<@>@ M@, @ A@> { *(
+    Get@<M@, Maybe@<A@>> get
+    M@<Bool@> end
+    ...
+  };
+
+But having end for input doesn't make sense to me. If we want to distinguish
+between end of stream and error on input, we should put it in the return type
+for get. Not as some separate side function to call after the get fails.
+
+* Input@ = <A@> { +(A@ ok, Unit@ end, Unit@ err); };
+* In@ = <<@>@ M@, @ A@> { *(Get@<M@, Input@<A@>> get); };
+
+There's some nice symmetry there between Input@ and Output@. Ish.
+
+What are the semantics of closing a file? The intent is that all subsequent
+reads on the other end return 'end'. All future puts are ignored.
+
+The other question is if we should be able to 'put' end. But why? That's not
+useful from a user perspective. We always know explicitly separately when we
+want to end the stream. No reason not to call a specific explicitly different
+function.
+
+Now the question is: am I going to provide any way in the interface to talk
+about errors, or no? Or leave it open somehow? If not, then I may as well use
+the Maybe@ type instead of Input@. And 'put' should probably be allowed to
+return an error code?
+
+I don't think C99 has a notion of error code beyond 'error' versus 'no error'.
+Is that useful? Except it has errno and perror and strerror() presumably to
+figure out what the error is if there is an error.
+
+Okay? I'm getting closer. Just need to decide about errors with respect to In@
+and Out@ interfaces. Then I think we'll have a clear proposal for moving
+forward. And I should update stdin and stdout to use In@/Out@, not Put@/Get@.
+In other words, standard input and standard output can be closed.
+
+---
+
+There are three ways I can handle errors in the API:
+1. Don't. No errors. Put returns M@<Unit@>. Get returns Maybe@<A@>.
+2. Signal error, but no details. Put returns M@<Bool@>. Get returns
+  +(A@ ok, Unit@ end, Unit@ err).
+ Presumably we have some out of band way to query error details if need be.
+ For example: StrError of type M@<String@>.
+3. Explicit error in return type. put returns +(Unit@ ok, E@ err). Get returns
+ +(A@ ok, Unit@ end, E@ err).
+ Means we have to pass around error types E@ everywhere.
+
+I don't feel like I have enough information, use cases, experience to design a
+decent error API right now. For the sake of making forward progress, I vote we
+go with (1) for now, with the intention of adding better support for errors in
+the future.
+
+Okay? Cool. I have my proposal.
+
+* Stream@ = <@ S@> { *(S@ return, (S@, (Unit@) { S@; }) { S@; } do); };
+* Output@ = <@ A@, @ S@>(Stream@<S@>, (A@) { S@; }) { S@; };
+* Put@ = <<@>@ M@, @ A@> { (A@) { M@<Unit@>; }; };
+* Get@ = <<@>@ M@, @ A@> { M@<A@>; };
+* In@ = <<@>@ M@, @ A@> { *(Get@<M@, Maybe@<A@>> get); };
+* Out@ = <<@>@ M@, @ A@> { *(Put@<M@, Output@<A@>> put, M@<Unit@> end) };
+
+The next question is how to organize things into modules.
+
+What we have today:
+* /Std/Char/Output% (Stream@, Output@, Return, Do, Put, Format, ToString, etc.)
+* /Std/Show% (Show@)
+* /Core/Char/Stream% (Get@, Put@, IStream@, OStream@)
+* /Core/Stdio/FFI% (Text, Binary)
+
+What I'm thinking to have instead:
+* /Std/Stream%
+    Stream@, Output@, Put@, Get@, In@, Out@,
+    Return, Do, Put, Puts, ToList, etc.
+* /Std/Stream/Text% (Output@, Return, Do, Put, Format, ToString, etc.)
+  - The Char@ specialization of stream.
+* /Std/Stream/Binary% (Output@, Return, Do, ...)
+  - The Int@ specialization of stream.
+* /Std/Show%
+* /Std/Io/File/Text% (Stdin, Stdout, Stderr, Read, Write, Append)
+* /Std/Io/File/Binary% (Stdin, Stdout, Stderr, Read, Write, Append)
+* /Std/Io/File/Internal% (Stdin, Stdout, Stderr, Open, Close, Flush)
+
+The concerns here would be false dependencies. Specifically:
+* Use of just Output@ falsely brings in Maybe@ type.
+
+That's not too expensive, right? The alternative would be to split input and
+output. But I think it feels more natural to do the split on Text/Binary, not
+on Text/Binary * Input/Output.
+
+Cool. I have a proposal. Let's work on it step by step. See how it feels. A
+possible development plan:
+* Change Stream@/Output@ interface, still hard coded for Char@.
+* Pull out /Std/Stream%, with general definition of Output@.
+* Rename IStream@ and OStream@ to In@ and Out@, and update their types while
+  we are at it. Still hard coded as Char@.
+* Implement general definitions of In@ and Out@.
+* Reorganize modules to match the proposal.
+
+This will involve some work in Std package. Hopefully that's okay.

@@ -24,3 +24,149 @@ Eq is the example in this case. The motivation for starting this discussion
 thread was stdlib.stdio.txt, asking if we can provide a generic implementation
 of Lift for monad composition.
 
+---
+
+stdlib.map.txt also wants generics.
+
+I don't want to be adding yet another language feature as part of this
+release, especially something crazy like generics. But how awesome would it be
+if we could come up with something nice?
+
+My intuition tells me we want something where you define a generic function
+that has a single implementation that you can magically pass anything at
+runtime of any purely data type and it can reuse the code.
+
+This is in contrast with having code generators that generate a different
+variation of code for every different data type you want to use it on.
+
+If we go this route, it feels like we have to use induction to define the
+function:
+* Tell us what to do for a struct with zero fields.
+* Tell us what to do for a union with one option.
+* Tell us what to do for a structure with one more field.
+* Tell us what to do for a union with one more option.
+
+At runtime I can test if it is a struct or union value. I can count how many
+fields there are. I can iterate over the fields.
+
+We'll have to have a way to describe the types. Again, presumably through
+induction. That sounds pretty complicated from a type system point of view.
+
+Anyway, in terms of implementation, it feels like we have a similar pattern
+for all the functions:
+
+if is union:
+  x = single option union;
+  while more options:
+    x = update(x, field);
+else:
+  x = zero field struct;
+  while more fields:
+    x = update(x, field);
+  
+Equality could be described something like:
+
+Uh oh. Two of the same data type needed? How do we iterate over multiple data
+types simultaneously?
+
+Eq = <* A@>(A@ a, A@ b) {
+  a.?(0: True);   # Zero field struct case.
+  a.?(1: True);   # Single option union case.
+  a.?(*: {
+    Eq(a.*.s, b.*.s).?(false: False); # Compare on 'shrunken' object.
+    Eq(a.*.z, b.*.z).?(false: False); # Compare on this field.
+    True;
+  });
+  a.?(+: {
+    b.+.?(a.+: Eq(b.+, a.+), : False);
+  });
+};
+
+Here's what I'm doing here:
+* For struct, you can get the current field and the view of the struct without
+  the current field.
+* For union, you can reference the tag, and do switch on the tag with other
+  values of the same type.
+
+We could write pretty close to this kind of code directly in fble today.
+
+Data@ = +(
+  Unit@ 0,                  # zero argument struct
+  *(Data@ z, Data@ s) S,    # Struct value s with additional field z.
+  *(Tag@ tag, Data@ arg) U, # Union value, with magic to capture the tag.
+);
+
+If we had functions instead of data, I could do this properly, right? Like as
+a builtin or something?
+
+If only we had a way to efficiently get a view of a struct value with fewer
+fields. If it's packed, it's easy. Otherwise it would be expensive if there is
+any chance it could escape the function.
+
+Maybe a better way is to represent handling of struct as an iteration? For
+each field? but how do you iterate over two values at once?
+
+It's almost like what I want is to be able to iterate and recurse over the
+structure of the type itself, rather than any particular value.
+
+Eq = <* T@>(@<T@> t@, T@ a, T@ b) {
+  t@.?(0: True);
+  t@.?(s: {
+    Eq(t@.s, a.(t@.s), b.(t@.s)).?(false: False);
+    Eq(t@.z, a.(t@.z), b.(t@.z)).?(false: False);
+    True;
+  });
+  a.?(t@...
+};
+
+It feels a lot like reflection. Like I want to programatically describe
+which fields and tags to access from a value, and somehow have type checking
+work out for it. Maybe we implicitly pass the field or tag number that we are
+operating on as an argument to the recursion?
+
+---
+
+If I just wanted a builtin, how about something like:
+
+ Lazy@ = <@ A@>(Unit@) { A@; };
+
+ Value@ = +(
+   List@<Lazy@<Value@>> struct,
+   *(Int@ tag, Lazy@<Value@> arg) union,
+   Unit@ func,      # opaque, because we can't apply in a type safe way
+   Unit@ native     # opaque
+ );
+  
+ <@ A@>(A@) { Value@; } ValueOf;
+
+Or maybe struct is a pair of number of fields and function from int to field
+value?
+
+It's hard to say passing around functions is cheaper than just raw converting
+the value though.
+
+Again, it feels better if we pass a type around, separately from the value.
+It's the type that lets us access bits of the value as desired.
+
+ Type@ = +(
+   List@<Type@> struct,
+   List@<Type@> union,
+   ...
+ );
+
+ And then I suppose you want:
+
+ (Int@) ...
+
+Trouble is, as soon as we go generic, we lose type information, and we need
+some way to pass around an untyped value.
+
+What if we kept the real type around as part of Type@? Well, then we can't put
+things on a List@ that have different types. I rely on structure and names to
+do type checking. We can't get rid of structure and names to be able to write
+generics without having some other way to make sure things are type safe.
+
+Like, I can't have a generic access field i from a struct value, because the
+type of field i very much depends on the type.
+
+
