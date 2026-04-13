@@ -1,0 +1,116 @@
+# @module[/Std/Stream%]
+#  Input and output streams.
+
+List@, Items, Empty .= /Std/List%;
+Unit@, Unit .= /Std/Unit%;
+
+# @struct[Stream@] Interface of stream types S@ that you can output to.
+#  @field[@][S@] The type that the interface applies to.
+#  @field[S@][return] An empty output.
+#  @field[(S@, (Unit@) { S@; }) { S@; })][do]
+#   Do one thing followed by another.
+Stream@ = <@ S@> { *(
+  S@ return,
+  (S@, (Unit@) { S@; }) { S@; } do
+);};
+
+# @type@[Output@] A computation that outputs values to a stream.
+#  @arg[@][A@] The type of value to output.
+#  @arg[@][S@] The type of stream to output to.
+#  @arg[Stream@<S@>][stream] Implementation of the stream interface.
+#  @arg[(A@) { S@; }][put] How to put a single value to the stream.
+#  @returns[S@] The stream computation.
+Output@ = <@ A@, @ S@>(Stream@<S@>, (A@) { S@; }) { S@; };
+
+# @value[Return] A computation that outputs nothing.
+#  @type[Output@]
+Output@ Return = <@ A@, @ S@>(Stream@<S@> s, (A@) { S@; } _) {
+  s.return;
+};
+
+# @func[Do] Output one thing after another.
+#  @arg[@][A@] The type of values to output.
+#  @arg[Output@][ma] The first thing to output.
+#  @arg[(Unit@) { Output@; }][f] The second thing to output.
+#  @return[Output@]
+#   A computation that outputs the first thing, then calls the function f to
+#   get the second thing to output, then outputs the second thing.
+<@ A@>(Output@<A@>, (Unit@) { Output@<A@>; }) { Output@<A@>; }
+Do = <@ A@>(Output@<A@> ma, (Unit@) { Output@<A@>; } f)<@ S@>(Stream@<S@> s, (A@) { S@; } put) {
+  s.do(ma(s, put), (Unit@ _) { f(Unit, s, put); });
+};
+
+# @func[Put] Output a single value.
+#  @arg[@][A@] The type of values to output.
+#  @arg[A@][v] The value to output.
+#  @returns[Output@] A computation that outputs the value..
+<@ A@>(A@) { Output@<A@>; }
+Put = <@ A@>(A@ v)<@ S@>(Stream@<S@> _, (A@) { S@; } put) {
+  put(v);
+};
+
+# @func[Puts] Output a list of values.
+#  @arg[@][A@] The type of values to output.
+#  @arg[List@<A@>][values] The values to output.
+#  @returns[Output<A@>] A computation that outputs the values.
+<@ A@>(List@<A@>) { Output@<A@>; }
+Puts = <@ A@>(List@<A@> values)<@ S@>(Stream@<S@> s, (A@) { S@; } put) {
+  values.?(empty: s.return);
+  Unit@ _ := s.do(put(values.items.head));
+  Puts(values.items.tail, s, put);
+};
+
+# @func[Concat] Output a sequence of computations.
+#  @arg[@][A@] The type of value to output.
+#  @arg[List@<Output@<A@>>] The list of outputs to output.
+#  @returns[Output<A@>] A computation to output each give output in turn.
+<@ A@>(List@<Output@<A@>>) { Output@<A@>; }
+Concat = <@ A@>(List@<Output@<A@>> xs) {
+  xs.?(empty: Return<A@>);
+  Unit@ _ := Do(xs.items.head);
+  Concat(xs.items.tail);
+};
+
+# @func[ToList] Output to a list.
+#  @arg[@][A@] The type of value to output.
+#  @arg[Output@<A@>] The output to perform.
+#  @returns[List@<A@>] A list of the output values.
+<@ A@>(Output@<A@>) { List@<A@>; }
+ToList = <@ A@> {
+  # Output to a list given the tail of the list.
+  S@ = (List@<A@>) { List@<A@>; };
+
+  Stream@<S@> S = @(
+    return: (List@<A@> tail) { tail; },
+    do: (S@ a, (Unit@) { S@; } fb, List@<A@> tail) {
+      a(fb(Unit, tail));
+    }
+  );
+
+  (Output@<A@> output) {
+    output(S, Items<A@>, Empty<A@>);
+  };
+};
+
+# @func[ToNull] Output to a Unit@.
+#  This goes through the output value by value, ignoring the value seen.
+#  Useful for test cases and benchmarks. If you don't care about the output in
+#  normal execution, you should just ignore the Output@ in the first place.
+#
+#  @arg[A@] The type of value to output.
+#  @arg[Output@<A@>] The output to perform.
+#  @returns[Unit@] Nothing interesting.
+<@ A@>(Output@<A@>) { Unit@; }
+ToNull = <@ A@> {
+  S@ = Unit@;
+  Stream@<S@> S = @(
+    return: Unit,
+    do: (Unit@ u, (Unit@) { Unit@; } f) { f(u); }
+  );
+
+  (Output@<A@> output) {
+    output(S, (A@ _) { Unit; });
+  };
+};
+
+@(Stream@, Output@, Return, Do, Put, Puts, Concat, ToList, ToNull);

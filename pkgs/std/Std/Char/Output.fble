@@ -3,30 +3,17 @@
 
 Char@ .= /Std/Char%;
 U .= /Std/Char/Lit%;
-List@, Empty, Items .= /Std/List%;
+List@ .= /Std/List%;
 String@ .= /Std/String%;
-Unit@, Unit .= /Std/Unit%;
-
-# @struct[Stream@] Interface of stream types S@ that you can output to.
-#  @field[@][S@] The type that the interface applies to.
-#  @field[S@][return] An empty output.
-#  @field[(S@, (Unit@) { S@; }) { S@; })][do]
-#   Output one thing followed by another.
-#  @field[(Char@) { S@; }][put]
-#   Output a single character.
-Stream@ = <@ S@> { *(
-  S@ return,
-  (S@, (Unit@) { S@; }) { S@; } do
-);};
+Stream@ .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
 
 # @type@[Output@] A computation that outputs characters to a stream.
-Output@ = <@ S@>(Stream@<S@>, (Char@) { S@; }) { S@; };
+Output@ = /Std/Stream%.Output@<Char@>;
 
 # @value[Return] A computation that outputs nothing.
 #  @type[Output@]
-Output@ Return = <@ S@>(Stream@<S@> s, (Char@) { S@; } _) {
-  s.return;
-};
+Output@ Return = /Std/Stream%.Return<Char@>;
 
 # @func[Do] Output one thing after another.
 #  @arg[Output@][ma] The first thing to output.
@@ -35,36 +22,25 @@ Output@ Return = <@ S@>(Stream@<S@> s, (Char@) { S@; } _) {
 #   A computation that outputs the first thing, then calls the function f to
 #   get the second thing to output, then outputs the second thing.
 (Output@, (Unit@) { Output@; }) { Output@; }
-Do = (Output@ ma, (Unit@) { Output@; } f)<@ S@>(Stream@<S@> s, (Char@) { S@; } put) {
-  s.do(ma(s, put), (Unit@ _) { f(Unit, s, put); });
-};
+Do = /Std/Stream%.Do<Char@>;
 
 # @func[Put] Output a single character.
 #  @arg[Char@][c] The character to output.
 #  @returns[Output@] A computation that outputs the character.
-(Char@) { Output@; } Put = (Char@ c)<@ S@>(Stream@<S@> _, (Char@) { S@; } put) {
-  put(c);
-};
+(Char@) { Output@; }
+Put = /Std/Stream%.Put<Char@>;
 
 # @func[String] Output a string.
 #  @arg[String@][str] The string to output.
 #  @returns[Output] A computation that outputs the string.
 (String@) { Output@; }
-String = (String@ str)<@ S@>(Stream@<S@> s, (Char@) { S@; } put) {
-  str.?(empty: s.return);
-  Unit@ _ := s.do(put(str.items.head));
-  String(str.items.tail, s, put);
-};
+String = /Std/Stream%.Puts<Char@>;
 
 # @func[Concat] Output a sequence of computations.
 #  @arg[List@<Output@>] The list of outputs to output.
 #  @returns[Output] A computation to output each give output in turn.
 (List@<Output@>) { Output@; }
-Concat = (List@<Output@> xs) {
-  xs.?(empty: Return);
-  Unit@ _ := Do(xs.items.head);
-  Concat(xs.items.tail);
-};
+Concat = /Std/Stream%.Concat<Char@>;
 
 # @func[Lines] Output a sequence of lines.
 #  @arg[List@<Output@>] A list of lines to output.
@@ -133,31 +109,11 @@ Format = (String@ fmt, List@<Output@> args)<@ S@>(Stream@<S@> s, (Char@) { S@; }
   Format(fmt.items.tail, args, s, put);
 };
 
-# Output a string given the tail of the string.
-StringStream@ = (String@) { String@; };
-
-# Implementation of Stream@ for StringStream@.
-Stream@<StringStream@> StringStream = @(
-  return: (String@ tail) { tail; },
-  do: (StringStream@ a, (Unit@) { StringStream@; } fb, String@ tail) {
-    a(fb(Unit, tail));
-  }
-);
-
 # @func[ToString] Output to a String@.
 #  @arg[Output@] The output to render.
 #  @returns[String@] A string with the output characters.
 (Output@) { String@; }
-ToString = (Output@ show) {
-  show(StringStream, Items<Char@>, Empty<Char@>);
-};
-
-# Null output stream that goes through the output but ignores the characters
-# output.
-Stream@<Unit@> NullStream = @(
-  return: Unit,
-  do: (Unit@ u, (Unit@) { Unit@; } f) { f(u); }
-);
+ToString = /Std/Stream%.ToList<Char@>;
 
 # @func[ToNull] Output to a Unit@.
 #  This goes through the output character by character, ignoring the
@@ -168,9 +124,7 @@ Stream@<Unit@> NullStream = @(
 #  @arg[Output@] The output to render.
 #  @returns[Unit@] Nothing interesting.
 (Output@) { Unit@; }
-ToNull = (Output@ show) {
-  show(NullStream, (Char@ _) { Unit; });
-};
+ToNull = /Std/Stream%.ToNull<Char@>;
 
 @(Output@, Stream@,
   Return, Do, Put, String, Format, Concat, Lines, Join,
