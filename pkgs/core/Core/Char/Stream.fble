@@ -1,21 +1,14 @@
 
 Char@ .= /Std/Char%;
-Output@ .= /Std/Char/Output%;
-Maybe@ .= /Std/Maybe%;
-Put@ .= /Std/Stream%;
-Unit@ .= /Std/Unit%;
 
 # Character input stream.
 #   Get's the next character in the input stream. Gets nothing if the end of
 #   the stream has been reached.
 # TODO: Reuse Get@ if/when the type inference issue is worked out.
 # In@ = <<@>@ M@> { Get@<M@, Maybe@<Char@>>; };
-In@ = <<@>@ M@> { *(M@<Maybe@<Char@>> get); };
+In@ = /Std/Stream%.In@<Char@>;
 
 # Character output stream.
-Out@ = <<@>@ M@> { *(
-  Put@<M@, Output@> put,    # Put output to the stream.
-  M@<Unit@> end           # Close the stream.
-); };
+Out@ = /Std/Stream%.Out@<Char@>;
 
 @(In@, Out@);
