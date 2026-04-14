@@ -25,7 +25,7 @@ Main@ = /Std/Io/Cli%.Main@;
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
 
-In@ = /Core/Stream%.In@;
+In@ .= /Std/Stream/Binary%;
 
 Output@ = /Std/Stream/Text%.Output@;
 
@@ -62,7 +62,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     });
 
     M@<Maybe@<Bit8@>> in = {
-      Maybe@<Int@> b := m.do(istream.just);
+      Maybe@<Int@> b := m.do(istream.just.get);
       m.return(b.?(just: Just(ToBits(b.just)), nothing: Nothing<Bit8@>));
     };
 

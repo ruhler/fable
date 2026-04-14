@@ -24,7 +24,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-In@ = /Core/Stream%.In@;
+In@ = /Std/Stream/Text%.In@;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -144,7 +144,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(In@<M@> in, Monad@<M@> m) {
     # Gets a byte from the input stream.
     # Returns Nothing if we reach end of input.
     PM@<Maybe@<Int@>> MaybeGet = (S@ s) {
-      Maybe@<Int@> mbyte := m.do(in);
+      Maybe@<Int@> mbyte := m.do(in.get);
       Return(mbyte, mbyte.?(just: Incr(s), nothing: s));
     };
 

@@ -9,39 +9,14 @@ String@ .= /Std/String%;
 Stream@ .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
-# @type@[Output@] A computation that outputs characters to a stream.
-Output@ = /Std/Stream%.Output@<Char@>;
-
-# @value[Return] A computation that outputs nothing.
-#  @type[Output@]
-Output@ Return = /Std/Stream%.Return<Char@>;
-
-# @func[Do] Output one thing after another.
-#  @arg[Output@][ma] The first thing to output.
-#  @arg[(Unit@) { Output@; }][f] The second thing to output.
-#  @return[Output@]
-#   A computation that outputs the first thing, then calls the function f to
-#   get the second thing to output, then outputs the second thing.
-(Output@, (Unit@) { Output@; }) { Output@; }
-Do = /Std/Stream%.Do<Char@>;
-
-# @func[Put] Output a single character.
-#  @arg[Char@][c] The character to output.
-#  @returns[Output@] A computation that outputs the character.
-(Char@) { Output@; }
-Put = /Std/Stream%.Put<Char@>;
+# Specializations of /Std/Stream% for Char@.
+Output@, In@, Out@, Return, Do, Put, Puts, Concat, ToList, ToNull
+  .= /Std/Stream%.Stream<Char@>;
 
 # @func[String] Output a string.
 #  @arg[String@][str] The string to output.
 #  @returns[Output] A computation that outputs the string.
-(String@) { Output@; }
-String = /Std/Stream%.Puts<Char@>;
-
-# @func[Concat] Output a sequence of computations.
-#  @arg[List@<Output@>] The list of outputs to output.
-#  @returns[Output] A computation to output each give output in turn.
-(List@<Output@>) { Output@; }
-Concat = /Std/Stream%.Concat<Char@>;
+(String@) { Output@; } String = Puts;
 
 # @func[Lines] Output a sequence of lines.
 #  @arg[List@<Output@>] A list of lines to output.
@@ -113,29 +88,7 @@ Format = (String@ fmt, List@<Output@> args)<@ S@>(Stream@<S@> s, (Char@) { S@; }
 # @func[ToString] Output to a String@.
 #  @arg[Output@] The output to render.
 #  @returns[String@] A string with the output characters.
-(Output@) { String@; }
-ToString = /Std/Stream%.ToList<Char@>;
-
-# @func[ToNull] Output to a Unit@.
-#  This goes through the output character by character, ignoring the
-#  characters seen. Useful for test cases and benchmarks. If you don't care
-#  about the output in normal execution, you should just ignore the Output@ in
-#  the first place.
-#
-#  @arg[Output@] The output to render.
-#  @returns[Unit@] Nothing interesting.
-(Output@) { Unit@; }
-ToNull = /Std/Stream%.ToNull<Char@>;
-
-# @type[In@] Interface for getting characters from a stream.
-#  Use the get method to get the next value from the stream. It returns
-#  Nothing if the end of the stream has been reached.
-In@ = /Std/Stream%.In@<Char@>;
-
-# @type[Out@] Interface for outputting characters to a stream.
-#  The put method puts the next character to output. The end method closes the
-#  stream.
-Out@ = /Std/Stream%.Out@<Char@>;
+(Output@) { String@; } ToString = ToList;
 
 @(Output@, Stream@, In@, Out@,
   Return, Do, Put, String, Format, Concat, Lines, Join,

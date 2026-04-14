@@ -49,7 +49,7 @@ String = /Std/Stream/Text%.String;
 
 Split = /Std/String/Eq%.Split;
 
-BinaryIn@ = /Core/Stream%.In@;
+BinaryIn@ = /Std/Stream/Binary%.In@;
 CharIn@ = /Std/Stream/Text%.In@;
 
 ToString = /Std/Stream/Text%.ToString;

@@ -4454,3 +4454,13 @@ Next steps:
 
 That should hopefully be the bulk of it.
 
+What all am I putting into /Std/Stream/Binary%?
+
+Should I define a common /Std/Stream%.Stream function that you can apply a
+type to?
+
+---
+
+Next todos:
+* Implement Append functions for text and binary.
+* Change standard in,out,err to use types In@ and Out@.

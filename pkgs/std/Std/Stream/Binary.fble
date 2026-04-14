@@ -1,0 +1,11 @@
+# @module[/Std/Stream/Stream%]
+#  Binary streams. This module provides specializations of the 
+#  /Std/Stream% types and functions for Int@ streams.
+
+Int@ .= /Std/Int%;
+
+# Specializations of /Std/Stream% for Int@.
+Output@, In@, Out@, Return, Do, Put, Puts, Concat, ToList, ToNull
+  .= /Std/Stream%.Stream<Int@>;
+
+@(Output@, In@, Out@, Return, Do, Put, Puts, Concat, ToList, ToNull);

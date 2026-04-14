@@ -136,7 +136,16 @@ In@ = <@ A@, <@>@ M@> { *(M@<Maybe@<A@>> get); };
 #  stream.
 Out@ = <@ A@, <@>@ M@> { *((Output@<A@>) { M@<Unit@>; } put, M@<Unit@> end); };
 
+# @value[Stream] Streams specialized for a given type.
+Stream = <@ A@> {
+  @(Output@: Output@<A@>, In@: In@<A@>, Out@: Out@<A@>,
+    Return: Return<A@>, Do: Do<A@>,
+    Put: Put<A@>, Puts: Puts<A@>, Concat: Concat<A@>,
+    ToList: ToList<A@>, ToNull: ToNull<A@>);
+};
+
 @(
   Stream@, Output@, Put@, Get@, In@, Out@,
-  Return, Do, Put, Puts, Concat, ToList, ToNull
+  Return, Do, Put, Puts, Concat, ToList, ToNull,
+  Stream
 );
