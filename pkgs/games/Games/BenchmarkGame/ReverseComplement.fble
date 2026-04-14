@@ -80,7 +80,7 @@ Main@
 Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Put@<M@, Output@> out, List@<String@> _args) {
   # Gets a line from stdin, discarding the final newline if any.
   M@<String@> GetLine = {
-    Maybe@<Char@> c := m.do(in);
+    Maybe@<Char@> c := m.do(in.get);
     c.?(nothing: m.return(Str|''));
     IsNewline(c.just).?(true: m.return(Str|''));
 

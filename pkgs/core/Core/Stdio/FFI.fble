@@ -55,7 +55,7 @@ Text = {
   <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<In@<M@>>; }
   Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
     File@ stdin := m.do(io.run(GetStdin));
-    m.return(io.run(GetChar(stdin)));
+    m.return(@(get: io.run(GetChar(stdin))));
   };
 
   <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Put@<M@, Output@>>; }
@@ -74,7 +74,7 @@ Text = {
   Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
     Maybe@<File@> file := m.do(io.run(Open(path, Str|r)));
     file.?(nothing: m.return(Nothing<In@<M@>>));
-    m.return(Just(io.run(GetChar(file.just))));
+    m.return(Just(@(get: io.run(GetChar(file.just)))));
   };
 
   <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<Out@<M@>>>; }

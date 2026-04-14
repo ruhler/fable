@@ -10,7 +10,7 @@ Unit@ .= /Std/Unit%;
 #   the stream has been reached.
 # TODO: Reuse Get@ if/when the type inference issue is worked out.
 # In@ = <<@>@ M@> { Get@<M@, Maybe@<Char@>>; };
-In@ = <<@>@ M@> { M@<Maybe@<Char@>>; };
+In@ = <<@>@ M@> { *(M@<Maybe@<Char@>> get); };
 
 # Character output stream.
 Out@ = <<@>@ M@> { *(
