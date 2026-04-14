@@ -86,7 +86,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     Unit@ _ := m.do $ {
       ostream.?(nothing: m.return(Unit));
       Unit@ _ := m.do(ostream.just.put $ /Std/Int/Show%.Show(Incr(seed)));
-      ostream.just.close;
+      ostream.just.end;
     };
 
     m.return(seed);

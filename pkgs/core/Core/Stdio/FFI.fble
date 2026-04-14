@@ -83,7 +83,7 @@ Text = {
     file.?(nothing: m.return(Nothing<Out@<M@>>));
     Out@<M@> ostream = @(
       put: Output(m, io, file.just),
-      close: io.run(Close(file.just))
+      end: io.run(Close(file.just))
     );
     m.return(Just(ostream));
   };

@@ -43,8 +43,8 @@ OStream = <<@>@ M@>(Monad@<M@> m, Byte.Out@<M@> s) {
     output(stream, (Char@ c) { s(/Std/Char%.Pos(c)); });
   };
 
-  M@<Unit@> close = s(Byte.End);
-  @(put, close);
+  M@<Unit@> end = s(Byte.End);
+  @(put, end);
 };
 
 @(IStream, OStream);

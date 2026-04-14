@@ -15,7 +15,7 @@ In@ = <<@>@ M@> { M@<Maybe@<Char@>>; };
 # Character output stream.
 Out@ = <<@>@ M@> { *(
   Put@<M@, Output@> put,    # Put output to the stream.
-  M@<Unit@> close           # Close the stream.
+  M@<Unit@> end           # Close the stream.
 ); };
 
 @(In@, Out@);

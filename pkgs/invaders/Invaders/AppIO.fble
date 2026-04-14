@@ -65,7 +65,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     ostream.?(nothing: m.return(Unit));
 
     Unit@ _ := m.do(ostream.just.put $ /Std/Int/Show%.Show(score));
-    ostream.just.close;
+    ostream.just.end;
   };
 
   State@<M@, Int@> high_score_s = State@<M@, Int@>(get_high_score, put_high_score);
