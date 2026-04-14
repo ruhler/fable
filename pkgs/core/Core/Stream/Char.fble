@@ -27,8 +27,8 @@ IStream = <<@>@ M@>(Monad@<M@> m, Byte.In@<M@> s) {
 };
 
 # Convert a byte output stream to a character output stream.
-<<@>@ M@>(Monad@<M@>, Byte.OStream@<M@>) { Char.OStream@<M@>; }
-OStream = <<@>@ M@>(Monad@<M@> m, Byte.OStream@<M@> s) {
+<<@>@ M@>(Monad@<M@>, Byte.Out@<M@>) { Char.Out@<M@>; }
+OStream = <<@>@ M@>(Monad@<M@> m, Byte.Out@<M@> s) {
   S@ = M@<Unit@>;
   S@ return = m.return(Unit);
   (S@, (Unit@) { S@; }) { S@; }

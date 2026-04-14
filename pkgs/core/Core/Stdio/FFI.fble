@@ -50,7 +50,7 @@ Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Output@ output) {
 
 Text = {
   In@ = /Core/Char/Stream%.In@;
-  OStream@ = /Core/Char/Stream%.OStream@;
+  Out@ = /Core/Char/Stream%.Out@;
 
   <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<In@<M@>>; }
   Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
@@ -77,11 +77,11 @@ Text = {
     m.return(Just(io.run(GetChar(file.just))));
   };
 
-  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<OStream@<M@>>>; }
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<Out@<M@>>>; }
   Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
     Maybe@<File@> file := m.do(io.run(Open(path, Str|w)));
-    file.?(nothing: m.return(Nothing<OStream@<M@>>));
-    OStream@<M@> ostream = @(
+    file.?(nothing: m.return(Nothing<Out@<M@>>));
+    Out@<M@> ostream = @(
       put: Output(m, io, file.just),
       close: io.run(Close(file.just))
     );

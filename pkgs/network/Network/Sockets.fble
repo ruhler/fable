@@ -3,7 +3,7 @@ Int@ = /Std/Int%.Int@;
 
 Maybe@ = /Std/Maybe%.Maybe@;
 
-IOStream@ = /Core/Stream%.IOStream@;
+IOut@ = /Core/Stream%.IOut@;
 
 String@ = /Std/String%.String@;
 
@@ -11,7 +11,7 @@ String@ = /Std/String%.String@;
 #  A server can be used to repeatedly accept connections from clients.
 #  The accept operation blocks until a client connects, returning an iostream
 #  connection to the client.
-Server@ = <<@>@ M@> { M@<IOStream@<M@>>; };
+Server@ = <<@>@ M@> { M@<IOut@<M@>>; };
 
 # Sockets@ --
 #   Interface for TCP sockets.
@@ -19,10 +19,10 @@ Sockets@ = <<@>@ M@> { *(
   # @func[client] Creates a client connection to a server
   #  @arg[String@][host] The host or ip address of the server.
   #  @arg[Int@][port] The port to connect to.
-  #  @returns[M@<Maybe@<IOStream@<M@>>>]
+  #  @returns[M@<Maybe@<IOut@<M@>>>]
   #   An IOStream connected to the server. Returns Nothing if it was unable to
   #   connect to the server.
-  (String@, Int@) { M@<Maybe@<IOStream@<M@>>>; } client,
+  (String@, Int@) { M@<Maybe@<IOut@<M@>>>; } client,
 
   # @func[server] Creates a TCP server.
   #  @arg[String@][host] The host or ip address of the server to bind.

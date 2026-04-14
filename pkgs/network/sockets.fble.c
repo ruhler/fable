@@ -227,13 +227,13 @@ static FbleValue* NewIStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId mo
 }
 
 /**
- * @func[NewOStream] Allocates an @l{OStream@} for a socket.
+ * @func[NewOStream] Allocates an @l{Out@} for a socket.
  *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleValue*][sfd] The socket to allocate the @l{OStream@} for.
+ *  @arg[FbleValue*][sfd] The socket to allocate the @l{Out@} for.
  *  @arg[FbleBlockId][module_block_id]
  *   The block_id of the /Network/Sockets/IO/Builtin% block.
  *
- *  @returns[FbleValue*] An fble @l{OStream@} function value.
+ *  @returns[FbleValue*] An fble @l{Out@} function value.
  *
  *  @sideeffects
  *   Allocates a value on the heap.
@@ -256,7 +256,7 @@ static FbleValue* NewOStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId mo
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (String@, Int@, Unit@) { Maybe@<IOStream@<IO@>>; }
+ *   (String@, Int@, Unit@) { Maybe@<IOut@<IO@>>; }
  */
 static FbleValue* ClientImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -340,7 +340,7 @@ static FbleValue* Client(FbleValueHeap* heap, FbleBlockId module_block_id)
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Unit@) { IOStream@<IO@>; }
+ *   (Unit@) { IOut@<IO@>; }
  */
 static FbleValue* AcceptImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -442,7 +442,7 @@ static FbleValue* ServerImpl(
 /**
  * @func[Accept] Allocates the Accept function.
  *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleValue*][sfd] The socket to allocate the @l{OStream@} for.
+ *  @arg[FbleValue*][sfd] The socket to allocate the @l{Out@} for.
  *  @arg[FbleBlockId][module_block_id]
  *   The block_id of the /Network/Sockets/IO/Builtin% block.
  *  @returns[FbleValue*] The allocated function.

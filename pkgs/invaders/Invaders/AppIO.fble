@@ -1,6 +1,6 @@
 
 In@ = /Core/Char/Stream%.In@;
-OStream@ = /Core/Char/Stream%.OStream@;
+Out@ = /Core/Char/Stream%.Out@;
 GetText = /Core/Char/Stream/IStream%.GetText;
 Output@ = /Std/Char/Output%.Output@;
 String = /Std/Char/Output%.String;
@@ -39,7 +39,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
 	Maybe@<String@> home := m.do(/Std/Io/Env%.GetVar(m, io, Str|'HOME'));
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
   (String@) { M@<Maybe@<In@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
-  (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(m, io);
+  (String@) { M@<Maybe@<Out@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(m, io);
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ := m.do(out $ String $ /Invaders/Usage%);
@@ -61,7 +61,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     home.?(nothing: m.return(Unit));
 
     String@ filename = Append(home.just, Str|'/.fble-invaders');
-    Maybe@<OStream@<M@>> ostream := m.do(write(filename));
+    Maybe@<Out@<M@>> ostream := m.do(write(filename));
     ostream.?(nothing: m.return(Unit));
 
     Unit@ _ := m.do(ostream.just.put $ /Std/Int/Show%.Show(score));

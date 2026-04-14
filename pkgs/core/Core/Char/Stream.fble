@@ -13,9 +13,9 @@ Unit@ .= /Std/Unit%;
 In@ = <<@>@ M@> { M@<Maybe@<Char@>>; };
 
 # Character output stream.
-OStream@ = <<@>@ M@> { *(
+Out@ = <<@>@ M@> { *(
   Put@<M@, Output@> put,    # Put output to the stream.
   M@<Unit@> close           # Close the stream.
 ); };
 
-@(In@, OStream@);
+@(In@, Out@);

@@ -19,9 +19,9 @@ Int@ End = Neg(Int|1);
 # The type Int@ is used for describing a byte.
 # Outputting 'End' will close the stream, causing all subsequence writes to be
 # ignored.
-OStream@ = <<@>@ M@>(Int@) { M@<Unit@>; };
+Out@ = <<@>@ M@>(Int@) { M@<Unit@>; };
 
 # A pair of input and output streams.
-IOStream@ = <<@>@ M@> { *(In@<M@> in, OStream@<M@> out); };
+IOut@ = <<@>@ M@> { *(In@<M@> in, Out@<M@> out); };
 
-@(In@, OStream@, IOStream@, End);
+@(In@, Out@, IOut@, End);

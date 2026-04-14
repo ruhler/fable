@@ -30,8 +30,8 @@ Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
 
 In@ = /Core/Stream%.In@;
-OStream@ = /Core/Stream%.OStream@;
-IOStream@ = /Core/Stream%.IOStream@;
+Out@ = /Core/Stream%.Out@;
+IOut@ = /Core/Stream%.IOut@;
 
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
@@ -108,8 +108,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets(io, m));
 
-  (In@<M@>, OStream@<M@>) { M@<Unit@>; }
-  ForwardAll = (In@<M@> in, OStream@<M@> out) {
+  (In@<M@>, Out@<M@>) { M@<Unit@>; }
+  ForwardAll = (In@<M@> in, Out@<M@> out) {
     Maybe@<Int@> mb := m.do(in);
     mb.?(nothing: out(/Core/Stream%.End));
     Unit@ _ := m.do(out(mb.just));
@@ -140,7 +140,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
     IsZero(n).?(true: m.return(Unit));
     Int@ nn = /Std/Int/Cmp%.Gt(n, Int|0).?(true: Decr(n), false: n);
 
-    IOStream@<M@> ios := m.do(s);
+    IOut@<M@> ios := m.do(s);
     Unit@ _ := m.do(ForwardAll(ios.in, ios.out));
     Serve(nn);
   };

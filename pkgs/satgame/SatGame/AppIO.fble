@@ -18,7 +18,7 @@ Io@ = /Std/Io%.Io@;
 Success = /Std/Io/Cli%.Success;
 
 In@ = /Core/Char/Stream%.In@;
-OStream@ = /Core/Char/Stream%.OStream@;
+Out@ = /Core/Char/Stream%.Out@;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -67,7 +67,7 @@ GetArgs = (List@<String@> args, Args@ default) {
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
 	Maybe@<String@> home := m.do(/Std/Io/Env%.GetVar(m, io, Str|HOME));
   (String@) { M@<Maybe@<In@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
-  (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(m, io);
+  (String@) { M@<Maybe@<Out@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(m, io);
 
   # Read and update the default seed value.
   Int@ seed := m.do({
@@ -82,7 +82,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
       m.return(/Core/Int/Read%.Read(text));
     });
 
-    Maybe@<OStream@<M@>> ostream := m.do(write(filename));
+    Maybe@<Out@<M@>> ostream := m.do(write(filename));
     Unit@ _ := m.do $ {
       ostream.?(nothing: m.return(Unit));
       Unit@ _ := m.do(ostream.just.put $ /Std/Int/Show%.Show(Incr(seed)));

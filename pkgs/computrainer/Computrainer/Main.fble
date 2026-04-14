@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
 In@ = /Core/Char/Stream%.In@;
-OStream@ = /Core/Char/Stream%.OStream@;
+Out@ = /Core/Char/Stream%.Out@;
 
 GetText = /Core/Char/Stream/IStream%.GetText;
 
@@ -111,7 +111,7 @@ State@ = *(
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
   (String@) { M@<Maybe@<In@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
-  (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(m, io);
+  (String@) { M@<Maybe@<Out@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(m, io);
 
   Int@ MenuScale = Int|8;
   Int@ MenuHeight = Add(Mul(MenuScale, W), Int|8);
@@ -342,9 +342,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
 
   State@ final := m.do(StepUI(initial));
 
-  Maybe@<OStream@<M@>> mostream := m.do(write(file));
+  Maybe@<Out@<M@>> mostream := m.do(write(file));
   mostream.?(nothing: m.return(Success));
-  OStream@<M@> ostream = mostream.just;
+  Out@<M@> ostream = mostream.just;
   Unit@ _ := m.do(ostream.put $ /Computrainer/Model/Save%.Model(final.model));
   Unit@ _ := m.do(ostream.close);
 
