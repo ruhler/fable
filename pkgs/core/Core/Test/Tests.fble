@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
 Output@ = /Std/Char/Output%.Output@;
-Put@ = /Core/Char/Stream%.Put@;
+Put@ .= /Std/Stream%;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 

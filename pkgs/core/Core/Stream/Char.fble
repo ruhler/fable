@@ -9,6 +9,8 @@ Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
 
+Put@ .= /Std/Stream%;
+
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
 
@@ -36,7 +38,7 @@ OStream = <<@>@ M@>(Monad@<M@> m, Byte.OStream@<M@> s) {
 
   /Std/Char/Output%.Stream@<M@<Unit@>> stream = @(return, do);
 
-  Char.Put@<M@, Output@> put = (Output@ output) {
+  Put@<M@, Output@> put = (Output@ output) {
     # TODO: Handle unicode properly.
     output(stream, (Char@ c) { s(/Std/Char%.Pos(c)); });
   };

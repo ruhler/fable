@@ -12,7 +12,7 @@ Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Put@ = /Core/Char/Stream%.Put@;
+Put@ .= /Std/Stream%;
 
 Io@ = /Std/Io%.Io@;
 External@ = /Std/Io%.External@;

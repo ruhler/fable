@@ -1,5 +1,5 @@
 
-Put@ = /Core/Char/Stream%.Put@;
+Put@ .= /Std/Stream%;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 Ascii@ = /Std/Char/Ascii%.Ascii@;

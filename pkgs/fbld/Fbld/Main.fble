@@ -1,5 +1,5 @@
 
-Put@ = /Core/Char/Stream%.Put@;
+Put@ .= /Std/Stream%;
 IStream@ = /Core/Char/Stream%.IStream@;
 GetText = /Core/Char/Stream/IStream%.GetText;
 String = /Std/Char/Output%.String;

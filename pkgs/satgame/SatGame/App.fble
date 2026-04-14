@@ -13,7 +13,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Put@ = /Core/Char/Stream%.Put@;
+Put@ .= /Std/Stream%;
 
 Format = /Std/Char/Ascii/Output%.Format;
 

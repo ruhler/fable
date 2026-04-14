@@ -1,14 +1,9 @@
 
-Char@ = /Std/Char%.Char@;
-
-Output@ = /Std/Char/Output%.Output@;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Put@ = <<@>@ M@, @ A@> { (A@) { M@<Unit@>; }; };
-Get@ = <<@>@ M@, @ A@> { M@<A@>; };
+Char@ .= /Std/Char%;
+Output@ .= /Std/Char/Output%;
+Maybe@ .= /Std/Maybe%;
+Put@ .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
 
 # Character input stream.
 #   Get's the next character in the input stream. Gets nothing if the end of
@@ -23,4 +18,4 @@ OStream@ = <<@>@ M@> { *(
   M@<Unit@> close           # Close the stream.
 ); };
 
-@(Put@, Get@, IStream@, OStream@);
+@(IStream@, OStream@);

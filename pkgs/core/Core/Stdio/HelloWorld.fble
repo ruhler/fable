@@ -1,6 +1,5 @@
 
-
-Put@ = /Core/Char/Stream%.Put@;
+Put@ .= /Std/Stream%;
 
 Output@ = /Std/Char/Output%.Output@;
 

@@ -3,7 +3,7 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-Put@ = /Core/Char/Stream%.Put@;
+Put@ .= /Std/Stream%;
 OStream = /Core/Stream/Char%.OStream;
 Output@ = /Std/Char/Output%.Output@;
 String = /Std/Char/Output%.String;

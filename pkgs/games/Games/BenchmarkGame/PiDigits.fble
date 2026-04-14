@@ -1,7 +1,7 @@
 
 Bool@ = /Std/Bool%.Bool@;
 
-Put@ = /Core/Char/Stream%.Put@;
+Put@ .= /Std/Stream%;
 
 Int@ = /Std/Int%.Int@;
 Add = /Std/Int%.Add;

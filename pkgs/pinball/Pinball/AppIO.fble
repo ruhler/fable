@@ -1,7 +1,7 @@
 
 Str = /Std/Char/Ascii%.Str;
 
-Put@ = /Core/Char/Stream%.Put@;
+Put@ .= /Std/Stream%;
 
 Output@ = /Std/Char/Output%.Output@;
 String = /Std/Char/Output%.String;

@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
-Put@ = /Core/Char/Stream%.Put@;
+Put@ .= /Std/Stream%;
 String = /Std/Char/Output%.String;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
