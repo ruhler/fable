@@ -7,8 +7,8 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
 Put@ .= /Std/Stream%;
-Output@ = /Std/Char/Output%.Output@;
-String = /Std/Char/Output%.String;
+Output@ = /Std/Stream/Text%.Output@;
+String = /Std/Stream/Text%.String;
 StringE = /Std/Char/Ascii/Output%.StringE;
 
 Main@ = /Std/Io/Cli%.Main@;

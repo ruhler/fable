@@ -4,7 +4,7 @@ Show@ = /Std/Show%.Show@;
 Text@ = /Fbld/Text%.Text@;
 
 Show@<Text@> Show = (Text@ t) {
-  /Fbld/Loc%.Report(t.loc, /Std/Char/Output%.String(t.text));
+  /Fbld/Loc%.Report(t.loc, /Std/Stream/Text%.String(t.text));
 };
 
 @(Show);

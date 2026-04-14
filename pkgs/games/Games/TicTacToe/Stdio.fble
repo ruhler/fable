@@ -6,8 +6,8 @@ Format = /Std/Char/Ascii/Output%.Format;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 Put@ .= /Std/Stream%;
-In@ = /Core/Char/Stream%.In@;
-Output@ = /Std/Char/Output%.Output@;
+In@ = /Std/Stream/Text%.In@;
+Output@ = /Std/Stream/Text%.Output@;
 GetLine = /Core/Char/Stream/IStream%.GetLine;
 
 List@ = /Std/List%.List@;

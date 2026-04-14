@@ -1,7 +1,7 @@
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Stream/Text%.Output@;
 
 Put@ .= /Std/Stream%;
 IStream = /Core/Char/Stream/IStream%.IStream;

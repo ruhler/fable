@@ -2,7 +2,7 @@
 Ascii@ = /Std/Char/Ascii%.Ascii@;
 OnAscii = /Std/Char/Ascii%.OnAscii;
 
-AssertOutput = OnAscii $ /Std/Char/Output/Assert%.AssertOutput;
+AssertOutput = OnAscii $ /Std/Stream/Text/Assert%.AssertOutput;
 
 Int@ = /Std/Int%.Int@;
 Neg = /Std/Int%.Neg;

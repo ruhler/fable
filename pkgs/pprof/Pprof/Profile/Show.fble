@@ -15,8 +15,8 @@ Show@<BlockId@> BlockId = /Std/Int/Show%.Show;
 
 Show@<Block@> Block = (Block@ x) {
   Format|'%s@%s:%s:%s'[
-    /Std/Char/Output%.String(x.name),
-    /Std/Char/Output%.String(x.file),
+    /Std/Stream/Text%.String(x.name),
+    /Std/Stream/Text%.String(x.file),
     /Std/Int/Show%.Show(x.line),
     /Std/Int/Show%.Show(x.column)];
 };

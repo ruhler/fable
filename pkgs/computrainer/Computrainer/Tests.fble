@@ -10,8 +10,8 @@ List = /Std/List%.List;
 
 Str = /Std/Char/Ascii%.Str;
 
-Output@ = /Std/Char/Output%.Output@;
-ToString = /Std/Char/Output%.ToString;
+Output@ = /Std/Stream/Text%.Output@;
+ToString = /Std/Stream/Text%.ToString;
 
 Test@ = /Std/Test%.Test@;
 Test = /Std/Test%.Test;

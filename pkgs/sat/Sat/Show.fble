@@ -23,7 +23,7 @@ Show@<Clause@> ShowClause = /Std/List/Show%.Show(ShowVar);
 Show@<Formula@> ShowFormula = /Std/List/Show%.Show(ShowClause);
 
 Show@<Parse@<Formula@>> ShowParsedFormula = (Parse@<Formula@> x) {
-  x.?(error: /Std/Char/Output%.String(x.error));
+  x.?(error: /Std/Stream/Text%.String(x.error));
   ShowFormula(x.parsed);
 };
 

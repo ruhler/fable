@@ -2,7 +2,7 @@
 Char@ = /Std/Char%.Char@;
 
 Str = /Std/Char/Ascii%.Str;
-Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Stream/Text%.Output@;
 
 Int@ = /Std/Int%.Int@;
 
@@ -49,8 +49,8 @@ Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Output@ output) {
 };
 
 Text = {
-  In@ = /Core/Char/Stream%.In@;
-  Out@ = /Core/Char/Stream%.Out@;
+  In@ = /Std/Stream/Text%.In@;
+  Out@ = /Std/Stream/Text%.Out@;
 
   <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<In@<M@>>; }
   Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {

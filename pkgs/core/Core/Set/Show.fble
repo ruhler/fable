@@ -2,8 +2,8 @@
 Map@ = /Core/Map%.Map@;
 
 Show@ = /Std/Show%.Show@;
-Output@ = /Std/Char/Output%.Output@;
-Do = /Std/Char/Output%.Do;
+Output@ = /Std/Stream/Text%.Output@;
+Do = /Std/Stream/Text%.Do;
 
 Format = /Std/Char/Ascii/Output%.Format;
 String = /Std/Char/Ascii/Output%.String;

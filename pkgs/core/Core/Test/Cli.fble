@@ -1,7 +1,7 @@
 
 Bool@ = /Std/Bool%.Bool@;
 
-Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Stream/Text%.Output@;
 Put@ .= /Std/Stream%;
 
 List@ = /Std/List%.List@;

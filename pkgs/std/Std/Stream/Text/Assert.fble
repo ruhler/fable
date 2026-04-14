@@ -1,7 +1,7 @@
-# @module[/Std/Char/Output/Assert%]
-#  Test assertions related to Output@.
+# @module[/Std/Stream/Text/Assert%]
+#  Test assertions related to text stream Output@.
 
-Output@, ToString .= /Std/Char/Output%;
+Output@, ToString .= /Std/Stream/Text%;
 AssertEquals .= /Std/Eq/Assert%;
 String@ .= /Std/String%;
 TestResult@ .= /Std/Test%;

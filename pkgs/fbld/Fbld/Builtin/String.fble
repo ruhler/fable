@@ -39,7 +39,7 @@ r = /Fbld/Result%.Monad;
     command: {
       Error<Maybe@<Char@>>(markup.command.name.loc,
         Format|'expected plain text, but found command @%s'[
-          /Std/Char/Output%.String(markup.command.name.text)]);
+          /Std/Stream/Text%.String(markup.command.name.text)]);
     },
     sequence: HeadOf(markup.sequence.a));
 };
@@ -64,7 +64,7 @@ Impl@ Head = (Env@ env, Command@ cmd) {
     command: {
       Error<Markup@>(markup.command.name.loc,
         Format|'expected plain text, but found command @%s'[
-          /Std/Char/Output%.String(markup.command.name.text)]);
+          /Std/Stream/Text%.String(markup.command.name.text)]);
     },
     sequence: {
       Markup@ a := r.do(TailOf(markup.sequence.a));

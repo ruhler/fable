@@ -2,7 +2,7 @@
 #  The Show@ instance for List@.
 
 String, Format .= /Std/Char/Ascii/Output%;
-Do .= /Std/Char/Output%;
+Do .= /Std/Stream/Text%;
 List@ .= /Std/List%;
 Show@ .= /Std/Show%;
 Unit@ .= /Std/Unit%;

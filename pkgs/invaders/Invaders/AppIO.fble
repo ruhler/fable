@@ -1,9 +1,9 @@
 
-In@ = /Core/Char/Stream%.In@;
-Out@ = /Core/Char/Stream%.Out@;
+In@ = /Std/Stream/Text%.In@;
+Out@ = /Std/Stream/Text%.Out@;
 GetText = /Core/Char/Stream/IStream%.GetText;
-Output@ = /Std/Char/Output%.Output@;
-String = /Std/Char/Output%.String;
+Output@ = /Std/Stream/Text%.Output@;
+String = /Std/Stream/Text%.String;
 
 Int@ = /Std/Int%.Int@;
 

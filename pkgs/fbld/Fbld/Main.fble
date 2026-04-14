@@ -1,8 +1,7 @@
 
 Put@ .= /Std/Stream%;
-In@ = /Core/Char/Stream%.In@;
+In@, String .= /Std/Stream/Text%;
 GetText = /Core/Char/Stream/IStream%.GetText;
-String = /Std/Char/Output%.String;
 
 List@ = /Std/List%.List@;
 Items = /Std/List%.Items;
@@ -17,7 +16,7 @@ Exit@ = /Std/Io/Cli%.Exit@;
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
 
-Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Stream/Text%.Output@;
 Format = /Std/Char/Ascii/Output%.Format;
 
 String@ = /Std/String%.String@;
@@ -66,7 +65,7 @@ Main = <<@>@ M@>(Monad@<M@> m, IO@<M@> io, List@<String@> args) {
     };
 
     fin.?(nothing: {
-      Output@ msg = Format|'unable to open %s'[/Std/Char/Output%.String(filename)];
+      Output@ msg = Format|'unable to open %s'[/Std/Stream/Text%.String(filename)];
       m.return(Error<List@<Text@>>(Unknown, msg));
     });
 

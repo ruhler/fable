@@ -16,9 +16,9 @@ List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-In@ = /Core/Char/Stream%.In@;
+In@ = /Std/Stream/Text%.In@;
 
-Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Stream/Text%.Output@;
 
 String@ = /Std/String%.String@;
 Format = /Std/Char/Ascii/Output%.Format;

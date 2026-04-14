@@ -1,7 +1,7 @@
 # @module[/Std/Int/Show%]
 #  The Show@ instance for Int@.
 
-Output@, Do, Return .= /Std/Char/Output%;
+Output@, Do, Return .= /Std/Stream/Text%;
 Format, String .= /Std/Char/Ascii/Output%;
 
 Int@, Neg .= /Std/Int%;

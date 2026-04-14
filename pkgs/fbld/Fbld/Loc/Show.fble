@@ -7,7 +7,7 @@ Loc@ = /Fbld/Loc%.Loc@;
 
 Show@<Loc@> Show = (Loc@ x) {
   Format|'%s:%s:%s'[
-    /Std/Char/Output%.String(x.file),
+    /Std/Stream/Text%.String(x.file),
     /Std/Int/Show%.Show(x.line),
     /Std/Int/Show%.Show(x.col)];
 };

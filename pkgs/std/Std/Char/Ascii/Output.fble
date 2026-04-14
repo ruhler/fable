@@ -3,14 +3,14 @@
 
 Ascii@, ToChar, StrE .= /Std/Char/Ascii%;
 StrLit .= /Std/Char/Lit%;
-Output@ .= /Std/Char/Output%;
+Output@ .= /Std/Stream/Text%;
 List@ .= /Std/List%;
 
 # @func[String] Output a string.
 #  @arg[List<Ascii@>][str] The string to output.
 #  @returns[Output@] The computation to output the string.
 (List@<Ascii@>) { Output@; }
-String = StrLit(ToChar, /Std/Char/Output%.String);
+String = StrLit(ToChar, /Std/Stream/Text%.String);
 
 # @func[String] Output a string with escape characters.
 #  Supports character sequences as in /Std/String/Escape%.Escape.
@@ -24,7 +24,7 @@ String = StrLit(ToChar, /Std/Char/Output%.String);
 #  @returns[Output@] The computation to output the string.
 (List@<Ascii@>) { Output@; }
 StringE = (List@<Ascii@> str) {
-  /Std/Char/Output%.String(StrE(str));
+  /Std/Stream/Text%.String(StrE(str));
 };
 
 # @func[Format] Construct a formatted output.
@@ -41,7 +41,7 @@ StringE = (List@<Ascii@> str) {
 #  @arg[List@<Output@>[args] Format args.
 #  @return[Output@] The formatted output.
 (List@<Ascii@>, List@<Output@>) { Output@; }
-Format = StrLit(ToChar, /Std/Char/Output%.Format);
+Format = StrLit(ToChar, /Std/Stream/Text%.Format);
 
 # @func[FormatE] Construct a formatted output.
 #  Provides printf like formatting, except the only supported format type is
@@ -62,7 +62,7 @@ Format = StrLit(ToChar, /Std/Char/Output%.Format);
 #  @return[Output@] The formatted output.
 (List@<Ascii@>, List@<Output@>) { Output@; }
 FormatE = (List@<Ascii@> str, List@<Output@> args) {
-  /Std/Char/Output%.Format(StrE(str), args);
+  /Std/Stream/Text%.Format(StrE(str), args);
 };
 
 @(String, StringE, Format, FormatE);

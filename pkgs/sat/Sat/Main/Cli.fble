@@ -1,9 +1,9 @@
 
 Put@ .= /Std/Stream%;
-In@ = /Core/Char/Stream%.In@;
+In@ = /Std/Stream/Text%.In@;
 
-Output@ = /Std/Char/Output%.Output@;
-String = /Std/Char/Output%.String;
+Output@ = /Std/Stream/Text%.Output@;
+String = /Std/Stream/Text%.String;
 
 List@ = /Std/List%.List@;
 Any = /Std/List/Search%.Any;

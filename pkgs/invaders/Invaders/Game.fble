@@ -1,6 +1,6 @@
 
 Str .= /Std/Char/Ascii%;
-ToString .= /Std/Char/Output%;
+ToString .= /Std/Stream/Text%;
 Int@, Add, Sub .= /Std/Int%;
 Mod .= /Std/Int/Div%;
 Eq .= /Std/Int/Eq%;

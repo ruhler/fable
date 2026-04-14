@@ -1,7 +1,7 @@
 
-Output@ = /Std/Char/Output%.Output@;
-Return = /Std/Char/Output%.Return;
-Concat = /Std/Char/Output%.Concat;
+Output@ = /Std/Stream/Text%.Output@;
+Return = /Std/Stream/Text%.Return;
+Concat = /Std/Stream/Text%.Concat;
 Format = /Std/Char/Ascii/Output%.Format;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 String = /Std/Char/Ascii/Output%.String;

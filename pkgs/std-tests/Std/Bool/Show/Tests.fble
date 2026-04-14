@@ -4,7 +4,7 @@ False = /Std/Bool%.False;
 
 OnAscii = /Std/Char/Ascii%.OnAscii;
 
-AssertOutput = OnAscii $ /Std/Char/Output/Assert%.AssertOutput;
+AssertOutput = OnAscii $ /Std/Stream/Text/Assert%.AssertOutput;
 
 List = /Std/List%.List;
 

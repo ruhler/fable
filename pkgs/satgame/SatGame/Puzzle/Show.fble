@@ -1,7 +1,7 @@
 
 Show@ = /Std/Show%.Show@;
-Do = /Std/Char/Output%.Do;
-Return = /Std/Char/Output%.Return;
+Do = /Std/Stream/Text%.Do;
+Return = /Std/Stream/Text%.Return;
 
 String = /Std/Char/Ascii/Output%.String;
 Format = /Std/Char/Ascii/Output%.Format;

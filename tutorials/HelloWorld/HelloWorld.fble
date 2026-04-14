@@ -19,7 +19,7 @@ Concat = /Std/List%.Concat;
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
 Lines = /Std/String/Lines%.Lines;
-ToString = /Std/Char/Output%.ToString;
+ToString = /Std/Stream/Text%.ToString;
 
 # Specify the output string.
 Char@ c = Char|A;

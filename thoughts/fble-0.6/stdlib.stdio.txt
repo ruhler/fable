@@ -4440,3 +4440,17 @@ possible development plan:
 * Reorganize modules to match the proposal.
 
 This will involve some work in Std package. Hopefully that's okay.
+
+--- 
+
+Next steps:
+* rename /Std/Char/Output% to /Std/Stream/Text%.
+* Move /Core/Char/Stream% contents to /Std/Stream/Text%.
+* Define /Std/Stream/Binary%.
+* Switch /Core/Stdio/FFI% over to using types from /Std/Stream/Text% and
+  /Std/Stream/Binary%
+* Move /Core/Stdio/FFI% over to /Std/Io/File organized as suggested above.
+* Implement missing functions for /Std/Io/File/Binary%.
+
+That should hopefully be the bulk of it.
+

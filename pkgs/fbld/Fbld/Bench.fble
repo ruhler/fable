@@ -1,10 +1,10 @@
 
 Str = /Std/Char/Ascii%.Str;
 
-Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Stream/Text%.Output@;
 
 Put@ .= /Std/Stream%;
-In@ = /Core/Char/Stream%.In@;
+In@ = /Std/Stream/Text%.In@;
 IStream = /Core/Char/Stream/IStream%.IStream;
 NullOutput = /Core/Char/Stream/OStream%.NullOutput;
 

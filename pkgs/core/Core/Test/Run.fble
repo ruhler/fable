@@ -6,8 +6,8 @@ And = /Std/Bool%.And;
 
 Put@ .= /Std/Stream%;
 
-Output@ = /Std/Char/Output%.Output@;
-String = /Std/Char/Output%.String;
+Output@ = /Std/Stream/Text%.Output@;
+String = /Std/Stream/Text%.String;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 StringE = /Std/Char/Ascii/Output%.StringE;
 

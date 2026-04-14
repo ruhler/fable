@@ -1,7 +1,7 @@
 
 Put@ .= /Std/Stream%;
 
-Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Stream/Text%.Output@;
 
 List@ = /Std/List%.List@;
 

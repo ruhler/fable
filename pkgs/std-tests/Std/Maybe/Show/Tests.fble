@@ -15,7 +15,7 @@ Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
 Show@ = /Std/Show%.Show@;
-ToString = /Std/Char/Output%.ToString;
+ToString = /Std/Stream/Text%.ToString;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

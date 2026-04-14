@@ -3,7 +3,7 @@
 
 Bool@ .= /Std/Bool%;
 List@ .= /Std/List%;
-Output@, ToString .= /Std/Char/Output%;
+Output@, ToString .= /Std/Stream/Text%;
 String@ .= /Std/String%;
 String, Format .= /Std/Char/Ascii/Output%;
 Unit@, Unit .= /Std/Unit%;
@@ -58,7 +58,7 @@ ExpectFails = (String@ msg, TestResult@ result) {
   /Std/String/Eq%.Contains(failure, msg).?(true: TestResult@(expected_fail: Unit));
 
   Fail(Format|'Expected failure containing "%s", but failed with "%s"'
-        [/Std/Char/Output%.String(msg), /Std/Char/Output%.String(failure)]);
+        [/Std/Stream/Text%.String(msg), /Std/Stream/Text%.String(failure)]);
 };
 
 # @func[Skip] A skipped test result.

@@ -19,8 +19,8 @@ Equal = /Std/Cmp%.Equal;
 Greater = /Std/Cmp%.Greater;
 
 Show@ = /Std/Show%.Show@;
-Do = /Std/Char/Output%.Do;
-ToString = /Std/Char/Output%.ToString;
+Do = /Std/Stream/Text%.Do;
+ToString = /Std/Stream/Text%.ToString;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

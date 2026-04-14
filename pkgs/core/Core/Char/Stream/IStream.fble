@@ -2,7 +2,7 @@
 Char@ = /Std/Char%.Char@;
 IsNewline = /Core/Char/Type%.IsNewline;
 
-In@ = /Core/Char/Stream%.In@;
+In@ = /Std/Stream/Text%.In@;
 
 List = /Std/List%.List;
 Items = /Std/List%.Items;

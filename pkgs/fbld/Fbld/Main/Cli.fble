@@ -1,7 +1,7 @@
 
-Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Stream/Text%.Output@;
 Put@ .= /Std/Stream%;
-In@ = /Core/Char/Stream%.In@;
+In@ = /Std/Stream/Text%.In@;
 
 List@ = /Std/List%.List@;
 Maybe@ = /Std/Maybe%.Maybe@;

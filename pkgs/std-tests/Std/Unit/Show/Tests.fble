@@ -1,7 +1,7 @@
 
 OnAscii = /Std/Char/Ascii%.OnAscii;
 
-AssertOutput = OnAscii(/Std/Char/Output/Assert%.AssertOutput);
+AssertOutput = OnAscii(/Std/Stream/Text/Assert%.AssertOutput);
 
 Test@ = /Std/Test%.Test@;
 Test = OnAscii(/Std/Test%.Test);

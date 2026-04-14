@@ -1,9 +1,9 @@
 
 Put@ .= /Std/Stream%;
 
-Output@ = /Std/Char/Output%.Output@;
-ToNull = /Std/Char/Output%.ToNull;
-Do = /Std/Char/Output%.Do;
+Output@ = /Std/Stream/Text%.Output@;
+ToNull = /Std/Stream/Text%.ToNull;
+Do = /Std/Stream/Text%.Do;
 
 Monad@ = /Std/Monad%.Monad@;
 State@ = /Std/State%.State@;

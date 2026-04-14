@@ -3,8 +3,8 @@ Str = /Std/Char/Ascii%.Str;
 
 Put@ .= /Std/Stream%;
 
-Output@ = /Std/Char/Output%.Output@;
-String = /Std/Char/Output%.String;
+Output@ = /Std/Stream/Text%.Output@;
+String = /Std/Stream/Text%.String;
 
 Success = /Std/Io/Cli%.Success;
 

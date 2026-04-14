@@ -1,8 +1,8 @@
 
 Put@ .= /Std/Stream%;
 
-Output@ = /Std/Char/Output%.Output@;
-String = /Std/Char/Output%.String;
+Output@ = /Std/Stream/Text%.Output@;
+String = /Std/Stream/Text%.String;
 Format = /Std/Char/Ascii/Output%.Format;
 
 List@ = /Std/List%.List@;

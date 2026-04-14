@@ -5,7 +5,7 @@ False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
 Put@ .= /Std/Stream%;
-String = /Std/Char/Output%.String;
+String = /Std/Stream/Text%.String;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 Int@ = /Std/Int%.Int@;
@@ -27,7 +27,7 @@ Failure = /Std/Io/Cli%.Failure;
 
 In@ = /Core/Stream%.In@;
 
-Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Stream/Text%.Output@;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -67,7 +67,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     };
 
     Hash@ hash := m.do(/Md5/Md5%.Md5(m, in));
-    Output@ line = Format|'%s  %s'[/Md5/Hash%.Show(hash), /Std/Char/Output%.String(filename)];
+    Output@ line = Format|'%s  %s'[/Md5/Hash%.Show(hash), /Std/Stream/Text%.String(filename)];
     Unit@ _ := m.do(out $ FormatE|'%s\n'[line]);
     m.return(True);
   };

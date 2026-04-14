@@ -1,7 +1,7 @@
 
 Put@ .= /Std/Stream%;
 GetText = /Core/Char/Stream/IStream%.GetText;
-Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Stream/Text%.Output@;
 
 Int@ = /Std/Int%.Int@;
 Incr = /Std/Int%.Incr;
@@ -17,8 +17,7 @@ Io@ = /Std/Io%.Io@;
 
 Success = /Std/Io/Cli%.Success;
 
-In@ = /Core/Char/Stream%.In@;
-Out@ = /Core/Char/Stream%.Out@;
+In@, Out@ .= /Std/Stream/Text%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

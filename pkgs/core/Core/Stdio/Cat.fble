@@ -1,10 +1,10 @@
 
 Put@ .= /Std/Stream%;
-In@ = /Core/Char/Stream%.In@;
+In@ = /Std/Stream/Text%.In@;
 GetLine = /Core/Char/Stream/IStream%.GetLine;
 
-Output@ = /Std/Char/Output%.Output@;
-String = /Std/Char/Output%.String;
+Output@ = /Std/Stream/Text%.Output@;
+String = /Std/Stream/Text%.String;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 List@ = /Std/List%.List@;

@@ -1,5 +1,5 @@
 
-Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Stream/Text%.Output@;
 
 Int@ = /Std/Int%.Int@;
 Sub = /Std/Int%.Sub;

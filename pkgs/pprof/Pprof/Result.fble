@@ -4,8 +4,8 @@ False = /Std/Bool%.False;
 Eq@ = /Std/Eq%.Eq@;
 
 Show@ = /Std/Show%.Show@;
-Output@ = /Std/Char/Output%.Output@;
-ToString = /Std/Char/Output%.ToString;
+Output@ = /Std/Stream/Text%.Output@;
+ToString = /Std/Stream/Text%.ToString;
 
 Format = /Std/Char/Ascii/Output%.Format;
 

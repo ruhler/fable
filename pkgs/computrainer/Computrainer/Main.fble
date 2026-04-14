@@ -3,8 +3,8 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-In@ = /Core/Char/Stream%.In@;
-Out@ = /Core/Char/Stream%.Out@;
+In@ = /Std/Stream/Text%.In@;
+Out@ = /Std/Stream/Text%.Out@;
 
 GetText = /Core/Char/Stream/IStream%.GetText;
 

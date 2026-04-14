@@ -204,7 +204,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
   }),
 
   Test(Str|MultiError, (Unit@ _) {
-    String@ got = /Std/Char/Output%.ToString(ShowErrors(Run[
+    String@ got = /Std/Stream/Text%.ToString(ShowErrors(Run[
       Str|'@error[Oh no!]',
       Str|'@error[Not good.]'
     ]));

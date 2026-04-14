@@ -63,7 +63,7 @@ Return = <@ T@>(T@ x, R@ r) {
 <@ T@>(Loc@, String@) { M@<T@>; }
 Error = <@ T@>(Loc@ l, String@ msg, R@ r) {
   r.report_errors.?(
-    true: /Fbld/Result%.Error<SM@<T@>>(l, /Std/Char/Output%.String(msg)),
+    true: /Fbld/Result%.Error<SM@<T@>>(l, /Std/Stream/Text%.String(msg)),
     false: Fail<SM@<T@>>);
 };
 

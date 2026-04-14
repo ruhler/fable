@@ -10,7 +10,7 @@ Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Output@ = /Std/Char/Output%.Output@;
+Output@ = /Std/Stream/Text%.Output@;
 
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
@@ -36,7 +36,7 @@ Result@ = <@ T@> {
 };
 
 <@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
-  Result@(/Std/Char/Output%.Return, False, Just(x));
+  Result@(/Std/Stream/Text%.Return, False, Just(x));
 };
 
 # Indicate an error with location and error message.
@@ -48,7 +48,7 @@ Error = <@ T@>(Loc@ l, Output@ msg) {
 # Indicate an error with no error message.
 <@ T@> { Result@<T@>; }
 Fail = <@ T@> {
-  Result@(/Std/Char/Output%.Return, True, Nothing<T@>);
+  Result@(/Std/Stream/Text%.Return, True, Nothing<T@>);
 };
 
 # Assuming the given result is an error, change its type.
@@ -73,7 +73,7 @@ Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
 
   Result@<B@> rb = f(ra.value.just);
   Output@ errors = {
-    Unit@ _ := /Std/Char/Output%.Do(ra.errors);
+    Unit@ _ := /Std/Stream/Text%.Do(ra.errors);
     rb.errors;
   };
   Result@(errors, Or(ra.failed, rb.failed), rb.value);

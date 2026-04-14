@@ -1,5 +1,6 @@
-# @module[/Std/Char/Output%]
-#  Utilities for outputting characters.
+# @module[/Std/Stream/Stream%]
+#  Text based streams. This module provides specializations of the 
+#  /Std/Stream% types and functions for Char@ streams.
 
 Char@ .= /Std/Char%;
 U .= /Std/Char/Lit%;
@@ -126,6 +127,16 @@ ToString = /Std/Stream%.ToList<Char@>;
 (Output@) { Unit@; }
 ToNull = /Std/Stream%.ToNull<Char@>;
 
-@(Output@, Stream@,
+# @type[In@] Interface for getting characters from a stream.
+#  Use the get method to get the next value from the stream. It returns
+#  Nothing if the end of the stream has been reached.
+In@ = /Std/Stream%.In@<Char@>;
+
+# @type[Out@] Interface for outputting characters to a stream.
+#  The put method puts the next character to output. The end method closes the
+#  stream.
+Out@ = /Std/Stream%.Out@<Char@>;
+
+@(Output@, Stream@, In@, Out@,
   Return, Do, Put, String, Format, Concat, Lines, Join,
   ToString, ToNull);

@@ -5,8 +5,8 @@ False = /Std/Bool%.False;
 
 Put@ .= /Std/Stream%;
 OStream = /Core/Stream/Char%.OStream;
-Output@ = /Std/Char/Output%.Output@;
-String = /Std/Char/Output%.String;
+Output@ = /Std/Stream/Text%.Output@;
+String = /Std/Stream/Text%.String;
 StringE = /Std/Char/Ascii/Output%.StringE;
 
 Int@ = /Std/Int%.Int@;
