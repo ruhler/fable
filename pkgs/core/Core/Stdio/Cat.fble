@@ -1,6 +1,6 @@
 
 Put@ .= /Std/Stream%;
-IStream@ = /Core/Char/Stream%.IStream@;
+In@ = /Core/Char/Stream%.In@;
 GetLine = /Core/Char/Stream/IStream%.GetLine;
 
 Output@ = /Std/Char/Output%.Output@;
@@ -30,10 +30,10 @@ Unit = /Std/Unit%.Unit;
 # The 'cat' program.
 Main@ Cat = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
-  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
+  In@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
+  (String@) { M@<Maybe@<In@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
 
-  (IStream@<M@>) { M@<Unit@>; } cat = (IStream@<M@> input) {
+  (In@<M@>) { M@<Unit@>; } cat = (In@<M@> input) {
     String@ line := m.do(GetLine(input, m));
     line.?(empty: m.return(Unit));
 
@@ -45,7 +45,7 @@ Main@ Cat = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     inputs.?(empty: m.return(Success));
     String@ filename = inputs.items.head;
 
-    Maybe@<IStream@<M@>> istream := m.do $ {
+    Maybe@<In@<M@>> istream := m.do $ {
       /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(in)));
       read(filename);
     };

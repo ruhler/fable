@@ -6,7 +6,7 @@ Format = /Std/Char/Ascii/Output%.Format;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 Put@ .= /Std/Stream%;
-IStream@ = /Core/Char/Stream%.IStream@;
+In@ = /Core/Char/Stream%.In@;
 Output@ = /Std/Char/Output%.Output@;
 GetLine = /Core/Char/Stream/IStream%.GetLine;
 
@@ -114,7 +114,7 @@ Input@ = +(Unit@ quit, Unit@ reset, Move@ move);
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
 
-  IStream@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
+  In@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
     Unit@ _ := m.do(out $ ShowGame(game));

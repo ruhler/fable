@@ -1,6 +1,6 @@
 
 Put@ .= /Std/Stream%;
-IStream@ = /Core/Char/Stream%.IStream@;
+In@ = /Core/Char/Stream%.In@;
 GetText = /Core/Char/Stream/IStream%.GetText;
 String = /Std/Char/Output%.String;
 
@@ -42,10 +42,10 @@ Text = /Fbld/Text%.Text;
 
 
 IO@ = <<@>@ M@> { *(
-  IStream@<M@> in,
+  In@<M@> in,
   Put@<M@, Output@> out,
   Put@<M@, Output@> err,
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read
+  (String@) { M@<Maybe@<In@<M@>>>; } read
 ); };
 
 # Main --
@@ -60,7 +60,7 @@ Main = <<@>@ M@>(Monad@<M@> m, IO@<M@> io, List@<String@> args) {
     tail.failed.?(true: m.return(tail));
 
     String@ filename = filenames.items.head;
-    Maybe@<IStream@<M@>> fin := m.do $ {
+    Maybe@<In@<M@>> fin := m.do $ {
       /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(io.in)));
       io.read(filename);
     };

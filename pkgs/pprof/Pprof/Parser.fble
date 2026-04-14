@@ -7,7 +7,7 @@ Reverse = /Std/List%.Reverse;
 
 Monad@ = /Std/Monad%.Monad@;
 
-IStream@ = /Core/Stream%.IStream@;
+In@ = /Core/Stream%.In@;
 
 String@ = /Std/String%.String@;
 
@@ -80,8 +80,8 @@ ProfileFromParsed = (ProtoProfile@ parsed) {
   @(metrics, blocks, samples);
 };
 
-<<@>@ M@>(Monad@<M@>, IStream@<M@>) { M@<Result@<Profile@>>; }
-Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in) {
+<<@>@ M@>(Monad@<M@>, In@<M@>) { M@<Result@<Profile@>>; }
+Parse = <<@>@ M@>(Monad@<M@> m, In@<M@> in) {
   Result@<ProtoProfile@> parsed := m.do(Run(ProfileParser, in, m));
   m.return(/Pprof/Result%.Apply(ProfileFromParsed, parsed));
 };

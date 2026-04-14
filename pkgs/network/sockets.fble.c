@@ -204,13 +204,13 @@ static FbleValue* OStreamImpl(
 }
 
 /**
- * @func[NewIStream] Allocates an @l{IStream@} for a socket.
+ * @func[NewIStream] Allocates an @l{In@} for a socket.
  *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleValue*][sfd] The socket to allocate the @l{IStream@} for.
+ *  @arg[FbleValue*][sfd] The socket to allocate the @l{In@} for.
  *  @arg[FbleBlockId][module_block_id]
  *   The block_id of the /Network/Sockets/IO/Builtin% block.
  *
- *  @returns[FbleValue*] An fble @l{IStream@} function value.
+ *  @returns[FbleValue*] An fble @l{In@} function value.
  *
  *  @sideeffects
  *   Allocates a value on the heap.

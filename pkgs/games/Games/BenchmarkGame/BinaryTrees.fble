@@ -16,7 +16,7 @@ List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-IStream@ = /Core/Char/Stream%.IStream@;
+In@ = /Core/Char/Stream%.In@;
 
 Output@ = /Std/Char/Output%.Output@;
 
@@ -55,7 +55,7 @@ Tree@ = +(Unit@ leaf, Node@ node);
 };
 
 Main@
-Main = <<@>@ M@>(Monad@<M@> m, IStream@<M@> _in, Put@<M@, Output@> out, List@<String@> args) {
+Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Put@<M@, Output@> out, List@<String@> args) {
   (List@<Ascii@>, List@<Output@>) { M@<Unit@>; }
   FmtL = (List@<Ascii@> fmt, List@<Output@> args) {
     out $ FormatE|'%s\n'[Format(fmt, args)];

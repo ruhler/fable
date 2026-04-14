@@ -9,7 +9,7 @@ Unit@ = /Std/Unit%.Unit@;
 # An input stream of bytes.
 # The bytes are read out of a monadic type M@.
 # The type Int@ is used for describing a byte.
-IStream@ = <<@>@ M@> { M@<Maybe@<Int@>>; };
+In@ = <<@>@ M@> { M@<Maybe@<Int@>>; };
 
 # Special value to write to an output stream to close the stream.
 Int@ End = Neg(Int|1);
@@ -22,6 +22,6 @@ Int@ End = Neg(Int|1);
 OStream@ = <<@>@ M@>(Int@) { M@<Unit@>; };
 
 # A pair of input and output streams.
-IOStream@ = <<@>@ M@> { *(IStream@<M@> in, OStream@<M@> out); };
+IOStream@ = <<@>@ M@> { *(In@<M@> in, OStream@<M@> out); };
 
-@(IStream@, OStream@, IOStream@, End);
+@(In@, OStream@, IOStream@, End);

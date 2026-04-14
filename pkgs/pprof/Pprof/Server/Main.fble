@@ -49,8 +49,8 @@ String = /Std/Char/Output%.String;
 
 Split = /Std/String/Eq%.Split;
 
-BinaryIStream@ = /Core/Stream%.IStream@;
-CharIStream@ = /Core/Char/Stream%.IStream@;
+BinaryIn@ = /Core/Stream%.In@;
+CharIn@ = /Core/Char/Stream%.In@;
 
 ToString = /Std/Char/Output%.ToString;
 Lines = /Std/Char/Output%.Lines;
@@ -166,7 +166,7 @@ Percent = (Int@ numerator, Int@ denominator) {
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
   Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr(m, io));
-  (String@) { M@<Maybe@<BinaryIStream@<M@>>>; } read = /Core/Stdio/FFI%.Binary.Read(m, io);
+  (String@) { M@<Maybe@<BinaryIn@<M@>>>; } read = /Core/Stdio/FFI%.Binary.Read(m, io);
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets(io, m));
 
@@ -257,7 +257,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   Unit@ _ := m.do(out $
       FormatE|'parsing %s...\n'[/Std/Char/Output%.String(args.file)]);
 
-  Maybe@<BinaryIStream@<M@>> fin := m.do(read(args.file));
+  Maybe@<BinaryIn@<M@>> fin := m.do(read(args.file));
   fin.?(nothing: {
     Unit@ _ := m.do(err $ FormatE|'unable to open ''%s''\n'[
         /Std/Char/Output%.String(args.file)]);
@@ -326,8 +326,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
       (Sequence@ s) { Append(seq, s); });
   };
 
-  (CharIStream@<M@>, Put@<M@, Output@>) { M@<Unit@>; }
-  HandleConnection = (CharIStream@<M@> is, Put@<M@, Output@> os) {
+  (CharIn@<M@>, Put@<M@, Output@>) { M@<Unit@>; }
+  HandleConnection = (CharIn@<M@> is, Put@<M@, Output@> os) {
     # Get the start line
     String@ start := m.do(GetLine(is, m));
 
@@ -394,7 +394,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   M@<Unit@> Serve = {
     IOStream@<M@> ios := m.do(s);
     OStream@<M@> os = OStream(m, ios.out);
-    CharIStream@<M@> is = IStream(m, ios.in);
+    CharIn@<M@> is = IStream(m, ios.in);
     Unit@ _ := m.do(HandleConnection(is, os.put));
     Unit@ _ := m.do(os.close);
     Serve;

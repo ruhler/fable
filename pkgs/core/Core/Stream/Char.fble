@@ -18,8 +18,8 @@ Byte = /Core/Stream%;
 Char = /Core/Char/Stream%;
 
 # Convert a byte input stream to a character input stream.
-<<@>@ M@>(Monad@<M@>, Byte.IStream@<M@>) { Char.IStream@<M@>; }
-IStream = <<@>@ M@>(Monad@<M@> m, Byte.IStream@<M@> s) {
+<<@>@ M@>(Monad@<M@>, Byte.In@<M@>) { Char.In@<M@>; }
+IStream = <<@>@ M@>(Monad@<M@> m, Byte.In@<M@> s) {
   # TODO: Handle unicode characters.
   Maybe@<Int@> mbyte := m.do(s);
   mbyte.?(nothing: m.return(Nothing<Char@>));

@@ -49,10 +49,10 @@ Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Output@ output) {
 };
 
 Text = {
-  IStream@ = /Core/Char/Stream%.IStream@;
+  In@ = /Core/Char/Stream%.In@;
   OStream@ = /Core/Char/Stream%.OStream@;
 
-  <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<IStream@<M@>>; }
+  <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<In@<M@>>; }
   Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
     File@ stdin := m.do(io.run(GetStdin));
     m.return(io.run(GetChar(stdin)));
@@ -70,10 +70,10 @@ Text = {
     m.return(Output(m, io, stderr));
   };
 
-  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<In@<M@>>>; }
   Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
     Maybe@<File@> file := m.do(io.run(Open(path, Str|r)));
-    file.?(nothing: m.return(Nothing<IStream@<M@>>));
+    file.?(nothing: m.return(Nothing<In@<M@>>));
     m.return(Just(io.run(GetChar(file.just))));
   };
 
@@ -92,9 +92,9 @@ Text = {
 };
 
 Binary = {
-  IStream@ = /Core/Stream%.IStream@;
+  In@ = /Core/Stream%.In@;
 
-  <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<IStream@<M@>>; }
+  <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<In@<M@>>; }
   Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
     # TODO: Re-open stdin in binary mode?
     File@ stdin := m.do(io.run(GetStdin));
@@ -107,10 +107,10 @@ Binary = {
     m.return((Int@ x) { io.run(PutByte(stdout, x)); });
   };
 
-  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<IStream@<M@>>>; }
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<In@<M@>>>; }
   Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
     Maybe@<File@> file := m.do(io.run(Open(path, Str|rb)));
-    file.?(nothing: m.return(Nothing<IStream@<M@>>));
+    file.?(nothing: m.return(Nothing<In@<M@>>));
     m.return(Just(io.run(GetByte(file.just))));
   };
 

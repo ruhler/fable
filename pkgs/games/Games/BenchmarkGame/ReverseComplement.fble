@@ -5,7 +5,7 @@ Ascii = /Std/Char/Ascii%.Ascii;
 IsNewline = /Core/Char/Type%.IsNewline;
 
 Put@ .= /Std/Stream%;
-IStream@ = /Core/Char/Stream%.IStream@;
+In@ = /Core/Char/Stream%.In@;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 Output@ = /Std/Char/Output%.Output@;
@@ -77,7 +77,7 @@ Seq@ = *(String@ header, String@ codes);
 };
 
 Main@
-Main = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in, Put@<M@, Output@> out, List@<String@> _args) {
+Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Put@<M@, Output@> out, List@<String@> _args) {
   # Gets a line from stdin, discarding the final newline if any.
   M@<String@> GetLine = {
     Maybe@<Char@> c := m.do(in);

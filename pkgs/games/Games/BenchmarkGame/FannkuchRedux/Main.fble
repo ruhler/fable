@@ -10,7 +10,7 @@ List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-IStream@ = /Core/Char/Stream%.IStream@;
+In@ = /Core/Char/Stream%.In@;
 
 Output@ = /Std/Char/Output%.Output@;
 
@@ -26,7 +26,7 @@ Fannkuch@ = /Games/BenchmarkGame/FannkuchRedux%.Fannkuch@;
 FannkuchRedux = /Games/BenchmarkGame/FannkuchRedux%.FannkuchRedux;
 
 Main@
-Main = <<@>@ M@>(Monad@<M@> m, IStream@<M@> _in, Put@<M@, Output@> out, List@<String@> args) {
+Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Put@<M@, Output@> out, List@<String@> args) {
 
   (List@<Ascii@>, List@<Output@>) { M@<Unit@>; }
   FmtL = (List@<Ascii@> fmt, List@<Output@> args) {

@@ -4,7 +4,7 @@ Str = /Std/Char/Ascii%.Str;
 Output@ = /Std/Char/Output%.Output@;
 
 Put@ .= /Std/Stream%;
-IStream@ = /Core/Char/Stream%.IStream@;
+In@ = /Core/Char/Stream%.In@;
 IStream = /Core/Char/Stream/IStream%.IStream;
 NullOutput = /Core/Char/Stream/OStream%.NullOutput;
 
@@ -37,11 +37,11 @@ Test@ Bench = Test(Str|Fbld, (Unit@ _) {
   M = P.Monad;
   S = P.State;
 
-  IStream@<M@> in = IStream(M, S);
+  In@<M@> in = IStream(M, S);
   Put@<M@, Output@> out = NullOutput(M);
   Put@<M@, Output@> err = NullOutput(M);
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read = (String@ _) {
-    M.return(Nothing<IStream@<M@>>);
+  (String@) { M@<Maybe@<In@<M@>>>; } read = (String@ _) {
+    M.return(Nothing<In@<M@>>);
   };
   IO@<M@> io = @(in, out, err, read);
   List@<String@> args = List[Str|'-'];

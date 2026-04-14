@@ -29,7 +29,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
 
-IStream@ = /Core/Stream%.IStream@;
+In@ = /Core/Stream%.In@;
 OStream@ = /Core/Stream%.OStream@;
 IOStream@ = /Core/Stream%.IOStream@;
 
@@ -108,8 +108,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets(io, m));
 
-  (IStream@<M@>, OStream@<M@>) { M@<Unit@>; }
-  ForwardAll = (IStream@<M@> in, OStream@<M@> out) {
+  (In@<M@>, OStream@<M@>) { M@<Unit@>; }
+  ForwardAll = (In@<M@> in, OStream@<M@> out) {
     Maybe@<Int@> mb := m.do(in);
     mb.?(nothing: out(/Core/Stream%.End));
     Unit@ _ := m.do(out(mb.just));

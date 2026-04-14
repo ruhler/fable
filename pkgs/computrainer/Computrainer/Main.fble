@@ -3,7 +3,7 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-IStream@ = /Core/Char/Stream%.IStream@;
+In@ = /Core/Char/Stream%.In@;
 OStream@ = /Core/Char/Stream%.OStream@;
 
 GetText = /Core/Char/Stream/IStream%.GetText;
@@ -110,7 +110,7 @@ State@ = *(
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
+  (String@) { M@<Maybe@<In@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
   (String@) { M@<Maybe@<OStream@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(m, io);
 
   Int@ MenuScale = Int|8;
@@ -320,7 +320,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
   };
 
   String@ file = args.?(items: args.items.head, empty: Str|'model.ct');
-  Maybe@<IStream@<M@>> istream := m.do(read(file));
+  Maybe@<In@<M@>> istream := m.do(read(file));
   Model@ model := m.do({
       istream.?(nothing: m.return(Model(Grid.Empty<Gate@>, Grid.Empty<Car@>)));
       String@ text := m.do(GetText(istream.just, m));

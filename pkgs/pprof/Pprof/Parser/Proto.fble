@@ -24,7 +24,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-IStream@ = /Core/Stream%.IStream@;
+In@ = /Core/Stream%.In@;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -109,8 +109,8 @@ Parser@ = <@ A@> {
   <<@>@ M@>(Proto@<M@>, Monad@<M@>) { M@<A@>; };
 };
 
-<@ A@>(Parser@<A@>)<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<Result@<A@>>; }
-Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
+<@ A@>(Parser@<A@>)<<@>@ M@>(In@<M@>, Monad@<M@>) { M@<Result@<A@>>; }
+Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(In@<M@> in, Monad@<M@> m) {
   S@ = Int@;  # Bytes read so far.
   R@ = <@ T@> { *(S@ s, T@ x); };
   PM@ = <@ T@>(S@) { M@<Result@<R@<T@>>>; };
