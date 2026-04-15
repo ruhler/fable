@@ -68,7 +68,7 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Char/Stream/OStream.fble
   - pkgs/core/Core/Char/Stream.fble ==> /Std/Stream/Text% [DONE]
   - pkgs/core/Core/Stdio/Cat.fble
-  - pkgs/core/Core/Stdio/FFI.fble
+  - pkgs/core/Core/Stdio/FFI.fble   ==> /Std/Io/File/*  [DONE]
   - pkgs/core/Core/Stdio/HelloWorld.fble
   - pkgs/core/Core/Stdio/StringO.fble
   - pkgs/core/Core/Stream/Char.fble

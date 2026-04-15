@@ -104,7 +104,7 @@ GetArgs = (List@<String@> args, Args@ default) {
 };
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
-  Out@<M@> err := m.do(/Core/Stdio/FFI%.Text.Stderr(m, io));
+  Out@<M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(io, m));
 
@@ -121,7 +121,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+    Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
     Unit@ _ := m.do(out.put $ String $ /Network/Apps/Echo/Usage%);
     m.return(Success);
   });
@@ -140,7 +140,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   IOut@<M@> ios = mios.just;
   Put@<M@, Output@> os = OStream(m, ios.out).put;
-  Binary.Out@<M@> out := m.do(/Core/Stdio/FFI%.Binary.Stdout(m, io));
+  Binary.Out@<M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
 
   Unit@ _ := m.do(os $ String $ args.message);
   Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, out.put));

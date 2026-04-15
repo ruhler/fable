@@ -110,9 +110,9 @@ Input@ = +(Unit@ quit, Unit@ reset, Move@ move);
 
 # Play a game of tic-tac-toe.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
-  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
 
-  In@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
+  In@<M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
     Unit@ _ := m.do(out.put $ ShowGame(game));

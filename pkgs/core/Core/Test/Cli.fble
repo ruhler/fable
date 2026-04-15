@@ -33,7 +33,7 @@ Test@ = /Std/Test%.Test@;
       args.items.tail.items.head;
     };
 
-    Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+    Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
     Bool@ passed := m.do(/Core/Test/Run%.Run(m, out.put, prefix, tests));
     m.return(passed.?(true: Success, false: Failure));
   };

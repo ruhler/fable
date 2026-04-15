@@ -13,10 +13,10 @@ Main@ = /Std/Io/Cli%.Main@;
 String@ = /Std/String%.String@;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-  In@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
-  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
-  Out@<M@> err := m.do(/Core/Stdio/FFI%.Text.Stderr(m, io));
-  (String@) { M@<Maybe@<In@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
+  In@<M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
+  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  Out@<M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
+  (String@) { M@<Maybe@<In@<M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
   /Fbld/Main%.Main(m, @(in, out: out.put, err: err.put, read), args);
 };
 

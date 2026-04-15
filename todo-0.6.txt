@@ -2,6 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
+
 * Remove things from /Std/Char/Output% that we could as easily get from
   /Std/Stream%?
  - Like ToNull, ToString, String, Concat?

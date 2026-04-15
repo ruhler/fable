@@ -1,6 +1,6 @@
 /**
  * @file stdio.fble.c
- *  Implementation of /Core/Stdio/FFI%.
+ *  Implementation of /Std/Io/File/Internal% functions.
  */
 
 #include "stdio.fble.h"
@@ -38,9 +38,9 @@ static FbleValue* GetStdin(
   return FbleNewNativeValue(heap, stdin, NULL);
 }
 
-// /Core/Stdio/FFI%.GetStdin foreign function.
-FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdin = {
-  .path = "/Core/Stdio/FFI%",
+// /Std/Io/File/Internal%.GetStdin foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdin = {
+  .path = "/Std/Io/File/Internal%",
   .name = "GetStdin",
   .num_args = 1,
   .max_call_args = 0,
@@ -66,9 +66,9 @@ static FbleValue* GetStdout(
   return FbleNewNativeValue(heap, stdout, NULL);
 }
 
-// /Core/Stdio/FFI%.GetStdout foreign function.
-FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdout = {
-  .path = "/Core/Stdio/FFI%",
+// /Std/Io/File/Internal%.GetStdout foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdout = {
+  .path = "/Std/Io/File/Internal%",
   .name = "GetStdout",
   .num_args = 1,
   .max_call_args = 0,
@@ -94,9 +94,9 @@ static FbleValue* GetStderr(
   return FbleNewNativeValue(heap, stderr, NULL);
 }
 
-// /Core/Stdio/FFI%.GetStderr foreign function.
-FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStderr = {
-  .path = "/Core/Stdio/FFI%",
+// /Std/Io/File/Internal%.GetStderr foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStderr = {
+  .path = "/Std/Io/File/Internal%",
   .name = "GetStderr",
   .num_args = 1,
   .max_call_args = 0,
@@ -132,9 +132,9 @@ static FbleValue* Open(
   FbleValue* v = FbleNewNativeValue(heap, fout, NULL);
   return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
 }
-// /Core/Stdio/FFI%.Open foreign function.
-FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Open = {
-  .path = "/Core/Stdio/FFI%",
+// /Std/Io/File/Internal%.Open foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Open = {
+  .path = "/Std/Io/File/Internal%",
   .name = "Open",
   .num_args = 3,
   .max_call_args = 0,
@@ -161,9 +161,9 @@ static FbleValue* Close(
   fclose(file);
   return FbleNewStructValue_(heap, 0);
 }
-// /Core/Stdio/FFI%.Close foreign function.
-FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Close = {
-  .path = "/Core/Stdio/FFI%",
+// /Std/Io/File/Internal%.Close foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Close = {
+  .path = "/Std/Io/File/Internal%",
   .name = "Close",
   .num_args = 2,
   .max_call_args = 0,
@@ -200,9 +200,9 @@ static FbleValue* GetChar(
   return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
 }
 
-// /Core/Stdio/FFI%.GetChar foreign function.
-FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar = {
-  .path = "/Core/Stdio/FFI%",
+// /Std/Io/File/Internal%.GetChar foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetChar = {
+  .path = "/Std/Io/File/Internal%",
   .name = "GetChar",
   .num_args = 2,
   .max_call_args = 0,
@@ -239,9 +239,9 @@ static FbleValue* GetByte(
   return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
 }
 
-// /Core/Stdio/FFI%.GetByte foreign function.
-FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetByte = {
-  .path = "/Core/Stdio/FFI%",
+// /Std/Io/File/Internal%.GetByte foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetByte = {
+  .path = "/Std/Io/File/Internal%",
   .name = "GetByte",
   .num_args = 2,
   .max_call_args = 0,
@@ -273,9 +273,9 @@ static FbleValue* PutChar(
   return FbleNewStructValue_(heap, 0);
 }
 
-// /Core/Stdio/FFI%.PutChar foreign function.
-FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar = {
-  .path = "/Core/Stdio/FFI%",
+// /Std/Io/File/Internal%.PutChar foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutChar = {
+  .path = "/Std/Io/File/Internal%",
   .name = "PutChar",
   .num_args = 3,
   .max_call_args = 0,
@@ -307,9 +307,9 @@ static FbleValue* PutByte(
   return FbleNewStructValue_(heap, 0);
 }
 
-// /Core/Stdio/FFI%.PutByte foreign function.
-FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutByte = {
-  .path = "/Core/Stdio/FFI%",
+// /Std/Io/File/Internal%.PutByte foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutByte = {
+  .path = "/Std/Io/File/Internal%",
   .name = "PutByte",
   .num_args = 3,
   .max_call_args = 0,
@@ -340,9 +340,9 @@ static FbleValue* Flush(
   return FbleNewStructValue_(heap, 0);
 }
 
-// /Core/Stdio/FFI%.Flush foreign function.
-FbleForeign _Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Flush = {
-  .path = "/Core/Stdio/FFI%",
+// /Std/Io/File/Internal%.Flush foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Flush = {
+  .path = "/Std/Io/File/Internal%",
   .name = "Flush",
   .num_args = 2,
   .max_call_args = 0,
@@ -354,14 +354,14 @@ void FbleRegisterStdioForeignValues(FbleValueHeap* heap)
 {
   setlocale(LC_CTYPE, "");
 
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdin);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStdout);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetStderr);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Open);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Close);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetChar);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_GetByte);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutChar);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_PutByte);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Stdio_2f_FFI_25__2e_Flush);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdin);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdout);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStderr);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Open);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Close);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetChar);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetByte);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutChar);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutByte);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Flush);
 }

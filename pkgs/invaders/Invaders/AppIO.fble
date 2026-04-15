@@ -34,9 +34,9 @@ Invaders = /Invaders/App%.Invaders;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
 	Maybe@<String@> home := m.do(/Std/Io/Env%.GetVar(m, io, Str|'HOME'));
-  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
-  (String@) { M@<Maybe@<In@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
-  (String@) { M@<Maybe@<Out@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(m, io);
+  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  (String@) { M@<Maybe@<In@<M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
+  (String@) { M@<Maybe@<Out@<M@>>>; } write = /Std/Io/File/Text%.Write(m, io);
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ := m.do(out.put $ String $ /Invaders/Usage%);

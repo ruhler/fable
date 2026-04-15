@@ -27,9 +27,9 @@ Unit = /Std/Unit%.Unit;
 
 # The 'cat' program.
 Main@ Cat = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
-  In@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
-  (String@) { M@<Maybe@<In@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
+  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  In@<M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
+  (String@) { M@<Maybe@<In@<M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
 
   (In@<M@>) { M@<Unit@>; } cat = (In@<M@> input) {
     String@ line := m.do(GetLine(input, m));

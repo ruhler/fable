@@ -1,0 +1,28 @@
+# @module[/Std/Io/File/Internal%]
+#  For internal use only.
+
+Char@ .= /Std/Char%;
+Int@ .= /Std/Int%;
+Maybe@ .= /Std/Maybe%;
+External@ .= /Std/Io%;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
+
+# Pretend type for FILE*. Only to be accessed from FFI functions.
+File@ = *(Unit@ file).%(@/Std/Io/File/Internal%);
+
+External@<File@> GetStdin = @<GetStdin>|GetStdin;
+External@<File@> GetStdout = @<GetStdout>|GetStdout;
+External@<File@> GetStderr = @<GetStderr>|GetStderr;
+(String@, String@) { External@<Maybe@<File@>>; } Open = @<Open>|Open;
+(File@) { External@<Unit@>; } Close = @<Close>|Close;
+(File@) { External@<Unit@>; } Flush = @<Flush>|Flush;
+
+(File@) { External@<Maybe@<Int@>>; } GetByte = @<GetByte>|GetByte;
+(File@, Int@) { External@<Unit@>; } PutByte = @<PutByte>|PutByte;
+
+(File@) { External@<Maybe@<Char@>>; } GetChar = @<GetChar>|GetChar;
+(File@, Char@) { External@<Unit@>; } PutChar = @<PutChar>|PutChar;
+
+@(File@, GetStdin, GetStdout, GetStderr, Open, Close, Flush,
+  GetByte, PutByte, GetChar, PutChar).%(@/Std/Io/File%);
