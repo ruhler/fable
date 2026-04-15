@@ -85,7 +85,14 @@ Text = {
     m.return(Just(Out(m, io, file.just)));
   };
 
-  @(Stdin, Stdout, Stderr, Read, Write);
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<Out@<M@>>>; }
+  Append = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
+    Maybe@<File@> file := m.do(io.run(Open(path, Str|a)));
+    file.?(nothing: m.return(Nothing<Out@<M@>>));
+    m.return(Just(Out(m, io, file.just)));
+  };
+
+  @(Stdin, Stdout, Stderr, Read, Write, Append);
 };
 
 Binary = {
@@ -143,7 +150,14 @@ Binary = {
     m.return(Just(Out(m, io, file.just)));
   };
 
-  @(Stdin, Stdout, Stderr, Read, Write);
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<Out@<M@>>>; }
+  Append = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
+    Maybe@<File@> file := m.do(io.run(Open(path, Str|ab)));
+    file.?(nothing: m.return(Nothing<Out@<M@>>));
+    m.return(Just(Out(m, io, file.just)));
+  };
+
+  @(Stdin, Stdout, Stderr, Read, Write, Append);
 };
 
 @(Text, Binary);

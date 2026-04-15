@@ -6,8 +6,6 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-Put@ .= /Std/Stream%;
-Output@ = /Std/Stream/Text%.Output@;
 String = /Std/Stream/Text%.String;
 StringE = /Std/Char/Ascii/Output%.StringE;
 Text = /Std/Stream/Text%;
