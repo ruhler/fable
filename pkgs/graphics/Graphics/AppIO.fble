@@ -1,10 +1,7 @@
 
 Str = /Std/Char/Ascii%.Str;
 
-Put@ .= /Std/Stream%;
-
-Output@ = /Std/Stream/Text%.Output@;
-String = /Std/Stream/Text%.String;
+Out@, String .= /Std/Stream/Text%;
 
 Success = /Std/Io/Cli%.Success;
 
@@ -26,10 +23,10 @@ Main@ = /App/Native%.Main@;
 Main@
 Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args)
 {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(out $ String $ /Graphics/Usage%);
+    Unit@ _ := m.do(out.put $ String $ /Graphics/Usage%);
     m.return(Success);
   });
 

@@ -1,8 +1,7 @@
 
 Bool@ = /Std/Bool%.Bool@;
 
-Output@ = /Std/Stream/Text%.Output@;
-Put@ .= /Std/Stream%;
+Out@ .= /Std/Stream/Text%;
 
 List@ = /Std/List%.List@;
 
@@ -34,8 +33,8 @@ Test@ = /Std/Test%.Test@;
       args.items.tail.items.head;
     };
 
-    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
-    Bool@ passed := m.do(/Core/Test/Run%.Run(m, out, prefix, tests));
+    Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+    Bool@ passed := m.do(/Core/Test/Run%.Run(m, out.put, prefix, tests));
     m.return(passed.?(true: Success, false: Failure));
   };
 };

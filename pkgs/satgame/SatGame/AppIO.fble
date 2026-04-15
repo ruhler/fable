@@ -1,7 +1,5 @@
 
-Put@ .= /Std/Stream%;
 GetText = /Core/Char/Stream/IStream%.GetText;
-Output@ = /Std/Stream/Text%.Output@;
 
 Int@ = /Std/Int%.Int@;
 Incr = /Std/Int%.Incr;
@@ -91,9 +89,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     m.return(seed);
   });
 
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
   Args@ args = GetArgs(argv, DefaultArgs.@(seed));
-  Unit@ _ := m.do(SatGame(m, out, app, width, height, args));
+  Unit@ _ := m.do(SatGame(m, out.put, app, width, height, args));
   m.return(Success);
 };
 

@@ -164,8 +164,8 @@ Percent = (Int@ numerator, Int@ denominator) {
 };
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
-  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr(m, io));
+  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Out@<M@> err := m.do(/Core/Stdio/FFI%.Text.Stderr(m, io));
   (String@) { M@<Maybe@<BinaryIn@<M@>>>; } read = /Core/Stdio/FFI%.Binary.Read(m, io);
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets(io, m));
@@ -230,47 +230,47 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Unit@ _ := m.do(out $ String $ /Pprof/Usage%);
+    Unit@ _ := m.do(out.put $ String $ /Pprof/Usage%);
     m.return(Success);
   });
 
   args.file.?(empty: {
-    Unit@ _ := m.do(err $ StringE|'missing input file');
-    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
+    Unit@ _ := m.do(err.put $ StringE|'missing input file');
+    Unit@ _ := m.do(err.put $ StringE|'\ntry --help for help\n');
     m.return(Failure);
   });
 
   args.error.?(just: {
-    Unit@ _ := m.do(err $ args.error.just);
-    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
+    Unit@ _ := m.do(err.put $ args.error.just);
+    Unit@ _ := m.do(err.put $ StringE|'\ntry --help for help\n');
     m.return(Failure);
   });
 
   Maybe@<Server@<M@>> ms := m.do(sockets.server(args.hostname, args.port));
   ms.?(nothing: {
-    Unit@ _ := m.do(err $ StringE|'unable to serve\n');
+    Unit@ _ := m.do(err.put $ StringE|'unable to serve\n');
     m.return(Failure);
   });
 
   Server@<M@> s = ms.just;
 
-  Unit@ _ := m.do(out $
+  Unit@ _ := m.do(out.put $
       FormatE|'parsing %s...\n'[/Std/Stream/Text%.String(args.file)]);
 
   Maybe@<BinaryIn@<M@>> fin := m.do(read(args.file));
   fin.?(nothing: {
-    Unit@ _ := m.do(err $ FormatE|'unable to open ''%s''\n'[
+    Unit@ _ := m.do(err.put $ FormatE|'unable to open ''%s''\n'[
         /Std/Stream/Text%.String(args.file)]);
     m.return(Failure);
   });
 
   Result@<Profile@> parsed := m.do(Parse(m, fin.just));
   parsed.?(error: {
-    Unit@ _ := m.do(err $ FormatE|'error: %s\n'[parsed.error]);
+    Unit@ _ := m.do(err.put $ FormatE|'error: %s\n'[parsed.error]);
     m.return(Failure);
   });
   
-  Unit@ _ := m.do(out $
+  Unit@ _ := m.do(out.put $
     FormatE|'serving at http://%s:%s\n'[
       /Std/Stream/Text%.String(args.hostname),
       /Std/Int/Show%.Show(args.port)
@@ -380,14 +380,14 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   args.benchmark.?(true: {
     # Run through a few different queries to act as a benchmark.
-    Unit@ _ := m.do(out $ OverviewPage);
-    Unit@ _ := m.do(out $ OverallPage);
-    Unit@ _ := m.do(out $ SelfPage);
-    Unit@ _ := m.do(out $ SeqsPage);
+    Unit@ _ := m.do(out.put $ OverviewPage);
+    Unit@ _ := m.do(out.put $ OverallPage);
+    Unit@ _ := m.do(out.put $ SelfPage);
+    Unit@ _ := m.do(out.put $ SeqsPage);
 
     profile.samples.?(empty: m.return(Success));
     Sequence@ seq = List[Last(profile.samples.items.head.sequence)];
-    Unit@ _ := m.do(out $ SeqPage(seq));
+    Unit@ _ := m.do(out.put $ SeqPage(seq));
     m.return(Success);
   });
 

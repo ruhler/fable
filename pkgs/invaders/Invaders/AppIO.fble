@@ -1,9 +1,6 @@
 
-In@ = /Std/Stream/Text%.In@;
-Out@ = /Std/Stream/Text%.Out@;
+In@, Out@, String .= /Std/Stream/Text%;
 GetText = /Core/Char/Stream/IStream%.GetText;
-Output@ = /Std/Stream/Text%.Output@;
-String = /Std/Stream/Text%.String;
 
 Int@ = /Std/Int%.Int@;
 
@@ -37,12 +34,12 @@ Invaders = /Invaders/App%.Invaders;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
 	Maybe@<String@> home := m.do(/Std/Io/Env%.GetVar(m, io, Str|'HOME'));
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
   (String@) { M@<Maybe@<In@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
   (String@) { M@<Maybe@<Out@<M@>>>; } write = /Core/Stdio/FFI%.Text.Write(m, io);
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(out $ String $ /Invaders/Usage%);
+    Unit@ _ := m.do(out.put $ String $ /Invaders/Usage%);
     m.return(Success);
   });
 

@@ -1,25 +1,18 @@
 
-Put@ .= /Std/Stream%;
+StringE .= /Std/Char/Ascii/Output%;
+Io@ .= /Std/Io%;
+Main@, Success .= /Std/Io/Cli%;
+List@ .= /Std/List%;
+Monad@ .= /Std/Monad%;
+Out@ .= /Std/Stream/Text%;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
 
-Output@ = /Std/Stream/Text%.Output@;
-
-List@ = /Std/List%.List@;
-
-Monad@ = /Std/Monad%.Monad@;
-
-Io@ = /Std/Io%.Io@;
-Main@ = /Std/Io/Cli%.Main@;
-Success = /Std/Io/Cli%.Success;
-
-String@ = /Std/String%.String@;
-StringE = /Std/Char/Ascii/Output%.StringE;
-
-Unit@ = /Std/Unit%.Unit@;
 
 # A hello world program using the cli interface.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
-  Unit@ _ := m.do(out $ StringE|'hello, world\n');
+  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Unit@ _ := m.do(out.put $ StringE|'hello, world\n');
   m.return(Success);
 };
 

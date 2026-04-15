@@ -1,10 +1,7 @@
 
-Output@ = /Std/Stream/Text%.Output@;
-Return = /Std/Stream/Text%.Return;
-ToString = /Std/Stream/Text%.ToString;
+In@, Out@, Output@, Return, ToString .= /Std/Stream/Text%;
 
 Put@ .= /Std/Stream%;
-In@ = /Std/Stream/Text%.In@;
 IStream = /Core/Char/Stream/IStream%.IStream;
 OStream = /Core/Char/Stream/OStream%.OStream;
 NullOutput = /Core/Char/Stream/OStream%.NullOutput;
@@ -94,8 +91,8 @@ Bench = (String@ name, Main@ game, String@ input, List@<String@> args) {
 (Main@) { /Std/Io/Cli%.Main@; }
 Run = (Main@ game)<<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   In@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
-  Unit@ _ := m.do(game(m, in, out, args));
+  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Unit@ _ := m.do(game(m, in, out.put, args));
   m.return(Success);
 };
 

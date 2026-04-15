@@ -3,8 +3,7 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-Output@ = /Std/Stream/Text%.Output@;
-Put@ .= /Std/Stream%;
+Out@ .= /Std/Stream/Text%;
 
 Main@ = /Std/Io/Cli%.Main@;
 Success = /Std/Io/Cli%.Success;
@@ -24,9 +23,9 @@ Unit@ = /Std/Unit%.Unit@;
 # It exits with success if all arguments have the same value, false otherwise.
 
 Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
 
-  Unit@ _ := m.do(out $ StringE|'hello, world\n');
+  Unit@ _ := m.do(out.put $ StringE|'hello, world\n');
 
   args.?(empty: m.return(Success));
   String@ head = args.items.head;

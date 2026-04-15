@@ -1,6 +1,5 @@
 
-Output@ = /Std/Stream/Text%.Output@;
-Put@ .= /Std/Stream%;
+Out@ .= /Std/Stream/Text%;
 In@ = /Std/Stream/Text%.In@;
 
 List@ = /Std/List%.List@;
@@ -15,10 +14,10 @@ String@ = /Std/String%.String@;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   In@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
-  Put@<M@, Output@> err := m.do(/Core/Stdio/FFI%.Text.Stderr(m, io));
+  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Out@<M@> err := m.do(/Core/Stdio/FFI%.Text.Stderr(m, io));
   (String@) { M@<Maybe@<In@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
-  /Fbld/Main%.Main(m, @(in, out, err, read), args);
+  /Fbld/Main%.Main(m, @(in, out: out.put, err: err.put, read), args);
 };
 
 Main;

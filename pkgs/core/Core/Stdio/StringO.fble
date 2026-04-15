@@ -1,8 +1,5 @@
 
-Put@ .= /Std/Stream%;
-
-Output@ = /Std/Stream/Text%.Output@;
-String = /Std/Stream/Text%.String;
+Out@, String .= /Std/Stream/Text%;
 Format = /Std/Char/Ascii/Output%.Format;
 
 List@ = /Std/List%.List@;
@@ -21,8 +18,8 @@ Unit@ = /Std/Unit%.Unit@;
 #   A cli main function that outputs a single string.
 (String@) { Main@; } Run = (String@ str) {
   <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
-    Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
-    Unit@ _ := m.do(out $ Format|'%s\n'[String(str)]);
+    Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+    Unit@ _ := m.do(out.put $ Format|'%s\n'[String(str)]);
     m.return(Success);
   };
 };

@@ -5,9 +5,7 @@ String = /Std/Char/Ascii/Output%.String;
 Format = /Std/Char/Ascii/Output%.Format;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
-Put@ .= /Std/Stream%;
-In@ = /Std/Stream/Text%.In@;
-Output@ = /Std/Stream/Text%.Output@;
+In@, Out@ .= /Std/Stream/Text%;
 GetLine = /Core/Char/Stream/IStream%.GetLine;
 
 List@ = /Std/List%.List@;
@@ -112,19 +110,19 @@ Input@ = +(Unit@ quit, Unit@ reset, Move@ move);
 
 # Play a game of tic-tac-toe.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
 
   In@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
-    Unit@ _ := m.do(out $ ShowGame(game));
+    Unit@ _ := m.do(out.put $ ShowGame(game));
 
     String@ line := m.do(GetLine(in, m));
     line.?(empty: m.return(Unit));
 
     Maybe@<Input@> mi = ParseInput(line);
     mi.?(nothing: {
-      Unit@ _ := m.do(out $ FormatE|'%s%s\n'[
+      Unit@ _ := m.do(out.put $ FormatE|'%s%s\n'[
         String|'invalid input: ',
         String|'expected {A,B,C}{1,2,3}, P, Q, or R']);
       TicTacToe(game);

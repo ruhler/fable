@@ -1,10 +1,8 @@
 
-Put@ .= /Std/Stream%;
 In@ = /Std/Stream/Text%.In@;
 GetLine = /Core/Char/Stream/IStream%.GetLine;
 
-Output@ = /Std/Stream/Text%.Output@;
-String = /Std/Stream/Text%.String;
+Out@, String .= /Std/Stream/Text%;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 List@ = /Std/List%.List@;
@@ -29,7 +27,7 @@ Unit = /Std/Unit%.Unit;
 
 # The 'cat' program.
 Main@ Cat = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-  Put@<M@, Output@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
+  Out@<M@> out := m.do(/Core/Stdio/FFI%.Text.Stdout(m, io));
   In@<M@> in := m.do(/Core/Stdio/FFI%.Text.Stdin(m, io));
   (String@) { M@<Maybe@<In@<M@>>>; } read = /Core/Stdio/FFI%.Text.Read(m, io);
 
@@ -37,7 +35,7 @@ Main@ Cat = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     String@ line := m.do(GetLine(input, m));
     line.?(empty: m.return(Unit));
 
-    Unit@ _ := m.do(out $ String(line));
+    Unit@ _ := m.do(out.put $ String(line));
     cat(input);
   };
 
@@ -51,7 +49,7 @@ Main@ Cat = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     };
 
     istream.?(nothing: {
-      Unit@ _ := m.do(out $
+      Unit@ _ := m.do(out.put $
         FormatE|'fble-cat: Unable to open %s\n'[String(filename)]);
       m.return(Failure);
     });
