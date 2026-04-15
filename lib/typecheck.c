@@ -998,7 +998,21 @@ static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV ex
   for (size_t i = 0; i < vars.size; ++i) {
     if (vars.xs[i].value == NULL) {
       error = true;
-      ReportError(loc, "unable to infer type for %t\n", vars.xs[i].var);
+      ReportError(loc, "unable to infer type for %t in ", vars.xs[i].var);
+      const char* comma = "";
+      for (size_t j = 0; j < expected.size; ++j) {
+        FblePrintType(expected.xs[j]);
+        fprintf(stderr, comma);
+        comma = ", ";
+      }
+      fprintf(stderr, " from ");
+      comma = "";
+      for (size_t j = 0; j < expected.size; ++j) {
+        FblePrintType(actual.xs[j].type);
+        fprintf(stderr, comma);
+        comma = ", ";
+      }
+      fprintf(stderr, "\n");
     }
   }
 
