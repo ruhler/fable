@@ -11,7 +11,7 @@ Monad@ = /Std/Monad%.Monad@;
 
 Eval = /Std/State/Pure%.Eval;
 
-In@ = /Core/Stream%.In@;
+In@ .= /Std/Stream/Binary%;
 
 Unit@ = /Std/Unit%.Unit@;
 
@@ -30,7 +30,7 @@ M@<Maybe@<Int@>> In = {
 # Runs a monadic computation involving an IStream as a pure function.
 <@ A@>(<<@>@ M@>(Monad@<M@>, In@<M@>) { M@<A@>; }, List@<Int@>) { A@; }
 Run = <@ A@>(<<@>@ M@>(Monad@<M@>, In@<M@>) { M@<A@>; } f, List@<Int@> input) {
-  Eval(f(M, In), input);
+  Eval(f(M, @(get: In)), input);
 };
 
 @(Run);

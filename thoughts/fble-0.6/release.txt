@@ -66,7 +66,7 @@ I fear I'll have to give up at some point. Anyway, status is something like:
 * Next round of Stdio@ API revisions
   - pkgs/core/Core/Char/Stream/IStream.fble
   - pkgs/core/Core/Char/Stream/OStream.fble
-  - pkgs/core/Core/Char/Stream.fble
+  - pkgs/core/Core/Char/Stream.fble ==> /Std/Stream/Text% [DONE]
   - pkgs/core/Core/Stdio/Cat.fble
   - pkgs/core/Core/Stdio/FFI.fble
   - pkgs/core/Core/Stdio/HelloWorld.fble
