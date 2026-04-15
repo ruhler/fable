@@ -143,3 +143,13 @@ really wish we could write code that operates on the native representation of
 the data type, and be able to reuse the same code for any purely data data
 type.
 
+---
+
+Proposal:
+* Implement the generic Map@ interface like we have already today.
+* Provide a HashMap@ implementation where
+  Hash@ = +(Int@ i, *(Hash@ a, Hash@ b) p);
+  Let people write their own Hash@ implementations, and/or PerfectHash
+  implementations and reuse the single standard HashMap@ implementations
+  rather than implement their own Maps.
+

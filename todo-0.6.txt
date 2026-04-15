@@ -2,7 +2,12 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* A lot of the /Std/* documentation isn't very helpful.
+  Consider rewriting it to be an explanation for how to use the functions
+  instead of a description of what they are.
+
 * Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
+* Reconsider if Read, Write, Append should report error messages?
 
 * Remove things from /Std/Char/Output% that we could as easily get from
   /Std/Stream%?

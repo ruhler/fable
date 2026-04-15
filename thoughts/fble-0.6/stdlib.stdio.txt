@@ -4464,3 +4464,25 @@ type to?
 Next todos:
 * Implement Append functions for text and binary.
 * Change standard in,out,err to use types In@ and Out@.
+
+---
+
+Standard io, text and binary reading and writing and appending files and
+streams is now standardized.
+
+What's left is a bunch of cleanup: remove what should hopefully be unused
+lingering prior io interfaces.
+
+---
+
+* /Core/Stream% is still used by networking sockets interface.
+* /Core/Stream/Char% is used for converting the old binary interface.
+* /Core/Char/Stream/OStream% is used for OStream, NullOutput stream.
+  - Consider defining /Std/Stream/Null for ToNull and NullOut?
+* /Core/Char/Stream/IStream% is used for GetLine, IStream, GetText
+
+What I need to do:
+* Migrate sockets over to new In@ and Out@ stream types.
+* Find homes for GetLine and GetText.
+* Provide Null and 'Pure' implementations for In@ and Out@.
+
