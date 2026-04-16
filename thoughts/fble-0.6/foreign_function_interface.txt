@@ -819,3 +819,11 @@ Transition over to foreign values is done. Looks good to me. Code is more
 consistent and simpler with our FbleNewForeignValue function taking an
 FbleForeign* directly. I like this change.
 
+---
+
+Issue migrating sockets to FFI: How do I do initialization functions? Like
+windows needs sockets to be initialized. Stdio wants setlocale to be called.
+
+I could define FFI functions and call them when the module is loaded. Is that
+a reasonable thing to do? Have module level side effects?
+

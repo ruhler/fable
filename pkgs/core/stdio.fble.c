@@ -177,7 +177,7 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Close = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (File@, Unit@) { Maybe@<Char@>; }.
+ *   (File@, Unit@) { Maybe@<Char@>; }
  *
  *  @sideeffects
  *   Reads a character from the give file.

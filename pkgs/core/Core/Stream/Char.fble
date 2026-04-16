@@ -14,7 +14,7 @@ Put@ .= /Std/Stream%;
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
 
-Byte = /Core/Stream%;
+Byte = /Std/Stream/Binary%;
 Char = /Std/Stream/Text%;
 
 # Convert a byte input stream to a character input stream.
@@ -22,7 +22,7 @@ Char = /Std/Stream/Text%;
 IStream = <<@>@ M@>(Monad@<M@> m, Byte.In@<M@> s) {
   @(get: {
     # TODO: Handle unicode characters.
-    Maybe@<Int@> mbyte := m.do(s);
+    Maybe@<Int@> mbyte := m.do(s.get);
     mbyte.?(nothing: m.return(Nothing<Char@>));
     m.return(Just(/Std/Char%.Char(mbyte.just)));
   });
@@ -42,11 +42,10 @@ OStream = <<@>@ M@>(Monad@<M@> m, Byte.Out@<M@> s) {
 
   Put@<M@, Output@> put = (Output@ output) {
     # TODO: Handle unicode properly.
-    output(stream, (Char@ c) { s(/Std/Char%.Pos(c)); });
+    output(stream, (Char@ c) { s.put(Byte.Put(/Std/Char%.Pos(c))); });
   };
 
-  M@<Unit@> end = s(Byte.End);
-  @(put, end);
+  @(put, end: s.end);
 };
 
 @(IStream, OStream);

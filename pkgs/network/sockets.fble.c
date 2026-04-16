@@ -1,6 +1,6 @@
 /**
  * @file sockets.fble.c
- *  Implementation of /Network/Sockets/IO/Builtin% module.
+ *  Implementation of /Network/Sockets/Native% module.
  */
 
 #define _POSIX_C_SOURCE 200112L  // for getaddrinfo
@@ -57,113 +57,33 @@ void Write(SOCKET sfd, char c)
 #endif
 
 #include <fble/fble-alloc.h>      // for FbleFree
-#include <fble/fble-function.h>
-#include <fble/fble-loc.h>
-#include <fble/fble-module-path.h>
-#include <fble/fble-name.h>
-#include <fble/fble-program.h>
-#include <fble/fble-string.h>
-#include <fble/fble-value.h>
+#include <fble/fble-value.h>      // for FbleValue, etc.
 
 #include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
-#include "string.fble.h"      // for FbleNewStringValue, FbleStringValueAccess
+#include "string.fble.h"      // for FbleStringValueAccess
 
 #define MAYBE_TAGWIDTH 1
 
-static FbleValue* IStreamImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args);
-static FbleValue* OStreamImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args);
-static FbleValue* ClientImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args);
-static FbleValue* AcceptImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args);
-static FbleValue* ServerImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args);
-static FbleValue* SocketsImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args);
-
-static FbleValue* NewIStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id);
-static FbleValue* NewOStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id);
-static FbleValue* Client(FbleValueHeap* heap, FbleBlockId module_block_id);
-static FbleValue* Accept(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id);
-static FbleValue* Server(FbleValueHeap* heap, FbleBlockId module_block_id);
-static FbleValue* Server(FbleValueHeap* heap, FbleBlockId module_block_id);
-static FbleValue* Sockets(FbleValueHeap* heap, FbleBlockId module_block_id);
-
-// -Wpedantic doesn't like our initialization of flexible array members when
-// defining static FbleString values.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-
-static FbleString StrFile = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = __FILE__, };
-static FbleString StrNetwork = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Network", };
-static FbleString StrSockets = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Sockets", };
-static FbleString StrNative = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Native", };
-
-static FbleString StrModuleBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Network/Sockets/Native%", };
-static FbleString StrClientBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Network/Sockets/Native%.Client", };
-static FbleString StrIStreamBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Network/Sockets/Native%.IStream", };
-static FbleString StrOStreamBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Network/Sockets/Native%.OStream", };
-static FbleString StrAcceptBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Network/Sockets/Native%.Accept", };
-static FbleString StrServerBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Network/Sockets/Native%.Server", };
-static FbleString StrSocketsBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Network/Sockets/Native%.Sockets", };
-
-#pragma GCC diagnostic pop
-
-#define CLIENT_BLOCK_OFFSET 1
-#define ISTREAM_BLOCK_OFFSET 2
-#define OSTREAM_BLOCK_OFFSET 3
-#define ACCEPT_BLOCK_OFFSET 4
-#define SERVER_BLOCK_OFFSET 5
-#define SOCKETS_BLOCK_OFFSET 6
-#define NUM_PROFILE_BLOCKS 7
-
-static FbleName ProfileBlocks[NUM_PROFILE_BLOCKS] = {
-  { .name = &StrModuleBlock, .space = 0, .loc = { .source = &StrFile, .line = __LINE__, .col = 1 }},
-  { .name = &StrClientBlock, .space = 0, .loc = { .source = &StrFile, .line = __LINE__, .col = 1 }},
-  { .name = &StrIStreamBlock, .space = 0, .loc = { .source = &StrFile, .line = __LINE__, .col = 1 }},
-  { .name = &StrOStreamBlock, .space = 0, .loc = { .source = &StrFile, .line = __LINE__, .col = 1 }},
-  { .name = &StrAcceptBlock, .space = 0, .loc = { .source = &StrFile, .line = __LINE__, .col = 1 }},
-  { .name = &StrServerBlock, .space = 0, .loc = { .source = &StrFile, .line = __LINE__, .col = 1 }},
-  { .name = &StrSocketsBlock, .space = 0, .loc = { .source = &StrFile, .line = __LINE__, .col = 1 }},
-};
-
-static FbleName PathEntries[] = {
-  { .name = &StrNetwork, .space = 0, .loc = { .source = &StrFile, .line = __LINE__, .col = 1 }},
-  { .name = &StrSockets, .space = 0, .loc = { .source = &StrFile, .line = __LINE__, .col = 1 }},
-  { .name = &StrNative, .space = 0, .loc = { .source = &StrFile, .line = __LINE__, .col = 1 }},
-};
-
-static FbleModulePath Path = {
-  .refcount = 1,
-  .magic = FBLE_MODULE_PATH_MAGIC,
-  .loc = { .source = &StrFile, .line = __LINE__, .col = 1 },
-  .path = { .size = 3, .xs = PathEntries},
-};
 
 /**
- * @func[IStreamImpl] FbleRunFunction to read a byte from a socket.
+ * @func[GetByte] FbleRunFunction to read a byte from a socket.
  *  See documentation of FbleRunFunction in fble-function.h
  *
- *  The fble type of the function is @l{(Unit@) { Maybe@<Int@>; }}.
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *    (Socket@, Unit@) { Maybe@<Int@>; }
  *
  *  @sideeffects
  *   Reads a byte from the socket.
  */
-static FbleValue* IStreamImpl(
+static FbleValue* GetByte(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
 
-  SOCKET sfd = (int)(intptr_t)FbleNativeValueData(function->statics[0]);
+  SOCKET sfd = (int)(intptr_t)FbleNativeValueData(args[0]);
 
   // TODO: Buffer the reads for better performance?
   int c = Read(sfd);
@@ -175,90 +95,58 @@ static FbleValue* IStreamImpl(
   FbleValue* v = FbleNewIntValue(heap, c);
   return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
 }
+
+// /Network/Sockets/Native%.GetByte foreign function.
+FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_GetByte = {
+  .path = "/Network/Sockets/Native%",
+  .name = "GetByte",
+  .num_args = 2,
+  .max_call_args = 0,
+  .run = &GetByte,
+};
+
 
 /**
- * @func[OStreamImpl] FbleRunFunction to write a byte to a file.
+ * @func[PutByte] FbleRunFunction to write a byte to a socket.
  *  See documentation of FbleRunFunction in fble-function.h
  *
- *  The fble type of the function is @l{(Int@, Unit@) { Unit@; }}.
+ *  The fble type of the function is @l{(Socket@, Int@, Unit@) { Unit@; }}.
  */
-static FbleValue* OStreamImpl(
+static FbleValue* PutByte(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
 
-  SOCKET sfd = (int)(intptr_t)FbleNativeValueData(function->statics[0]);
-
-  FbleValue* byte = args[0];
+  SOCKET sfd = (int)(intptr_t)FbleNativeValueData(args[0]);
+  FbleValue* byte = args[1];
 
   // TODO: Buffer writes to improve performance?
   int64_t x = FbleIntValueAccess(byte);
-  if (x == -1) {
-    closesocket(sfd);
-  } else {
-    Write(sfd, (char)x);
-  }
+  Write(sfd, (char)x);
 
   return FbleNewStructValue_(heap, 0);
 }
+
+// /Network/Sockets/Native%.PutByte foreign function.
+FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_PutByte = {
+  .path = "/Network/Sockets/Native%",
+  .name = "PutByte",
+  .num_args = 3,
+  .max_call_args = 0,
+  .run = &PutByte,
+};
 
 /**
- * @func[NewIStream] Allocates an @l{In@} for a socket.
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleValue*][sfd] The socket to allocate the @l{In@} for.
- *  @arg[FbleBlockId][module_block_id]
- *   The block_id of the /Network/Sockets/IO/Builtin% block.
- *
- *  @returns[FbleValue*] An fble @l{In@} function value.
- *
- *  @sideeffects
- *   Allocates a value on the heap.
- */
-static FbleValue* NewIStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id)
-{
-  FbleExecutable exe = {
-    .num_args = 1,
-    .num_statics = 1,
-    .max_call_args = 0,
-    .run = &IStreamImpl,
-  };
-  return FbleNewFuncValue(heap, &exe, module_block_id + ISTREAM_BLOCK_OFFSET, &sfd);
-}
-
-/**
- * @func[NewOStream] Allocates an @l{Out@} for a socket.
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleValue*][sfd] The socket to allocate the @l{Out@} for.
- *  @arg[FbleBlockId][module_block_id]
- *   The block_id of the /Network/Sockets/IO/Builtin% block.
- *
- *  @returns[FbleValue*] An fble @l{Out@} function value.
- *
- *  @sideeffects
- *   Allocates a value on the heap.
- */
-static FbleValue* NewOStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id)
-{
-  FbleExecutable exe = {
-    .num_args = 2,
-    .num_statics = 1,
-    .max_call_args = 0,
-    .run = &OStreamImpl,
-  };
-  return FbleNewFuncValue(heap, &exe, module_block_id + OSTREAM_BLOCK_OFFSET, &sfd);
-}
-
-/**
- * @func[ClientImpl] FbleRunFunction to do a tcp client connection.
+ * @func[Client] FbleRunFunction to do a tcp client connection.
  *  See documentation of FbleRunFunction in fble-function.h
  *
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (String@, Int@, Unit@) { Maybe@<IOut@<IO@>>; }
+ *   (String@, Int@, Unit@) { Maybe@<Socket@>; }
  */
-static FbleValue* ClientImpl(
+static FbleValue* Client(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
@@ -306,49 +194,35 @@ static FbleValue* ClientImpl(
     return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
   }
 
-  FbleBlockId module_block_id = function->profile_block_id - CLIENT_BLOCK_OFFSET;
   FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, NULL);
-  FbleValue* istream = NewIStream(heap, sfd_value, module_block_id);
-  FbleValue* ostream = NewOStream(heap, sfd_value, module_block_id);
-  FbleValue* ios = FbleNewStructValue_(heap, 2, istream, ostream);
-  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, ios);  // Just(ios);
+  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, sfd_value);
 }
+
+// /Network/Sockets/Native%.Client foreign function.
+FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_Client = {
+  .path = "/Network/Sockets/Native%",
+  .name = "Client",
+  .num_args = 3,
+  .max_call_args = 0,
+  .run = &Client,
+};
 
 /**
- * @func[Client] Allocates the Client function.
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleBlockId][module_block_id]
- *   The block_id of the /Network/Sockets/IO/Builtin% block.
- *  @returns[FbleValue*] The allocated function.
- *  @sideeffects Allocates an fble value.
- */
-static FbleValue* Client(FbleValueHeap* heap, FbleBlockId module_block_id)
-{
-  FbleExecutable exe = {
-    .num_args = 3,
-    .num_statics = 0,
-    .max_call_args = 0,
-    .run = &ClientImpl,
-  };
-  return FbleNewFuncValue(heap, &exe, module_block_id + CLIENT_BLOCK_OFFSET, NULL);
-}
-
-/**
- * @func[AcceptImpl] FbleRunFunction to accept a tcp connection.
+ * @func[Accept] FbleRunFunction to accept a tcp connection.
  *  See documentation of FbleRunFunction in fble-function.h
  *
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Unit@) { IOut@<IO@>; }
+ *   (Socket@, Unit@) { Socket@; }
  */
-static FbleValue* AcceptImpl(
+static FbleValue* Accept(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
 
-  SOCKET sfd = (SOCKET)(intptr_t)FbleNativeValueData(function->statics[0]);
+  SOCKET sfd = (SOCKET)(intptr_t)FbleNativeValueData(args[0]);
 
   SOCKET cfd = accept(sfd, NULL, NULL);
   if (cfd == INVALID_SOCKET) {
@@ -357,23 +231,58 @@ static FbleValue* AcceptImpl(
     assert(false);
   }
 
-  FbleBlockId module_block_id = function->profile_block_id - ACCEPT_BLOCK_OFFSET;
-  FbleValue* cfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)cfd, NULL);
-  FbleValue* istream = NewIStream(heap, cfd_value, module_block_id);
-  FbleValue* ostream = NewOStream(heap, cfd_value, module_block_id);
-  return FbleNewStructValue_(heap, 2, istream, ostream);
+  return FbleNewNativeValue(heap, (void*)(intptr_t)cfd, NULL);
 }
+
+// /Network/Sockets/Native%.Accept foreign function.
+FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_Accept = {
+  .path = "/Network/Sockets/Native%",
+  .name = "Accept",
+  .num_args = 2,
+  .max_call_args = 0,
+  .run = &Accept,
+};
 
 /**
- * @func[ServerImpl] FbleRunFunction to start a tcp server.
+ * @func[Close] FbleRunFunction to close a tcp connection.
  *  See documentation of FbleRunFunction in fble-function.h
  *
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (String@, Int@, Unit@) { Maybe@<Server@>; } Server;
+ *   (Socket@, Unit@) { Unit@; }
  */
-static FbleValue* ServerImpl(
+static FbleValue* Close(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  (void)profile;
+
+  SOCKET sfd = (SOCKET)(intptr_t)FbleNativeValueData(args[0]);
+  closesocket(sfd);
+  return FbleNewStructValue_(heap, 0);
+}
+
+// /Network/Sockets/Native%.Close foreign function.
+FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_Close = {
+  .path = "/Network/Sockets/Native%",
+  .name = "Close",
+  .num_args = 2,
+  .max_call_args = 0,
+  .run = &Close,
+};
+
+
+/**
+ * @func[Server] FbleRunFunction to start a tcp server.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (String@, Int@, Unit@) { Maybe@<Socket@>; }
+ */
+static FbleValue* Server(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
@@ -433,95 +342,31 @@ static FbleValue* ServerImpl(
     return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
   }
 
-  FbleBlockId module_block_id = function->profile_block_id - SERVER_BLOCK_OFFSET;
   FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, NULL);
-  FbleValue* accept = Accept(heap, sfd_value, module_block_id);
-  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, accept);  // Just(accept);
+  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, sfd_value);
 }
+
+// /Network/Sockets/Native%.Server foreign function.
+FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_Server = {
+  .path = "/Network/Sockets/Native%",
+  .name = "Server",
+  .num_args = 3,
+  .max_call_args = 0,
+  .run = &Server,
+};
 
 /**
- * @func[Accept] Allocates the Accept function.
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleValue*][sfd] The socket to allocate the @l{Out@} for.
- *  @arg[FbleBlockId][module_block_id]
- *   The block_id of the /Network/Sockets/IO/Builtin% block.
- *  @returns[FbleValue*] The allocated function.
- *  @sideeffects Allocates an fble value.
- */
-static FbleValue* Accept(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id)
-{
-  FbleExecutable exe = {
-    .num_args = 1,
-    .num_statics = 1,
-    .max_call_args = 0,
-    .run = &AcceptImpl,
-  };
-  return FbleNewFuncValue(heap, &exe, module_block_id + ACCEPT_BLOCK_OFFSET, &sfd);
-}
-
-/**
- * @func[Server] Allocates the Server function.
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleBlockId][module_block_id]
- *   The block_id of the /Network/Sockets/IO/Builtin% block.
- *  @returns[FbleValue*] The allocated function.
- *  @sideeffects Allocates an fble value.
- */
-static FbleValue* Server(FbleValueHeap* heap, FbleBlockId module_block_id)
-{
-  FbleExecutable exe = {
-    .num_args = 3,
-    .num_statics = 0,
-    .max_call_args = 0,
-    .run = &ServerImpl,
-  };
-  return FbleNewFuncValue(heap, &exe, module_block_id + SERVER_BLOCK_OFFSET, NULL);
-}
-
-/**
- * @func[SocketsImpl] FbleRunFunction to generate the native Sockets@ interface.
+ * @func[Init] FbleRunFunction to initialize sockets infra.
  *  See documentation of FbleRunFunction in fble-function.h
  *
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Io@<M@>, Monad@<M@>, Unit@) { Sockets@<M@>; }
- */  
-static FbleValue* SocketsImpl(
+ *   (Unit@) { Unit@; }
+ */
+static FbleValue* Init(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
-{
-  (void)profile;
-  (void)args;
-
-  FbleBlockId module_block_id = function->profile_block_id - SOCKETS_BLOCK_OFFSET;
-
-  FblePushFrame(heap);
-  FbleValue* client = Client(heap, module_block_id);
-  FbleValue* server = Server(heap, module_block_id);
-  FbleValue* sockets = FbleNewStructValue_(heap, 2, client, server);
-  return FblePopFrame(heap, sockets);
-}
-
-/**
- * @func[Sockets] Allocates an fble Sockets function.
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleBlockId][module_block_id]
- *   The block_id of the /Network/Sockets/Native% block.
- *  @returns[FbleValue*] The allocated function.
- *  @sideeffects Allocates an fble value.
- */
-static FbleValue* Sockets(FbleValueHeap* heap, FbleBlockId module_block_id) {
-  FbleExecutable exe = {
-    .num_args = 3,
-    .num_statics = 0,
-    .max_call_args = 0,
-    .run = &SocketsImpl,
-  };
-  return FbleNewFuncValue(heap, &exe, module_block_id + SOCKETS_BLOCK_OFFSET, NULL);
-}
-
-static FbleValue* Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* function, FbleValue** args)
 {
 #ifdef __WIN32
   WSADATA wsaData;
@@ -531,24 +376,14 @@ static FbleValue* Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunct
   }
 #endif // __WIN32
 
-  FbleBlockId module_block_id = function->profile_block_id;
-
-  FblePushFrame(heap);
-  FbleValue* sockets = Sockets(heap, module_block_id);
-  FbleValue* module = FbleNewStructValue_(heap, 1, sockets);
-  return FblePopFrame(heap, module);
+  return FbleNewStructValue_(heap, 0);
 }
 
-static FbleExecutable Executable = {
-  .num_args = 0, 
-  .num_statics = 0,
+// /Network/Sockets/Native%.Init foreign function.
+FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_Init = {
+  .path = "/Network/Sockets/Native%",
+  .name = "Init",
+  .num_args = 1,
   .max_call_args = 0,
-  .run = &Run,
-};
-
-FblePreloadedModule _Fble_2f_Network_2f_Sockets_2f_Native_25_ = {
-  .path = &Path,
-  .deps = { .size = 0, .xs = NULL },
-  .executable = &Executable,
-  .profile_blocks = { .size = NUM_PROFILE_BLOCKS, .xs = ProfileBlocks },
+  .run = &Init,
 };

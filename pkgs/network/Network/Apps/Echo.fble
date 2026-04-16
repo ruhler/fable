@@ -28,9 +28,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
 
-In@ = /Core/Stream%.In@;
-Out@ = /Core/Stream%.Out@;
-IOut@ = /Core/Stream%.IOut@;
+In@, Out@, Put .= /Std/Stream/Binary%;
 
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
@@ -41,8 +39,7 @@ Str = /Std/Char/Ascii%.Str;
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
 
-Server@ = /Network/Sockets%.Server@;
-Sockets@ = /Network/Sockets%.Sockets@;
+InOut@, Server@, Sockets@ .= /Network/Sockets%;
 
 Args@ = *(
   Bool@ help,
@@ -109,9 +106,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   (In@<M@>, Out@<M@>) { M@<Unit@>; }
   ForwardAll = (In@<M@> in, Out@<M@> out) {
-    Maybe@<Int@> mb := m.do(in);
-    mb.?(nothing: out(/Core/Stream%.End));
-    Unit@ _ := m.do(out(mb.just));
+    Maybe@<Int@> mb := m.do(in.get);
+    mb.?(nothing: out.end);
+    Unit@ _ := m.do(out.put(Put(mb.just)));
     ForwardAll(in, out);
   };
 
@@ -139,7 +136,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
     IsZero(n).?(true: m.return(Unit));
     Int@ nn = /Std/Int/Cmp%.Gt(n, Int|0).?(true: Decr(n), false: n);
 
-    IOut@<M@> ios := m.do(s);
+    InOut@<M@> ios := m.do(s);
     Unit@ _ := m.do(ForwardAll(ios.in, ios.out));
     Serve(nn);
   };

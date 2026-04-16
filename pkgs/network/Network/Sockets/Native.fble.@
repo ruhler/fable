@@ -1,8 +1,0 @@
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-Sockets@ = /Network/Sockets%.Sockets@;
-
-<<@>@ M@>(Io@<M@>, Monad@<M@>) { M@<Sockets@<M@>>; } Sockets;
-
-@(Sockets);

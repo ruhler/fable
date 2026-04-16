@@ -24,9 +24,8 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
 
+In@ .= /Std/Stream/Binary%;
 Out@ .= /Std/Stream/Text%;
-In@ = /Core/Stream%.In@;
-IOut@ = /Core/Stream%.IOut@;
 
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
@@ -38,7 +37,7 @@ Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
 
 Main@ = /Std/Io/Cli%.Main@;
-Sockets@ = /Network/Sockets%.Sockets@;
+InOut@, Sockets@ .= /Network/Sockets%;
 
 Args@ = *(
   Bool@ help,
@@ -113,7 +112,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
     IsZero(n).?(true: m.return(Unit));
     Int@ nn = /Std/Int/Cmp%.Gt(n, Int|0).?(true: Decr(n), false: n);
 
-    Maybe@<Int@> mb := m.do(in);
+    Maybe@<Int@> mb := m.do(in.get);
     mb.?(nothing: m.return(Unit));
     Unit@ _ := m.do(out(Binary.Put(mb.just)));
     ForwardN(nn, in, out);
@@ -132,13 +131,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
     m.return(Failure);
   });
 
-  Maybe@<IOut@<M@>> mios := m.do(sockets.client(args.hostname, args.port));
+  Maybe@<InOut@<M@>> mios := m.do(sockets.client(args.hostname, args.port));
   mios.?(nothing: {
     Unit@ _ := m.do(err.put $ StringE|'unable to connect\n');
     m.return(Failure);
   });
 
-  IOut@<M@> ios = mios.just;
+  InOut@<M@> ios = mios.just;
   Put@<M@, Output@> os = OStream(m, ios.out).put;
   Binary.Out@<M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
 
