@@ -4,7 +4,7 @@ Str .= /Std/Char/Ascii%;
 FormatE, StringE .= /Std/Char/Ascii/Output%;
 Concat, ForEach .= /Std/List%;
 Monad@ .= /Std/Monad%;
-Out@, String .= /Std/Stream/Text%;
+Output@, Out@, String .= /Std/Stream/Text%;
 String@ .= /Std/String%;
 Test@, TestResult@ .= /Std/Test%;
 Unit@, Unit .= /Std/Unit%;
@@ -17,31 +17,27 @@ Run = <<@>@ M@>(Monad@<M@> m, Out@<M@> out, String@ prefix, Test@ test) {
     case: {
       String@ name = Concat[prefix, test.case.name];
       Unit@ _ := m.do(out.put $ FormatE|'@[%s]: '[String(name)]);
+
       TestResult@ tr = test.case.test(Unit);
+
+      (Output@, Bool@) { M@<Bool@>; }
+      Return = (Output@ output, Bool@ result) { 
+        Unit@ _ := m.do(out.put(output));
+        m.return(result);
+      };
+
       tr.?(
-        pass: {
-          Unit@ _ := m.do(out.put $ StringE|'@PASS\n');
-          m.return(True);
-        },
-        fail: {
-          Unit@ _ := m.do(out.put $ FormatE|'@FAIL: %s\n'[tr.fail]);
-          m.return(False);
-        },
-        expected_fail: {
-          Unit@ _ := m.do(out.put $ StringE|'@EXPECTED_FAIL\n');
-          m.return(True);
-        },
-        skip: {
-          Unit@ _ := m.do(out.put $ FormatE|'@SKIP: %s\n'[tr.skip]);
-          m.return(True);
-        });
+        pass: Return(StringE|'@PASS\n', True),
+        fail: Return(FormatE|'@FAIL: %s\n'[tr.fail], False),
+        expected_fail: Return(StringE|'@EXPECTED_FAIL\n', True),
+        skip: Return(FormatE|'@SKIP: %s\n'[tr.skip], True));
     },
     suite: {
-      String@ nprefix = Concat[prefix, test.suite.name, Str|'.'];
+      String@ name = Concat[prefix, test.suite.name, Str|'.'];
       ForEach(test.suite.tests, m.return(True),
         (Test@ test, M@<Bool@> mp) {
           Bool@ passing := m.do(mp);
-          Bool@ pass := m.do(Run(m, out, nprefix, test));
+          Bool@ pass := m.do(Run(m, out, name, test));
           m.return(And(passing, pass));
         });
     });
