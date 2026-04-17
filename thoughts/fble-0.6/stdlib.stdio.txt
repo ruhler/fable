@@ -4486,3 +4486,12 @@ What I need to do:
 * Find homes for GetLine and GetText.
 * Provide Null and 'Pure' implementations for In@ and Out@.
 
+---
+
+/Core/Stream/Char% IStream, OStream convert from binary to char streams.
+ - pprof server outputs text html to a binary socket interface.
+ - pprof server consumes binary socket interface as text http request.
+ - network client app forwards a string message to a binary socket.
+
+So, sadness, I'm not sure how to get rid of these.
+

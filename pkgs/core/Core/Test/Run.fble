@@ -1,54 +1,38 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-And = /Std/Bool%.And;
-
-Put@ .= /Std/Stream%;
-
-Output@ = /Std/Stream/Text%.Output@;
-String = /Std/Stream/Text%.String;
-FormatE = /Std/Char/Ascii/Output%.FormatE;
-StringE = /Std/Char/Ascii/Output%.StringE;
-
-Concat = /Std/List%.Concat;
-ForEach = /Std/List%.ForEach;
-
-Monad@ = /Std/Monad%.Monad@;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-TestResult@ = /Std/Test%.TestResult@;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Bool@, True, False, And .= /Std/Bool%;
+Str .= /Std/Char/Ascii%;
+FormatE, StringE .= /Std/Char/Ascii/Output%;
+Concat, ForEach .= /Std/List%;
+Monad@ .= /Std/Monad%;
+Out@, String .= /Std/Stream/Text%;
+String@ .= /Std/String%;
+Test@, TestResult@ .= /Std/Test%;
+Unit@, Unit .= /Std/Unit%;
 
 # Runs a test or test suite, outputting summary information along the way.
 # Returns True if the all the tests pass, false otherwise.
-<<@>@ M@>(Monad@<M@>, Put@<M@, Output@>, String@, Test@) { M@<Bool@>; }
-Run = <<@>@ M@>(Monad@<M@> m, Put@<M@, Output@> out, String@ prefix, Test@ test) {
+<<@>@ M@>(Monad@<M@>, Out@<M@>, String@, Test@) { M@<Bool@>; }
+Run = <<@>@ M@>(Monad@<M@> m, Out@<M@> out, String@ prefix, Test@ test) {
   test.?(
     case: {
       String@ name = Concat[prefix, test.case.name];
-      Unit@ _ := m.do(out $ FormatE|'@[%s]: '[String(name)]);
+      Unit@ _ := m.do(out.put $ FormatE|'@[%s]: '[String(name)]);
       TestResult@ tr = test.case.test(Unit);
       tr.?(
         pass: {
-          Unit@ _ := m.do(out $ StringE|'@PASS\n');
+          Unit@ _ := m.do(out.put $ StringE|'@PASS\n');
           m.return(True);
         },
         fail: {
-          Unit@ _ := m.do(out $ FormatE|'@FAIL: %s\n'[tr.fail]);
+          Unit@ _ := m.do(out.put $ FormatE|'@FAIL: %s\n'[tr.fail]);
           m.return(False);
         },
         expected_fail: {
-          Unit@ _ := m.do(out $ StringE|'@EXPECTED_FAIL\n');
+          Unit@ _ := m.do(out.put $ StringE|'@EXPECTED_FAIL\n');
           m.return(True);
         },
         skip: {
-          Unit@ _ := m.do(out $ FormatE|'@SKIP: %s\n'[tr.skip]);
+          Unit@ _ := m.do(out.put $ FormatE|'@SKIP: %s\n'[tr.skip]);
           m.return(True);
         });
     },

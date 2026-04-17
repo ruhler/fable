@@ -3,8 +3,7 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-Output@ = /Std/Stream/Text%.Output@;
-Put@ .= /Std/Stream%;
+Out@, Output@ .= /Std/Stream/Text%;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
@@ -30,7 +29,7 @@ Unit = /Std/Unit%.Unit;
 # Returns whether the test passed or failed.
 (Test@) { Bool@; }
 Run = (Test@ test) {
-  Put@<Pure@, Output@> out = (Output@ _) { Unit; };
+  Out@<Pure@> out = @(put: (Output@ _) { Unit; }, end: Unit);
   /Core/Test/Run%.Run(/Core/Monad/Pure%.Monad, out, Str|TestTest, test);
 };
 
