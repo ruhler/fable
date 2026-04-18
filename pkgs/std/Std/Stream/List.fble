@@ -1,8 +1,8 @@
 # @module[/Std/Stream/List%]
-#  Utilities for outputting a stream to a list.
+#  Utilities for converting between lists and streams.
 
 List@, Empty, Items .= /Std/List%;
-Channel@, Stream@ .= /Std/Stream%;
+Channel@, Stream@, Return, Do, Put .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 # @func[List] Output a stream to a list.
@@ -27,4 +27,26 @@ List = <@ A@> {
   };
 };
 
-@(List);
+# @func[Puts] Output a list of values.
+#  @arg[@][A@] The type of values to output.
+#  @arg[List@<A@>][values] The values to output.
+#  @returns[Stream@<A@>] A computation that outputs the values.
+<@ A@>(List@<A@>) { Stream@<A@>; }
+Puts = <@ A@>(List@<A@> values) {
+  values.?(empty: Return<A@>);
+  Unit@ _ := Do(Put(values.items.head));
+  Puts(values.items.tail);
+};
+
+# @func[Concat] Output a sequence of computations.
+#  @arg[@][A@] The type of value to output.
+#  @arg[List@<Stream@<A@>>] The list of outputs to output.
+#  @returns[Output<A@>] A computation to output each give output in turn.
+<@ A@>(List@<Stream@<A@>>) { Stream@<A@>; }
+Concat = <@ A@>(List@<Stream@<A@>> xs) {
+  xs.?(empty: Return<A@>);
+  Unit@ _ := Do(xs.items.head);
+  Concat(xs.items.tail);
+};
+
+@(List, Puts, Concat);

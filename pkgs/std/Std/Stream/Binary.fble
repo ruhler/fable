@@ -5,7 +5,7 @@
 Int@ .= /Std/Int%;
 
 # Specializations of /Std/Stream% for Int@.
-Stream@, In@, Out@, Return, Do, Put, Puts, Concat, ToNull
+Stream@, In@, Out@, Return, Do, Put, ToNull
   .= /Std/Stream%.Stream<Int@>;
 
-@(Stream@, In@, Out@, Return, Do, Put, Puts, Concat, ToNull);
+@(Stream@, In@, Out@, Return, Do, Put, ToNull);
