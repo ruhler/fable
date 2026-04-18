@@ -9,21 +9,21 @@ String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 
 # Specializations of /Std/Stream% for Char@.
-Channel@, Output@, In@, Out@, Return, Do, Put, Puts, Concat, ToList, ToNull
+Channel@, Stream@, In@, Out@, Return, Do, Put, Puts, Concat, ToList, ToNull
   .= /Std/Stream%.Stream<Char@>;
 
 # @func[String] Output a string.
 #  @arg[String@][str] The string to output.
 #  @returns[Output] A computation that outputs the string.
-(String@) { Output@; } String = Puts;
+(String@) { Stream@; } String = Puts;
 
 # @func[Lines] Output a sequence of lines.
-#  @arg[List@<Output@>] A list of lines to output.
+#  @arg[List@<Stream@>] A list of lines to output.
 #  @returns[Output]
 #   A computation to output each line in turn, adding a newline character
 #   after every one.
-(List@<Output@>) { Output@; }
-Lines = (List@<Output@> xs) {
+(List@<Stream@>) { Stream@; }
+Lines = (List@<Stream@> xs) {
   xs.?(empty: Return);
   Unit@ _ := Do(xs.items.head);
   Unit@ _ := Do(Put(/Std/String/Lines%.Newline));
@@ -32,10 +32,10 @@ Lines = (List@<Output@> xs) {
 
 # @func[Join] Output a sequence of outputs with separator in between.
 #  @arg[String@][sep] The separator to output between each given output.
-#  @arg[List@<Output@>][xs] The elements to output.
-#  @return[Output@] Outputs each element in turn, separated by @a[sep].
-(String@, List@<Output@>) { Output@; }
-Join = (String@ sep, List@<Output@> xs) {
+#  @arg[List@<Stream@>][xs] The elements to output.
+#  @return[Stream@] Outputs each element in turn, separated by @a[sep].
+(String@, List@<Stream@>) { Stream@; }
+Join = (String@ sep, List@<Stream@> xs) {
   xs.?(empty: Return);
   xs.items.tail.?(empty: xs.items.head);
   Unit@ _ := Do(xs.items.head);
@@ -54,13 +54,13 @@ Char@ '%s' = U|73;
 #  For example:
 #
 #  @code[fble] @
-#   Output@ out = Format|'a: %s, b: %s'[String|'hello', String|'there'];
+#   Stream@ out = Format|'a: %s, b: %s'[String|'hello', String|'there'];
 #
 #  @arg[String@][fmt] The format specifier
-#  @arg[List@<Output@>[args] Format args.
-#  @return[Output@] The formatted output.
-(String@, List@<Output@>) { Output@; }
-Format = (String@ fmt, List@<Output@> args)<@ S@>(Channel@<S@> s) {
+#  @arg[List@<Stream@>[args] Format args.
+#  @return[Stream@] The formatted output.
+(String@, List@<Stream@>) { Stream@; }
+Format = (String@ fmt, List@<Stream@> args)<@ S@>(Channel@<S@> s) {
   fmt.?(empty: s.return);
   Char@ c = fmt.items.head;
   /Std/Char/Eq%.Eq('%%', c).?(true: {
@@ -85,10 +85,10 @@ Format = (String@ fmt, List@<Output@> args)<@ S@>(Channel@<S@> s) {
 };
 
 # @func[ToString] Output to a String@.
-#  @arg[Output@] The output to render.
+#  @arg[Stream@] The output to render.
 #  @returns[String@] A string with the output characters.
-(Output@) { String@; } ToString = ToList;
+(Stream@) { String@; } ToString = ToList;
 
-@(Output@, Channel@, In@, Out@,
+@(Stream@, Channel@, In@, Out@,
   Return, Do, Put, String, Format, Concat, Lines, Join,
   ToString, ToNull);

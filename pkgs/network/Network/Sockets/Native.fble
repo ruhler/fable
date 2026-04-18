@@ -3,7 +3,7 @@ Int@ .= /Std/Int%;
 Io@, External@ .= /Std/Io%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Output@, In@, Out@ .= /Std/Stream/Binary%;
+Stream@, In@, Out@ .= /Std/Stream/Binary%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -22,8 +22,8 @@ Socket@ = *(Unit@ socket).%(@/Network/Sockets/Native%);
 
 <<@>@ M@>(Io@<M@>, Monad@<M@>) { M@<Sockets@<M@>>; }
 Sockets = <<@>@ M@>(Io@<M@> io, Monad@<M@> m) {
-  (Socket@, Output@) { M@<Unit@>; }
-  Output = (Socket@ socket, Output@ output) {
+  (Socket@, Stream@) { M@<Unit@>; }
+  Output = (Socket@ socket, Stream@ output) {
     S@ = M@<Unit@>;
     S@ return = m.return(Unit);
     (S@, (Unit@) { S@; }) { S@; } do = (S@ ma, (Unit@) { S@; } f) {

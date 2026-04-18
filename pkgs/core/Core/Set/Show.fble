@@ -2,7 +2,7 @@
 Map@ = /Core/Map%.Map@;
 
 Show@ = /Std/Show%.Show@;
-Output@ = /Std/Stream/Text%.Output@;
+Stream@ = /Std/Stream/Text%.Stream@;
 Do = /Std/Stream/Text%.Do;
 
 Format = /Std/Char/Ascii/Output%.Format;
@@ -23,7 +23,7 @@ Show = <<@>@ M@, @ K@>(Map@<M@, K@> m, Show@<K@> show_key) {
 
   Show@<S.Set@> show = (S.Set@ s) {
     Unit@ _ := Do(S.ForEach(s, String|'{ ',
-      (K@ x, Output@ shown) {
+      (K@ x, Stream@ shown) {
         Unit@ _ := Do(shown);
         Format|'%s; '[show_key(x)];
       }));

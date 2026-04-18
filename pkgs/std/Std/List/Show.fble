@@ -36,7 +36,7 @@ Tail = <@ T@>(Show@<T@> show, List@<T@> list) {
 #  @arg[@][T@] The type of element on the list.
 #  @arg[Show@<T@>][show] How to show an element of the list.
 #  @arg[List@<T@>][list] The list to show.
-#  @returns[Output@] Output that shows the contents of the list.
+#  @returns[Stream@] Output that shows the contents of the list.
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 Show = <@ T@>(Show@<T@> show, List@<T@> list) {
   list.?(empty: String|'[]');

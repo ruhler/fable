@@ -3,13 +3,13 @@
 
 Ascii@, ToChar, StrE .= /Std/Char/Ascii%;
 StrLit .= /Std/Char/Lit%;
-Output@ .= /Std/Stream/Text%;
+Stream@ .= /Std/Stream/Text%;
 List@ .= /Std/List%;
 
 # @func[String] Output a string.
 #  @arg[List<Ascii@>][str] The string to output.
-#  @returns[Output@] The computation to output the string.
-(List@<Ascii@>) { Output@; }
+#  @returns[Stream@] The computation to output the string.
+(List@<Ascii@>) { Stream@; }
 String = StrLit(ToChar, /Std/Stream/Text%.String);
 
 # @func[String] Output a string with escape characters.
@@ -18,11 +18,11 @@ String = StrLit(ToChar, /Std/Stream/Text%.String);
 #  Example use:
 #
 #  @code[fble] @
-#   Output@ out = StringE|'hello\nworld\n';
+#   Stream@ out = StringE|'hello\nworld\n';
 #
 #  @arg[List<Ascii@>][str] The string to output.
-#  @returns[Output@] The computation to output the string.
-(List@<Ascii@>) { Output@; }
+#  @returns[Stream@] The computation to output the string.
+(List@<Ascii@>) { Stream@; }
 StringE = (List@<Ascii@> str) {
   /Std/Stream/Text%.String(StrE(str));
 };
@@ -35,12 +35,12 @@ StringE = (List@<Ascii@> str) {
 #  For example:
 #
 #  @code[fble] @
-#   Output@ out = Format|'a: %s, b: %s'[String|'hello', String|'there'];
+#   Stream@ out = Format|'a: %s, b: %s'[String|'hello', String|'there'];
 #
 #  @arg[List@<Ascii@>][fmt] The format specifier
-#  @arg[List@<Output@>[args] Format args.
-#  @return[Output@] The formatted output.
-(List@<Ascii@>, List@<Output@>) { Output@; }
+#  @arg[List@<Stream@>[args] Format args.
+#  @return[Stream@] The formatted output.
+(List@<Ascii@>, List@<Stream@>) { Stream@; }
 Format = StrLit(ToChar, /Std/Stream/Text%.Format);
 
 # @func[FormatE] Construct a formatted output.
@@ -55,13 +55,13 @@ Format = StrLit(ToChar, /Std/Stream/Text%.Format);
 #  For example:
 #
 #  @code[fble] @
-#   Output@ out = FormatE|'a: %s\nb: %s\n'[String|'hello', String|'there'];
+#   Stream@ out = FormatE|'a: %s\nb: %s\n'[String|'hello', String|'there'];
 #
 #  @arg[List@<Ascii@>][fmt] The format specifier
-#  @arg[List@<Output@>[args] Format args.
-#  @return[Output@] The formatted output.
-(List@<Ascii@>, List@<Output@>) { Output@; }
-FormatE = (List@<Ascii@> str, List@<Output@> args) {
+#  @arg[List@<Stream@>[args] Format args.
+#  @return[Stream@] The formatted output.
+(List@<Ascii@>, List@<Stream@>) { Stream@; }
+FormatE = (List@<Ascii@> str, List@<Stream@> args) {
   /Std/Stream/Text%.Format(StrE(str), args);
 };
 

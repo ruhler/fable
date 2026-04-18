@@ -16,7 +16,7 @@ Exit@ = /Std/Io/Cli%.Exit@;
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
 
-Output@ = /Std/Stream/Text%.Output@;
+Stream@ = /Std/Stream/Text%.Stream@;
 Format = /Std/Char/Ascii/Output%.Format;
 
 String@ = /Std/String%.String@;
@@ -42,8 +42,8 @@ Text = /Fbld/Text%.Text;
 
 IO@ = <<@>@ M@> { *(
   In@<M@> in,
-  Put@<M@, Output@> out,
-  Put@<M@, Output@> err,
+  Put@<M@, Stream@> out,
+  Put@<M@, Stream@> err,
   (String@) { M@<Maybe@<In@<M@>>>; } read
 ); };
 
@@ -65,7 +65,7 @@ Main = <<@>@ M@>(Monad@<M@> m, IO@<M@> io, List@<String@> args) {
     };
 
     fin.?(nothing: {
-      Output@ msg = Format|'unable to open %s'[/Std/Stream/Text%.String(filename)];
+      Stream@ msg = Format|'unable to open %s'[/Std/Stream/Text%.String(filename)];
       m.return(Error<List@<Text@>>(Unknown, msg));
     });
 

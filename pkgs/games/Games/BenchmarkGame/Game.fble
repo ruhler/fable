@@ -1,5 +1,5 @@
 
-In@, Out@, Output@, Return, ToString .= /Std/Stream/Text%;
+In@, Out@, Stream@, Return, ToString .= /Std/Stream/Text%;
 
 Put@ .= /Std/Stream%;
 IStream = /Core/Char/Stream/IStream%.IStream;
@@ -30,12 +30,12 @@ Unit@ = /Std/Unit%.Unit@;
 
 # Common interface for benchmark games.
 # You get stdin, stdout, and a list of args.
-Main@ = <<@>@ M@>(Monad@<M@>, In@<M@>, Put@<M@, Output@>, List@<String@>) { M@<Unit@>; };
+Main@ = <<@>@ M@>(Monad@<M@>, In@<M@>, Put@<M@, Stream@>, List@<String@>) { M@<Unit@>; };
 
 # Test a benchmark game.
 (String@, Main@, String@, List@<String@>, String@) { Test@; }
 Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ expected_output) {
-  S@ = *(String@ in, Output@ out);
+  S@ = *(String@ in, Stream@ out);
   P = Pure<S@>;
   M@ = P.M@;
   M = P.Monad;
@@ -51,19 +51,19 @@ Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ ex
       S.put(x.@(in: str));
     });
 
-  State@<Output@, M@> s_out = @(
+  State@<Stream@, M@> s_out = @(
     get: {
       S@ x := M.do(S.get);
       M.return(x.out);
     },
-    put: (Output@ str) {
+    put: (Stream@ str) {
       S@ x := M.do(S.get);
       S.put(x.@(out: str));
     });
 
   /Std/Test%.Test(name, (Unit@ _) {
     In@<M@> in = IStream(M, s_in);
-    Put@<M@, Output@> out = OStream(M, s_out);
+    Put@<M@, Stream@> out = OStream(M, s_out);
     M@<Unit@> go = game(M, in, out, args);
     String@ got = ToString $ Exec(go, S@(input, Return)).out;
     String@ wnt = expected_output;
@@ -81,7 +81,7 @@ Bench = (String@ name, Main@ game, String@ input, List@<String@> args) {
     S = P.State;
 
     In@<M@> in = IStream(M, S);
-    Put@<M@, Output@> out = NullOutput(M);
+    Put@<M@, Stream@> out = NullOutput(M);
     Unit@ _ = Eval(game(M, in, out, args), input);
     Pass;
   });

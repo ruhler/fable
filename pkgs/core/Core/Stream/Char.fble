@@ -1,6 +1,6 @@
 
 Char@ = /Std/Char%.Char@;
-Channel@, Output@ .= /Std/Stream/Text%;
+Channel@, Stream@ .= /Std/Stream/Text%;
 Int@ = /Std/Int%.Int@;
 
 Maybe@ = /Std/Maybe%.Maybe@;
@@ -43,7 +43,7 @@ OStream = <<@>@ M@>(Monad@<M@> m, Byte.Out@<M@> s) {
 
   Channel@<M@<Unit@>> stream = @(return, do, put);
 
-  Put@<M@, Output@> put = (Output@ output) {
+  Put@<M@, Stream@> put = (Stream@ output) {
     output(stream);
   };
 

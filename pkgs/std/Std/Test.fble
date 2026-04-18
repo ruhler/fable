@@ -3,17 +3,17 @@
 
 Bool@ .= /Std/Bool%;
 List@ .= /Std/List%;
-Output@, ToString .= /Std/Stream/Text%;
+Stream@, ToString .= /Std/Stream/Text%;
 String@ .= /Std/String%;
 String, Format .= /Std/Char/Ascii/Output%;
 Unit@, Unit .= /Std/Unit%;
 
 # @union[TestResult@] The result of running a test.
 #  @field[Unit@][pass] The test passed.
-#  @field[Output@][fail] The test failed with given error message.
+#  @field[Stream@][fail] The test failed with given error message.
 #  @field[Unit@][expected_fail] The test was expected to fail and it did.
-#  @field[Output@][skip] The test was skipped, with explanation as to why.
-TestResult@ = +(Unit@ pass, Output@ fail, Unit@ expected_fail, Output@ skip);
+#  @field[Stream@][skip] The test was skipped, with explanation as to why.
+TestResult@ = +(Unit@ pass, Stream@ fail, Unit@ expected_fail, Stream@ skip);
 
 # @struct[TestCase@] A test case.
 #  @field[String@][name] The name of the test.
@@ -35,9 +35,9 @@ Test@ = +(TestCase@ case, TestSuite@ suite);
 TestResult@ Pass = TestResult@(pass: Unit);
 
 # @func[Fail] A failing test result.
-#  @arg[Output@][msg] Test failure message.
+#  @arg[Stream@][msg] Test failure message.
 #  @returns[TestResult@] A failing test result.
-(Output@) { TestResult@; } Fail = (Output@ msg) {
+(Stream@) { TestResult@; } Fail = (Stream@ msg) {
   TestResult@(fail: msg);
 };
 
@@ -62,10 +62,10 @@ ExpectFails = (String@ msg, TestResult@ result) {
 };
 
 # @func[Skip] A skipped test result.
-#  @arg[Output@][msg] Explanation for why the test was skipped.
+#  @arg[Stream@][msg] Explanation for why the test was skipped.
 #  @returns[TestResult@] A skipped test result.
-(Output@) { TestResult@; }
-Skip = (Output@ msg) {
+(Stream@) { TestResult@; }
+Skip = (Stream@ msg) {
   TestResult@(skip: msg);
 };
 
@@ -89,32 +89,32 @@ TestSuite = (String@ name, List@<Test@> tests) {
 };
 
 # @func[SkipTest] Skips a test
-#  @arg[Output@][msg] Explanation for why the test is skipped.
+#  @arg[Stream@][msg] Explanation for why the test is skipped.
 #  @arg[Test@][test] The test to skip.
 #  @returns[Test@] A skipped test.
-(Output@, Test@) { Test@; }
-SkipTest = (Output@ msg, Test@ test) {
+(Stream@, Test@) { Test@; }
+SkipTest = (Stream@ msg, Test@ test) {
   test.?(case: Test(test.case.name, (Unit@ _) { Skip(msg); }));
   TestSuite(test.suite.name, /Std/List%.Map(test.suite.tests, SkipTest(msg)));
 };
 
 # @func[SkipTestIf] Conditionally skips a test.
 #  @arg[Bool@][if] Skip the test if this condition holds.
-#  @arg[Output@][msg] Explanation for why the test is skipped.
+#  @arg[Stream@][msg] Explanation for why the test is skipped.
 #  @arg[Test@][test] The test to skip.
 #  @returns[Test@] A skipped test.
-(Bool@, Output@, Test@) { Test@; }
-SkipTestIf = (Bool@ if, Output@ msg) {
+(Bool@, Stream@, Test@) { Test@; }
+SkipTestIf = (Bool@ if, Stream@ msg) {
   if.?(true: SkipTest(msg), false: /Std/Func%.Id<Test@>);
 };
 
 # @func[SkipTestUnless] Conditionally skips a test.
 #  @arg[Bool@][unless] Skip the test unless this condition holds.
-#  @arg[Output@][msg] Explanation for why the test is skipped.
+#  @arg[Stream@][msg] Explanation for why the test is skipped.
 #  @arg[Test@][test] The test to skip.
 #  @returns[Test@] A skipped test.
-(Bool@, Output@, Test@) { Test@; }
-SkipTestUnless = (Bool@ unless, Output@ msg) {
+(Bool@, Stream@, Test@) { Test@; }
+SkipTestUnless = (Bool@ unless, Stream@ msg) {
   unless.?(true: /Std/Func%.Id<Test@>, false: SkipTest(msg));
 };
 

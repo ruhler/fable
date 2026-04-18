@@ -4,7 +4,7 @@ Str .= /Std/Char/Ascii%;
 FormatE, StringE .= /Std/Char/Ascii/Output%;
 Concat, ForEach .= /Std/List%;
 Monad@ .= /Std/Monad%;
-Output@, Out@, String .= /Std/Stream/Text%;
+Stream@, Out@, String .= /Std/Stream/Text%;
 String@ .= /Std/String%;
 Test@, TestResult@ .= /Std/Test%;
 Unit@, Unit .= /Std/Unit%;
@@ -20,8 +20,8 @@ Run = <<@>@ M@>(Monad@<M@> m, Out@<M@> out, String@ prefix, Test@ test) {
 
       TestResult@ tr = test.case.test(Unit);
 
-      (Output@, Bool@) { M@<Bool@>; }
-      Return = (Output@ output, Bool@ result) { 
+      (Stream@, Bool@) { M@<Bool@>; }
+      Return = (Stream@ output, Bool@ result) { 
         Unit@ _ := m.do(out.put(output));
         m.return(result);
       };

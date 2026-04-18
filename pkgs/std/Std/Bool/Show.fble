@@ -7,7 +7,7 @@ Show@ .= /Std/Show%;
 
 # @func[Show] Show a Bool@ value.
 #  @arg[Bool@][x] The value to show.
-#  @returns[Output@] Output that shows the value.
+#  @returns[Stream@] Output that shows the value.
 Show@<Bool@> Show = (Bool@ x) {
   x.?(true: String|True, false: String|False);
 };

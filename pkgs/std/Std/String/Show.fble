@@ -24,7 +24,7 @@ Show@<String@> Chars = (String@ s) {
 
 # @func[Show] Show a String@ value.
 #  @arg[String@][x] The value to show.
-#  @returns[Output@] Output that shows the value.
+#  @returns[Stream@] Output that shows the value.
 Show@<String@> Show = (String@ s) {
   FormatE|'\q%s\q'[Chars(s)];
 };

@@ -5,7 +5,7 @@ Hex@ = /Core/Digits%.Hex@;
 List@ = /Std/List%.List@;
 
 Show@ = /Std/Show%.Show@;
-Output@ = /Std/Stream/Text%.Output@;
+Stream@ = /Std/Stream/Text%.Stream@;
 Do = /Std/Stream/Text%.Do;
 Return = /Std/Stream/Text%.Return;
 
@@ -18,7 +18,7 @@ Show@<Bit@> ShowBit = (Bit@ b) {
 };
 
 Show@<List@<Bit@>> ShowBits = (List@<Bit@> bits) {
-  /Std/List%.ForEach(bits, Return, (Bit@ bit, Output@ shown) {
+  /Std/List%.ForEach(bits, Return, (Bit@ bit, Stream@ shown) {
     Unit@ _ := Do(shown);
     ShowBit(bit);
   });

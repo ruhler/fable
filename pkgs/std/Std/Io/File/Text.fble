@@ -6,15 +6,15 @@ Str .= /Std/Char/Ascii%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Io@ .= /Std/Io%;
-In@, Out@, Output@ .= /Std/Stream/Text%;
+In@, Out@, Stream@ .= /Std/Stream/Text%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 
 File@, GetStdin, GetStdout, GetStderr, Open, Close, Flush,
 GetChar, PutChar .= /Std/Io/File/Internal%;
 
-<<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Output@) { M@<Unit@>; }
-Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Output@ output) {
+<<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@) { M@<Unit@>; }
+Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@ output) {
   S@ = M@<Unit@>;
   S@ return = m.return(Unit);
   (S@, (Unit@) { S@; }) { S@; } do = (S@ ma, (Unit@) { S@; } f) {

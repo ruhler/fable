@@ -16,7 +16,7 @@ List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Output@ = /Std/Stream/Text%.Output@;
+Stream@ = /Std/Stream/Text%.Stream@;
 
 In@ = /Std/Stream/Text%.In@;
 
@@ -106,7 +106,7 @@ StreamResult@ = *(State@ state, Int@ output);
 # Output the digits of pi, one digit output for each input string, starting
 # from state 's'.
 Main@
-Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Put@<M@, Output@> out, List@<String@> args) {
+Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Put@<M@, Stream@> out, List@<String@> args) {
   Int@ l = Int|10;
   Int@ n = /Core/Int/Read%.Read(args.items.head);
 

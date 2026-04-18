@@ -6,7 +6,7 @@ Show@ .= /Std/Show%;
 
 # @func[Show] Show a Char@ value.
 #  @arg[Char@][x] The value to show.
-#  @returns[Output@] Output that shows the value.
+#  @returns[Stream@] Output that shows the value.
 Show@<Char@> Show = (Char@ x) {
   /Std/String/Show%.Show[x];
 };

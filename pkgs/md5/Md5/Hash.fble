@@ -12,7 +12,7 @@ List = /Std/List%.List;
 ForEach = /Std/List%.ForEach;
 
 Show@ = /Std/Show%.Show@;
-Output@ = /Std/Stream/Text%.Output@;
+Stream@ = /Std/Stream/Text%.Stream@;
 Do = /Std/Stream/Text%.Do;
 Return = /Std/Stream/Text%.Return;
 
@@ -52,8 +52,8 @@ Show@<Hex@> Hex = (Hex@ h) {
     C: String|c, D: String|d, E: String|e, F: String|f);
 };
 
-(List@<Output@>) { Output@; }
-Seq = (List@<Output@> xs) {
+(List@<Stream@>) { Stream@; }
+Seq = (List@<Stream@> xs) {
   xs.?(empty: Return);
   Unit@ _ := Do(xs.items.head);
   Seq(xs.items.tail);

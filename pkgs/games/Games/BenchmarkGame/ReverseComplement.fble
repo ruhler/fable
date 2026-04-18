@@ -8,7 +8,7 @@ Put@ .= /Std/Stream%;
 In@ = /Std/Stream/Text%.In@;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
-Output@ = /Std/Stream/Text%.Output@;
+Stream@ = /Std/Stream/Text%.Stream@;
 Put = /Std/Stream/Text%.Put;
 Do = /Std/Stream/Text%.Do;
 String = /Std/Stream/Text%.String;
@@ -77,7 +77,7 @@ Seq@ = *(String@ header, String@ codes);
 };
 
 Main@
-Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Put@<M@, Output@> out, List@<String@> _args) {
+Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Put@<M@, Stream@> out, List@<String@> _args) {
   # Gets a line from stdin, discarding the final newline if any.
   M@<String@> GetLine = {
     Maybe@<Char@> c := m.do(in.get);
@@ -89,7 +89,7 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Put@<M@, Output@> out, List@<String@>
   };
 
   # Prints codes to stdout, breaking lines every 60 characters.
-  (Int@, String@) { Output@; } OutputCodes = (Int@ n, String@ codes) {
+  (Int@, String@) { Stream@; } OutputCodes = (Int@ n, String@ codes) {
     codes.?(empty: Put(Ascii.nl));
 
     IsZero(n).?(true: {

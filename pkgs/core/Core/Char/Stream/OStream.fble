@@ -1,7 +1,7 @@
 
 Put@ .= /Std/Stream%;
 
-Output@ = /Std/Stream/Text%.Output@;
+Stream@ = /Std/Stream/Text%.Stream@;
 ToNull = /Std/Stream/Text%.ToNull;
 Do = /Std/Stream/Text%.Do;
 
@@ -14,16 +14,16 @@ Unit@ = /Std/Unit%.Unit@;
 # For use in test cases and benchmarking, where we want to exercise the output
 # code but don't care about what is output.
 # TODO: Come up with a better name to distinguish this from m.return(Unit)?
-<<@>@ M@>(Monad@<M@>) { Put@<M@, Output@>; }
-NullOutput = <<@>@ M@>(Monad@<M@> m, Output@ output) {
+<<@>@ M@>(Monad@<M@>) { Put@<M@, Stream@>; }
+NullOutput = <<@>@ M@>(Monad@<M@> m, Stream@ output) {
   m.return(ToNull(output));
 };
 
-# Make an output stream from an Output@ state monad.
+# Make an output stream from an Stream@ state monad.
 # TODO: Move this to a different module to avoid false dependency on State@?
-<<@>@ M@>(Monad@<M@>, State@<Output@, M@>) { Put@<M@, Output@>; }
-OStream = <<@>@ M@>(Monad@<M@> m, State@<Output@, M@> s, Output@ output) {
-  Output@ prev := m.do(s.get);
+<<@>@ M@>(Monad@<M@>, State@<Stream@, M@>) { Put@<M@, Stream@>; }
+OStream = <<@>@ M@>(Monad@<M@> m, State@<Stream@, M@> s, Stream@ output) {
+  Stream@ prev := m.do(s.get);
   s.put(Do(prev, (Unit@ _) { output; }));
 };
 

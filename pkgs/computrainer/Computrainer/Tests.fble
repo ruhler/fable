@@ -10,7 +10,7 @@ List = /Std/List%.List;
 
 Str = /Std/Char/Ascii%.Str;
 
-Output@ = /Std/Stream/Text%.Output@;
+Stream@ = /Std/Stream/Text%.Stream@;
 ToString = /Std/Stream/Text%.ToString;
 
 Test@ = /Std/Test%.Test@;
@@ -346,7 +346,7 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
 
   Test(Str|'Load Save', (Unit@ _) {
     Model@ model = Ticks(/Computrainer/Sample%.Sample);
-    Output@ saved = /Computrainer/Model/Save%.Model(model);
+    Stream@ saved = /Computrainer/Model/Save%.Model(model);
     Model@ loaded = /Computrainer/Model/Load%.Model(ToString(saved));
     Model@ wnt = model;
     Model@ got = loaded;

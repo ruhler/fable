@@ -1,5 +1,5 @@
 
-Output@ = /Std/Stream/Text%.Output@;
+Stream@ = /Std/Stream/Text%.Stream@;
 
 Int@ = /Std/Int%.Int@;
 Sub = /Std/Int%.Sub;
@@ -75,8 +75,8 @@ State@ = *(
   Transform@ transform  # Transformation to apply to the board.
 );
 
-<<@>@ M@>(Monad@<M@>, Put@<M@, Output@>, App@<M@>, Int@, Int@, Args@) { M@<Unit@>; }
-SatGame = <<@>@ M@>(Monad@<M@> m, Put@<M@, Output@> out, App@<M@> app, Int@ width, Int@ height, Args@ args) {
+<<@>@ M@>(Monad@<M@>, Put@<M@, Stream@>, App@<M@>, Int@, Int@, Args@) { M@<Unit@>; }
+SatGame = <<@>@ M@>(Monad@<M@> m, Put@<M@, Stream@> out, App@<M@> app, Int@ width, Int@ height, Args@ args) {
   Params@ params = Params@(args.num_vars, args.num_clauses, args.num_literals_per_clause);
   Layout@ layout = Layout(params);
 

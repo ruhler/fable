@@ -10,7 +10,7 @@ Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Output@ = /Std/Stream/Text%.Output@;
+Stream@ = /Std/Stream/Text%.Stream@;
 
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
@@ -29,7 +29,7 @@ Report = /Fbld/Loc%.Report;
 # * If failed is False, value is Just.
 Result@ = <@ T@> {
   *(
-    Output@ errors,          # List of error messages reported.
+    Stream@ errors,          # List of error messages reported.
     Bool@ failed,           # True if there were any errors, false otherwise.
     Maybe@<T@> value        # The value of the result.
   );
@@ -40,8 +40,8 @@ Result@ = <@ T@> {
 };
 
 # Indicate an error with location and error message.
-<@ T@>(Loc@, Output@) { Result@<T@>; }
-Error = <@ T@>(Loc@ l, Output@ msg) {
+<@ T@>(Loc@, Stream@) { Result@<T@>; }
+Error = <@ T@>(Loc@ l, Stream@ msg) {
   Result@(Report(l, FormatE|'error: %s\n'[msg]), True, Nothing<T@>);
 };
 
@@ -72,7 +72,7 @@ Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
   ra.value.?(nothing: Raise<B@>(ra));
 
   Result@<B@> rb = f(ra.value.just);
-  Output@ errors = {
+  Stream@ errors = {
     Unit@ _ := /Std/Stream/Text%.Do(ra.errors);
     rb.errors;
   };

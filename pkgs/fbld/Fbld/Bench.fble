@@ -1,7 +1,7 @@
 
 Str = /Std/Char/Ascii%.Str;
 
-Output@ = /Std/Stream/Text%.Output@;
+Stream@ = /Std/Stream/Text%.Stream@;
 
 Put@ .= /Std/Stream%;
 In@ = /Std/Stream/Text%.In@;
@@ -38,8 +38,8 @@ Test@ Bench = Test(Str|Fbld, (Unit@ _) {
   S = P.State;
 
   In@<M@> in = IStream(M, S);
-  Put@<M@, Output@> out = NullOutput(M);
-  Put@<M@, Output@> err = NullOutput(M);
+  Put@<M@, Stream@> out = NullOutput(M);
+  Put@<M@, Stream@> err = NullOutput(M);
   (String@) { M@<Maybe@<In@<M@>>>; } read = (String@ _) {
     M.return(Nothing<In@<M@>>);
   };

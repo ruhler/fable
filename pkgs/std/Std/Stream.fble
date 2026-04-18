@@ -18,36 +18,36 @@ Channel@ = <@ A@, @ S@> { *(
   (A@) { S@; } put
 );};
 
-# @type@[Output@] A computation that outputs values to a channel.
+# @type@[Stream@] A computation that streams values to a channel.
 #  @arg[@][A@] The type of value to output.
 #  @arg[@][S@] The type of channel to output to.
 #  @arg[Channel@<S@>][channel] Implementation of the channel interface.
 #  @returns[S@] The filled channel.
-Output@ = <@ A@, @ S@>(Channel@<A@, S@>) { S@; };
+Stream@ = <@ A@, @ S@>(Channel@<A@, S@>) { S@; };
 
 # @value[Return] A computation that outputs nothing.
-#  @type[Output@]
-Output@ Return = <@ A@, @ S@>(Channel@<A@, S@> s) {
+#  @type[Stream@]
+Stream@ Return = <@ A@, @ S@>(Channel@<A@, S@> s) {
   s.return;
 };
 
-# @func[Do] Output one thing after another.
+# @func[Do] Stream one thing after another.
 #  @arg[@][A@] The type of values to output.
-#  @arg[Output@][ma] The first thing to output.
-#  @arg[(Unit@) { Output@; }][f] The second thing to output.
-#  @return[Output@]
-#   A computation that outputs the first thing, then calls the function f to
-#   get the second thing to output, then outputs the second thing.
-<@ A@>(Output@<A@>, (Unit@) { Output@<A@>; }) { Output@<A@>; }
-Do = <@ A@>(Output@<A@> ma, (Unit@) { Output@<A@>; } f)<@ S@>(Channel@<A@, S@> s) {
+#  @arg[Stream@][ma] The first stream of outputs.
+#  @arg[(Unit@) { Stream@; }][f] The next stream of outputs.
+#  @return[Stream@]
+#   A computation that streams out the first set of outputs, then calls the
+#   function f to get the second set of outputs to stream.
+<@ A@>(Stream@<A@>, (Unit@) { Stream@<A@>; }) { Stream@<A@>; }
+Do = <@ A@>(Stream@<A@> ma, (Unit@) { Stream@<A@>; } f)<@ S@>(Channel@<A@, S@> s) {
   s.do(ma(s), (Unit@ _) { f(Unit, s); });
 };
 
 # @func[Put] Output a single value.
 #  @arg[@][A@] The type of values to output.
 #  @arg[A@][v] The value to output.
-#  @returns[Output@] A computation that outputs the value..
-<@ A@>(A@) { Output@<A@>; }
+#  @returns[Stream@] A computation that outputs the value.
+<@ A@>(A@) { Stream@<A@>; }
 Put = <@ A@>(A@ v)<@ S@>(Channel@<A@, S@> s) {
   s.put(v);
 };
@@ -55,8 +55,8 @@ Put = <@ A@>(A@ v)<@ S@>(Channel@<A@, S@> s) {
 # @func[Puts] Output a list of values.
 #  @arg[@][A@] The type of values to output.
 #  @arg[List@<A@>][values] The values to output.
-#  @returns[Output<A@>] A computation that outputs the values.
-<@ A@>(List@<A@>) { Output@<A@>; }
+#  @returns[Stream@<A@>] A computation that outputs the values.
+<@ A@>(List@<A@>) { Stream@<A@>; }
 Puts = <@ A@>(List@<A@> values)<@ S@>(Channel@<A@, S@> s) {
   values.?(empty: s.return);
   Unit@ _ := s.do(s.put(values.items.head));
@@ -65,10 +65,10 @@ Puts = <@ A@>(List@<A@> values)<@ S@>(Channel@<A@, S@> s) {
 
 # @func[Concat] Output a sequence of computations.
 #  @arg[@][A@] The type of value to output.
-#  @arg[List@<Output@<A@>>] The list of outputs to output.
+#  @arg[List@<Stream@<A@>>] The list of outputs to output.
 #  @returns[Output<A@>] A computation to output each give output in turn.
-<@ A@>(List@<Output@<A@>>) { Output@<A@>; }
-Concat = <@ A@>(List@<Output@<A@>> xs) {
+<@ A@>(List@<Stream@<A@>>) { Stream@<A@>; }
+Concat = <@ A@>(List@<Stream@<A@>> xs) {
   xs.?(empty: Return<A@>);
   Unit@ _ := Do(xs.items.head);
   Concat(xs.items.tail);
@@ -76,9 +76,9 @@ Concat = <@ A@>(List@<Output@<A@>> xs) {
 
 # @func[ToList] Output to a list.
 #  @arg[@][A@] The type of value to output.
-#  @arg[Output@<A@>] The output to perform.
+#  @arg[Stream@<A@>] The output to perform.
 #  @returns[List@<A@>] A list of the output values.
-<@ A@>(Output@<A@>) { List@<A@>; }
+<@ A@>(Stream@<A@>) { List@<A@>; }
 ToList = <@ A@> {
   # Output to a list given the tail of the list.
   S@ = (List@<A@>) { List@<A@>; };
@@ -91,7 +91,7 @@ ToList = <@ A@> {
     put: Items<A@>
   );
 
-  (Output@<A@> output) {
+  (Stream@<A@> output) {
     output(S, Empty<A@>);
   };
 };
@@ -99,12 +99,12 @@ ToList = <@ A@> {
 # @func[ToNull] Output to a Unit@.
 #  This goes through the output value by value, ignoring the value seen.
 #  Useful for test cases and benchmarks. If you don't care about the output in
-#  normal execution, you should just ignore the Output@ in the first place.
+#  normal execution, you should just ignore the Stream@ in the first place.
 #
 #  @arg[A@] The type of value to output.
-#  @arg[Output@<A@>] The output to perform.
+#  @arg[Stream@<A@>] The output to perform.
 #  @returns[Unit@] Nothing interesting.
-<@ A@>(Output@<A@>) { Unit@; }
+<@ A@>(Stream@<A@>) { Unit@; }
 ToNull = <@ A@> {
   S@ = Unit@;
   Channel@<A@, S@> S = @(
@@ -113,7 +113,7 @@ ToNull = <@ A@> {
     put: (A@ _) { Unit; }
   );
 
-  (Output@<A@> output) {
+  (Stream@<A@> output) {
     output(S);
   };
 };
@@ -138,11 +138,11 @@ In@ = <@ A@, <@>@ M@> { *(M@<Maybe@<A@>> get); };
 # @type[Out@] Interface for outputting values to a stream.
 #  The put method puts the next value to output. The end method closes the
 #  stream.
-Out@ = <@ A@, <@>@ M@> { *((Output@<A@>) { M@<Unit@>; } put, M@<Unit@> end); };
+Out@ = <@ A@, <@>@ M@> { *((Stream@<A@>) { M@<Unit@>; } put, M@<Unit@> end); };
 
 # @value[Stream] Streams specialized for a given type.
 Stream = <@ A@> {
-  @(Channel@: Channel@<A@>, Output@: Output@<A@>,
+  @(Channel@: Channel@<A@>, Stream@: Stream@<A@>,
     In@: In@<A@>, Out@: Out@<A@>,
     Return: Return<A@>, Do: Do<A@>,
     Put: Put<A@>, Puts: Puts<A@>, Concat: Concat<A@>,
@@ -150,7 +150,7 @@ Stream = <@ A@> {
 };
 
 @(
-  Channel@, Output@, Put@, Get@, In@, Out@,
+  Channel@, Stream@, Put@, Get@, In@, Out@,
   Return, Do, Put, Puts, Concat, ToList, ToNull,
   Stream
 );

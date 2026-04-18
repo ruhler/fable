@@ -16,7 +16,7 @@ Format, String .= /Std/Char/Ascii/Output%;
 #  @arg[@][T@] The type of value.
 #  @arg[Show@<T@>][show] How to show a value.
 #  @arg[Maybe@<T@>][maybe] The maybe to show.
-#  @returns[Output@] Output that shows the maybe.
+#  @returns[Stream@] Output that shows the maybe.
 <@ T@>(Show@<T@>) { Show@<Maybe@<T@>>; }
 Show = <@ T@>(Show@<T@> show, Maybe@<T@> maybe) {
   maybe.?(nothing: String|'Nothing');
