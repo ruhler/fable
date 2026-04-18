@@ -4963,3 +4963,25 @@ Who uses those?
 If I did move them to /Std/Stream/List%, does it still make sense to call List
 List? Sure, why not?
 
+---
+
+How do you feel about 'Null' for ignoring, 'Test' for exercising but otherwise
+discarding? Because you would only do that for testing, right? If you wanted
+to capture data as part of testing, you would use List as the output. So test
+has a reasonable unique name I think.
+
+---
+
+It's a bit awkward for /Std/Stream/Text% to export Concat, Puts, ToString, ToNull
+equivalents which don't show up in /Std/Stream%. Not sure how I feel about
+that. At least Puts, Concat, and maybe ToString I can argue from a dependency
+point of view? Actually, maybe I can't?
+
+Consider revisiting this. Like maybe Puts, Concat should be moved out of
+/Std/Stream/Text% and into /Std/Stream/String?
+
+/Std/Stream/Binary% is, right now, equivalent to /Std/Stream%.Stream<Int@>. Is
+that worth defining as a separate module? How about text? Like, maybe we
+should move String, Format, Lines, Join to somewhere else?
+
+It's getting a little confusing distinguishing sources of things from targets.

@@ -1,9 +1,7 @@
 
 Put@ .= /Std/Stream%;
 
-Stream@ = /Std/Stream/Text%.Stream@;
-ToNull = /Std/Stream/Text%.ToNull;
-Do = /Std/Stream/Text%.Do;
+Stream@, Do .= /Std/Stream/Text%;
 
 Monad@ = /Std/Monad%.Monad@;
 State@ = /Std/State%.State@;
@@ -16,7 +14,7 @@ Unit@ = /Std/Unit%.Unit@;
 # TODO: Come up with a better name to distinguish this from m.return(Unit)?
 <<@>@ M@>(Monad@<M@>) { Put@<M@, Stream@>; }
 NullOutput = <<@>@ M@>(Monad@<M@> m, Stream@ output) {
-  m.return(ToNull(output));
+  m.return(/Std/Stream/Test%.Test(output));
 };
 
 # Make an output stream from an Stream@ state monad.

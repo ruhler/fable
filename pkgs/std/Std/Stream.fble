@@ -51,28 +51,6 @@ Put = <@ A@>(A@ v)<@ S@>(Channel@<A@, S@> s) {
   s.put(v);
 };
 
-# @func[ToNull] Output to a Unit@.
-#  This goes through the output value by value, ignoring the value seen.
-#  Useful for test cases and benchmarks. If you don't care about the output in
-#  normal execution, you should just ignore the Stream@ in the first place.
-#
-#  @arg[A@] The type of value to output.
-#  @arg[Stream@<A@>] The output to perform.
-#  @returns[Unit@] Nothing interesting.
-<@ A@>(Stream@<A@>) { Unit@; }
-ToNull = <@ A@> {
-  S@ = Unit@;
-  Channel@<A@, S@> S = @(
-    return: Unit,
-    do: (Unit@ u, (Unit@) { Unit@; } f) { f(u); },
-    put: (A@ _) { Unit; }
-  );
-
-  (Stream@<A@> output) {
-    output(S);
-  };
-};
-
 # @type[Put@] Interfae for putting values.
 #  @arg[<@>@][M@] The monadic type to put to.
 #  @arg[@][A@] The type of value to put.
@@ -100,12 +78,12 @@ Stream = <@ A@> {
   @(Channel@: Channel@<A@>, Stream@: Stream@<A@>,
     In@: In@<A@>, Out@: Out@<A@>,
     Return: Return<A@>, Do: Do<A@>,
-    Put: Put<A@>,
-    ToNull: ToNull<A@>);
+    Put: Put<A@>);
 };
 
 @(
-  Channel@, Stream@, Put@, Get@, In@, Out@,
-  Return, Do, Put, ToNull,
+  Channel@, Stream@,
+  Put@, Get@, In@, Out@,
+  Return, Do, Put,
   Stream
 );

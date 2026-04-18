@@ -1,0 +1,29 @@
+# @module[/Std/Stream/Test%]
+#  An output channel for testing.
+
+Channel@, Stream@ .= /Std/Stream%;
+Unit@, Unit .= /Std/Unit%;
+
+# @func[Test] Output to a Unit@.
+#  This goes through the output value by value, ignoring the value seen.
+#  Useful for test cases and benchmarks. If you don't care about the output in
+#  normal execution, you should just ignore the Stream@ in the first place.
+#
+#  @arg[A@] The type of value to output.
+#  @arg[Stream@<A@>] The output to perform.
+#  @returns[Unit@] Nothing interesting.
+<@ A@>(Stream@<A@>) { Unit@; }
+Test = <@ A@> {
+  S@ = Unit@;
+  Channel@<A@, S@> S = @(
+    return: Unit,
+    do: (Unit@ u, (Unit@) { Unit@; } f) { f(u); },
+    put: (A@ _) { Unit; }
+  );
+
+  (Stream@<A@> output) {
+    output(S);
+  };
+};
+
+@(Test);
