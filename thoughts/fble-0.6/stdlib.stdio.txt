@@ -4952,3 +4952,14 @@ more?
 The key thing is to clearly distinguish the channel type (e.g. List@) from the
 output value type (e.g. Char@, Int@). S@ sounds reasonable enough, no?
 
+---
+
+It would be really cool if we could move Puts and Concat out of Stream, to
+drop the List@ dependency. How about putting those into /Std/Stream/List%? Or
+/Std/List/Stream%?
+
+Who uses those?
+
+If I did move them to /Std/Stream/List%, does it still make sense to call List
+List? Sure, why not?
+

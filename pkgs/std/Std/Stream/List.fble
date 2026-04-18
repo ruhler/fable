@@ -1,0 +1,30 @@
+# @module[/Std/Stream/List%]
+#  Utilities for outputting a stream to a list.
+
+List@, Empty, Items .= /Std/List%;
+Channel@, Stream@ .= /Std/Stream%;
+Unit@, Unit .= /Std/Unit%;
+
+# @func[List] Output a stream to a list.
+#  @arg[@][A@] The type of value to output.
+#  @arg[Stream@<A@>] The output to perform.
+#  @returns[List@<A@>] A list of the output values.
+<@ A@>(Stream@<A@>) { List@<A@>; }
+List = <@ A@> {
+  # Output to a list given the tail of the list.
+  S@ = (List@<A@>) { List@<A@>; };
+
+  Channel@<A@, S@> S = @(
+    return: (List@<A@> tail) { tail; },
+    do: (S@ a, (Unit@) { S@; } fb, List@<A@> tail) {
+      a(fb(Unit, tail));
+    },
+    put: Items<A@>
+  );
+
+  (Stream@<A@> output) {
+    output(S, Empty<A@>);
+  };
+};
+
+@(List);

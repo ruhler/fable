@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Double check all the old documentation referring to Output@, which is now
+  called Stream@?
+
 * Add back character type functions isspace, isalnum, etc?
 * Add Lt, Le, Gt, Ge, etc for Char@?
 

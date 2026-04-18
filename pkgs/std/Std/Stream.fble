@@ -1,7 +1,7 @@
 # @module[/Std/Stream%]
 #  Types and utilities for streaming data out.
 
-List@, Items, Empty .= /Std/List%;
+List@ .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -74,28 +74,6 @@ Concat = <@ A@>(List@<Stream@<A@>> xs) {
   Concat(xs.items.tail);
 };
 
-# @func[ToList] Output to a list.
-#  @arg[@][A@] The type of value to output.
-#  @arg[Stream@<A@>] The output to perform.
-#  @returns[List@<A@>] A list of the output values.
-<@ A@>(Stream@<A@>) { List@<A@>; }
-ToList = <@ A@> {
-  # Output to a list given the tail of the list.
-  S@ = (List@<A@>) { List@<A@>; };
-
-  Channel@<A@, S@> S = @(
-    return: (List@<A@> tail) { tail; },
-    do: (S@ a, (Unit@) { S@; } fb, List@<A@> tail) {
-      a(fb(Unit, tail));
-    },
-    put: Items<A@>
-  );
-
-  (Stream@<A@> output) {
-    output(S, Empty<A@>);
-  };
-};
-
 # @func[ToNull] Output to a Unit@.
 #  This goes through the output value by value, ignoring the value seen.
 #  Useful for test cases and benchmarks. If you don't care about the output in
@@ -146,11 +124,11 @@ Stream = <@ A@> {
     In@: In@<A@>, Out@: Out@<A@>,
     Return: Return<A@>, Do: Do<A@>,
     Put: Put<A@>, Puts: Puts<A@>, Concat: Concat<A@>,
-    ToList: ToList<A@>, ToNull: ToNull<A@>);
+    ToNull: ToNull<A@>);
 };
 
 @(
   Channel@, Stream@, Put@, Get@, In@, Out@,
-  Return, Do, Put, Puts, Concat, ToList, ToNull,
+  Return, Do, Put, Puts, Concat, ToNull,
   Stream
 );
