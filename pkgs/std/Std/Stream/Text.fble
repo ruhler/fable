@@ -9,7 +9,7 @@ String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 
 # Specializations of /Std/Stream% for Char@.
-Channel@, Stream@, In@, Out@, Return, Do, Put .= /Std/Stream%.Stream<Char@>;
+Channel@, Stream@, Return, Do, Put .= /Std/Stream%.Stream<Char@>;
 
 Puts = /Std/Stream/List%.Puts<Char@>;
 Concat = /Std/Stream/List%.Concat<Char@>;
@@ -91,7 +91,7 @@ Format = (String@ fmt, List@<Stream@> args)<@ S@>(Channel@<S@> s) {
 #  @returns[String@] A string with the output characters.
 (Stream@) { String@; } ToString = /Std/Stream/List%.List<Char@>;
 
-@(Stream@, Channel@, In@, Out@,
+@(Stream@, Channel@,
   Return, Do, Put, Puts, Concat,
   String, Format, Lines, Join,
   ToString);

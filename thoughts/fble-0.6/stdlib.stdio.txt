@@ -4985,3 +4985,6 @@ that worth defining as a separate module? How about text? Like, maybe we
 should move String, Format, Lines, Join to somewhere else?
 
 It's getting a little confusing distinguishing sources of things from targets.
+
+It's nice to have 'Binary' and 'Text' to hide the detail and extra import
+needed for Char@ and Int@.

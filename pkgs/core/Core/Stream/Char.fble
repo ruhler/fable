@@ -2,6 +2,7 @@
 Char@ = /Std/Char%.Char@;
 Channel@, Stream@ .= /Std/Stream/Text%;
 Int@ = /Std/Int%.Int@;
+Put .= /Std/Stream%.Stream<Int@>;
 
 Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
@@ -9,13 +10,13 @@ Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Put@ .= /Std/Stream%;
+Put@ .= /Std/Io/Stream%;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
 
-Byte = /Std/Stream/Binary%;
-Char = /Std/Stream/Text%;
+Byte = /Std/Io/Stream/Binary%;
+Char = /Std/Io/Stream/Text%;
 
 # Convert a byte input stream to a character input stream.
 <<@>@ M@>(Monad@<M@>, Byte.In@<M@>) { Char.In@<M@>; }
@@ -39,7 +40,7 @@ OStream = <<@>@ M@>(Monad@<M@> m, Byte.Out@<M@> s) {
   };
 
   # TODO: Handle unicode properly.
-  put = (Char@ c) { s.put(Byte.Put(/Std/Char%.Pos(c))); };
+  put = (Char@ c) { s.put(Put(/Std/Char%.Pos(c))); };
 
   Channel@<M@<Unit@>> stream = @(return, do, put);
 

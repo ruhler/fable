@@ -3,8 +3,8 @@ Str = /Std/Char/Ascii%.Str;
 
 Stream@ = /Std/Stream/Text%.Stream@;
 
-Put@ .= /Std/Stream%;
-In@ = /Std/Stream/Text%.In@;
+Put@ .= /Std/Io/Stream%;
+In@ .= /Std/Io/Stream/Text%;
 IStream = /Core/Char/Stream/IStream%.IStream;
 NullOutput = /Core/Char/Stream/OStream%.NullOutput;
 

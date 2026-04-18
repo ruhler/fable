@@ -6,7 +6,8 @@ Int@ .= /Std/Int%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Io@ .= /Std/Io%;
-In@, Out@, Stream@ .= /Std/Stream/Binary%;
+In@, Out@ .= /Std/Io/Stream%.Io<Int@>;
+Stream@ .= /Std/Stream%.Stream<Int@>;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 

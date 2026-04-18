@@ -3,7 +3,8 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-Out@, Stream@ .= /Std/Stream/Text%;
+Out@ .= /Std/Io/Stream/Text%;
+Stream@ .= /Std/Stream/Text%;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 

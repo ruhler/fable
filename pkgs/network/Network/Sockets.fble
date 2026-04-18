@@ -1,7 +1,7 @@
 
 Int@ .= /Std/Int%;
 Maybe@ .= /Std/Maybe%;
-In@, Out@ .= /Std/Stream/Binary%;
+In@, Out@ .= /Std/Io/Stream/Binary%;
 String@ .= /Std/String%;
 
 InOut@ = <<@>@ M@> { *(In@<M@> in, Out@<M@> out); };

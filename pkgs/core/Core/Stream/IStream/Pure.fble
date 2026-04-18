@@ -11,7 +11,7 @@ Monad@ = /Std/Monad%.Monad@;
 
 Eval = /Std/State/Pure%.Eval;
 
-In@ .= /Std/Stream/Binary%;
+In@ .= /Std/Io/Stream/Binary%;
 
 Unit@ = /Std/Unit%.Unit@;
 

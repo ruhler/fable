@@ -3,7 +3,7 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-Out@ .= /Std/Stream/Text%;
+Out@ .= /Std/Io/Stream%.Io</Std/Char%.Char@>;
 
 Main@ = /Std/Io/Cli%.Main@;
 Success = /Std/Io/Cli%.Success;

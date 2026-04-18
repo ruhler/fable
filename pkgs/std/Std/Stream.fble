@@ -1,7 +1,6 @@
 # @module[/Std/Stream%]
 #  Types and utilities for streaming data out.
 
-Maybe@ .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 
 # @struct[Channel@] Interface of types S@ that you can stream output to.
@@ -51,39 +50,11 @@ Put = <@ A@>(A@ v)<@ S@>(Channel@<A@, S@> s) {
   s.put(v);
 };
 
-# @type[Put@] Interfae for putting values.
-#  @arg[<@>@][M@] The monadic type to put to.
-#  @arg[@][A@] The type of value to put.
-#  @return[M@<Unit@>] A computation to put the value.
-Put@ = <<@>@ M@, @ A@>(A@) { M@<Unit@>; };
-
-# @type[Get@] Interfae for getting values.
-#  @arg[<@>@][M@] The monadic type to get from.
-#  @arg[@][A@] The type of value to get.
-#  @return[M@<Unit@>] A computation to get a value.
-Get@ = <<@>@ M@, @ A@> { M@<A@>; };
-
-# @type[In@] Interface for getting from a stream of values.
-#  Use the get method to get the next value from the stream. It returns
-#  Nothing if the end of the stream has been reached.
-In@ = <@ A@, <@>@ M@> { *(M@<Maybe@<A@>> get); };
-
-# @type[Out@] Interface for outputting values to a stream.
-#  The put method puts the next value to output. The end method closes the
-#  stream.
-Out@ = <@ A@, <@>@ M@> { *((Stream@<A@>) { M@<Unit@>; } put, M@<Unit@> end); };
-
 # @value[Stream] Streams specialized for a given type.
 Stream = <@ A@> {
   @(Channel@: Channel@<A@>, Stream@: Stream@<A@>,
-    In@: In@<A@>, Out@: Out@<A@>,
     Return: Return<A@>, Do: Do<A@>,
     Put: Put<A@>);
 };
 
-@(
-  Channel@, Stream@,
-  Put@, Get@, In@, Out@,
-  Return, Do, Put,
-  Stream
-);
+@(Channel@, Stream@, Return, Do, Put, Stream);

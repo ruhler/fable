@@ -1,6 +1,6 @@
 
 Ascii@ = /Std/Char/Ascii%.Ascii@;
-Put@ .= /Std/Stream%;
+Put@ .= /Std/Io/Stream%;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 Int@ = /Std/Int%.Int@;
@@ -10,7 +10,7 @@ List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-In@ = /Std/Stream/Text%.In@;
+In@ = /Std/Io/Stream/Text%.In@;
 
 Stream@ = /Std/Stream/Text%.Stream@;
 

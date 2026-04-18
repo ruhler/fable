@@ -24,7 +24,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-In@ = /Std/Stream/Binary%.In@;
+In@ .= /Std/Io/Stream/Binary%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

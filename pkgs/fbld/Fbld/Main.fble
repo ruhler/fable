@@ -1,6 +1,7 @@
 
-Put@ .= /Std/Stream%;
-In@, String .= /Std/Stream/Text%;
+Put@ .= /Std/Io/Stream%;
+In@ .= /Std/Io/Stream/Text%;
+String .= /Std/Stream/Text%;
 GetText = /Core/Char/Stream/IStream%.GetText;
 
 List@ = /Std/List%.List@;

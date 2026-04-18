@@ -1,0 +1,4 @@
+# @module[/Std/Io/Stream/Text%]
+#  Interfaces for stream based text input/output.
+
+/Std/Io/Stream%.Io</Std/Char%.Char@>;

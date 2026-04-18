@@ -8,7 +8,7 @@ False = /Std/Bool%.False;
 
 String = /Std/Stream/Text%.String;
 StringE = /Std/Char/Ascii/Output%.StringE;
-Text = /Std/Stream/Text%;
+Text = /Std/Io/Stream/Text%;
 
 Main@ = /Std/Io/Cli%.Main@;
 
@@ -28,7 +28,8 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
 
-In@, Out@, Put .= /Std/Stream/Binary%;
+Put .= /Std/Stream%.Stream<Int@>;
+In@, Out@ .= /Std/Io/Stream/Binary%;
 
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;

@@ -379,3 +379,6 @@ Experience report:
   imports small and out of the way. Feels like it makes renaming on import
   more obvious and explicit than it was before. Does especially well when
   importing a lot from the same module, like for lists.
+* Renaming modules is much more convenient with import statements, because
+  there are a lot fewer places where we name the module that need to be
+  updated.

@@ -1,7 +1,8 @@
 
-In@, Out@, Stream@, Return, ToString .= /Std/Stream/Text%;
+In@, Out@ .= /Std/Io/Stream/Text%;
+Stream@, Return, ToString .= /Std/Stream/Text%;
 
-Put@ .= /Std/Stream%;
+Put@ .= /Std/Io/Stream%;
 IStream = /Core/Char/Stream/IStream%.IStream;
 OStream = /Core/Char/Stream/OStream%.OStream;
 NullOutput = /Core/Char/Stream/OStream%.NullOutput;

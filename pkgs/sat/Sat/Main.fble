@@ -1,6 +1,6 @@
 
-Put@ .= /Std/Stream%;
-In@ = /Std/Stream/Text%.In@;
+Put@ .= /Std/Io/Stream%;
+In@ = /Std/Io/Stream/Text%.In@;
 GetLine = /Core/Char/Stream/IStream%.GetLine;
 
 Stream@ = /Std/Stream/Text%.Stream@;

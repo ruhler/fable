@@ -3,18 +3,19 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-Put@ .= /Std/Stream%;
+Put@ .= /Std/Io/Stream%;
 OStream = /Core/Stream/Char%.OStream;
 Stream@ = /Std/Stream/Text%.Stream@;
 String = /Std/Stream/Text%.String;
 StringE = /Std/Char/Ascii/Output%.StringE;
-Binary = /Std/Stream/Binary%;
 
 Int@ = /Std/Int%.Int@;
 Neg = /Std/Int%.Neg;
 Decr = /Std/Int%.Decr;
 Int = /Std/Int/Lit%.Int;
 IsZero = /Std/Int/Sign%.IsZero;
+
+Binary = /Std/Stream%.Stream<Int@>;
 
 List@ = /Std/List%.List@;
 Concat = /Std/List%.Concat;
@@ -24,8 +25,8 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
 
-In@ .= /Std/Stream/Binary%;
-Out@ .= /Std/Stream/Text%;
+In@ .= /Std/Io/Stream/Binary%;
+Out@ .= /Std/Io/Stream/Text%;
 
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
@@ -139,7 +140,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   InOut@<M@> ios = mios.just;
   Put@<M@, Stream@> os = OStream(m, ios.out).put;
-  Binary.Out@<M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
+  /Std/Io/Stream/Binary%.Out@<M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
 
   Unit@ _ := m.do(os $ String $ args.message);
   Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, out.put));

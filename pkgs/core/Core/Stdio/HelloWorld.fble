@@ -1,10 +1,11 @@
 
+Char@ .= /Std/Char%;
 StringE .= /Std/Char/Ascii/Output%;
 Io@ .= /Std/Io%;
 Main@, Success .= /Std/Io/Cli%;
 List@ .= /Std/List%;
 Monad@ .= /Std/Monad%;
-Out@ .= /Std/Stream/Text%;
+Out@ .= /Std/Io/Stream%.Io<Char@>;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 

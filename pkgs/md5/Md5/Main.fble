@@ -24,9 +24,10 @@ Main@ = /Std/Io/Cli%.Main@;
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
 
-In@ .= /Std/Stream/Binary%;
+In@ .= /Std/Io/Stream/Binary%;
 
-Stream@, Out@ .= /Std/Stream/Text%;
+Out@ .= /Std/Io/Stream/Text%;
+Stream@ .= /Std/Stream/Text%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

@@ -4,8 +4,8 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
 Char = /Std/Char/Ascii%.Char;
-Put@ .= /Std/Stream%;
-Out@ = /Std/Stream/Text%.Out@;
+Put@ .= /Std/Io/Stream%;
+Out@ = /Std/Io/Stream/Text%.Out@;
 OStream = /Core/Stream/Char%.OStream;
 IStream = /Core/Stream/Char%.IStream;
 GetLine = /Core/Char/Stream/IStream%.GetLine;
@@ -48,8 +48,8 @@ String = /Std/Stream/Text%.String;
 
 Split = /Std/String/Eq%.Split;
 
-BinaryIn@ = /Std/Stream/Binary%.In@;
-CharIn@ = /Std/Stream/Text%.In@;
+BinaryIn@ = /Std/Io/Stream/Binary%.In@;
+CharIn@ = /Std/Io/Stream/Text%.In@;
 
 ToString = /Std/Stream/Text%.ToString;
 Lines = /Std/Stream/Text%.Lines;

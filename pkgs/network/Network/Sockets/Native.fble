@@ -3,7 +3,8 @@ Int@ .= /Std/Int%;
 Io@, External@ .= /Std/Io%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Stream@, In@, Out@ .= /Std/Stream/Binary%;
+In@, Out@ .= /Std/Io/Stream/Binary%;
+Stream@ .= /Std/Stream%.Stream<Int@>;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 

@@ -1,5 +1,6 @@
 
-Out@, String .= /Std/Stream/Text%;
+String .= /Std/Stream/Text%;
+Out@ .= /Std/Io/Stream/Text%;
 Format = /Std/Char/Ascii/Output%.Format;
 
 List@ = /Std/List%.List@;

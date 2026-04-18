@@ -1,8 +1,8 @@
 
-In@ = /Std/Stream/Text%.In@;
+In@, Out@ .= /Std/Io/Stream/Text%;
 GetLine = /Core/Char/Stream/IStream%.GetLine;
 
-Out@, String .= /Std/Stream/Text%;
+String .= /Std/Stream/Text%;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 List@ = /Std/List%.List@;

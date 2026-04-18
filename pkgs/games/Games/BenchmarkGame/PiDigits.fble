@@ -1,7 +1,7 @@
 
 Bool@ = /Std/Bool%.Bool@;
 
-Put@ .= /Std/Stream%;
+Put@ .= /Std/Io/Stream%;
 
 Int@ = /Std/Int%.Int@;
 Add = /Std/Int%.Add;
@@ -18,7 +18,7 @@ Monad@ = /Std/Monad%.Monad@;
 
 Stream@ = /Std/Stream/Text%.Stream@;
 
-In@ = /Std/Stream/Text%.In@;
+In@ = /Std/Io/Stream/Text%.In@;
 
 String@ = /Std/String%.String@;
 StringE = /Std/Char/Ascii/Output%.StringE;

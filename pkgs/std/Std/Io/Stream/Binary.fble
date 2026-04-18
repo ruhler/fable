@@ -1,0 +1,4 @@
+# @module[/Std/Io/Stream/Binary%]
+#  Interfaces for stream based binary input/output.
+
+/Std/Io/Stream%.Io</Std/Int%.Int@>;

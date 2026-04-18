@@ -1,5 +1,5 @@
 
-Put@ .= /Std/Stream%;
+Put@ .= /Std/Io/Stream%;
 
 Stream@, Do .= /Std/Stream/Text%;
 
