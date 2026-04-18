@@ -1,10 +1,7 @@
 
 Bool@ = /Std/Bool%.Bool@;
 
-Ascii@ = /Std/Char/Ascii%.Ascii@;
-Str = /Std/Char/Ascii%.Str;
-
-IsSpace = /Core/Char/Type%.IsSpace;
+Ascii@, Char, Str .= /Std/Char/Ascii%;
 
 Int@ = /Std/Int%.Int@;
 Int = /Std/Int/Lit%.Int;
@@ -118,7 +115,7 @@ Routing = (List@<String@> args, Model@ m) {
 
 (String@, Model@) { Model@; }
 DoLine = (String@ line, Model@ m) {
-    List@<String@> args = Split(line, IsSpace);
+    List@<String@> args = Split(line, /Std/Char/Eq%.Eq(Char|' '));
     args.?(empty: m);
 
     String@ head = args.items.head;

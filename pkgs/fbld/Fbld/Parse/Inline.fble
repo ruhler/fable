@@ -1,11 +1,9 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
+Bool@, True, False, Or .= /Std/Bool%;
 
-Char@ = /Std/Char%.Char@;
+Char@, Pos .= /Std/Char%;
 Char = /Std/Char/Ascii%.Char;
 Ascii = /Std/Char/Ascii%.Ascii;
-IsAlNum = /Core/Char/Type%.IsAlNum;
 
 Int@ = /Std/Int%.Int@;
 Incr = /Std/Int%.Incr;
@@ -21,7 +19,7 @@ Concat = /Std/List%.Concat;
 Maybe@ = /Std/Maybe%.Maybe@;
 
 String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
+Str .= /Std/Char/Ascii%;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
@@ -44,6 +42,29 @@ Loc = /Fbld/Parse/M%.Loc;
 Get = /Fbld/Parse/M%.Get;
 GetL = /Fbld/Parse/M%.GetL;
 String = /Fbld/Parse/M%.String;
+
+(Char@) { Bool@; } IsUpper = (Char@ c) {
+  /Std/Int/Cmp%.Lt(Pos(c), Pos(Char|'A')).?(true: False);
+  /Std/Int/Cmp%.Le(Pos(c), Pos(Char|'Z'));
+};
+      
+(Char@) { Bool@; } IsLower = (Char@ c) {
+  /Std/Int/Cmp%.Lt(Pos(c), Pos(Char|'a')).?(true: False);
+  /Std/Int/Cmp%.Le(Pos(c), Pos(Char|'z'));
+};
+
+(Char@) { Bool@; } IsAlpha = (Char@ c) {
+  Or(IsUpper(c), IsLower(c));
+};
+
+(Char@) { Bool@; } IsDigit = (Char@ c) {
+  /Std/Int/Cmp%.Lt(Pos(c), Pos(Char|'0')).?(true: False);
+  /Std/Int/Cmp%.Le(Pos(c), Pos(Char|'9'));
+};
+
+(Char@) { Bool@; } IsAlNum = (Char@ c) {
+  Or(IsAlpha(c), IsDigit(c));
+};
 
 (Char@) { Bool@; } IsNameChar = (Char@ c) {
   /Std/Char/Eq%.Eq(Char|'_', c).?(true: True);

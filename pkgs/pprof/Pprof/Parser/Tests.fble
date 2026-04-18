@@ -1,6 +1,7 @@
 
 Char@ = /Std/Char%.Char@;
 Char = /Std/Char/Ascii%.Char;
+Eq .= /Std/Char/Eq%;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
@@ -57,22 +58,23 @@ String@ HexEncoded = Str|'
 
 (Char@) { Int@; }
 HexToInt = (Char@ c) {
-  /Std/Char/Eq%.Eq(c, Char|0).?(true: Int|0);
-  /Std/Char/Eq%.Eq(c, Char|1).?(true: Int|1);
-  /Std/Char/Eq%.Eq(c, Char|2).?(true: Int|2);
-  /Std/Char/Eq%.Eq(c, Char|3).?(true: Int|3);
-  /Std/Char/Eq%.Eq(c, Char|4).?(true: Int|4);
-  /Std/Char/Eq%.Eq(c, Char|5).?(true: Int|5);
-  /Std/Char/Eq%.Eq(c, Char|6).?(true: Int|6);
-  /Std/Char/Eq%.Eq(c, Char|7).?(true: Int|7);
-  /Std/Char/Eq%.Eq(c, Char|8).?(true: Int|8);
-  /Std/Char/Eq%.Eq(c, Char|9).?(true: Int|9);
-  /Std/Char/Eq%.Eq(c, Char|a).?(true: Int|10);
-  /Std/Char/Eq%.Eq(c, Char|b).?(true: Int|11);
-  /Std/Char/Eq%.Eq(c, Char|c).?(true: Int|12);
-  /Std/Char/Eq%.Eq(c, Char|d).?(true: Int|13);
-  /Std/Char/Eq%.Eq(c, Char|e).?(true: Int|14);
-  /Std/Char/Eq%.Eq(c, Char|f).?(true: Int|15);
+  # TODO: Use math here instead?
+  Eq(c, Char|0).?(true: Int|0);
+  Eq(c, Char|1).?(true: Int|1);
+  Eq(c, Char|2).?(true: Int|2);
+  Eq(c, Char|3).?(true: Int|3);
+  Eq(c, Char|4).?(true: Int|4);
+  Eq(c, Char|5).?(true: Int|5);
+  Eq(c, Char|6).?(true: Int|6);
+  Eq(c, Char|7).?(true: Int|7);
+  Eq(c, Char|8).?(true: Int|8);
+  Eq(c, Char|9).?(true: Int|9);
+  Eq(c, Char|a).?(true: Int|10);
+  Eq(c, Char|b).?(true: Int|11);
+  Eq(c, Char|c).?(true: Int|12);
+  Eq(c, Char|d).?(true: Int|13);
+  Eq(c, Char|e).?(true: Int|14);
+  Eq(c, Char|f).?(true: Int|15);
 
   Int@ undefined;
   undefined;
@@ -81,7 +83,9 @@ HexToInt = (Char@ c) {
 (String@) { List@<Int@>; }
 FromHex = (String@ s) {
   s.?(empty: Empty<Int@>);
-  /Core/Char/Type%.IsSpace(s.items.head).?(true: FromHex(s.items.tail));
+  Eq(s.items.head, Char|' ').?(true: FromHex(s.items.tail));
+  Eq(s.items.head, /Std/String/Lines%.Newline).?(true: FromHex(s.items.tail));
+
   Char@ h = s.items.head;
   Char@ l = s.items.tail.items.head;
   Int@ byte = Add(Mul(Int|16, HexToInt(h)), HexToInt(l));

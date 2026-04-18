@@ -42,6 +42,7 @@ I fear I'll have to give up at some point. Anyway, status is something like:
 * Start work on Map cleanup
   - pkgs/core/Core/Char/Map/Tests.fble
   - pkgs/core/Core/Char/Map.fble
+  - pkgs/core/Core/Char/Tests.fble
   - pkgs/core/Core/Int/IntP/Map/Eq.fble
   - pkgs/core/Core/Int/IntP/Map.fble
   - pkgs/core/Core/Int/Map/Eq.fble
@@ -84,8 +85,7 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Env/Native.fble ==> /Std/Io/Env% [DONE]
   - pkgs/core/Core/Native.fble     ==> /Std/Io%     [DONE]
 * Character type classes:
-  - pkgs/core/Core/Char/Type.fble
-  - pkgs/core/Core/Char/Tests.fble
+  - pkgs/core/Core/Char/Type.fble  [REMOVED]
 * Finish porting test cases over to std-test
   - pkgs/core/Core/Int/Show/Tests.fble
   - pkgs/core/Core/Int/Tests.fble

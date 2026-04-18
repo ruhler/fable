@@ -1,6 +1,6 @@
 
 Char@ = /Std/Char%.Char@;
-IsNewline = /Core/Char/Type%.IsNewline;
+IsNewline = /Std/String/Lines%.IsNewline;
 
 In@ = /Std/Stream/Text%.In@;
 

@@ -5,7 +5,7 @@ False = /Std/Bool%.False;
 
 Char@ = /Std/Char%.Char@;
 Char = /Std/Char/Ascii%.Char;
-IsNewline = /Core/Char/Type%.IsNewline;
+IsNewline = /Std/String/Lines%.IsNewline;
 
 Int@ = /Std/Int%.Int@;
 Incr = /Std/Int%.Incr;

@@ -2,6 +2,12 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Add back character type functions isspace, isalnum, etc?
+* Add Lt, Le, Gt, Ge, etc for Char@?
+
+* Reconsider name of /Std/Char/Ascii/Output% module.
+  Now that we moved Output@ definition to /Std/Stream%.
+
 * Add maybe.c helper functions for working with maybe types at native level.
 
 * Make sure setlocal gets called for compiled stdio code
@@ -147,9 +153,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Figure out why we see the same errors reported many times when we build.
  - And fix it.
-
-* Get rid of /Std/String/Format% ?
- - Prefer the Show@ version of Format?
 
 * Cover all escape chars in StrE tests.
 * Better implementation of ReadHex in /Std/String/Escape.

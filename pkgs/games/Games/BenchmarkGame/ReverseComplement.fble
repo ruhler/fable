@@ -2,7 +2,7 @@
 Char@ = /Std/Char%.Char@;
 Char = /Std/Char/Ascii%.Char;
 Ascii = /Std/Char/Ascii%.Ascii;
-IsNewline = /Core/Char/Type%.IsNewline;
+IsNewline .= /Std/String/Lines%;
 
 Put@ .= /Std/Stream%;
 In@ = /Std/Stream/Text%.In@;

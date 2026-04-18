@@ -1,8 +1,9 @@
 
+Bool@, True, False .= /Std/Bool%;
+
 Char@ = /Std/Char%.Char@;
 Char = /Std/Char/Ascii%.Char;
 Ascii = /Std/Char/Ascii%.Ascii;
-IsSpace = /Core/Char/Type%.IsSpace;
 
 Int@ = /Std/Int%.Int@;
 Abs = /Std/Int/Sign%.Abs;
@@ -88,7 +89,17 @@ ParseM@<Maybe@<String@>> GetLine = (ParseState@ state) {
   Return(Items(v, tail));
 };
 
-(String@) { ParseM@<Clause@>; } ParseClause = (String@ line) {
+(Char@) { Bool@; }
+IsSpace = (Char@ c) {
+  # DIMACs spec says space, tab, or newline.
+  /Std/Char/Eq%.Eq(c, Ascii.' ').?(true: True);
+  /Std/Char/Eq%.Eq(c, Ascii.tab).?(true: True);
+  /Std/Char/Eq%.Eq(c, Ascii.nl).?(true: True);
+  False;
+};
+
+(String@) { ParseM@<Clause@>; }
+ParseClause = (String@ line) {
   ParseVars(Split(line, IsSpace));
 };
 

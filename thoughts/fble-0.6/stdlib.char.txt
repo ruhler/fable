@@ -431,3 +431,49 @@ What to do about character type classes like isalnum? Where should those live?
 What all classes should I support? On which character sets should I support
 these?
 
+Options:
+* Don't provide any support for character classes.
+* Character class applies to specific character set.
+  So, isalnum in Ascii means the character belongs to the ascii set and is
+  alpha numeric.
+* Full unicode support for these character class things.
+* Do something locale based like wctype, iswalnum, isalnum_l.
+
+Current use cases:
+* IsNewline for GetLine implementations.
+* IsSpace for pprof parser test to skip over space in my literal pprof file.
+* IsSpace in sat solver for dimacs parser.
+* IsNewline in fbld loc line number tracking.
+* IsSpace, IsNewline, IsAlNum in fbld parser.
+
+In all these use cases, I really ought to be using a narrower definition of
+what I'm looking for. IsAlNum and IsSpace in the fbld parser, for example,
+entirely depend on the fbld language spec. I'm not free to make that decision
+as an fble standard library developer.
+
+So unless there is a common definition of these things used by all these use
+cases, I feel like I shouldn't provide character class support at all in the
+standard library. Anyone who uses it for anything other than a specification
+that has the same interpretation and definition gets no value.
+
+I'm thinking the first task here is to understand the underlying specs for all
+my use cases, switch to implementing those precisely. And then probably it
+makes sense to remove the character classes entirely unless something
+obviously consistent shows up that is worth standardizing, in which case it
+will be obvious what definition to use for that standardization.
+
+---
+
+* GetLine - is \n, per /Std/String/Lines%.
+ - I get just use it from there, right?
+* /Pprof/Parser/Tests%
+ - Space or newline.
+ - Maybe just hard code them? Or search in StrE|' \n'? Or anything except hex?
+* SAT DIMACs
+ - Space, tab, or newline according to the spec.
+
+---
+
+I ended up basically inlining everything. But ... oh, it feels like it would
+be so nice to have ascii definitions for Alpha, Lower, Upper, AlNum, Space,
+etc... Or at least an easier way to define and check ranges of characters?

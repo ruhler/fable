@@ -1,5 +1,5 @@
 
-IsSpace = /Core/Char/Type%.IsSpace;
+Char, Str .= /Std/Char/Ascii%;
 
 Int@ = /Std/Int%.Int@;
 Int = /Std/Int/Lit%.Int;
@@ -19,7 +19,6 @@ Split = /Std/List/Search%.Split;
 Maybe@ = /Std/Maybe%.Maybe@;
 
 String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
 
 Unit@ = /Std/Unit%.Unit@;
 
@@ -111,7 +110,7 @@ Impl@ Define = (Env@ env, Command@ cmd) {
     Markup@ arg = Get(cmd.args, 1);
     Markup@ evaled := r.do(Eval(env, arg));
     String@ list := r.do(ToString(evaled));
-    r.return(Split(list, IsSpace));
+    r.return(Split(list, /Std/Char/Eq%.Eq(Char|' ')));
   });
 
   Markup@ def = Get(cmd.args, 2);

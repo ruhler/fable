@@ -1,0 +1,69 @@
+Printf Debugging
+================
+
+Currently we provide the ability to output a string, a line, and to easily
+enable or disable debug tracing.
+
+I'll want to update that for Output@ certainly. I think it's still valuable to
+have printf-like debugging. In other words: you can do IO to some implicit
+output stream at any time from anywhere without needing to pass something
+through your program to the function where you want it called. The resulting
+output need not be fast.
+
+To start I can make it go to stderr, but you can imagine fble-cli has an
+argument to redirect it to a different file.
+
+In terms of platform implementation, the most natural FFI interface is a
+single PutChar function to put a single char without buffering. I imagine some
+implementation running on an fpga where we can send that char to some
+arbitrary uart interface, for example.
+
+I think it makes sense for the API to live at /Std/Io/Debug%, given that it
+clearly does output of some kind. But it should absolutely be a set of pure
+functions with a comment saying they are unsafe in the sense that there is no
+well specified ordering of output message for things that would otherwise
+depend on order of argument evaluation.
+
+Question is: what should the API be?
+
+* How to make it easy to enable or disable?
+* Do I want to build formatting and newline into the api, or keep it separate?
+* What do I want to call the debug function?
+
+Sample current uses of debug:
+        Unit@ _ = /Core/Debug%.TraceLn(
+          ToString(Format|'block %s not found'[/Std/Int/Show%.Show(block)]));
+
+That's it right now.
+
+In this case, Format is from /Std/Char/Ascii/Output% module.
+
+The most general thing would be to provide a single function:
+
+  (Output@) { Unit@; } Debug;
+
+Require people to import Format, StringE, etc. all on their own. Require them
+to add their own newlines. Or maybe provide /Std/Char/Ascii/Debug% wrapper
+around it that exports Format, StringE, FormatE, etc. all as debug functions
+that return Unit@ instead of Output@.
+
+That way:
+
+        Unit@ _ = /Core/Debug%.TraceLn(
+          ToString(Format|'block %s not found'[/Std/Int/Show%.Show(block)]));
+
+Turns into:
+
+        Unit@ _ = /Std/Char/Ascii/Debug%.Format
+          |'block %s not found'[/Std/Int/Show%.Show(block)];
+
+Which isn't terribly convenient, to be honest.
+
+And it's not clear how that should compose with Enable/Disabling. We can use
+ToNull output stream helper as a drop in replacement for debug.
+
+Should Debug be part of /Std/Stream/Debug% instead? It provides a different
+pure implementation of (Output@) { Unit@; }? In contrast with
+/Std/Stream/Null%, but also I need to distinguish between the null stream that
+entirely ignores its Output@ argument and the on that runs through its Output@
+argument but ignores all the individual characters.
