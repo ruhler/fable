@@ -6,11 +6,10 @@ Char@ .= /Std/Char%;
 U .= /Std/Char/Lit%;
 List@ .= /Std/List%;
 String@ .= /Std/String%;
-Channel@ .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # Specializations of /Std/Stream% for Char@.
-Output@, In@, Out@, Return, Do, Put, Puts, Concat, ToList, ToNull
+Channel@, Output@, In@, Out@, Return, Do, Put, Puts, Concat, ToList, ToNull
   .= /Std/Stream%.Stream<Char@>;
 
 # @func[String] Output a string.
@@ -61,7 +60,7 @@ Char@ '%s' = U|73;
 #  @arg[List@<Output@>[args] Format args.
 #  @return[Output@] The formatted output.
 (String@, List@<Output@>) { Output@; }
-Format = (String@ fmt, List@<Output@> args)<@ S@>(Channel@<S@> s, (Char@) { S@; } put) {
+Format = (String@ fmt, List@<Output@> args)<@ S@>(Channel@<S@> s) {
   fmt.?(empty: s.return);
   Char@ c = fmt.items.head;
   /Std/Char/Eq%.Eq('%%', c).?(true: {
@@ -69,20 +68,20 @@ Format = (String@ fmt, List@<Output@> args)<@ S@>(Channel@<S@> s, (Char@) { S@; 
     Char@ e = fmt.items.tail.items.head;
 
     /Std/Char/Eq%.Eq('%%', e).?(true: {
-      Unit@ _ := s.do(put(c));
-      Format(fmt.items.tail.items.tail, args, s, put);
+      Unit@ _ := s.do(s.put(c));
+      Format(fmt.items.tail.items.tail, args, s);
     });
 
     /Std/Char/Eq%.Eq('%s', e).?(true: {
-      Unit@ _ := s.do(args.items.head(s, put));
-      Format(fmt.items.tail.items.tail, args.items.tail, s, put);
+      Unit@ _ := s.do(args.items.head(s));
+      Format(fmt.items.tail.items.tail, args.items.tail, s);
     });
 
     /Std/Undef%.Undef.undef<S@>;
   });
 
-  Unit@ _ := s.do(put(c));
-  Format(fmt.items.tail, args, s, put);
+  Unit@ _ := s.do(s.put(c));
+  Format(fmt.items.tail, args, s);
 };
 
 # @func[ToString] Output to a String@.

@@ -4934,3 +4934,21 @@ Cool. Let's get started. Steps are something like:
 
 ---
 
+If Stream@ is a function that takes the output channel, then I could actually
+export output channels, right?
+
+  Unit@ _ = String|'hello'(Debug);
+  Unit@ _ = String|'hello'(Ignore);
+  Unit@ _ = String|'hello'(Null);
+  Unit@ _ = String|'hello'(StringChannel);
+
+What do you think of that? Something to consider.
+
+I'm using the type S@ and name 's' for the channel value. Is there a better
+choice? I don't want to use M@, because anytime I see M@ I expect it to take
+an argument. S@ made sense when reading as stream, but doesn't really any
+more?
+
+The key thing is to clearly distinguish the channel type (e.g. List@) from the
+output value type (e.g. Char@, Int@). S@ sounds reasonable enough, no?
+

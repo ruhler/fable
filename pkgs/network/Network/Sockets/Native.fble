@@ -30,7 +30,7 @@ Sockets = <<@>@ M@>(Io@<M@> io, Monad@<M@> m) {
       m.do(ma, f);
     };
     (Int@) { S@; } put = (Int@ c) { io.run(PutByte(socket, c)); };
-    output(@(return, do), put);
+    output(@(return, do, put));
   };
 
   (Socket@) { InOut@<M@>; }

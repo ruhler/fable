@@ -21,7 +21,7 @@ Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Output@ output) {
     m.do(ma, f);
   };
   (Int@) { S@; } put = (Int@ c) { io.run(PutByte(file, c)); };
-  Unit@ _ := m.do(output(@(return, do), put));
+  Unit@ _ := m.do(output(@(return, do, put)));
   io.run(Flush(file));
 };
 
