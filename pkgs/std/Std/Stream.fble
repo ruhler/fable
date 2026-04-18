@@ -1,16 +1,16 @@
 # @module[/Std/Stream%]
-#  Input and output streams.
+#  Types and utilities for streaming data out.
 
 List@, Items, Empty .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 
-# @struct[Stream@] Interface of stream types S@ that you can output to.
+# @struct[Channel@] Interface of types S@ that you can stream output to.
 #  @field[@][S@] The type that the interface applies to.
-#  @field[S@][return] An empty output.
+#  @field[S@][return] Outputs nothing to the channel.
 #  @field[(S@, (Unit@) { S@; }) { S@; })][do]
-#   Do one thing followed by another.
-Stream@ = <@ S@> { *(
+#   Output one thing followed by another.
+Channel@ = <@ S@> { *(
   S@ return,
   (S@, (Unit@) { S@; }) { S@; } do
 );};
@@ -18,14 +18,14 @@ Stream@ = <@ S@> { *(
 # @type@[Output@] A computation that outputs values to a stream.
 #  @arg[@][A@] The type of value to output.
 #  @arg[@][S@] The type of stream to output to.
-#  @arg[Stream@<S@>][stream] Implementation of the stream interface.
+#  @arg[Channel@<S@>][stream] Implementation of the stream interface.
 #  @arg[(A@) { S@; }][put] How to put a single value to the stream.
 #  @returns[S@] The stream computation.
-Output@ = <@ A@, @ S@>(Stream@<S@>, (A@) { S@; }) { S@; };
+Output@ = <@ A@, @ S@>(Channel@<S@>, (A@) { S@; }) { S@; };
 
 # @value[Return] A computation that outputs nothing.
 #  @type[Output@]
-Output@ Return = <@ A@, @ S@>(Stream@<S@> s, (A@) { S@; } _) {
+Output@ Return = <@ A@, @ S@>(Channel@<S@> s, (A@) { S@; } _) {
   s.return;
 };
 
@@ -37,7 +37,7 @@ Output@ Return = <@ A@, @ S@>(Stream@<S@> s, (A@) { S@; } _) {
 #   A computation that outputs the first thing, then calls the function f to
 #   get the second thing to output, then outputs the second thing.
 <@ A@>(Output@<A@>, (Unit@) { Output@<A@>; }) { Output@<A@>; }
-Do = <@ A@>(Output@<A@> ma, (Unit@) { Output@<A@>; } f)<@ S@>(Stream@<S@> s, (A@) { S@; } put) {
+Do = <@ A@>(Output@<A@> ma, (Unit@) { Output@<A@>; } f)<@ S@>(Channel@<S@> s, (A@) { S@; } put) {
   s.do(ma(s, put), (Unit@ _) { f(Unit, s, put); });
 };
 
@@ -46,7 +46,7 @@ Do = <@ A@>(Output@<A@> ma, (Unit@) { Output@<A@>; } f)<@ S@>(Stream@<S@> s, (A@
 #  @arg[A@][v] The value to output.
 #  @returns[Output@] A computation that outputs the value..
 <@ A@>(A@) { Output@<A@>; }
-Put = <@ A@>(A@ v)<@ S@>(Stream@<S@> _, (A@) { S@; } put) {
+Put = <@ A@>(A@ v)<@ S@>(Channel@<S@> _, (A@) { S@; } put) {
   put(v);
 };
 
@@ -55,7 +55,7 @@ Put = <@ A@>(A@ v)<@ S@>(Stream@<S@> _, (A@) { S@; } put) {
 #  @arg[List@<A@>][values] The values to output.
 #  @returns[Output<A@>] A computation that outputs the values.
 <@ A@>(List@<A@>) { Output@<A@>; }
-Puts = <@ A@>(List@<A@> values)<@ S@>(Stream@<S@> s, (A@) { S@; } put) {
+Puts = <@ A@>(List@<A@> values)<@ S@>(Channel@<S@> s, (A@) { S@; } put) {
   values.?(empty: s.return);
   Unit@ _ := s.do(put(values.items.head));
   Puts(values.items.tail, s, put);
@@ -81,7 +81,7 @@ ToList = <@ A@> {
   # Output to a list given the tail of the list.
   S@ = (List@<A@>) { List@<A@>; };
 
-  Stream@<S@> S = @(
+  Channel@<S@> S = @(
     return: (List@<A@> tail) { tail; },
     do: (S@ a, (Unit@) { S@; } fb, List@<A@> tail) {
       a(fb(Unit, tail));
@@ -104,7 +104,7 @@ ToList = <@ A@> {
 <@ A@>(Output@<A@>) { Unit@; }
 ToNull = <@ A@> {
   S@ = Unit@;
-  Stream@<S@> S = @(
+  Channel@<S@> S = @(
     return: Unit,
     do: (Unit@ u, (Unit@) { Unit@; } f) { f(u); }
   );
@@ -145,7 +145,7 @@ Stream = <@ A@> {
 };
 
 @(
-  Stream@, Output@, Put@, Get@, In@, Out@,
+  Channel@, Output@, Put@, Get@, In@, Out@,
   Return, Do, Put, Puts, Concat, ToList, ToNull,
   Stream
 );

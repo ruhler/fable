@@ -411,3 +411,46 @@ Priority has to go to Stdio, to be able to implement the test runner and apps
 in general. Some of the left over is straight forward. Hopefully some of it we
 can get rid of. We're closing in now though.
 
+---
+
+I've made good progress, but I seem to have reach a point where everything
+feels somewhat slightly tangled and caught up on some core things that don't
+feel quite clean to me.
+
+Specifically:
+* For Map@, I'm thinking about reusing In@ and Out@ or Output@ for hashing
+  keys. Which brings up questions about the difference between Out@ and
+  Output@. Maybe there's no confusion? We want just Output@?
+* Stdio is waiting on cleanup for places where I convert between binary and
+  text streams, which going from things like http text to sockets or strings
+  to binary sockets.
+* I feel unease about Char@ type class functions. Should we have them or not?
+  If so, what do they mean?
+* Test@ runner wants to know if it works on Out@ or Put@<Output@>.
+* Debug trace wants to know if it should assume Ascii@, or have some Ascii@
+  helpers. And also questions whether ToNull, ToString, ToDebug should be
+  separated out from /Std/Stream%.
+
+Broadly speaking, it all ties up to /Std/Stream% and character sets:
+* Should Output@ be separate from Put@, Get@, In@, Out@?
+* When to use Out@ versus Put@<Output@> for things that don't need to close
+  the stream?
+* What utilities to provide for interpreting characters semantically (e.g.
+  IsAlpha) given our vague specification of character set?
+
+Let me remind myself:
+* Output@ is for non-interactive stuff. You output all at once.
+ - This is appropriate for Show@, Hash@, Serialize@.
+* Put@<Output@> is for interactive output that you don't close.
+* Out@ is for interactive output that you might close.
+* Applications should be explicit about what character types they are using,
+  and do their own conversion between characters and binary, because there
+  aren't well established standards across existing application domains that
+  we could standardize and reuse everywhere.
+* Debug trace shouldn't assume Ascii. Better to be a little bit verbose I
+  think. Debug trace should be using Output@.
+
+Okay. It was good to put things in this perspective. Let me go back to
+stdlib.stdio.txt for discussion on how to split of /Std/Stream% if/as
+appropriate.
+

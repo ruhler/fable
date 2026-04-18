@@ -153,3 +153,105 @@ Proposal:
   implementations and reuse the single standard HashMap@ implementations
   rather than implement their own Maps.
 
+---
+
+I'm wondering whether Hash@ should be lazy or not. So we could do partial
+lookup in a map, find that the key can't be there without having to hash the
+entire key.
+
+It occurs to me that lazy Hash@ would be very similar to Output@<Int@>. Maybe
+the Hash class should be:
+
+  Hash@ = <@ A@>(A@) { Output@<Int@>; };
+
+You can hash your value to a sequence of ints. Output@ lets you describe the
+hash lazily.
+
+I should be able to produce this pretty easily. Something like:
+
+ (List@<A@> x) {
+   x.?(nil: Put(Int|0));
+   Unit@ _ := Do(Put(Int|1));
+   Unit@ _ := Do(hash(x.items.head));
+   Do(hash(x.items.tail));
+ };
+
+Hmm... does that give us enough structure to go back the other direction? How
+do we know when one field of a struct ends and the next one starts? Or it
+doesn't matter, we always go in order?
+
+Anyway, assuming that's not an issue, could we consume this for map?
+
+It would be like having a map where the key is a list of Int@, but we pass the
+key as an Output@<Int@> that it can consume a little at a time? Could we
+implement the map as the stream type S@?
+
+ Map@ = +(Unit@ empty, Maybe@<V@> value, IntMap@<Map@> s);
+
+ S@ = (Map@) { Map@; }
+
+ return = (Map@ m) { m; };
+ do = (S@ a, (Unit@) { S@; } b, Map@ m) {
+   m.?(empty: m);   # Doesn't matter what you think you have.
+   Map@ n = a(m);   # Look up based on a key information.
+   n.?(empty: n);   # Doesn't matter what you have in b.
+   b(Unit, n);      # Look up based on rest.
+ };
+
+ put = (Int@ v, Map@ m) {
+   m.s.get(v);
+ };
+
+
+Then, at the top level, we simply run your Output@ computation on our initial
+Map@. At the end, we return the value if found, or nothing.
+
+It may be we need to use a union of struct instead of a union of union. But I
+think the rest stays the same.
+
+Thus we get efficient lookup from your value in a lazy way. It's easy to
+implement Hash@.
+
+Other questions:
+* How hard would it be to use this Hash@ implementation to implement Eq@?
+  Cmp@?
+* How hard would it be to implement a reverse hash implementation, assuming
+  objects are perfectly hashed?
+
+The reverse hash, I fear, needs more of a monadic interface? Or some way to
+lazily produce the sequence of Int@. But I'm sure I can do that. It's like
+taking an Output@ and returning back an In@ that I can use to consume the
+state of the Output@. So reverse interface is 
+
+  RHash@ = <@ A@, <@> M@>(Monad@<M@>, M@<Int@>) { A@; }
+
+And we implement it something like:
+
+  RHashList = (Monad@<M@> m, M@<Int@> in) {
+    Int@ x := m.do(in.get);
+    IsZero(x).?(true: m.return(Empty<A@>));
+    A@ head := m.do(RHashA(m, in));
+    List@<A@> tail := m.do(RHashList(m, in));
+    m.return(Items(head, tail));
+  };
+
+Easy, no?
+
+And if you think of hashing like this, it's also like a way to serialize data.
+Like, I could write out to a file and read back in.
+
+So, we use Output@, In@ stream based interface for hashing and unhashing. If I
+have names for Serialize@ and Deserialize@, then we could provide two
+different map implementations. One that takes Serialize@ and Eq@, assuming two
+keys could serialize to the same value but not be equal. And a map that takes
+Serialize@ and Deserialize@, assuming no two values serialize to the same
+value. In this case, Deserialize@ is used to save space in the map... but
+honestly, it just seems easier to store the key there and always use the hash
+map approach, so you just need to pass Serialize@ and promise that defines
+your notion of equality.
+
+It's interesting that for the case of Serialize@ and Deserialize@... do I want
+to make use of 'end' feature of In@ and Out@? Perhaps. It could save me from
+storing a terminating 0 I suppose? Or maybe not. Maybe it doesn't compose well
+at all.
+    

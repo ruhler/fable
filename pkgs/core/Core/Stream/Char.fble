@@ -38,7 +38,7 @@ OStream = <<@>@ M@>(Monad@<M@> m, Byte.Out@<M@> s) {
     m.do(ma, f);
   };
 
-  /Std/Stream/Text%.Stream@<M@<Unit@>> stream = @(return, do);
+  /Std/Stream/Text%.Channel@<M@<Unit@>> stream = @(return, do);
 
   Put@<M@, Output@> put = (Output@ output) {
     # TODO: Handle unicode properly.

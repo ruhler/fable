@@ -4495,3 +4495,442 @@ What I need to do:
 
 So, sadness, I'm not sure how to get rid of these.
 
+---
+
+/Std/Stream% is getting more complicated and more widespread use. I need to
+step back and rethink it and whether I want to split it up somehow.
+
+Right now we are putting a bunch of different things together into
+/Std/Stream%, which may or may not cover the things I actually want to use.
+
+1. Output@ and everything you can do with it. 
+ - Atomic generation of streamed sequence data. Stream@, Output@, Return, Do,
+   Put, Puts, Concat.
+2. Specific Output@ stream implementations: List, Null, Ignore, Debug, etc.
+3. Put@, Get@.
+ - I'm not convinced I actually use these for much of anything today. Also,
+   why aren't these part of State@ instead, for example?
+4. In@ - Interactive input stream with explicit end marker.
+5. Put@<Output@> - Interactive non-terminated output stream.
+6. Out@ - Interactive terminated output stream.
+
+I think there is real justification to distinguish between (5) and (6).
+Typically I might think of it like we open a file. We output a bunch without
+terminating the stream. Then we close the file. Whoever is doing the
+outputting shouldn't be closing things. That's the responsibility of whoever
+opened the stream in the first place.
+
+We use Out@ to pass back up to the owner/opener the put and end methods. When
+delegating to a writer, we only want to pass the put method.
+
+So we have three kinds of output types, which all have their own clear
+distinct use cases. And all of which need more meaningful names.
+
+If we have three kinds of outputs, why do we only have one kind of input?
+
+The consumer has no control over when the input stream may end. It needs to be
+able to handle that always regardless. That explains why we don't have a
+corresponding Owner/Writer distinction.
+
+Batching on input is data dependant. We can't predict ahead of time how many
+bytes we need to read. So while we could provide GetLine like functions and
+say you read the entire line as a single side effecting action, and then read
+individual characters from that line without having side effects, it just
+doesn't really feel like a useful thing to do.
+
+Let's face it. There is asymmetry here.
+
+I need names. Better names to distinguish between Output@, Put@,
+Put@<Output@>, and Out@.
+
+How would I describe the concepts?
+
+Output@: describes a single atomic output that can be produced/consumed lazily
+in a streamed manner.
+
+Put@: an interface that let's you output a sequence of atomic values in an
+interactive setting. Nothing about lazy or streaming.
+
+Put@<Output@>: an interface that let's you output a sequence of streamed
+atomic values in an interactive setting.
+
+Out@: an interface for a closeable resource that you can stream output to.
+
+I also have these names Stream@, File that I use here and there. And things
+like 'Show@', 'Hash@', maybe Serialize@.
+
+I bet if I had a type declared for Put@<Output@>, I would have any need for
+Put@? No. That's not true. It's a bit painful to write (Foo@) { M@<Unit@>; }
+everywhere instead of Put@<M@, Foo@>;
+
+In@ is most similar to Put@<Output@> I feel like? It's hard to say. It really
+depends on who determines when we should close an output stream. I'm pretty
+sloppy about this. Especially for stdout and stderr.
+
+I would say In@, Get@ are clear. Nothing hard about that. Let's just focus on
+the rest and think about how we want to name them.
+
+---
+
+First concept. This is clear I think. Stream@.
+
+Stream@ is the interface for a type S@ that acts as a stream. A stream is
+something you can dump values to in a streaming fashion.
+
+A stream should be associated with the type of value you are dumping to it. So
+I should switch back to having put as part of the Stream@ interface.
+
+For example, List@<Int@> can act as a stream for Int@, because you can dump
+the ints into a list. You can have a null stream, a debug stream, a string
+stream, etc. The point is, all these types are things that can consume or
+accept a sequence of the value type for the stream.
+
+---
+
+Next concept. A producer. Hmm... what do you call the origin of a stream? A
+mountain? This thing is a computation that dumps values into a stream. A
+computation that puts values into a stream. But it works on whatever kind of
+stream you want to give it.
+
+You could almost call it, like, a source? For example, to a show a value of
+type A@, you need to give a Source@<Char@> for it? What you do with a
+Source@<Char@> is give it a stream to write out to? The name doesn't feel
+right yet.
+
+Source? Producer? Writer?
+
+I feel like it's better to make it clear this is a computation, not a computed
+value. Output@ feels too much like an already computed value.
+
+Streams have sources, right? To source something... I must say, from a
+dictionary perspective, Source sounds right. Except, is it not obviously a
+computation?
+
+Maybe we say, you can show any value that can act as a source of characters?
+
+If we inlined it...
+
+  Show@ = <@ A@>(A@) { Source@<Char@>; };
+
+  Show@ = <@ A@>(A@)<@ S@>(Stream@<S@, A@>) { S@; };
+
+Like, you can show a value to any stream.
+
+Source<Char@> feels too much like something you would try to get stuff from
+though. I want a name that conveys ... less the thing that is producing the
+values, and more the sequence (stream?) of values it is producing.
+
+It's also a little weird to think about a function that takes a stream and
+produces values compared to a source of values. Like, do I want to pass the
+stream or not?
+
+Or, I would think of a source as something that produces a stream, not
+something that takes a stream as an argument.
+
+Perhaps a different metaphor than 'stream' would make it easier to come up
+with a name here?
+
+Output@ is starting to feel almost better for this. The noun form works well
+as an Output. The verb form works well as 'output to this stream'. Output
+means the final product, or to produce the product.
+
+I don't know. Let's move on, see if that gives us any new insight.
+
+---
+
+Next concept: A channel you can use for outputting stuff in a non-terminated
+streaming interactive fashion.
+
+I suppose this is, an side effecting monadic interface for being able to
+output stuff. Other interfaces we have are called things like: State@, Rng@,
+Io@. We name them after the description of whatever M@ refers to. A state
+monad. A random number generator. An Io@???
+
+An 'Out@' feels right to me for this. Though 'out' is not typically a noun,
+which is a little weird. But it's like an 'ask' is not a noun, but people use
+it like that. It's kind of short for 'output port'. A place that you can put
+things out. Like an 'out', an escape route. Like, 'standard out'. Or, an
+'output channel'. Where channel refers to the place where the water of a
+stream would flow.
+
+---
+
+Last concept: An Out@ that you need to close when you are done with it.
+
+It's like a resource. I don't like the name File for this. File suggests you
+have a bunch of different ones you want to put in some order. Here I'm talking
+about a single thing. A single output channel, that just happens to need
+closing when you are done.
+
+Why do I need to close files at all?
+
+Is a File@ just a Stream@? Couldn't it be implemented as such? It's a thing
+you could put to.
+
+I need to close files to free up resources associated with them. To say: I
+promise nothing else is coming on this file, so no need to do anything more
+with it. But why can't I rely on the garbage collection to close a file?
+
+I know I need to close explicitly for sockets. That's fine. We could define
+Socket@ as having in, out, and close fields. I know I'm never going to write
+to the file again once I drop the last reference to it. Think how much easier
+if we don't have to remember to close the file?
+
+If it's a side effect to do a single output to a file, then the file is
+'complete' in a sense after every output, no? Like, the reader is going to
+return Nothing after the last output, regardless of whether you are going to
+write more or not, right?
+
+My current uses of 'end':
+* fble-invaders closes the high score file when done writing.
+* computrainer closes the model when done saving.
+* satgame closes the seed file when done writing.
+* pprof server closes the socket when done handling a connection.
+* network echo app closes the server when done echoing.
+
+That's it. I would argue the files don't need to be closed, assuming output
+flushes to file and we have GC to take care of closing the resource handle.
+
+Sockets need to be closed explicitly, but that closes both input and output.
+It's not particularly associated with just the output.
+
+Honestly, I feel like it's fine not to explicitly close files. Right? Does it
+make a difference in practice? For a FIFO, maybe. The real question is if a
+reader can tell the difference between closed or not. Maybe I should write
+some tests for this in C. Yes. Lets.
+
+I know the reader can tell for a socket. You won't get EOF until the socket
+has been closed. But for a file... you aren't really tied to the writer,
+right?
+
+It makes no difference. The reader gets end of file when they reach the end,
+regardless of whether you have closed the file or not.
+
+So it makes sense to me to remove explicit closing of file. Out@ appends to
+whatever thing you are outputting to. There are only some certain kind of
+things you need to close explicitly.
+
+Like a fifo? Shall we try my test with a fifo instead? But that's like a
+socket. I don't see value in testing that.
+
+The question is: who has to care about closing something? Certainly not anyone
+writing to an output stream, because you could be writing to a file and not
+need to close. Just as long as things are being flushed.
+
+Okay? Sounds like we can at least make some improvement here by getting rid of
+'end' from Out@. That removes that distinction. No need to worry about closing
+output streams.
+
+---
+
+I like Stream@. I like Out@. I like Put@. I just wish I had a better name for
+Output@.
+
+Review some of my current uses of Output@:
+
+  Args@ = *(Bool@ help, Maybe@<Output@> error, ...)
+
+  (Int@, Int@) { Output@; }
+  Percent = (Int@ numerator, Int@ denominator) {
+    Format|...
+  };
+
+  (Sequence@) { Output@; }
+  SeqNames = (Sequence@ seq) {
+
+  Result@ = <@ A@> {
+    +(A@ ok, Output@ error);
+  };
+
+  (Loc@, Output@) { Output@; } Report = (Loc@ l, Output@ msg) { ... };
+
+Output@ really feels reasonable for these things. Again, the noun versus verb
+thing is pretty nice. You output to a stream. You are an output.
+
+Uh... Hash@ = (A@) { Output@<Int@>; }?
+
+Okay, that's weird. Maybe it's easier for me to think of a bunch of characters
+as a single output than it is a bunch of integers? Or it's weird to think of
+an Output@ as parameterized by some type: because I think of Output@ as the
+type, not Int@ as the type associated with the output.
+
+Let's experiment:
+
+  Args@ = *(Bool@ help, Maybe@<Source@<Char@>> error, ...)
+
+  (Int@, Int@) { Source@<Char@>; }
+  Percent = (Int@ numerator, Int@ denominator) {
+    Format|...
+  };
+
+  (Sequence@) { Source@<Char@>; }
+  SeqNames = (Sequence@ seq) {
+
+  Result@ = <@ A@> {
+    +(A@ ok, Source@<Char@> error);
+  };
+
+  (Loc@, Source@<Char@>) { Source@<Char@>; } Report = (Loc@ l, Source@<Char@> msg) { ... };
+
+Doesn't feel great. "Source" feels more like a description of where things
+came from rather than the things that came from the source.
+
+Suddenly I'm tempted to use 'Stream'? Can we distinguish between:
+
+ Stream@<Int@>, Stream@<Char@>, Stream@<Foo@>.
+
+Here, 'stream' works as noun and verb: a stream of characters. A function to
+stream characters to... to what?
+
+You stream characters to a ... port? A destination? A sink?
+
+  ???@ = <@ A@, @ S@> { *(
+    S@ return,
+    (S@, (Unit@) { S@; }) { S@; } do,
+    (A@) { S@; } put
+  );};
+
+You know, I almost never mention Stream@ explicitly? Only for implementations
+that accept it. Things like: ToList, ToNull, etc.
+
+'return' is like empty. do is like 'seq'. This feels like, maybe, sequence? A
+list is a sequence? Not sure. Doesn't feel quite right.
+
+Some other terms in the water metaphor:
+* stream, flow, channel 
+
+Stream is the volume of water. You can output to a stream. The stream flows in
+the channel. A channel can be empty. It feels like Channel@ is a reasonable
+term to use for my interface for putting things? It just feels weird.
+
+A stream goes into a channel...
+
+Out@ lets you put a stream. It's going to put it to its own internal channel.
+That makes sense, right? You might have a file channel, a socket channel, a
+channel that goes nowhere. A debug channel. Like, the channel selects where
+the thing goes, like a radio channel or tv channel or communications channel.
+No? The path the stream takes? Where you direct that?
+
+Okay, so, aside from it not being immediately natural to me, the definition
+seems to fit.
+
+Let's summarize what I'm proposing now, then. But consider this straw:
+* /Std/Channel%
+ - Channel@ is the interface for types that accept sequences of elements.
+ - Add 'put' method back to Channel@.
+* /Std/Stream%
+ - Stream@ is the new name for what was called Output@.
+ - Return, Do, Put, Puts, Concat, etc all still stand.
+* /Std/Stream/Text% gives you a text stream.
+* /Std/Stream/Binary% gives you a binary stream.
+* /Std/Channel/List% gives you a list channel implementation?
+* /Std/Channel/String%, Debug%, Null%, Test%?
+* Or maybe /Std/Channel% gives you List, String, Debug, Null, Test channels?
+* /Std/Stream/Io% gives you In@ and Out@, Io (for typed In@ and Out@).
+ - No 'end' method as part of Out@.
+* No need for Get@ or Put@ anymore as part of this API?
+
+Other possibilities:
+* /Std/Io/Stream% for In@ and Out@ instead of /Std/Stream/Io%?
+* /Std/Stream/Channel/ List%, Debug%, Null%, Test%?
+ - Because it feels like Channel is useless without Stream. And it's all part
+   of the same metaphor.
+
+There's really very little to what would go in /Std/Channel%. It's just the
+definition. Nothing more. Stream@ on the other hand, has a much more involved
+API.
+
+ToList, ToDebug, etc... it's not that we are exposing a list channel. List@
+isn't the Channel, function from list to list is the channel. List is the
+destination. So it's a little weird to call ToList, or ToNull a channel. The
+only thing we do with a channel is direct stuff somewhere. And ToNull, ToList
+take stream. So it makes sense to me to say:
+* /Std/Stream/Null% - Let's you output a stream to nowhere.
+* /Std/Stream/List% - Output to a list.
+* /Std/Stream/String% - Output to a string (if you are a Char@ stream).
+* /Std/Stream/Debug% - Let's you output a stream to debug.
+
+Straw proposal:
+* /Std/Stream% - Channel@, Stream@, Do, Return, ...
+* /Std/Stream/Text% - Char@ specialization for Stream@.
+* /Std/Stream/Binary% - Int@ specialization for Stream@.
+* /Std/Stream/Foo% - (Stream@) { Foo@; } Foo,
+  - For List, String, Debug, Null
+* /Std/Io/Stream% - In@, Out@
+
+Reusing the names List and String is slightly inconvenient.
+
+  String@ wnt = Str|'{ }';
+  String@ got = ToString(Show(/Std/Bool/Show%.Show, map));
+
+  String@ got = ToString(String|'hello');
+
+  String@ got = /Std/Stream/String%.String(String|'hello');
+
+  String@ got = String.To(String|'hello');
+  String@ got = To(String|'hello');
+  String@ got = ToString(String|'hello');
+  String@ got = StringChannel(String|'hello');
+  String@ got = StringStream(String|'hello');
+
+  Unit@ _ = DebugStream(String|'hello');
+  Unit@ _ = Debug(String|'hello');
+  Unit@ _ = Ignore(String|'hello');
+  Unit@ _ = Null(String|'hello');
+
+I think 'String' is fine. Let people rename if/as needed as they feel
+appropriate. That's what module namespacing is for anyway, right?
+
+Sounds like a plan.
+
+How do I feel about
+
+  Hash@ = <@ A@>(A@) { Stream@<Int@>; }
+
+Sounds reasonable enough to me.
+  
+  Args@ = *(Bool@ help, Maybe@<Stream@<Char@>> error, ...)
+
+  (Int@, Int@) { Stream@<Char@>; }
+  Percent = (Int@ numerator, Int@ denominator) {
+    Format|...
+  };
+
+  (Sequence@) { Stream@<Char@>; }
+  SeqNames = (Sequence@ seq) {
+
+  Result@ = <@ A@> {
+    +(A@ ok, Stream@<Char@> error);
+  };
+
+  (Loc@, Stream@<Char@>) { Stream@<Char@>; } Report = (Loc@ l, Stream@<Char@> msg) { ... };
+
+Looks reasonable to me. Reads well.
+
+What happens to /Std/Char/Ascii/Output%? It becomes /Std/Char/Ascii/Stream%.
+
+Easy.
+
+Okay? Plan is clear. Let's try it out. Go step by step.
+
+Also, how about helper functions like mapping a stream to another stream?
+
+If you give me a stream of A@, and a way to go from A@ to stream of B@, I
+should be able to give you a stream of B@. Is that just 'Do' defined for
+stream@? Or some variation on it, right? Anyway, we've got plenty of module
+name space now to work with for helper functions like those.
+
+Cool. Let's get started. Steps are something like:
+* Rename Stream@ to Channel@.
+* Move put method to be with Channel@.
+* Rename Output@ to Stream@.
+* Move In@ and Out@ to /Std/Io/Stream%.
+* Remove 'end' from Out@.
+* Remove Get@, Put@.
+* Rename /Std/Char/Ascii/Output% to /Std/Char/Ascii/Stream%.
+* Pull out /Std/Stream/ List, String, Test, Null.
+* Move GetLine, GetText to /Std/Io/Stream/Text%.
+* Do binary to text conversion in app that needs it.
+
+---
+

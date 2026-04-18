@@ -6,7 +6,7 @@ Char@ .= /Std/Char%;
 U .= /Std/Char/Lit%;
 List@ .= /Std/List%;
 String@ .= /Std/String%;
-Stream@ .= /Std/Stream%;
+Channel@ .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # Specializations of /Std/Stream% for Char@.
@@ -61,7 +61,7 @@ Char@ '%s' = U|73;
 #  @arg[List@<Output@>[args] Format args.
 #  @return[Output@] The formatted output.
 (String@, List@<Output@>) { Output@; }
-Format = (String@ fmt, List@<Output@> args)<@ S@>(Stream@<S@> s, (Char@) { S@; } put) {
+Format = (String@ fmt, List@<Output@> args)<@ S@>(Channel@<S@> s, (Char@) { S@; } put) {
   fmt.?(empty: s.return);
   Char@ c = fmt.items.head;
   /Std/Char/Eq%.Eq('%%', c).?(true: {
@@ -90,6 +90,6 @@ Format = (String@ fmt, List@<Output@> args)<@ S@>(Stream@<S@> s, (Char@) { S@; }
 #  @returns[String@] A string with the output characters.
 (Output@) { String@; } ToString = ToList;
 
-@(Output@, Stream@, In@, Out@,
+@(Output@, Channel@, In@, Out@,
   Return, Do, Put, String, Format, Concat, Lines, Join,
   ToString, ToNull);
