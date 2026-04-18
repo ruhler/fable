@@ -17,7 +17,7 @@ Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
 
 Stream@ = /Std/Stream/Text%.Stream@;
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

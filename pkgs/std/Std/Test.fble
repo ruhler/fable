@@ -5,7 +5,7 @@ Bool@ .= /Std/Bool%;
 List@ .= /Std/List%;
 Stream@, ToString .= /Std/Stream/Text%;
 String@ .= /Std/String%;
-String, Format .= /Std/Char/Ascii/Output%;
+String, Format .= /Std/Char/Ascii/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 # @union[TestResult@] The result of running a test.

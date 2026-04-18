@@ -12,7 +12,7 @@ MulVS = /Pinball/Vec%.MulVS;
 
 Show@ = /Std/Show%.Show@;
 
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 # Ball@ --
 #   pos - the position of the center of the ball.

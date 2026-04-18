@@ -1,7 +1,7 @@
 
 Show@ = /Std/Show%.Show@;
 
-String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Stream%.String;
 
 Position@ = /Games/TicTacToe/Board%.Position@;
 Status@ = /Games/TicTacToe/Board%.Status@;

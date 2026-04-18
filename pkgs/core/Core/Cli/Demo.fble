@@ -15,7 +15,7 @@ Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
 
 String@ = /Std/String%.String@;
-StringE = /Std/Char/Ascii/Output%.StringE;
+StringE = /Std/Char/Ascii/Stream%.StringE;
 
 Unit@ = /Std/Unit%.Unit@;
 

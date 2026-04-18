@@ -13,7 +13,7 @@ Sqrt = /Pinball/Num%.Sqrt;
 
 Show@ = /Std/Show%.Show@;
 
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 # Vec@ -- 
 #   A 2D vector.

@@ -1,5 +1,5 @@
 
-String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Stream%.String;
 
 Data@ = /Hwdg/Data%.Data@;
 

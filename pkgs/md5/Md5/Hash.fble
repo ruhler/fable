@@ -3,7 +3,7 @@ Bool@ = /Std/Bool%.Bool@;
 And = /Std/Bool%.And;
 True = /Std/Bool%.True;
 
-String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Stream%.String;
 
 Hex@ = /Core/Digits%.Hex@;
 

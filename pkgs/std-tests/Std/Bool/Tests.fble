@@ -9,7 +9,7 @@ Xor = /Std/Bool%.Xor;
 
 Ascii@ = /Std/Char/Ascii%.Ascii@;
 OnAscii = /Std/Char/Ascii%.OnAscii;
-String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Stream%.String;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 

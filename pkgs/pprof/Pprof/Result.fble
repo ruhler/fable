@@ -7,7 +7,7 @@ Show@ = /Std/Show%.Show@;
 Stream@ = /Std/Stream/Text%.Stream@;
 ToString = /Std/Stream/Text%.ToString;
 
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 
 Result@ = <@ A@> {

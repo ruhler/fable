@@ -2,9 +2,9 @@
 Stream@ = /Std/Stream/Text%.Stream@;
 Return = /Std/Stream/Text%.Return;
 Concat = /Std/Stream/Text%.Concat;
-Format = /Std/Char/Ascii/Output%.Format;
-FormatE = /Std/Char/Ascii/Output%.FormatE;
-String = /Std/Char/Ascii/Output%.String;
+Format = /Std/Char/Ascii/Stream%.Format;
+FormatE = /Std/Char/Ascii/Stream%.FormatE;
+String = /Std/Char/Ascii/Stream%.String;
 
 Car@ = /Computrainer/Car%.Car@;
 Cars@ = /Computrainer/Car%.Cars@;

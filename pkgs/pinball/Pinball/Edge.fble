@@ -8,7 +8,7 @@ Normalize = /Pinball/Vec%.Normalize;
 
 Show@ = /Std/Show%.Show@;
 
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 # Edge@ --
 #   Internal representation for a stationary edge.

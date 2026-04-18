@@ -1,5 +1,5 @@
 
-FormatE = /Std/Char/Ascii/Output%.FormatE;
+FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
 Ascii@ = /Std/Char/Ascii%.Ascii@;
 
@@ -20,7 +20,7 @@ In@, Out@ .= /Std/Io/Stream/Text%;
 Stream@ = /Std/Stream/Text%.Stream@;
 
 String@ = /Std/String%.String@;
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;

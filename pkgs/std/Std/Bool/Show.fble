@@ -2,7 +2,7 @@
 #  The Show@ instance for Bool@.
 
 Bool@ .= /Std/Bool%;
-String .= /Std/Char/Ascii/Output%;
+String .= /Std/Char/Ascii/Stream%;
 Show@ .= /Std/Show%;
 
 # @func[Show] Show a Bool@ value.

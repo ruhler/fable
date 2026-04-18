@@ -4,9 +4,8 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
 OStream = /Core/Stream/Char%.OStream;
-Stream@ = /Std/Stream/Text%.Stream@;
 String = /Std/Stream/Text%.String;
-StringE = /Std/Char/Ascii/Output%.StringE;
+StringE = /Std/Char/Ascii/Stream%.StringE;
 
 Int@ = /Std/Int%.Int@;
 Neg = /Std/Int%.Neg;

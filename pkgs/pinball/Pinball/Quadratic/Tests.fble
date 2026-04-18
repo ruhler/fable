@@ -21,7 +21,7 @@ Roots = /Pinball/Quadratic%.Roots;
 Show@ = /Std/Show%.Show@;
 
 Str = /Std/Char/Ascii%.Str;
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 Test@ = /Std/Test%.Test@;
 Test = /Std/Test%.Test;

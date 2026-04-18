@@ -1,7 +1,7 @@
 # @module[/Std/Eq/Assert%]
 #  Equality based test assertions.
 
-Format .= /Std/Char/Ascii/Output%;
+Format .= /Std/Char/Ascii/Stream%;
 Eq@ .= /Std/Eq%;
 Show@ .= /Std/Show%;
 TestResult@, Pass, Fail .= /Std/Test%;

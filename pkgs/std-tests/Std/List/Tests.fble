@@ -21,7 +21,7 @@ Do = /Std/List%.Do;
 ForEach = /Std/List%.ForEach;
 Reverse = /Std/List%.Reverse;
 
-String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Stream%.String;
 
 Test@ = /Std/Test%.Test@;
 Test = OnAscii $ /Std/Test%.Test;

@@ -56,9 +56,9 @@ Lines = /Std/Stream/Text%.Lines;
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
 StrE = /Std/Char/Ascii%.StrE;
-Format = /Std/Char/Ascii/Output%.Format;
-FormatE = /Std/Char/Ascii/Output%.FormatE;
-StringE = /Std/Char/Ascii/Output%.StringE;
+Format = /Std/Char/Ascii/Stream%.Format;
+FormatE = /Std/Char/Ascii/Stream%.FormatE;
+StringE = /Std/Char/Ascii/Stream%.StringE;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;

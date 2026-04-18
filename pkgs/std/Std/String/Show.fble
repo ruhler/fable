@@ -2,7 +2,7 @@
 #  The Show@ instance for String@.
 
 Char@ .= /Std/Char%;
-FormatE .= /Std/Char/Ascii/Output%;
+FormatE .= /Std/Char/Ascii/Stream%;
 U .= /Std/Char/Lit%;
 Do, Return, String .= /Std/Stream/Text%;
 Show@ .= /Std/Show%;

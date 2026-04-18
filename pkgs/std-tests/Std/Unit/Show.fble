@@ -2,7 +2,7 @@
 #  The Show@ instance for Unit@.
 
 Show@ = /Std/Show%.Show@;
-String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Stream%.String;
 Unit@ = /Std/Unit%.Unit@;
 
 # @func[Show] Show a Unit@ value.

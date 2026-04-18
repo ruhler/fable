@@ -12,7 +12,7 @@ Concat = /Std/List%.Concat;
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
 StrE = /Std/Char/Ascii%.StrE;
-String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Stream%.String;
 Lines = /Std/String/Lines%.Lines;
 
 Test@ = /Std/Test%.Test@;

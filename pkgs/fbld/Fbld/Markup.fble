@@ -6,7 +6,7 @@ Nothing = /Std/Maybe%.Nothing;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;

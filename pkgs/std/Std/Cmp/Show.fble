@@ -1,7 +1,7 @@
 # @module[/Std/Cmp/Show%]
 #  The Show@ instance for Compared@.
 
-String .= /Std/Char/Ascii/Output%;
+String .= /Std/Char/Ascii/Stream%;
 Compared@ .= /Std/Cmp%;
 Show@ .= /Std/Show%;
 

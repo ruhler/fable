@@ -12,7 +12,7 @@ Monad@ = /Std/Monad%.Monad@;
 
 Stream@ = /Std/Stream/Text%.Stream@;
 
-FormatE = /Std/Char/Ascii/Output%.FormatE;
+FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
 Unit@ = /Std/Unit%.Unit@;
 

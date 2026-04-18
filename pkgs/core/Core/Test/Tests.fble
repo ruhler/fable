@@ -14,7 +14,7 @@ Pure@ = /Core/Monad/Pure%.Pure@;
 
 Str = /Std/Char/Ascii%.Str;
 
-String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Stream%.String;
 
 Test@ = /Std/Test%.Test@;
 Test = /Std/Test%.Test;

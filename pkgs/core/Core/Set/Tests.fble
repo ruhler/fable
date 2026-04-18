@@ -24,7 +24,7 @@ ToString = /Std/Stream/Text%.ToString;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
-String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Stream%.String;
 
 Test@ = /Std/Test%.Test@;
 Test = /Std/Test%.Test;

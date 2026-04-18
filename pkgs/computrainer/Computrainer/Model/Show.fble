@@ -1,8 +1,8 @@
 
 Show@ = /Std/Show%.Show@;
 
-String = /Std/Char/Ascii/Output%.String;
-Format = /Std/Char/Ascii/Output%.Format;
+String = /Std/Char/Ascii/Stream%.String;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 Coord@ = /Computrainer/Grid%.Coord@;
 Grid = /Computrainer/Grid%.Grid;

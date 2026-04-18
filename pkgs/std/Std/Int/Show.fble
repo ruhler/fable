@@ -2,7 +2,7 @@
 #  The Show@ instance for Int@.
 
 Stream@, Do, Return .= /Std/Stream/Text%;
-Format, String .= /Std/Char/Ascii/Output%;
+Format, String .= /Std/Char/Ascii/Stream%;
 
 Int@, Neg .= /Std/Int%;
 Eq .= /Std/Int/Eq%;

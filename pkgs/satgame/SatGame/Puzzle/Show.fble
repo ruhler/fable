@@ -3,9 +3,9 @@ Show@ = /Std/Show%.Show@;
 Do = /Std/Stream/Text%.Do;
 Return = /Std/Stream/Text%.Return;
 
-String = /Std/Char/Ascii/Output%.String;
-Format = /Std/Char/Ascii/Output%.Format;
-FormatE = /Std/Char/Ascii/Output%.FormatE;
+String = /Std/Char/Ascii/Stream%.String;
+Format = /Std/Char/Ascii/Stream%.Format;
+FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
 Unit@ = /Std/Unit%.Unit@;
 

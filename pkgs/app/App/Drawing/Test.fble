@@ -25,7 +25,7 @@ Compared@ = /Std/Cmp%.Compared@;
 
 Show@ = /Std/Show%.Show@;
 
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 TestResult@ = /Std/Test%.TestResult@;
 

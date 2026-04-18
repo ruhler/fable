@@ -3,7 +3,7 @@
 
 Maybe@ .= /Std/Maybe%;
 Show@ .= /Std/Show%;
-Format, String .= /Std/Char/Ascii/Output%;
+Format, String .= /Std/Char/Ascii/Stream%;
 
 # Show --
 #   Implementation of Show@ for Maybe@<T@>. See documentation of /Show%.Show@.

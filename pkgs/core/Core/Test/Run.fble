@@ -1,7 +1,7 @@
 
 Bool@, True, False, And .= /Std/Bool%;
 Str .= /Std/Char/Ascii%;
-FormatE, StringE .= /Std/Char/Ascii/Output%;
+FormatE, StringE .= /Std/Char/Ascii/Stream%;
 Concat, ForEach .= /Std/List%;
 Monad@ .= /Std/Monad%;
 Stream@, String .= /Std/Stream/Text%;

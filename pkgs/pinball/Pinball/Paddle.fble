@@ -13,7 +13,7 @@ SubV = /Pinball/Vec%.SubV;
 
 Show@ = /Std/Show%.Show@;
 
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 Num@ 0 = Int|0;
 

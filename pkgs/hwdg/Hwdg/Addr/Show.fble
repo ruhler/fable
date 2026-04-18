@@ -1,5 +1,5 @@
 
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 Show@ = /Std/Show%.Show@;
 

@@ -21,7 +21,7 @@ IntI = /Std/Int/Lit%.Int;
 
 Show@ = /Std/Show%.Show@;
 
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 # Num@ -- 
 #   A number with sufficient precision for the pinball game.

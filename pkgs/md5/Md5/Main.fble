@@ -5,7 +5,7 @@ False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
 String = /Std/Stream/Text%.String;
-FormatE = /Std/Char/Ascii/Output%.FormatE;
+FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
 Int@ = /Std/Int%.Int@;
 
@@ -31,7 +31,7 @@ Stream@ .= /Std/Stream/Text%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
-Format = /Std/Char/Ascii/Output%.Format;
+Format = /Std/Char/Ascii/Stream%.Format;
 
 Unit@ = /Std/Unit%.Unit@;
 

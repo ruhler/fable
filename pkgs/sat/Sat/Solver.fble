@@ -21,8 +21,8 @@ Monad@ = /Std/Monad%.Monad@;
 
 Show@ = /Std/Show%.Show@;
 
-Format = /Std/Char/Ascii/Output%.Format;
-String = /Std/Char/Ascii/Output%.String;
+Format = /Std/Char/Ascii/Stream%.Format;
+String = /Std/Char/Ascii/Stream%.String;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;

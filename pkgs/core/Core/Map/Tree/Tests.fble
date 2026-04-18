@@ -17,7 +17,7 @@ Show@ = /Std/Show%.Show@;
 Do = /Std/Stream/Text%.Do;
 
 Str = /Std/Char/Ascii%.Str;
-String = /Std/Char/Ascii/Output%.String;
+String = /Std/Char/Ascii/Stream%.String;
 
 Test@ = /Std/Test%.Test@;
 TestSuite = /Std/Test%.TestSuite;

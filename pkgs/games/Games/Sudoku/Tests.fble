@@ -18,8 +18,8 @@ Stream@ = /Std/Stream/Text%.Stream@;
 Return = /Std/Stream/Text%.Return;
 
 Str = /Std/Char/Ascii%.Str;
-String = /Std/Char/Ascii/Output%.String;
-StringE = /Std/Char/Ascii/Output%.StringE;
+String = /Std/Char/Ascii/Stream%.String;
+StringE = /Std/Char/Ascii/Stream%.StringE;
 
 Test@ = /Std/Test%.Test@;
 TestResult@ = /Std/Test%.TestResult@;

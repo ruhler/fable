@@ -1,8 +1,8 @@
 
 Show@ = /Std/Show%.Show@;
 
-Format = /Std/Char/Ascii/Output%.Format;
-String = /Std/Char/Ascii/Output%.String;
+Format = /Std/Char/Ascii/Stream%.Format;
+String = /Std/Char/Ascii/Stream%.String;
 
 Clause@ = /Sat/Solver%.Clause@;
 VarId@ = /Sat/Solver%.VarId@;

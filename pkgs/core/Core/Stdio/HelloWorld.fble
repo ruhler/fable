@@ -1,6 +1,6 @@
 
 Char@ .= /Std/Char%;
-StringE .= /Std/Char/Ascii/Output%;
+StringE .= /Std/Char/Ascii/Stream%;
 Io@ .= /Std/Io%;
 Main@, Success .= /Std/Io/Cli%;
 List@ .= /Std/List%;
