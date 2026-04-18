@@ -3,7 +3,6 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-Put@ .= /Std/Io/Stream%;
 OStream = /Core/Stream/Char%.OStream;
 Stream@ = /Std/Stream/Text%.Stream@;
 String = /Std/Stream/Text%.String;
@@ -16,6 +15,7 @@ Int = /Std/Int/Lit%.Int;
 IsZero = /Std/Int/Sign%.IsZero;
 
 Binary = /Std/Stream%.Stream<Int@>;
+BinaryIo = /Std/Io/Stream/Binary%;
 
 List@ = /Std/List%.List@;
 Concat = /Std/List%.Concat;
@@ -108,14 +108,14 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(io, m));
 
-  (Int@, In@<M@>, Put@<M@, Binary.Stream@>) { M@<Unit@>; }
-  ForwardN = (Int@ n, In@<M@> in, Put@<M@, Binary.Stream@> out) {
+  (Int@, In@<M@>, BinaryIo.Out@<M@>) { M@<Unit@>; }
+  ForwardN = (Int@ n, In@<M@> in, BinaryIo.Out@<M@> out) {
     IsZero(n).?(true: m.return(Unit));
     Int@ nn = /Std/Int/Cmp%.Gt(n, Int|0).?(true: Decr(n), false: n);
 
     Maybe@<Int@> mb := m.do(in.get);
     mb.?(nothing: m.return(Unit));
-    Unit@ _ := m.do(out(Binary.Put(mb.just)));
+    Unit@ _ := m.do(out.put(Binary.Put(mb.just)));
     ForwardN(nn, in, out);
   };
 
@@ -139,11 +139,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   });
 
   InOut@<M@> ios = mios.just;
-  Put@<M@, Stream@> os = OStream(m, ios.out).put;
+  Out@<M@> os = OStream(m, ios.out);
   /Std/Io/Stream/Binary%.Out@<M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
 
-  Unit@ _ := m.do(os $ String $ args.message);
-  Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, out.put));
+  Unit@ _ := m.do(os.put $ String $ args.message);
+  Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, out));
   m.return(Success);
 };
 

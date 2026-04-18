@@ -4,8 +4,7 @@ Char = /Std/Char/Ascii%.Char;
 Ascii = /Std/Char/Ascii%.Ascii;
 IsNewline .= /Std/String/Lines%;
 
-Put@ .= /Std/Io/Stream%;
-In@ = /Std/Io/Stream/Text%.In@;
+In@, Out@ .= /Std/Io/Stream/Text%;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 Stream@ = /Std/Stream/Text%.Stream@;
@@ -77,7 +76,7 @@ Seq@ = *(String@ header, String@ codes);
 };
 
 Main@
-Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Put@<M@, Stream@> out, List@<String@> _args) {
+Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Out@<M@> out, List@<String@> _args) {
   # Gets a line from stdin, discarding the final newline if any.
   M@<String@> GetLine = {
     Maybe@<Char@> c := m.do(in.get);
@@ -103,7 +102,7 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Put@<M@, Stream@> out, List@<String@>
 
   # Prints a sequence to stdout.
   (Seq@) { M@<Unit@>; } PrintSeq = (Seq@ s) {
-    out $ FormatE|'%s\n%s'[String(s.header), OutputCodes(Int|60, s.codes)];
+    out.put $ FormatE|'%s\n%s'[String(s.header), OutputCodes(Int|60, s.codes)];
   };
 
   # Complements an already-reversed sequence and prints the result to stdout.

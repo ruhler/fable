@@ -90,7 +90,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
 
   Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
   Args@ args = GetArgs(argv, DefaultArgs.@(seed));
-  Unit@ _ := m.do(SatGame(m, out.put, app, width, height, args));
+  Unit@ _ := m.do(SatGame(m, out, app, width, height, args));
   m.return(Success);
 };
 

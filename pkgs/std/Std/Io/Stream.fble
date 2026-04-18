@@ -5,18 +5,6 @@ Maybe@ .= /Std/Maybe%;
 Stream@ .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
-# @type[Put@] Interface for putting values.
-#  @arg[<@>@][M@] The monadic type to put to.
-#  @arg[@][A@] The type of value to put.
-#  @return[M@<Unit@>] A computation to put the value.
-Put@ = <<@>@ M@, @ A@>(A@) { M@<Unit@>; };
-
-# @type[Get@] Interfae for getting values.
-#  @arg[<@>@][M@] The monadic type to get from.
-#  @arg[@][A@] The type of value to get.
-#  @return[M@<Unit@>] A computation to get a value.
-Get@ = <<@>@ M@, @ A@> { M@<A@>; };
-
 # @type[In@] Interface for getting from a stream of values.
 #  Use the get method to get the next value from the stream. It returns
 #  Nothing if the end of the stream has been reached.
@@ -31,5 +19,5 @@ Io = <@ A@> {
   @(In@: In@<A@>, Out@: Out@<A@>);
 };
 
-@(Put@, Get@, In@, Out@, Io);
+@(In@, Out@, Io);
 

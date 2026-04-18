@@ -1,5 +1,4 @@
 
-Put@ .= /Std/Io/Stream%;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
 Ascii@ = /Std/Char/Ascii%.Ascii@;
@@ -16,7 +15,7 @@ List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-In@ = /Std/Io/Stream/Text%.In@;
+In@, Out@ .= /Std/Io/Stream/Text%;
 
 Stream@ = /Std/Stream/Text%.Stream@;
 
@@ -55,10 +54,10 @@ Tree@ = +(Unit@ leaf, Node@ node);
 };
 
 Main@
-Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Put@<M@, Stream@> out, List@<String@> args) {
+Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Out@<M@> out, List@<String@> args) {
   (List@<Ascii@>, List@<Stream@>) { M@<Unit@>; }
   FmtL = (List@<Ascii@> fmt, List@<Stream@> args) {
-    out $ FormatE|'%s\n'[Format(fmt, args)];
+    out.put $ FormatE|'%s\n'[Format(fmt, args)];
   };
 
   Int@ n = args.?(items: /Core/Int/Read%.Read(args.items.head), empty: 0);

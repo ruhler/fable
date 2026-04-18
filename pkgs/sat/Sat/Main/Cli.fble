@@ -26,7 +26,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     m.return(Success);
   });
 
-  /Sat/Main%.Main(m, in, out.put, err.put);
+  /Sat/Main%.Main(m, in, out, err);
 };
 
 Main;

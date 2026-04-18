@@ -1,5 +1,5 @@
 
-Stream@ = /Std/Stream/Text%.Stream@;
+Out@ .= /Std/Io/Stream/Text%;
 
 Int@ = /Std/Int%.Int@;
 Sub = /Std/Int%.Sub;
@@ -12,8 +12,6 @@ Int = /Std/Int/Lit%.Int;
 Maybe@ = /Std/Maybe%.Maybe@;
 
 Monad@ = /Std/Monad%.Monad@;
-
-Put@ .= /Std/Io/Stream%;
 
 Format = /Std/Char/Ascii/Output%.Format;
 
@@ -75,8 +73,8 @@ State@ = *(
   Transform@ transform  # Transformation to apply to the board.
 );
 
-<<@>@ M@>(Monad@<M@>, Put@<M@, Stream@>, App@<M@>, Int@, Int@, Args@) { M@<Unit@>; }
-SatGame = <<@>@ M@>(Monad@<M@> m, Put@<M@, Stream@> out, App@<M@> app, Int@ width, Int@ height, Args@ args) {
+<<@>@ M@>(Monad@<M@>, Out@<M@>, App@<M@>, Int@, Int@, Args@) { M@<Unit@>; }
+SatGame = <<@>@ M@>(Monad@<M@> m, Out@<M@> out, App@<M@> app, Int@ width, Int@ height, Args@ args) {
   Params@ params = Params@(args.num_vars, args.num_clauses, args.num_literals_per_clause);
   Layout@ layout = Layout(params);
 
@@ -150,14 +148,14 @@ SatGame = <<@>@ M@>(Monad@<M@> m, Put@<M@, Stream@> out, App@<M@> app, Int@ widt
       });
   };
 
-  Unit@ _ := m.do(out $
+  Unit@ _ := m.do(out.put $
       Format|'Generating puzzle with params: %s (seed %s)'[
         /SatGame/Puzzle/Show%.Params(params),
         /Std/Int/Show%.Show(args.seed)
   ]);
 
   Puzzle@ puzzle = Generate(params, args.seed);
-  Unit@ _ := m.do(out $ /SatGame/Puzzle/Show%.Puzzle(puzzle));
+  Unit@ _ := m.do(out.put $ /SatGame/Puzzle/Show%.Puzzle(puzzle));
 
   Game@ game = /SatGame/Game%.Game(puzzle);
 

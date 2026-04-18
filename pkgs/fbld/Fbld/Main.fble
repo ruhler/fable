@@ -1,6 +1,5 @@
 
-Put@ .= /Std/Io/Stream%;
-In@ .= /Std/Io/Stream/Text%;
+In@, Out@ .= /Std/Io/Stream/Text%;
 String .= /Std/Stream/Text%;
 GetText = /Core/Char/Stream/IStream%.GetText;
 
@@ -43,8 +42,8 @@ Text = /Fbld/Text%.Text;
 
 IO@ = <<@>@ M@> { *(
   In@<M@> in,
-  Put@<M@, Stream@> out,
-  Put@<M@, Stream@> err,
+  Out@<M@> out,
+  Out@<M@> err,
   (String@) { M@<Maybe@<In@<M@>>>; } read
 ); };
 
@@ -77,7 +76,7 @@ Main = <<@>@ M@>(Monad@<M@> m, IO@<M@> io, List@<String@> args) {
 
   Result@<List@<Text@>> inputs := m.do(ReadInputs(args));
   inputs.failed.?(true: {
-    Unit@ _ := m.do(io.err $ ShowErrors(inputs));
+    Unit@ _ := m.do(io.err.put $ ShowErrors(inputs));
     m.return(Failure);
   });
 
@@ -88,11 +87,11 @@ Main = <<@>@ M@>(Monad@<M@> m, IO@<M@> io, List@<String@> args) {
   };
 
   result.failed.?(true: {
-    Unit@ _ := m.do(io.err $ ShowErrors(result));
+    Unit@ _ := m.do(io.err.put $ ShowErrors(result));
     m.return(Failure);
   });
 
-  Unit@ _ := m.do(io.out $ String $ result.value.just);
+  Unit@ _ := m.do(io.out.put $ String $ result.value.just);
   m.return(Success);
 };
 

@@ -4994,3 +4994,8 @@ needed for Char@ and Int@.
 If I'm removing 'end' from Out@, it means I need to implement onfree for my
 FILE*, right?
 
+---
+
+Should In@ and Out@ be the raw functions, or I want to wrap them in get and
+put? Wrapping them makes it easier to add more things in the future, for
+example related to errors. Probably that's the safest way to go.

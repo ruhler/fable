@@ -2,7 +2,6 @@
 In@, Out@ .= /Std/Io/Stream/Text%;
 Stream@, Return, ToString .= /Std/Stream/Text%;
 
-Put@ .= /Std/Io/Stream%;
 IStream = /Core/Char/Stream/IStream%.IStream;
 OStream = /Core/Char/Stream/OStream%.OStream;
 NullOutput = /Core/Char/Stream/OStream%.NullOutput;
@@ -31,7 +30,7 @@ Unit@ = /Std/Unit%.Unit@;
 
 # Common interface for benchmark games.
 # You get stdin, stdout, and a list of args.
-Main@ = <<@>@ M@>(Monad@<M@>, In@<M@>, Put@<M@, Stream@>, List@<String@>) { M@<Unit@>; };
+Main@ = <<@>@ M@>(Monad@<M@>, In@<M@>, Out@<M@>, List@<String@>) { M@<Unit@>; };
 
 # Test a benchmark game.
 (String@, Main@, String@, List@<String@>, String@) { Test@; }
@@ -64,7 +63,7 @@ Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ ex
 
   /Std/Test%.Test(name, (Unit@ _) {
     In@<M@> in = IStream(M, s_in);
-    Put@<M@, Stream@> out = OStream(M, s_out);
+    Out@<M@> out = OStream(M, s_out);
     M@<Unit@> go = game(M, in, out, args);
     String@ got = ToString $ Exec(go, S@(input, Return)).out;
     String@ wnt = expected_output;
@@ -82,7 +81,7 @@ Bench = (String@ name, Main@ game, String@ input, List@<String@> args) {
     S = P.State;
 
     In@<M@> in = IStream(M, S);
-    Put@<M@, Stream@> out = NullOutput(M);
+    Out@<M@> out = NullOutput(M);
     Unit@ _ = Eval(game(M, in, out, args), input);
     Pass;
   });
@@ -93,7 +92,7 @@ Bench = (String@ name, Main@ game, String@ input, List@<String@> args) {
 Run = (Main@ game)<<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   In@<M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
   Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  Unit@ _ := m.do(game(m, in, out.put, args));
+  Unit@ _ := m.do(game(m, in, out, args));
   m.return(Success);
 };
 

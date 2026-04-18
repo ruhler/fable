@@ -10,8 +10,6 @@ Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Put@ .= /Std/Io/Stream%;
-
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
 
@@ -44,11 +42,7 @@ OStream = <<@>@ M@>(Monad@<M@> m, Byte.Out@<M@> s) {
 
   Channel@<M@<Unit@>> stream = @(return, do, put);
 
-  Put@<M@, Stream@> put = (Stream@ output) {
-    output(stream);
-  };
-
-  @(put);
+  @(put: (Stream@ output) { output(stream); });
 };
 
 @(IStream, OStream);

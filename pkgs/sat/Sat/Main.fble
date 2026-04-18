@@ -1,9 +1,7 @@
 
-Put@ .= /Std/Io/Stream%;
-In@ = /Std/Io/Stream/Text%.In@;
+In@, Out@ .= /Std/Io/Stream/Text%;
 GetLine = /Core/Char/Stream/IStream%.GetLine;
 
-Stream@ = /Std/Stream/Text%.Stream@;
 String = /Std/Stream/Text%.String;
 FormatE = /Std/Char/Ascii/Output%.FormatE;
 
@@ -34,8 +32,8 @@ Parse@ = /Sat/Dimacs%.Parse@;
 ParseLines = /Sat/Dimacs%.ParseLines;
 ShowResult = /Sat/Show%.ShowResult;
 
-<<@>@ M@>(Monad@<M@>, In@<M@>, Put@<M@, Stream@>, Put@<M@, Stream@>) { M@<Exit@>; }
-Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Put@<M@, Stream@> out, Put@<M@, Stream@> err) {
+<<@>@ M@>(Monad@<M@>, In@<M@>, Out@<M@>, Out@<M@>) { M@<Exit@>; }
+Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Out@<M@> out, Out@<M@> err) {
   (List@<String@>) { M@<List@<String@>>; }
   PrependReversedLines = (List@<String@> lines) {
     String@ next := m.do(GetLine(in, m));
@@ -51,13 +49,13 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Put@<M@, Stream@> out, Put@<M@, Strea
   List@<String@> lines := m.do(GetLines);
   Parse@<Formula@> parsed = ParseLines(lines);
   parsed.?(error: {
-    Unit@ _ := m.do(err $ String $ parsed.error);
+    Unit@ _ := m.do(err.put $ String $ parsed.error);
     m.return(Failure);
   });
 
   Solver@ solver = AddClauses(NewSolver, parsed.parsed); 
   Result@ result := m.do(Solve(m, solver));
-  Unit@ _ := m.do(out $ FormatE|'%s\n'[ShowResult(result)]);
+  Unit@ _ := m.do(out.put $ FormatE|'%s\n'[ShowResult(result)]);
   m.return(Success);
 };
 

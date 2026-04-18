@@ -16,7 +16,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
   Out@<M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
   (String@) { M@<Maybe@<In@<M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
-  /Fbld/Main%.Main(m, @(in, out: out.put, err: err.put, read), args);
+  /Fbld/Main%.Main(m, @(in, out, err, read), args);
 };
 
 Main;

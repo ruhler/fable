@@ -4,7 +4,6 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
 Char = /Std/Char/Ascii%.Char;
-Put@ .= /Std/Io/Stream%;
 Out@ = /Std/Io/Stream/Text%.Out@;
 OStream = /Core/Stream/Char%.OStream;
 IStream = /Core/Stream/Char%.IStream;
@@ -324,8 +323,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
       (Sequence@ s) { Append(seq, s); });
   };
 
-  (CharIn@<M@>, Put@<M@, Stream@>) { M@<Unit@>; }
-  HandleConnection = (CharIn@<M@> is, Put@<M@, Stream@> os) {
+  (CharIn@<M@>, Out@<M@>) { M@<Unit@>; }
+  HandleConnection = (CharIn@<M@> is, Out@<M@> os) {
     # Get the start line
     String@ start := m.do(GetLine(is, m));
 
@@ -349,25 +348,25 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
       uri_split.items.tail.items.head;
     };
 
-    Unit@ _ := m.do(os $ Lines[
+    Unit@ _ := m.do(os.put $ Lines[
       StringE|'HTTP/1.1 200 OK',
       StringE|'Content-Type: text/html\r',
       StringE|'Cache-Control: no-cache\r',
       StringE|'\r']);
 
-    Unit@ _ := m.do(os $ FormatE|'%s\n'[String $ /Pprof/Server/Menu%.Menu]);
+    Unit@ _ := m.do(os.put $ FormatE|'%s\n'[String $ /Pprof/Server/Menu%.Menu]);
 
-    /Std/String/Eq%.Eq(Str|'/', path).?(true: os $ OverviewPage);
-    /Std/String/Eq%.Eq(Str|'/overall', path).?(true: os $ OverallPage);
-    /Std/String/Eq%.Eq(Str|'/self', path).?(true: os $ SelfPage);
-    /Std/String/Eq%.Eq(Str|'/seqs', path).?(true: os $ SeqsPage);
+    /Std/String/Eq%.Eq(Str|'/', path).?(true: os.put $ OverviewPage);
+    /Std/String/Eq%.Eq(Str|'/overall', path).?(true: os.put $ OverallPage);
+    /Std/String/Eq%.Eq(Str|'/self', path).?(true: os.put $ SelfPage);
+    /Std/String/Eq%.Eq(Str|'/seqs', path).?(true: os.put $ SeqsPage);
 
     /Std/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
       List@<String@> ids = Split(Drop(path, Int|5), Str|',');
-      os $ SeqPage(/Std/List%.Map(ids, /Core/Int/Read%.Read));
+      os.put $ SeqPage(/Std/List%.Map(ids, /Core/Int/Read%.Read));
     });
 
-    os $ Lines[
+    os.put $ Lines[
       StringE|'<h1>Unsupported Request</h1>',
       StringE|'<h2>Request Info</h2>',
       FormatE|'Method: %s <br/>'[String $ method],
@@ -393,7 +392,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
     InOut@<M@> ios := m.do(s);
     Out@<M@> os = OStream(m, ios.out);
     CharIn@<M@> is = IStream(m, ios.in);
-    Unit@ _ := m.do(HandleConnection(is, os.put));
+    Unit@ _ := m.do(HandleConnection(is, os));
     Unit@ _ := m.do(ios.close);
     Serve;
   };
