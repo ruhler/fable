@@ -30,7 +30,7 @@ Unit = /Std/Unit%.Unit;
 # Returns whether the test passed or failed.
 (Test@) { Bool@; }
 Run = (Test@ test) {
-  Out@<Pure@> out = @(put: (Stream@ _) { Unit; }, end: Unit);
+  Out@<Pure@> out = @(put: (Stream@ _) { Unit; });
   /Core/Test/Run%.Run(/Core/Monad/Pure%.Monad, out, Str|TestTest, test);
 };
 

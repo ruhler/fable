@@ -3,8 +3,10 @@ Int@ .= /Std/Int%;
 Maybe@ .= /Std/Maybe%;
 In@, Out@ .= /Std/Io/Stream/Binary%;
 String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
 
-InOut@ = <<@>@ M@> { *(In@<M@> in, Out@<M@> out); };
+# TODO: rename to Socket@ or some such.
+InOut@ = <<@>@ M@> { *(In@<M@> in, Out@<M@> out, M@<Unit@> close); };
 
 # Server@ --
 #  A server can be used to repeatedly accept connections from clients.

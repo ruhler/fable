@@ -18,6 +18,15 @@
 
 #define MAYBE_TAGWIDTH 1
 
+/**
+ * @func[CloseFileOnFree] on_free function for closing a file.
+ *  @arg[void*][file] The FILE* to close.
+ *  @sideeffects Closes the file.
+ */
+static void CloseFileOnFree(void* file)
+{
+  fclose((FILE*)file);
+}
 
 /**
  * @func[GetStdin] FbleRunFunction to for GetStdin foreign function.
@@ -129,7 +138,7 @@ static FbleValue* Open(
     return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1);
   }
 
-  FbleValue* v = FbleNewNativeValue(heap, fout, NULL);
+  FbleValue* v = FbleNewNativeValue(heap, fout, &CloseFileOnFree);
   return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
 }
 // /Std/Io/File/Internal%.Open foreign function.

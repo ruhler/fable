@@ -23,9 +23,8 @@ Get@ = <<@>@ M@, @ A@> { M@<A@>; };
 In@ = <@ A@, <@>@ M@> { *(M@<Maybe@<A@>> get); };
 
 # @type[Out@] Interface for outputting values to a stream.
-#  The put method puts the next value to output. The end method closes the
-#  stream.
-Out@ = <@ A@, <@>@ M@> { *((Stream@<A@>) { M@<Unit@>; } put, M@<Unit@> end); };
+#  The put method puts the next value to output.
+Out@ = <@ A@, <@>@ M@> { *((Stream@<A@>) { M@<Unit@>; } put); };
 
 # @value[Io] Specializations of In@ and Out@ types for the given type.
 Io = <@ A@> {

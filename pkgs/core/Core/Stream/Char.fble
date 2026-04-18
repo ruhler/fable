@@ -48,7 +48,7 @@ OStream = <<@>@ M@>(Monad@<M@> m, Byte.Out@<M@> s) {
     output(stream);
   };
 
-  @(put, end: s.end);
+  @(put);
 };
 
 @(IStream, OStream);

@@ -4988,3 +4988,9 @@ It's getting a little confusing distinguishing sources of things from targets.
 
 It's nice to have 'Binary' and 'Text' to hide the detail and extra import
 needed for Char@ and Int@.
+
+---
+
+If I'm removing 'end' from Out@, it means I need to implement onfree for my
+FILE*, right?
+

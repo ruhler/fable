@@ -108,7 +108,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   (In@<M@>, Out@<M@>) { M@<Unit@>; }
   ForwardAll = (In@<M@> in, Out@<M@> out) {
     Maybe@<Int@> mb := m.do(in.get);
-    mb.?(nothing: out.end);
+    mb.?(nothing: m.return(Unit));
     Unit@ _ := m.do(out.put(Put(mb.just)));
     ForwardAll(in, out);
   };
@@ -139,6 +139,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
     InOut@<M@> ios := m.do(s);
     Unit@ _ := m.do(ForwardAll(ios.in, ios.out));
+    Unit@ _ := m.do(ios.close);
     Serve(nn);
   };
 

@@ -11,7 +11,7 @@ Stream@ .= /Std/Stream/Text%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 
-File@, GetStdin, GetStdout, GetStderr, Open, Close, Flush,
+File@, GetStdin, GetStdout, GetStderr, Open, Flush,
 GetChar, PutChar .= /Std/Io/File/Internal%;
 
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@) { M@<Unit@>; }
@@ -28,7 +28,7 @@ Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@ output) {
 
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@) { Out@<M@>; }
 Out = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file) {
-  @(put: Output(m, io, file), end: io.run(Close(file)));
+  @(put: Output(m, io, file));
 };
 
 # @func[Stdin] Standard input stream.

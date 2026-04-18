@@ -394,7 +394,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
     Out@<M@> os = OStream(m, ios.out);
     CharIn@<M@> is = IStream(m, ios.in);
     Unit@ _ := m.do(HandleConnection(is, os.put));
-    Unit@ _ := m.do(os.end);
+    Unit@ _ := m.do(ios.close);
     Serve;
   };
 
