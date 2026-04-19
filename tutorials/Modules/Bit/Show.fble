@@ -1,11 +1,11 @@
 
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
+Stream@ .= /Std/Stream/Text%;
+String = /Std/Char/Ascii/Stream%.String;
 
 Bit@ = /Bit%.Bit@;
 
-(Bit@) { String@; } Show = (Bit@ a) {
-  a.?(0: Str|0, 1: Str|1);
+(Bit@) { Stream@; } Show = (Bit@ a) {
+  a.?(0: String|0, 1: String|1);
 };
 
 @(Show);

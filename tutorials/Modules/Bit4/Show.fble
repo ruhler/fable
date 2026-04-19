@@ -1,13 +1,13 @@
 
-Concat = /Std/List%.Concat;
 
-String@ = /Std/String%.String@;
+Stream@ .= /Std/Stream/Text%;
+Concat .= /Std/Stream/List%;
 
 ShowBit = /Bit/Show%.Show;
 
 Bit4@ = /Bit4%.Bit4@;
 
-(Bit4@) { String@; } Show = (Bit4@ a) {
+(Bit4@) { Stream@; } Show = (Bit4@ a) {
   Concat[ShowBit(a.3), ShowBit(a.2), ShowBit(a.1), ShowBit(a.0)];
 };
 

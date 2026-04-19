@@ -1,21 +1,13 @@
 
-Bool@ = /Std/Bool%.Bool@;
-
+Bool@ .= /Std/Bool%;
+Str .= /Std/Char/Ascii%;
+Io@ .= /Std/Io%;
+Main@, Success, Failure .= /Std/Io/Cli%;
+List@ .= /Std/List%;
+Monad@ .= /Std/Monad%;
 Out@ .= /Std/Stream/Text%;
-
-List@ = /Std/List%.List@;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
-Main@ = /Std/Io/Cli%.Main@;
-Success = /Std/Io/Cli%.Success;
-Failure = /Std/Io/Cli%.Failure;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
+String@ .= /Std/String%;
+Test@ .= /Std/Test%;
 
 # Run --
 #   A cli program to run a set of tests.

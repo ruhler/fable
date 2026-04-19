@@ -5190,3 +5190,106 @@ Let's try it.
 Should the input stream take a State@, or should it take a Stream@? Except,
 how would that make sense to take a Stream@, unless the first thing we did was
 convert to a list and pass a State@ instead?
+
+---
+
+Next step is figuring out how to deal with:
+* pkgs/core/Core/Stdio/Cat.fble (raw cli Main function)
+ - Implements cat program.
+ - Used for testing stdio?
+ - Used for local performance testing.
+* pkgs/core/Core/Stdio/HelloWorld.fble (raw cli Main function)
+ - Used for testing stdio?
+ - Demo hello world program.
+ - May as well use the cli demo program?
+* pkgs/core/Core/Stdio/StringO.fble (Run)
+ - Cli program for outputting a string.
+ - Very useful for tutorials.
+ - Ought to be updated to take Stream@<Char@> instead.
+* pkgs/core/Core/Test/Cli.fble (Run)
+ - Cli program for running a test.
+* pkgs/core/Cli/Demo.fble (raw cli main function)
+ - Demo / test app for cli programs.
+ - Exercises args and stdout. Not stdin.
+
+Of Cat, HelloWorld, and Demo, I only need one. And probably not in the
+standard library.
+
+StringO and Test runners should be part of the standard library. I just need
+to figure out names and locations. I think test runner should go with tests.
+So: /Std/Test/Cli%(Run). And StringO should go with Cli, or with stream? Or
+Io?
+
+/Std/Io/Stream%.Run?
+/Std/Io/Cli/Stream%.Run?
+/Std/Stream/Text/Cli%.Run?
+
+Or... instead of "command line interface", "text user interface", and
+"graphical user interface", we come up with something similar, like "output
+interface".
+
+/Std/Io/OutputInterface%.Run?
+/Std/Io/Oi%.Run?
+/Std/Io/OutputCli%.Run?
+
+It converts to cli, so doesn't really fall under the category of another
+cli/tui/gui.
+
+/Std/Io/Cli/Output%.Run?
+
+Yeah, that sounds best to me. It gives you cli that just outputs a raw stream.
+Hmm... I suppose 'output' doesn't clearly convey Stream@<Char@> instead of
+Out@, or anything with any other types.
+
+We could be weird and call it Tutorial?
+
+  /Std/Io/Cli/Tutorial%.Run
+
+That sort of captures: test based, output only...
+
+Except, what if you want to work with command line arguments? How awkward is
+it to use Cli directly? A lot more awkward than we want to be for a tutorial.
+
+  /Std/Io/Cli/Print%.Run?
+
+Because all it's doing is printing output? Like, printf?
+
+Yeah, I'm kind of liking print? But should it be called 'run' in that case?
+
+  /Std/Io/Cli/Print%.Print
+
+# Call the helper function for a main function
+# that outputs a single string value.
+/Std/Io/Cli%.Run(output);
+
+How about add a Print function to /Std/Io/Cli%? Then I could just write:
+
+  # Call the helper function for a main function
+  # that prints out the given stream of characters.
+  /Std/Io/Cli%.Print(output);
+
+Yeah. Cool. I like that.
+
+And for tests:
+
+Test@ Tests = ...;
+
+/Std/Test/Cli%.Run(tests);
+
+Perfect.
+
+Sounds like a plan. Shall I implement it now?
+
+No. Print needs to live in a separate module, because it depends on weird
+things like stdout. Oh well.
+
+  # Call the helper function for a main function
+  # that prints out the given stream of characters.
+  /Std/Io/Cli/Print%.Print(output);
+
+Or move it up front?
+
+  /Std/Io/Cli/Print%.Print $ {
+    ...
+
+  };

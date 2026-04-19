@@ -1,8 +1,6 @@
 
-Concat = /Std/List%.Concat;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
+Format .= /Std/Char/Ascii/Stream%;
+Stream@ .= /Std/Stream/Text%;
 
 0 = /Bit%.0;
 1 = /Bit%.1;
@@ -15,6 +13,8 @@ Bit4@ X = Bit4@(0, 0, 1, 1);
 Bit4@ Y = Bit4@(1, 0, 1, 0);
 Bit4@ Z = And(X, Y);
 
-String@ output = Concat[Show(X), Str|' AND ', Show(Y), Str|' = ', Show(Z)];
+Stream@ output = Format|'%s AND %s = %s'[
+  Show(X), Show(Y), Show(Z)
+];
 
-/Core/Stdio/StringO%.Run(output);
+/Std/Io/Cli/Print%.Print(output);

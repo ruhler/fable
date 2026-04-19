@@ -1,9 +1,8 @@
 
 # Imports
-Concat = /Std/List%.Concat;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
+Stream@ .= /Std/Stream/Text%;
+Concat .= /Std/Stream/List%;
+Format, String .= /Std/Char/Ascii/Stream%;
 
 # Types
 Unit@ = *();
@@ -31,15 +30,16 @@ Bit4@ Y = Bit4@(1, 0, 1, 0);
 Bit4@ Z = And4(X, Y);
 
 # String Conversions
-(Bit@) { String@; } ShowBit = (Bit@ a) {
-  a.?(0: Str|0, 1: Str|1);
+(Bit@) { Stream@; } ShowBit = (Bit@ a) {
+  a.?(0: String|0, 1: String|1);
 };
 
-(Bit4@) { String@; } ShowBit4 = (Bit4@ a) {
+(Bit4@) { Stream@; } ShowBit4 = (Bit4@ a) {
   Concat[ShowBit(a.3), ShowBit(a.2), ShowBit(a.1), ShowBit(a.0)];
 };
 
-String@ output = Concat[
-  ShowBit4(X), Str|' AND ', ShowBit4(Y), Str|' = ', ShowBit4(Z)];
+Stream@ output = Format|'%s AND %s = %s'[
+  ShowBit4(X), ShowBit4(Y), ShowBit4(Z)
+];
 
-/Core/Stdio/StringO%.Run(output);
+/Std/Io/Cli/Print%.Print(output);

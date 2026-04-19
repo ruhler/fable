@@ -1,37 +1,25 @@
 
-# Import boolean type and values.
-Bool@ = /Std/Bool%.Bool@;
-Bool@ True = /Std/Bool%.True;
-Bool@ False = /Std/Bool%.False;
-
-# Import character type and values.
-Char@ = /Std/Char%.Char@;
-Char = /Std/Char/Ascii%.Char;
-
-# Import integer type and literal.
-Int@ = /Std/Int%.Int@;
-Int = /Std/Int/Lit%.Int;
-
-# Important list function.
-Concat = /Std/List%.Concat;
-
-# Import string type and functions.
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-Lines = /Std/String/Lines%.Lines;
-ToString = /Std/Stream/String%.ToString;
+# Import required types and values used.
+Bool@, True, False .= /Std/Bool%;
+Char@ .= /Std/Char%;
+Char .= /Std/Char/Ascii%;
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Lines .= /Std/Stream/String%;
+Stream@ .= /Std/Stream/Text%;
+String, Format .= /Std/Char/Ascii/Stream%;
 
 # Specify the output string.
 Char@ c = Char|A;
 Int@ x = Int|42;
-String@ output = Lines[
-  Str|'hello, world',
-  Concat[Str|'A boolean: ', ToString(/Std/Bool/Show%.Show(True))],
-  Concat[Str|'A character: ', ToString(/Std/Char/Show%.Show(c))],
-  Concat[Str|'A list: ',
-    ToString(/Std/List/Show%.Show(/Std/Bool/Show%.Show)[True, False, False])],
-  Concat[Str|'An integer: ', ToString(/Std/Int/Show%.Show(x))]];
+Stream@ output = Lines[
+  String|'hello, world',
+  Format|'A boolean: %s'[/Std/Bool/Show%.Show(True)],
+  Format|'A character: %s'[/Std/Char/Show%.Show(c)],
+  Format|'A list: %s'[
+    /Std/List/Show%.Show(/Std/Bool/Show%.Show)[True, False, False]],
+  Format|'An integer: '[/Std/Int/Show%.Show(x)]];
 
 # Call the helper function for a main function
 # that outputs a single string value.
-/Core/Stdio/StringO%.Run(output);
+/Std/Io/Cli/Print%.Print(output);
