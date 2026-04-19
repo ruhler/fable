@@ -24,7 +24,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-In@ .= /Std/Io/Stream/Binary%;
+In@ .= /Std/Stream/Binary%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -133,7 +133,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(In@<M@> in, Monad@<M@> m) {
     <@ A@>(String@) { PM@<A@>; }
     Fail = <@ A@>(String@ msg, S@ s) {
       m.return(Error<R@<A@>>(Format|'error:%s: %s'[
-          /Std/Int/Show%.Show(s), /Std/Stream/Text%.String(msg)]));
+          /Std/Int/Show%.Show(s), /Std/Stream/String%.String(msg)]));
     };
 
     # Returns number of bytes read so far.

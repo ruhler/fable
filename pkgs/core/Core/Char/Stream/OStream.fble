@@ -1,20 +1,8 @@
 
-Stream@, Do .= /Std/Stream/Text%;
-Out@ .= /Std/Io/Stream/Text%;
-
-Monad@ = /Std/Monad%.Monad@;
-State@ = /Std/State%.State@;
-
-Unit@ = /Std/Unit%.Unit@;
-
-# Constructs an output stream that discards the output characters.
-# For use in test cases and benchmarking, where we want to exercise the output
-# code but don't care about what is output.
-# TODO: Come up with a better name to distinguish this from m.return(Unit)?
-<<@>@ M@>(Monad@<M@>) { Out@<M@>; }
-NullOutput = <<@>@ M@>(Monad@<M@> m) {
-  @(put: (Stream@ output) { m.return(/Std/Stream/Test%.Test(output)); });
-};
+Monad@ .= /Std/Monad%;
+Stream@, Out@, Do .= /Std/Stream/Text%;
+State@ .= /Std/State%;
+Unit@ .= /Std/Unit%;
 
 # Make an output stream from an Stream@ state monad.
 # TODO: Move this to a different module to avoid false dependency on State@?
@@ -26,4 +14,4 @@ OStream = <<@>@ M@>(Monad@<M@> m, State@<Stream@, M@> s) {
   });
 };
 
-@(NullOutput, OStream);
+@(OStream);

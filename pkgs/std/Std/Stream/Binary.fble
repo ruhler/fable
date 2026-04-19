@@ -1,0 +1,5 @@
+# @module[/Std/Stream/Binary%]
+#  Binary based streams. This module provides specializations of the 
+#  /Std/Stream% types and functions for streams of Int@.
+
+/Std/Stream%.Stream</Std/Int%.Int@>;

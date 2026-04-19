@@ -13,8 +13,8 @@ Monad@ = /Std/Monad%.Monad@;
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
 
-Byte = /Std/Io/Stream/Binary%;
-Char = /Std/Io/Stream/Text%;
+Byte = /Std/Stream/Binary%;
+Char = /Std/Stream/Text%;
 
 # Convert a byte input stream to a character input stream.
 <<@>@ M@>(Monad@<M@>, Byte.In@<M@>) { Char.In@<M@>; }

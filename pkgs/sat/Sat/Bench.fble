@@ -1,14 +1,16 @@
 
+Char@ .= /Std/Char%;
+
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 IStream = /Core/Char/Stream/IStream%.IStream;
 
-NullOutput = /Core/Char/Stream/OStream%.NullOutput;
+NullOut = /Std/Stream/Null%.NullOut<Char@>;
 
 Pure = /Std/State/Pure%.Pure;
 Eval = /Std/State/Pure%.Eval;
 
-Out@ .= /Std/Io/Stream/Text%;
+Out@ .= /Std/Stream/Text%;
 
 Exit@ = /Std/Io/Cli%.Exit@;
 Success = /Std/Io/Cli%.Success;
@@ -27,7 +29,7 @@ Test@ Bench = Test(Str|Sat, (Unit@ _) {
   M = P.Monad;
   S = P.State;
 
-  Out@<M@> null = NullOutput(M);
+  Out@<M@> null = NullOut(M);
   M@<Exit@> go = /Sat/Main%.Main(M, IStream(M, S), null, null);
   Exit@ got = Eval(go, /Sat/Bench/Input%);
   Exit@ wnt = Success;

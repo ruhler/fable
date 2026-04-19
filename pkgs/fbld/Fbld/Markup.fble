@@ -67,7 +67,7 @@ ToString_ = (Markup@ m, String@ s) {
     command: {
       Error<String@>(m.command.name.loc,
         Format|'expected plain text, but found command @%s'[
-          /Std/Stream/Text%.String(m.command.name.text)
+          /Std/Stream/String%.String(m.command.name.text)
         ]);
     },
     sequence: {

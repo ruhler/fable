@@ -1,5 +1,5 @@
 
-Out@ .= /Std/Io/Stream/Text%;
+Out@ .= /Std/Stream/Text%;
 
 Int@ = /Std/Int%.Int@;
 Sub = /Std/Int%.Sub;

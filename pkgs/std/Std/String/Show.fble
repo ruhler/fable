@@ -4,7 +4,8 @@
 Char@ .= /Std/Char%;
 FormatE .= /Std/Char/Ascii/Stream%;
 U .= /Std/Char/Lit%;
-Do, Return, String .= /Std/Stream/Text%;
+Do, Return .= /Std/Stream/Text%;
+String .= /Std/Stream/String%;
 Show@ .= /Std/Show%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;

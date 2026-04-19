@@ -1,5 +1,5 @@
 
-In@, Out@ .= /Std/Io/Stream/Text%;
+In@, Out@ .= /Std/Stream/Text%;
 
 List@ = /Std/List%.List@;
 Maybe@ = /Std/Maybe%.Maybe@;

@@ -5,7 +5,7 @@ Eq@ = /Std/Eq%.Eq@;
 
 Show@ = /Std/Show%.Show@;
 Stream@ = /Std/Stream/Text%.Stream@;
-ToString = /Std/Stream/Text%.ToString;
+ToString = /Std/Stream/String%.ToString;
 
 Format = /Std/Char/Ascii/Stream%.Format;
 

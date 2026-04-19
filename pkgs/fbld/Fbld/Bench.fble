@@ -1,9 +1,11 @@
 
+Char@ .= /Std/Char%;
+
 Str = /Std/Char/Ascii%.Str;
 
-In@, Out@ .= /Std/Io/Stream/Text%;
+In@, Out@ .= /Std/Stream/Text%;
 IStream = /Core/Char/Stream/IStream%.IStream;
-NullOutput = /Core/Char/Stream/OStream%.NullOutput;
+NullOut = /Std/Stream/Null%.NullOut<Char@>;
 
 Exit@ = /Std/Io/Cli%.Exit@;
 Success = /Std/Io/Cli%.Success;
@@ -35,8 +37,8 @@ Test@ Bench = Test(Str|Fbld, (Unit@ _) {
   S = P.State;
 
   In@<M@> in = IStream(M, S);
-  Out@<M@> out = NullOutput(M);
-  Out@<M@> err = NullOutput(M);
+  Out@<M@> out = NullOut(M);
+  Out@<M@> err = NullOut(M);
   (String@) { M@<Maybe@<In@<M@>>>; } read = (String@ _) {
     M.return(Nothing<In@<M@>>);
   };

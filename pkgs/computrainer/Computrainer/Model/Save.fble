@@ -1,10 +1,7 @@
 
-Stream@ = /Std/Stream/Text%.Stream@;
-Return = /Std/Stream/Text%.Return;
-Concat = /Std/Stream/Text%.Concat;
-Format = /Std/Char/Ascii/Stream%.Format;
-FormatE = /Std/Char/Ascii/Stream%.FormatE;
-String = /Std/Char/Ascii/Stream%.String;
+Stream@, Return .= /Std/Stream/Text%;
+Concat = /Std/Stream/List%.Concat;
+Format, FormatE, String .= /Std/Char/Ascii/Stream%;
 
 Car@ = /Computrainer/Car%.Car@;
 Cars@ = /Computrainer/Car%.Cars@;

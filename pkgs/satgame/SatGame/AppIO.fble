@@ -15,7 +15,7 @@ Io@ = /Std/Io%.Io@;
 
 Success = /Std/Io/Cli%.Success;
 
-In@, Out@ .= /Std/Io/Stream/Text%;
+In@, Out@ .= /Std/Stream/Text%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

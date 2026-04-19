@@ -64,7 +64,7 @@ AssertArgCount = (Int@ expected, Command@ cmd) {
     Error<Unit@>(cmd.name.loc,
       Format|'Expected %s arguments to %s, but found %s'[
         /Std/Int/Show%.Show(expected),
-        /Std/Stream/Text%.String(cmd.name.text),
+        /Std/Stream/String%.String(cmd.name.text),
         /Std/Int/Show%.Show(num_args)]);
   });
   r.return(Unit);

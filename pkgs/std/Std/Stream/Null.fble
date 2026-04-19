@@ -1,0 +1,32 @@
+# @module[/Std/Stream/Null%]
+#  An output channel that ignores all output.
+
+Monad@ = /Std/Monad%.Monad@;
+Stream@, Out@ .= /Std/Stream%;
+Unit@, Unit .= /Std/Unit%;
+
+# @func[ToNull] Stream discarder.
+#  Ignores the stream, for cases where you don't care about what is being
+#  output.
+#
+#  @arg[A@] The type of value to output.
+#  @arg[Stream@<A@>] The output to perform.
+#  @returns[Unit@] Nothing interesting.
+<@ A@>(Stream@<A@>) { Unit@; }
+ToNull = <@ A@>(Stream@<A@> _) {
+  Unit;
+};
+
+# @func[NullOut] An Out@ that ignores its output.
+#  All output is discarded immediately.
+#
+#  @arg[A@] The type of value to output.
+#  @arg[<@>@][M@] Monadic type to work with.
+#  @arg[Monad@<M@>][m] The monadic interface.
+#  @returns[Out@<M@>] The null output port.
+<@ A@, <@>@ M@>(Monad@<M@>) { Out@<A@, M@>; }
+NullOut = <@ A@, <@>@ M@>(Monad@<M@> m) {
+  @(put: (Stream@<A@> _) { m.return(Unit); });
+};
+
+@(ToNull, NullOut);

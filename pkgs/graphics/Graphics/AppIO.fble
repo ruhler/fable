@@ -1,8 +1,8 @@
 
 Str = /Std/Char/Ascii%.Str;
 
-Out@ .= /Std/Io/Stream/Text%;
-String .= /Std/Stream/Text%;
+Out@ .= /Std/Stream/Text%;
+String .= /Std/Stream/String%;
 
 Success = /Std/Io/Cli%.Success;
 

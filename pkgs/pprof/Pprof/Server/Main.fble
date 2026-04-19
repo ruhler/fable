@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
 Char = /Std/Char/Ascii%.Char;
-Out@ = /Std/Io/Stream/Text%.Out@;
+Out@ .= /Std/Stream/Text%;
 OStream = /Core/Stream/Char%.OStream;
 IStream = /Core/Stream/Char%.IStream;
 GetLine = /Core/Char/Stream/IStream%.GetLine;
@@ -43,15 +43,14 @@ Stream@ = /Std/Stream/Text%.Stream@;
 Do = /Std/Stream/Text%.Do;
 Put = /Std/Stream/Text%.Put;
 Return = /Std/Stream/Text%.Return;
-String = /Std/Stream/Text%.String;
+String = /Std/Stream/String%.String;
 
 Split = /Std/String/Eq%.Split;
 
-BinaryIn@ = /Std/Io/Stream/Binary%.In@;
-CharIn@ = /Std/Io/Stream/Text%.In@;
+BinaryIn@ = /Std/Stream/Binary%.In@;
+CharIn@ = /Std/Stream/Text%.In@;
 
-ToString = /Std/Stream/Text%.ToString;
-Lines = /Std/Stream/Text%.Lines;
+Lines, ToString .= /Std/Stream/String%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -126,7 +125,7 @@ GetArgs = (List@<String@> args, Args@ default) {
 
   args.items.tail.?(empty: {
     default.@(error: Just(Format|'missing arg to option %s'[
-        /Std/Stream/Text%.String(arg)]));
+        /Std/Stream/String%.String(arg)]));
   });
 
   String@ value = args.items.tail.items.head;
@@ -142,7 +141,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     });
 
     default.@(error: Just(Format|'unrecognized option %s'[
-        /Std/Stream/Text%.String(arg)]));
+        /Std/Stream/String%.String(arg)]));
   };
 
   nargs.error.?(just: nargs);
@@ -178,7 +177,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
       BlockId@ block = seq.items.head;
       Maybe@<Block@> mname = Blocks.Lookup(profile.blocks, block);
       Stream@ name = { 
-        mname.?(just: /Std/Stream/Text%.String(mname.just.name));
+        mname.?(just: /Std/Stream/String%.String(mname.just.name));
         Unit@ _ = /Core/Debug%.TraceLn(
           ToString(Format|'block %s not found'[/Std/Int/Show%.Show(block)]));
         Format|'??%s??'[/Std/Int/Show%.Show(block)];
@@ -252,12 +251,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   Server@<M@> s = ms.just;
 
   Unit@ _ := m.do(out.put $
-      FormatE|'parsing %s...\n'[/Std/Stream/Text%.String(args.file)]);
+      FormatE|'parsing %s...\n'[/Std/Stream/String%.String(args.file)]);
 
   Maybe@<BinaryIn@<M@>> fin := m.do(read(args.file));
   fin.?(nothing: {
     Unit@ _ := m.do(err.put $ FormatE|'unable to open ''%s''\n'[
-        /Std/Stream/Text%.String(args.file)]);
+        /Std/Stream/String%.String(args.file)]);
     m.return(Failure);
   });
 
@@ -269,7 +268,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   
   Unit@ _ := m.do(out.put $
     FormatE|'serving at http://%s:%s\n'[
-      /Std/Stream/Text%.String(args.hostname),
+      /Std/Stream/String%.String(args.hostname),
       /Std/Int/Show%.Show(args.port)
   ]);
 

@@ -4,13 +4,10 @@ Char = /Std/Char/Ascii%.Char;
 Ascii = /Std/Char/Ascii%.Ascii;
 IsNewline .= /Std/String/Lines%;
 
-In@, Out@ .= /Std/Io/Stream/Text%;
+Stream@, In@, Out@, Put, Do .= /Std/Stream/Text%;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
-Stream@ = /Std/Stream/Text%.Stream@;
-Put = /Std/Stream/Text%.Put;
-Do = /Std/Stream/Text%.Do;
-String = /Std/Stream/Text%.String;
+String = /Std/Stream/String%.String;
 
 Int@ = /Std/Int%.Int@;
 Sub = /Std/Int%.Sub;

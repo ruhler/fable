@@ -1,6 +1,6 @@
 
-In@, Out@ .= /Std/Io/Stream/Text%;
-String .= /Std/Stream/Text%;
+In@, Out@ .= /Std/Stream/Text%;
+String .= /Std/Stream/String%;
 
 List@ = /Std/List%.List@;
 Any = /Std/List/Search%.Any;

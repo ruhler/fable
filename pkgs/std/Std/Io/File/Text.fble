@@ -6,8 +6,7 @@ Str .= /Std/Char/Ascii%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Io@ .= /Std/Io%;
-In@, Out@ .= /Std/Io/Stream%.Io<Char@>;
-Stream@ .= /Std/Stream/Text%;
+Stream@, In@, Out@ .= /Std/Stream/Text%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 

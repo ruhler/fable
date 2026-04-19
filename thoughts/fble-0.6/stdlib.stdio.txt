@@ -4942,7 +4942,8 @@ export output channels, right?
   Unit@ _ = String|'hello'(Null);
   Unit@ _ = String|'hello'(StringChannel);
 
-What do you think of that? Something to consider.
+What do you think of that? Something to consider. Except for list and string
+we need an extra conversion step. So nevermind on that.
 
 I'm using the type S@ and name 's' for the channel value. Is there a better
 choice? I don't want to use M@, because anytime I see M@ I expect it to take
@@ -5000,3 +5001,92 @@ Should In@ and Out@ be the raw functions, or I want to wrap them in get and
 put? Wrapping them makes it easier to add more things in the future, for
 example related to errors. Probably that's the safest way to go.
 
+---
+
+Now the definitions if In@ and Out@ are so simple. Does it really not make
+sense to define them as part of Stream%? The only cost is Maybe@. Well, and
+the complexity of introducing M@ as a type.
+
+I'm not sure.
+
+I think we need another round of thought and cleanup. To consider:
+* Where ToList versus Puts and Concat should live.
+* Whether In@ and Out@ should be part of /Std/Stream%.
+* Whether we should provide .../Text%, .../Binary% wrapper modules or not.
+* Whether In@ and Out@ should be structs or direct functions.
+
+---
+
+Where I am right now:
+* /Std/Stream%: Channel@, Stream@, Return, Do, Put, Stream
+* /Std/Stream/List%: List, Puts, Concat
+* /Std/Stream/Test%: Test
+* /Std/Stream/Text%:
+ - Channel@, Stream@, Return, Do, Put
+ - Puts, Concat, String, Format, Lines, Join, ToString
+* /Std/Stream/Text/Assert%: AssertOutput
+* /Std/Io/Stream%: In@, Out@, Io
+* /Std/Io/Stream/Binary%: In@, Out@
+* /Std/Io/Stream/Text%: In@, Out@
+* /Core/Char/Stream/OStream%: NullOutput
+
+Let's talk about one thing at a time. Starting with the list specific things:
+* List
+ - Outputs a stream to a list. So, list is the target. The channel.
+ - Converts a stream to a list.
+* Puts
+ - Converts a list to a stream.
+* Concat
+ - Flattens a list of streams into a single stream.
+
+Honestly, it feels okay. To have them together feels reasonable.
+
+How about /Std/Stream/String%? Like, doesn't it make sense to have String,
+Format, Lines, Join, and, err... ToString go there? /Std/Stream/Text% can just
+be raw /Std/Stream% for Char@?
+
+What name should I use instead of 'String'? Is String a stream of characters,
+or a constructor for a string from a stream? It's the same question as List
+versus Puts,right?
+
+I like the name String, Format, etc. when describing streams of characters. I
+feel like ToString, ToList might be better names for those conversions after
+all? But then... ToDebug? ToTest?
+
+---
+
+Yeah, let's use ToString, ToList, ToDebug, ToTest, ToNull. That makes sense.
+
+In terms of defining In@ and Out@ with Stream%, I'm still torn. It's so
+tempting to put it all in one place. Certainly anyone who uses Out@ will need
+to know about Stream@ and likely want to work with it. On the other hand, In@
+really has nothing to do with stream. And is it really that hard to define In@
+and Out@ separately?
+
+I guess I want to piggy back on top of Text and Binary being a thing for both
+streams and In@/Out@. Or, really, any type.
+
+If we define Out@ as part of Stream%, then we could define things besides
+ToString, ToList, ToTest, ToDebug, ToNull for Out@. Maybe call them...
+StringOut, ListOut, TestOut, DebugOut, NullOut? Or String, List, Test, Debug,
+Null? Except, we need monads for those. Test, Debug, and Null can work for any
+monad you provide. String and List need a State@ monad. 
+
+Come on, surely it makes sense to include In@ and Out@ in /Std/Stream%.
+
+Which gets me to an updated proposal:
+* /Std/Stream%: Channel@, Stream@, Return, Do, Put, Stream, In@, Out@
+* /Std/Stream/List%: Puts, Concat, ToList
+* /Std/Stream/String%: Puts, Concat, String, Format, Lines, Join, ToString
+* /Std/Stream/String/Assert%: AssertStream
+* /Std/Stream/Test%: ToTest, TestOut
+* /Std/Stream/Null%: ToNull, NullOut
+* /Std/Stream/Text%: Channel@, Stream@, Return, Do, Put, In@, Out@
+* /Std/Stream/Binary%: Channel@, Stream@, Return, Do, Put, In@, Out@
+
+And then I just need to decide if I want to provide Out@ for State@ of List@,
+String@, and/or Stream@, and if so where. Maybe provide Stream@ and List@ both
+in /Std/Stream/Pure%? I don't know. I can review use case first before adding
+those.
+
+Yeah, this feels a bit cleaner to me. Let's go in that direction.

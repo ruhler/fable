@@ -1,6 +1,6 @@
 
-In@, Out@ .= /Std/Io/Stream/Text%;
-String .= /Std/Stream/Text%;
+In@, Out@ .= /Std/Stream/Text%;
+String .= /Std/Stream/String%;
 GetText = /Core/Char/Stream/IStream%.GetText;
 
 Int@ = /Std/Int%.Int@;

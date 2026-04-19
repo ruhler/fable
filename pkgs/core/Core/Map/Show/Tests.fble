@@ -10,7 +10,7 @@ Int = /Std/Int/Lit%.Int;
 
 List = /Std/List%.List;
 
-ToString = /Std/Stream/Text%.ToString;
+ToString = /Std/Stream/String%.ToString;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

@@ -9,9 +9,7 @@ List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-In@, Out@ .= /Std/Io/Stream/Text%;
-
-Stream@ = /Std/Stream/Text%.Stream@;
+Stream@, In@, Out@ .= /Std/Stream/Text%;
 
 String@ = /Std/String%.String@;
 Format = /Std/Char/Ascii/Stream%.Format;

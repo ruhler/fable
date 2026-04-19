@@ -1,6 +1,6 @@
 
-String .= /Std/Stream/Text%;
-Out@ .= /Std/Io/Stream/Text%;
+String .= /Std/Stream/String%;
+Out@ .= /Std/Stream/Text%;
 Format = /Std/Char/Ascii/Stream%.Format;
 
 List@ = /Std/List%.List@;

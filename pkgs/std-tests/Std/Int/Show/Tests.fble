@@ -2,7 +2,7 @@
 Ascii@ = /Std/Char/Ascii%.Ascii@;
 OnAscii = /Std/Char/Ascii%.OnAscii;
 
-AssertOutput = OnAscii $ /Std/Stream/Text/Assert%.AssertOutput;
+AssertStream = OnAscii $ /Std/Stream/String/Assert%.AssertStream;
 
 Int@ = /Std/Int%.Int@;
 Neg = /Std/Int%.Neg;
@@ -19,7 +19,7 @@ Unit@ = /Std/Unit%.Unit@;
 
 (List@<Ascii@>, List@<Ascii@>, Int@) { Test@; }
 TestShow = (List@<Ascii@> name, List@<Ascii@> expected, Int@ value) {
-  Test(name, (Unit@ _) { AssertOutput(expected, /Std/Int/Show%.Show(value)); });
+  Test(name, (Unit@ _) { AssertStream(expected, /Std/Int/Show%.Show(value)); });
 };
 
 Test@ Tests = TestSuite|'Show' $ List[

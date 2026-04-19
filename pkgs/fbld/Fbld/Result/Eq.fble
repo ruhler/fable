@@ -3,7 +3,7 @@ False = /Std/Bool%.False;
 
 Eq@ = /Std/Eq%.Eq@;
 
-ToString = /Std/Stream/Text%.ToString;
+ToString = /Std/Stream/String%.ToString;
 
 Result@ = /Fbld/Result%.Result@;
 

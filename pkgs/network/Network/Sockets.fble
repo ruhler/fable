@@ -1,7 +1,7 @@
 
 Int@ .= /Std/Int%;
 Maybe@ .= /Std/Maybe%;
-In@, Out@ .= /Std/Io/Stream/Binary%;
+In@, Out@ .= /Std/Stream/Binary%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 

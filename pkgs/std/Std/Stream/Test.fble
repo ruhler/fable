@@ -1,19 +1,21 @@
 # @module[/Std/Stream/Test%]
 #  An output channel for testing.
 
-Channel@, Stream@ .= /Std/Stream%;
+Monad@ = /Std/Monad%.Monad@;
+Channel@, Stream@, Out@ .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
-# @func[Test] Output to a Unit@.
+# @func[ToTest] Stream values to a Unit@.
 #  This goes through the output value by value, ignoring the value seen.
 #  Useful for test cases and benchmarks. If you don't care about the output in
-#  normal execution, you should just ignore the Stream@ in the first place.
+#  normal execution, use /Std/Stream/Null% instead, which ignores the entire
+#  Stream@ in the first place.
 #
 #  @arg[A@] The type of value to output.
 #  @arg[Stream@<A@>] The output to perform.
 #  @returns[Unit@] Nothing interesting.
 <@ A@>(Stream@<A@>) { Unit@; }
-Test = <@ A@> {
+ToTest = <@ A@> {
   S@ = Unit@;
   Channel@<A@, S@> S = @(
     return: Unit,
@@ -26,4 +28,19 @@ Test = <@ A@> {
   };
 };
 
-@(Test);
+# @func[TestOut] An Out@ for use in testing.
+#  This exercises the output stream computations but ignores the actual values
+#  output. Useful for test cases and benchmarks. If you don't care about the
+#  output in normal execution, use /Std/Stream/Null% instead, which ignores
+#  the entire Stream@ output in the first place.
+#
+#  @arg[A@] The type of value to output.
+#  @arg[<@>@][M@] Monadic type to work with.
+#  @arg[Monad@<M@>][m] The monadic interface.
+#  @returns[Out@<M@>] The test output port.
+<@ A@, <@>@ M@>(Monad@<M@>) { Out@<A@, M@>; }
+TestOut = <@ A@, <@>@ M@>(Monad@<M@> m) {
+  @(put: (Stream@<A@> output) { m.return(ToTest(output)); });
+};
+
+@(ToTest, TestOut);

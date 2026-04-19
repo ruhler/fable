@@ -5,28 +5,6 @@ List@, Empty, Items .= /Std/List%;
 Channel@, Stream@, Return, Do, Put .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
-# @func[List] Output a stream to a list.
-#  @arg[@][A@] The type of value to output.
-#  @arg[Stream@<A@>] The output to perform.
-#  @returns[List@<A@>] A list of the output values.
-<@ A@>(Stream@<A@>) { List@<A@>; }
-List = <@ A@> {
-  # Output to a list given the tail of the list.
-  S@ = (List@<A@>) { List@<A@>; };
-
-  Channel@<A@, S@> S = @(
-    return: (List@<A@> tail) { tail; },
-    do: (S@ a, (Unit@) { S@; } fb, List@<A@> tail) {
-      a(fb(Unit, tail));
-    },
-    put: Items<A@>
-  );
-
-  (Stream@<A@> output) {
-    output(S, Empty<A@>);
-  };
-};
-
 # @func[Puts] Output a list of values.
 #  @arg[@][A@] The type of values to output.
 #  @arg[List@<A@>][values] The values to output.
@@ -49,4 +27,26 @@ Concat = <@ A@>(List@<Stream@<A@>> xs) {
   Concat(xs.items.tail);
 };
 
-@(List, Puts, Concat);
+# @func[ToList] Output a stream to a list.
+#  @arg[@][A@] The type of value to output.
+#  @arg[Stream@<A@>] The output to perform.
+#  @returns[List@<A@>] A list of the output values.
+<@ A@>(Stream@<A@>) { List@<A@>; }
+ToList = <@ A@> {
+  # Output to a list given the tail of the list.
+  S@ = (List@<A@>) { List@<A@>; };
+
+  Channel@<A@, S@> S = @(
+    return: (List@<A@> tail) { tail; },
+    do: (S@ a, (Unit@) { S@; } fb, List@<A@> tail) {
+      a(fb(Unit, tail));
+    },
+    put: Items<A@>
+  );
+
+  (Stream@<A@> output) {
+    output(S, Empty<A@>);
+  };
+};
+
+@(Puts, Concat, ToList);

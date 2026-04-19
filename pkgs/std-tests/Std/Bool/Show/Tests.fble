@@ -4,7 +4,7 @@ False = /Std/Bool%.False;
 
 OnAscii = /Std/Char/Ascii%.OnAscii;
 
-AssertOutput = OnAscii $ /Std/Stream/Text/Assert%.AssertOutput;
+AssertStream = OnAscii $ /Std/Stream/String/Assert%.AssertStream;
 
 List = /Std/List%.List;
 
@@ -18,11 +18,11 @@ Unit@ = /Std/Unit%.Unit@;
 #  @type[Test@]
 Test@ Tests = TestSuite|'Show' $ List[
   Test|'True' $ (Unit@ _) {
-    AssertOutput|'True' $ /Std/Bool/Show%.Show(True);
+    AssertStream|'True' $ /Std/Bool/Show%.Show(True);
   },
 
   Test|'False' $ (Unit@ _) {
-    AssertOutput|'False' $ /Std/Bool/Show%.Show(False);
+    AssertStream|'False' $ /Std/Bool/Show%.Show(False);
   }
 ];
 

@@ -11,7 +11,7 @@ List = /Std/List%.List;
 Str = /Std/Char/Ascii%.Str;
 
 Stream@ = /Std/Stream/Text%.Stream@;
-ToString = /Std/Stream/Text%.ToString;
+ToString = /Std/Stream/String%.ToString;
 
 Test@ = /Std/Test%.Test@;
 Test = /Std/Test%.Test;

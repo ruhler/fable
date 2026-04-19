@@ -1,0 +1,96 @@
+# @module[/Std/Stream/String%]
+#  Utilities for working with strings and text streams.
+
+Char@ .= /Std/Char%;
+U .= /Std/Char/Lit%;
+List@ .= /Std/List%;
+Channel@, Stream@, Return, Do, Put .= /Std/Stream/Text%;
+Puts, ToList .= /Std/Stream/List%;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
+
+# @func[String] Output a string.
+#  @arg[String@][str] The string to output.
+#  @returns[Output] A computation that outputs the string.
+(String@) { Stream@; }
+String = (String@ s) {
+  Puts(s);
+};
+
+# @func[Lines] Output a sequence of lines.
+#  @arg[List@<Stream@>] A list of lines to output.
+#  @returns[Output]
+#   A computation to output each line in turn, adding a newline character
+#   after every one.
+(List@<Stream@>) { Stream@; }
+Lines = (List@<Stream@> xs) {
+  xs.?(empty: Return);
+  Unit@ _ := Do(xs.items.head);
+  Unit@ _ := Do(Put(/Std/String/Lines%.Newline));
+  Lines(xs.items.tail);
+};
+
+# @func[Join] Output a sequence of outputs with separator in between.
+#  @arg[String@][sep] The separator to output between each given output.
+#  @arg[List@<Stream@>][xs] The elements to output.
+#  @return[Stream@] Outputs each element in turn, separated by @a[sep].
+(String@, List@<Stream@>) { Stream@; }
+Join = (String@ sep, List@<Stream@> xs) {
+  xs.?(empty: Return);
+  xs.items.tail.?(empty: xs.items.head);
+  Unit@ _ := Do(xs.items.head);
+  Unit@ _ := Do(String(sep));
+  Join(sep, xs.items.tail);
+};
+
+Char@ '%%' = U|25;
+Char@ '%s' = U|73;
+
+# @func[Format] Construct a formatted output.
+#  Provides printf like formatting, except the only supported format type is
+#  @l{%s}. More specifically, outputs the format string with @l{%%} replaced
+#  with @l{%} and @l{%s} replaced with the value of the next argument output.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Stream@ out = Format|'a: %s, b: %s'[String|'hello', String|'there'];
+#
+#  @arg[String@][fmt] The format specifier
+#  @arg[List@<Stream@>[args] Format args.
+#  @return[Stream@] The formatted output.
+(String@, List@<Stream@>) { Stream@; }
+Format = (String@ fmt, List@<Stream@> args)<@ S@>(Channel@<S@> s) {
+  fmt.?(empty: s.return);
+  Char@ c = fmt.items.head;
+  /Std/Char/Eq%.Eq('%%', c).?(true: {
+    fmt.items.tail.?(empty: /Std/Undef%.Undef.undef<S@>);
+    Char@ e = fmt.items.tail.items.head;
+
+    /Std/Char/Eq%.Eq('%%', e).?(true: {
+      Unit@ _ := s.do(s.put(c));
+      Format(fmt.items.tail.items.tail, args, s);
+    });
+
+    /Std/Char/Eq%.Eq('%s', e).?(true: {
+      Unit@ _ := s.do(args.items.head(s));
+      Format(fmt.items.tail.items.tail, args.items.tail, s);
+    });
+
+    /Std/Undef%.Undef.undef<S@>;
+  });
+
+  Unit@ _ := s.do(s.put(c));
+  Format(fmt.items.tail, args, s);
+};
+
+# @func[ToString] Output to a String@.
+#  @arg[Stream@] The output to render.
+#  @returns[String@] A string with the output characters.
+(Stream@) { String@; }
+ToString = (Stream@ s) {
+  ToList(s);
+};
+
+@(String, Format, Lines, Join, ToString);
+

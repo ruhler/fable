@@ -20,7 +20,7 @@ Greater = /Std/Cmp%.Greater;
 
 Show@ = /Std/Show%.Show@;
 Do = /Std/Stream/Text%.Do;
-ToString = /Std/Stream/Text%.ToString;
+ToString = /Std/Stream/String%.ToString;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
