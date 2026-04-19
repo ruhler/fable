@@ -1,17 +1,12 @@
 
-Char@ = /Std/Char%.Char@;
-Channel@, Stream@ .= /Std/Stream/Text%;
+Char@, Pos .= /Std/Char%;
 Int@ = /Std/Int%.Int@;
-Put .= /Std/Stream%.Stream<Int@>;
 
 Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
 
 Byte = /Std/Stream/Binary%;
 Char = /Std/Stream/Text%;
@@ -25,22 +20,20 @@ IStream = <<@>@ M@>(Monad@<M@> m, Byte.In@<M@> s) {
   m.return(Just(/Std/Char%.Char(mbyte.just)));
 };
 
+<@ S@>(Byte.Channel@<S@>) { Char.Channel@<S@>; }
+ChannelFromAscii = <@ S@>(Byte.Channel@<S@> s) {
+  Char.Channel@(s.return, s.do, (Char@ c) { s.put(Pos(c)); });
+};
+
+(Char.Stream@) { Byte.Stream@; }
+StreamFromAscii = (Char.Stream@ char_stream)<@ S@>(Byte.Channel@<S@> byte_channel) {
+  char_stream(ChannelFromAscii(byte_channel));
+};
+
 # Convert a byte output stream to a character output stream.
-<<@>@ M@>(Monad@<M@>, Byte.Out@<M@>) { Char.Out@<M@>; }
-OStream = <<@>@ M@>(Monad@<M@> m, Byte.Out@<M@> s) {
-  S@ = M@<Unit@>;
-  S@ return = m.return(Unit);
-  (S@, (Unit@) { S@; }) { S@; }
-  do = (S@ ma, (Unit@) { S@; } f) {
-    m.do(ma, f);
-  };
-
-  # TODO: Handle unicode properly.
-  put = (Char@ c) { s(Put(/Std/Char%.Pos(c))); };
-
-  Channel@<M@<Unit@>> stream = @(return, do, put);
-
-  (Stream@ output) { output(stream); };
+<<@>@ M@>(Byte.Out@<M@>) { Char.Out@<M@>; }
+OStream = <<@>@ M@>(Byte.Out@<M@> byte_out, Char.Stream@ char_stream) {
+  byte_out(StreamFromAscii(char_stream));
 };
 
 @(IStream, OStream);

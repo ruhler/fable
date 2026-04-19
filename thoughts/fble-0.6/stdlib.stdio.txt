@@ -5096,3 +5096,65 @@ Yeah, this feels a bit cleaner to me. Let's go in that direction.
 I think the bulk of the API feels reasonable now. Just some lingering cleanup
 and migration.
 
+* pkgs/core/Core/Char/Stream/IStream.fble
+  - IStream: Reads text In@ from a string, given a state monad.
+* pkgs/core/Core/Char/Stream/OStream.fble
+  - OStream: Reads text Out@ to a Stream@, given a state monad.
+* pkgs/core/Core/Stream/Char.fble
+  - IStream: Converts bytes to characters on In@
+  - OStream: Converts bytes to characters on Out@
+* pkgs/core/Core/Stream/IStream/Pure.fble
+  - State monad In@ for binary stream.
+
+Let's look one at a time for how to clean these up.
+
+The pprof server wants to handle a socket connection. Input and output are
+binary at the socket level. But I want to reuse things like GetLine, Lines.
+
+So what is the character encoding used by http? By pprof strings?
+
+Because I'm consuming http, and generating http, but also outputting html that
+contains text that comes from the strings in pprof.
+
+For input, I only care about the start line, and then I skip over all the
+header lines, but line by line.
+
+You know what? I think I'm fine to inline the byte to char conversion into
+pprof and worry about fixing pprof later. It looks like I'm already not doing
+proper decoding of the path in the http request.
+
+Do I perhaps want to provide an easy way to go from Stream@<A@> to
+Stream@<B@>? That sounds reasonable to me.
+
+But maybe that's easy enough to do already?
+
+In this case, I'm trying to remap Out@. Let me see if I can simplify it first,
+then inline.
+
+---
+
+It's surprisingly tricky to transform an Out@<Int@> to an Out@<Char@>.
+
+Channel@ is easy enough: just wrap the put function.
+ - Interesting I can't use struct modify for this, because it changes the
+   type. Should I generalize struct modify to allow changing the type?
+
+Stream@ is tricky. What is my goal here? You give me a byte Out@, I want it to
+be a char Out@. So I'm giving you character streams. You need to convert those
+to byte streams. That should be easy enough too, right?
+
+I don't know what the channel is. I don't know where things are going to. What
+I'm given is a function to put a byte stream. I want to use that to implement
+a function to put a character stream. The function to put a byte stream is
+given the byte stream. Which means I should be able to take the provided
+stream and modify it on the fly, right? Whatever stream you give me, I can??
+
+It shouldn't be hard. It should be:
+* Out@<Char@>: You give me a Stream@<Char@>, I'll convert it to a Stream@<Int@> and
+  pass that to my internal Out@<Int@>.
+* Stream@<Int@>: You give me a Channel@<Int@>, I'll convert it to a
+  Channel@<Char@> and pass that to my internal Stream@<Char@>.
+* Channel@<Char@>: Is just a wrapper around your Channel@<Int@>.
+
+Let's put it into code then, shall we?
+

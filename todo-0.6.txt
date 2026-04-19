@@ -2,6 +2,10 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Should struct copy be allowed to change the type of fields it updates?
+ Sample use case: Convert a byte Channel@ to a char Channel@ using
+   s.@(put: (Char@ c) { s.put(Pos(c)); });
+
 * Document somewhere that files are closed automatically.
 
 * Double check all the old documentation referring to Output@, which is now
