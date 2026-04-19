@@ -1,7 +1,9 @@
 # @module[/Std/Stream/Map%]
 #  Utilities for mapping between different stream types.
 
-Channel@, Stream@, Out@ .= /Std/Stream%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
+Channel@, Stream@, In@, Out@ .= /Std/Stream%;
 
 # @func[Channel] Changes the output type of a channel.
 #  @arg[@][A@] The output type of the original channel.
@@ -43,4 +45,19 @@ Out = <@ A@, @ B@>((B@) { A@; } f)<<@>@ M@>(Out@<A@, M@> out) {
   };
 };
 
-@(Channel, Stream, Out);
+# @func[In] Changes the input type of an In@.
+#  @arg[@][A@] The input type of the original In@.
+#  @arg[@][B@] The input type of the new In@.
+#  @arg[(A@) { B@; }][f] Function to convert input values.
+#  @arg[<@>@][M@] The monadic type.
+#  @arg[Monad@<M@>][m] The monad implementation.
+#  @arg[In@<A@, M@>][In] The original In@.
+#  @return[In@<B@, M@>] A new In@ that inputs the target input type.
+<@ A@, @ B@>((A@) { B@; })<<@>@ M@>(Monad@<M@>, In@<A@, M@>) { In@<B@, M@>; }
+In = <@ A@, @ B@>((A@) { B@; } f)<<@>@ M@>(Monad@<M@> m, In@<A@, M@> in) {
+  Maybe@<A@> ma := m.do(in);
+  ma.?(nothing: m.return(Nothing<B@>));
+  m.return(Just(f(ma.just)));
+};
+
+@(Channel, Stream, Out, In);
