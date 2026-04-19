@@ -144,7 +144,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(In@<M@> in, Monad@<M@> m) {
     # Gets a byte from the input stream.
     # Returns Nothing if we reach end of input.
     PM@<Maybe@<Int@>> MaybeGet = (S@ s) {
-      Maybe@<Int@> mbyte := m.do(in.get);
+      Maybe@<Int@> mbyte := m.do(in);
       Return(mbyte, mbyte.?(just: Incr(s), nothing: s));
     };
 

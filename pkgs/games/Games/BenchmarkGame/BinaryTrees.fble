@@ -55,7 +55,7 @@ Main@
 Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Out@<M@> out, List@<String@> args) {
   (List@<Ascii@>, List@<Stream@>) { M@<Unit@>; }
   FmtL = (List@<Ascii@> fmt, List@<Stream@> args) {
-    out.put $ FormatE|'%s\n'[Format(fmt, args)];
+    out $ FormatE|'%s\n'[Format(fmt, args)];
   };
 
   Int@ n = args.?(items: /Core/Int/Read%.Read(args.items.head), empty: 0);

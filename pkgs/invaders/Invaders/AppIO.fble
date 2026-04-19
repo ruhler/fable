@@ -40,7 +40,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
   (String@) { M@<Maybe@<Out@<M@>>>; } write = /Std/Io/File/Text%.Write(m, io);
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(out.put $ String $ /Invaders/Usage%);
+    Unit@ _ := m.do(out $ String $ /Invaders/Usage%);
     m.return(Success);
   });
 
@@ -61,7 +61,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     String@ filename = Append(home.just, Str|'/.fble-invaders');
     Maybe@<Out@<M@>> ostream := m.do(write(filename));
     ostream.?(nothing: m.return(Unit));
-    ostream.just.put $ /Std/Int/Show%.Show(score);
+    ostream.just $ /Std/Int/Show%.Show(score);
   };
 
   State@<M@, Int@> high_score_s = State@<M@, Int@>(get_high_score, put_high_score);

@@ -106,27 +106,27 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   (In@<M@>, Out@<M@>) { M@<Unit@>; }
   ForwardAll = (In@<M@> in, Out@<M@> out) {
-    Maybe@<Int@> mb := m.do(in.get);
+    Maybe@<Int@> mb := m.do(in);
     mb.?(nothing: m.return(Unit));
-    Unit@ _ := m.do(out.put(Put(mb.just)));
+    Unit@ _ := m.do(out(Put(mb.just)));
     ForwardAll(in, out);
   };
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Unit@ _ := m.do(out.put $ String $ /Network/Apps/Echo/Usage%);
+    Unit@ _ := m.do(out $ String $ /Network/Apps/Echo/Usage%);
     m.return(Success);
   });
 
   args.error.?(items: {
-    Unit@ _ := m.do(err.put $ String $ args.error);
-    Unit@ _ := m.do(err.put $ StringE|'\ntry --help for help\n');
+    Unit@ _ := m.do(err $ String $ args.error);
+    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
     m.return(Failure);
   });
 
   Maybe@<Server@<M@>> ms := m.do(sockets.server(args.hostname, args.port));
   ms.?(nothing: {
-    Unit@ _ := m.do(err.put $ StringE|'unable to serve\n');
+    Unit@ _ := m.do(err $ StringE|'unable to serve\n');
     m.return(Failure);
   });
 

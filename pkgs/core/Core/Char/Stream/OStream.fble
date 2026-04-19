@@ -7,11 +7,9 @@ Unit@ .= /Std/Unit%;
 # Make an output stream from an Stream@ state monad.
 # TODO: Move this to a different module to avoid false dependency on State@?
 <<@>@ M@>(Monad@<M@>, State@<Stream@, M@>) { Out@<M@>; }
-OStream = <<@>@ M@>(Monad@<M@> m, State@<Stream@, M@> s) {
-  @(put: (Stream@ output) {
-    Stream@ prev := m.do(s.get);
-    s.put(Do(prev, (Unit@ _) { output; }));
-  });
+OStream = <<@>@ M@>(Monad@<M@> m, State@<Stream@, M@> s, Stream@ output) {
+  Stream@ prev := m.do(s.get);
+  s.put(Do(prev, (Unit@ _) { output; }));
 };
 
 @(OStream);

@@ -54,20 +54,20 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     });
 
     istream.?(nothing: {
-      Unit@ _ := m.do(err.put $ FormatE|'fble-md5: unable to open %s\n'[
+      Unit@ _ := m.do(err $ FormatE|'fble-md5: unable to open %s\n'[
         String(filename)
       ]);
       m.return(False);
     });
 
     M@<Maybe@<Bit8@>> in = {
-      Maybe@<Int@> b := m.do(istream.just.get);
+      Maybe@<Int@> b := m.do(istream.just);
       m.return(b.?(just: Just(ToBits(b.just)), nothing: Nothing<Bit8@>));
     };
 
     Hash@ hash := m.do(/Md5/Md5%.Md5(m, in));
     Stream@ line = Format|'%s  %s'[/Md5/Hash%.Show(hash), /Std/Stream/String%.String(filename)];
-    Unit@ _ := m.do(out.put $ FormatE|'%s\n'[line]);
+    Unit@ _ := m.do(out $ FormatE|'%s\n'[line]);
     m.return(True);
   };
 
@@ -79,7 +79,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   };
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(out.put $ String $ /Md5/Usage%);
+    Unit@ _ := m.do(out $ String $ /Md5/Usage%);
     m.return(Success);
   });
 

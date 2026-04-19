@@ -36,8 +36,8 @@ Sockets = <<@>@ M@>(Io@<M@> io, Monad@<M@> m) {
 
   (Socket@) { InOut@<M@>; }
   InOut = (Socket@ socket) {
-    In@<M@> in = @(get: io.run(GetByte(socket)));
-    Out@<M@> out = @(put: Output(socket));
+    In@<M@> in = io.run(GetByte(socket));
+    Out@<M@> out = Output(socket);
     M@<Unit@> end = io.run(Close(socket));
     InOut@(in, out, end);
   };

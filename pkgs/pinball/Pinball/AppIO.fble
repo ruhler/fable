@@ -27,7 +27,7 @@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height
   Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(out.put $ String $ /Pinball/Usage%);
+    Unit@ _ := m.do(out $ String $ /Pinball/Usage%);
     m.return(Success);
   });
 

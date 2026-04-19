@@ -39,8 +39,8 @@ ToTest = <@ A@> {
 #  @arg[Monad@<M@>][m] The monadic interface.
 #  @returns[Out@<M@>] The test output port.
 <@ A@, <@>@ M@>(Monad@<M@>) { Out@<A@, M@>; }
-TestOut = <@ A@, <@>@ M@>(Monad@<M@> m) {
-  @(put: (Stream@<A@> output) { m.return(ToTest(output)); });
+TestOut = <@ A@, <@>@ M@>(Monad@<M@> m, Stream@<A@> output) {
+  m.return(ToTest(output));
 };
 
 @(ToTest, TestOut);

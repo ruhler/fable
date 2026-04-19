@@ -12,7 +12,7 @@ Unit@ .= /Std/Unit%;
 # A hello world program using the cli interface.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
   Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  Unit@ _ := m.do(out.put $ StringE|'hello, world\n');
+  Unit@ _ := m.do(out $ StringE|'hello, world\n');
   m.return(Success);
 };
 

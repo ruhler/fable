@@ -25,8 +25,8 @@ ToNull = <@ A@>(Stream@<A@> _) {
 #  @arg[Monad@<M@>][m] The monadic interface.
 #  @returns[Out@<M@>] The null output port.
 <@ A@, <@>@ M@>(Monad@<M@>) { Out@<A@, M@>; }
-NullOut = <@ A@, <@>@ M@>(Monad@<M@> m) {
-  @(put: (Stream@<A@> _) { m.return(Unit); });
+NullOut = <@ A@, <@>@ M@>(Monad@<M@> m, Stream@<A@> _) {
+  m.return(Unit);
 };
 
 @(ToNull, NullOut);

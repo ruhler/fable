@@ -27,7 +27,7 @@ Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@ output) {
 
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@) { Out@<M@>; }
 Out = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file) {
-  @(put: Output(m, io, file));
+  Output(m, io, file);
 };
 
 # @func[Stdin] Standard input stream.
@@ -38,7 +38,7 @@ Out = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file) {
 <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<In@<M@>>; }
 Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
   File@ stdin := m.do(io.run(GetStdin));
-  m.return(@(get: io.run(GetChar(stdin))));
+  m.return(io.run(GetChar(stdin)));
 };
 
 # @func[Stdout] Standard output stream.
@@ -75,7 +75,7 @@ Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
 Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
   Maybe@<File@> file := m.do(io.run(Open(path, Str|r)));
   file.?(nothing: m.return(Nothing<In@<M@>>));
-  m.return(Just(@(get: io.run(GetChar(file.just)))));
+  m.return(Just(io.run(GetChar(file.just))));
 };
 
 # @func[Write] Opens a file for writing.

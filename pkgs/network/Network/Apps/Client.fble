@@ -111,28 +111,28 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
     IsZero(n).?(true: m.return(Unit));
     Int@ nn = /Std/Int/Cmp%.Gt(n, Int|0).?(true: Decr(n), false: n);
 
-    Maybe@<Int@> mb := m.do(in.get);
+    Maybe@<Int@> mb := m.do(in);
     mb.?(nothing: m.return(Unit));
-    Unit@ _ := m.do(out.put(Binary.Put(mb.just)));
+    Unit@ _ := m.do(out(Binary.Put(mb.just)));
     ForwardN(nn, in, out);
   };
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
     Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-    Unit@ _ := m.do(out.put $ String $ /Network/Apps/Echo/Usage%);
+    Unit@ _ := m.do(out $ String $ /Network/Apps/Echo/Usage%);
     m.return(Success);
   });
 
   args.error.?(items: {
-    Unit@ _ := m.do(err.put $ String $ args.error);
-    Unit@ _ := m.do(err.put $ StringE|'\ntry --help for help\n');
+    Unit@ _ := m.do(err $ String $ args.error);
+    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
     m.return(Failure);
   });
 
   Maybe@<InOut@<M@>> mios := m.do(sockets.client(args.hostname, args.port));
   mios.?(nothing: {
-    Unit@ _ := m.do(err.put $ StringE|'unable to connect\n');
+    Unit@ _ := m.do(err $ StringE|'unable to connect\n');
     m.return(Failure);
   });
 
@@ -140,7 +140,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   Out@<M@> os = OStream(m, ios.out);
   /Std/Stream/Binary%.Out@<M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
 
-  Unit@ _ := m.do(os.put $ String $ args.message);
+  Unit@ _ := m.do(os $ String $ args.message);
   Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, out));
   m.return(Success);
 };

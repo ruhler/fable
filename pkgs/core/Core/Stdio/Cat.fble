@@ -35,7 +35,7 @@ Main@ Cat = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     String@ line := m.do(GetLine(input, m));
     line.?(empty: m.return(Unit));
 
-    Unit@ _ := m.do(out.put $ String(line));
+    Unit@ _ := m.do(out $ String(line));
     cat(input);
   };
 
@@ -49,7 +49,7 @@ Main@ Cat = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     };
 
     istream.?(nothing: {
-      Unit@ _ := m.do(out.put $
+      Unit@ _ := m.do(out $
         FormatE|'fble-cat: Unable to open %s\n'[String(filename)]);
       m.return(Failure);
     });

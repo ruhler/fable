@@ -22,7 +22,7 @@ Unit@ = /Std/Unit%.Unit@;
 # Returns an empty list in case of end of input.
 <<@>@ M@>(In@<M@>, Monad@<M@>) { M@<String@>; }
 GetLine = <<@>@ M@>(In@<M@> in, Monad@<M@> m) {
-  Maybe@<Char@> c := m.do(in.get);
+  Maybe@<Char@> c := m.do(in);
   c.?(nothing: m.return(List<Char@>[]));
   IsNewline(c.just).?(true: m.return(List[c.just]));
 
@@ -33,7 +33,7 @@ GetLine = <<@>@ M@>(In@<M@> in, Monad@<M@> m) {
 # Gets all the rest of the input stream.
 <<@>@ M@>(In@<M@>, Monad@<M@>) { M@<String@>; }
 GetText = <<@>@ M@>(In@<M@> in, Monad@<M@> m) {
-  Maybe@<Char@> c := m.do(in.get);
+  Maybe@<Char@> c := m.do(in);
   c.?(nothing: m.return(List<Char@>[]));
 
   String@ tail := m.do(GetText<M@>(in, m));
@@ -44,12 +44,10 @@ GetText = <<@>@ M@>(In@<M@> in, Monad@<M@> m) {
 # TODO: Move this to a different module to avoid false dependency on State@?
 <<@>@ M@>(Monad@<M@>, State@<String@, M@>) { In@<M@>; }
 IStream = <<@>@ M@>(Monad@<M@> m, State@<String@, M@> s) {
-  @(get: {
-    String@ str := m.do(s.get);
-    str.?(empty: m.return(Nothing<Char@>));
-    Unit@ _ := m.do(s.put(str.items.tail));
-    m.return(Just(str.items.head));
-  });
+  String@ str := m.do(s.get);
+  str.?(empty: m.return(Nothing<Char@>));
+  Unit@ _ := m.do(s.put(str.items.tail));
+  m.return(Just(str.items.head));
 };
 
 @(GetLine, GetText, IStream);

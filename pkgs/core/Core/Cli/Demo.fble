@@ -25,7 +25,7 @@ Unit@ = /Std/Unit%.Unit@;
 Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
 
-  Unit@ _ := m.do(out.put $ StringE|'hello, world\n');
+  Unit@ _ := m.do(out $ StringE|'hello, world\n');
 
   args.?(empty: m.return(Success));
   String@ head = args.items.head;

@@ -82,7 +82,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     Maybe@<Out@<M@>> ostream := m.do(write(filename));
     Unit@ _ := m.do $ {
       ostream.?(nothing: m.return(Unit));
-      ostream.just.put $ /Std/Int/Show%.Show(Incr(seed));
+      ostream.just $ /Std/Int/Show%.Show(Incr(seed));
     };
 
     m.return(seed);

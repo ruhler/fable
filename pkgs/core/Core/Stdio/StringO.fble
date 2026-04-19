@@ -20,7 +20,7 @@ Unit@ = /Std/Unit%.Unit@;
 (String@) { Main@; } Run = (String@ str) {
   <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
     Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-    Unit@ _ := m.do(out.put $ Format|'%s\n'[String(str)]);
+    Unit@ _ := m.do(out $ Format|'%s\n'[String(str)]);
     m.return(Success);
   };
 };
