@@ -1,0 +1,46 @@
+# @module[/Std/Stream/Map%]
+#  Utilities for mapping between different stream types.
+
+Channel@, Stream@, Out@ .= /Std/Stream%;
+
+# @func[Channel] Changes the output type of a channel.
+#  @arg[@][A@] The output type of the original channel.
+#  @arg[@][B@] The output type of the new channel.
+#  @arg[(B@) { A@; }][f] Function to convert output values.
+#  @arg[@][S@] The channel type.
+#  @arg[Channel@<A@, S@>][channel] The original channel implementation.
+#  @return[Channel@<B@, S@>]
+#   A new channel implementation that accepts the target output type.
+<@ A@, @ B@>((B@) { A@; })<@ S@>(Channel@<A@, S@>) { Channel@<B@, S@>; }
+Channel = <@ A@, @ B@>((B@) { A@; } f)<@ S@>(Channel@<A@, S@> channel) {
+  Channel@(channel.return, channel.do, (B@ a) { channel.put(f(a)); });
+};
+
+# @func[Stream] Changes the output type of a stream.
+#  @arg[@][A@] The output type of the original stream.
+#  @arg[@][B@] The output type of the new stream.
+#  @arg[(A@) { B@; }][f] Function to convert output values.
+#  @arg[Stream@<A@>][stream] The original stream.
+#  @return[Stream@<B@>] A new stream that outputs the target output type.
+<@ A@, @ B@>((A@) { B@; }, Stream@<A@>) { Stream@<B@>; }
+Stream = <@ A@, @ B@>((A@) { B@; } f, Stream@<A@> s) {
+  <@ S@>(Channel@<B@, S@> channel) {
+    s(Channel(f, channel));
+  };
+};
+
+# @func[Out] Changes the output type of a Out@.
+#  @arg[@][A@] The output type of the original Out@.
+#  @arg[@][B@] The output type of the new Out@.
+#  @arg[(B@) { A@; }][f] Function to convert output values.
+#  @arg[<@>@][M@] The monadic type.
+#  @arg[Out@<A@, M@>][out] The original Out@.
+#  @return[Out@<B@, M@>] A new Out@ that outputs the target output type.
+<@ A@, @ B@>((B@) { A@; })<<@>@ M@>(Out@<A@, M@>) { Out@<B@, M@>; }
+Out = <@ A@, @ B@>((B@) { A@; } f)<<@>@ M@>(Out@<A@, M@> out) {
+  (Stream@<B@> stream) {
+    out(Stream(f, stream));
+  };
+};
+
+@(Channel, Stream, Out);

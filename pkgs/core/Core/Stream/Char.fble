@@ -1,5 +1,5 @@
 
-Char@, Pos .= /Std/Char%;
+Char@ .= /Std/Char%;
 Int@ = /Std/Int%.Int@;
 
 Maybe@ = /Std/Maybe%.Maybe@;
@@ -20,20 +20,4 @@ IStream = <<@>@ M@>(Monad@<M@> m, Byte.In@<M@> s) {
   m.return(Just(/Std/Char%.Char(mbyte.just)));
 };
 
-<@ S@>(Byte.Channel@<S@>) { Char.Channel@<S@>; }
-ChannelFromAscii = <@ S@>(Byte.Channel@<S@> s) {
-  Char.Channel@(s.return, s.do, (Char@ c) { s.put(Pos(c)); });
-};
-
-(Char.Stream@) { Byte.Stream@; }
-StreamFromAscii = (Char.Stream@ char_stream)<@ S@>(Byte.Channel@<S@> byte_channel) {
-  char_stream(ChannelFromAscii(byte_channel));
-};
-
-# Convert a byte output stream to a character output stream.
-<<@>@ M@>(Byte.Out@<M@>) { Char.Out@<M@>; }
-OStream = <<@>@ M@>(Byte.Out@<M@> byte_out, Char.Stream@ char_stream) {
-  byte_out(StreamFromAscii(char_stream));
-};
-
-@(IStream, OStream);
+@(IStream);

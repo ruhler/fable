@@ -3,7 +3,8 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-OStream = /Core/Stream/Char%.OStream;
+Pos .= /Std/Char%;
+
 String = /Std/Stream/String%.String;
 StringE = /Std/Char/Ascii/Stream%.StringE;
 
@@ -137,7 +138,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   });
 
   InOut@<M@> ios = mios.just;
-  Out@<M@> os = OStream(ios.out);
+  Out@<M@> os = /Std/Stream/Map%.Out(Pos, ios.out);
   /Std/Stream/Binary%.Out@<M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
 
   Unit@ _ := m.do(os $ String $ args.message);
