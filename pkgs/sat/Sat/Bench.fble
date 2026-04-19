@@ -3,8 +3,6 @@ Char@ .= /Std/Char%;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-IStream = /Core/Char/Stream/IStream%.IStream;
-
 NullOut = /Std/Stream/Null%.NullOut<Char@>;
 
 Pure = /Std/State/Pure%.Pure;
@@ -30,7 +28,7 @@ Test@ Bench = Test(Str|Sat, (Unit@ _) {
   S = P.State;
 
   Out@<M@> null = NullOut(M);
-  M@<Exit@> go = /Sat/Main%.Main(M, IStream(M, S), null, null);
+  M@<Exit@> go = /Sat/Main%.Main(M, /Std/Stream/State%.In(M, S), null, null);
   Exit@ got = Eval(go, /Sat/Bench/Input%);
   Exit@ wnt = Success;
   AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);

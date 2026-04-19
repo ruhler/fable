@@ -4,8 +4,6 @@ Char@ .= /Std/Char%;
 Stream@, In@, Out@, Return .= /Std/Stream/Text%;
 ToString .= /Std/Stream/String%;
 
-IStream = /Core/Char/Stream/IStream%.IStream;
-OStream = /Core/Char/Stream/OStream%.OStream;
 NullOut = /Std/Stream/Null%.NullOut<Char@>;
 
 Success = /Std/Io/Cli%.Success;
@@ -64,8 +62,8 @@ Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ ex
     });
 
   /Std/Test%.Test(name, (Unit@ _) {
-    In@<M@> in = IStream(M, s_in);
-    Out@<M@> out = OStream(M, s_out);
+    In@<M@> in = /Std/Stream/State%.In(M, s_in);
+    Out@<M@> out = /Std/Stream/State%.Out(M, s_out);
     M@<Unit@> go = game(M, in, out, args);
     String@ got = ToString $ Exec(go, S@(input, Return)).out;
     String@ wnt = expected_output;
@@ -82,7 +80,7 @@ Bench = (String@ name, Main@ game, String@ input, List@<String@> args) {
     M = P.Monad;
     S = P.State;
 
-    In@<M@> in = IStream(M, S);
+    In@<M@> in = /Std/Stream/State%.In(M, S);
     Out@<M@> out = NullOut(M);
     Unit@ _ = Eval(game(M, in, out, args), input);
     Pass;

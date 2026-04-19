@@ -1,0 +1,41 @@
+# @module[/Std/Stream/State%]
+#  In@ and Out@ streams that work with state monads.
+
+List@ .= /Std/List%;
+Just, Nothing .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
+State@ .= /Std/State%;
+Stream@, In@, Out@, Do .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
+
+# @func[In] An input port that consumes from a list.
+#  @arg[<@>@][M@] The state monad type.
+#  @arg[Monad@<M@>][m] The state monad instance.
+#  @arg[@][A@] The type of value to input.
+#  @arg[State@<List@<A@>, M@>][s]
+#   Interface for accessing the list of elements to consume from the state.
+#  @returns[In@<A@, M@>] An input port that reads elements from the state.
+<<@>@ M@>(Monad@<M@>)<@ A@>(State@<List@<A@>, M@>) { In@<A@, M@>; }
+In = <<@>@ M@>(Monad@<M@> m)<@ A@>(State@<List@<A@>, M@> s) {
+  List@<A@> xs := m.do(s.get);
+  xs.?(empty: m.return(Nothing<A@>));
+  Unit@ _ := m.do(s.put(xs.items.tail));
+  m.return(Just(xs.items.head));
+};
+
+# @func[Out] An output port that puts to a stream.
+#  @arg[<@>@][M@] The state monad type.
+#  @arg[Monad@<M@>][m] The state monad instance.
+#  @arg[@][A@] The type of value to output.
+#  @arg[State@<Stream@<A@>, M@>][s]
+#   Interface for accessing the output stream to write to.
+#  @returns[Out@<A@, M@>] An output port that streams outputs to the state.
+<<@>@ M@>(Monad@<M@>)<@ A@>(State@<Stream@<A@>, M@>) { Out@<A@, M@>; }
+Out = <<@>@ M@>(Monad@<M@> m)<@ A@>(State@<Stream@<A@>, M@> s) {
+  (Stream@<A@> stream) {
+    Stream@<A@> prev := m.do(s.get);
+    s.put(Do(prev, (Unit@ _) { stream; }));
+  };
+};
+
+@(In, Out);

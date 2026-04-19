@@ -15,7 +15,9 @@ List = /Std/List%.List;
 Items = /Std/List%.Items;
 Empty = /Std/List%.Empty;
 
-Run = /Core/Stream/IStream/Pure%.Run;
+Eval .= /Std/State/Pure%;
+
+In@ .= /Std/Stream/Binary%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -124,7 +126,10 @@ Profile@ Parsed = @(
 
 Test@ Tests = TestSuite(Str|Parser, List[
   Test(Str|Basic, (Unit@ _) {
-    Result@<Profile@> got = Run(/Pprof/Parser%.Parse, Encoded);
+    M@, M(.Monad), S(.State) .= /Std/State/Pure%.Pure<List@<Int@>>;
+    In@<M@> in = /Std/Stream/State%.In(M, S);
+
+    Result@<Profile@> got = Eval(/Pprof/Parser%.Parse(M, in), Encoded);
     Result@<Profile@> wnt = Okay(Parsed);
     AssertEquals(
       /Pprof/Result%.Eq(/Pprof/Profile/Eq%.Profile),

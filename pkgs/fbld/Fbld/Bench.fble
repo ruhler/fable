@@ -4,7 +4,6 @@ Char@ .= /Std/Char%;
 Str = /Std/Char/Ascii%.Str;
 
 In@, Out@ .= /Std/Stream/Text%;
-IStream = /Core/Char/Stream/IStream%.IStream;
 NullOut = /Std/Stream/Null%.NullOut<Char@>;
 
 Exit@ = /Std/Io/Cli%.Exit@;
@@ -36,7 +35,7 @@ Test@ Bench = Test(Str|Fbld, (Unit@ _) {
   M = P.Monad;
   S = P.State;
 
-  In@<M@> in = IStream(M, S);
+  In@<M@> in = /Std/Stream/State%.In(M, S);
   Out@<M@> out = NullOut(M);
   Out@<M@> err = NullOut(M);
   (String@) { M@<Maybe@<In@<M@>>>; } read = (String@ _) {

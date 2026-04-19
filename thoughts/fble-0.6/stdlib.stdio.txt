@@ -5158,3 +5158,35 @@ It shouldn't be hard. It should be:
 
 Let's put it into code then, shall we?
 
+---
+
+* pkgs/core/Core/Char/Stream/IStream.fble
+  - IStream: Reads text In@ from a string, given a state monad.
+* pkgs/core/Core/Char/Stream/OStream.fble
+  - OStream: Reads text Out@ to a Stream@, given a state monad.
+* pkgs/core/Core/Stream/IStream/Pure.fble
+  - State monad In@ for binary stream.
+
+IStream is used by:
+* Sat benchmark to pass pure input characters.
+* Fbld benchmark to pass input characters.
+* Benchmark games tests, to pass input, where we also want output.
+* /Core/Stream/IStream/Pure is similar use case, but for bytes
+ - And also hard codes the top level run function.
+
+OStream is used by:
+* Benchmark games tests to collect the output.
+
+So what do I want in general? In all these cases, I'm using a pure state
+monad. But in some cases the state supports multiple components, and others it
+is the only thing present.
+
+It feels like I should reuse pure state monad, and provide wrappers for In@
+and Out@ given the appropriate state things. What would you call this? Maybe
+/Std/Stream/State%?
+
+Let's try it.
+
+Should the input stream take a State@, or should it take a Stream@? Except,
+how would that make sense to take a Stream@, unless the first thing we did was
+convert to a list and pass a State@ instead?
