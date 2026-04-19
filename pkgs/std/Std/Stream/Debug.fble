@@ -1,0 +1,41 @@
+# @module[/Std/Stream/Debug%]
+#  An output channel that send output to a debug stream. For the purposes of
+#  printf style debugging of programs.
+
+Char@ .= /Std/Char%;
+Monad@ .= /Std/Monad%;
+Channel@, Stream@, Out@ .= /Std/Stream/Text%;
+Unit@, Unit .= /Std/Unit%;
+
+(Char@) { Unit@; } PutChar = @<PutChar>|PutChar;
+
+# @func[ToDebug] Outputs to a debug a stream.
+#  The destination is a platform implementation dependent debug output stream.
+#  This is inteded to be used for printf style debugging only.
+#
+#  @arg[Stream@] The output to perform.
+#  @returns[Unit@] Nothing interesting.
+(Stream@) { Unit@; }
+ToDebug = {
+  S@ = Unit@;
+  Channel@<S@> S = @(
+    return: Unit,
+    do: (Unit@ u, (Unit@) { Unit@; } f) { f(u); },
+    put: PutChar
+  );
+
+  (Stream@ output) {
+    output(S);
+  };
+};
+
+# @func[DebugOut] An Out@ that sends to the debug output stream.
+#  @arg[<@>@][M@] Monadic type to work with.
+#  @arg[Monad@<M@>][m] The monadic interface.
+#  @returns[Out@<M@>] The null output port.
+<<@>@ M@>(Monad@<M@>) { Out@<M@>; }
+DebugOut = <<@>@ M@>(Monad@<M@> m, Stream@ s) {
+  m.return(ToDebug(s));
+};
+
+@(ToDebug, DebugOut);

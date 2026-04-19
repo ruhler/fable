@@ -1,8 +1,0 @@
-
-String@ = /Std/String%.String@;
-Unit@ = /Std/Unit%.Unit@;
-
-# Trace function for printf-like debugging.
-(String@) { Unit@; } Trace = @<Trace>|Trace;
-
-@(Trace);

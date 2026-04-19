@@ -1,7 +1,7 @@
 # @module[/Std/Stream/Test%]
 #  An output channel for testing.
 
-Monad@ = /Std/Monad%.Monad@;
+Monad@ .= /Std/Monad%;
 Channel@, Stream@, Out@ .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -39,8 +39,8 @@ ToTest = <@ A@> {
 #  @arg[Monad@<M@>][m] The monadic interface.
 #  @returns[Out@<M@>] The test output port.
 <@ A@, <@>@ M@>(Monad@<M@>) { Out@<A@, M@>; }
-TestOut = <@ A@, <@>@ M@>(Monad@<M@> m, Stream@<A@> output) {
-  m.return(ToTest(output));
+TestOut = <@ A@, <@>@ M@>(Monad@<M@> m, Stream@<A@> s) {
+  m.return(ToTest(s));
 };
 
 @(ToTest, TestOut);

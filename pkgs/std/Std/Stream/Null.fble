@@ -1,7 +1,7 @@
 # @module[/Std/Stream/Null%]
 #  An output channel that ignores all output.
 
-Monad@ = /Std/Monad%.Monad@;
+Monad@ .= /Std/Monad%;
 Stream@, Out@ .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 

@@ -50,7 +50,8 @@ Split = /Std/String/Eq%.Split;
 BinaryIn@ = /Std/Stream/Binary%.In@;
 CharIn@ = /Std/Stream/Text%.In@;
 
-Lines, ToString .= /Std/Stream/String%;
+Lines .= /Std/Stream/String%;
+ToDebug .= /Std/Stream/Debug%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -178,8 +179,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
       Maybe@<Block@> mname = Blocks.Lookup(profile.blocks, block);
       Stream@ name = { 
         mname.?(just: /Std/Stream/String%.String(mname.just.name));
-        Unit@ _ = /Core/Debug%.TraceLn(
-          ToString(Format|'block %s not found'[/Std/Int/Show%.Show(block)]));
+        Unit@ _ = ToDebug(Format|'block %s not found'[/Std/Int/Show%.Show(block)]);
         Format|'??%s??'[/Std/Int/Show%.Show(block)];
       };
       Unit@ _ := Do(name);

@@ -16,7 +16,7 @@
 #include "fble-cli.usage.h"        // for fbldUsageHelpText
 
 #include "char.fble.h"          // for FbleCharValueAccess
-#include "debug.fble.h"         // for /Core/Debug/Builtin%
+#include "debug.fble.h"         // for /Std/Stream/Debug%
 #include "env.fble.h"           // for /Std/Io/Env%
 #include "int.fble.h"           // for FbleNewIntValue, FbleIntValueAccess
 #include "io.fble.h"            // for FbleIoM
@@ -116,7 +116,7 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   uint64_t profile_sample_period = 0;
   FbleValue* main = NULL;
 
-  FbleRegisterForeignValue(heap, &_Fble_2f_Core_2f_Debug_2f_Builtin_25__2e_Trace);
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Stream_2f_Debug_25__2e_PutChar);
   FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_Env_25__2e_GetVar);
   FbleRegisterStdioForeignValues(heap);
 

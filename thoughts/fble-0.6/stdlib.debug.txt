@@ -67,3 +67,9 @@ pure implementation of (Output@) { Unit@; }? In contrast with
 /Std/Stream/Null%, but also I need to distinguish between the null stream that
 entirely ignores its Output@ argument and the on that runs through its Output@
 argument but ignores all the individual characters.
+
+---
+
+Moving things to /Std/Stream/Debug% looks nice. It's super easy to swap out
+ToDebug with ToNull. Let's declare this done.
+
