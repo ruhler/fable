@@ -1,8 +1,7 @@
 
 In@, Out@ .= /Std/Stream/Text%;
-GetLine = /Core/Char/Stream/IStream%.GetLine;
 
-String .= /Std/Stream/String%;
+String, GetLine .= /Std/Stream/String%;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
 List@ = /Std/List%.List@;
@@ -32,7 +31,7 @@ Main@ Cat = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   (String@) { M@<Maybe@<In@<M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
 
   (In@<M@>) { M@<Unit@>; } cat = (In@<M@> input) {
-    String@ line := m.do(GetLine(input, m));
+    String@ line := m.do(GetLine(m, input));
     line.?(empty: m.return(Unit));
 
     Unit@ _ := m.do(out $ String(line));

@@ -6,7 +6,7 @@ Format = /Std/Char/Ascii/Stream%.Format;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
 In@, Out@ .= /Std/Stream/Text%;
-GetLine = /Core/Char/Stream/IStream%.GetLine;
+GetLine .= /Std/Stream/String%;
 
 List@ = /Std/List%.List@;
 
@@ -117,7 +117,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
     Unit@ _ := m.do(out $ ShowGame(game));
 
-    String@ line := m.do(GetLine(in, m));
+    String@ line := m.do(GetLine(m, in));
     line.?(empty: m.return(Unit));
 
     Maybe@<Input@> mi = ParseInput(line);

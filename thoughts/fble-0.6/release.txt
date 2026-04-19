@@ -74,7 +74,7 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Stdio/StringO.fble
   - pkgs/core/Core/Stream/Char.fble
   - pkgs/core/Core/Stream/IStream/Pure.fble
-  - pkgs/core/Core/Stream.fble
+  - pkgs/core/Core/Stream.fble      [REMOVED]
 * Revise state monad based on random numbers api design?
   - pkgs/core/Core/Monad/State.fble [Removed]
   - pkgs/core/Core/State/Pure.fble ==> /Std/State/Pure% [DONE]

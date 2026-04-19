@@ -5090,3 +5090,9 @@ in /Std/Stream/Pure%? I don't know. I can review use case first before adding
 those.
 
 Yeah, this feels a bit cleaner to me. Let's go in that direction.
+
+---
+
+I think the bulk of the API feels reasonable now. Just some lingering cleanup
+and migration.
+

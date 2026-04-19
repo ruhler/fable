@@ -1,7 +1,6 @@
 
 In@, Out@ .= /Std/Stream/Text%;
-String .= /Std/Stream/String%;
-GetText = /Core/Char/Stream/IStream%.GetText;
+String, GetText .= /Std/Stream/String%;
 
 Int@ = /Std/Int%.Int@;
 
@@ -51,7 +50,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     Maybe@<In@<M@>> istream := m.do(read(filename));
     istream.?(nothing: m.return(Int|0));
 
-    String@ text := m.do(GetText(istream.just, m));
+    String@ text := m.do(GetText(m, istream.just));
     m.return(/Core/Int/Read%.Read(text));
   };
 

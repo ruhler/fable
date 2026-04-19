@@ -5,9 +5,9 @@ False = /Std/Bool%.False;
 
 Char = /Std/Char/Ascii%.Char;
 Out@ .= /Std/Stream/Text%;
+GetLine .= /Std/Stream/String%;
 OStream = /Core/Stream/Char%.OStream;
 IStream = /Core/Stream/Char%.IStream;
-GetLine = /Core/Char/Stream/IStream%.GetLine;
 
 Main@ = /Std/Io/Cli%.Main@;
 Success = /Std/Io/Cli%.Success;
@@ -325,11 +325,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   (CharIn@<M@>, Out@<M@>) { M@<Unit@>; }
   HandleConnection = (CharIn@<M@> is, Out@<M@> os) {
     # Get the start line
-    String@ start := m.do(GetLine(is, m));
+    String@ start := m.do(GetLine(m, is));
 
     # Skip past the request headers. We don't care about those.
     M@<Unit@> SkipHeaders = {
-      String@ line := m.do(GetLine(is, m));
+      String@ line := m.do(GetLine(m, is));
       /Std/String/Eq%.Eq(StrE|'\r\n', line).?(true: m.return(Unit));
       SkipHeaders;
     };

@@ -1,7 +1,6 @@
 
 In@, Out@ .= /Std/Stream/Text%;
-String .= /Std/Stream/String%;
-GetText = /Core/Char/Stream/IStream%.GetText;
+String, GetText .= /Std/Stream/String%;
 
 List@ = /Std/List%.List@;
 Items = /Std/List%.Items;
@@ -69,7 +68,7 @@ Main = <<@>@ M@>(Monad@<M@> m, IO@<M@> io, List@<String@> args) {
       m.return(Error<List@<Text@>>(Unknown, msg));
     });
 
-    String@ contents := m.do(GetText(fin.just, m));
+    String@ contents := m.do(GetText(m, fin.just));
     Text@ text = Text(Start(filename), contents);
     m.return(Ok(Items(text, tail.value.just)));
   };

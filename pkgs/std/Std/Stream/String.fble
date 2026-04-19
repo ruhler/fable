@@ -3,10 +3,13 @@
 
 Char@ .= /Std/Char%;
 U .= /Std/Char/Lit%;
-List@ .= /Std/List%;
-Channel@, Stream@, Return, Do, Put .= /Std/Stream/Text%;
+List@, List, Items .= /Std/List%;
+Maybe@ .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
+Channel@, Stream@, In@, Return, Do, Put .= /Std/Stream/Text%;
 Puts, ToList .= /Std/Stream/List%;
 String@ .= /Std/String%;
+IsNewline .= /Std/String/Lines%;
 Unit@ .= /Std/Unit%;
 
 # @func[String] Output a string.
@@ -92,5 +95,35 @@ ToString = (Stream@ s) {
   ToList(s);
 };
 
-@(String, Format, Lines, Join, ToString);
+# @func[GetLine] Get the next line of input.
+#  @arg[<@>@][M@] The monadic stream type.
+#  @arg[Monad@<M@>][m] The monadic stream implementation.
+#  @arg[In<M@>][in] The input stream to read from.
+#  @returns[M@<String@>]
+#   Everything up to and including the next newline character from the given
+#   input. The empty string in case of end of input.
+<<@>@ M@>(Monad@<M@>, In@<M@>) { M@<String@>; }
+GetLine = <<@>@ M@>(Monad@<M@> m, In@<M@> in) {
+  Maybe@<Char@> c := m.do(in);
+  c.?(nothing: m.return(List<Char@>[]));
+  IsNewline(c.just).?(true: m.return(List[c.just]));
 
+  String@ tail := m.do(GetLine(m, in));
+  m.return(Items(c.just, tail));
+};
+
+# @func[GetText] Gets all the rest of the input stream.
+#  @arg[<@>@][M@] The monadic stream type.
+#  @arg[Monad@<M@>][m] The monadic stream implementation.
+#  @arg[In<M@>][in] The input stream to read from.
+#  @returns[M@<String@>] Everything left in the input stream.
+<<@>@ M@>(Monad@<M@>, In@<M@>) { M@<String@>; }
+GetText = <<@>@ M@>(Monad@<M@> m, In@<M@> in) {
+  Maybe@<Char@> c := m.do(in);
+  c.?(nothing: m.return(List<Char@>[]));
+
+  String@ tail := m.do(GetText(m, in));
+  m.return(Items(c.just, tail));
+};
+
+@(String, Format, Lines, Join, ToString, GetLine, GetText);

@@ -1,5 +1,5 @@
 
-GetText = /Core/Char/Stream/IStream%.GetText;
+GetText .= /Std/Stream/String%;
 
 Int@ = /Std/Int%.Int@;
 Incr = /Std/Int%.Incr;
@@ -75,7 +75,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
 
     Int@ seed := m.do({
       istream.?(nothing: m.return(Int|0));
-      String@ text := m.do(GetText(istream.just, m));
+      String@ text := m.do(GetText(m, istream.just));
       m.return(/Core/Int/Read%.Read(text));
     });
 

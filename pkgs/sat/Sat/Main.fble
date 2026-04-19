@@ -1,8 +1,6 @@
 
 In@, Out@ .= /Std/Stream/Text%;
-GetLine = /Core/Char/Stream/IStream%.GetLine;
-
-String = /Std/Stream/String%.String;
+String, GetLine .= /Std/Stream/String%;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
 List@ = /Std/List%.List@;
@@ -36,7 +34,7 @@ ShowResult = /Sat/Show%.ShowResult;
 Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Out@<M@> out, Out@<M@> err) {
   (List@<String@>) { M@<List@<String@>>; }
   PrependReversedLines = (List@<String@> lines) {
-    String@ next := m.do(GetLine(in, m));
+    String@ next := m.do(GetLine(m, in));
     next.?(empty: m.return(lines));
     PrependReversedLines(Items(next, lines));
   };

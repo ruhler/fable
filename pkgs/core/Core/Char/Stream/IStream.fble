@@ -1,13 +1,8 @@
 
 Char@ = /Std/Char%.Char@;
-IsNewline = /Std/String/Lines%.IsNewline;
 
 In@ .= /Std/Stream/Text%;
 
-List = /Std/List%.List;
-Items = /Std/List%.Items;
-
-Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
@@ -17,28 +12,6 @@ State@ = /Std/State%.State@;
 String@ = /Std/String%.String@;
 
 Unit@ = /Std/Unit%.Unit@;
-
-# Gets everything up to and including the next newline character from stdin.
-# Returns an empty list in case of end of input.
-<<@>@ M@>(In@<M@>, Monad@<M@>) { M@<String@>; }
-GetLine = <<@>@ M@>(In@<M@> in, Monad@<M@> m) {
-  Maybe@<Char@> c := m.do(in);
-  c.?(nothing: m.return(List<Char@>[]));
-  IsNewline(c.just).?(true: m.return(List[c.just]));
-
-  String@ tail := m.do(GetLine(in, m));
-  m.return(Items(c.just, tail));
-};
-
-# Gets all the rest of the input stream.
-<<@>@ M@>(In@<M@>, Monad@<M@>) { M@<String@>; }
-GetText = <<@>@ M@>(In@<M@> in, Monad@<M@> m) {
-  Maybe@<Char@> c := m.do(in);
-  c.?(nothing: m.return(List<Char@>[]));
-
-  String@ tail := m.do(GetText<M@>(in, m));
-  m.return(Items(c.just, tail));
-};
 
 # Make an IStream from a String@ state monad.
 # TODO: Move this to a different module to avoid false dependency on State@?
@@ -50,4 +23,4 @@ IStream = <<@>@ M@>(Monad@<M@> m, State@<String@, M@> s) {
   m.return(Just(str.items.head));
 };
 
-@(GetLine, GetText, IStream);
+@(IStream);
