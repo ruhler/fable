@@ -72,12 +72,7 @@ Unit@ = /Std/Unit%.Unit@;
     h24, h25, h26, h27, h28, h29, h30, h31);
 };
 
-Pure = /Std/State/Pure%.Pure<List@<Bit8@>>;
-M@ = Pure.M@;
-M = Pure.Monad;
-S = Pure.State;
-
-Eval = /Std/State/Pure%.Eval;
+M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<List@<Bit8@>>;
 
 M@<Maybe@<Bit8@>> Get = {
   List@<Bit8@> bytes := M.do(S.get);

@@ -46,7 +46,6 @@ Nothing = /Std/Maybe%.Nothing;
 DoWhile = /Core/Maybe%.DoWhile;
 For = /Core/Maybe%.For;
 
-Eval = /Std/State/Pure%.Eval;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
@@ -56,10 +55,9 @@ Int@ 1 = Int|1;
 Int@ 2 = Int|2;
 
 Prng = /Std/Random/Lfsr%.Lfsr8;
-Pure = /Std/Random/Prng/Pure%.Pure(Prng);
-M@ = Pure.M@;
-M = Pure.Monad;
-Rng = Pure.Rng;
+
+Eval .= /Std/State/Pure%;
+M@, M(.Monad), Rng .= /Std/Random/Prng/Pure%.Pure(Prng);
 
 # Aliens move together in a group of rows and columns. They decide which
 # direction to move. Then each live alien, in turn, makes a move. After a full

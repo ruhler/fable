@@ -1,49 +1,38 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+Bool@ .= /Std/Bool%;
+Int@, Shr .= /Std/Int%;
+IsZero .= /Std/Int/Sign%;
+HexLit@, Hex, Int .= /Std/Int/Lit%;
+Unit@ .= /Std/Unit%;
 
-Bit@ = /Core/Digits%.Bit@;
-Hex@ = /Core/Digits%.Hex@;
-HexToBits = /Core/Digits/String%.HexToBits;
-BitStr = /Core/Digits/String%.BitStr;
+Var@ .= /SatGame/Var%;
 
-Int = /Std/Int/Lit%.Int;
+M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<Int@>;
 
-List@ = /Std/List%.List@;
-Append = /Std/List%.Append;
-Take = /Std/List/Index%.Take;
+M@<Bool@> GetBit = {
+  Int@ x := M.do(S.get);
+  Bool@ bit = IsZero(x);
+  Unit@ _ := M.do(S.put(Shr(x, Int|1)));
+  M.return(bit);
+};
 
-Var@ = /SatGame/Var%.Var@;
-
-(Bit@) { Bool@; } ToBool = (Bit@ x) {
-  x.?(0: False, 1: True);
+M@<Var@> GetVar = {
+  Bool@ ul := M.do(GetBit);
+  Bool@ uc := M.do(GetBit);
+  Bool@ ur := M.do(GetBit);
+  Bool@ ml := M.do(GetBit);
+  Bool@ mc := M.do(GetBit);
+  Bool@ mr := M.do(GetBit);
+  Bool@ ll := M.do(GetBit);
+  Bool@ lc := M.do(GetBit);
+  Bool@ lr := M.do(GetBit);
+  M.return $ @(ul, uc, ur, ml, mc, mr, ll, lc, lr);
 };
 
 # A literal to create vars from hex digits.
-(List@<Hex@>) { Var@; } Var = (List@<Hex@> hex) {
-  List@<Bit@> bits = HexToBits(hex);
-
-  List@<Bit@> 9 = Take(Append(bits, BitStr|000000000), Int|9);
-  List@<Bit@> 8 = 9.items.tail;
-  List@<Bit@> 7 = 8.items.tail;
-  List@<Bit@> 6 = 7.items.tail;
-  List@<Bit@> 5 = 6.items.tail;
-  List@<Bit@> 4 = 5.items.tail;
-  List@<Bit@> 3 = 4.items.tail;
-  List@<Bit@> 2 = 3.items.tail;
-  List@<Bit@> 1 = 2.items.tail;
-
-  Bool@ ul = ToBool(9.items.head);
-  Bool@ uc = ToBool(8.items.head);
-  Bool@ ur = ToBool(7.items.head);
-  Bool@ ml = ToBool(6.items.head);
-  Bool@ mc = ToBool(5.items.head);
-  Bool@ mr = ToBool(4.items.head);
-  Bool@ ll = ToBool(3.items.head);
-  Bool@ lc = ToBool(2.items.head);
-  Bool@ lr = ToBool(1.items.head);
-  @(ul, uc, ur, ml, mc, mr, ll, lc, lr);
+(HexLit@) { Var@; }
+Var = (HexLit@ hex) {
+  Eval(GetVar, Hex(hex));
 };
 
 @(Var);

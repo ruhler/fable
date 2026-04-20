@@ -119,3 +119,57 @@ I fear I'll have to give up at some point. Anyway, status is something like:
 
 So, as you can see, it's a pretty long list of things. And a bunch of them
 will probably be difficult.
+
+---
+
+Taking stock now. What's left to deal with in pkgs/core:
+
+Map related modules:
+* pkgs/core/Core/Map/Show/Tests.fble
+* pkgs/core/Core/Map/Show.fble
+* pkgs/core/Core/Map/Tree/Tests.fble
+* pkgs/core/Core/Map/Tree.fble
+* pkgs/core/Core/Map/Eq/Tests.fble
+* pkgs/core/Core/Map/Eq.fble
+* pkgs/core/Core/Map/Tests.fble
+* pkgs/core/Core/Map/Test.fble
+* pkgs/core/Core/Map.fble
+* pkgs/core/Core/Int/Map/Eq.fble
+* pkgs/core/Core/Int/Map/Tests.fble
+* pkgs/core/Core/Int/Map.fble
+* pkgs/core/Core/Int/IntP/Map/Eq.fble
+* pkgs/core/Core/Int/IntP/Map.fble
+* pkgs/core/Core/Set.fble
+* pkgs/core/Core/Char/Map/Tests.fble
+* pkgs/core/Core/Char/Map.fble
+* pkgs/core/Core/List/Map.fble
+* pkgs/core/Core/Set/Show.fble
+* pkgs/core/Core/Set/Eq.fble
+* pkgs/core/Core/Set/Tests.fble
+* pkgs/core/Core/String/Map/Tests.fble
+* pkgs/core/Core/String/Map.fble
+
+Test modules:
+* pkgs/core/Core/Int/Show/Tests.fble
+* pkgs/core/Core/Int/Tests.fble
+* pkgs/core/Core/Char/Tests.fble
+* pkgs/core/Core/Random/Lfsr/Tests.fble
+* pkgs/core/Core/Random/Lcg/Tests.fble
+* pkgs/core/Core/Test/Tests.fble
+* pkgs/core/Core/String/Tests.fble
+* pkgs/core/Core/Tests.fble
+* pkgs/core/Core/Debug/Tests.fble
+
+Misc modules:
+* pkgs/core/Core/Monad/Pure.fble
+* pkgs/core/Core/Int/Read.fble
+* pkgs/core/Core/Int/Iter.fble
+* pkgs/core/Core/Iter.fble
+* pkgs/core/Core/Maybe.fble
+* pkgs/core/Core/Digits/Show.fble
+* pkgs/core/Core/Digits/String.fble
+* pkgs/core/Core/Digits/Eq.fble
+* pkgs/core/Core/Digits/Tests.fble
+* pkgs/core/Core/Digits.fble
+
+Getting closer...

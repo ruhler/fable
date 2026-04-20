@@ -22,8 +22,6 @@ ForEach = /Std/List%.ForEach;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Exec = /Std/State/Pure%.Exec;
-
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
 
@@ -74,10 +72,7 @@ Fannkuch@ = *(
   Int@ max_flips
 );
 
-P = /Std/State/Pure%.Pure<Fannkuch@>;
-M@ = P.M@;
-M = P.Monad;
-S = P.State;
+M@, M(.Monad), S(.State), Exec .= /Std/State/Pure%.Pure<Fannkuch@>;
 
 (List@<Int@>) { M@<Unit@>;  } DoPermutation = (List@<Int@> l) {
   Fannkuch@ s := M.do(S.get);

@@ -12,8 +12,6 @@ Append = /Std/List%.Append;
 Str = /Std/Char/Ascii%.Str;
 StrE = /Std/Char/Ascii%.StrE;
 
-Exec = /Std/State/Pure%.Exec;
-
 Test@ = /Std/Test%.Test@;
 Test = /Std/Test%.Test;
 TestSuite = /Std/Test%.TestSuite;
@@ -66,10 +64,7 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
       List[Int|1, Int|3, Int|2]];
 
     S@ = List@<List@<Int@>>;
-    P = /Std/State/Pure%.Pure<S@>;
-    M@ = P.M@;
-    M = P.Monad;
-    S = P.State;
+    M@, M(.Monad), S(.State), Exec .= /Std/State/Pure%.Pure<S@>;
 
     (List@<Int@>) { M@<Unit@>; } F = (List@<Int@> l) {
       S@ s := M.do(S.get);

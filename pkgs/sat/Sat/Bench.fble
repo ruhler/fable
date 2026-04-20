@@ -5,9 +5,6 @@ AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 NullOut = /Std/Stream/Null%.NullOut<Char@>;
 
-Pure = /Std/State/Pure%.Pure;
-Eval = /Std/State/Pure%.Eval;
-
 Out@ .= /Std/Stream/Text%;
 
 Exit@ = /Std/Io/Cli%.Exit@;
@@ -22,10 +19,7 @@ Test = /Std/Test%.Test;
 Unit@ = /Std/Unit%.Unit@;
 
 Test@ Bench = Test(Str|Sat, (Unit@ _) {
-  P = Pure<String@>;
-  M@ = P.M@;
-  M = P.Monad;
-  S = P.State;
+  M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<String@>;
 
   Out@<M@> null = NullOut(M);
   M@<Exit@> go = /Sat/Main%.Main(M, /Std/Stream/State%.In(M, S), null, null);

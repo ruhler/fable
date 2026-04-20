@@ -19,10 +19,6 @@ String@ = /Std/String%.String@;
 
 State@ = /Std/State%.State@;
 
-Pure = /Std/State/Pure%.Pure;
-Eval = /Std/State/Pure%.Eval;
-Exec = /Std/State/Pure%.Exec;
-
 Test@ = /Std/Test%.Test@;
 Pass = /Std/Test%.Pass;
 
@@ -36,10 +32,7 @@ Main@ = <<@>@ M@>(Monad@<M@>, In@<M@>, Out@<M@>, List@<String@>) { M@<Unit@>; };
 (String@, Main@, String@, List@<String@>, String@) { Test@; }
 Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ expected_output) {
   S@ = *(String@ in, Stream@ out);
-  P = Pure<S@>;
-  M@ = P.M@;
-  M = P.Monad;
-  S = P.State;
+  M@, M(.Monad), S(.State), Exec .= /Std/State/Pure%.Pure<S@>;
 
   State@<String@, M@> s_in = @(
     get: {
@@ -75,10 +68,7 @@ Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ ex
 (String@, Main@, String@, List@<String@>) { Test@; }
 Bench = (String@ name, Main@ game, String@ input, List@<String@> args) {
   /Std/Test%.Test(name, (Unit@ _) {
-    P = Pure<String@>;
-    M@ = P.M@;
-    M = P.Monad;
-    S = P.State;
+    M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<String@>;
 
     In@<M@> in = /Std/Stream/State%.In(M, S);
     Out@<M@> out = NullOut(M);

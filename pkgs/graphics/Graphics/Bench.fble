@@ -8,8 +8,7 @@ Str = /Std/Char/Ascii%.Str;
 
 Const = /Std/Func%.Const;
 
-Pure = /Std/State/Pure%.Pure;
-Eval = /Std/State/Pure%.Eval;
+Pure, Eval .= /Std/State/Pure%;
 
 Test@ = /Std/Test%.Test@;
 Test = /Std/Test%.Test;

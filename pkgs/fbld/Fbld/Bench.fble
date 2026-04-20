@@ -19,9 +19,6 @@ Nothing = /Std/Maybe%.Nothing;
 
 String@ = /Std/String%.String@;
 
-Pure = /Std/State/Pure%.Pure;
-Eval = /Std/State/Pure%.Eval;
-
 Test@ = /Std/Test%.Test@;
 Test = /Std/Test%.Test;
 
@@ -30,10 +27,7 @@ Unit@ = /Std/Unit%.Unit@;
 IO@ = /Fbld/Main%.IO@;
 
 Test@ Bench = Test(Str|Fbld, (Unit@ _) {
-  P = Pure<String@>;
-  M@ = P.M@;
-  M = P.Monad;
-  S = P.State;
+  M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<String@>;
 
   In@<M@> in = /Std/Stream/State%.In(M, S);
   Out@<M@> out = NullOut(M);

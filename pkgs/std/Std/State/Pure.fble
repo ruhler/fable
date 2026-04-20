@@ -36,15 +36,6 @@ State = <@ S@> {
     put: (S@ s, S@ _) { Result@(s, Unit); });
 };
 
-# @func[Pure] Implementation of a pure state monad.
-#  @arg[@][S@] The type of state.
-#  @returns[...]
-#   The monad type M@, monad instance Monad, and state interface State
-#   implementing the pure state monad for state type S@.
-Pure = <@ S@> {
-  @(M@: Pure@<S@>, Monad: Monad<S@>, State: State<S@>);
-};
-
 # @func[Run] Runs a pure state computation.
 #  @arg[@][S@] The state type.
 #  @arg[@][A@] The result type.
@@ -97,4 +88,14 @@ Lift = <@ S@, <@>@ M@>(Monad@<M@> m, State@<S@, M@> s)<@ A@>(Pure@<S@, A@> p) {
   m.return(r.return);
 };
 
-@(Pure@, Result@, Monad, State, Pure, Run, Eval, Exec, Lift);
+# @func[Pure] Implementation of a pure state monad.
+#  @arg[@][S@] The type of state.
+#  @returns[...]
+#   The monad type M@, monad instance Monad, and state interface State
+#   implementing the pure state monad for state type S@.
+Pure = <@ S@> {
+  @(M@: Pure@<S@>, Monad: Monad<S@>, State: State<S@>,
+    Run: Run<S@>, Eval: Eval<S@>, Exec: Exec<S@>, Lift: Lift<S@>);
+};
+
+@(Pure@, Result@, Monad, State, Run, Eval, Exec, Lift, Pure);

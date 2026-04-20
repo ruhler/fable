@@ -24,12 +24,7 @@ Get@ = /Invaders/App%.Get@;
 State@ = /Invaders/App%.State@;
 Invaders = /Invaders/App%.Invaders;
 
-Eval = /Std/State/Pure%.Eval;
-
-P = /Std/State/Pure%.Pure<Int@>;
-M@ = P.M@;
-M = P.Monad;
-S = P.State;
+M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<Int@>;
 
 # The number of iterations is chosen so that the benchmark takes on the
 # order of 1 minute to run. The target goal for invaders is 60 frames a

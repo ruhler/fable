@@ -35,12 +35,8 @@ Lookup = /Core/Int/Map%.Map.Lookup<Var@>;
 Insert = /Core/Int/Map%.Map.Insert<Var@>;
 
 Prng = /Std/Random/Lfsr%.Lfsr24;
-Pure = /Std/Random/Prng/Pure%.Pure(Prng);
-M@ = Pure.M@;
-M = Pure.Monad;
-Rng = Pure.Rng;
-
-Eval = /Std/State/Pure%.Eval;
+M@, M(.Monad), Rng .= /Std/Random/Prng/Pure%.Pure(Prng);
+Eval .= /Std/State/Pure%;
 
 # @func[Generate] Generates a random satgame puzzle.
 #  @arg[Params@][params] Parameters for the puzzle to generate.
