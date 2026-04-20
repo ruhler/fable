@@ -5315,3 +5315,5 @@ fine.
 
 This can replace HelloWorld, Cat, and Demo that I already have.
 
+The only trouble is I don't have a way to read an Int@ in the standard library
+yet. I need to add that.

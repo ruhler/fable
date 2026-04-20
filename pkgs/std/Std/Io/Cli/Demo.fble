@@ -1,0 +1,105 @@
+# @module[/Std/Io/Cli/Demo%]
+#  A command line interface demo program.
+
+Str .= /Std/Char/Ascii%;
+Format, FormatE, StringE .= /Std/Char/Ascii/Stream%;
+Io@ .= /Std/Io%;
+Main@, Exit@, Success, Failure .= /Std/Io/Cli%;
+GetVar .= /Std/Io/Env%;
+List@, ForEach, Join .= /Std/List%;
+Maybe@ .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
+String, Lines, GetLine .= /Std/Stream/String%;
+Stream@, In@, Out@ .= /Std/Stream/Text%;
+String@ .= /Std/String%;
+Eq .= /Std/String/Eq%;
+Unit@, Unit .= /Std/Unit%;
+
+# @func[Demo] Demo command line interface program.
+#  Run with command line argument 'help' for usage info.
+Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  Out@<M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
+
+  Stream@ Usage = Lines[
+    StringE|'Usage: fble-cli-demo [COMMAND [ARGS]...]',
+    StringE|'Commands:',
+    StringE|'  help             Prints this usage info',
+    StringE|'  echo [STRING]... Echos the string to standard out',
+    StringE|'  env VAR          Prints the environment variable VAR',
+    StringE|'  exit STATUS      Exit with the given status code',
+    StringE|'  cat [FILE]...    Print out the contents of files'
+  ];
+
+  (Stream@) { M@<Exit@>; }
+  Error = (Stream@ msg) {
+    Unit@ _ := m.do(err $ FormatE|'%s\n%s'[msg, Usage]);
+    m.return(Failure);
+  };
+
+  # With no args, default behavior is to print hello world.
+  args.?(empty: {
+    Unit@ _ := m.do(out $ StringE|'hello, world\n');
+    m.return(Success);
+  });
+
+  String@ cmd = args.items.head;
+  List@<String@> cmd_args = args.items.tail;
+
+  # Print out usage info.
+  Eq(Str|help, cmd).?(true: {
+    Unit@ _ := m.do(out $ Usage);
+    m.return(Success);
+  });
+
+  # Echo args to standard output.
+  Eq(Str|echo, cmd).?(true: {
+    Unit@ _ := m.do(out $ FormatE|'%s\n'[String(Join(cmd_args, Str|' '))]);
+    m.return(Success);
+  });
+
+  # Read an environment variable.
+  Eq(Str|env, cmd).?(true: {
+    cmd_args.?(empty: Error(StringE|'missing var name'));
+    String@ var = cmd_args.items.head;
+    Maybe@<String@> value := m.do(GetVar(m, io, var));
+    Unit@ _ := m.do(out $ {
+      value.?(nothing: FormatE|'''%s'' is not set\n'[String(var)]);
+      FormatE|'$%s = %s\n'[String(var), String(value.just)];
+    });
+    m.return(Success);
+  });
+
+  # Exit with given status code.
+  Eq(Str|exit, cmd).?(true: {
+    Error(StringE|'TODO: implement exit command');
+  });
+
+  # Prints out contents of files.
+  Eq(Str|cat, cmd).?(true: {
+    (String@) { M@<Maybe@<In@<M@>>>; } Read = /Std/Io/File/Text%.Read(m, io);
+
+    (In@<M@>) { M@<Unit@>; }
+    Cat = (In@<M@> in) {
+      String@ line := m.do(GetLine(m, in));
+      line.?(empty: m.return(Unit));
+      Unit@ _ := m.do(out $ String(line));
+      Cat(in);
+    };
+
+    ForEach(cmd_args, m.return(Success),
+      (String@ path, M@<Exit@> return) {
+        Maybe@<In@<M@>> in := m.do(Read(path));
+        in.?(nothing: {
+          Unit@ _ := m.do(err $ FormatE|'%s: unable to open\n'[String(path)]);
+          m.return(Failure);
+        });
+        Unit@ _ := m.do(Cat(in.just));
+        return;
+      });
+  });
+
+  Error(Format|'Invalid command ''%s'''[String(cmd)]);
+};
+
+Demo;

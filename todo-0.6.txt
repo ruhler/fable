@@ -2,6 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Add exit command to /Std/Io/Cli/Demo% app.
+
 * Should struct copy be allowed to change the type of fields it updates?
  Sample use case: Convert a byte Channel@ to a char Channel@ using
    s.@(put: (Char@ c) { s.put(Pos(c)); });
