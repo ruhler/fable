@@ -63,26 +63,6 @@ namespace eval "pkgs/core" {
     testsuite $target $target.out "cat $target.out"
   }
 
-  # /Core/Stdio/Cat% interpreted test.
-  run_cli $::b/pkgs/core/Core/Stdio/fble-cat.out \
-    "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.fbld"
-  test $::b/pkgs/core/Core/Stdio/fble-cat.tr \
-    "$::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld" \
-    "diff -Z $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld"
-
-  # /Core/Stdio/Cat% interpreted test 2.
-  run_cli $::b/pkgs/core/Core/Stdio/fble-cat.2.out \
-    "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Stdio/Cat% -- $::s/README.fbld"
-  test $::b/pkgs/core/Core/Stdio/fble-cat.2.tr \
-    "$::b/pkgs/core/Core/Stdio/fble-cat.2.out" \
-    "diff -Z $::b/pkgs/core/Core/Stdio/fble-cat.2.out $::s/README.fbld"
-
-  # /Core/Stdio/Cat% compiled.
-  cli $::b/pkgs/core/fble-cat "/Core/Stdio/Cat%" "" ""
-  install $::b/pkgs/core/fble-cat $::config::bindir/fble-cat
-  fbld_man_usage $::b/pkgs/core/fble-cat.1 $::s/pkgs/core/fble-cat.fbld
-  install $::b/pkgs/core/fble-cat.1 $::config::mandir/man1/fble-cat.1
-
   # /Std/Io/Cli/Demo% interpreted test.
   run_cli $::b/pkgs/core/fble-cli.out \
     "-I $::s/pkgs/std -m /Std/Io/Cli/Demo%"
