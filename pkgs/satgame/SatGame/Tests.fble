@@ -103,4 +103,4 @@ Test@ Tests = TestSuite(Str|SatGame, List[
   })
 ]);
 
-/Core/Test/Cli%.Run(Tests);
+/Std/Test/Cli%.Run(Tests);

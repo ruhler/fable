@@ -1,3 +1,5 @@
+# @module[/Std/Test/Cli%]
+#  Test runner using a command line interface.
 
 Bool@ .= /Std/Bool%;
 Str .= /Std/Char/Ascii%;
@@ -9,15 +11,11 @@ Out@ .= /Std/Stream/Text%;
 String@ .= /Std/String%;
 Test@ .= /Std/Test%;
 
-# Run --
-#   A cli program to run a set of tests.
-#
-# Inputs:
-#   tests - the tests to run.
-#
-# Result:
-#   A cli Main@ program to run the tests.
-(Test@) { Main@; } Run = (Test@ tests) {
+# @func[Run] A cli program to run a set of tests.
+#  @arg[Test@][test] The test or test suite to run.
+#  @returns[Main@] A cli program that runs the test.
+(Test@) { Main@; }
+Run = (Test@ tests) {
   <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     String@ prefix = {
       args.?(empty: Str|'');
@@ -26,7 +24,7 @@ Test@ .= /Std/Test%;
     };
 
     Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-    Bool@ passed := m.do(/Core/Test/Run%.Run(m, out, prefix, tests));
+    Bool@ passed := m.do(/Std/Test/Run%.Run(m, out, prefix, tests));
     m.return(passed.?(true: Success, false: Failure));
   };
 };

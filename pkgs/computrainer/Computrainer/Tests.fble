@@ -354,4 +354,4 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
   })
 ]);
 
-/Core/Test/Cli%.Run(Tests);
+/Std/Test/Cli%.Run(Tests);

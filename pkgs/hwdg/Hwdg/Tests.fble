@@ -11,4 +11,4 @@ _ = /Hwdg/App%;
 
 Test@ Tests = TestSuite(Str|Hwdg, Empty<Test@>);
 
-/Core/Test/Cli%.Run(Tests);
+/Std/Test/Cli%.Run(Tests);

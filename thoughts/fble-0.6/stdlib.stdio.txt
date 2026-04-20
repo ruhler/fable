@@ -5293,3 +5293,25 @@ Or move it up front?
     ...
 
   };
+
+---
+
+I think it's worth having a demo app. If for no other reason than
+documentation. But also useful for examples in man pages and to validate
+setup.
+
+Here's what I propose for the demo app:
+* no args: print hello world
+* echo foo: prints foo on standard out.
+* env foo: prints $foo on standard out.
+* cat foo: prints contents of the file foo on standard out.
+* exit n: exits with status n.
+* help: prints help to standard out and exits.
+* bad args: prints error message to stderr, prints help, and exits.
+
+That way we cover command line args, exit status, stdout, stderr, env vars,
+and reading files. We don't have writing files or reading stdin, but that's
+fine.
+
+This can replace HelloWorld, Cat, and Demo that I already have.
+

@@ -1,3 +1,5 @@
+# @module[/Std/Test/Run%]
+#  Test runner for unit tests.
 
 Bool@, True, False, And .= /Std/Bool%;
 Str .= /Std/Char/Ascii%;
@@ -10,8 +12,13 @@ String@ .= /Std/String%;
 Test@, TestResult@ .= /Std/Test%;
 Unit@, Unit .= /Std/Unit%;
 
-# Runs a test or test suite, outputting summary information along the way.
-# Returns True if the all the tests pass, false otherwise.
+# @func[Run] Runs a test or test suite.
+#  @arg[<@>@][M@] Monadic type to run the tests under.
+#  @arg[Monad@<M@>][m] Monad implementation.
+#  @arg[Out@<M@>][out] Stream to output progress information to.
+#  @arg[String@][prefix] Prefix to use for reported test names.
+#  @arg[Test@][test] The test or test suite to run.
+#  @returns[M@<Bool@>] True if all tests pass, false otherwise.
 <<@>@ M@>(Monad@<M@>, Out@<M@>, String@, Test@) { M@<Bool@>; }
 Run = <<@>@ M@>(Monad@<M@> m, Out@<M@> out, String@ prefix, Test@ test) {
   test.?(
@@ -21,17 +28,17 @@ Run = <<@>@ M@>(Monad@<M@> m, Out@<M@> out, String@ prefix, Test@ test) {
 
       TestResult@ tr = test.case.test(Unit);
 
-      (Stream@, Bool@) { M@<Bool@>; }
-      Return = (Stream@ output, Bool@ result) { 
+      (Bool@, Stream@) { M@<Bool@>; }
+      Return = (Bool@ result, Stream@ output) { 
         Unit@ _ := m.do(out(output));
         m.return(result);
       };
 
       tr.?(
-        pass: Return(StringE|'@PASS\n', True),
-        fail: Return(FormatE|'@FAIL: %s\n'[tr.fail], False),
-        expected_fail: Return(StringE|'@EXPECTED_FAIL\n', True),
-        skip: Return(FormatE|'@SKIP: %s\n'[tr.skip], True));
+        pass: Return(True, StringE|'@PASS\n'),
+        fail: Return(False, FormatE|'@FAIL: %s\n'[tr.fail]),
+        expected_fail: Return(True, StringE|'@EXPECTED_FAIL\n'),
+        skip: Return(True, FormatE|'@SKIP: %s\n'[tr.skip]));
     },
     suite: {
       String@ name = Concat[prefix, test.suite.name, Str|'.'];

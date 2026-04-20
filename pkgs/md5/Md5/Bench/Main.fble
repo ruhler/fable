@@ -1,1 +1,1 @@
-/Core/Test/Cli%.Run(/Md5/Bench%.Bench);
+/Std/Test/Cli%.Run(/Md5/Bench%.Bench);

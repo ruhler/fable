@@ -12,4 +12,4 @@ _ = /Invaders/Bench%;
 
 Test@ Tests = TestSuite(Str|Invaders, List<Test@>[]);
 
-/Core/Test/Cli%.Run(Tests);
+/Std/Test/Cli%.Run(Tests);

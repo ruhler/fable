@@ -8,4 +8,4 @@ TestSuite = /Std/Test%.TestSuite;
 
 Test@ Tests = TestSuite(Str|App, List<Test@>[]);
 
-/Core/Test/Cli%.Run(Tests);
+/Std/Test/Cli%.Run(Tests);

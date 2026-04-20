@@ -222,4 +222,4 @@ p cnf 5 3
 
 ]);
 
-/Core/Test/Cli%.Run(Tests);
+/Std/Test/Cli%.Run(Tests);

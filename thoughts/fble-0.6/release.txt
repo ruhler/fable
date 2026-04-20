@@ -92,12 +92,12 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/String/Tests.fble
   - pkgs/core/Core/Test/Tests.fble
   - pkgs/core/Core/Tests.fble
+  - pkgs/core/Core/Debug/Tests.fble
 * Figure out what to do with all the other miscellaneous stuff.
   - pkgs/core/Core/CRC/Debug.fble   [Removed]
   - pkgs/core/Core/CRC/Tests.fble   [Removed]
   - pkgs/core/Core/CRC.fble         [Removed]
   - pkgs/core/Core/Debug/Builtin.fble ==> /Std/Stream/Debug%
-  - pkgs/core/Core/Debug/Tests.fble
   - pkgs/core/Core/Debug.fble         ==> /Std/Stream/Debug%
   - pkgs/core/Core/Digits/Eq.fble
   - pkgs/core/Core/Digits/Show.fble
@@ -114,8 +114,8 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Monad/IO.fble    [Removed]
   - pkgs/core/Core/Monad/Pure.fble
   - pkgs/core/Core/Scratch.fble     [Removed]
-  - pkgs/core/Core/Test/Cli.fble
-  - pkgs/core/Core/Test/Run.fble
+  - pkgs/core/Core/Test/Cli.fble    ==> /Std/Test/Cli%
+  - pkgs/core/Core/Test/Run.fble    ==> /Std/Test/Run%
 
 So, as you can see, it's a pretty long list of things. And a bunch of them
 will probably be difficult.

@@ -1,6 +1,6 @@
 
 # Import required types and values used.
-Bool@, True, False .= /Std/Bool%;
+True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
 Char .= /Std/Char/Ascii%;
 Int@ .= /Std/Int%;
