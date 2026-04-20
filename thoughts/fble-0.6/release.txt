@@ -68,9 +68,9 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/Char/Stream/IStream.fble ==> /Std/Stream/State% [DONE]
   - pkgs/core/Core/Char/Stream/OStream.fble ==> /Std/Stream/State% [DONE]
   - pkgs/core/Core/Char/Stream.fble ==> /Std/Stream/Text% [DONE]
-  - pkgs/core/Core/Stdio/Cat.fble
+  - pkgs/core/Core/Stdio/Cat.fble   ==> /Std/Io/Cli/Demo%
   - pkgs/core/Core/Stdio/FFI.fble   ==> /Std/Io/File/*  [DONE]
-  - pkgs/core/Core/Stdio/HelloWorld.fble
+  - pkgs/core/Core/Stdio/HelloWorld.fble   ==> /Std/Io/Cli/Demo%
   - pkgs/core/Core/Stdio/StringO.fble ==> /Std/Io/Cli/Print% [DONE]
   - pkgs/core/Core/Stream/Char.fble ==> /Std/Stream/State% [DONE]
   - pkgs/core/Core/Stream/IStream/Pure.fble [REMOVED]
@@ -80,7 +80,7 @@ I fear I'll have to give up at some point. Anyway, status is something like:
   - pkgs/core/Core/State/Pure.fble ==> /Std/State/Pure% [DONE]
   - pkgs/core/Core/State.fble      ==> /Std/State%      [DONE]
 * Next round of formalization/cleanup of native APIs
-  - pkgs/core/Core/Cli/Demo.fble
+  - pkgs/core/Core/Cli/Demo.fble   ==> /Std/Io/Cli/Demo%
   - pkgs/core/Core/Cli.fble        ==> /Std/Io/Cli% [DONE]
   - pkgs/core/Core/Env/Native.fble ==> /Std/Io/Env% [DONE]
   - pkgs/core/Core/Native.fble     ==> /Std/Io%     [DONE]

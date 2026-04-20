@@ -29,5 +29,5 @@
   @def[117] Other error.
  
  @examples
-  @ex[fble-cli -p std -p core -m /Core/Cli/Demo% -- a a]
-   Runs the demo program, passing arguments @l[a] and @l[b].
+  @ex[fble-cli -p std -m /Std/Io/Cli/Demo% -- help]
+   Runs the demo program, passing argument @l[help].
