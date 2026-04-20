@@ -83,19 +83,19 @@ namespace eval "pkgs/core" {
   fbld_man_usage $::b/pkgs/core/fble-cat.1 $::s/pkgs/core/fble-cat.fbld
   install $::b/pkgs/core/fble-cat.1 $::config::mandir/man1/fble-cat.1
 
-  # /Core/Stdio/HelloWorld% interpreted test.
-  run_cli $::b/pkgs/core/Core/Stdio/fble-cli.out \
-    "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Stdio/HelloWorld%"
-  test $::b/pkgs/core/Core/Stdio/fble-cli.tr $::b/pkgs/core/Core/Stdio/fble-cli.out \
-    "grep hello $::b/pkgs/core/Core/Stdio/fble-cli.out"
+  # /Std/Io/Cli/Demo% interpreted test.
+  run_cli $::b/pkgs/core/fble-cli.out \
+    "-I $::s/pkgs/std -m /Std/Io/Cli/Demo%"
+  test $::b/pkgs/core/fble-cli.tr $::b/pkgs/core/fble-cli.out \
+    "grep hello $::b/pkgs/core/fble-cli.out"
 
-  # /Core/Stdio/HelloWorld% compiled test.
-  cli $::b/pkgs/core/Core/Stdio/fble-cli-test "/Core/Stdio/HelloWorld%" "" ""
-  test $::b/pkgs/core/Core/Stdio/fble-cli-test.out \
-    $::b/pkgs/core/Core/Stdio/fble-cli-test \
-    "$::b/pkgs/core/Core/Stdio/fble-cli-test > $::b/pkgs/core/Core/Stdio/fble-cli-test.out"
-  test $::b/pkgs/core/Core/Stdio/fble-cli-test.tr $::b/pkgs/core/Core/Stdio/fble-cli-test.out \
-    "grep hello $::b/pkgs/core/Core/Stdio/fble-cli-test.out"
+  # /Std/Io/Cli/Demo% compiled test.
+  cli $::b/pkgs/core/fble-cli-demo "/Std/Io/Cli/Demo%" "" ""
+  test $::b/pkgs/core/fble-cli-demo.out \
+    $::b/pkgs/core/fble-cli-demo \
+    "$::b/pkgs/core/fble-cli-demo > $::b/pkgs/core/fble-cli-demo.out"
+  test $::b/pkgs/core/fble-cli-demo.tr $::b/pkgs/core/fble-cli-demo.out \
+    "grep hello $::b/pkgs/core/fble-cli-demo.out"
 
   # Core/Tests interpreted
   run_cli_tests $::b/pkgs/core/Core/tests.tr "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Tests%" ""
