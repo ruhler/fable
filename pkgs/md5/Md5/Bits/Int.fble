@@ -1,6 +1,6 @@
 
-Bit@ = /Core/Digits%.Bit@;
-Bit = /Core/Digits%.Bit;
+Bit@ = /Md5/Digits%.Bit@;
+Bit = /Md5/Digits%.Bit;
 
 Int@ = /Std/Int%.Int@;
 IsNegative = /Std/Int/Sign%.IsNegative;

@@ -1,6 +1,6 @@
 
-Bit@ = /Core/Digits%.Bit@;
-Hex@ = /Core/Digits%.Hex@;
+Bit@ = /Md5/Digits%.Bit@;
+Hex@ = /Md5/Digits%.Hex@;
 
 List@ = /Std/List%.List@;
 List = /Std/List%.List ;

@@ -1,0 +1,25 @@
+Digits
+======
+I have Int literals that define local BinLit@, OctLit@, intLit@, HexLit@. I
+don't want to bring /Core/Digits% over to the standard library beyond that.
+
+My last use case for /Core/Digits% is md5. Let's see how they are used and
+what I can do to replace them.
+
+How they are used:
+* Hash@ is defined as 32 Hex@ digits.
+* BitN values and bit wise operations defined in terms of Bit@.
+* We have literals to construct the BitN values.
+
+It's pretty core right now to the md5 implementation. But it's also pretty
+messy the way md5 is implemented.
+
+Rounds operate on 32 bit words. The padder has some 64 bit arithmetic.
+
+Options:
+1. Move /Core/Digits into md5 package. Worry about things later.
+2. Implement bitwise operations in md5 as Int@ + truncate.
+3. Implement bitwise operations in md5 as List@<Bool@>.
+
+The obvious thing to do right now is move Digits into md5 and just worry about
+things later. Sounds like a plan to me.

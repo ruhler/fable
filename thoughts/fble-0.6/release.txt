@@ -160,16 +160,18 @@ Test modules:
 * pkgs/core/Core/Tests.fble
 * pkgs/core/Core/Debug/Tests.fble
 
-Misc modules:
-* pkgs/core/Core/Monad/Pure.fble
-* pkgs/core/Core/Int/Read.fble
-* pkgs/core/Core/Int/Iter.fble
-* pkgs/core/Core/Iter.fble
-* pkgs/core/Core/Maybe.fble
+Digits: ==> /Md5/Digits* [DONE]
 * pkgs/core/Core/Digits/Show.fble
 * pkgs/core/Core/Digits/String.fble
 * pkgs/core/Core/Digits/Eq.fble
 * pkgs/core/Core/Digits/Tests.fble
 * pkgs/core/Core/Digits.fble
+
+Other modules:
+* pkgs/core/Core/Monad/Pure.fble
+* pkgs/core/Core/Int/Read.fble
+* pkgs/core/Core/Int/Iter.fble
+* pkgs/core/Core/Iter.fble
+* pkgs/core/Core/Maybe.fble
 
 Getting closer...

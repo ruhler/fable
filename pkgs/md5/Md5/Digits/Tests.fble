@@ -15,8 +15,8 @@ TestSuite = /Std/Test%.TestSuite;
 
 Unit@ = /Std/Unit%.Unit@;
 
-Bit = /Core/Digits%.Bit;
-EqBit = /Core/Digits/Eq%.EqBit;
+Bit = /Md5/Digits%.Bit;
+EqBit = /Md5/Digits/Eq%.EqBit;
 
 
 Test@ Tests = TestSuite(Str|Digits, List<Test@>[

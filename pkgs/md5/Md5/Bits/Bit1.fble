@@ -3,12 +3,12 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-Bit@ = /Core/Digits%.Bit@;
+Bit@ = /Md5/Digits%.Bit@;
 Bits@ = /Md5/Bits/Bits%.Bits@;
 Overflow@ = /Md5/Bits/Bits%.Overflow@;
 
-Bit@ 0 = /Core/Digits%.Bit.0;
-Bit@ 1 = /Core/Digits%.Bit.1;
+Bit@ 0 = /Md5/Digits%.Bit.0;
+Bit@ 1 = /Md5/Digits%.Bit.1;
 
 Bit1@ = Bit@;
 

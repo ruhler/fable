@@ -1,5 +1,5 @@
 
-Bit = /Core/Digits%.Bit;
+Bit = /Md5/Digits%.Bit;
 
 BitXY = /Md5/Bits/BitXY%(/Md5/Bits/Bit32%.Bits, /Md5/Bits/Bit32%.Bits);
 Bit64@ = BitXY.BitXY@;

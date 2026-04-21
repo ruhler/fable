@@ -2,8 +2,8 @@
 Bit8@ = /Md5/Bits/Bit8%.Bit8@;
 H8 = /Md5/Bits/Bit8%.H8;
 
-Hex@ = /Core/Digits%.Hex@;
-HexStr = /Core/Digits/String%.HexStr;
+Hex@ = /Md5/Digits%.Hex@;
+HexStr = /Md5/Digits/String%.HexStr;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
@@ -102,6 +102,8 @@ M@<Maybe@<Bit8@>> Get = {
 };
 
 Test@ Tests = TestSuite(Str|Md5, List[
+  /Md5/Digits/Tests%.Tests,
+
   # ""
   TestStr(
     Str|empty,

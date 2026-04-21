@@ -1,8 +1,8 @@
 
-Bit@ = /Core/Digits%.Bit@;
-Hex@ = /Core/Digits%.Hex@;
+Bit@ = /Md5/Digits%.Bit@;
+Hex@ = /Md5/Digits%.Hex@;
 
-HexToBits = /Core/Digits/String%.HexToBits;
+HexToBits = /Md5/Digits/String%.HexToBits;
 
 List@ = /Std/List%.List@;
 

@@ -5,7 +5,7 @@ True = /Std/Bool%.True;
 
 String = /Std/Char/Ascii/Stream%.String;
 
-Hex@ = /Core/Digits%.Hex@;
+Hex@ = /Md5/Digits%.Hex@;
 
 List@ = /Std/List%.List@;
 List = /Std/List%.List;
