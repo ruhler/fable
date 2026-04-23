@@ -17,8 +17,6 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
-Monad@ = /Std/Monad%.Monad@;
-
 Show@ = /Std/Show%.Show@;
 
 Format = /Std/Char/Ascii/Stream%.Format;
@@ -381,23 +379,22 @@ GetConflict = (List@<Assign@> todo)
       todo));
 };
 
-<<@>@ M@>(Monad@<M@>, Solver@) { M@<Result@>; }
-Solve = <<@>@ M@>(Monad@<M@> m) {
+(Solver@) { Result@; }
+Solve = {
   # Process todos until no more remain or unsat.
-  (Solver@) { M@<Solver@>; } Simplify = (Solver@ s) {
-    s.unsat.?(true: m.return(s));
-    s.todo.?(empty: m.return(s));
+  (Solver@) { Solver@; } Simplify = (Solver@ s) {
+    s.unsat.?(true: s);
+    s.todo.?(empty: s);
 
     # Check for conflicts in the todo list.
     Maybe@<Conflict@> conflict = GetConflict(s.todo);
     conflict.?(just: {
       # Add the conflict and note that we are done here.
       ClauseId@ id = s.clause_id;
-      Solver@ rs = s.@(
+      s.@(
         unsat: True,
         clause_id: Incr(id),
         conflicts: Conflicts.Insert(s.conflicts, id, conflict.just));
-      m.return(rs);
     });
 
     # Apply the next assignment in the todo list.
@@ -407,8 +404,8 @@ Solve = <<@>@ M@>(Monad@<M@> m) {
 
     # If the assignment succeeded, but further simplification failed, apply
     # what we learned to before the assignment and simplify again.
-    Solver@ ss := m.do(Simplify(result));
-    ss.unsat.?(false: m.return(ss));
+    Solver@ ss = Simplify(result);
+    ss.unsat.?(false: ss);
     Simplify(ApplyLearnedClauses(s, ss));
   };
 
@@ -427,19 +424,19 @@ Solve = <<@>@ M@>(Monad@<M@> m) {
   };
 
   # Sat solver with conflict driven clause learning.
-  (Solver@) { M@<SearchResult@>; } Search = (Solver@ s) {
-    Solver@ ss := m.do(Simplify(s));
+  (Solver@) { SearchResult@; } Search = (Solver@ s) {
+    Solver@ ss = Simplify(s);
     Solver@ s = ss;
-    s.unsat.?(true: m.return(Unsat(s)));
+    s.unsat.?(true: Unsat(s));
 
     Maybe@<VarId@> mvar = PickSomeVar(s.vars);
-    mvar.?(nothing: m.return(SearchResult@(sat: s.assigns)));
+    mvar.?(nothing: SearchResult@(sat: s.assigns));
     VarId@ var = mvar.just;
 
     Var@ vattempt = Var@(var, True);
     Solver@ attempt = Assign(vattempt, s);
       
-    SearchResult@ attempted := m.do(Search(attempt));
+    SearchResult@ attempted = Search(attempt);
     attempted.?(unsat: {
       # Add conflict clauses for all conflicts encountered in our attempted
       # search
@@ -449,14 +446,14 @@ Solve = <<@>@ M@>(Monad@<M@> m) {
       Search(ApplyLearnedClauses(s, ns));
     });
 
-    m.return(attempted);
+    attempted;
   };
 
   (Solver@ s) {
-    SearchResult@ result := m.do(Search(s));
-    m.return(result.?(
+    SearchResult@ result = Search(s);
+    result.?(
       sat: Result@(sat: result.sat),
-      unsat: Result@(unsat: Unit)));
+      unsat: Result@(unsat: Unit));
   };
 };
 

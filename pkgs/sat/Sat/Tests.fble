@@ -9,8 +9,6 @@ Int = /Std/Int/Lit%.Int;
 
 List = /Std/List%.List;
 
-Monad@ = /Std/Monad%.Monad@;
-
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
 
@@ -73,13 +71,9 @@ VarId@ X = Int|1;
 VarId@ Y = Int|2;
 VarId@ Z = Int|3;
 
-(Formula@) { Result@; } Solve = {
-  M@ = /Core/Monad/Pure%.Pure@;
-  Monad@<M@> m = /Core/Monad/Pure%.Monad;
-  solve = /Sat/Solver%.Solve(m);
-  (Formula@ formula) {
-    solve(AddClauses(NewSolver, formula));
-  };
+(Formula@) { Result@; }
+Solve = (Formula@ formula) {
+  /Sat/Solver%.Solve(AddClauses(NewSolver, formula));
 };
 
 Test@ Tests = TestSuite(Str|Sat, List[

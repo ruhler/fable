@@ -52,7 +52,7 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Out@<M@> out, Out@<M@> err) {
   });
 
   Solver@ solver = AddClauses(NewSolver, parsed.parsed); 
-  Result@ result := m.do(Solve(m, solver));
+  Result@ result = Solve(solver);
   Unit@ _ := m.do(out $ FormatE|'%s\n'[ShowResult(result)]);
   m.return(Success);
 };
