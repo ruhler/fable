@@ -12,7 +12,6 @@ List = /Std/List%.List;
 Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
-DoWhile = /Core/Maybe%.DoWhile;
 
 Stream@ = /Std/Stream/Text%.Stream@;
 Return = /Std/Stream/Text%.Return;
@@ -41,7 +40,7 @@ Solved@ = /Games/Sudoku%.Solved@;
 7 = /Games/Sudoku%.7;
 8 = /Games/Sudoku%.8;
 9 = /Games/Sudoku%.9;
-IterateSymbol = /Games/Sudoku%.IterateSymbol;
+Symbols = /Games/Sudoku%.Symbols;
 Solve = /Games/Sudoku%.Solve;
 
 (Symbol@, Symbol@) { Bool@; } EqSymbol = (Symbol@ a, Symbol@ b) {
@@ -61,7 +60,7 @@ Array@ = <@ T@>(Symbol@){ T@; };
 
 <@ T@>((T@, T@) { Bool@; }, Array@<T@>, Array@<T@>) { Bool@; }
 EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
-  DoWhile(1, IterateSymbol, True,
+  /Std/Stream%.ForEach(Symbols, True,
     (Symbol@ s, Bool@ p) {
       And(p, eq(a(s), b(s)));
     });

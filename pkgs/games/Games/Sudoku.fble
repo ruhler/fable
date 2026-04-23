@@ -1,17 +1,10 @@
 
-Bool@ = /Std/Bool%.Bool@;
-False = /Std/Bool%.False;
-True = /Std/Bool%.True;
-
-List@ = /Std/List%.List@;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing; 
-DoWhile = /Core/Maybe%.DoWhile; 
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Bool@, True, False .= /Std/Bool%;
+List@, List .= /Std/List%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Stream@, Return, Do, Put, ForEach .= /Std/Stream%;
+Puts, ToList .= /Std/Stream/List%;
+Unit@, Unit .= /Std/Unit%;
 
 # The 9 symbols used in sudoku: 1 through 9.
 Symbol@ = +(
@@ -30,13 +23,7 @@ Symbol@ 8 = Symbol@(8: Unit);
 Symbol@ 9 = Symbol@(9: Unit);
 
 # Iterate over the symbols in order.
-(Symbol@) { Maybe@<Symbol@>; } IterateSymbol = (Symbol@ s) {
-  (Symbol@){ Maybe@<Symbol@>; } J = Just<Symbol@>;
-  s.?(
-    1: J(2), 2: J(3), 3: J(4),
-    4: J(5), 5: J(6), 6: J(7),
-    7: J(8), 8: J(9), 9: Nothing<Symbol@>);
-};
+Stream@<Symbol@> Symbols = Puts(List[1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
 # An index specifying a row or column of a box group.
 BoxIndex@ = +(Unit@ 1, Unit@ 2, Unit@ 3);
@@ -102,14 +89,15 @@ Set2D = (Symbol@ a, Symbol@ b)<@ T@>(T@ x, Array@<Array@<T@>> array) {
 CellId@ = *(Symbol@ row, Symbol@ col);
 
 # Iterate over cell ids, going left to right and top to bottom.
-(CellId@) { Maybe@<CellId@>; } IterateCellId = (CellId@ cell) {
-  Maybe@<Symbol@> mncol = IterateSymbol(cell.col);
-  mncol.?(just: Just(CellId@(cell.row, mncol.just)));
-
-  Maybe@<Symbol@> mnrow = IterateSymbol(cell.row);
-  mnrow.?(nothing: Nothing<CellId@>);
-
-  Just(CellId@(mnrow.just, 1));
+Stream@<CellId@> CellIds = {
+  ForEach(Symbols, Return<CellId@>,
+    (Symbol@ col, Stream@<CellId@> stream) {
+      ForEach(Symbols, stream,
+        (Symbol@ row, Stream@<CellId@> stream) {
+          Unit@ _ := Do(stream);
+          Put(CellId@(row, col));
+        });
+    });
 };
 
 # Return the id of the box group that this cell belongs to.
@@ -144,7 +132,7 @@ Set@ FullSet = (Symbol@ _s) { True; };
 (Set@) { Maybe@<Symbol@>; } Singleton = (Set@ set) {
   State@ = +(Unit@ empty, Symbol@ single, Unit@ multi);
 
-  State@ state = DoWhile(1, IterateSymbol, State@(empty: Unit),
+  State@ state = ForEach(Symbols, State@(empty: Unit),
     (Symbol@ symbol, State@ state) {
       set(symbol).?(false: state);
       state.?(
@@ -195,7 +183,7 @@ XS@ EmptyXS = XS@(empty: Unit);
 (CellId@, Symbol@) { XS@; } Assign = (CellId@ cell, Symbol@ s) {
   # Cell: This cell cannot be any symbol other than s.
   Set@ isS = Set(s, True, (Symbol@ _) { False; });
-  XS@ xCell = DoWhile(1, IterateSymbol, EmptyXS,
+  XS@ xCell = ForEach(Symbols, EmptyXS,
     (Symbol@ other, XS@ xs) {
       isS(other).?(true: xs);
       AddX(X@(cell, other), xs);
@@ -205,7 +193,7 @@ XS@ EmptyXS = XS@(empty: Unit);
   # This is a helper function we'll reuse for rows, columns, and boxes.
   (Set@, (Symbol@) { CellId@; }) { XS@; }
   Group = (Set@ isThis, (Symbol@) { CellId@; } cellOf) {
-    DoWhile(1, IterateSymbol, EmptyXS,
+    ForEach(Symbols, EmptyXS,
       (Symbol@ i, XS@ xs) {
         isThis(i).?(true: xs);
         AddX(X@(cellOf(i), s), xs);
@@ -300,13 +288,13 @@ BoardX@ = *(Board@ board, XS@ xs);
 #   mfrom - The symbols for all cells in the board before this cell are assumed
 #          to have been determined. Nothing means the symbols for all cells
 #          have been determined.
-(Board@, Maybe@<CellId@>) { Maybe@<Board@>; }
-SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
-  mfrom.?(nothing: Just(board));
+(Board@, List@<CellId@>) { Maybe@<Board@>; }
+SolveFrom = (Board@ board, List@<CellId@> mfrom) {
+  mfrom.?(empty: Just(board));
 
-  CellId@ from = mfrom.just;
+  CellId@ from = mfrom.items.head;
   Cell@ cell = board(from.row, from.col);
-  Maybe@<CellId@> next = IterateCellId(from);
+  List@<CellId@> next = mfrom.items.tail;
 
   Maybe@<Symbol@> single = Singleton(cell);
   single.?(
@@ -318,7 +306,7 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
     nothing: {
       # We don't know the symbol for this cell yet. Try all possible
       # options until we've found a solution to the puzzle.
-      DoWhile(1, IterateSymbol, Nothing<Board@>,
+      ForEach(Symbols, Nothing<Board@>,
         (Symbol@ s, Maybe@<Board@> solved) {
           # TODO: Can we break out more efficiently in the case when it's
           # solved, rather than have to iterate through and ignore all the
@@ -335,7 +323,7 @@ Input@ = (Symbol@, Symbol@) { Maybe@<Symbol@>; };
 
 # Generate constraints based on the given input board.
 (Input@) { XS@; } InputXS = (Input@ board) {
-  DoWhile(CellId@(1, 1), IterateCellId, EmptyXS,
+  ForEach(CellIds, EmptyXS,
     (CellId@ cell, XS@ xs) {
       Maybe@<Symbol@> ms = board(cell.row, cell.col);
       ms.?(nothing: xs);
@@ -349,7 +337,7 @@ Solved@ = (Symbol@, Symbol@) { Symbol@; };
 (Input@) { Maybe@<Solved@>; } Solve = (Input@ in) {
   Maybe@<Board@> solved = SolveFrom(
     ApplyXS(EmptyBoard, InputXS(in)),
-    Just(CellId@(1, 1)));
+    ToList(CellIds));
   solved.?(
     just: Just<Solved@>(
       (Symbol@ row, Symbol@ col) {
@@ -359,5 +347,5 @@ Solved@ = (Symbol@, Symbol@) { Symbol@; };
 };
 
 @(
-  Symbol@, 1, 2, 3, 4, 5, 6, 7, 8, 9, IterateSymbol,
+  Symbol@, 1, 2, 3, 4, 5, 6, 7, 8, 9, Symbols,
   Input@, Solved@, Solve);
