@@ -638,3 +638,232 @@ Or, have the type be union of T@ and _. Yeah. I like that. We support that
 kind of union now.
 
 Let's give it a try.
+
+---
+
+I need conversion from String@ to Int@. How should we provide that?
+
+Abstractly we have choices of either hard coding radix or having radix encoded
+as part of the syntax. For example:
+
+* ReadDec, ReadHex, ReadOct, ReadRadix(n), etc... which all take a specific
+  radix.
+* ReadInt, which can take, e.g. 0x123, or 0013, or 123, and so on.
+
+So decisions are:
+* Which radix specific functions to support?
+ - At least Bin, Oct, Dec, Hex corresponding to Int literals?
+* For a give radix, what syntax to support?
+ - '+', '-', leading zeros allowed? '_' or other separators? ',' separator?
+   whitespace?
+* Should we provide a mixed radix read function?
+ - If so, what syntax and what radix to support within that?
+
+Let's see what other libraries use.
+
+C:
+* atoi: base 10
+ - any amount of whitespace, then single optional '+' or '-'
+* strtol: base as argument, or special 0.
+ - If 0, then prefix of '0x', or '0', or else. Except 16 accepts 0x too.
+ - Reads to the first invalid character.
+ - But other things can be accepted depending on locale if not C or POSIX.
+
+Java:
+* Integer.parseInt
+ - Optional explicit radix to pass.
+ - Optional single '+' or '-' followed by all valid digits for the base.
+ - Throws exception if malformed.
+
+Go:
+* ParseInt
+ - Like strtol. Prefixes for bases are 0b, 0 or 0o, 0x
+ - Underscores allowed if radix is special '0' only.
+
+Python:
+* int()
+ - Can have whitespace around it, leading zeroes, underscore separators.
+ - Radix prefixes are 0b/0B, 0o/0O, 0x/0X
+
+Seems like it would be nice to have integer literals take Ascii? Or keep
+things separate in that regard?
+
+Anyway, the options are clear. I just need to make some arbitrary decisions.
+
+---
+
+Proposal:
+* /Std/Int/Parse%
+  - (Int@, String@) { Maybe@<Int@>; } Radix
+    Parse an integer in the given radix, radix between 2 and 36.
+    Returns Nothing for bad radix or failure to parse.
+    Syntax is optional '+' or '-', followed by the radix digits.
+    Any number of leading zeros (after '+' or '-') are allowed.
+    Single '_' separators are allowed.
+  - (String@) { Maybe@<Int@>; }; Int
+    Parse an integer, where radix is part of the syntax.
+    Syntax is optional '+' or '-'.
+    Radix is '0b' '0B' '0o' '0O' '0d' '0D' '0h', '0H', '0x' '0X'
+      Anything else following an initial '0' is not allowed.
+    If the first digit is [1-9], then radix is 10.
+    After the radix specification, any number of leading zeros are allowed.
+    Single '_' separators are allowed.
+* /Std/Int/Lit%
+  - Bin, Oct, Dec, Hex - wrappers around Radix(2), Radix(8), ...
+    Taking List@<Ascii@> as arguments.
+    Assuming no error.
+  - Int - wrapper around /Std/Int/Parse%.Int.
+     
+Sounds like a plan to me.
+
+Um... I think I like a separator for radix better. It's different, yes, but
+more consistent. How about we more things forward in the world?
+
+  b'
+  o'
+  h'ABCDFFFF;
+  x'ABCDFFFF;
+
+I guess it depends on what your applications are doing. If I want to write an
+app that takes an int as the command line, and let people write 0xabcd instead
+of h'abcd, that means something.
+
+Consider my demo cli program's exit command, for example. If I'm going to use
+this ParseInt function, then my library function is determining the api for
+the application's exit command. That sounds... it's reasonable only if
+everyone has the same interpretation of what kind of things you can pass for
+integers everywhere. I'm not just talking about an integer literal spec for a
+programming language here. I'm talking about a standardized specification for
+applications to use in their user interfaces.
+
+How can we do that? It's like the character class case: If we provide a
+standard function that does almost, but not quite, what the application needs,
+it's useless. Or harmful, because now people will use that instead.
+
+  b|01110101;
+  o|07741423;
+  d|188723;
+  h|ABCDFFFF;
+  x|ABCDFFFF;
+
+For example, the syntax for an exit status shouldn't let you put negative
+numbers. But it probably should let you do hex if you want.
+
+  fble-cli-demo exit 0x47
+  fble-cli-demo exit 42
+  fble-cli-demo exit -0x44_1a
+
+Anyway, we can at least take away some things here to improve literals
+* Add Dec literal. Let Int take literal spec in the string itself.
+ - Not sure what spec to use for radix though.
+* Allow '+' and '-' in literals.
+* Consider renaming literals to: B, O, D, H?
+
+  Int|b01110101;
+  Int|B01110101;
+  Int|o07741423;
+  Int|d188723;
+  Int|188723;
+  Int|'-188723';
+  Int|hABCD_FFFF;
+  Int|xABCD_FFFF;
+  Int|'-xABCD_FFFF';
+  Int|'-XABCD_FFFF';
+
+What do existing command line programs use? For example, kill? Or nice?
+
+  nice: invalid adjustment ‘0x12’
+
+But '+12' and '-12' work.
+
+Anyway, for literals, I vote for radix prefix of:
+   b B o O d D h H
+
+No x. No 0x. If you start with 0 through 9, that defaults to decimal. Any
+number of leading digits allowed.
+
+And it makes sense to provide a way to go from String@ to Int@ with the same
+syntax as literals in the language.
+
+The question that leaves is if applications should be making use of that
+helper function, or if they should do custom parsers. You could say that's a
+question for the application. As long as we make it clear that we are only
+providing support for particular literals, we should be fine, no?
+
+But if I have this nice function to use, at least for exit demo for example,
+then I'll want to use it. And maybe that isn't such a bad thing.
+
+Updated proposal:
+* /Std/Int/Lit%
+ - Bin, Oct, Dec, Hex: '+'/'-', leading zeros, no whitespace, assume correct.
+   List@<Ascii@> input.
+ - Int: '+'/'-', starts with optional radix prefix. List@<Ascii@> input.
+ - Parse.Radix: Int@, String@ to Maybe@<Int@>
+ - Parse.Int: String@ to Maybe<Int@>
+   Radix prefix is b B o O d D h H, or default if 0-9
+
+And that's it. If you want to parse something in the style of an fble integer
+literal, the library will let you do that. If you want some other custom
+format, that's on you.
+
+And now I could say things like:
+
+  fble-cli-demo exit -h_4_2
+
+Why not?
+
+---
+
+I have a bootstrapping problem:
+* Parse.Radix depends on character literals to compare against 'a', etc.
+* Character literals depend on integer literals to define 'a' as Int|97.
+* Integer literals depend on radix to parse the 97 into an integer.
+
+It feels like the right way to break the cycle is for characters to continue
+to depend on integer literals, but not have integer literals depend on strings
+or characters. Because Char@ depends on Int@, not the other way around.
+
+The only way I can do that without duplicating the parsing logic would be to
+implement the parser on a special letter type that Int knows about. It would
+bootstrap on something that takes a list of Int@ for composition rather than
+a list of letters. The string version of the parser would then map string to
+list of int literal letters and call the int literal letter parser.
+
+Why not reuse Ascii@ for int literal letters? As long as I can separate the
+definition of Ascii@ from any use of int literals, it has what I want. I'm
+defining it anyway. Then everyone can use Ascii for int literals.
+
+I suppose that's another consideration. Today I have IntLit@, BinLit@, etc.
+for literal types. If all those types were the same, I could write a function
+that works for generic literals more easily. Otherwise I have to have multiple
+variations. It seems like we should use one letter type to cover all the kinds
+of literals. Though that means you can have invalid characters in literals.
+
+Reviewing my current implementation, I suppose all we really need is a map
+from letter to Int@ and a radix. Then some sort of special handling for '+',
+'-', separators, and radix prefix. But that kind of handling can be done
+separately anyway, because it all comes at the front. Well, except for the
+separators.
+
+Partly the question is, if I've already defined integer literals without use
+of Char@ or String@, is there any justification for defining an integer
+parsing function as part of the standard library? Because almost certainly
+it's not going to use the same syntax as whatever you application requires.
+
+Maybe it's enough for it to be a superset of whatever syntax your application
+requires? Like, if it can parse +/- sequence of digits, without worrying about
+separators or radix specifications, that's enough? Is it fair not to worry
+about radix specifications or leading zeroes?
+
+Or maybe we want to have some specification you have to supply for your number
+format? Like how they do for dates? It seems pretty clear what all choices
+there are, doesn't it? Maybe not. But if the tedious part is mapping digits to
+ints and combining those together by radix, then all we ought to need is the
+pure parsing that does that. You can implement your own wrapper as needed. For
+example:
+* Check for and strip of +-.
+* Check for and strip of 0x, 0, 0o, 0b, etc to pick radix.
+* Remove leading whitespaces. Remove internal separators.
+* Then call the shared function that knows how to convert to int and compose
+  together.
+

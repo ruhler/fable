@@ -335,8 +335,8 @@ _Show = {
 (Solver@, Solver@) { Solver@; }
 ApplyLearnedClauses = (Solver@ to, Solver@ from) {
   Solver@ s = to.@(clause_id: from.clause_id, conflicts: from.conflicts);
-  /Core/Iter%.For(
-      /Core/Int/Iter%.Range(to.clause_id, from.clause_id), s,
+  /Std/Stream%.ForEach(
+      /Std/Int/Stream%.Range(to.clause_id, from.clause_id), s,
       (Id@ i, Solver@ s) {
         Maybe@<Conflict@> conflict = Conflicts.Lookup(s.conflicts, i);
         AddConflictClause(i, conflict.just, s);

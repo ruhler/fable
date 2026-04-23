@@ -324,7 +324,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
     # We launch bombs once all aliens have completed their move.
     aliens.next.?(just: M.return(bombs));
 
-    /Core/Iter%.For(/Core/Int/Iter%.Range(Int|0, NumCols), M.return(bombs)) $
+    /Std/Stream%.ForEach(/Std/Int/Stream%.Range(Int|0, NumCols), M.return(bombs)) $
       (Int@ col, M@<Bombs@> mbombs) {
         Maybe@<Alien@> alien = Vanguard(aliens, col);
         alien.?(nothing: mbombs);

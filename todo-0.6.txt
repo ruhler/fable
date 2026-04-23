@@ -2,6 +2,12 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Revisit '$' application syntax.
+ - Remove syntax highlighting?
+ - Remove feature entirely?
+   Because it feels arbitrary whether I write:
+     foo(bar(sludge)) or foo(bar $ sludge)
+
 * Add exit command to /Std/Io/Cli/Demo% app.
 
 * Should struct copy be allowed to change the type of fields it updates?

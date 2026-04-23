@@ -1,0 +1,20 @@
+# @module[/Std/Int/Stream%]
+#  Integer streaming functions.
+
+Int@, Incr .= /Std/Int%;
+Lt .= /Std/Int/Cmp%;
+Stream@, Return, Do, Put .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
+
+# @func[Range] A stream of integers in the range [lo, hi).
+#  @arg[Int@][lo] The start of the range, inclusive.
+#  @arg[Int@][hi] The end of the range, exclusive.
+#  @returns[Stream@<Int@>] The stream of integers from lo to hi.
+(Int@, Int@) { Stream@<Int@>; }
+Range = (Int@ lo, Int@ hi) {
+  Lt(lo, hi).?(false: Return<Int@>);
+  Unit@ _ := Do(Put(lo));
+  Range(Incr(lo), hi);
+};
+
+@(Range);

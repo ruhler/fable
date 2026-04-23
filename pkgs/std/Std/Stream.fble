@@ -51,6 +51,39 @@ Put = <@ A@>(A@ v)<@ S@>(Channel@<A@, S@> s) {
   s.put(v);
 };
 
+# @func[ForEach] Iterate over elements of a stream.
+#  @arg[@][A@] The type of element on the stream.
+#  @arg[Stream@<A@>][stream] The stream of elements to iterate over.
+#  @arg[@][B@] The type of data to return.
+#  @arg[B@][base] The value to return for an empty list.
+#  @arg[(A@, B@) { B@; }][body]
+#   A function to update the value to return given the next element on the
+#   stream.
+#  @returns[B@]
+#   The result of applying the body consecutively to the base value, once for
+#   each element in the stream in order.
+#
+# Conceptually the behavior is like:
+#
+# @code[txt] @
+#  B@ b = base
+#  foreach x in stream:
+#    b = body(x, b)
+#  return b
+<@ A@>(Stream@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
+ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
+  S@ = (B@) { B@; };
+
+  return = (B@ b) { b; };
+
+  do = (S@ a, (Unit@) { S@; } f, B@ b) {
+    B@ nb = a(b);
+    f(Unit, nb);
+  };
+
+  stream(Channel@(return, do, body), base);
+};
+
 # @type[In@] Monadic interface for getting from a stream of values.
 #  Get the next value from the stream. It returns Nothing if the end of the
 #  stream has been reached.
@@ -64,7 +97,7 @@ Out@ = <@ A@, <@>@ M@>(Stream@<A@>) { M@<Unit@>; };
 Stream = <@ A@> {
   @(Channel@: Channel@<A@>, Stream@: Stream@<A@>,
     In@: In@<A@>, Out@: Out@<A@>,
-    Return: Return<A@>, Do: Do<A@>, Put: Put<A@>);
+    Return: Return<A@>, Do: Do<A@>, Put: Put<A@>, ForEach: ForEach<A@>);
 };
 
-@(Channel@, Stream@, In@, Out@, Return, Do, Put, Stream);
+@(Channel@, Stream@, In@, Out@, Return, Do, Put, ForEach, Stream);

@@ -170,8 +170,8 @@ Digits: ==> /Md5/Digits* [DONE]
 Other modules:
 * pkgs/core/Core/Monad/Pure.fble
 * pkgs/core/Core/Int/Read.fble
-* pkgs/core/Core/Int/Iter.fble
-* pkgs/core/Core/Iter.fble
+* pkgs/core/Core/Int/Iter.fble    ==> /Std/Int/Stream%.Range
+* pkgs/core/Core/Iter.fble        ==> /Std/Stream%.ForEach
 * pkgs/core/Core/Maybe.fble
 
 Getting closer...

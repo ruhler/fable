@@ -44,3 +44,75 @@ Maybe I want to be able to write a generic 'Has' function that works over any
 data structure supporting iteration and that can break out early. What
 interface would I use for that?
 
+
+---
+
+Back after a while.
+
+For loops. I use them pretty often. A ForEach like construct that iterates
+over integers in a range. Today I separate the range from the iteration. Not
+sure if that's the best approach.  I could define different for functions
+instead?
+
+The use cases I have today:
+
+  For each integer from a to b.
+  For each integer from 0 to a.
+
+I could also imagine:
+
+  For each integer from a to b with update f.
+  While p(s).
+
+The nicest API for my use cases will be for integer range a to b call some
+function. It's not super general though. Not nearly so general as a C for
+loop, for example.
+
+Another line of thought is, could we use Stream@<A@> as the argument to a
+generic for loop? Then provide a library of Stream@ functions?
+
+The important thing about Stream@ is its laziness and streaminess, in contrast
+to list. That's exactly my motivation for using Stream@ for IO.
+
+It wouldn't be difficult to produce a stream.
+
+  (Int@, Int@) { Stream@<Int@>; }
+  Range = (Int@ l, Int@ h) {
+    Lt(l, h).?(false: Return<Int@>);
+    Unit@ _ := Put(l);
+    Range(Incr(l, h));
+  };
+
+That's a super nice way of iterating over things.
+
+But can I easily enough consume the stream? Maybe your base in the for loop is
+exactly the stream type we are going to?
+
+Interesting. Let's continue this line of thought.
+
+---
+
+Yes. Stream@<Int@> as an argument to for loops, to replace iter, sounds
+perfect. Super easy to construct. Super easy to consume from a for loop
+implementation point of view. If we want to have a lazy list type, that's easy
+to construct too, so that people can easily consume the stream.
+
+I did think about whether we could use a lazy list type instead of stream
+everywhere, but it's not quite so nice:
+* As a list, it doesn't allow easy concatenation of two different lists.
+* We could make it a tree instead, but that's awkward.
+* And we don't get flexibility that's nice to have to define your own stream
+  type rather than have to go through a lazy list everywhere.
+
+So, plan is:
+* Define a /Std/Stream%.ForEach function.
+* Define an /Std/Int/Stream%.Range function
+ - Just call Range(0, n) rather than define some UpTo function.
+* Migrate everyone off of Iter.
+* Use streams to replace /Core/Maybe%.For and DoWhile too.
+
+That should get us done with the majority of the 'other modules' from core
+library that I need to get rid of.
+
+Let me draft a change. Test it out for Range. /App/Drawing/Test% would be good
+to start.

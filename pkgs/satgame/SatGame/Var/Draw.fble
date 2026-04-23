@@ -12,7 +12,7 @@ Int@ = /Std/Int%.Int@;
 Add = /Std/Int%.Add;
 Mul = /Std/Int%.Mul;
 Int = /Std/Int/Lit%.Int;
-CountUpTo = /Core/Int/Iter%.CountUpTo;
+Range = /Std/Int/Stream%.Range;
 
 Var@ = /SatGame/Var%.Var@;
 
@@ -28,9 +28,9 @@ Box = (Bool@ p, Color@ color) {
   };
   p.?(true: box);
 
-  /Core/Iter%.For(CountUpTo(Int|3), box,
+  /Std/Stream%.ForEach(Range(Int|0, Int|3), box,
     (Int@ x, Drawing@ d) {
-      /Core/Iter%.For(CountUpTo(Int|3), d,
+      /Std/Stream%.ForEach(Range(Int|0, Int|3), d,
         (Int@ y, Drawing@ e) {
           Drawings[
             e,

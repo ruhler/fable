@@ -14,9 +14,9 @@ Le = /Std/Int/Cmp%.Le;
 Max = /Std/Int/Cmp%.Max;
 Min = /Std/Int/Cmp%.Min;
 IsNegative = /Std/Int/Sign%.IsNegative;
-Range = /Core/Int/Iter%.Range;
+Range = /Std/Int/Stream%.Range;
 
-For = /Core/Iter%.For;
+ForEach = /Std/Stream%.ForEach;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;
@@ -79,7 +79,7 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
     xc: Fixed@(a.x, 0));
   Point@ db = Point@(Sub(b.x, a.x), Sub(b.y, a.y));
   Point@ dc = Point@(Sub(c.x, a.x), Sub(c.y, a.y));
-  State@ bottom = For(Range(a.y, b.y), initial, 
+  State@ bottom = ForEach(Range(a.y, b.y), initial, 
     (Int@ y, State@ state) {
       Int@ xmin = Min(state.xb.x, state.xc.x);
       Int@ xmax = Max(state.xb.x, state.xc.x);
@@ -98,7 +98,7 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
     drawing: bottom.drawing,
     xb: Fixed@(b.x, 0),
     xc: bottom.xc);
-  State@ top = For(Range(b.y, c.y), initial,
+  State@ top = ForEach(Range(b.y, c.y), initial,
     (Int@ y, State@ state) {
       Int@ xmin = Min(state.xc.x, state.xb.x);
       Int@ xmax = Max(state.xc.x, state.xb.x);
