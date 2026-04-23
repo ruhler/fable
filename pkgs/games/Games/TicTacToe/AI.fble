@@ -6,7 +6,6 @@ ForEach = /Std/List%.ForEach;
 Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
-DoWhile = /Core/Maybe%.DoWhile;
 
 Less = /Std/Cmp%.Less;
 Equal = /Std/Cmp%.Equal;
@@ -42,17 +41,17 @@ Move = /Games/TicTacToe/Board%.Move;
   Equal;
 };
 
-(Position@){ Maybe@<Position@>; } NextPosition = (Position@ p) {
-  p.?(UL: Just(Position@(UC: Unit)),
-      UC: Just(Position@(UR: Unit)),
-      UR: Just(Position@(ML: Unit)),
-      ML: Just(Position@(MC: Unit)),
-      MC: Just(Position@(MR: Unit)),
-      MR: Just(Position@(LL: Unit)),
-      LL: Just(Position@(LC: Unit)),
-      LC: Just(Position@(LR: Unit)),
-      LR: Nothing<Position@>);
-};
+List@<Position@> Positions = List[
+  Position@(UL: Unit),
+  Position@(UC: Unit),
+  Position@(UR: Unit),
+  Position@(ML: Unit),
+  Position@(MC: Unit),
+  Position@(MR: Unit),
+  Position@(LL: Unit),
+  Position@(LC: Unit),
+  Position@(LR: Unit)
+];
 
 # Rotate a board 90 degrees clockwise
 (Board@) { Board@; } RotateBoard = (Board@ b) {
@@ -186,9 +185,7 @@ ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
   cached.?(just: MemoState@(m, cached.just));
 
   MemoState@<Maybe@<PositionResult@>> best =
-    DoWhile(
-      Position@(UL: Unit), NextPosition,
-      MemoState@(m, Nothing<PositionResult@>),
+    ForEach(Positions, MemoState@(m, Nothing<PositionResult@>),
       (Position@ p, MemoState@<Maybe@<PositionResult@>> best) {
         MemoState@<Maybe@<PositionResult@>> curr = MoveResult(best.memo, b, x, p);
         MemoState@<Maybe@<PositionResult@>>(
