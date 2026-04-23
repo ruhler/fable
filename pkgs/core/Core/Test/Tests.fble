@@ -9,8 +9,6 @@ AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 List = /Std/List%.List;
 
-Pure@ = /Core/Monad/Pure%.Pure@;
-
 Str = /Std/Char/Ascii%.Str;
 
 String = /Std/Char/Ascii/Stream%.String;
@@ -29,8 +27,11 @@ Unit = /Std/Unit%.Unit;
 # Returns whether the test passed or failed.
 (Test@) { Bool@; }
 Run = (Test@ test) {
-  Out@<Pure@> out = (Stream@ _) { Unit; };
-  /Std/Test/Run%.Run(/Core/Monad/Pure%.Monad, out, Str|TestTest, test);
+  M@ = <@ A@> { A@; };
+  return = <@ A@>(A@ x) { x; };
+  do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f) { f(ma); };
+  Out@<M@> out = (Stream@ _) { Unit; };
+  /Std/Test/Run%.Run(@(M@, return, do), out, Str|TestTest, test);
 };
 
 Test@ pass = Test(Str|pass, (Unit@ _) { Pass; });
