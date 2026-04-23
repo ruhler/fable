@@ -35,6 +35,7 @@ Gt = /Std/Int/Cmp%.Gt;
 Int = /Std/Int/Lit%.Int;
 Ord = /Std/Int/Cmp%.Cmp;
 UpTo = /Std/Int/Random%.UpTo;
+Range .= /Std/Int/Stream%;
 
 List@ = /Std/List%.List@;
 Items = /Std/List%.Items;
@@ -43,7 +44,6 @@ Empty = /Std/List%.Empty;
 Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
-DoWhile = /Core/Maybe%.DoWhile;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
@@ -91,7 +91,7 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
   Alien@ next = next_;
 
   Eq(NumRows, next.row).?(true: Nothing<Alien@>);
-  Just<Alien@>(next);
+  Just(next);
 };
 
 # AlienLt, AlienLe -- 
@@ -123,10 +123,13 @@ Set@ = Set.Set@;
 # AllAliens --
 #   The set of all aliens.
 Set@ AllAliens = {
-  DoWhile(FirstAlien, Next, Set.Empty, 
-    (Alien@ a, Set@ s) {
-      Set.Insert(s, a);
-    });
+  /Std/Stream%.ForEach(Range(Int|0, NumRows), Set.Empty,
+    (Int@ row, Set@ set) {
+      /Std/Stream%.ForEach(Range(Int|0, NumCols), set,
+        (Int@ col, Set@ set) {
+          Set.Insert(set, Alien@(row, col));
+        });
+      });
 };
 
 (Set@) { Bool@; } IsEmpty = Set.IsEmpty;
@@ -322,7 +325,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
     # We launch bombs once all aliens have completed their move.
     aliens.next.?(just: M.return(bombs));
 
-    /Std/Stream%.ForEach(/Std/Int/Stream%.Range(Int|0, NumCols), M.return(bombs)) $
+    /Std/Stream%.ForEach(Range(Int|0, NumCols), M.return(bombs)) $
       (Int@ col, M@<Bombs@> mbombs) {
         Maybe@<Alien@> alien = Vanguard(aliens, col);
         alien.?(nothing: mbombs);

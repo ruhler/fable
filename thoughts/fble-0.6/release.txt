@@ -172,6 +172,6 @@ Other modules:
 * pkgs/core/Core/Int/Read.fble
 * pkgs/core/Core/Int/Iter.fble    ==> /Std/Int/Stream%.Range
 * pkgs/core/Core/Iter.fble        ==> /Std/Stream%.ForEach
-* pkgs/core/Core/Maybe.fble
+* pkgs/core/Core/Maybe.fble       ==> [REMOVED]
 
 Getting closer...
