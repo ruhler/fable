@@ -1,9 +1,9 @@
 
 Bool@, True, False .= /Std/Bool%;
-List@, List .= /Std/List%;
+List@, List, ForEach .= /Std/List%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
-Stream@, Return, Do, Put, ForEach .= /Std/Stream%;
-Puts, ToList .= /Std/Stream/List%;
+Stream@, Return, Do, Put .= /Std/Stream%;
+ToList .= /Std/Stream/List%;
 Unit@, Unit .= /Std/Unit%;
 
 # The 9 symbols used in sudoku: 1 through 9.
@@ -22,8 +22,8 @@ Symbol@ 7 = Symbol@(7: Unit);
 Symbol@ 8 = Symbol@(8: Unit);
 Symbol@ 9 = Symbol@(9: Unit);
 
-# Iterate over the symbols in order.
-Stream@<Symbol@> Symbols = Puts(List[1, 2, 3, 4, 5, 6, 7, 8, 9]);
+# The list of symbols in order.
+List@<Symbol@> Symbols = List[1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 # An index specifying a row or column of a box group.
 BoxIndex@ = +(Unit@ 1, Unit@ 2, Unit@ 3);
@@ -88,8 +88,8 @@ Set2D = (Symbol@ a, Symbol@ b)<@ T@>(T@ x, Array@<Array@<T@>> array) {
 # A cell is identified by its row and column.
 CellId@ = *(Symbol@ row, Symbol@ col);
 
-# Iterate over cell ids, going left to right and top to bottom.
-Stream@<CellId@> CellIds = {
+# The list of cell ids, going left to right and top to bottom.
+List@<CellId@> CellIds = ToList $ {
   ForEach(Symbols, Return<CellId@>,
     (Symbol@ col, Stream@<CellId@> stream) {
       ForEach(Symbols, stream,
@@ -335,9 +335,7 @@ Solved@ = (Symbol@, Symbol@) { Symbol@; };
 
 # Solve a board.
 (Input@) { Maybe@<Solved@>; } Solve = (Input@ in) {
-  Maybe@<Board@> solved = SolveFrom(
-    ApplyXS(EmptyBoard, InputXS(in)),
-    ToList(CellIds));
+  Maybe@<Board@> solved = SolveFrom(ApplyXS(EmptyBoard, InputXS(in)), CellIds);
   solved.?(
     just: Just<Solved@>(
       (Symbol@ row, Symbol@ col) {

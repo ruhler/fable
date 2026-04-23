@@ -60,7 +60,7 @@ Array@ = <@ T@>(Symbol@){ T@; };
 
 <@ T@>((T@, T@) { Bool@; }, Array@<T@>, Array@<T@>) { Bool@; }
 EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
-  /Std/Stream%.ForEach(Symbols, True,
+  /Std/List%.ForEach(Symbols, True,
     (Symbol@ s, Bool@ p) {
       And(p, eq(a(s), b(s)));
     });

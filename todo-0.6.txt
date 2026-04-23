@@ -2,6 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Figure out why fble-benchmark fails on the fbld benchmark.
+
 * Revisit '$' application syntax.
  - Remove syntax highlighting?
  - Remove feature entirely?
