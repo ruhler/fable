@@ -44,8 +44,6 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 DoWhile = /Core/Maybe%.DoWhile;
-For = /Core/Maybe%.For;
-
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
@@ -502,8 +500,7 @@ Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
       Over(d, Translate(dy.x, dy.y, DeadAlien));
     });
      
-  For(
-    FirstAlive(as.alive), NextAlive(as.alive), dying,
+  Set.ForEach(as.alive, dying,
     (Alien@ a, Drawing@ d) {
       Bool@ moved = as.next.?(just: AlienLt(a, as.next.just), nothing: True);
       Int@ group_x = moved.?(true: as.dst_x, false: as.src_x);
