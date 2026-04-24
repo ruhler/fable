@@ -1,0 +1,28 @@
+# @@fble-test@@ no-error
+#
+# Regression test for a bug where we accidentally forgot to copy over the
+# number of fields in an import expression when rewriting var ids for
+# multi argument function merging.
+
+Unit@ = *();
+Unit = Unit@();
+
+Bool = {
+  Bool@ = +(Unit@ true, Unit@ false);
+  True = Bool@(true: Unit);
+  False = Bool@(false: Unit);
+
+  @(Bool@, True, False);
+};
+
+F = (Unit@ _) {
+  Bool@, True, False .= Bool;
+
+  (Bool@) { Bool@; } Not = (Bool@ x) {
+    x.?(true: False, false: True);
+  };
+
+  Not(False).true;
+};
+
+F(Unit);

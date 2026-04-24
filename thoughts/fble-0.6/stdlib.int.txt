@@ -913,3 +913,14 @@ in my code, and it just propagates up and out and everywhere.
    <<@>@ M@>(Error@<M@> e, String@) { M@<Int@>; }
 
 Blah.
+
+---
+
+It wasn't too bad to return Maybe and deal with that. Probably for the better.
+Let's stick with that for now.
+
+So we provide the two options. You give a radix, or assume decimal. What do I
+want to call these parse functions?
+* Radix, Int?
+
+Yeah. Why not? Easy, no?

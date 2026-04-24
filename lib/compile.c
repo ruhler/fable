@@ -524,6 +524,7 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
       FbleImportTc* import_tc = (FbleImportTc*)tc;
 
       FbleImportTc* ntc = FbleNewTc(FbleImportTc, FBLE_IMPORT_TC, tc->loc);
+      ntc->fieldc = import_tc->fieldc;
       ntc->def = RewriteVars(statics, arg_offset, import_tc->def);
       FbleInitVector(ntc->imports);
       for (size_t i = 0; i < import_tc->imports.size; ++i) {
@@ -1383,6 +1384,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
     case FBLE_IMPORT_TC: {
       FbleImportTc* import_tc = (FbleImportTc*)v;
+
       Local* def = CompileExpr(blocks, false, false, scope, import_tc->def);
 
       for (size_t i = 0; i < import_tc->imports.size; ++i) {
