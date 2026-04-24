@@ -1,44 +1,55 @@
 
-Char@ .= /Std/Char%;
+Bool@, True, False .= /Std/Bool%;
+Char@, Pos .= /Std/Char%;
+Lt, Gt .= /Std/Cmp%.Cmp(/Std/Char/Cmp%.Cmp);
 Char .= /Std/Char/Ascii%;
-Int@, Add, Neg, Mul .= /Std/Int%;
+Int@, Add, Sub, Neg, Mul .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 Maybe@, Just, Nothing, Do .= /Std/Maybe%;
 String@ .= /Std/String%;
 
-(String@) { Maybe@<Int@>; } Read = {
-  (Char@) { Maybe@<Int@>; } Digit = (Char@ c) {
-    /Std/Char/Eq%.Eq(Char|0, c).?(true: Just(Int|0));
-    /Std/Char/Eq%.Eq(Char|1, c).?(true: Just(Int|1));
-    /Std/Char/Eq%.Eq(Char|2, c).?(true: Just(Int|2));
-    /Std/Char/Eq%.Eq(Char|3, c).?(true: Just(Int|3));
-    /Std/Char/Eq%.Eq(Char|4, c).?(true: Just(Int|4));
-    /Std/Char/Eq%.Eq(Char|5, c).?(true: Just(Int|5));
-    /Std/Char/Eq%.Eq(Char|6, c).?(true: Just(Int|6));
-    /Std/Char/Eq%.Eq(Char|7, c).?(true: Just(Int|7));
-    /Std/Char/Eq%.Eq(Char|8, c).?(true: Just(Int|8));
-    /Std/Char/Eq%.Eq(Char|9, c).?(true: Just(Int|9));
-    Nothing<Int@>;
-  };
+(Char@, Char@, Char@) { Bool@; }
+InRange = (Char@ lo, Char@ hi, Char@ c) {
+  Lt(c, lo).?(true: False);
+  Gt(c, hi).?(true: False);
+  True;
+};
 
-  (Int@, String@) { Maybe@<Int@>; }
-  ReadP = (Int@ x, String@ s) {
-    s.?(empty: Just(x));
-    Int@ digit := Do(Digit(s.items.head));
-    ReadP(Add(Mul(Int|10, x), digit), s.items.tail);
-  };
+(Char@) { Maybe@<Int@>; }
+Digit = (Char@ c) {
+  InRange(Char|0, Char|9, c).?(true: {
+    Just(Sub(Pos(c), Pos(Char|0)));
+  });
+
+  InRange(Char|A, Char|Z, c).?(true: {
+    Just(Add(Int|10, Sub(Pos(c), Pos(Char|A))));
+  });
+
+  InRange(Char|a, Char|z, c).?(true: {
+    Just(Add(Int|10, Sub(Pos(c), Pos(Char|a))));
+  });
+
+  Nothing<Int@>;
+};
+
+(Int@, String@) { Maybe@<Int@>; }
+ReadP = (Int@ x, String@ s) {
+  s.?(empty: Just(x));
+  Int@ digit := Do(Digit(s.items.head));
+  ReadP(Add(Mul(Int|10, x), digit), s.items.tail);
+};
   
-  (String@ s) {
-    s.?(empty: Nothing<Int@>);
-    /Std/Char/Eq%.Eq(Char|'+', s.items.head).?(true: {
-      ReadP(Int|0, s.items.tail);
-    });
-    /Std/Char/Eq%.Eq(Char|'-', s.items.head).?(true: {
-      Int@ read := Do(ReadP(Int|0, s.items.tail));
-      Just(Neg(read));
-    });
-    ReadP(Int|0, s);
-  };
+(String@) { Maybe@<Int@>; }
+Read = (String@ s) {
+  s.?(empty: Nothing<Int@>);
+  /Std/Char/Eq%.Eq(Char|'+', s.items.head).?(true: {
+    ReadP(Int|0, s.items.tail);
+  });
+  /Std/Char/Eq%.Eq(Char|'-', s.items.head).?(true: {
+    Int@ read := Do(ReadP(Int|0, s.items.tail));
+    Just(Neg(read));
+  });
+  ReadP(Int|0, s);
 };
 
 @(Read);

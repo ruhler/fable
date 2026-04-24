@@ -924,3 +924,14 @@ want to call these parse functions?
 * Radix, Int?
 
 Yeah. Why not? Easy, no?
+
+Is this everything I need? More than I need?
+
+The one thing missing potentially is a way to parse from the front of a string
+and tell you where you ended up. Or parse from an input stream. But I'm not
+providing parsers in general for data types. Why do it for Int@? Except it's
+such a common thing to want to parse.
+
+Let me just do Radix and Int and be done with it for now. We can worry about
+more later if needed.
+
