@@ -104,7 +104,7 @@ StreamResult@ = *(State@ state, Int@ output);
 Main@
 Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Out@<M@> out, List@<String@> args) {
   Int@ l = Int|10;
-  Int@ n = /Core/Int/Read%.Read(args.items.head);
+  Int@ n = /Core/Int/Read%.Read(args.items.head).just;
 
   (Int@, State@) { M@<Unit@>; } PiDigits = (Int@ i, State@ s) {
     Eq(i, n).?(true: m.return(Unit));

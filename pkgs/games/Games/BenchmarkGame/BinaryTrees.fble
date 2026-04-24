@@ -13,6 +13,7 @@ Gt = /Std/Int/Cmp%.Gt;
 
 List@ = /Std/List%.List@;
 
+Get .= /Std/Maybe%;
 Monad@ = /Std/Monad%.Monad@;
 
 Stream@, In@, Out@ .= /Std/Stream/Text%;
@@ -58,7 +59,10 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Out@<M@> out, List@<String@> args) {
     out $ FormatE|'%s\n'[Format(fmt, args)];
   };
 
-  Int@ n = args.?(items: /Core/Int/Read%.Read(args.items.head), empty: 0);
+  Int@ n = {
+    args.?(empty: 0);
+    Get(0, /Core/Int/Read%.Read(args.items.head));
+  };
   Int@ max_depth = Gt(Add(2, MinDepth), n).?(
     true: Add(2, MinDepth),
     false: n);

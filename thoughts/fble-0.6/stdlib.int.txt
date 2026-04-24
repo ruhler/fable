@@ -867,3 +867,49 @@ example:
 * Then call the shared function that knows how to convert to int and compose
   together.
 
+---
+
+Look at all the ways I currently use /Core/Int/Read%:
+* To read integer values previously shown out.
+* To parse DIMACs integer.
+* To get n on command line for benchmark games
+* To get the port number or number of bytes for use with servers
+
+All these cases really want something simple and basic I think. For the most
+part only positive numbers, but you could imagine negative numbers. No
+separators. Decimal only. Like, basic atoi stuff.
+
+Why don't we make that our spec? Optionally we could have radix specified
+externally, but otherwise, a straight forward:
+
+ ParseInt(radix, string)
+
+Where radix is between 2 and 36. String is optional +, -, followed by the raw
+digits. No separators. No 0x h whatever. No reason to have to do anything or
+share anything at all with integer literals.
+
+---
+
+Hmm... What combination of functions do I want, and what names should I give
+them? I'm thinking:
+* One that takes a radix, 2 to 36. One that assumes decimal.
+* One that returns Maybe, one that is undefined?
+
+It doesn't make any sense to crash if the string is malformed. What does atoi
+do? It returns 0 on error. Better to return 0? I kind of doubt it.
+
+For now, let's have:
+
+  /Std/Int/Parse%
+    (Int@, String@) { Maybe@<Int@>; } Radix;
+    (String@) { Maybe@<Int@>; } Int = Radix(10);
+
+Any other name ideas? Should I have a (String@) { Int@; } variation?
+
+Sigh. Once again, errors being messy. The practical trouble is, once this can
+return an error, I have to figure out how to deal with that error everywhere
+in my code, and it just propagates up and out and everywhere.
+
+   <<@>@ M@>(Error@<M@> e, String@) { M@<Int@>; }
+
+Blah.

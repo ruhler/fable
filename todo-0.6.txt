@@ -2,6 +2,11 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Debug assertion failure when compiling FannkuchRedux benchmarks.
+
+* Figure out a real solution to error handling in general?
+ - Examples to consider: file read/write, parsing an int.
+
 * Figure out why fble-benchmark fails on the fbld benchmark.
 
 * Revisit '$' application syntax.

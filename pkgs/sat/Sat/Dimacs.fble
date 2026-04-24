@@ -80,7 +80,10 @@ ParseM@<Maybe@<String@>> GetLine = (ParseState@ state) {
 (List@<String@>) { ParseM@<Clause@>; } ParseVars = (List@<String@> words) {
   words.?(empty: Error<Clause@>(Str|'missing clause terminator'));
 
-  Int@ x = /Core/Int/Read%.Read(words.items.head);
+  Maybe@<Int@> mx = /Core/Int/Read%.Read(words.items.head);
+  mx.?(nothing: Error<Clause@>(Str|'unable to parse var'));
+
+  Int@ x = mx.just;
   /Std/Int/Eq%.Eq(x, Int|0).?(true: Return(List<Var@>[]));
 
   Var@ v = Var@(Abs(x), /Std/Int/Cmp%.Gt(x, Int|0));

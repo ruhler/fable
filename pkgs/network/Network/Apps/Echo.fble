@@ -84,11 +84,19 @@ GetArgs = (List@<String@> args, Args@ default) {
     });
 
     ArgAnyOf[Str|'-p', Str|'--port'].?(true: {
-      default.@(port: /Core/Int/Read%.Read(value));
+      Maybe@<Int@> port = /Core/Int/Read%.Read(value);
+      port.?(nothing: {
+        default.@(error: Concat[Str|'invalid port ', value]);
+      });
+      default.@(port: port.just);
     });
 
     ArgAnyOf[Str|'-n', Str|'--num-clients'].?(true: {
-      default.@(num_clients: /Core/Int/Read%.Read(value));
+      Maybe@<Int@> num_clients = /Core/Int/Read%.Read(value);
+      num_clients.?(nothing: {
+        default.@(error: Concat[Str|'invalid num clients ', value]);
+      });
+      default.@(num_clients: num_clients.just);
     });
 
     default.@(error: Concat[Str|'unrecognized option ', arg]);
