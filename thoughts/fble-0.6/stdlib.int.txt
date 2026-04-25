@@ -935,3 +935,9 @@ such a common thing to want to parse.
 Let me just do Radix and Int and be done with it for now. We can worry about
 more later if needed.
 
+---
+
+It's a little annoying dealing with the name conflict between Lit%.Int and
+Parse%.Int. I can use I, Int, or Int, ParseInt if needed. But is there not
+some better choice of name?
+

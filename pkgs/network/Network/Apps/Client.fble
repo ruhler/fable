@@ -84,7 +84,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     });
 
     ArgAnyOf[Str|'-p', Str|'--port'].?(true: {
-      Maybe@<Int@> port = /Core/Int/Read%.Int(value);
+      Maybe@<Int@> port = /Std/Int/Parse%.Int(value);
       port.?(nothing: {
         default.@(error: Concat[Str|'invalid port ', value]);
       });
@@ -96,7 +96,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     });
 
     ArgAnyOf[Str|'-n', Str|'--num-bytes'].?(true: {
-      Maybe@<Int@> num_bytes = /Core/Int/Read%.Int(value);
+      Maybe@<Int@> num_bytes = /Std/Int/Parse%.Int(value);
       num_bytes.?(nothing: {
         default.@(error: Concat[Str|'invalid num bytes ', value]);
       });

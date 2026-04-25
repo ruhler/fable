@@ -1,12 +1,17 @@
+# @module[/Std/Int/Parse%]
+#  Parse an integer from a string.
 
 Bool@, True, False .= /Std/Bool%;
 Char@, Pos .= /Std/Char%;
 Lt, Gt .= /Std/Cmp%.Cmp(/Std/Char/Cmp%.Cmp);
 Char .= /Std/Char/Ascii%;
 Int@, Add, Sub, Neg, Mul .= /Std/Int%;
-I(.Int) .= /Std/Int/Lit%;
+Int .= /Std/Int/Lit%;
 Maybe@, Just, Nothing, Do, Map .= /Std/Maybe%;
 String@ .= /Std/String%;
+
+Int@ 0 = Int|0;
+Int@ 10 = Int|10;
 
 # func[InRange] Tests if a character is in a given range.
 #  @arg[Char@][lo] The inclusive lower bound of the range.
@@ -32,11 +37,11 @@ Digit = (Char@ c) {
   });
 
   InRange(Char|A, Char|Z, c).?(true: {
-    Just(Add(I|10, Sub(Pos(c), Pos(Char|A))));
+    Just(Add(10, Sub(Pos(c), Pos(Char|A))));
   });
 
   InRange(Char|a, Char|z, c).?(true: {
-    Just(Add(I|10, Sub(Pos(c), Pos(Char|a))));
+    Just(Add(10, Sub(Pos(c), Pos(Char|a))));
   });
 
   Nothing<Int@>;
@@ -60,7 +65,8 @@ Digits = (Int@ radix, Int@ parsed, String@ digits) {
   
 # @func[Radix] Parse an integer from a string with give radix.
 #  The format of the string is an optional '+' or '-' followed by a sequence
-#  of one or more digits of the given radix.
+#  of one or more digits of the given radix. Practically speaking radix should
+#  be in the range [2, 36].
 #
 #  @arg[Int@][radix] The radix to use for conversion.
 #  @arg[String@][string] The string to parse.
@@ -71,13 +77,13 @@ Radix = (Int@ radix, String@ string) {
   string.?(empty: Nothing<Int@>);
   /Std/Char/Eq%.Eq(Char|'+', string.items.head).?(true: {
     string.items.tail.?(empty: Nothing<Int@>);
-    Digits(radix, I|0, string.items.tail);
+    Digits(radix, 0, string.items.tail);
   });
   /Std/Char/Eq%.Eq(Char|'-', string.items.head).?(true: {
     string.items.tail.?(empty: Nothing<Int@>);
-    Map(Digits(radix, I|0, string.items.tail), Neg);
+    Map(Digits(radix, 0, string.items.tail), Neg);
   });
-  Digits(radix, I|0, string);
+  Digits(radix, 0, string);
 };
 
 # @func[Int] Parse a decimal integer from a string.
@@ -87,6 +93,6 @@ Radix = (Int@ radix, String@ string) {
 #  @arg[String@][string] The string to parse.
 #  @returns[Maybe@<Int@>]
 #   The parsed value. Nothing in case of invalid formatted the string.
-(String@) { Maybe@<Int@>; } Int = Radix(I|10);
+(String@) { Maybe@<Int@>; } Int = Radix(10);
 
 @(Radix, Int);

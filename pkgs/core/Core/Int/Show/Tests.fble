@@ -17,7 +17,7 @@ Int@ = /Std/Int%.Int@;
 Neg = /Std/Int%.Neg;
 Int = /Std/Int/Lit%.Int;
 
-Radix, ParseInt(.Int) .= /Core/Int/Read%;
+Radix, ParseInt(.Int) .= /Std/Int/Parse%;
 
 Test@ Tests = TestSuite(Str|Show, List[
   Test(Str|Read_Positive, (Unit@ _) {

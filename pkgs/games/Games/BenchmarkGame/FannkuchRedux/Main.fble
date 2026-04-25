@@ -33,7 +33,7 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Out@<M@> out, List@<String@> args) {
 
   Int@ n = {
     args.?(empty: Int|7);
-    Get(Int|7, /Core/Int/Read%.Int(args.items.head));
+    Get(Int|7, /Std/Int/Parse%.Int(args.items.head));
   };
   Fannkuch@ result = FannkuchRedux(n);
   Unit@ _ := m.do(FmtL|'%s'[/Std/Int/Show%.Show(result.checksum)]);

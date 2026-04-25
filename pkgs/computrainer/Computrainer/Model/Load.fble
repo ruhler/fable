@@ -68,8 +68,8 @@ AddCar = (List@<String@> args, Model@ m) {
     String@ v = Get(args, 2);
 
     Coord@ coord = @(
-      x: /Std/Maybe%.Get(Int|0, /Core/Int/Read%.Int(x)),
-      y: /Std/Maybe%.Get(Int|0, /Core/Int/Read%.Int(y)));
+      x: /Std/Maybe%.Get(Int|0, /Std/Int/Parse%.Int(x)),
+      y: /Std/Maybe%.Get(Int|0, /Std/Int/Parse%.Int(y)));
     Car@ car = ReadCar(v);
     m.@(s: m.s.@(cars: Grid.Insert(m.s.cars, coord, car)));
 };
@@ -90,8 +90,8 @@ AddGate = (List@<String@> args, Model@ m) {
     String@ g = Get(args, 2);
 
     Coord@ coord = @(
-      x: /Std/Maybe%.Get(Int|0, /Core/Int/Read%.Int(x)),
-      y: /Std/Maybe%.Get(Int|0, /Core/Int/Read%.Int(y)));
+      x: /Std/Maybe%.Get(Int|0, /Std/Int/Parse%.Int(x)),
+      y: /Std/Maybe%.Get(Int|0, /Std/Int/Parse%.Int(y)));
     Gate@ gate = {
         StrIs|'stop'(g).?(true: Gate.Stop);
         StrIs|'move'(g).?(true: Gate.Move(ReadDir(Get(args, 3))));
@@ -113,8 +113,8 @@ Routing = (List@<String@> args, Model@ m) {
     String@ y = Get(args, 1);
     String@ d = Get(args, 2);
     Coord@ coord = @(
-      x: /Std/Maybe%.Get(0, /Core/Int/Read%.Int(x)),
-      y: /Std/Maybe%.Get(0, /Core/Int/Read%.Int(y)));
+      x: /Std/Maybe%.Get(0, /Std/Int/Parse%.Int(x)),
+      y: /Std/Maybe%.Get(0, /Std/Int/Parse%.Int(y)));
     Dir@ dir = ReadDir(d);
     m.@(s: m.s.@(routing: Grid.Insert(m.s.routing, coord, dir)));
 };
