@@ -1,8 +1,8 @@
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-List = /Std/List%.List;
-Empty = /Std/List%.Empty;
+Lazy@ .= /Std/Lazy%;
+List@, List, Empty .= /Std/List%;
 
 Num@ = /Pinball/Num%.Num@;
 Neg = /Pinball/Num%.Neg;
@@ -23,19 +23,21 @@ Tick = /Pinball/World%.Tick;
 
 Vec@ = /Pinball/Vec%.Vec@;
 
-Str = /Std/Char/Ascii%.Str;
+Ascii@, Str .= /Std/Char/Ascii%;
 
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-ExpectFails = /Std/Test%.ExpectFails;
+Test@, TestResult@, Test, TestSuite .= /Std/Test%;
 
-Unit@ = /Std/Unit%.Unit@;
+Unit@, Unit .= /Std/Unit%;
 
 # Import to test compilation.
 _ = /Pinball/AppIO%;
 _ = /Pinball/Bench%;
 _ = /Pinball/Circle%;
+
+(List@<Ascii@>, Lazy@<TestResult@>) { TestResult@; }
+ExpectFails = (List@<Ascii@> msg, Lazy@<TestResult@> result) {
+  /Std/Test%.ExpectFails(Str(msg), result(Unit));
+};
 
 Test@ Tests = TestSuite(Str|'Pinball', List[
   /Pinball/Rotate/Tests%.Tests,
@@ -255,7 +257,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     Ball@ got = end.ball;
 
     # TODO: Test fails due to loss of precision. How should we handle this?
-    ExpectFails(Str|', but got Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)') $
+    Unit@ _ := ExpectFails|', but got Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)';
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
 

@@ -12,7 +12,7 @@ Unit = /Std/Unit%.Unit;
 # @value[Tests] Test suite for /Std/Unit/Show%.
 #  @type[Test@]
 Test@ Tests = Test|'Show' $ (Unit@ _) {
-  AssertStream|'Unit' $ /Std/Unit/Show%.Show(Unit);
+  AssertStream|'Unit'(/Std/Unit/Show%.Show(Unit));
 };
 
 @(Tests);

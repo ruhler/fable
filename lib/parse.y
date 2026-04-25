@@ -616,16 +616,6 @@ stmt:
       import_expr->body = $5;
       $$ = &import_expr->_base;
     }
-  | expr '$' stmt {
-      FbleApplyExpr* apply_expr = FbleAlloc(FbleApplyExpr);
-      apply_expr->_base.tag = FBLE_MISC_APPLY_EXPR;
-      apply_expr->_base.loc = FbleCopyLoc(@$);
-      apply_expr->misc = $1;
-      FbleInitVector(apply_expr->args);
-      FbleAppendToVector(apply_expr->args, $3);
-      apply_expr->bind = false;
-      $$ = &apply_expr->_base;
-   }
   | expr ';' stmt {
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)$1;
       if (select_expr->_base.tag != FBLE_UNION_SELECT_EXPR

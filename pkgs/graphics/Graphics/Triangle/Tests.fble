@@ -23,21 +23,19 @@ Vertex = /Graphics/Camera%.Vertex;
 
 Triangle = /Graphics/Triangle%.Triangle;
 
-Neg = /Std/Int%.Neg;
-Int = /Std/Int/Lit%.Int;
+Neg .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Lazy@ .= /Std/Lazy%;
+List@, List .= /Std/List%;
+Maybe@, Just .= /Std/Maybe%;
+Ascii@, Str .= /Std/Char/Ascii%;
+Test@, TestResult@, Test, TestSuite .= /Std/Test%;
+Unit@, Unit .= /Std/Unit%;
 
-List = /Std/List%.List;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-
-Unit@ = /Std/Unit%.Unit@;
+(List@<Ascii@>, Lazy@<TestResult@>) { TestResult@; }
+ExpectFails = (List@<Ascii@> msg, Lazy@<TestResult@> result) {
+  /Std/Test%.ExpectFails(Str(msg), result(Unit));
+};
 
 Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
   Test(Str|'Focus Triangle', (Unit@ _) {
@@ -293,7 +291,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     Drawn@ got = Draw(drawing);
       
     # TODO: Debug this test failure.
-    /Std/Test%.ExpectFails(Str|'') $
+    Unit@ _ := ExpectFails|'';
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
@@ -315,8 +313,8 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     Maybe@<Color@> wnt = Just(Color.Green);
       
     # TODO: debug this test passing.
-    /Std/Test%.ExpectFails(Str|'') $
-    /Std/Test%.ExpectFails(Str|'Nothing') $
+    Unit@ _ := ExpectFails|'';
+    Unit@ _ := ExpectFails|'Nothing';
     /Std/Eq/Assert%.AssertEquals(
       /Std/Maybe/Eq%.Eq(EqColor),
       /Std/Maybe/Show%.Show(ShowColor), wnt, got);

@@ -9,11 +9,11 @@ Things to consider doing for the fble-0.6 release.
 
 * Figure out why fble-benchmark fails on the fbld benchmark.
 
-* Revisit '$' application syntax.
- - Remove syntax highlighting?
- - Remove feature entirely?
-   Because it feels arbitrary whether I write:
-     foo(bar(sludge)) or foo(bar $ sludge)
+* Move $ application syntax.
+ - Remove all uses of '$'.
+ - Clean up parse.y now.
+ - Remove from the spec.
+ - Double check when I added it what all else I should remove.
 
 * Add exit command to /Std/Io/Cli/Demo% app.
 

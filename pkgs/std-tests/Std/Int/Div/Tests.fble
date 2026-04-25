@@ -23,7 +23,7 @@ Unit@ = /Std/Unit%.Unit@;
 # Test the various ways of calling division for the given arguments.
 (List@<Ascii@>, Int@, Int@, Int@, Int@) { Test@; }
 DivTest = (List@<Ascii@> name, Int@ a, Int@ b, Int@ q, Int@ r) {
-  TestSuite(name) $ List[
+  TestSuite(name)[
     Test|DivQ $ (Unit@ _) {
       AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, q, Div(a, b).q);
     },

@@ -1004,3 +1004,10 @@ So, my vote is:
 * Define tests as above with bind and Lazy constructor.
 
 Cool. Let's try to iron out the interface for Lazy@.
+
+---
+
+This will work well. I'm getting rid of '$' syntax.
+
+I just need to make a decision for expected failure case. How about for now I
+define a helper function where used. Easy.
