@@ -3,20 +3,14 @@ OnAscii = /Std/Char/Ascii%.OnAscii;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-
-Head = /Std/List/Maybe%.Head;
-Last = /Std/List/Maybe%.Last;
-Concat = /Std/List/Maybe%.Concat;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
+Lazy .= /Std/Lazy%;
+List@ .= /Std/List%;
+Head, Last, Concat .= /Std/List/Maybe%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
 
 Test@ = /Std/Test%.Test@;
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Unit@ = /Std/Unit%.Unit@;
 
@@ -28,62 +22,69 @@ Show = /Std/List/Tests/Elem%.Show;
 Eqs = /Std/List/Tests/Elem%.Eqs;
 Shows = /Std/List/Tests/Elem%.Shows;
 
-Test@ Tests = TestSuite|Maybe $ List[
-  TestSuite|List $ List[
-    Test|J $ (Unit@ _) { 
+Test@ Tests = TestSuite|Maybe[
+  TestSuite|List[
+    Test|J({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|A;
       List@<Elem@> got = /Std/List/Maybe%.List(Just(Elem.A));
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|N $ (Unit@ _) { 
+    Test|N({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|'';
       List@<Elem@> got = /Std/List/Maybe%.List(Nothing<Elem@>);
       AssertEquals(Eqs, Shows, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|Head $ List[
-    Test|J $ (Unit@ _) { 
+  TestSuite|Head[
+    Test|J({
+      Unit@ _ := Lazy;
       Maybe@<Elem@> wnt = Just(Elem.A);
       Maybe@<Elem@> got = Head(Elems|ABCDE);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(Eq),
         /Std/Maybe/Show%.Show(Show),
         wnt, got);
-    },
+    }),
 
-    Test|N $ (Unit@ _) { 
+    Test|N({
+      Unit@ _ := Lazy;
       Maybe@<Elem@> wnt = Nothing<Elem@>;
       Maybe@<Elem@> got = Head(Elems|'');
       AssertEquals(
         /Std/Maybe/Eq%.Eq(Eq),
         /Std/Maybe/Show%.Show(Show),
         wnt, got);
-    }
+    })
   ],
 
-  TestSuite|Last $ List[
-    Test|J $ (Unit@ _) { 
+  TestSuite|Last[
+    Test|J({
+      Unit@ _ := Lazy;
       Maybe@<Elem@> wnt = Just(Elem.E);
       Maybe@<Elem@> got = Last(Elems|ABCDE);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(Eq),
         /Std/Maybe/Show%.Show(Show),
         wnt, got);
-    },
+    }),
 
-    Test|N $ (Unit@ _) { 
+    Test|N({
+      Unit@ _ := Lazy;
       Maybe@<Elem@> wnt = Nothing<Elem@>;
       Maybe@<Elem@> got = Last(Elems|'');
       AssertEquals(
         /Std/Maybe/Eq%.Eq(Eq),
         /Std/Maybe/Show%.Show(Show),
         wnt, got);
-    }
+    })
   ],
 
-  Test|Concat $ (Unit@ _) {
+  Test|Concat({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|ABC;
     List@<Elem@> got = Concat[
       Just(Elem.A),
@@ -93,7 +94,7 @@ Test@ Tests = TestSuite|Maybe $ List[
       Nothing<Elem@>
     ];
     AssertEquals(Eqs, Shows, wnt, got);
-  }
+  })
 ];
 
 @(Tests);

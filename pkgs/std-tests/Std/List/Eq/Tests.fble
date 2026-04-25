@@ -8,13 +8,13 @@ OnAscii = /Std/Char/Ascii%.OnAscii;
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 Test@ = /Std/Test%.Test@;
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Unit@ = /Std/Unit%.Unit@;
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
+Lazy .= /Std/Lazy%;
+List@, List .= /Std/List%;
 
 HasItems = /Std/List/Eq%.HasItems;
 IsEmpty = /Std/List/Eq%.IsEmpty;
@@ -37,233 +37,266 @@ Eq = /Std/List/Tests/Elem%.Eq;
 Eqs = /Std/List/Tests/Elem%.Eqs;
 Shows = /Std/List/Tests/Elem%.Shows;
 
-Test@ Tests = TestSuite|Eq $ List[
-  TestSuite|HasItems $ List[
-    Test|T $ (Unit@ _) {
+Test@ Tests = TestSuite|Eq[
+  TestSuite|HasItems[
+    Test|T({
+      Unit@ _ := Lazy;
       Bool@ wnt = True;
       Bool@ got = HasItems(Elems|ABBCCDDE);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|F $ (Unit@ _) {
+    Test|F({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = HasItems(Elems|'');
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|IsEmpty $ List[
-    Test|T $ (Unit@ _) {
+  TestSuite|IsEmpty[
+    Test|T({
+      Unit@ _ := Lazy;
       Bool@ wnt = True;
       Bool@ got = IsEmpty(Elems|'');
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|F $ (Unit@ _) {
+    Test|F({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = IsEmpty(Elems|ABBCCDDE);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|Eq $ List[
-    Test|T $ (Unit@ _) {
+  TestSuite|Eq[
+    Test|T({
+      Unit@ _ := Lazy;
       Bool@ wnt = True;
       Bool@ got = Eqs(Elems|ABCDE, Elems|ABCDE);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|DiffElem $ (Unit@ _) {
+    Test|DiffElem({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = Eqs(Elems|ABCDE, Elems|ABDDE);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|DiffSize $ (Unit@ _) {
+    Test|DiffSize({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = Eqs(Elems|ABCDE, Elems|ABCD);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|StartsWith $ List[
-    Test|T $ (Unit@ _) {
+  TestSuite|StartsWith[
+    Test|T({
+      Unit@ _ := Lazy;
       Bool@ wnt = True;
       Bool@ got = StartsWith(Eq, Elems|ABBCCDDE, Elems|ABBC);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|Mismatch $ (Unit@ _) {
+    Test|Mismatch({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = StartsWith(Eq, Elems|ABBCCDDE, Elems|ABC);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|EndOfString $ (Unit@ _) {
+    Test|EndOfString({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = StartsWith(Eq, Elems|ABBC, Elems|ABBCD);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|EndsWith $ List[
-    Test|T $ (Unit@ _) {
+  TestSuite|EndsWith[
+    Test|T({
+      Unit@ _ := Lazy;
       Bool@ wnt = True;
       Bool@ got = EndsWith(Eq, Elems|ABBCCDDE, Elems|CDDE);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|Mismatch $ (Unit@ _) {
+    Test|Mismatch({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = EndsWith(Eq, Elems|ABBCCDDE, Elems|CDD);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|EndOfString $ (Unit@ _) {
+    Test|EndOfString({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = EndsWith(Eq, Elems|ABBC, Elems|ABBCD);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|Contains $ List[
-    Test|T $ (Unit@ _) {
+  TestSuite|Contains[
+    Test|T({
+      Unit@ _ := Lazy;
       Bool@ wnt = True;
       Bool@ got = Contains(Eq, Elems|ABBCCDDE, Elems|BCCD);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|F $ (Unit@ _) {
+    Test|F({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = Contains(Eq, Elems|ABBCCDDE, Elems|DCCB);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|Skip $ List[
-    Test|Match $ (Unit@ _) {
+  TestSuite|Skip[
+    Test|Match({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|CDDE;
       List@<Elem@> got = Skip(Eq, Elems|ABBCCDDE, Elems|ABBC);
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|Mismatch $ (Unit@ _) {
+    Test|Mismatch({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|ABBCCDDE;
       List@<Elem@> got = Skip(Eq, Elems|ABBCCDDE, Elems|ABCD);
       AssertEquals(Eqs, Shows, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|Trim $ List[
-    Test|Match $ (Unit@ _) {
+  TestSuite|Trim[
+    Test|Match({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|ABBC;
       List@<Elem@> got = Trim(Eq, Elems|ABBCCDDE, Elems|CDDE);
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|Mismatch $ (Unit@ _) {
+    Test|Mismatch({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|ABBCCDDE;
       List@<Elem@> got = Trim(Eq, Elems|ABBCCDDE, Elems|EDDC);
       AssertEquals(Eqs, Shows, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|Strip $ List[
-    Test|Match $ (Unit@ _) {
+  TestSuite|Strip[
+    Test|Match({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|CDDE;
       List@<Elem@> got = Strip(Eq, Elems|ABBCCDDEABBC, Elems|ABBC);
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|Mismatch $ (Unit@ _) {
+    Test|Mismatch({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|ABBCCDDE;
       List@<Elem@> got = Strip(Eq, Elems|ABBCCDDE, Elems|EDDC);
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|Overlap $ (Unit@ _) {
+    Test|Overlap({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|BA;
       List@<Elem@> got = Strip(Eq, Elems|ABABA, Elems|ABA);
       AssertEquals(Eqs, Shows, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|Search $ List[
-    Test|Match $ (Unit@ _) {
+  TestSuite|Search[
+    Test|Match({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|ADBADE;
       List@<Elem@> got = Search(Eq, Elems|ABCADBADE, Elems|AD);
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|Mismatch $ (Unit@ _) {
+    Test|Mismatch({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|'';
       List@<Elem@> got = Search(Eq, Elems|ABCADBE, Elems|AC);
       AssertEquals(Eqs, Shows, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|SearchR $ List[
-    Test|Match $ (Unit@ _) {
+  TestSuite|SearchR[
+    Test|Match({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|ADE;
       List@<Elem@> got = SearchR(Eq, Elems|ABCADBADE, Elems|AD);
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|Mismatch $ (Unit@ _) {
+    Test|Mismatch({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|'';
       List@<Elem@> got = SearchR(Eq, Elems|ABCADBADE, Elems|AC);
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|Empty $ (Unit@ _) {
+    Test|Empty({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|'';
       List@<Elem@> got = SearchR(Eq, Elems|ABCADBADE, Elems|'');
       AssertEquals(Eqs, Shows, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|Until $ List[
-    Test|Match $ (Unit@ _) {
+  TestSuite|Until[
+    Test|Match({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|ABC;
       List@<Elem@> got = Until(Eq, Elems|ABCADBADE, Elems|AD);
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|Mismatch $ (Unit@ _) {
+    Test|Mismatch({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|ABCADBADE;
       List@<Elem@> got = Until(Eq, Elems|ABCADBADE, Elems|AC);
       AssertEquals(Eqs, Shows, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|Break $ List[
-    Test|span $ (Unit@ _) {
+  TestSuite|Break[
+    Test|span({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|ABC;
       List@<Elem@> got = Break(Eq, Elems|ABCADBE, Elems|AD).span;
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|tail $ (Unit@ _) {
+    Test|tail({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|ADBE;
       List@<Elem@> got = Break(Eq, Elems|ABCADBE, Elems|AD).tail;
       AssertEquals(Eqs, Shows, wnt, got);
-    }
+    })
   ],
 
-  Test|Split $ (Unit@ _) {
+  Test|Split({
+    Unit@ _ := Lazy;
     List@<List@<Elem@>> wnt = List[Elems|A, Elems|DE, Elems|A, Elems|''];
     List@<List@<Elem@>> got = Split(Eq, Elems|ABCDEBCABC, Elems|BC);
     AssertEquals(
       /Std/List/Eq%.Eq(Eqs),
       /Std/List/Show%.Show(Shows),
       wnt, got);
-  },
+  }),
 
-  Test|Replace $ (Unit@ _) {
+  Test|Replace({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|AEADEEAAEA;
     List@<Elem@> got = Replace(Eq, Elems|ABCDEBCABC, Elems|BC, Elems|EA);
     AssertEquals(Eqs, Shows, wnt, got);
-  }
+  })
 ];
 
 @(Tests);

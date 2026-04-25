@@ -18,12 +18,11 @@ Shl = /Std/Int%.Shl;
 Shr = /Std/Int%.Shr;
 Int = /Std/Int/Lit%.Int;
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
+List@ .= /Std/List%;
 
 Test@ = /Std/Test%.Test@;
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Unit@ = /Std/Unit%.Unit@;
 
@@ -41,22 +40,22 @@ Binary = (List@<Ascii@> name, (Int@, Int@) { Int@; } f, Int@ a, Int@ b, Int@ z) 
   });
 };
 
-Test@ Tests = TestSuite|Int $ List[
-  TestSuite|Incr $ List[
+Test@ Tests = TestSuite|Int[
+  TestSuite|Incr[
     Unary|N(Incr, Neg(Int|8), Neg(Int|7)),
     Unary|'-1'(Incr, Neg(Int|1), Int|0),
     Unary|0(Incr, Int|0, Int|1),
     Unary|P(Incr, Int|2315, Int|2316)
   ],
 
-  TestSuite|Decr $ List[
+  TestSuite|Decr[
     Unary|N(Decr, Neg(Int|8), Neg(Int|9)),
     Unary|0(Decr, Int|0, Neg(Int|1)),
     Unary|1(Decr, Int|1, Int|0),
     Unary|P(Decr, Int|2315, Int|2314)
   ],
 
-  TestSuite|Add $ List[
+  TestSuite|Add[
     Binary|PP(Add, Int|133, Int|456, Int|589),
     Binary|0P(Add, Int|0, Int|456, Int|456),
     Binary|P0(Add, Int|456, Int|0, Int|456),
@@ -67,7 +66,7 @@ Test@ Tests = TestSuite|Int $ List[
     Binary|NP(Add, Neg(Int|133), Int|456, Int|323)
   ],
 
-  TestSuite|Sub $ List[
+  TestSuite|Sub[
     Binary|PP(Sub, Int|133, Int|456, Neg(Int|323)),
     Binary|0P(Sub, Int|0, Int|456, Neg(Int|456)),
     Binary|P0(Sub, Int|456, Int|0, Int|456),
@@ -78,13 +77,13 @@ Test@ Tests = TestSuite|Int $ List[
     Binary|NP(Sub, Neg(Int|133), Int|456, Neg(Int|589))
   ],
 
-  TestSuite|Neg $ List[
+  TestSuite|Neg[
     Unary|N(Neg, Neg(Int|4), Int|4),
     Unary|0(Neg, Int|0, Int|0),
     Unary|P(Neg, Int|3, Neg(Int|3))
   ],
 
-  TestSuite|Mul $ List[
+  TestSuite|Mul[
     Binary|PP(Mul, Int|133, Int|456, Int|60648),
     Binary|0P(Mul, Int|0, Int|456, Int|0),
     Binary|P0(Mul, Int|456, Int|0, Int|0),
@@ -95,14 +94,14 @@ Test@ Tests = TestSuite|Int $ List[
     Binary|NP(Mul, Neg(Int|133), Int|456, Neg(Int|60648))
   ],
 
-  TestSuite|Mul2 $ List[
+  TestSuite|Mul2[
     Unary|N(Mul2, Neg(Int|7), Neg(Int|14)),
     Unary|0(Mul2, Int|0, Int|0),
     Unary|1(Mul2, Int|1, Int|2),
     Unary|P(Mul2, Int|2315, Int|4630)
   ],
 
-  TestSuite|Exp $ List[
+  TestSuite|Exp[
     Binary|PP(Exp, Int|3, Int|4, Int|81),
     Binary|0P(Exp, Int|0, Int|3, Int|0),
     Binary|P0(Exp, Int|5, Int|0, Int|1),
@@ -112,13 +111,13 @@ Test@ Tests = TestSuite|Int $ List[
     Binary|NE(Exp, Neg(Int|3), Int|4, Int|81)
   ],
 
-  TestSuite|Exp2 $ List[
+  TestSuite|Exp2[
     Unary|0(Exp2, Int|0, Int|1),
     Unary|1(Exp2, Int|1, Int|2),
     Unary|P(Exp2, Int|5, Int|32)
   ],
 
-  TestSuite|Shl $ List[
+  TestSuite|Shl[
     Binary|PP(Shl, Int|81, Int|4, Int|1296),
     Binary|0P(Shl, Int|0, Int|3, Int|0),
     Binary|P0(Shl, Int|5, Int|0, Int|5),
@@ -127,7 +126,7 @@ Test@ Tests = TestSuite|Int $ List[
     Binary|NP(Shl, Neg(Int|3), Int|3, Neg(Int|24))
   ],
 
-  TestSuite|Shr $ List[
+  TestSuite|Shr[
     Binary|PP(Shr, Int|1298, Int|4, Int|81),
     Binary|0P(Shr, Int|0, Int|3, Int|0),
     Binary|P0(Shr, Int|5, Int|0, Int|5),

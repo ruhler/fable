@@ -1011,3 +1011,8 @@ This will work well. I'm getting rid of '$' syntax.
 
 I just need to make a decision for expected failure case. How about for now I
 define a helper function where used. Easy.
+
+Honestly, I think the test specification is cleaner with Unit@ _ := Lazy
+approach, from a syntactic point of view. And ExpectedFailure helper too.
+
+Yeah. Definitely don't need $ sugar.

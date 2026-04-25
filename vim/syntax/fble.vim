@@ -18,11 +18,9 @@ exec 'syn match fbleComment "#.*" contains=@Spell'
 exec 'syn match fbleType "' . s:word . '@"'
 exec 'syn match fbleLabel "' . s:word . ':"'
 exec 'syn match fbleLabel ":"'
-exec 'syn match fbleLabel "\$"'
 exec 'syn match fbleLiteral "|' . s:word . '"'
 exec 'syn match fbleModulePath "\(/' . s:word . '\)\+%"'
 exec 'syn match fblePoly "[@<>%]"'
-exec 'syn match fbleNotPoly "<-"'
 
 " Specify highlight groups to use for each of the syntax groups.
 hi def link fbleComment Comment

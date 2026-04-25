@@ -10,7 +10,7 @@ OnAscii = /Std/Char/Ascii%.OnAscii;
 Eq@ = /Std/Eq%.Eq@;
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-List = /Std/List%.List;
+Lazy .= /Std/Lazy%;
 
 Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
@@ -23,8 +23,8 @@ String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
 
 Test@ = /Std/Test%.Test@;
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Unit@ = /Std/Unit%.Unit@;
 
@@ -32,65 +32,74 @@ Eq@<Maybe@<String@>> Eq = /Std/Maybe/Eq%.Eq(/Std/String/Eq%.Eq);
 
 # @value[Tests] Test suite for /Std/Maybe/Eq%
 #  @type[Test@]
-Test@ Tests = TestSuite|Eq $ List[
-  TestSuite|IsJust $ List[
-    Test|Just $ (Unit@ _) {
+Test@ Tests = TestSuite|Eq[
+  TestSuite|IsJust[
+    Test|Just({
+      Unit@ _ := Lazy;
       Bool@ wnt = True;
       Bool@ got = IsJust(Just(Str|ABCD));
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|Nothing $ (Unit@ _) {
+    Test|Nothing({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = IsJust(Nothing<String@>);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|IsNothing $ List[
-    Test|Just $ (Unit@ _) {
+  TestSuite|IsNothing[
+    Test|Just({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = IsNothing(Just(Str|ABCD));
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|Nothing $ (Unit@ _) {
+    Test|Nothing({
+      Unit@ _ := Lazy;
       Bool@ wnt = True;
       Bool@ got = IsNothing(Nothing<String@>);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|Eq $ List[
-    Test|NN $ (Unit@ _) {
+  TestSuite|Eq[
+    Test|NN({
+      Unit@ _ := Lazy;
       Bool@ wnt = True;
       Bool@ got = Eq(Nothing<String@>, Nothing<String@>);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|JN $ (Unit@ _) {
+    Test|JN({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = Eq(Just(Str|ABCD), Nothing<String@>);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|NJ $ (Unit@ _) {
+    Test|NJ({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = Eq(Nothing<String@>, Just(Str|ABCD));
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|JJ $ (Unit@ _) {
+    Test|JJ({
+      Unit@ _ := Lazy;
       Bool@ wnt = True;
       Bool@ got = Eq(Just(Str|ABCD), Just(Str|ABCD));
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|Jj $ (Unit@ _) {
+    Test|Jj({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = Eq(Just(Str|ABCD), Just(Str|DCBA));
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }
+    })
   ]
 ];
 

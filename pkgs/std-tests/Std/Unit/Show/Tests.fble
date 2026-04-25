@@ -3,6 +3,7 @@ OnAscii = /Std/Char/Ascii%.OnAscii;
 
 AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
 
+Lazy .= /Std/Lazy%;
 Test@ = /Std/Test%.Test@;
 Test = OnAscii(/Std/Test%.Test);
 
@@ -11,8 +12,9 @@ Unit = /Std/Unit%.Unit;
 
 # @value[Tests] Test suite for /Std/Unit/Show%.
 #  @type[Test@]
-Test@ Tests = Test|'Show' $ (Unit@ _) {
+Test@ Tests = Test|Show({
+  Unit@ _ := Lazy;
   AssertStream|'Unit'(/Std/Unit/Show%.Show(Unit));
-};
+});
 
 @(Tests);

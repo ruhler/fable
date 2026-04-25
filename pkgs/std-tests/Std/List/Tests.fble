@@ -5,27 +5,16 @@ OnAscii = /Std/Char/Ascii%.OnAscii;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-Append = /Std/List%.Append;
-Concat = /Std/List%.Concat;
-Join = /Std/List%.Join;
-Head = /Std/List%.Head;
-Tail = /Std/List%.Tail;
-Last = /Std/List%.Last;
-Init = /Std/List%.Init;
-Map = /Std/List%.Map;
-Do = /Std/List%.Do;
-ForEach = /Std/List%.ForEach;
-Reverse = /Std/List%.Reverse;
+Lazy .= /Std/Lazy%;
+
+List@, List, Items, Empty, Append, Concat,
+Join, Head, Tail, Last,Init, Map, Do, ForEach, Reverse .= /Std/List%;
 
 String = /Std/Char/Ascii/Stream%.String;
 
 Test@ = /Std/Test%.Test@;
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 Pass = /Std/Test%.Pass;
 Fail = /Std/Test%.Fail;
 
@@ -41,98 +30,112 @@ Shows = /Std/List/Tests/Elem%.Shows;
 
 # @value[Tests] Test suite for /Std/List%
 #  @type[Test@]
-Test@ Tests = TestSuite|List $ List[
-  Test|List $ (Unit@ _) {
+Test@ Tests = TestSuite|List[
+  Test|List({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|ABCDE;
     List@<Elem@> got = List<Elem@>|ABCDE;
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Empty $ (Unit@ _) {
+  Test|Empty({
+    Unit@ _ := Lazy;
     Empty<Elem@>.?(items: Fail(String|'Empty is items'), empty: Pass);
-  },
+  }),
 
-  Test|Items $ (Unit@ _) {
+  Test|Items({
+    Unit@ _ := Lazy;
     List@<Elem@> list = Items(Elem.A, Empty<Elem@>);
     list.?(items: Pass, empty: Fail(String|'Items is empty'));
-  },
+  }),
 
-  Test|Append $ (Unit@ _) {
+  Test|Append({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|ABCDE;
     List@<Elem@> got = Append(Elems|ABC, Elems|DE);
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Concat $ (Unit@ _) {
+  Test|Concat({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|ABCDEABCD;
     List@<Elem@> got = Concat[Elems|ABC, Elems|DE, Elems|'', Elems|ABCD];
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Join $ (Unit@ _) {
+  Test|Join({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|ABCEEDEEEAB;
     List@<Elem@> got = Join[Elems|ABC, Elems|DE, Elems|AB]|EE;
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Head $ (Unit@ _) {
+  Test|Head({
+    Unit@ _ := Lazy;
     Elem@ wnt = Elem.B;
     Elem@ got = Head<Elem@>|BAC;
     AssertEquals(Eq, Show, wnt, got);
-  },
+  }),
 
-  Test|Tail $ (Unit@ _) {
+  Test|Tail({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|BCDE;
     List@<Elem@> got = Tail<Elem@>|ABCDE;
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Last $ (Unit@ _) {
+  Test|Last({
+    Unit@ _ := Lazy;
     Elem@ wnt = Elem.C;
     Elem@ got = Last<Elem@>|BAC;
     AssertEquals(Eq, Show, wnt, got);
-  },
+  }),
 
-  Test|Init $ (Unit@ _) {
+  Test|Init({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|ABCD;
     List@<Elem@> got = Init<Elem@>|ABCDE;
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|ForEach $ (Unit@ _) {
+  Test|ForEach({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|EDCBA;
     List@<Elem@> got =
       ForEach(Elems|ABCDE, Empty<Elem@>, (Elem@ e, List@<Elem@> b) {
         Items(e, b);
       });
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Map $ (Unit@ _) {
+  Test|Map({
     (Elem@) { Elem@; } f = (Elem@ e) {
       e.?(A: Elem.B, B: Elem.C, C: Elem.D, D: Elem.E, E: Elem.A);
     };
 
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|BCDEA;
     List@<Elem@> got = Map(Elems|ABCDE, f);
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Do $ (Unit@ _) {
+  Test|Do({
     (Elem@) { List@<Elem@>; } f = (Elem@ e) {
       e.?(A: Elems|AB, B: Elems|BC, C: Elems|CD, D: Elems|DE, E: Elems|EA);
     };
 
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|ABBCCDDE;
     List@<Elem@> got = Do(Elems|ABCD, f);
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Reverse $ (Unit@ _) {
+  Test|Reverse({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|EDCBA;
     List@<Elem@> got = Reverse<Elem@>|ABCDE;
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
   /Std/List/Count/Tests%.Tests,
   /Std/List/Eq/Tests%.Tests,

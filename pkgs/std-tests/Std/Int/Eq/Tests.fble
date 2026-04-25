@@ -14,12 +14,11 @@ Int = /Std/Int/Lit%.Int;
 Eq = /Std/Int/Eq%.Eq;
 Ne = /Std/Int/Eq%.Ne;
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
+List@ .= /Std/List%;
 
 Test@ = /Std/Test%.Test@;
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Unit@ = /Std/Unit%.Unit@;
 
@@ -30,8 +29,8 @@ Binary = (List@<Ascii@> name, (Int@, Int@) { Bool@; } f, Int@ a, Int@ b, Bool@ z
   });
 };
 
-Test@ Tests = TestSuite|Eq $ List[
-  TestSuite|Eq $ List[
+Test@ Tests = TestSuite|Eq[
+  TestSuite|Eq[
     Binary|PP(Eq, Int|1298, Int|1298, True),
     Binary|Pp(Eq, Int|1298, Int|1398, False),
     Binary|P0(Eq, Int|1298, Int|0, False),
@@ -44,7 +43,7 @@ Test@ Tests = TestSuite|Eq $ List[
     Binary|NP(Eq, Int|1298, Neg(Int|1298), False)
   ],
 
-  TestSuite|Ne $ List[
+  TestSuite|Ne[
     Binary|PP(Ne, Int|1298, Int|1298, False),
     Binary|Pp(Ne, Int|1298, Int|1398, True),
     Binary|P0(Ne, Int|1298, Int|0, True),

@@ -9,12 +9,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Figure out why fble-benchmark fails on the fbld benchmark.
 
-* Move $ application syntax.
- - Remove all uses of '$'.
- - Clean up parse.y now.
- - Remove from the spec.
- - Double check when I added it what all else I should remove.
-
 * Add exit command to /Std/Io/Cli/Demo% app.
 
 * Should struct copy be allowed to change the type of fields it updates?
@@ -156,9 +150,6 @@ Things to consider doing for the fble-0.6 release.
 * Standardize IO
 
 * Add test for StrE with \q escape.
-* Add spec tests for foo $ bar syntaxes.
-  - right associativity
-  - works in expr and stmt context
 
 * Update tutorials for new bind and function application syntax.
 

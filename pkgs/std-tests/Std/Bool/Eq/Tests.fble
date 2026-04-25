@@ -10,8 +10,7 @@ OnAscii = /Std/Char/Ascii%.OnAscii;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
+List@ .= /Std/List%;
 
 Test@ = /Std/Test%.Test@;
 Test = OnAscii(/Std/Test%.Test);
@@ -28,7 +27,7 @@ Binary = (List@<Ascii@> name, (Bool@, Bool@) { Bool@; } f, Bool@ a, Bool@ b, Boo
 
 # @value[Tests] Test suite for /Std/Bool%
 #  @type[Test@]
-Test@ Tests = TestSuite|Eq $ List[
+Test@ Tests = TestSuite|Eq[
   Binary|FF(Eq, False, False, True),
   Binary|FT(Eq, False, True, False),
   Binary|TF(Eq, True, False, False),

@@ -11,12 +11,12 @@ Mod = /Std/Int/Div%.Mod;
 Neg = /Std/Int%.Neg;
 Int = /Std/Int/Lit%.Int;
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
+Lazy .= /Std/Lazy%;
+List@ .= /Std/List%;
 
 Test@ = /Std/Test%.Test@;
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Unit@ = /Std/Unit%.Unit@;
 
@@ -24,22 +24,29 @@ Unit@ = /Std/Unit%.Unit@;
 (List@<Ascii@>, Int@, Int@, Int@, Int@) { Test@; }
 DivTest = (List@<Ascii@> name, Int@ a, Int@ b, Int@ q, Int@ r) {
   TestSuite(name)[
-    Test|DivQ $ (Unit@ _) {
+    Test|DivQ({
+      Unit@ _ := Lazy;
       AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, q, Div(a, b).q);
-    },
-    Test|DivR $ (Unit@ _) {
+    }),
+
+    Test|DivR({
+      Unit@ _ := Lazy;
       AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, r, Div(a, b).r);
-    },
-    Test|Quot $ (Unit@ _) {
+    }),
+
+    Test|Quot({
+      Unit@ _ := Lazy;
       AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, q, Quot(a, b));
-    },
-    Test|Mod $ (Unit@ _) {
+    }),
+
+    Test|Mod({
+      Unit@ _ := Lazy;
       AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, r, Mod(a, b));
-    }
+    })
   ];
 };
 
-Test@ Tests = TestSuite|Div $ List[
+Test@ Tests = TestSuite|Div[
   DivTest|PP(Int|11, Int|4, Int|2, Int|3),
   DivTest|NP(Neg(Int|11), Int|4, Neg(Int|3), Int|1),
   DivTest|PN(Int|11, Neg(Int|4), Neg(Int|3), Neg(Int|1)),

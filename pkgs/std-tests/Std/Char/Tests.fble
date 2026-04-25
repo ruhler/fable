@@ -3,23 +3,25 @@ Char@, Char, Pos .= /Std/Char%;
 OnAscii .= /Std/Char/Ascii%;
 AssertEquals .= /Std/Eq/Assert%;
 Int .= /Std/Int/Lit%;
-List .= /Std/List%;
+Lazy .= /Std/Lazy%;
 Test@ .= /Std/Test%;
 Unit@ .= /Std/Unit%;
 
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Char@ A = /Std/Char/Ascii%.Char|A;
 
-Test@ Tests = TestSuite|Char $ List[
-  Test|Char $ (Unit@ _) {
+Test@ Tests = TestSuite|Char[
+  Test|Char({
+    Unit@ _ := Lazy;
     AssertEquals(/Std/Char/Eq%.Eq, /Std/Char/Show%.Show, A, Char(Int|65));
-  },
+  }),
 
-  Test|Pos $ (Unit@ _) {
+  Test|Pos({
+    Unit@ _ := Lazy;
     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, Int|65, Pos(A));
-  }
+  })
 ];
 
 @(Tests);

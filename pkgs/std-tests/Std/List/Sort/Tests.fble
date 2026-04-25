@@ -3,13 +3,13 @@ OnAscii = /Std/Char/Ascii%.OnAscii;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Sort = /Std/List/Sort%.Sort;
+Lazy .= /Std/Lazy%;
+List@ .= /Std/List%;
+Sort .= /Std/List/Sort%;
 
 Test@ = /Std/Test%.Test@;
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Unit@ = /Std/Unit%.Unit@;
 
@@ -19,13 +19,14 @@ Cmp = /Std/List/Tests/Elem%.Cmp;
 Eqs = /Std/List/Tests/Elem%.Eqs;
 Shows = /Std/List/Tests/Elem%.Shows;
 
-Test@ Tests = TestSuite|Sort $ List[
-  Test|Sort $ (Unit@ _) {
+Test@ Tests = TestSuite|Sort[
+  Test|Sort({
+    Unit@ _ := Lazy;
     List@<Elem@> unsorted = Elems|DABEC;
     List@<Elem@> wnt = Elems|ABCDE;
     List@<Elem@> got = Sort(Cmp, unsorted);
     AssertEquals(Eqs, Shows, wnt, got);
-  }
+  })
 ];
 
 @(Tests);

@@ -6,20 +6,13 @@ AssertEquals = /Std/Eq/Assert%.AssertEquals;
 Int@ = /Std/Int%.Int@;
 Int = /Std/Int/Lit%.Int;
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-
-Length = /Std/List/Index%.Length;
-Get = /Std/List/Index%.Get;
-Set = /Std/List/Index%.Set;
-Take = /Std/List/Index%.Take;
-Drop = /Std/List/Index%.Drop;
-Range = /Std/List/Index%.Range;
-Span = /Std/List/Index%.Span;
+Lazy .= /Std/Lazy%;
+List@ .= /Std/List%;
+Length, Get, Set, Take, Drop, Range, Span .= /Std/List/Index%;
 
 Test@ = /Std/Test%.Test@;
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Unit@ = /Std/Unit%.Unit@;
 
@@ -31,55 +24,63 @@ Show = /Std/List/Tests/Elem%.Show;
 Eqs = /Std/List/Tests/Elem%.Eqs;
 Shows = /Std/List/Tests/Elem%.Shows;
 
-Test@ Tests = TestSuite|Index $ List[
-  Test|Length $ (Unit@ _) {
+Test@ Tests = TestSuite|Index[
+  Test|Length({
+    Unit@ _ := Lazy;
     Int@ wnt = Int|5;
     Int@ got = Length(Elems|ABCDE);
     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
-  },
+  }),
 
-  Test|Get $ (Unit@ _) {
+  Test|Get({
+    Unit@ _ := Lazy;
     Elem@ got = Get(Elems|ABCDE, Int|2);
     Elem@ wnt = Elem.C;
     AssertEquals(Eq, Show, wnt, got);
-  },
+  }),
 
-  Test|Set $ (Unit@ _) {
+  Test|Set({
+    Unit@ _ := Lazy;
     List@<Elem@> got = Set(Elems|ABCDE, Int|2, Elem.A);
     List@<Elem@> wnt = Elems|ABADE;
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Take $ (Unit@ _) {
+  Test|Take({
+    Unit@ _ := Lazy;
     List@<Elem@> got = Take(Elems|ABCDE, Int|2);
     List@<Elem@> wnt = Elems|AB;
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Drop $ (Unit@ _) {
+  Test|Drop({
+    Unit@ _ := Lazy;
     List@<Elem@> got = Drop(Elems|ABCDE, Int|2);
     List@<Elem@> wnt = Elems|CDE;
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Range $ (Unit@ _) {
+  Test|Range({
+    Unit@ _ := Lazy;
     List@<Elem@> got = Range(Elems|ABCDE, Int|1, Int|2);
     List@<Elem@> wnt = Elems|BC;
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  TestSuite|Span $ List[
-    Test|span $ (Unit@ _) {
+  TestSuite|Span[
+    Test|span({
+      Unit@ _ := Lazy;
       List@<Elem@> got = Span(Elems|ABCDE, Int|2).span;
       List@<Elem@> wnt = Elems|AB;
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|tail $ (Unit@ _) {
+    Test|tail({
+      Unit@ _ := Lazy;
       List@<Elem@> got = Span(Elems|ABCDE, Int|2).tail;
       List@<Elem@> wnt = Elems|CDE;
       AssertEquals(Eqs, Shows, wnt, got);
-    }
+    })
   ]
 ];
 

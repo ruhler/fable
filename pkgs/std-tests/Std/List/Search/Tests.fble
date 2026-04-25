@@ -8,13 +8,13 @@ OnAscii = /Std/Char/Ascii%.OnAscii;
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
 Test@ = /Std/Test%.Test@;
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Unit@ = /Std/Unit%.Unit@;
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
+Lazy .= /Std/Lazy%;
+List@, List .= /Std/List%;
 
 Any = /Std/List/Search%.Any;
 Keep = /Std/List/Search%.Keep;
@@ -38,117 +38,134 @@ Ge = /Std/List/Tests/Elem%.Ge;
 Eqs = /Std/List/Tests/Elem%.Eqs;
 Shows = /Std/List/Tests/Elem%.Shows;
 
-Test@ Tests = TestSuite|Search $ List[
-  TestSuite|Any $ List[
-    Test|T $ (Unit@ _) {
+Test@ Tests = TestSuite|Search[
+  TestSuite|Any[
+    Test|T({
+      Unit@ _ := Lazy;
       Bool@ wnt = True;
       Bool@ got = Any(Elems|BDBB, (Elem@ e) { e.?(D: True, : False); });
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    },
+    }),
 
-    Test|F $ (Unit@ _) {
+    Test|F({
+      Unit@ _ := Lazy;
       Bool@ wnt = False;
       Bool@ got = Any(Elems|BDBB, (Elem@ e) { e.?(C: True, : False); });
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }
+    })
   ],
 
-  Test|Keep $ (Unit@ _) {
+  Test|Keep({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|ABBBABA;
     List@<Elem@> got = Keep(Elems|ABBCDDBCCADEBA, Ge(Elem.B));
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Remove $ (Unit@ _) {
+  Test|Remove({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|ACCDDE;
     List@<Elem@> got = Remove(Elems|ABBCCDDE, Eq(Elem.B));
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Split $ (Unit@ _) {
+  Test|Split({
+    Unit@ _ := Lazy;
     List@<List@<Elem@>> wnt = List[Elems|ACD, Elems|E, Elems|CA];
     List@<List@<Elem@>> got = Split(Elems|BBACDBEBBCAB, Eq(Elem.B));
     AssertEquals(
       /Std/List/Eq%.Eq(Eqs),
       /Std/List/Show%.Show(Shows), wnt, got);
-  },
+  }),
 
-  TestSuite|Search $ List[
-    Test|T $ (Unit@ _) {
+  TestSuite|Search[
+    Test|T({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|CBDCDE;
       List@<Elem@> got = Search(Elems|ABCBDCDE, Eq(Elem.C));
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|F $ (Unit@ _) {
+    Test|F({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|'';
       List@<Elem@> got = Search(Elems|ABBDDE, Eq(Elem.C));
       AssertEquals(Eqs, Shows, wnt, got);
-    }
+    })
   ],
 
-  Test|SearchR $ (Unit@ _) {
+  Test|SearchR({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|CDE;
     List@<Elem@> got = SearchR(Elems|ABCBDCDE, Eq(Elem.C));
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Skip $ (Unit@ _) {
+  Test|Skip({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|BCBDCDE;
     List@<Elem@> got = Skip(Elems|AABCBDCDE, Eq(Elem.A));
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Until $ (Unit@ _) {
+  Test|Until({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|AAB;
     List@<Elem@> got = Until(Elems|AABCBDCDE, Eq(Elem.C));
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|While $ (Unit@ _) {
+  Test|While({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|AAB;
     List@<Elem@> got = While(Elems|AABCBDCDE, Ge(Elem.B));
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Trim $ (Unit@ _) {
+  Test|Trim({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|EAABCEBDCD;
     List@<Elem@> got = Trim(Elems|EAABCEBDCDEE, Eq(Elem.E));
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  Test|Strip $ (Unit@ _) {
+  Test|Strip({
+    Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|AABCEBDCD;
     List@<Elem@> got = Strip(Elems|EAABCEBDCDEE, Eq(Elem.E));
     AssertEquals(Eqs, Shows, wnt, got);
-  },
+  }),
 
-  TestSuite|Span $ List[
-    Test|span $ (Unit@ _) {
+  TestSuite|Span[
+    Test|span({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|AB;
       List@<Elem@> got = Span(Elems|ABCADBE, Ge(Elem.B)).span;
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|tail $ (Unit@ _) {
+    Test|tail({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|CADBE;
       List@<Elem@> got = Span(Elems|ABCADBE, Ge(Elem.B)).tail;
       AssertEquals(Eqs, Shows, wnt, got);
-    }
+    })
   ],
 
-  TestSuite|Break $ List[
-    Test|span $ (Unit@ _) {
+  TestSuite|Break[
+    Test|span({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|AB;
       List@<Elem@> got = Break(Elems|ABCADBE, Eq(Elem.C)).span;
       AssertEquals(Eqs, Shows, wnt, got);
-    },
+    }),
 
-    Test|tail $ (Unit@ _) {
+    Test|tail({
+      Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|CADBE;
       List@<Elem@> got = Break(Elems|ABCADBE, Eq(Elem.C)).tail;
       AssertEquals(Eqs, Shows, wnt, got);
-    }
+    })
   ]
 ];
 

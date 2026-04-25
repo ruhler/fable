@@ -13,12 +13,12 @@ String = /Std/Char/Ascii/Stream%.String;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
+Lazy .= /Std/Lazy%;
+List@ .= /Std/List%;
 
 Test@ = /Std/Test%.Test@;
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 Pass = /Std/Test%.Pass;
 Fail = /Std/Test%.Fail;
 
@@ -40,35 +40,37 @@ Binary = (List@<Ascii@> name, (Bool@, Bool@) { Bool@; } f, Bool@ a, Bool@ b, Boo
 
 # @value[Tests] Test suite for /Std/Bool%
 #  @type[Test@]
-Test@ Tests = TestSuite|Bool $ List[
-  Test|True $ (Unit@ _) {
+Test@ Tests = TestSuite|Bool[
+  Test|True({
+    Unit@ _ := Lazy;
     True.?(true: Pass, false: Fail(String|'True is false'));
-  },
+  }),
 
-  Test|False $ (Unit@ _) {
+  Test|False({
+    Unit@ _ := Lazy;
     False.?(true: Fail(String|'False is true'), false: Pass);
-  },
+  }),
 
-  TestSuite|Not $ List[
+  TestSuite|Not[
     Unary|T(Not, True, False),
     Unary|F(Not, False, True)
   ],
 
-  TestSuite|And $ List[
+  TestSuite|And[
     Binary|FF(And, False, False, False),
     Binary|FT(And, False, True, False),
     Binary|TF(And, True, False, False),
     Binary|TT(And, True, True, True)
   ],
 
-  TestSuite|Or $ List[
+  TestSuite|Or[
     Binary|FF(Or, False, False, False),
     Binary|FT(Or, False, True, True),
     Binary|TF(Or, True, False, True),
     Binary|TT(Or, True, True, True)
   ],
 
-  TestSuite|Xor $ List[
+  TestSuite|Xor[
     Binary|FF(Xor, False, False, False),
     Binary|FT(Xor, False, True, True),
     Binary|TF(Xor, True, False, True),
