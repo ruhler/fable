@@ -135,7 +135,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     });
 
     ArgAnyOf[Str|'-p', Str|'--port'].?(true: {
-      Maybe@<Int@> port = /Core/Int/Read%.Read(value);
+      Maybe@<Int@> port = /Core/Int/Read%.Int(value);
       port.?(nothing: {
         default.@(error: Just(Format|'invalid port %s'[String(value)]));
       });
@@ -364,7 +364,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
     /Std/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
       List@<String@> ids = Split(Drop(path, Int|5), Str|',');
       os $ SeqPage(/Std/List%.Map(ids, (String@ id) {
-          /Std/Maybe%.Get(Int|0, /Core/Int/Read%.Read(id));
+          /Std/Maybe%.Get(Int|0, /Core/Int/Read%.Int(id));
         }));
     });
 

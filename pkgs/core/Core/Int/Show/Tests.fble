@@ -17,12 +17,12 @@ Int@ = /Std/Int%.Int@;
 Neg = /Std/Int%.Neg;
 Int = /Std/Int/Lit%.Int;
 
-Read = /Core/Int/Read%.Read;
+Radix, ParseInt(.Int) .= /Core/Int/Read%;
 
 Test@ Tests = TestSuite(Str|Show, List[
   Test(Str|Read_Positive, (Unit@ _) {
     Maybe@<Int@> wnt = Just(Int|49113);
-    Maybe@<Int@> got = Read(Str|49113);
+    Maybe@<Int@> got = ParseInt(Str|49113);
     AssertEquals(
       /Std/Maybe/Eq%.Eq(/Std/Int/Eq%.Eq),
       /Std/Maybe/Show%.Show(/Std/Int/Show%.Show),
@@ -31,7 +31,7 @@ Test@ Tests = TestSuite(Str|Show, List[
 
   Test(Str|Read_Negative, (Unit@ _) {
     Maybe@<Int@> wnt = Just(Neg(Int|49113));
-    Maybe@<Int@> got = Read(Str|'-49113');
+    Maybe@<Int@> got = ParseInt(Str|'-49113');
     AssertEquals(
       /Std/Maybe/Eq%.Eq(/Std/Int/Eq%.Eq),
       /Std/Maybe/Show%.Show(/Std/Int/Show%.Show),
@@ -40,7 +40,7 @@ Test@ Tests = TestSuite(Str|Show, List[
 
   Test(Str|Read_AllDigits, (Unit@ _) {
     Maybe@<Int@> wnt = Just(Int|1234567890);
-    Maybe@<Int@> got = Read(Str|1234567890);
+    Maybe@<Int@> got = ParseInt(Str|1234567890);
     AssertEquals(
       /Std/Maybe/Eq%.Eq(/Std/Int/Eq%.Eq),
       /Std/Maybe/Show%.Show(/Std/Int/Show%.Show),
@@ -49,7 +49,16 @@ Test@ Tests = TestSuite(Str|Show, List[
 
   Test(Str|Read_empty, (Unit@ _) {
     Maybe@<Int@> wnt = Nothing<Int@>;
-    Maybe@<Int@> got = Read(Str|'');
+    Maybe@<Int@> got = ParseInt(Str|'');
+    AssertEquals(
+      /Std/Maybe/Eq%.Eq(/Std/Int/Eq%.Eq),
+      /Std/Maybe/Show%.Show(/Std/Int/Show%.Show),
+      wnt, got);
+  }),
+
+  Test(Str|Radix, (Unit@ _) {
+    Maybe@<Int@> wnt = Just(Neg(Int|1587));
+    Maybe@<Int@> got = Radix(Int|18, Str|'-4g3');
     AssertEquals(
       /Std/Maybe/Eq%.Eq(/Std/Int/Eq%.Eq),
       /Std/Maybe/Show%.Show(/Std/Int/Show%.Show),

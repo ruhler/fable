@@ -4,10 +4,15 @@ Char@, Pos .= /Std/Char%;
 Lt, Gt .= /Std/Cmp%.Cmp(/Std/Char/Cmp%.Cmp);
 Char .= /Std/Char/Ascii%;
 Int@, Add, Sub, Neg, Mul .= /Std/Int%;
-Int .= /Std/Int/Lit%;
-Maybe@, Just, Nothing, Do .= /Std/Maybe%;
+I(.Int) .= /Std/Int/Lit%;
+Maybe@, Just, Nothing, Do, Map .= /Std/Maybe%;
 String@ .= /Std/String%;
 
+# func[InRange] Tests if a character is in a given range.
+#  @arg[Char@][lo] The inclusive lower bound of the range.
+#  @arg[Char@][hi] The inclusive upper bound of the range.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is in range [lo, hi].
 (Char@, Char@, Char@) { Bool@; }
 InRange = (Char@ lo, Char@ hi, Char@ c) {
   Lt(c, lo).?(true: False);
@@ -15,6 +20,11 @@ InRange = (Char@ lo, Char@ hi, Char@ c) {
   True;
 };
 
+# func[Digit] Converts a digit to its corresponding integer value.
+#  @arg[Char@][digit] The digit to convert. [0-9a-zA-Z].
+#  @returns[Maybe@<Int@>]
+#   The integer value associated with the digit. For example, '9' has value 9,
+#   'c' has value 12. Returns Nothing if the character is not a valid digit.
 (Char@) { Maybe@<Int@>; }
 Digit = (Char@ c) {
   InRange(Char|0, Char|9, c).?(true: {
@@ -22,34 +32,61 @@ Digit = (Char@ c) {
   });
 
   InRange(Char|A, Char|Z, c).?(true: {
-    Just(Add(Int|10, Sub(Pos(c), Pos(Char|A))));
+    Just(Add(I|10, Sub(Pos(c), Pos(Char|A))));
   });
 
   InRange(Char|a, Char|z, c).?(true: {
-    Just(Add(Int|10, Sub(Pos(c), Pos(Char|a))));
+    Just(Add(I|10, Sub(Pos(c), Pos(Char|a))));
   });
 
   Nothing<Int@>;
 };
 
-(Int@, String@) { Maybe@<Int@>; }
-ReadP = (Int@ x, String@ s) {
-  s.?(empty: Just(x));
-  Int@ digit := Do(Digit(s.items.head));
-  ReadP(Add(Mul(Int|10, x), digit), s.items.tail);
+# func[Digits] Converts a string of digits to an integer value.
+#  @arg[Int@][radix] The radix to use for conversion.
+#  @arg[Int@][parsed]
+#   The integer value of the most significant digits already parsed.
+#  @arg[String@][digits] The digits still to parse.
+#  @returns[Maybe@<Int@>]
+#   The integer value associated with the fully parsed string of digits.
+#   Nothing in case of invalid characters in the string.
+(Int@, Int@, String@) { Maybe@<Int@>; }
+Digits = (Int@ radix, Int@ parsed, String@ digits) {
+  digits.?(empty: Just(parsed));
+  Int@ digit := Do(Digit(digits.items.head));
+  /Std/Int/Cmp%.Ge(digit, radix).?(true: Nothing<Int@>);
+  Digits(radix, Add(Mul(radix, parsed), digit), digits.items.tail);
 };
   
-(String@) { Maybe@<Int@>; }
-Read = (String@ s) {
-  s.?(empty: Nothing<Int@>);
-  /Std/Char/Eq%.Eq(Char|'+', s.items.head).?(true: {
-    ReadP(Int|0, s.items.tail);
+# @func[Radix] Parse an integer from a string with give radix.
+#  The format of the string is an optional '+' or '-' followed by a sequence
+#  of one or more digits of the given radix.
+#
+#  @arg[Int@][radix] The radix to use for conversion.
+#  @arg[String@][string] The string to parse.
+#  @returns[Maybe@<Int@>]
+#   The parsed value. Nothing in case of invalid formatted the string.
+(Int@, String@) { Maybe@<Int@>; }
+Radix = (Int@ radix, String@ string) {
+  string.?(empty: Nothing<Int@>);
+  /Std/Char/Eq%.Eq(Char|'+', string.items.head).?(true: {
+    string.items.tail.?(empty: Nothing<Int@>);
+    Digits(radix, I|0, string.items.tail);
   });
-  /Std/Char/Eq%.Eq(Char|'-', s.items.head).?(true: {
-    Int@ read := Do(ReadP(Int|0, s.items.tail));
-    Just(Neg(read));
+  /Std/Char/Eq%.Eq(Char|'-', string.items.head).?(true: {
+    string.items.tail.?(empty: Nothing<Int@>);
+    Map(Digits(radix, I|0, string.items.tail), Neg);
   });
-  ReadP(Int|0, s);
+  Digits(radix, I|0, string);
 };
 
-@(Read);
+# @func[Int] Parse a decimal integer from a string.
+#  The format of the string is an optional '+' or '-' followed by a sequence
+#  of one or more decimal digits.
+#
+#  @arg[String@][string] The string to parse.
+#  @returns[Maybe@<Int@>]
+#   The parsed value. Nothing in case of invalid formatted the string.
+(String@) { Maybe@<Int@>; } Int = Radix(I|10);
+
+@(Radix, Int);
