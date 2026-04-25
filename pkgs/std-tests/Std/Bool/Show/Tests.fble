@@ -1,29 +1,25 @@
 
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
-OnAscii = /Std/Char/Ascii%.OnAscii;
-
+True, False .= /Std/Bool%;
+OnAscii .= /Std/Char/Ascii%;
 AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
-
-List = /Std/List%.List;
-
-Test@ = /Std/Test%.Test@;
+Lazy .= /Std/Lazy%;
+Test@ .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
-
-Unit@ = /Std/Unit%.Unit@;
+Unit@ .= /Std/Unit%;
 
 # @value[Tests] Test suite for /Std/Bool/Show%.
 #  @type[Test@]
-Test@ Tests = TestSuite|'Show' $ List[
-  Test|'True' $ (Unit@ _) {
-    AssertStream|'True' $ /Std/Bool/Show%.Show(True);
-  },
+Test@ Tests = TestSuite|Show[
+  Test|True({
+    Unit@ _ := Lazy;
+    AssertStream|True(/Std/Bool/Show%.Show(True));
+  }),
 
-  Test|'False' $ (Unit@ _) {
-    AssertStream|'False' $ /Std/Bool/Show%.Show(False);
-  }
+  Test|False({
+    Unit@ _ := Lazy;
+    AssertStream|False(/Std/Bool/Show%.Show(False));
+  })
 ];
 
 @(Tests);

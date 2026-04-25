@@ -2,6 +2,7 @@
 #  Unit test framework.
 
 Bool@ .= /Std/Bool%;
+Lazy@ .= /Std/Lazy%;
 List@ .= /Std/List%;
 Stream@ .= /Std/Stream/Text%;
 ToString .= /Std/Stream/String%;
@@ -18,8 +19,8 @@ TestResult@ = +(Unit@ pass, Stream@ fail, Unit@ expected_fail, Stream@ skip);
 
 # @struct[TestCase@] A test case.
 #  @field[String@][name] The name of the test.
-#  @field[(Unit@) { TestResult@; }][test] The test code to run.
-TestCase@ = *(String@ name, (Unit@) { TestResult@; } test);
+#  @field[Lazy@<TestResult@>][test] The test code to run.
+TestCase@ = *(String@ name, Lazy@<TestResult@> test);
 
 # @struct[TestSuite@] A test suite.
 #  @field[String@][name] The name of the test suite.
@@ -72,11 +73,11 @@ Skip = (Stream@ msg) {
 
 # @func[Test] Creates an individual test.
 #  @arg[String@][name] The name of the test.
-#  @arg[(Unit@) { TestResult@; }][test]
+#  @arg[Lazy@<TestResult@>][test]
 #   A function that returns the result of the test.
 #  @returns[Test@] The constructed test.
-(String@, (Unit@) { TestResult@; }) { Test@; }
-Test = (String@ name, (Unit@) { TestResult@; } test) {
+(String@, Lazy@<TestResult@>) { Test@; }
+Test = (String@ name, Lazy@<TestResult@> test) {
   Test@(case: TestCase@(name, test));
 };
 

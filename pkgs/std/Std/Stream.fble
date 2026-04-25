@@ -1,6 +1,7 @@
 # @module[/Std/Stream%]
 #  Types and utilities for streaming data out.
 
+Lazy@ .= /Std/Lazy%;
 Maybe@ .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -8,12 +9,12 @@ Unit@, Unit .= /Std/Unit%;
 #  @field[@][A@] The type of value to stream to the channel.
 #  @field[@][S@] The type of the channel the interface applies to.
 #  @field[S@][return] Outputs nothing to the channel.
-#  @field[(S@, (Unit@) { S@; }) { S@; })][do]
+#  @field[(S@, Lazy@<S@>) { S@; })][do]
 #   Output some things followed by other things.
 #  @field[(A@) { S@; }][put] Outputs a single value.
 Channel@ = <@ A@, @ S@> { *(
   S@ return,
-  (S@, (Unit@) { S@; }) { S@; } do,
+  (S@, Lazy@<S@>) { S@; } do,
   (A@) { S@; } put
 );};
 
@@ -37,8 +38,8 @@ Stream@ Return = <@ A@, @ S@>(Channel@<A@, S@> s) {
 #  @return[Stream@]
 #   A computation that streams out the first set of outputs, then calls the
 #   function f to get the second set of outputs to stream.
-<@ A@>(Stream@<A@>, (Unit@) { Stream@<A@>; }) { Stream@<A@>; }
-Do = <@ A@>(Stream@<A@> ma, (Unit@) { Stream@<A@>; } f)<@ S@>(Channel@<A@, S@> s) {
+<@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
+Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> f)<@ S@>(Channel@<A@, S@> s) {
   s.do(ma(s), (Unit@ _) { f(Unit, s); });
 };
 
@@ -76,7 +77,7 @@ ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
 
   return = (B@ b) { b; };
 
-  do = (S@ a, (Unit@) { S@; } f, B@ b) {
+  do = (S@ a, Lazy@<S@> f, B@ b) {
     B@ nb = a(b);
     f(Unit, nb);
   };

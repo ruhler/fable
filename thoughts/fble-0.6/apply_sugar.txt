@@ -848,3 +848,159 @@ Test@ Tests = TestSuite|'Show' $ List[
     AssertStream|'False' $ /Std/Bool/Show%.Show(False);
   }
 ];
+
+
+Let's review /Graphics/Triangle/Tests% case:
+
+    # TODO: debug this test passing.
+    /Std/Test%.ExpectFails(Str|'') $
+    /Std/Test%.ExpectFails(Str|'Nothing') $
+    /Std/Eq/Assert%.AssertEquals(
+      /Std/Maybe/Eq%.Eq(EqColor),
+      /Std/Maybe/Show%.Show(ShowColor), wnt, got);
+
+These are really rare cases. Like, maybe 4 or less in all my tens of thousands
+of lines of fble code written so far.
+
+Option: use old syntax:
+
+    # TODO: debug this test passing.
+    /Std/Test%.ExpectFails(Str|'')(
+      /Std/Test%.ExpectFails(Str|'Nothing')(
+        /Std/Eq/Assert%.AssertEquals(
+          /Std/Maybe/Eq%.Eq(EqColor),
+          /Std/Maybe/Show%.Show(ShowColor), wnt, got)));
+
+I don't like having to indent to mark as expected fails.
+
+Option 2: Bind syntax. Because we are already in a statement context here.
+
+    # TODO: debug this test passing.
+    Unit@ _ := Annotate(/Std/Test%.ExpectFails(Str|''));
+    Unit@ _ := Annotate(/Std/Test%.ExpectFails(Str|'Nothing'));
+    /Std/Eq/Assert%.AssertEquals(
+      /Std/Maybe/Eq%.Eq(EqColor),
+      /Std/Maybe/Show%.Show(ShowColor), wnt, got);
+
+Great! We are already in statement syntax. It's rare. Performance doesn't
+matter. No need to insert lines. Composes well. No trouble. I can make
+Annotate part of /Std/Func%.
+
+  ((A@) { B@; }, (Unit@) { A@; }) { B@; } Annotate;
+
+Let me try that here.
+
+It's a bit tedious that I want to be able to comment out these lines of code
+to quickly try re-enabling. But then Annotate becomes unused. So practically I
+might instead write:
+
+    # TODO: debug this test passing.
+    Unit@ _ := /Std/Func%.Annotate(/Std/Test%.ExpectFails(Str|''));
+    Unit@ _ := /Std/Func%.Annotate(/Std/Test%.ExpectFails(Str|'Nothing'));
+    /Std/Eq/Assert%.AssertEquals(
+      /Std/Maybe/Eq%.Eq(EqColor),
+      /Std/Maybe/Show%.Show(ShowColor), wnt, got);
+
+Not too bad? Or should we define a helper:
+
+    # TODO: debug this test passing.
+    Unit@ _ := /Std/Test%.AnnotateExpectFails(Str|'');
+    Unit@ _ := /Std/Test%.AnnotateExpectFails(Str|'Nothing');
+    /Std/Eq/Assert%.AssertEquals(
+      /Std/Maybe/Eq%.Eq(EqColor),
+      /Std/Maybe/Show%.Show(ShowColor), wnt, got);
+
+Or do the imports, get the warnings:
+
+    # TODO: debug this test passing.
+    Unit@ _ := Annotate(ExpectFails(Str|''));
+    Unit@ _ := Annotate(ExpectFails(Str|'Nothing'));
+    /Std/Eq/Assert%.AssertEquals(
+      /Std/Maybe/Eq%.Eq(EqColor),
+      /Std/Maybe/Show%.Show(ShowColor), wnt, got);
+
+Anyway, for such a rare case, the syntax isn't justified. Let's discuss the
+more common case that I'm using now.
+
+  Test@ Tests = TestSuite|Show $ List[
+    Test|True $ (Unit@ _) {
+      AssertStream|'True' $ /Std/Bool/Show%.Show(True);
+    },
+
+    Test|False $ (Unit@ _) {
+      AssertStream|'False' $ /Std/Bool/Show%.Show(False);
+    }
+  ];
+
+  Test@ Tests = TestSuite|Show[
+    Test|True((Unit@ _) {
+      AssertStream|True(/Std/Bool/Show%.Show(True));
+    }),
+
+    Test|False((Unit@ _) {
+      AssertStream|False(/Std/Bool/Show%.Show(False));
+    })
+  ];
+
+The dollar sign was a nicer seperator between the test name and the value.
+That's for sure.
+
+  Test@ Tests = TestSuite|Show[
+    {
+      Unit@ _ := Test|True;
+      AssertStream|True(/Std/Bool/Show%.Show(True));
+    },
+
+    {
+      Unit@ _ := Test|False;
+      AssertStream|False(/Std/Bool/Show%.Show(False));
+    }
+  ];
+
+For this case, I like Test|False as the name in front.
+
+How about this? This doesn't look too bad:
+
+  Test@ Tests = TestSuite|Show[
+    Test|True({
+      Unit@ _ := Id;
+      AssertStream|True(/Std/Bool/Show%.Show(True));
+    }),
+
+    Test|False({
+      Unit@ _ := Id;
+      AssertStream|False(/Std/Bool/Show%.Show(False));
+    })
+  ];
+
+Maybe we just need a better name than Id to indicate it's a test? Like, Lazy
+maybe? Or StartTest? Begin?
+
+Or, what if instead of taking (Unit@) { TestResult@; }, Test took a
+Lazy@<TestResult@>, or similar? Lazy isn't quite the right word. On demand?
+Future?
+
+  Test@ Tests = TestSuite|Show[
+    Test|True({
+      Unit@ _ := Lazy;
+      AssertStream|True(/Std/Bool/Show%.Show(True));
+    }),
+
+    Test|False({
+      Unit@ _ := Lazy;
+      AssertStream|False(/Std/Bool/Show%.Show(False));
+    })
+  ];
+
+Whatever name I think of for that, I think it's reasonable to have a name for
+this function that takes a function from Unit@ and returns itself.
+
+Honestly, I like this.
+
+So, my vote is:
+* Remove $ syntax from the language.
+* Define a Lazy@ type or equivalent in standard library. I already know I'll
+  have plenty of use cases for it.
+* Define tests as above with bind and Lazy constructor.
+
+Cool. Let's try to iron out the interface for Lazy@.

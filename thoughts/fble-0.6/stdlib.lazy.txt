@@ -1,0 +1,38 @@
+Lazy
+====
+
+I want to define some type like:
+
+  Lazy@ = <@ A@>(Unit@) { A@; };
+
+We have plenty of use cases for this. The immediate motivator right now is
+test cases:
+
+  TestCase@ = *(String@ name, (Unit@) { TestResult@; } test);
+  TestCase@ = *(String@ name, Lazy@<TestResult@> test);
+
+But anywhere I might want to pass a computation that's evaluated later as
+needed this makes sense. For example, maybe a LazyList@ type that I get the
+elements of one by one on demand. We use it in Channel@ type for streams. We
+use it for FFI related stuff.
+
+It's a monad. Return and Do make plenty of sense. Maybe we want:
+* Lazy@, Lazy, Return, Do, Run.
+
+Simple. Easy.
+
+The question is... is 'lazy' the right name, or we should use something else?
+Does this concept exist in other languages?
+
+From a functional programming perspective, I usually think of lazy as: will
+evaluate on-demand, but also only once. So if two people demand it, I only
+evaluate it once. That's not the case with what I'm proposing here. It's more
+like a 'non strict' thing.
+
+Java Future is:
+* Something you expect to finish some time in the future. It's more a
+  concurrency primitive. Not an on-demand kind of primitive.
+
+From a dictionary definition point of view, lazy sounds like the right word.
+
+Let's just write it up. Implement it. Switch to it.
