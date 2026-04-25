@@ -52,7 +52,7 @@ Adder1 = (Adder@ ifc) {
     List@<Addr@> ins = Append(valids, List[a.data, b.data, c_in.data]);
     List@<Addr@> outs = Append(valids, List[c_out.data, z.data]);
 
-    Return $ Designs[
+    Return(Designs[
         Rule(ins)|11100000(outs)|0001100,
         Rule(ins)|11100001(outs)|0001101,
         Rule(ins)|11100010(outs)|0001101,
@@ -61,21 +61,21 @@ Adder1 = (Adder@ ifc) {
         Rule(ins)|11100101(outs)|0001110,
         Rule(ins)|11100110(outs)|0001110,
         Rule(ins)|11100111(outs)|0001111
-    ];
+    ]);
 };
 
 # N-bit adder.
 (Adder@) { Build@<Design@>; }
 Adder = (Adder@ ifc) {
     # Instantiate N 1-bit adders, connected together via cout => cin.
-    List@<MAddr@> cs := Do $ /Std/List%.ForEach(
+    List@<MAddr@> cs := Do(/Std/List%.ForEach(
         ifc.a.items.tail, Return(Empty<MAddr@>),
         (MAddr@ _, Build@<List@<MAddr@>> mkcs) {
             Addr@ data := Do(Addr(Data.0));
             Addr@ valid := Do(Addr(Data.0));
             List@<MAddr@> tail := Do(mkcs);
             Return(Items(MAddr@(data, valid), tail));
-        });
+        }));
     List@<MAddr@> cins = Append(cs, List[ifc.c_in]);
     List@<MAddr@> couts = Append(List[ifc.c_out], cs);
 
@@ -94,14 +94,14 @@ Adder = (Adder@ ifc) {
     };
 
     List@<Adder@> bits = Zip(ifc.a, ifc.b, cins, ifc.z, couts);
-    List@<Design@> designs := Do $ /Std/List%.ForEach(
+    List@<Design@> designs := Do(/Std/List%.ForEach(
         bits, Return(Empty<Design@>), (Adder@ adder, Build@<List@<Design@>> mk) {
             Design@ head := Do(Adder1(adder));
             List@<Design@> tail := Do(mk);
             Return(Items(head, tail));
-        });
+        }));
 
-    Return $ Designs(designs);
+    Return(Designs(designs));
 };
 
 # 4 bit addition of 6 and 3

@@ -27,11 +27,11 @@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height
   Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(out $ String $ /Graphics/Usage%);
+    Unit@ _ := m.do(out(String(/Graphics/Usage%)));
     m.return(Success);
   });
 
-  Unit@ _ := m.do $ /Graphics/App%.Main(m, app, width, height);
+  Unit@ _ := m.do(/Graphics/App%.Main(m, app, width, height));
   m.return(Success);
 };
 

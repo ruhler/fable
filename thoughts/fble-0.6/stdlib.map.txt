@@ -255,3 +255,77 @@ to make use of 'end' feature of In@ and Out@? Perhaps. It could save me from
 storing a terminating 0 I suppose? Or maybe not. Maybe it doesn't compose well
 at all.
     
+---
+
+Regardless of what map implementations I want to provide, let's start with
+figuring out what the map interface for use should be.
+
+Current interface:
+* M@, K@, V@, Empty, IsEmpty, Lookup, Insert, InsertWith, Delete, ForEach
+ - Where I make M@, K@ part of the implementation and allow V@ to be passed
+   separately. Not sure if we should keep that distinction.
+
+Java Map:
+* K, V, Empty, Construct from other map.
+* Some methods are allowed to be unsupported.
+* A number of stateful operations that don't apply to fble.
+* containsKey, containsValue, entrySet, keySet, forEach, 
+* get, getOrDefault, put, putAll, putIfAbsent, remove, 
+* remove if value equals given target, replace,
+* replace if particular value is present, replaceAll,
+* size, values
+
+So, not too bad. Besides from different name choices, what it has that I don't
+is:
+* Contains. But we can just use lookup for that, right?
+* ContainsValue: doesn't need to be in the core map interface?
+* EntrySet, KeySet: You can get from ForEach.
+* GetOrDefault: Compose Get with some Maybe function?
+* PutAll: I don't really have a way to optimize this, unless its from M@ type?
+* PutIfAbsent: Is like insert with.
+* Replace: Is like insert with.
+* Size: Oops. Should we have that?
+
+If I want to go the route of Map@ interface being the core interface, we can
+build these helper functions up on to of that. The primary consideration for
+making something part of the core interface, besides required core
+functionality, would be if we can optimize it significantly depending on the
+map implementation.
+
+C++ map (just the new stuff):
+* reverse iteration
+* count number of elements matching the key? 0 or 1?o
+* size
+
+Yeah, not much else. Some things based on it using ordering as part of the
+type.
+
+Haskell:
+* Get (erroring if not found)
+* fromList
+* size
+* member (contains key)
+* Get with default value in case not found
+* InsertWithKey - the insert function gets the key
+* adjust - modify a value of a given key.
+    Like insert with, but doesn't modify anything if it isn't there.
+   - And all sorts of similar variations.
+   - Most general would be Maybe a -> Maybe a function to insert, update,
+     remove, or ignore.
+* union, unionWith, unionWithKey, unions, 
+* difference, differenceWith, 
+* intersection, intersectionWith
+* map, mapWithKey, mapAccum, mapKeys, mapKeysWith
+* fold, foldWithKey, 
+* elems, keys, keysSet, assocs
+ and on and on and on...
+
+I will say, I don't like the complexity of the Haskell map api. It's like they
+have to define names for every different variation instead of using
+composition to accomplish the same.
+
+I suppose the big things currently feel missing are:
+* size
+* Maybe generalize insertWith to allow removal too.
+* Bulk insertion/modification/removal, if those matter for performance.
+

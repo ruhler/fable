@@ -24,7 +24,7 @@ Run = <<@>@ M@>(Monad@<M@> m, Out@<M@> out, String@ prefix, Test@ test) {
   test.?(
     case: {
       String@ name = Concat[prefix, test.case.name];
-      Unit@ _ := m.do(out $ FormatE|'@[%s]: '[String(name)]);
+      Unit@ _ := m.do(out(FormatE|'@[%s]: '[String(name)]));
 
       TestResult@ tr = test.case.test(Unit);
 

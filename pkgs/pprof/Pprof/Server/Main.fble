@@ -227,51 +227,51 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Unit@ _ := m.do(out $ String $ /Pprof/Usage%);
+    Unit@ _ := m.do(out(String(/Pprof/Usage%)));
     m.return(Success);
   });
 
   args.file.?(empty: {
-    Unit@ _ := m.do(err $ StringE|'missing input file');
-    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
+    Unit@ _ := m.do(err(StringE|'missing input file'));
+    Unit@ _ := m.do(err(StringE|'\ntry --help for help\n'));
     m.return(Failure);
   });
 
   args.error.?(just: {
-    Unit@ _ := m.do(err $ args.error.just);
-    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
+    Unit@ _ := m.do(err(args.error.just));
+    Unit@ _ := m.do(err(StringE|'\ntry --help for help\n'));
     m.return(Failure);
   });
 
   Maybe@<Server@<M@>> ms := m.do(sockets.server(args.hostname, args.port));
   ms.?(nothing: {
-    Unit@ _ := m.do(err $ StringE|'unable to serve\n');
+    Unit@ _ := m.do(err(StringE|'unable to serve\n'));
     m.return(Failure);
   });
 
   Server@<M@> s = ms.just;
 
-  Unit@ _ := m.do(out $
-      FormatE|'parsing %s...\n'[/Std/Stream/String%.String(args.file)]);
+  Unit@ _ := m.do(out(
+      FormatE|'parsing %s...\n'[/Std/Stream/String%.String(args.file)]));
 
   Maybe@<BinaryIn@<M@>> fin := m.do(read(args.file));
   fin.?(nothing: {
-    Unit@ _ := m.do(err $ FormatE|'unable to open ''%s''\n'[
-        /Std/Stream/String%.String(args.file)]);
+    Unit@ _ := m.do(err(FormatE|'unable to open ''%s''\n'[
+        /Std/Stream/String%.String(args.file)]));
     m.return(Failure);
   });
 
   Result@<Profile@> parsed := m.do(Parse(m, fin.just));
   parsed.?(error: {
-    Unit@ _ := m.do(err $ FormatE|'error: %s\n'[parsed.error]);
+    Unit@ _ := m.do(err(FormatE|'error: %s\n'[parsed.error]));
     m.return(Failure);
   });
   
-  Unit@ _ := m.do(out $
+  Unit@ _ := m.do(out(
     FormatE|'serving at http://%s:%s\n'[
       /Std/Stream/String%.String(args.hostname),
       /Std/Int/Show%.Show(args.port)
-  ]);
+  ]));
 
   Profile@ profile = parsed.ok;
 
@@ -348,45 +348,45 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
       uri_split.items.tail.items.head;
     };
 
-    Unit@ _ := m.do(os $ Lines[
+    Unit@ _ := m.do(os(Lines[
       StringE|'HTTP/1.1 200 OK',
       StringE|'Content-Type: text/html\r',
       StringE|'Cache-Control: no-cache\r',
-      StringE|'\r']);
+      StringE|'\r']));
 
-    Unit@ _ := m.do(os $ FormatE|'%s\n'[String $ /Pprof/Server/Menu%.Menu]);
+    Unit@ _ := m.do(os(FormatE|'%s\n'[String(/Pprof/Server/Menu%.Menu)]));
 
-    /Std/String/Eq%.Eq(Str|'/', path).?(true: os $ OverviewPage);
-    /Std/String/Eq%.Eq(Str|'/overall', path).?(true: os $ OverallPage);
-    /Std/String/Eq%.Eq(Str|'/self', path).?(true: os $ SelfPage);
-    /Std/String/Eq%.Eq(Str|'/seqs', path).?(true: os $ SeqsPage);
+    /Std/String/Eq%.Eq(Str|'/', path).?(true: os(OverviewPage));
+    /Std/String/Eq%.Eq(Str|'/overall', path).?(true: os(OverallPage));
+    /Std/String/Eq%.Eq(Str|'/self', path).?(true: os(SelfPage));
+    /Std/String/Eq%.Eq(Str|'/seqs', path).?(true: os(SeqsPage));
 
     /Std/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
       List@<String@> ids = Split(Drop(path, Int|5), Str|',');
-      os $ SeqPage(/Std/List%.Map(ids, (String@ id) {
+      os(SeqPage(/Std/List%.Map(ids, (String@ id) {
           /Std/Maybe%.Get(Int|0, /Std/Int/Parse%.Int(id));
-        }));
+        })));
     });
 
-    os $ Lines[
+    os(Lines[
       StringE|'<h1>Unsupported Request</h1>',
       StringE|'<h2>Request Info</h2>',
-      FormatE|'Method: %s <br/>'[String $ method],
-      FormatE|'Path: %s <br/>'[String $ path],
-      FormatE|'Query: %s <br/>'[String $ query],
-      FormatE|'Version: %s <br/>'[String $ version]];
+      FormatE|'Method: %s <br/>'[String(method)],
+      FormatE|'Path: %s <br/>'[String(path)],
+      FormatE|'Query: %s <br/>'[String(query)],
+      FormatE|'Version: %s <br/>'[String(version)]]);
   };
 
   args.benchmark.?(true: {
     # Run through a few different queries to act as a benchmark.
-    Unit@ _ := m.do(out $ OverviewPage);
-    Unit@ _ := m.do(out $ OverallPage);
-    Unit@ _ := m.do(out $ SelfPage);
-    Unit@ _ := m.do(out $ SeqsPage);
+    Unit@ _ := m.do(out(OverviewPage));
+    Unit@ _ := m.do(out(OverallPage));
+    Unit@ _ := m.do(out(SelfPage));
+    Unit@ _ := m.do(out(SeqsPage));
 
     profile.samples.?(empty: m.return(Success));
     Sequence@ seq = List[Last(profile.samples.items.head.sequence)];
-    Unit@ _ := m.do(out $ SeqPage(seq));
+    Unit@ _ := m.do(out(SeqPage(seq)));
     m.return(Success);
   });
 

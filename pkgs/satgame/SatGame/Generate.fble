@@ -50,7 +50,7 @@ Eval .= /Std/State/Pure%;
   });
 
   M@<Puzzle@> puzzle = {
-    Map@ vars := M.do $ {
+    Map@ vars := M.do({
       List@<Var@> list := M.do(/SatGame/Var/Rand%.Vars(M, Rng, params.num_vars));
       S@ = *(Int@ i, Map@ map);
       Map@ map = /Std/List%.ForEach(list, S@(Int|0, Empty),
@@ -58,7 +58,7 @@ Eval .= /Std/State/Pure%;
           S@(Incr(s.i), Insert(s.map, s.i, vid));
         }).map;
       M.return(map);
-    };
+    });
 
     (Int@) { M@<Var@>; } RandVar = (Int@ max) {
       Int@ index := M.do(UpTo(M, Rng, max));

@@ -122,19 +122,19 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Unit@ _ := m.do(out $ String $ /Network/Apps/Echo/Usage%);
+    Unit@ _ := m.do(out(String(/Network/Apps/Echo/Usage%)));
     m.return(Success);
   });
 
   args.error.?(items: {
-    Unit@ _ := m.do(err $ String $ args.error);
-    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
+    Unit@ _ := m.do(err(String(args.error)));
+    Unit@ _ := m.do(err(StringE|'\ntry --help for help\n'));
     m.return(Failure);
   });
 
   Maybe@<Server@<M@>> ms := m.do(sockets.server(args.hostname, args.port));
   ms.?(nothing: {
-    Unit@ _ := m.do(err $ StringE|'unable to serve\n');
+    Unit@ _ := m.do(err(StringE|'unable to serve\n'));
     m.return(Failure);
   });
 

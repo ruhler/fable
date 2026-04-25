@@ -22,7 +22,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   In@<M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
-    Unit@ _ := m.do(out $ String $ /Sat/Usage%);
+    Unit@ _ := m.do(out(String(/Sat/Usage%)));
     m.return(Success);
   });
 

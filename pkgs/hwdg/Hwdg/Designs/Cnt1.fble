@@ -25,7 +25,7 @@ Build@<Design@> Cnt1 = {
     Design@ not := Do(Not(in, in_ready, out, out_ready));
     Design@ wire := Do(Wire(out, out_ready, in, in_ready));
 
-    Return $ Designs[not, wire];
+    Return(Designs[not, wire]);
 };
 
 @(Cnt1);

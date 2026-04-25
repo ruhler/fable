@@ -45,8 +45,8 @@ UpTo = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng, Int@ n) {
 #   A random integer value uniformly distributed in the range [lo, hi].
 <<@>@ M@>(Monad@<M@>, Rng@<M@>, Int@, Int@) { M@<Int@>; }
 Range = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng, Int@ lo, Int@ hi) {
-  Int@ x := m.do $ UpTo(m, rng, Incr(Sub(hi, lo)));
-  m.return $ Add(lo, x);
+  Int@ x := m.do(UpTo(m, rng, Incr(Sub(hi, lo))));
+  m.return(Add(lo, x));
 };
 
 @(UpTo, Range);

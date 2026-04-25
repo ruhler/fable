@@ -47,13 +47,13 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Out@<M@> out, Out@<M@> err) {
   List@<String@> lines := m.do(GetLines);
   Parse@<Formula@> parsed = ParseLines(lines);
   parsed.?(error: {
-    Unit@ _ := m.do(err $ String $ parsed.error);
+    Unit@ _ := m.do(err(String(parsed.error)));
     m.return(Failure);
   });
 
   Solver@ solver = AddClauses(NewSolver, parsed.parsed); 
   Result@ result = Solve(solver);
-  Unit@ _ := m.do(out $ FormatE|'%s\n'[ShowResult(result)]);
+  Unit@ _ := m.do(out(FormatE|'%s\n'[ShowResult(result)]));
   m.return(Success);
 };
 

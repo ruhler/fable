@@ -115,16 +115,16 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
   In@<M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
-    Unit@ _ := m.do(out $ ShowGame(game));
+    Unit@ _ := m.do(out(ShowGame(game)));
 
     String@ line := m.do(GetLine(m, in));
     line.?(empty: m.return(Unit));
 
     Maybe@<Input@> mi = ParseInput(line);
     mi.?(nothing: {
-      Unit@ _ := m.do(out $ FormatE|'%s%s\n'[
+      Unit@ _ := m.do(out(FormatE|'%s%s\n'[
         String|'invalid input: ',
-        String|'expected {A,B,C}{1,2,3}, P, Q, or R']);
+        String|'expected {A,B,C}{1,2,3}, P, Q, or R']));
       TicTacToe(game);
     });
 

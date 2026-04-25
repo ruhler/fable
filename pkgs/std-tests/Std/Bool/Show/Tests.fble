@@ -4,13 +4,13 @@ False = /Std/Bool%.False;
 
 OnAscii = /Std/Char/Ascii%.OnAscii;
 
-AssertStream = OnAscii $ /Std/Stream/String/Assert%.AssertStream;
+AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
 
 List = /Std/List%.List;
 
 Test@ = /Std/Test%.Test@;
-Test = OnAscii $ /Std/Test%.Test;
-TestSuite = OnAscii $ /Std/Test%.TestSuite;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Unit@ = /Std/Unit%.Unit@;
 

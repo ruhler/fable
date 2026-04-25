@@ -128,7 +128,7 @@ RandEdges = {
     Node@ a := M.do(UpTo(NumNodes));
     Node@ b := M.do(UpTo(NumNodes));
     List@<Edge@> tail := M.do(Gen(Decr(n)));
-    M.return $ Items(Edge@(a, b), tail);
+    M.return(Items(Edge@(a, b), tail));
   };
 
   (Int@ n) {
@@ -323,9 +323,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ _width, Int@
       # Print out the score to the user.
       Int@ cost_before = Cost(s.layout, s.edges);
       Int@ cost_after = Cost(layout, s.edges);
-      Unit@ _ := m.do(out $ FormatE|'%s => %s\n'[
+      Unit@ _ := m.do(out(FormatE|'%s => %s\n'[
               /Std/Int/Show%.Show(cost_before),
-              /Std/Int/Show%.Show(cost_after)]);
+              /Std/Int/Show%.Show(cost_after)]));
 
       StepUI(s.@(layout, selected: Nothing<Pos@>));
     });

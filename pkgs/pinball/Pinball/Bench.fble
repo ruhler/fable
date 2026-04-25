@@ -36,7 +36,7 @@ Test@ Bench = Test(Str|'Pinball', (Unit@ _) {
     M.return(Event@(tick: Unit));
   };
 
-  (Effect@) { M@<Unit@>; } effect = Const<Effect@> $ M.return(Unit);
+  (Effect@) { M@<Unit@>; } effect = Const<Effect@>(M.return(Unit));
 
   App@<M@> app = App@<M@>(event, effect);
 

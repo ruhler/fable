@@ -44,19 +44,19 @@ Sockets = <<@>@ M@>(Io@<M@> io, Monad@<M@> m) {
 
   client = (String@ host, Int@ port) {
     Maybe@<Socket@> socket := m.do(io.run(Client(host, port)));
-    m.return $ {
+    m.return({
       socket.?(nothing: Nothing<InOut@<M@>>);
-      Just $ InOut(socket.just);
-    };
+      Just(InOut(socket.just));
+    });
   };
 
   server = (String@ host, Int@ port) {
     Maybe@<Socket@> socket := m.do(io.run(Server(host, port)));
-    socket.?(nothing: m.return $ Nothing<Server@<M@>>);
-    m.return $ Just $ {
+    socket.?(nothing: m.return(Nothing<Server@<M@>>));
+    m.return(Just({
       Socket@ s := m.do(io.run(Accept(socket.just)));
       m.return(InOut(s));
-    };
+    }));
   };
 
   m.return(Sockets@(client, server));

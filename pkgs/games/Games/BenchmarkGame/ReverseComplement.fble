@@ -99,7 +99,7 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Out@<M@> out, List@<String@> _args) {
 
   # Prints a sequence to stdout.
   (Seq@) { M@<Unit@>; } PrintSeq = (Seq@ s) {
-    out $ FormatE|'%s\n%s'[String(s.header), OutputCodes(Int|60, s.codes)];
+    out(FormatE|'%s\n%s'[String(s.header), OutputCodes(Int|60, s.codes)]);
   };
 
   # Complements an already-reversed sequence and prints the result to stdout.

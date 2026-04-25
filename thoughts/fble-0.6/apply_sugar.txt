@@ -785,3 +785,66 @@ Do same thing as aexpr/expr for astmt/stmt?
 Okay, it's not bad. I can use '$' for expressions and statements. Let's go
 with that, see how it feels.
 
+---
+
+It's been a while. Coming back to this now, because I feel like for the
+majority of cases, I don't know when I should use parens versus '$'. I wish it
+was more standardized. I'm questioning whether this syntax provides more value
+than it does cost in complexity of the parser, in standardization of function
+application.
+
+Is it really worth it? In which cases? Is there not some alternative I can
+use? Or can I restrict it to those cases I care about?
+
+Having not yet reviewed the above, I'm thinking:
+* If everything is on one line, it's not useful. Use parens instead.
+  e.g.: Unit@ _ := m.do(out(Format|'hello'[])); instead of
+        Unit@ _ := m.do(out $ Format|'hello'[]);
+* If its already in a statement context, we could use bind syntax hack
+  instead:
+  e.g.: 
+    Unit@ _ := Annotate(ExpectError|'yes I expect this');
+    ...
+
+Which leaves only things that are multiline expression context. Now, I can't
+think of a better way to handle those, except to say, maybe it's a rare
+enough case?
+
+Let me review all my previous discussion and see if it still feels right:
+* The previous discussion isn't very compelling.
+
+Maybe let's look over all my current uses of '$'. Migrate off of them as much
+as possible. See what the most annoying ones left are, and reopen the
+discussion for how to handle those.
+
+Experience trying to remove '$':
+* I am so inconsistent in my use of '$' today. It's mixed up all over the
+  place.
+* If I use nested '$', it starts to look really weird: 'out $ String $ msg';
+* Otherwise we mix syntax. But mixed syntax is inconsistent, and if we have
+  even a single ( or { that needs to be closed, it doesn't feel like much pain
+  to add an extra ')' at the end group.
+* I feel good for the majority of cases getting rid of use of '$'. It feels
+  like it adds clarity and consistency with almost no cost.
+* The place where it started to feel more worthwhile was multiline
+  expressions, but even then, marginal value I think.
+* The two use cases I want to think about more before switching:
+
+1. Expect fails:
+    # TODO: debug this test passing.
+    /Std/Test%.ExpectFails(Str|'') $
+    /Std/Test%.ExpectFails(Str|'Nothing') $
+    /Std/Eq/Assert%.AssertEquals(
+      /Std/Maybe/Eq%.Eq(EqColor),
+      /Std/Maybe/Show%.Show(ShowColor), wnt, got);
+
+2. Test case lambdas:
+Test@ Tests = TestSuite|'Show' $ List[
+  Test|'True' $ (Unit@ _) {
+    AssertStream|'True' $ /Std/Bool/Show%.Show(True);
+  },
+
+  Test|'False' $ (Unit@ _) {
+    AssertStream|'False' $ /Std/Bool/Show%.Show(False);
+  }
+];

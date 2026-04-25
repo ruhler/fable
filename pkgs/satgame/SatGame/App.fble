@@ -148,14 +148,14 @@ SatGame = <<@>@ M@>(Monad@<M@> m, Out@<M@> out, App@<M@> app, Int@ width, Int@ h
       });
   };
 
-  Unit@ _ := m.do(out $
+  Unit@ _ := m.do(out(
       Format|'Generating puzzle with params: %s (seed %s)'[
         /SatGame/Puzzle/Show%.Params(params),
         /Std/Int/Show%.Show(args.seed)
-  ]);
+  ]));
 
   Puzzle@ puzzle = Generate(params, args.seed);
-  Unit@ _ := m.do(out $ /SatGame/Puzzle/Show%.Puzzle(puzzle));
+  Unit@ _ := m.do(out(/SatGame/Puzzle/Show%.Puzzle(puzzle)));
 
   Game@ game = /SatGame/Game%.Game(puzzle);
 

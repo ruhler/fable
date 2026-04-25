@@ -28,11 +28,11 @@ Rng = <@ S@> (Prng@<S@> prng) {
 
     Int@ lo = prng.bits(next);
     Le(n, prng.n).?(true: {
-      M.return $ Shr(lo, Sub(prng.n, n));
+      M.return(Shr(lo, Sub(prng.n, n)));
     });
 
     Int@ hi := M.do(rand(Sub(n, prng.n)));
-    M.return $ Add(Shl(hi, prng.n), lo);
+    M.return(Add(Shl(hi, prng.n), lo));
   };
 
   (Int@, Int@) { M@<Unit@>; } feed = (Int@ n, Int@ x) {

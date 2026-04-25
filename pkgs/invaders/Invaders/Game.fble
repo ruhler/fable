@@ -239,7 +239,7 @@ Input@ = +(Dir@ dir, Unit@ fire);
 
   (Int@ score) {
     # Print exactly 4 digits for the score.
-    String@ digits = ToString $ /Std/Int/Show%.Show(Add(10000, Mod(score, 10000)));
+    String@ digits = ToString(/Std/Int/Show%.Show(Add(10000, Mod(score, 10000))));
     Translate(Int|40, Int|220, Graphics.String(digits.items.tail));
   };
 };

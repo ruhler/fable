@@ -343,7 +343,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
   Maybe@<Out@<M@>> mostream := m.do(write(file));
   mostream.?(nothing: m.return(Success));
   Out@<M@> ostream = mostream.just;
-  Unit@ _ := m.do(ostream $ /Computrainer/Model/Save%.Model(final.model));
+  Unit@ _ := m.do(ostream(/Computrainer/Model/Save%.Model(final.model)));
 
   m.return(Success);
 };

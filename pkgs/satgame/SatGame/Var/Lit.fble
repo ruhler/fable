@@ -26,7 +26,7 @@ M@<Var@> GetVar = {
   Bool@ ll := M.do(GetBit);
   Bool@ lc := M.do(GetBit);
   Bool@ lr := M.do(GetBit);
-  M.return $ @(ul, uc, ur, ml, mc, mr, ll, lc, lr);
+  M.return(@(ul, uc, ur, ml, mc, mr, ll, lc, lr));
 };
 
 # A literal to create vars from hex digits.

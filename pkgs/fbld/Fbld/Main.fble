@@ -58,10 +58,10 @@ Main = <<@>@ M@>(Monad@<M@> m, IO@<M@> io, List@<String@> args) {
     tail.failed.?(true: m.return(tail));
 
     String@ filename = filenames.items.head;
-    Maybe@<In@<M@>> fin := m.do $ {
+    Maybe@<In@<M@>> fin := m.do({
       /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(io.in)));
       io.read(filename);
-    };
+    });
 
     fin.?(nothing: {
       Stream@ msg = Format|'unable to open %s'[/Std/Stream/String%.String(filename)];
@@ -75,7 +75,7 @@ Main = <<@>@ M@>(Monad@<M@> m, IO@<M@> io, List@<String@> args) {
 
   Result@<List@<Text@>> inputs := m.do(ReadInputs(args));
   inputs.failed.?(true: {
-    Unit@ _ := m.do(io.err $ ShowErrors(inputs));
+    Unit@ _ := m.do(io.err(ShowErrors(inputs)));
     m.return(Failure);
   });
 
@@ -86,11 +86,11 @@ Main = <<@>@ M@>(Monad@<M@> m, IO@<M@> io, List@<String@> args) {
   };
 
   result.failed.?(true: {
-    Unit@ _ := m.do(io.err $ ShowErrors(result));
+    Unit@ _ := m.do(io.err(ShowErrors(result)));
     m.return(Failure);
   });
 
-  Unit@ _ := m.do(io.out $ String $ result.value.just);
+  Unit@ _ := m.do(io.out(String(result.value.just)));
   m.return(Success);
 };
 

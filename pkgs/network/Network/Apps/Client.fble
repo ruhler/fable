@@ -129,19 +129,19 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
     Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-    Unit@ _ := m.do(out $ String $ /Network/Apps/Echo/Usage%);
+    Unit@ _ := m.do(out(String(/Network/Apps/Echo/Usage%)));
     m.return(Success);
   });
 
   args.error.?(items: {
-    Unit@ _ := m.do(err $ String $ args.error);
-    Unit@ _ := m.do(err $ StringE|'\ntry --help for help\n');
+    Unit@ _ := m.do(err(String(args.error)));
+    Unit@ _ := m.do(err(StringE|'\ntry --help for help\n'));
     m.return(Failure);
   });
 
   Maybe@<InOut@<M@>> mios := m.do(sockets.client(args.hostname, args.port));
   mios.?(nothing: {
-    Unit@ _ := m.do(err $ StringE|'unable to connect\n');
+    Unit@ _ := m.do(err(StringE|'unable to connect\n'));
     m.return(Failure);
   });
 
@@ -149,7 +149,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   Out@<M@> os = /Std/Stream/Map%.Out(Pos, ios.out);
   /Std/Stream/Binary%.Out@<M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
 
-  Unit@ _ := m.do(os $ String $ args.message);
+  Unit@ _ := m.do(os(String(args.message)));
   Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, out));
   m.return(Success);
 };

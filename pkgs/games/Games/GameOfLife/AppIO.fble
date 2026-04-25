@@ -18,7 +18,7 @@ Main@ = /App/Native%.Main@;
 Main@
 Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> _, App@<M@> app, Int@ width, Int@ height, List@<String@> _args)
 {
-  Unit@ _ := m.do $ /Games/GameOfLife/App%.Main(m, app, width, height);
+  Unit@ _ := m.do(/Games/GameOfLife/App%.Main(m, app, width, height));
   m.return(Success);
 };
 

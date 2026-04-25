@@ -89,7 +89,7 @@ Set2D = (Symbol@ a, Symbol@ b)<@ T@>(T@ x, Array@<Array@<T@>> array) {
 CellId@ = *(Symbol@ row, Symbol@ col);
 
 # The list of cell ids, going left to right and top to bottom.
-List@<CellId@> CellIds = ToList $ {
+List@<CellId@> CellIds = ToList({
   ForEach(Symbols, Return<CellId@>,
     (Symbol@ col, Stream@<CellId@> stream) {
       ForEach(Symbols, stream,
@@ -98,7 +98,7 @@ List@<CellId@> CellIds = ToList $ {
           Put(CellId@(row, col));
         });
     });
-};
+});
 
 # Return the id of the box group that this cell belongs to.
 (CellId@) { Symbol@; } BoxGroupOf = (CellId@ cell) {

@@ -28,7 +28,7 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Out@<M@> out, List@<String@> args) {
 
   (List@<Ascii@>, List@<Stream@>) { M@<Unit@>; }
   FmtL = (List@<Ascii@> fmt, List@<Stream@> args) {
-    out $ FormatE|'%s\n'[Format(fmt, args)];
+    out(FormatE|'%s\n'[Format(fmt, args)]);
   };
 
   Int@ n = {

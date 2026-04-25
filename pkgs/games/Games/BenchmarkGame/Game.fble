@@ -58,7 +58,7 @@ Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ ex
     In@<M@> in = /Std/Stream/State%.In(M, s_in);
     Out@<M@> out = /Std/Stream/State%.Out(M, s_out);
     M@<Unit@> go = game(M, in, out, args);
-    String@ got = ToString $ Exec(go, S@(input, Return)).out;
+    String@ got = ToString(Exec(go, S@(input, Return)).out);
     String@ wnt = expected_output;
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   });

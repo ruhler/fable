@@ -325,7 +325,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
     # We launch bombs once all aliens have completed their move.
     aliens.next.?(just: M.return(bombs));
 
-    /Std/Stream%.ForEach(Range(Int|0, NumCols), M.return(bombs)) $
+    /Std/Stream%.ForEach(Range(Int|0, NumCols), M.return(bombs), 
       (Int@ col, M@<Bombs@> mbombs) {
         Maybe@<Alien@> alien = Vanguard(aliens, col);
         alien.?(nothing: mbombs);
@@ -342,7 +342,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
           true: Kind@(squiggle: Unit),
           false: Kind@(bomb: Unit));
         M.return(/Invaders/Bombs%.Fire(x, y, kind, bombs));
-      };
+      });
   };
 
   (Aliens@ aliens, Bombs@ bombs) {
