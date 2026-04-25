@@ -3,6 +3,7 @@
 
 Str .= /Std/Char/Ascii%;
 Format, FormatE, StringE .= /Std/Char/Ascii/Stream%;
+Int@ .= /Std/Int%;
 Io@ .= /Std/Io%;
 Main@, Exit@, Success, Failure .= /Std/Io/Cli%;
 GetVar .= /Std/Io/Env%;
@@ -72,7 +73,11 @@ Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
 
   # Exit with given status code.
   Eq(Str|exit, cmd).?(true: {
-    Error(StringE|'TODO: implement exit command');
+    cmd_args.?(empty: Error(StringE|'missing exit code'));
+    Maybe@<Int@> exit = /Std/Int/Parse%.Int(cmd_args.items.head);
+    exit.?(nothing: Error(Format|'invalid exit code %s'[
+        String(cmd_args.items.head)]));
+    m.return(exit.just);
   });
 
   # Prints out contents of files.

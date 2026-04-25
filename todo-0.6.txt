@@ -2,14 +2,14 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Update all the sample apps for latest features, styles, idioms.
+
 * Should we provide Monad instances for Maybe@ and Lazy@ somewhere? List@?
 
 * Figure out a real solution to error handling in general?
  - Examples to consider: file read/write, parsing an int.
 
 * Figure out why fble-benchmark fails on the fbld benchmark.
-
-* Add exit command to /Std/Io/Cli/Demo% app.
 
 * Should struct copy be allowed to change the type of fields it updates?
  Sample use case: Convert a byte Channel@ to a char Channel@ using
@@ -23,9 +23,6 @@ Things to consider doing for the fble-0.6 release.
 * Add back character type functions isspace, isalnum, etc?
 * Add Lt, Le, Gt, Ge, etc for Char@?
 
-* Reconsider name of /Std/Char/Ascii/Output% module.
-  Now that we moved Output@ definition to /Std/Stream%.
-
 * Add maybe.c helper functions for working with maybe types at native level.
 
 * Make sure setlocal gets called for compiled stdio code
@@ -38,10 +35,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
 * Reconsider if Read, Write, Append should report error messages?
-
-* Remove things from /Std/Char/Output% that we could as easily get from
-  /Std/Stream%?
- - Like ToNull, ToString, String, Concat?
 
 * Add spec tests for import expressions.
  - Add tests for unused warnings.
@@ -110,10 +103,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Figure out what FbleStringValueAccess should do in terms of unicode.
 
-* Define a type synonym for Put@<M@, Output@>? Something like:
-  OStream@<M@>... but just for the Output@ part? So I don't have to be
-  importing both Put@ and Output@ everywhere?
-
 * Add tests for Output ToString and ToNull
  - Assuming we don't already have them.
 
@@ -147,11 +136,9 @@ Things to consider doing for the fble-0.6 release.
 
 * Add test for /Core/Native/Env%.GetVar.
 
-* Standardize IO
-
 * Add test for StrE with \q escape.
 
-* Update tutorials for new bind and function application syntax.
+* Update tutorials for new bind syntax.
 
 * Print function names along with error location on stack trace?
 
@@ -159,12 +146,6 @@ Things to consider doing for the fble-0.6 release.
   level rather than calling Int|* over and over?
 
 * Add function to show an integer base 16? Base 2? Base anything?
-
-* Change /Core/Stdio/StringO% to take Output@ instead of String@.
-* Change /Core/Debug%.TraceLn function to take Output@ instead of String@?
-* Double check if I should be able to write:
-   @ ShowM@ = /Core/Show%.ShowM@, when ShowM@ has kind <@>@.
-  Seems like I can't, but I thought I made it so I could.
 
 * Figure out why we see the same errors reported many times when we build.
  - And fix it.

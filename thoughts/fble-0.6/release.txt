@@ -12,7 +12,7 @@ Other notable things I've changed along the way for the standard library
 cleanup:
 * Foreign Function Interface
 * Composite character literal support (?)
-* Change -> to := for monadic bind
+* Change <- to := for monadic bind
 * Support for '$' function application.
 
 There's still a long way to go with the rest of the standard library cleanup.
