@@ -9,8 +9,6 @@ Things to consider doing for the fble-0.6 release.
 * Figure out a real solution to error handling in general?
  - Examples to consider: file read/write, parsing an int.
 
-* Figure out why fble-benchmark fails on the fbld benchmark.
-
 * Should struct copy be allowed to change the type of fields it updates?
  Sample use case: Convert a byte Channel@ to a char Channel@ using
    s.@(put: (Char@ c) { s.put(Pos(c)); });

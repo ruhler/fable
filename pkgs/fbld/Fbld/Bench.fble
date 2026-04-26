@@ -3,7 +3,7 @@ Char@ .= /Std/Char%;
 
 Str = /Std/Char/Ascii%.Str;
 
-In@, Out@ .= /Std/Stream/Text%;
+Stream@, In@, Out@, Return .= /Std/Stream/Text%;
 NullOut = /Std/Stream/Null%.NullOut<Char@>;
 
 Exit@ = /Std/Io/Cli%.Exit@;
@@ -14,9 +14,9 @@ AssertEquals = /Std/Eq/Assert%.AssertEquals;
 List@ = /Std/List%.List@;
 List = /Std/List%.List;
 
-Maybe@ = /Std/Maybe%.Maybe@;
-Nothing = /Std/Maybe%.Nothing;
-
+Maybe@, Just, Nothing .= /Std/Maybe%;
+State@, Modify, Gets .= /Std/State%;
+ToString .= /Std/Stream/String%;
 String@ = /Std/String%.String@;
 
 Test@ = /Std/Test%.Test@;
@@ -27,19 +27,48 @@ Unit@ = /Std/Unit%.Unit@;
 IO@ = /Fbld/Main%.IO@;
 
 Test@ Bench = Test(Str|Fbld, (Unit@ _) {
-  M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+  S@ = *(String@ in, Stream@ err);
+  M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<S@>;
 
-  In@<M@> in = /Std/Stream/State%.In(M, S);
+  In@<M@> in = /Std/Stream/State%.In(M, {
+    M@<String@> get = { S@ s := Gets(M, S); s.in; };
+    (String@) { M@<Unit@>; } put = (String@ in) {
+      S@ s := Modify(M, S); s.@(in);
+    };
+    State@<String@, M@>(get, put);
+  });
+
   Out@<M@> out = NullOut(M);
-  Out@<M@> err = NullOut(M);
+
+  Out@<M@> err = /Std/Stream/State%.Out(M, {
+    M@<Stream@> get = { S@ s := Gets(M, S); s.err; };
+    (Stream@) { M@<Unit@>; } put = (Stream@ err) {
+      S@ s := Modify(M, S); s.@(err);
+    };
+    State@<Stream@, M@>(get, put);
+  });
+
   (String@) { M@<Maybe@<In@<M@>>>; } read = (String@ _) {
     M.return(Nothing<In@<M@>>);
   };
+
   IO@<M@> io = @(in, out, err, read);
   List@<String@> args = List[Str|'-'];
-  Exit@ wnt = Success;
-  Exit@ got = Eval(/Fbld/Main%.Main(M, io, args), /Fbld/Bench/Input%);
-  AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+
+  M@<Maybe@<String@>> bench = {
+    Exit@ status := M.do(/Fbld/Main%.Main(M, io, args));
+    /Std/Int/Eq%.Eq(Success, status).?(true: M.return(Nothing<String@>));
+    S@ s := Gets(M, S);
+    Just(ToString(s.err));
+  };
+
+  Maybe@<String@> wnt = Nothing<String@>;
+  Maybe@<String@> got = Eval(bench, S@(/Fbld/Bench/Input%, Return));
+
+  AssertEquals(
+    /Std/Maybe/Eq%.Eq(/Std/String/Eq%.Eq),
+    /Std/Maybe/Show%.Show(/Std/String/Show%.Show),
+    wnt, got);
 });
 
 @(Bench);

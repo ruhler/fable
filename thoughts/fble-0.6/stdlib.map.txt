@@ -329,3 +329,16 @@ I suppose the big things currently feel missing are:
 * Maybe generalize insertWith to allow removal too.
 * Bulk insertion/modification/removal, if those matter for performance.
 
+---
+
+Playing around with my Data@ based map implementation, a question has come up.
+Can we require the hash be a prefix code? That is, if there is some value that
+hashes to [a, b, c], then that means we are not allowed to hash some other
+value to just [a, b] or [a] or []?
+
+If we do that, I think the map implementation simplifies a bit. In practice
+for struct/union data types, I think this is a natural condition to have.
+Maybe let's start with that and hope for the best. If you didn't have that,
+you couldn't parse struct values properly. So maybe we really need this.
+
+
