@@ -3,9 +3,8 @@ Int@ = /Std/Int%.Int@;
 
 Id@ = Int@;
 EqId = /Std/Int/Eq%.Eq;
-OrdId = /Std/Int/Cmp%.Cmp;
 
-Map = /Core/Map/Tree%.Map(OrdId);
+Map = /Core/Int/Map%.Map;
 Set = /Core/Set%.Set(Map);
 
 @(Id@, EqId, Map, Set);

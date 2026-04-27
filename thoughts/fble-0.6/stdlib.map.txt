@@ -363,3 +363,31 @@ to have copies of the keys in the map along with the values.
 If I store the key, that also means we don't need to define an unpack
 operation, which is nice.
 
+---
+
+Implementation of data map works. Honestly, the implementation is tricky. But
+not as difficult or complicated as the binary tree implementation. And I'm
+hoping it's more efficient.
+
+Let's try it out for sat solver, see if we notice much improvement in the
+fble-benchmark performance.
+
+Before switching to my new map:
+
+  /usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time: 1:35.40
+  Memory: 111972
+
+Well... first off, the question is, why am I using a tree map instead of an
+Int map for sat solver? Using a data map seems overkill if we can use a single
+int to encode everything.
+
+Switching to a direct int map:
+
+  /usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time: 1:35.40 ==> 1:21.88
+  Memory: 111972 ==> 112036
+
+Well, that's a big improvement. But says nothing about the performance of my
+new data map. I'll have to find the next big user. I think it's game of life.
+
