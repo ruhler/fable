@@ -89,7 +89,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
         /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
         wnt, got);
     }),
-
+  
     /Std/Test%.Test(Str|'delete nothing', (Unit@ _) {
       m.Map@<Bool@> map = m.Delete(m.Insert(m.Empty<Bool@>, b, False), a);
       Maybe@<Bool@> wnt = Just(False);

@@ -2,6 +2,16 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Figure out why we don't propagate an error
+ - If /Core/Map/Data% Delete function is left undefined.
+ - The tests print @[, then skip over to the next test?
+
+* Remove /Std/Stream/Text% and /Std/Stream/Binary%?
+  Now that I'm using Stream@ type more generically elsewhere in the library?
+
+* Improve the performance of fble-pprof.
+  Taking more than a minute for a 5MB profile feels way too slow.
+
 * Update all the sample apps for latest features, styles, idioms.
 
 * Should we provide Monad instances for Maybe@ and Lazy@ somewhere? List@?

@@ -341,4 +341,25 @@ for struct/union data types, I think this is a natural condition to have.
 Maybe let's start with that and hope for the best. If you didn't have that,
 you couldn't parse struct values properly. So maybe we really need this.
 
+---
+
+I'm going to want to understand the performance of my new approach. If I can
+show it beats the performance of the balanced binary tree map, I should just
+get rid of the balanced binary tree map. As cool as that code is, its not
+worth the complexity if something simpler does better. And theoretically, I
+think it should always be better to traverse the structure of a data map once
+per key than it is to do more than one comparison between two keys needed for
+the binary tree.
+
+Looks like sat solver benchmark exercises map code pretty heavily. I think we
+have good coverage in fble-benchmark for map performance. Let's try switching
+sat solver over first.
+
+I think I should store the key in the map directly, to facilitate foreach
+without having to do extra allocations. Silly to keep allocating and
+reallocating what we already had in memory. Hopefully it won't cost too much
+to have copies of the keys in the map along with the values.
+
+If I store the key, that also means we don't need to define an unpack
+operation, which is nice.
 
