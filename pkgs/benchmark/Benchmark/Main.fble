@@ -7,17 +7,17 @@ TestSuite = /Std/Test%.TestSuite;
 Str = /Std/Char/Ascii%.Str;
 
 Test@ Benchmarks = TestSuite(Str|Benchmarks, List[
-  #/Fbld/Bench%.Bench,
-  #/Games/Sudoku/Tests%.Bench,
-  #/Games/Snake/Bench%.Bench,
-  /Games/GameOfLife/Bench%.Bench
-  #/Games/TicTacToe/Tests%.Bench,
-  #/Games/BenchmarkGame/Bench%.Bench,
-  #/Graphics/Bench%.Bench,
-  #/Invaders/Bench%.Bench,
-  #/Pinball/Bench%.Bench,
-  #/Md5/Bench%.Bench,
-  #/Sat/Bench%.Bench
+  /Fbld/Bench%.Bench,
+  /Games/Sudoku/Tests%.Bench,
+  /Games/Snake/Bench%.Bench,
+  /Games/GameOfLife/Bench%.Bench,
+  /Games/TicTacToe/Tests%.Bench,
+  /Games/BenchmarkGame/Bench%.Bench,
+  /Graphics/Bench%.Bench,
+  /Invaders/Bench%.Bench,
+  /Pinball/Bench%.Bench,
+  /Md5/Bench%.Bench,
+  /Sat/Bench%.Bench
 ]);
 
 /Std/Test/Cli%.Run(Benchmarks);

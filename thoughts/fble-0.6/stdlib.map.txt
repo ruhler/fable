@@ -407,3 +407,14 @@ Memory: 3324
 
 Maybe that's something? Seems improved, right?
 
+---
+
+Switching tictactoe over doubles the benchmark size and memory use, but it's
+pretty small to begin with, so maybe we don't care?
+
+  Time: 0:00.31 ==> 0:00.63
+  Memory: 5112 ==> 10112
+
+That's a more interesting case, because it is a deeper sequence of values: 9
+instead of 2.
+

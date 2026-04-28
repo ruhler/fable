@@ -1,4 +1,9 @@
 
+Data@ .= /Core/Data%;
+
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+
 List@ = /Std/List%.List@;
 List = /Std/List%.List;
 ForEach = /Std/List%.ForEach;
@@ -7,11 +12,8 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
-Less = /Std/Cmp%.Less;
-Equal = /Std/Cmp%.Equal;
-Greater = /Std/Cmp%.Greater;
-
-Unit = /Std/Unit%.Unit;
+Put, Do, Return .= /Std/Stream%;
+Unit@, Unit .= /Std/Unit%;
 
 Board@ = /Games/TicTacToe/Board%.Board@;
 Player@ = /Games/TicTacToe/Board%.Player@;
@@ -21,24 +23,21 @@ Square@ = /Games/TicTacToe/Board%.Square@;
 BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
 Move = /Games/TicTacToe/Board%.Move;
 
-/Std/Cmp%.Cmp@<Square@> SquareOrd = (Square@ a, Square@ b) {
-  a.?(
-    X: b.?(X: Equal, O: Less, E: Less),
-    O: b.?(X: Greater, O: Equal, E: Less),
-    E: b.?(X: Greater, O: Greater, E: Equal));
+Data@<Square@> SquareData = (Square@ x) {
+  Put(x.?(X: Int|0, O: Int|1, E: Int|2));
 };
 
-/Std/Cmp%.Cmp@<Board@> BoardOrd = (Board@ a, Board@ b) {
-  SquareOrd(a.ul, b.ul).?(less: Less, greater: Greater);
-  SquareOrd(a.uc, b.uc).?(less: Less, greater: Greater);
-  SquareOrd(a.ur, b.ur).?(less: Less, greater: Greater);
-  SquareOrd(a.ml, b.ml).?(less: Less, greater: Greater);
-  SquareOrd(a.mc, b.mc).?(less: Less, greater: Greater);
-  SquareOrd(a.mr, b.mr).?(less: Less, greater: Greater);
-  SquareOrd(a.ll, b.ll).?(less: Less, greater: Greater);
-  SquareOrd(a.lc, b.lc).?(less: Less, greater: Greater);
-  SquareOrd(a.lr, b.lr).?(less: Less, greater: Greater);
-  Equal;
+Data@<Board@> BoardData = (Board@ x) {
+  Unit@ _ := Do(SquareData(x.ul));
+  Unit@ _ := Do(SquareData(x.uc));
+  Unit@ _ := Do(SquareData(x.ur));
+  Unit@ _ := Do(SquareData(x.ml));
+  Unit@ _ := Do(SquareData(x.mc));
+  Unit@ _ := Do(SquareData(x.mr));
+  Unit@ _ := Do(SquareData(x.ll));
+  Unit@ _ := Do(SquareData(x.lc));
+  Unit@ _ := Do(SquareData(x.lr));
+  Return<Int@>;
 };
 
 List@<Position@> Positions = List[
@@ -139,7 +138,7 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
-Map = /Core/Map/Tree%.Map(BoardOrd);
+Map = /Core/Map/Data%.Map(BoardData);
 MemoTable@ = Map.Map@<PositionResult@>;
 Empty = Map.Empty<PositionResult@>;
 Lookup = Map.Lookup<PositionResult@>;
