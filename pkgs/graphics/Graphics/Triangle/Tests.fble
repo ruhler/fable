@@ -8,7 +8,7 @@ Drawn@ = /App/Drawing/Test%.Drawn@;
 Pixel@ = /App/Drawing/Test%.Pixel@;
 Drawn = /App/Drawing/Test%.Drawn;
 Draw = /App/Drawing/Test%.Draw;
-OrdPoint = /App/Drawing/Test%.OrdPoint;
+DataPoint = /App/Drawing/Test%.DataPoint;
 EqColor = /App/Drawing/Test%.EqColor;
 ShowColor = /App/Drawing/Test%.ShowColor;
 
@@ -308,7 +308,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     Drawn@ drawn = Draw(drawing);
 
     # Verify we don't have a hole in the lower left corner.
-    Map = /Core/Map/Tree%.Map(OrdPoint);
+    Map = /Core/Map/Data%.Map(DataPoint);
     Maybe@<Color@> got = Map.Lookup(drawn, Point@(Neg(Int|32), Neg(Int|24)));
     Maybe@<Color@> wnt = Just(Color.Green);
       

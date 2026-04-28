@@ -4,6 +4,8 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 Or = /Std/Bool%.Or;
 
+Data@ .= /Core/Data%;
+
 Drawing@ = /App/Drawing%.Drawing@;
 Blank = /App/Drawing%.Blank;
 Over = /App/Drawing%.Over;
@@ -33,7 +35,6 @@ Lt = /Std/Int/Cmp%.Lt;
 Ge = /Std/Int/Cmp%.Ge;
 Gt = /Std/Int/Cmp%.Gt;
 Int = /Std/Int/Lit%.Int;
-Ord = /Std/Int/Cmp%.Cmp;
 UpTo = /Std/Int/Random%.UpTo;
 Range .= /Std/Int/Stream%;
 
@@ -44,6 +45,8 @@ Empty = /Std/List%.Empty;
 Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
+
+Put, Do .= /Std/Stream%;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
@@ -108,15 +111,15 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
   Le(a.col, b.col);
 };
 
-/Std/Cmp%.Cmp@<Alien@> AlienOrd = (Alien@ a, Alien@ b) {
-  Ord(a.row, b.row).?(less: /Std/Cmp%.Less, greater: /Std/Cmp%.Greater);
-  Ord(a.col, b.col);
+Data@<Alien@> AlienData = (Alien@ x) {
+  Unit@ _ := Do(Put(x.row));
+  Put(x.col);
 };
 
 # Set@ --
 #   A set of aliens, to keep track of which aliens are alive or dead.
 # A set of aliens.
-Map = /Core/Map/Tree%.Map(AlienOrd);
+Map = /Core/Map/Data%.Map(AlienData);
 Set = /Core/Set%.Set(Map);
 Set@ = Set.Set@;
 

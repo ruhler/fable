@@ -1,22 +1,24 @@
 
+Data@ .= /Core/Data%;
+
 Int@ = /Std/Int%.Int@;
 Incr = /Std/Int%.Incr;
 Decr = /Std/Int%.Decr;
 
-Ord = /Std/Int/Cmp%.Cmp;
-
 Maybe@ = /Std/Maybe%.Maybe@;
 
 List@ = /Std/List%.List@;
+Put, Do .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
 
 Coord@ = *(Int@ x, Int@ y);
 
-/Std/Cmp%.Cmp@<Coord@> CoordOrd = (Coord@ a, Coord@ b) {
-  Ord(a.x, b.x).?(less: /Std/Cmp%.Less, greater: /Std/Cmp%.Greater);
-  Ord(a.y, b.y);
+Data@<Coord@> CoordData = (Coord@ x) {
+  Unit@ _ := Do(Put(x.x));
+  Put(x.y);
 };
 
-Grid = /Core/Map/Tree%.Map(CoordOrd);
+Grid = /Core/Map/Data%.Map(CoordData);
 
 Grid@ = <@ T@> { Grid.Map@<T@>; };
 

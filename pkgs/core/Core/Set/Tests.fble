@@ -4,6 +4,9 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
+Data@ .= /Core/Data%;
+Int .= /Std/Int/Lit%;
+
 Eq@ = /Std/Eq%.Eq@;
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 AssertNotEquals = /Std/Eq/Assert%.AssertNotEquals;
@@ -12,15 +15,10 @@ List@ = /Std/List%.List@;
 List = /Std/List%.List;
 Items = /Std/List%.Items;
 
-Cmp@ = /Std/Cmp%.Cmp@;
-Compared@ = /Std/Cmp%.Compared@;
-Less = /Std/Cmp%.Less;
-Equal = /Std/Cmp%.Equal;
-Greater = /Std/Cmp%.Greater;
-
 Show@ = /Std/Show%.Show@;
-Do = /Std/Stream/Text%.Do;
 ToString = /Std/Stream/String%.ToString;
+
+Do, Put .= /Std/Stream%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -46,10 +44,8 @@ Eq@<Bit1@> EqBit1 = (Bit1@ a, Bit1@ b) {
     1: b.?(0: False, 1: True));
 };
 
-Cmp@<Bit1@> OrdBit1 = (Bit1@ a, Bit1@ b) {
-  a.?(
-    0: b.?(0: Equal, 1: Less),
-    1: b.?(0: Greater, 1: Equal));
+Data@<Bit1@> DataBit1 = (Bit1@ x) {
+  x.?(0: Put(Int|0), 1: Put(Int|1));
 };
 
 Show@<Bit1@> ShowBit1 = (Bit1@ x) {
@@ -60,9 +56,9 @@ Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
   And(EqBit1(a.h, b.h), EqBit1(a.l, b.l));
 };
 
-Cmp@<Bit2@> OrdBit2 = (Bit2@ a, Bit2@ b) {
-  Compared@ oh = OrdBit1(a.h, b.h);
-  oh.?(equal: OrdBit1(a.l, b.l), : oh);
+Data@<Bit2@> DataBit2 = (Bit2@ x) {
+  Unit@ _ := Do(DataBit1(x.h));
+  DataBit1(x.l);
 };
 
 Show@<Bit2@> ShowBit2 = (Bit2@ x) {
@@ -70,7 +66,7 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
   ShowBit1(x.l);
 };
 
-Map = /Core/Map/Tree%.Map(OrdBit2);
+Map = /Core/Map/Data%.Map(DataBit2);
 Set = /Core/Set%.Set(Map);
 
 Set@ = Set.Set@;

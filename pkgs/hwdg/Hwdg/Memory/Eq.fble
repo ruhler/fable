@@ -1,7 +1,7 @@
 
 Eq@ = /Std/Eq%.Eq@;
 
-Map = /Core/Map/Tree%.Map(/Hwdg/Addr/Ord%.Ord);
+Map = /Core/Map/Data%.Map(/Hwdg/Addr%.Data);
 
 Memory@ = /Hwdg/Memory%.Memory@;
 

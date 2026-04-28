@@ -10,7 +10,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Addr@ = /Hwdg/Addr%.Addr@;
 Data@ = /Hwdg/Data%.Data@;
 
-Map = /Core/Map/Tree%.Map(/Hwdg/Addr/Ord%.Ord);
+Map = /Core/Map/Data%.Map(/Hwdg/Addr%.Data);
 
 Memory@ = Map.Map@<Data@>;
 

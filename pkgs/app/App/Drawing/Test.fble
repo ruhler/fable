@@ -1,4 +1,6 @@
 
+Data@ .= /Core/Data%;
+
 Drawing@ = /App/Drawing%.Drawing@;
 Color@ = /App/Drawing%.Color@;
 Point@ = /App/Drawing%.Point@;
@@ -24,10 +26,12 @@ Cmp@ = /Std/Cmp%.Cmp@;
 Compared@ = /Std/Cmp%.Compared@;
 
 Show@ = /Std/Show%.Show@;
+Do, Put .= /Std/Stream%;
 
 Format = /Std/Char/Ascii/Stream%.Format;
 
 TestResult@ = /Std/Test%.TestResult@;
+Unit@ .= /Std/Unit%;
 
 (Point@, Point@) { Bool@; } EqPoint = (Point@ a, Point@ b) {
   Eq(a.x, b.x).?(false: False);
@@ -44,6 +48,11 @@ TestResult@ = /Std/Test%.TestResult@;
 Cmp@<Point@> OrdPoint = (Point@ a, Point@ b) {
   Compared@ r = Ord(a.x, b.x);
   r.?(equal: Ord(a.y, b.y), : r);
+};
+
+Data@<Point@> DataPoint = (Point@ a) {
+  Unit@ _ := Do(Put(a.x));
+  Put(a.y);
 };
 
 Show@<Point@> ShowPoint = (Point@ x) {
@@ -65,7 +74,7 @@ Show@<Color@> ShowColor = (Color@ c) {
     /Std/Int/Show%.Show(c.b)];
 };
 
-Map = /Core/Map/Tree%.Map(OrdPoint);
+Map = /Core/Map/Data%.Map(DataPoint);
 
 Drawn@ = Map.Map@<Color@>;
 Empty = Map.Empty<Color@>;
@@ -140,5 +149,5 @@ AssertEquals = (Drawn@ expected, Drawn@ actual) {
 };
 
 @(Drawn@, Pixel@,
-  Draw, Drawn, ShowColor, EqColor, LtPoint, OrdPoint, AssertEquals);
+  Draw, Drawn, ShowColor, EqColor, LtPoint, OrdPoint, DataPoint, AssertEquals);
 

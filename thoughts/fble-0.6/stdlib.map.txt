@@ -418,3 +418,15 @@ pretty small to begin with, so maybe we don't care?
 That's a more interesting case, because it is a deeper sequence of values: 9
 instead of 2.
 
+---
+
+Before getting rid of the tree map, I feel like I should make a benchmark
+involving a map with strings as the key. Like, maybe we take a file as input,
+break it up into words, and keep track of how many times we see a given word?
+
+Why not give it a try? At least give us some ballpark estimate of the worst
+case... except, we wouldn't be comparing against tree map. The only places
+left where we use tree map are for coordinates (Int@, Int@), and I've already
+seen an improvement there in GameOfLife.
+
+

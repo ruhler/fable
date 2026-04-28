@@ -1,5 +1,8 @@
 
+Data@ .= /Core/Data%;
 Int@ = /Std/Int%.Int@;
+Do, Put .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
 
 # A unique identifier for a location.
 # For convenience when mapping to a 2d grid for graphics, we specify an address
@@ -7,5 +10,9 @@ Int@ = /Std/Int%.Int@;
 # the purposes of computation.
 Addr@ = *(Int@ x, Int@ y);
 
+Data@<Addr@> Data = (Addr@ a) {
+  Unit@ _ := Do(Put(a.x));
+  Put(a.y);
+};
 
-@(Addr@);
+@(Addr@, Data);
