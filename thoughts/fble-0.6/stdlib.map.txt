@@ -391,3 +391,19 @@ Switching to a direct int map:
 Well, that's a big improvement. But says nothing about the performance of my
 new data map. I'll have to find the next big user. I think it's game of life.
 
+---
+
+Looking at GameOfLife only part of fble-benchmark:
+
+Time: 0:04.63
+Memory: 2948
+
+It's not much to be able to improve upon. But let's see.
+
+After switching:
+
+Time: 0:03.76
+Memory: 3324
+
+Maybe that's something? Seems improved, right?
+

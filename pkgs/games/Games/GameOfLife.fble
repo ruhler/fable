@@ -4,6 +4,8 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
+Data@ .= /Core/Data%;
+
 Eq@ = /Std/Eq%.Eq@;
 
 Int@ = /Std/Int%.Int@;
@@ -12,7 +14,6 @@ Decr = /Std/Int%.Decr;
 
 IsZero = /Std/Int/Sign%.IsZero;
 Eq = /Std/Int/Eq%.Eq;
-Ord = /Std/Int/Cmp%.Cmp;
 
 List@ = /Std/List%.List@;
 List = /Std/List%.List;
@@ -20,12 +21,11 @@ ForEach = /Std/List%.ForEach;
 
 Maybe@ = /Std/Maybe%.Maybe@;
 
-Cmp@ = /Std/Cmp%.Cmp@;
-Compared@ = /Std/Cmp%.Compared@;
-
 Show@ = /Std/Show%.Show@;
 
 Format = /Std/Char/Ascii/Stream%.Format;
+
+Do, Put .= /Std/Stream%;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
@@ -36,9 +36,9 @@ Eq@<Coord@> EqCoord = (Coord@ a, Coord@ b) {
   And(Eq(a.row, b.row), Eq(a.col, b.col));
 };
 
-Cmp@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
-  Compared@ o = Ord(a.row, b.row);
-  o.?(equal: Ord(a.col, b.col), : o);
+Data@<Coord@> DataCoord = (Coord@ a) {
+  Unit@ _ := Do(Put(a.row));
+  Put(a.col);
 };
 
 Show@<Coord@> ShowCoord = (Coord@ a) {
@@ -46,7 +46,7 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 };
 
 # The world is a set of Coord@ where there are live cells.
-Map = /Core/Map/Tree%.Map(OrdCoord);
+Map = /Core/Map/Data%.Map(DataCoord);
 Set = /Core/Set%.Set(Map);
 World@ = Set.Set@;
 EqWorld = /Core/Set/Eq%.Eq(Map, EqCoord);
