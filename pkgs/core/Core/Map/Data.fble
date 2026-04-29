@@ -10,15 +10,25 @@ Unit@, Unit .= /Std/Unit%;
 
 # A Map that operates on Data@ types.
 # Essentially a map with Stream@<Int@> as the key.
-Map = <@ K@>(Data@<K@> data) {
-  Key@ = K@;
 
-  Entry@ = <@ V@> { *(Key@ key, V@ value); };
+Entry@ = <@ Key@, @ Value@> { *(Key@ key, Value@ value); };
 
-  Map@ = <@ V@> {
-    M@ = +(Unit@ empty, Entry@<V@> entry, IntMap.Map@<M@> children);
-    M@;
-  };
+Map@ = <@ Key@, @ Value@> {
+  M@ = +(Unit@ empty, Entry@<Key@, Value@> entry, IntMap.Map@<M@> children);
+  M@;
+};
+
+<@ K@, @ V@>(Map@<K@, V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; }
+ForEach = <@ K@, @ V@>(Map@<K@, V@> map)<@ B@>(B@ base, (K@, V@, B@) { B@; } body) {
+  map.?(empty: base);
+  map.?(entry: body(map.entry.key, map.entry.value, base));
+  IntMap.ForEach(map.children, base, (Int@ _, Map@<K@, V@> child, B@ b) {
+    ForEach(child, b, body);
+  });
+};
+
+Map = <@ Key@>(Data@<Key@> data) {
+  Map@ .= @(Map@: Map@<Key@>);
 
   Map@ Empty = <@ V@> {
     Map@<V@>(empty: Unit);
@@ -171,18 +181,11 @@ Map = <@ K@>(Data@<K@> data) {
     });
   };
 
-  <@ V@>(Map@<V@>)<@ B@>(B@, (Key@, V@, B@) { B@; }) { B@; }
-  ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (Key@, V@, B@) { B@; } body) {
-    map.?(empty: base);
-    map.?(entry: body(map.entry.key, map.entry.value, base));
-    IntMap.ForEach(map.children, base, (Int@ _, Map@<V@> child, B@ b) {
-      ForEach(child, b, body);
-    });
-  };
+  ForEach .= @(ForEach: ForEach<Key@>);
 
   /Core/Map%.Map@(
     Map@, Key@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
   );
 };
 
-@(Map);
+@(Entry@, Map@, ForEach, Map);

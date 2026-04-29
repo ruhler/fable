@@ -5,6 +5,6 @@ Id@ = Int@;
 EqId = /Std/Int/Eq%.Eq;
 
 Map = /Core/Int/Map%.Map;
-Set = /Core/Set%.Set(Map);
+Set = /Core/Set%.Set(/Core/Int/Data%.Data);
 
 @(Id@, EqId, Map, Set);

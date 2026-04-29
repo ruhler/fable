@@ -429,4 +429,23 @@ case... except, we wouldn't be comparing against tree map. The only places
 left where we use tree map are for coordinates (Int@, Int@), and I've already
 seen an improvement there in GameOfLife.
 
+---
+
+We're down to just the three essential maps now: IntP, Int, and Data.
+Everything else should be good to reuse the Data implementation, in the
+absence of any evidence of performance issues thus far. No need to optimize
+until we run into performance problems with it.
+
+This means I can get rid of /Core/Map% as an interface, and just informally
+keep the Int map and the Data map interfaces the same so you can easily switch
+up your data types. Or somehow make the Int map internal and have users use a
+Data map version of it.
+
+On second thought, /Core/Map% is still useful for Set? Unless we just want Set
+to always go on top of /Core/Map/Data%?
+
+Let's get the structure first. remove /Core/Map%. Move /Core/Map/Data% to
+/Core/Map%. Change /Core/Set% to take Data@ instead of Map@.
+
+Then we can start to ask about what precisely the API should be.
 

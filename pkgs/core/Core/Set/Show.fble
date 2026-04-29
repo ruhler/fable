@@ -1,14 +1,9 @@
 
-Map@ = /Core/Map%.Map@;
-
-Show@ = /Std/Show%.Show@;
-Stream@ = /Std/Stream/Text%.Stream@;
-Do = /Std/Stream/Text%.Do;
-
-Format = /Std/Char/Ascii/Stream%.Format;
-String = /Std/Char/Ascii/Stream%.String;
-
-Unit@ = /Std/Unit%.Unit@;
+Set@, ForEach .= /Core/Set%;
+Show@ .= /Std/Show%;
+Stream@, Do .= /Std/Stream/Text%;
+Format, String .= /Std/Char/Ascii/Stream%;
+Unit@ .= /Std/Unit%;
 
 # Show --
 #   Implementation of Show@ for Set@<T@>. See documentation of
@@ -18,19 +13,14 @@ Unit@ = /Std/Unit%.Unit@;
 #   { a; }
 #   { a; b; }
 #
-Show = <<@>@ M@, @ K@>(Map@<M@, K@> m, Show@<K@> show_key) {
-  S = /Core/Set%.Set(m);
-
-  Show@<S.Set@> show = (S.Set@ s) {
-    Unit@ _ := Do(S.ForEach(s, String|'{ ',
-      (K@ x, Stream@ shown) {
-        Unit@ _ := Do(shown);
-        Format|'%s; '[show_key(x)];
-      }));
-    String|'}';
-  };
-
-  show;
+<@ K@>(Show@<K@>) { Show@<Set@<K@>>; }
+Show = <@ K@>(Show@<K@> show_key, Set@<K@> s) {
+  Unit@ _ := Do(ForEach(s, String|'{ ',
+    (K@ x, Stream@ shown) {
+      Unit@ _ := Do(shown);
+      Format|'%s; '[show_key(x)];
+    }));
+  String|'}';
 };
 
 @(Show);

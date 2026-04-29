@@ -1,21 +1,47 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+Bool@, True, False .= /Std/Bool%;
+Data@ .= /Core/Data%;
+Map@ .= /Core/Map/Data%;
+Unit@, Unit .= /Std/Unit%;
 
-Map@ = /Core/Map%.Map@;
+# Set@ -- 
+#   A set of elements.
+Set@ = <@ Key@> { Map@<Key@, Unit@>; };
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+# ForEach --
+#   Iterates over entries of a set.
+#
+# Type Parameters:
+#   T@ - the type of element in the set.
+#   B@ - The type of value updated and returned by the foreach loop.
+#
+# Inputs:
+#   set - the set to iterate over.
+#   base - the initial value to update and return from the loop.
+#   body - the body of the loop.
+#
+# Returns:
+#   The result of applying the body consecutively to the base value, once for
+#   each entry in the map.
+#
+# Conceptually:
+#   B@ b = base
+#   foreach x in map:
+#     b = body(x, b)
+#   return b
+<@ K@>(Set@<K@>)<@ B@>(B@, (K@, B@) { B@; }) { B@; }
+ForEach = <@ K@>(Set@<K@> set)<@ B@>(B@ base, (K@, B@) { B@; } body) {
+  /Core/Map/Data%.ForEach(set, base, (K@ x, Unit@ _, B@ b) { body(x, b); });
+};
 
-Set = <<@>@ M@, @ K@>(Map@<M@, K@> m) {
-  # Set@ -- 
-  #   A set of elements.
-  Set@ = M@<Unit@>;
+Set = <@ K@>(Data@<K@> data) {
+  Map = /Core/Map/Data%.Map(data);
+
+  Set@ .= @(Set@: Set@<K@>);
 
   # Empty -- 
   #   The empty set.
-  Set@ Empty = m.Empty<Unit@>;
+  Set@ Empty = Map.Empty<Unit@>;
 
   # IsEmpty --
   #   Check if a set is empty.
@@ -28,7 +54,7 @@ Set = <<@>@ M@, @ K@>(Map@<M@, K@> m) {
   #
   # Returns:
   #   True if the set is empty, false otherwise.
-  (Set@) { Bool@; } IsEmpty = m.IsEmpty<Unit@>;
+  (Set@) { Bool@; } IsEmpty = Map.IsEmpty<Unit@>;
 
   # Contains --
   #   Test whether an element exists in a set.
@@ -49,7 +75,7 @@ Set = <<@>@ M@, @ K@>(Map@<M@, K@> m) {
   #   Contains(set, value);
   (Set@, K@) { Bool@; }
   Contains = (Set@ set, K@ element) {
-    m.Lookup(set, element).?(just: True, nothing: False);
+    Map.Lookup(set, element).?(just: True, nothing: False);
   };
 
   # Insert --
@@ -67,7 +93,7 @@ Set = <<@>@ M@, @ K@>(Map@<M@, K@> m) {
   #   % Insert = /Set%.Insert<String@>(/Core/String/Ord%.Ord);
   #   Insert(set, Str(Chars|foo));
   (Set@, K@) { Set@; } Insert = (Set@ set, K@ element) {
-    m.Insert(set, element, Unit);
+    Map.Insert(set, element, Unit);
   };
 
   # Delete --
@@ -86,35 +112,10 @@ Set = <<@>@ M@, @ K@>(Map@<M@, K@> m) {
   # Example Use:
   #   % Delete = /Set%.Delete<String@>(/Core/String/Ord%.Ord);
   #   Delete(set, Str(Chars|foo));
-  (Set@, K@) { Set@; } Delete = m.Delete<Unit@>;
+  (Set@, K@) { Set@; } Delete = Map.Delete<Unit@>;
 
-  # ForEach --
-  #   Iterates over entries of a set.
-  #
-  # Type Parameters:
-  #   T@ - the type of element in the set.
-  #   B@ - The type of value updated and returned by the foreach loop.
-  #
-  # Inputs:
-  #   set - the set to iterate over.
-  #   base - the initial value to update and return from the loop.
-  #   body - the body of the loop.
-  #
-  # Returns:
-  #   The result of applying the body consecutively to the base value, once for
-  #   each entry in the map.
-  #
-  # Conceptually:
-  #   B@ b = base
-  #   foreach x in map:
-  #     b = body(x, b)
-  #   return b
-  (Set@)<@ B@>(B@, (K@, B@) { B@; }) { B@; }
-  ForEach = (Set@ set)<@ B@>(B@ base, (K@, B@) { B@; } body) {
-    m.ForEach(set, base, (K@ x, Unit@ _, B@ b) { body(x, b); });
-  };
 
-  @(Set@, Empty, IsEmpty, Contains, Insert, Delete, ForEach);
+  @(Set@, Empty, IsEmpty, Contains, Insert, Delete, ForEach: ForEach<K@>);
 };
 
-@(Set);
+@(Set@, ForEach, Set);

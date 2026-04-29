@@ -66,8 +66,7 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
   ShowBit1(x.l);
 };
 
-Map = /Core/Map/Data%.Map(DataBit2);
-Set = /Core/Set%.Set(Map);
+Set = /Core/Set%.Set(DataBit2);
 
 Set@ = Set.Set@;
 Empty = Set.Empty;
@@ -76,8 +75,8 @@ Insert = Set.Insert;
 Delete = Set.Delete;
 ForEach = Set.ForEach;
 
-Eq = /Core/Set/Eq%.Eq(Map, EqBit2);
-Show = /Core/Set/Show%.Show(Map, ShowBit2);
+Eq = /Core/Set/Eq%.Eq(EqBit2);
+Show = /Core/Set/Show%.Show(ShowBit2);
 
 Test@ Tests = TestSuite(Str|Set, List[
   Test(Str|'empty', (Unit@ _) {

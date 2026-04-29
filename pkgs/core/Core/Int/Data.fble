@@ -1,0 +1,8 @@
+
+Data@ .= /Core/Data%;
+Int@ .= /Std/Int%;
+Put .= /Std/Stream%;
+
+Data@<Int@> Data = Put<Int@>;
+
+@(Data);

@@ -119,8 +119,7 @@ Data@<Alien@> AlienData = (Alien@ x) {
 # Set@ --
 #   A set of aliens, to keep track of which aliens are alive or dead.
 # A set of aliens.
-Map = /Core/Map/Data%.Map(AlienData);
-Set = /Core/Set%.Set(Map);
+Set = /Core/Set%.Set(AlienData);
 Set@ = Set.Set@;
 
 # AllAliens --
