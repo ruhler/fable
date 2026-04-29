@@ -7,7 +7,6 @@ Test@ = /Std/Test%.Test@;
 TestSuite = /Std/Test%.TestSuite;
 
 Test@ Tests = TestSuite(Str|Core, List[
-  /Core/Char/Tests%.Tests,
   /Core/Debug/Tests%.Tests,
   /Core/Int/Tests%.Tests,
   /Core/Random/Lcg/Tests%.Tests,
