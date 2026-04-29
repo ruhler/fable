@@ -1,12 +1,10 @@
 
 Show@ = /Std/Show%.Show@;
 
-Map = /Core/Map/Data%.Map(/Hwdg/Addr%.Data);
-
 Memory@ = /Hwdg/Memory%.Memory@;
 
 Show@<Memory@> Show = {
-  /Core/Map/Show%.Show(Map, /Hwdg/Addr/Show%.Show, /Hwdg/Data/Show%.Show);
+  /Core/Map/Show%.Show(/Hwdg/Addr/Show%.Show, /Hwdg/Data/Show%.Show);
 };
 
 @(Show);

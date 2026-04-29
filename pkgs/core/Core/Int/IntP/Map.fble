@@ -109,7 +109,7 @@ ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (IntP@, V@, B@) { B@; } body) {
   });
 };
 
-/Core/Map%.Map@<Map@, IntP@> Map = @(
+Map = @(
   Map@, Key@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
 );
 

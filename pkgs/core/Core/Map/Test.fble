@@ -1,8 +1,6 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-And = /Std/Bool%.And;
+Bool@, True, False, And .= /Std/Bool%;
+Data@ .= /Core/Data%;
 
 Eq@ = /Std/Eq%.Eq@;
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
@@ -33,12 +31,14 @@ Unit = /Std/Unit%.Unit;
 #   - Implementations of Eq and Show for keys of the map.
 #   - Three distinct keys in iteration order.
 # It gives you back a test suite.
-<<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@>, Eq@<K@>, Show@<K@>, K@, K@, K@) { Test@; }
-Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
+<@ K@>(Data@<K@>, Eq@<K@>, Show@<K@>, K@, K@, K@) { Test@; }
+Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
+  Map = /Core/Map/Data%.Map(data);
+
   TestSuite(Str|'Map', List[
     /Std/Test%.Test(Str|'empty', (Unit@ _) {
       Maybe@<Unit@> wnt = Nothing<Unit@>;
-      Maybe@<Unit@> got = m.Lookup(m.Empty<Unit@>, b);
+      Maybe@<Unit@> got = Map.Lookup(Map.Empty<Unit@>, b);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(/Std/Unit/Eq%.Eq),
         /Std/Maybe/Show%.Show(/Std/Unit/Show%.Show),
@@ -46,9 +46,9 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
     }),
 
     /Std/Test%.Test(Str|'not found', (Unit@ _) {
-      m.Map@<Unit@> map = m.Insert<Unit@>(m.Empty<Unit@>, c, Unit);
+      Map.Map@<Unit@> map = Map.Insert<Unit@>(Map.Empty<Unit@>, c, Unit);
       Maybe@<Unit@> wnt = Nothing<Unit@>;
-      Maybe@<Unit@> got = m.Lookup(map, b);
+      Maybe@<Unit@> got = Map.Lookup(map, b);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(/Std/Unit/Eq%.Eq),
         /Std/Maybe/Show%.Show(/Std/Unit/Show%.Show),
@@ -56,12 +56,12 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
     }),
 
     /Std/Test%.Test(Str|'found', (Unit@ _) {
-      m.Map@<Bool@> map = m.Insert(m.Insert(m.Insert(m.Empty<Bool@>,
+      Map.Map@<Bool@> map = Map.Insert(Map.Insert(Map.Insert(Map.Empty<Bool@>,
         a, False),
         b, True),
         c, False);
       Maybe@<Bool@> wnt = Just(True);
-      Maybe@<Bool@> got = m.Lookup(map, b);
+      Maybe@<Bool@> got = Map.Lookup(map, b);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
         /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
@@ -69,11 +69,11 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
     }),
 
     /Std/Test%.Test(Str|'replace', (Unit@ _) {
-      m.Map@<Bool@> map = m.Insert(m.Insert(m.Empty<Bool@>,
+      Map.Map@<Bool@> map = Map.Insert(Map.Insert(Map.Empty<Bool@>,
         b, False),
         b, True);
       Maybe@<Bool@> wnt = Just(True);
-      Maybe@<Bool@> got = m.Lookup(map, b);
+      Maybe@<Bool@> got = Map.Lookup(map, b);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
         /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
@@ -81,9 +81,9 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
     }),
 
     /Std/Test%.Test(Str|'delete', (Unit@ _) {
-      m.Map@<Bool@> map = m.Delete(m.Insert(m.Empty<Bool@>, b, False), b);
+      Map.Map@<Bool@> map = Map.Delete(Map.Insert(Map.Empty<Bool@>, b, False), b);
       Maybe@<Bool@> wnt = Nothing<Bool@>;
-      Maybe@<Bool@> got = m.Lookup(map, b);
+      Maybe@<Bool@> got = Map.Lookup(map, b);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
         /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
@@ -91,9 +91,9 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
     }),
   
     /Std/Test%.Test(Str|'delete nothing', (Unit@ _) {
-      m.Map@<Bool@> map = m.Delete(m.Insert(m.Empty<Bool@>, b, False), a);
+      Map.Map@<Bool@> map = Map.Delete(Map.Insert(Map.Empty<Bool@>, b, False), a);
       Maybe@<Bool@> wnt = Just(False);
-      Maybe@<Bool@> got = m.Lookup(map, b);
+      Maybe@<Bool@> got = Map.Lookup(map, b);
       AssertEquals(
         /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
         /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
@@ -101,7 +101,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
     }),
 
     /Std/Test%.Test(Str|'foreach', (Unit@ _) {
-      m.Map@<Bool@> map = m.Insert(m.Insert(m.Insert(m.Empty<Bool@>,
+      Map.Map@<Bool@> map = Map.Insert(Map.Insert(Map.Insert(Map.Empty<Bool@>,
         b, True),
         a, True),
         b, False);
@@ -111,7 +111,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       # to be in the order B, A.
       Entry@ = *(K@ key, Bool@ value);
       List@<Entry@> wnt = List[Entry@(b, False), Entry@(a, True)];
-      List@<Entry@> got = m.ForEach(map, Empty<Entry@>,
+      List@<Entry@> got = Map.ForEach(map, Empty<Entry@>,
         (K@ k, Bool@ v, List@<Entry@> l) {
           Items(Entry@(k, v), l);
         });

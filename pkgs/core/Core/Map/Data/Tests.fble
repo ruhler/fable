@@ -57,10 +57,8 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
   ShowBit1(x.l);
 };
 
-Map = /Core/Map/Data%.Map(DataBit2);
-
 Test@ Tests = TestSuite(Str|Data, List[
-  /Core/Map/Test%.Test(Map, EqBit2, ShowBit2, A, B, C)
+  /Core/Map/Test%.Test(DataBit2, EqBit2, ShowBit2, A, B, C)
 ]);
 
 @(Tests);

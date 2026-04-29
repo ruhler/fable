@@ -1,18 +1,11 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+Bool@, True, False .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
+Map@, ForEach .= /Core/Map/Data%;
+List@, Items, Empty .= /Std/List%;
 
-Eq@ = /Std/Eq%.Eq@;
-
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-
-Map@ = /Core/Map%.Map@;
-
-<<@>@ M@, @ K@>(Map@<M@, K@>, Eq@<K@>)<@ V@>(Eq@<V@>, M@<V@>, M@<V@>) { Bool@; }
-Eq = <<@>@ M@, @ K@>(Map@<M@, K@> m, Eq@<K@> keq)<@ V@>(Eq@<V@> veq) {
+<@ K@>(Eq@<K@>)<@ V@>(Eq@<V@>, Map@<K@, V@>, Map@<K@, V@>) { Bool@; }
+Eq = <@ K@>(Eq@<K@> keq)<@ V@>(Eq@<V@> veq, Map@<K@, V@> a, Map@<K@, V@> b) {
   Entry@ = *(K@ key, V@ value);
 
   Eq@<Entry@> EqEntry = (Entry@ a, Entry@ b) {
@@ -21,18 +14,15 @@ Eq = <<@>@ M@, @ K@>(Map@<M@, K@> m, Eq@<K@> keq)<@ V@>(Eq@<V@> veq) {
     True;
   };
 
-  # TODO: Is it safe to assume equal maps give equal orders for ForEach?
-  (M@<V@> a, M@<V@> b) {
-    List@<Entry@> as = m.ForEach(a, Empty<Entry@>, (K@ k, V@ v, List@<Entry@> b) {
-      Items(Entry@(k, v), b);
-    });
+  List@<Entry@> as = ForEach(a, Empty<Entry@>, (K@ k, V@ v, List@<Entry@> b) {
+    Items(Entry@(k, v), b);
+  });
 
-    List@<Entry@> bs = m.ForEach(b, Empty<Entry@>, (K@ k, V@ v, List@<Entry@> b) {
-      Items(Entry@(k, v), b);
-    });
+  List@<Entry@> bs = ForEach(b, Empty<Entry@>, (K@ k, V@ v, List@<Entry@> b) {
+    Items(Entry@(k, v), b);
+  });
 
-    /Std/List/Eq%.Eq(EqEntry, as, bs);
-  };
+  /Std/List/Eq%.Eq(EqEntry, as, bs);
 };
 
 @(Eq);

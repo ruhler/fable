@@ -11,7 +11,7 @@ In@ .= /Std/Stream/Binary%;
 
 String@ = /Std/String%.String@;
 
-Map = /Core/Int/Map%.Map;
+Map = /Core/Map/Data%.Map(/Core/Int/Data%.Data);
 
 Block@ = /Pprof/Profile%.Block@;
 Blocks@ = /Pprof/Profile%.Blocks@;

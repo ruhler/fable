@@ -5,7 +5,6 @@ String = /Std/Char/Ascii/Stream%.String;
 Format = /Std/Char/Ascii/Stream%.Format;
 
 Coord@ = /Computrainer/Grid%.Coord@;
-Grid = /Computrainer/Grid%.Grid;
 
 Car@ = /Computrainer/Car%.Car@;
 Cars@ = /Computrainer/Car%.Cars@;
@@ -22,7 +21,7 @@ Show@<Car@> Value = (Car@ v) {
     v.?(C: String|C, 0: String|0, 1: String|1);
 };
 
-Show@<Cars@> Cars = /Core/Map/Show%.Show(Grid, Coord, Value);
+Show@<Cars@> Cars = /Core/Map/Show%.Show(Coord, Value);
 
 Show@<State@> State = (State@ a) {
     # TODO: Show state?

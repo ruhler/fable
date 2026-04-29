@@ -1,14 +1,12 @@
 
-Test@ = /Std/Test%.Test@;
-
-Int@ = /Std/Int%.Int@;
-Neg = /Std/Int%.Neg;
-Int = /Std/Int/Lit%.Int;
+Neg .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Test@ .= /Std/Test%;
 
 # Note: Iteration order is not quite what you expect.
 # Negative before zero before positive, yes, but evens come before odds.
-Test@ Tests = /Core/Map/Test%.Test</Core/Int/Map%.Map.Map@, Int@>(
-  /Core/Int/Map%.Map, /Std/Int/Eq%.Eq, /Std/Int/Show%.Show, 
+Test@ Tests = /Core/Map/Test%.Test(
+  /Core/Int/Data%.Data, /Std/Int/Eq%.Eq, /Std/Int/Show%.Show, 
   Neg(Int|4), Int|5, Int|7);
 
 @(Tests);

@@ -449,3 +449,24 @@ Let's get the structure first. remove /Core/Map%. Move /Core/Map/Data% to
 
 Then we can start to ask about what precisely the API should be.
 
+---
+
+It's a bit messy, because things like Show don't work for /Core/Int/Map%
+anymore. I think it will be okay, but I need to work through the compile
+errors from converting uses of /Core/Int/Map% to /Core/Map/Data%. Probably
+best to try and keep /Core/Int/Map% internal and encourage everyone to use
+/Core/Map/Data for int maps.
+
+---
+
+Turns out I was using /Core/Int/Map% a bunch. I hope performance doesn't
+suffer from using the Data map instead.
+
+To get a vague sense, here are the benchmark results after switching
+everything over:
+
+  Time: 1:35.40 ==> 1:21.88 ==> 1:29.73
+  Memory: 111972 ==> 112036 ==> 112124
+
+So yeah... a bit slower. Not surprising I guess. Something to keep in mind and
+think about.

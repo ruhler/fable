@@ -22,7 +22,7 @@ Query@ = /Pprof/Query%.Query@;
 MetricOf = /Pprof/Query/Util%.MetricOf;
 Sort = /Pprof/Query/Util%.Sort;
 
-M = /Core/Int/Map%.Map;
+M = /Core/Map/Data%.Map(/Core/Int/Data%.Data);
 
 (List@<BlockId@>, BlockId@) { Bool@; }
 ContainsBlock = (List@<BlockId@> l, BlockId@ id) {

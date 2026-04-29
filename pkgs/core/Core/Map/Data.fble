@@ -18,6 +18,29 @@ Map@ = <@ Key@, @ Value@> {
   M@;
 };
 
+# Iterate over elements of the map.
+# Type Parameters:
+#   V@ - the type of values in the map.
+#   B@ - The type of value updated and returned by the foreach loop.
+#
+# Inputs:
+#   map - the map to iterate over.
+#   base - the initial value to update and return from the loop.
+#   body - the body of the loop.
+#
+# Returns:
+#   The result of applying the body consecutively to the base value, once for
+#   each entry in the map.
+#
+# Conceptually:
+#   B@ b = base
+#   foreach (k, v) in map:
+#     b = body(k, v, b)
+#   return b
+#
+# Note that the order in which the entries are visited depends on the
+# underlying map implementation. It may not correspond to the natural order
+# you would expect for the given key type.
 <@ K@, @ V@>(Map@<K@, V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; }
 ForEach = <@ K@, @ V@>(Map@<K@, V@> map)<@ B@>(B@ base, (K@, V@, B@) { B@; } body) {
   map.?(empty: base);
@@ -30,16 +53,19 @@ ForEach = <@ K@, @ V@>(Map@<K@, V@> map)<@ B@>(B@ base, (K@, V@, B@) { B@; } bod
 Map = <@ Key@>(Data@<Key@> data) {
   Map@ .= @(Map@: Map@<Key@>);
 
+  # The empty map.
   Map@ Empty = <@ V@> {
     Map@<V@>(empty: Unit);
   };
 
+  # Returns true if the map is empty.
   <@ V@>(Map@<V@>) { Bool@; }
   IsEmpty = <@ V@>(Map@<V@> map) {
     map.?(empty: True);
     False;
   };
 
+  # Lookup a value in a map. Returns the value if present, Nothing otherwise.
   <@ V@>(Map@<V@>, Key@) { Maybe@<V@>; }
   Lookup = <@ V@>(Map@<V@> map, Key@ key) {
     # Given a map to look up in, returns the leaf map node where the entry
@@ -71,6 +97,8 @@ Map = <@ Key@>(Data@<Key@> data) {
     Just(lookup.entry.value);
   };
 
+  # Insert a value into a map, taking into account whatever existing value is
+  # in the map for the given key.
   <@ V@>(Map@<V@>, Key@, (Maybe@<V@>) { V@; }) { Map@<V@>; }
   InsertWith = <@ V@>(Map@<V@> map, Key@ key, (Maybe@<V@>) { V@; } with) {
     # Given a function that modifies the map at the current location, returns
@@ -123,11 +151,13 @@ Map = <@ Key@>(Data@<Key@> data) {
     });
   };
 
+  # Insert a value into a map.
   <@ V@>(Map@<V@>, Key@, V@) { Map@<V@>; }
   Insert = <@ V@>(Map@<V@> map, Key@ key, V@ value) {
     InsertWith(map, key, (Maybe@<V@> _) { value; });
   };
 
+  # Remove a value from the map if it is present.
   <@ V@>(Map@<V@>, Key@) { Map@<V@>; }
   Delete = <@ V@>(Map@<V@> map, Key@ key) {
     # Given a function that optionally modifies the map at the current
@@ -183,7 +213,7 @@ Map = <@ Key@>(Data@<Key@> data) {
 
   ForEach .= @(ForEach: ForEach<Key@>);
 
-  /Core/Map%.Map@(
+  @(
     Map@, Key@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
   );
 };

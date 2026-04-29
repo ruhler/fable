@@ -21,8 +21,7 @@ Show@<Block@> Block = (Block@ x) {
     /Std/Int/Show%.Show(x.column)];
 };
 
-Show@<Blocks@> Blocks = /Core/Map/Show%.Show(
-  /Pprof/Profile%.Blocks, /Std/Int/Show%.Show, Block);
+Show@<Blocks@> Blocks = /Core/Map/Show%.Show(/Std/Int/Show%.Show, Block);
 
 Show@<Sequence@> Sequence = /Std/List/Show%.Show(BlockId);
 

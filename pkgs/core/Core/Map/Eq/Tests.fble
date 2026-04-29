@@ -22,13 +22,13 @@ Int@ A = Int|0;
 Int@ B = Int|1;
 Int@ C = Int|2;
 
-Map = /Core/Int/Map%.Map;
+Map = /Core/Map/Data%.Map(/Core/Int/Data%.Data);
 Map@ = Map.Map@;
 Empty = Map.Empty;
 Insert = Map.Insert;
 Delete = Map.Delete;
 
-Eq = /Core/Map/Eq%.Eq(Map, /Std/Int/Eq%.Eq);
+Eq = /Core/Map/Eq%.Eq(/Std/Int/Eq%.Eq);
 
 Test@ Tests = TestSuite(Str|Eq, List[
   Test(Str|'eq: equal', (Unit@ _) {

@@ -1,18 +1,13 @@
 
-Map@ = /Core/Map%.Map@;
+Map@, ForEach .= /Core/Map/Data%;
+Show@ .= /Std/Show%;
+Stream@, Do .= /Std/Stream/Text%;
+Format, String .= /Std/Char/Ascii/Stream%;
+Unit@ .= /Std/Unit%;
 
-Show@ = /Std/Show%.Show@;
-Stream@ = /Std/Stream/Text%.Stream@;
-Do = /Std/Stream/Text%.Do;
-
-Format = /Std/Char/Ascii/Stream%.Format;
-String = /Std/Char/Ascii/Stream%.String;
-
-Unit@ = /Std/Unit%.Unit@;
-
-<<@>@ M@, @ K@>(Map@<M@, K@>, Show@<K@>)<@ V@>(Show@<V@>) { Show@<M@<V@>>; }
-Show = <<@>@ M@, @ K@>(Map@<M@, K@> m, Show@<K@> show_key)<@ V@>(Show@<V@> show_value, M@<V@> map) {
-  Unit@ _ := Do(m.ForEach(map, String|'{ ',
+<@ K@>(Show@<K@>)<@ V@>(Show@<V@>) { Show@<Map@<K@, V@>>; }
+Show = <@ K@>(Show@<K@> show_key)<@ V@>(Show@<V@> show_value, Map@<K@, V@> map) {
+  Unit@ _ := Do(ForEach(map, String|'{ ',
     (K@ k, V@ v, Stream@ shown) {
       Unit@ _ := Do(shown);
       Format|'%s => %s; '[show_key(k), show_value(v)];

@@ -6,7 +6,6 @@ Eq@ = /Std/Eq%.Eq@;
 
 Coord@ = /Computrainer/Grid%.Coord@;
 Grid@ = /Computrainer/Grid%.Grid@;
-Grid = /Computrainer/Grid%.Grid;
 
 Eq@<Coord@> Coord = (Coord@ a, Coord@ b) {
     /Std/Int/Eq%.Eq(a.x, b.x).?(false: False);
@@ -14,6 +13,6 @@ Eq@<Coord@> Coord = (Coord@ a, Coord@ b) {
     True;
 };
 
-<@ T@> (Eq@<T@>) { Eq@<Grid@<T@>>; } Eq = /Core/Map/Eq%.Eq<Grid@, Coord@>(Grid, Coord);
+<@ T@> (Eq@<T@>) { Eq@<Grid@<T@>>; } Eq = /Core/Map/Eq%.Eq(Coord);
 
 @(Eq);

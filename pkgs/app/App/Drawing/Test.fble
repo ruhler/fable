@@ -79,8 +79,8 @@ Map = /Core/Map/Data%.Map(DataPoint);
 Drawn@ = Map.Map@<Color@>;
 Empty = Map.Empty<Color@>;
 Insert = Map.Insert<Color@>;
-Eq@<Drawn@> EqDrawn = /Core/Map/Eq%.Eq(Map, EqPoint, EqColor);
-Show@<Drawn@> ShowDrawn = /Core/Map/Show%.Show(Map, ShowPoint, ShowColor);
+Eq@<Drawn@> EqDrawn = /Core/Map/Eq%.Eq(EqPoint, EqColor);
+Show@<Drawn@> ShowDrawn = /Core/Map/Show%.Show(ShowPoint, ShowColor);
 
 Pixel@ = *(Int@ x, Int@ y, Color@ color);
 

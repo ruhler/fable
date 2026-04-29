@@ -24,12 +24,12 @@ Unit@ = /Std/Unit%.Unit@;
 Int@ B = Int|2;
 Int@ C = Int|3;
 
-Map = /Core/Int/Map%.Map;
+Map = /Core/Map/Data%.Map(/Core/Int/Data%.Data);
 Map@ = Map.Map@;
 Empty = Map.Empty;
 Insert = Map.Insert;
 
-Show = /Core/Map/Show%.Show(Map, /Std/Int/Show%.Show);
+Show = /Core/Map/Show%.Show(/Std/Int/Show%.Show);
 
 Test@ Tests = TestSuite(Str|Show, List[
   Test(Str|'empty', (Unit@ _) {

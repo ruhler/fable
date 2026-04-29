@@ -22,7 +22,7 @@ Eq@<Block@> Block = (Block@ a, Block@ b) {
   True;
 };
 
-Eq@<Blocks@> Blocks = /Core/Int/Map/Eq%.Eq(Block);
+Eq@<Blocks@> Blocks = /Core/Map/Eq%.Eq(/Std/Int/Eq%.Eq, Block);
 
 Eq@<Sequence@> Sequence = /Std/List/Eq%.Eq(BlockId);
 
