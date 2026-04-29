@@ -5,9 +5,11 @@ False = /Std/Bool%.False;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+
 List = /Std/List%.List;
 
-String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
 
 Test@ = /Std/Test%.Test@;
@@ -16,17 +18,17 @@ TestSuite = /Std/Test%.TestSuite;
 
 Unit@ = /Std/Unit%.Unit@;
 
-String@ A = Str|A;
-String@ B = Str|B;
-String@ C = Str|C;
+Int@ A = Int|0;
+Int@ B = Int|1;
+Int@ C = Int|2;
 
-Map = /Core/String/Map%.Map;
+Map = /Core/Int/Map%.Map;
 Map@ = Map.Map@;
 Empty = Map.Empty;
 Insert = Map.Insert;
 Delete = Map.Delete;
 
-Eq = /Core/Map/Eq%.Eq(Map, /Std/String/Eq%.Eq);
+Eq = /Core/Map/Eq%.Eq(Map, /Std/Int/Eq%.Eq);
 
 Test@ Tests = TestSuite(Str|Eq, List[
   Test(Str|'eq: equal', (Unit@ _) {

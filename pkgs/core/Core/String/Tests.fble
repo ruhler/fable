@@ -210,9 +210,7 @@ Test@ Tests = TestSuite(Str|String, List[
     String@ wnt = Str|'ab01c2';
     String@ got = S|'ab01c2';
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  /Core/String/Map/Tests%.Tests
+  })
 
 ]);
 
