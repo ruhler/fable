@@ -1,0 +1,62 @@
+
+True = /Std/Bool%.True;
+False = /Std/Bool%.False;
+And = /Std/Bool%.And;
+
+Data@, Data .= /Core/Data2%;
+Eq@ = /Std/Eq%.Eq@;
+
+List = /Std/List%.List;
+
+Show@ = /Std/Show%.Show@;
+Do .= /Std/Stream%;
+
+Str = /Std/Char/Ascii%.Str;
+String = /Std/Char/Ascii/Stream%.String;
+
+Test@ = /Std/Test%.Test@;
+TestSuite = /Std/Test%.TestSuite;
+
+Unit@ = /Std/Unit%.Unit@;
+Unit = /Std/Unit%.Unit;
+
+Bit1@ = +(Unit@ 0, Unit@ 1);
+Bit2@ = *(Bit1@ h, Bit1@ l);
+
+Bit2@ A = Bit2@(Bit1@(0: Unit), Bit1@(0: Unit));
+Bit2@ B = Bit2@(Bit1@(0: Unit), Bit1@(1: Unit));
+Bit2@ C = Bit2@(Bit1@(1: Unit), Bit1@(0: Unit));
+
+Eq@<Bit1@> EqBit1 = (Bit1@ a, Bit1@ b) {
+  a.?(
+    0: b.?(0: True, 1: False),
+    1: b.?(0: False, 1: True));
+};
+
+Data@<Bit1@> DataBit1 = (Bit1@ x) {
+  x.?(0: Data|0, 1: Data|1);
+};
+
+Show@<Bit1@> ShowBit1 = (Bit1@ x) {
+  x.?(0: String|0, 1: String|1);
+};
+
+Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
+  And(EqBit1(a.h, b.h), EqBit1(a.l, b.l));
+};
+
+Data@<Bit2@> DataBit2 = (Bit2@ x) {
+  Unit@ _ := Do(DataBit1(x.h));
+  DataBit1(x.l);
+};
+
+Show@<Bit2@> ShowBit2 = (Bit2@ x) {
+  Unit@ _ := Do(ShowBit1(x.h));
+  ShowBit1(x.l);
+};
+
+Test@ Tests = TestSuite(Str|Data, List[
+  /Core/Map/Test2%.Test(DataBit2, EqBit2, ShowBit2, A, B, C)
+]);
+
+@(Tests);

@@ -1,0 +1,16 @@
+
+List@ .= /Std/List%;
+Stream@ .= /Std/Stream%;
+Puts .= /Std/Stream/List%;
+Unit@, Unit .= /Std/Unit%;
+
+Bit@ = +(Unit@ 0, Unit@ 1);
+
+0 = Bit@(0: Unit);
+1 = Bit@(1: Unit);
+
+Data@ = <@ A@>(A@) { Stream@<Bit@>; };
+
+(List@<Bit@>) { Stream@<Bit@>; } Data = Puts<Bit@>;
+
+@(Bit@, 0, 1, Data@, Data);

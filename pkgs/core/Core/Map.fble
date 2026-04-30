@@ -1,0 +1,217 @@
+
+Bool@, True, False .= /Std/Bool%;
+Data@, Bit@ .= /Core/Data2%;
+Lazy@ .= /Std/Lazy%;
+Maybe@, Just, Nothing, Get .= /Std/Maybe%;
+Channel@ .= /Std/Stream%;
+Unit@, Unit .= /Std/Unit%;
+
+# A Map that operates on Data@ types.
+# Essentially a map with Stream@<Bit@> as the key.
+
+Entry@ = <@ Key@, @ Value@> { *(Key@ key, Value@ value); };
+
+Map@ = <@ Key@, @ Value@> {
+  M@ = +(Unit@ empty, Entry@<Key@, Value@> entry, *(M@ 0, M@ 1) children);
+  M@;
+};
+
+# The empty map.
+Map@ Empty = <@ K@, @ V@> {
+  Map@<K@, V@>(empty: Unit);
+};
+
+# Returns true if the map is empty.
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
+IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map.?(empty: True);
+  False;
+};
+
+# Lookup a value in a map. Returns the value if present, Nothing otherwise.
+<@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
+Lookup = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
+  # Given a map to look up in, returns the leaf map node where the entry
+  # should be found.
+  S@ = (Map@<K@, V@>) { Map@<K@, V@>; };
+
+  return = (Map@<K@, V@> m) { m; };
+
+  do = (S@ a, Lazy@<S@> b, Map@<K@, V@> m) {
+    m.?(empty: m);
+    Map@<K@, V@> ma = a(m);
+    ma.?(empty: ma);
+    b(Unit, ma);
+  };
+
+  put = (Bit@ x, Map@<K@, V@> m) {
+    m.?(empty: m, entry: Empty<K@, V@>);
+    x.?(0: m.children.0, 1: m.children.1);
+  };
+
+  Map@<K@, V@> lookup = data(key, Channel@(return, do, put), map);
+  lookup.?(empty: Nothing<V@>);
+
+  # If lookup.value access fails with wrong tag, it means your data type
+  # didn't satisfy the prefix code requirement.
+  Just(lookup.entry.value);
+};
+
+# Insert a value into a map, taking into account whatever existing value is
+# in the map for the given key.
+<@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>) { V@; }) { Map@<K@, V@>; }
+InsertWith = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
+  # Given a function that modifies the map at the current location, returns
+  # the final modified map at the root location.
+  Modify@ = ((Map@<K@, V@>) { Map@<K@, V@>; }) { Map@<K@, V@>; };
+
+  S@ = (Modify@) { Modify@; };
+
+  return = (Modify@ modify) { modify; };
+
+  do = (S@ a, Lazy@<S@> b, Modify@ current) {
+    b(Unit, a(current));
+  };
+
+  put = (Bit@ x, Modify@ modify_current, (Map@<K@, V@>) { Map@<K@, V@>; } modify_child) {
+    Map@<K@, V@> current := modify_current;
+
+    children = {
+      current.?(empty: @(0: Empty<K@, V@>, 1: Empty<K@, V@>));
+
+      # If current.children access fails with wrong tag, it means your data
+      # type didn't satisfy the prefix code requirement.
+      current.children;
+    };
+
+    Map@<K@, V@> child = modify_child({
+      x.?(0: children.0, 1: children.1);
+    });
+
+    x.?(
+      0: Map@(children: children.@(0: child)),
+      1: Map@(children: children.@(1: child)));
+  };
+
+  Modify@ modify_root = ((Map@<K@, V@>) { Map@<K@, V@>; } f) { f(map); };
+  Modify@ modify_leaf = data(key, Channel@(return, do, put), modify_root);
+
+  modify_leaf((Map@<K@, V@> leaf) {
+    V@ value = with({
+      leaf.?(empty: Nothing<V@>);
+
+      # If you get a wrong tag access error here on leaf.entry, then your
+      # data type violates the prefix property.
+      Just(leaf.entry.value);
+    });
+
+    Map@(entry: Entry@(key, value));
+  });
+};
+
+# Insert a value into a map.
+<@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
+Insert = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
+  InsertWith(data, map, key, (Maybe@<V@> _) { value; });
+};
+
+# Remove a value from the map if it is present.
+<@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
+Delete = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
+  # Given a function that optionally modifies the map at the current
+  # location, returns the final modified map at the root location.
+  # The modification may remove elements.
+  Modify@ = ((Map@<K@, V@>) { Maybe@<Map@<K@, V@>>; }) { Map@<K@, V@>; };
+
+  S@ = (Modify@) { Modify@; };
+
+  return = (Modify@ modify) { modify; };
+
+  do = (S@ a, Lazy@<S@> b, Modify@ current) {
+    b(Unit, a(current));
+  };
+
+  put = (Bit@ x, Modify@ modify_current, (Map@<K@, V@>) { Maybe@<Map@<K@, V@>>; } modify_child) {
+    Map@<K@, V@> current := modify_current;
+    current.?(empty: Nothing<Map@<K@, V@>>);
+
+    # If current.children access fails with wrong tag, it means your data
+    # type didn't satisfy the prefix code requirement.
+    Map@<K@, V@> child = x.?(0: current.children.0, 1: current.children.1);
+    Maybe@<Map@<K@, V@>> nchild = modify_child(child);
+    nchild.?(nothing: Nothing<Map@<K@, V@>>);
+
+    nchild.just.?(empty: {
+      Bool@ empty = x.?(0: IsEmpty(current.children.1), 1: IsEmpty(current.children.0));
+      empty.?(true: Just(Empty<K@, V@>));
+
+      x.?(0: Just(Map@(children: current.children.@(0: Empty<K@, V@>))));
+      Just(Map@(children: current.children.@(1: Empty<K@, V@>)));
+    });
+
+    x.?(0: Just(Map@(children: current.children.@(0: nchild.just))));
+    Just(Map@(children: current.children.@(1: nchild.just)));
+  };
+
+  Modify@ modify_root = ((Map@<K@, V@>) { Maybe@<Map@<K@, V@>>; } f) {
+    Get(map, f(map));
+  };
+
+  Modify@ modify_leaf = data(key, Channel@(return, do, put), modify_root);
+
+  modify_leaf((Map@<K@, V@> leaf) {
+    # If you get undef here, then your data type violates the prefix
+    # property.
+    leaf.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@<K@, V@>>>);
+
+    leaf.?(empty: Nothing<Map@<K@, V@>>);
+    Just(Empty<K@, V@>);
+  });
+};
+
+# Iterate over elements of the map.
+# Type Parameters:
+#   V@ - the type of values in the map.
+#   B@ - The type of value updated and returned by the foreach loop.
+#
+# Inputs:
+#   map - the map to iterate over.
+#   base - the initial value to update and return from the loop.
+#   body - the body of the loop.
+#
+# Returns:
+#   The result of applying the body consecutively to the base value, once for
+#   each entry in the map.
+#
+# Conceptually:
+#   B@ b = base
+#   foreach (k, v) in map:
+#     b = body(k, v, b)
+#   return b
+#
+# Note that the order in which the entries are visited depends on the
+# underlying map implementation. It may not correspond to the natural order
+# you would expect for the given key type.
+<@ K@, @ V@>(Map@<K@, V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; }
+ForEach = <@ K@, @ V@>(Map@<K@, V@> map)<@ B@>(B@ base, (K@, V@, B@) { B@; } body) {
+  map.?(empty: base);
+  map.?(entry: body(map.entry.key, map.entry.value, base));
+  ForEach(map.children.1, ForEach(map.children.0, base, body), body);
+};
+
+Map = <@ K@>(Data@<K@> data) {
+  @(
+    Map@: Map@<K@>,
+    Key@: K@,
+    Empty: Empty<K@>,
+    IsEmpty: IsEmpty<K@>,
+    Insert: Insert(data),
+    InsertWith: InsertWith(data),
+    Delete: Delete(data),
+    Lookup: Lookup(data),
+    ForEach: ForEach<K@>
+  );
+};
+
+@(Entry@, Map@, Empty, IsEmpty, Lookup, InsertWith, Insert, Delete, ForEach,
+  Map);

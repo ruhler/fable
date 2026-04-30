@@ -470,3 +470,73 @@ everything over:
 
 So yeah... a bit slower. Not surprising I guess. Something to keep in mind and
 think about.
+
+Summary of where we are for maps right now:
+
+  pkgs/core/Core/Data.fble
+  pkgs/core/Core/Map/Show.fble
+  pkgs/core/Core/Map/Data.fble
+  pkgs/core/Core/Map/Eq.fble
+  pkgs/core/Core/Int/Map/Eq.fble
+  pkgs/core/Core/Int/Map.fble
+  pkgs/core/Core/Int/Data.fble
+  pkgs/core/Core/Int/IntP/Map/Eq.fble
+  pkgs/core/Core/Int/IntP/Map.fble
+  pkgs/core/Core/Set.fble
+  pkgs/core/Core/Set/Show.fble
+  pkgs/core/Core/Set/Eq.fble
+
+Where Set is always using the data based map. Everyone except the data based
+map is using the data based map. The data based map uses the Int map. The Int
+map uses the IntP map.
+
+I want to move more of the Map functions to the top level if I can, because
+it's easier to work with if we don't have to provide a Data@ implementation
+except for the functions we need to. Like, I can do Show and Eq without
+knowing Data. But that is kind of making assumptions about how the map is
+implemented.
+
+Another idea: Instead of implementing Set on top of Map, we could implement
+Map on top of Set, and say Map@<K@, V@> is Set@<Entry@<K@, V@>>, just reusing
+the hash function for the key and ignoring the value. That might result in a
+simpler implementation and avoid passing around an unnecessary Unit@
+everywhere in the Set case.
+
+If we have an Int map implementation, shouldn't people be allowed to use it?
+But if they do, I have to provide the same API for Int map that I provide for
+Data map: Show, Eq, etc. Which suggests declaring a Map@ interface like I had,
+which is an extra layer of complexity.
+
+How much of the Int map API do I make use of in the data Map implementation?
+* Map@, ForEach, Lookup, Empty, InsertWith, Delete, IsEmpty, Insert
+
+Yeah, that's kind of everything.
+
+Another question is: do I want /Core/Map/Data%.Map to take the value type too,
+and return all the specialized functions, or keep it like it is now, only
+provide key and hash function, but keep the methods polymorphic in value type?
+There may be a couple of places where I reuse the same import with different
+values, but I suspect it's pretty rare. On the other hand, if we ever want to
+map between one and the other, or allow us to implement that kind of map
+function, don't we need to be able to return something with fixed hash
+function but parameterized by value?
+
+Another question is: do I want to define wrapper modules for things like
+/Std/String/Map%, which provide their own instance of Data so as a user you
+don't have to think about it?
+
+If a specialized Int map is faster than general Data map, and a specialized
+pair of int map is faster than general Data map, and that extra speed is
+important, I don't want people to have to specialize pair of int map. If they
+do, what's the point of having a general Data map at all? We should make the
+general Data map just as fast, or close enough to as fast as the specialized
+map.
+
+Should/could we change Data@ to be a stream of bits instead of a stream of
+ints? We could have a helper function to stream out an int, so it's not so
+hard to define your stream implementations. Then no need for an int map at
+all, and presumably, hopefully, we could implement the general data map as
+fast as an int map? Or even faster?
+
+Lots to think about.
+
