@@ -571,3 +571,60 @@ everywhere to pass the value type.
 Except for computrainer, which uses Grid heavily, and so now where we could
 rely on type inference before for most things, we no longer can.
 
+---
+
+Anyway, performance investigation.
+
+sat benchmark only, using bits based data map implementation:
+  Time: 1:52.91
+  Memory: 42668
+
+sat benchmark only, using int based data map implementation:
+  Time: 0:20.68
+  Memory: 20560
+
+Using pure fble based profiling:
+
+The ints based approach is dominated by:
+  ForEach. It's all in the IntP ForEach traversal. It's 73% of total time.
+  This is the call from Solver.Assign, coming from 75% simplify and 25%
+  search.
+
+The bits based approach is dominated by:
+
+Maybe  best to look at top 10 self time:
+
+Data was:
+   19.055% 47836 [5]/Core/Int/IntP/Map%.InsertWith
+   14.086% 36367 [6]/Core/Int/IntP/Map%.Delete
+   12.089% 31549 [7]/Core/Int/IntP/Map%.Lookup
+   5.036%  13125 [8]/Core/Int/IntP/Map%.IsEmptyP
+   3.035%  8214  [9]/Std/Int/IntP/Eq%.Eq
+   3.7%    7520  [10]/Core/Int/IntP/Map%.ForEach
+   3.1%    7373  [11]/Sat/Solver%.RemoveClauseFromVar
+   2.067%  6543  [12]/Std/List%.ForEach
+   1.086%  4554  [13]/Core/Map/Data%.Map.InsertWith
+   1.083%  4495  [14]/Core/Map/Data%.Map.Delete.put
+
+Bits is:
+   15.0%   135657 [5]/Std/Stream/List%.Puts
+   12.039% 112064 [6]/Std/Stream%.Do
+   11.036% 102758 [7]/Core/Map%.InsertWith.put
+   10.021% 92366  [8]/Core/Map%.Delete.put
+   6.041%  58039  [9]/Std/Stream/List%.Puts
+   5.044%  49224  [10]/Core/Int/IntP/Data%.Data
+   4.034%  39254  [11]/Core/Map%.Lookup.do
+   4.029%  38811  [12]/Std/Stream%.Put
+   3.075%  33991  [13]/Core/Map%.Lookup.put
+   3.8%    27908  [14]/Std/Stream%.Do
+
+So you see, there's a bunch of overhead associated with use of Stream@.
+
+Let's do a linux perf profile if we can. Well, not right now, because I don't
+have it installed yet.
+
+Looking at the code, /Core/Int/IntP/Map%.InsertWith is a super tight loop. The
+stream interface has all this overhead associated with putting values. What am
+I to do?
+
+I should do linux perf, see what's taking so long.

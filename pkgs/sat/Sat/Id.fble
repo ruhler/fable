@@ -6,5 +6,9 @@ EqId = /Std/Int/Eq%.Eq;
 
 Map = /Core/Map%.Map(/Core/Int/Data2%.Data);
 Set = /Core/Set2%.Set(/Core/Int/Data2%.Data);
+Show = /Core/Map/Show2%.Show;
+#Map = /Core/Map/Data%.Map(/Core/Int/Data%.Data);
+#Set = /Core/Set%.Set(/Core/Int/Data%.Data);
+#Show = /Core/Map/Show%.Show;
 
-@(Id@, EqId, Map, Set);
+@(Id@, EqId, Map, Set, Show);

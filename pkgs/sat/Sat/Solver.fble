@@ -325,7 +325,7 @@ _Show = {
     Format|'Conflict %s, %s on %s'[Id(c.a), Id(c.b), Id(c.var)];
   };
 
-  Show@<Clauses@> Clauses = /Core/Map/Show2%.Show(Id, Clause);
+  Show@<Clauses@> Clauses = /Sat/Id%.Show(Id, Clause);
 
   @(Id, Var, Clause, Why, Assign, Todo, Conflict, Clauses);
 };
