@@ -1,0 +1,19 @@
+
+Data@, Bit@ .= /Core/Data2%;
+IntP@ .= /Std/Int/IntP%;
+Return, Do .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
+
+Data@<IntP@> Data = (IntP@ x) {
+  x.?(1: /Core/Data2%.Data|00,
+    2p0: {
+      Unit@ _ := Do(/Core/Data2%.Data|01);
+      Data(x.2p0);
+    },
+    2p1: {
+      Unit@ _ := Do(/Core/Data2%.Data|10);
+      Data(x.2p1);
+    });
+};
+
+@(Data);

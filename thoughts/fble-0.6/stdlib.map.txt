@@ -540,3 +540,17 @@ fast as an int map? Or even faster?
 
 Lots to think about.
 
+---
+
+Switching sat solver over to new Data@<Bit@> based map implementation:
+
+  Time: 1:35.40 ==> 1:21.88 ==> 1:29.73 ==> 2:57.50 SIG 2?
+  Memory: 111972 ==> 112036 ==> 112124 ==> 81808
+
+Well... It's a different traversal order, right? So maybe not a fair
+comparison, because it could be doing totally different stuff? Maybe I should
+try to start with not changing the traversal order?
+
+Hmm... Seems just as bad regardless, aside from the SIG 2. So performance
+doesn't feel too good with my new map implementation. Tough. Will need to
+think about what to do here.

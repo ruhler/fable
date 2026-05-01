@@ -1,0 +1,23 @@
+
+Data@ .= /Core/Data2%;
+Int@ .= /Std/Int%;
+Do .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
+
+Data@<Int@> Data = (Int@ x) {
+  x.?(
+    n: {
+      Unit@ _ := Do(/Core/Data2%.Data|00);
+      /Core/Int/IntP/Data%.Data(x.n);
+    },
+
+    0: /Core/Data2%.Data|01,
+
+    p: {
+      Unit@ _ := Do(/Core/Data2%.Data|10);
+      /Core/Int/IntP/Data%.Data(x.p);
+    });
+};
+
+@(Data);
+
