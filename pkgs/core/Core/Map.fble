@@ -199,17 +199,17 @@ ForEach = <@ K@, @ V@>(Map@<K@, V@> map)<@ B@>(B@ base, (K@, V@, B@) { B@; } bod
   ForEach(map.children.1, ForEach(map.children.0, base, body), body);
 };
 
-Map = <@ K@>(Data@<K@> data) {
+Map = <@ K@>(Data@<K@> data)<@ V@> {
   @(
-    Map@: Map@<K@>,
+    Map@: Map@<K@, V@>,
     Key@: K@,
-    Empty: Empty<K@>,
-    IsEmpty: IsEmpty<K@>,
-    Insert: Insert(data),
-    InsertWith: InsertWith(data),
-    Delete: Delete(data),
-    Lookup: Lookup(data),
-    ForEach: ForEach<K@>
+    Empty: Empty<K@, V@>,
+    IsEmpty: IsEmpty<K@, V@>,
+    Insert: Insert(data)<V@>,
+    InsertWith: InsertWith(data)<V@>,
+    Delete: Delete(data)<V@>,
+    Lookup: Lookup(data)<V@>,
+    ForEach: ForEach<K@, V@>
   );
 };
 
