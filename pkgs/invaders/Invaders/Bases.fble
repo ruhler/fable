@@ -21,8 +21,6 @@ List = /Std/List%.List;
 
 Maybe@ = /Std/Maybe%.Maybe@;
 
-Map = /Core/Map/Data%.Map(/Core/Int/Data%.Data);
-
 Int@ 1 = Int|1;
 
 # Slice@ --
@@ -40,22 +38,8 @@ Int@ BaseY = Int|36;
 
 # Bases@ --
 #   Map from x coordinate to the slice of base, if any, at that x coordinate.
-Bases@ = Map.Map@<Slice@>;
-
-# Empty --
-#   No bases.
-Bases@ Empty = Map.Empty<Slice@>;
-
-# Lookup --
-#   Look up a slice by X coordinate.
-(Bases@, Int@) { Maybe@<Slice@>; } Lookup = Map.Lookup<Slice@>;
-
-# Delete --
-#   Remove a slice by X coordinate.
-(Bases@, Int@) { Bases@; } Delete = Map.Delete<Slice@>;
-
-(Bases@, Int@, Slice@) { Bases@; } Insert = Map.Insert<Slice@>;
-  
+Map@, Empty, Lookup, Delete, Insert, ForEach .= /Core/Map/Data%.Map(/Core/Int/Data%.Data)<Slice@>;
+Bases@ = Map@;
 
 # BaseSpec --
 #   Specification for the shape of an individual base, relative to the lower
@@ -156,7 +140,7 @@ BulletHit = (Int@ x, Int@ y, Bases@ bases) {
 # Draw --
 #   Draw the bases.
 (Bases@) { Drawing@; } Draw = (Bases@ bases) {
-  Map.ForEach(bases, Blank, (Int@ x, Slice@ s, Drawing@ d) {
+  ForEach(bases, Blank, (Int@ x, Slice@ s, Drawing@ d) {
     Over(d, Rect(x, s.min, 1, Sub(s.max, s.min), Color.Green));
   });
 };

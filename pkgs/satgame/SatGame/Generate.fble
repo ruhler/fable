@@ -28,11 +28,7 @@ Var@ = /SatGame/Var%.Var@;
 
 Shuffle = /Std/List/Random%.Shuffle;
 
-Map = /Core/Map/Data%.Map(/Core/Int/Data%.Data);
-Map@ = Map.Map@<Var@>;
-Empty = Map.Empty<Var@>;
-Lookup = Map.Lookup<Var@>;
-Insert = Map.Insert<Var@>;
+Map@, Empty, Lookup, Insert .= /Core/Map/Data%.Map(/Core/Int/Data%.Data)<Var@>;
 
 Prng = /Std/Random/Lfsr%.Lfsr24;
 M@, M(.Monad), Rng .= /Std/Random/Prng/Pure%.Pure(Prng);

@@ -6,7 +6,6 @@ Add = /Std/Int%.Add;
 
 List@ = /Std/List%.List@;
 Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
 List = /Std/List%.List;
 
 Maybe@ = /Std/Maybe%.Maybe@;
@@ -22,7 +21,7 @@ Query@ = /Pprof/Query%.Query@;
 MetricOf = /Pprof/Query/Util%.MetricOf;
 Sort = /Pprof/Query/Util%.Sort;
 
-M = /Core/Map/Data%.Map(/Core/Int/Data%.Data);
+Map@, Empty, InsertWith, ForEach .= /Core/Map/Data%.Map(/Core/Int/Data%.Data)<Int@>;
 
 (List@<BlockId@>, BlockId@) { Bool@; }
 ContainsBlock = (List@<BlockId@> l, BlockId@ id) {
@@ -49,30 +48,30 @@ DeDup = (List@<BlockId@> xs) {
 #  @returns[Table@] The time of each frame in descending order.
 ((Sequence@) { List@<BlockId@>; }) { Query@; }
 Query = ((Sequence@) { List@<BlockId@>; } frames, Profile@ profile) {
-  (Sample@, M.Map@<Int@>) { M.Map@<Int@>; }
-  Sample = (Sample@ sample, M.Map@<Int@> map) {
+  (Sample@, Map@) { Map@; }
+  Sample = (Sample@ sample, Map@ map) {
     sample.sequence.?(empty: map);
 
     List@<BlockId@> set = DeDup(frames(sample.sequence));
     Int@ count = MetricOf(sample.values);
 
-    /Std/List%.ForEach(set, map, (BlockId@ block, M.Map@<Int@> m) {
-      M.InsertWith(m, block, (Maybe@<Int@> mx) {
+    /Std/List%.ForEach(set, map, (BlockId@ block, Map@ m) {
+      InsertWith(m, block, (Maybe@<Int@> mx) {
         mx.?(just: Add(mx.just, count));
         count;
       });
     });
   };
 
-  (List@<Sample@>, M.Map@<Int@>) { M.Map@<Int@>; }
-  Samples = (List@<Sample@> samples, M.Map@<Int@> map) {
+  (List@<Sample@>, Map@) { Map@; }
+  Samples = (List@<Sample@> samples, Map@ map) {
     samples.?(empty: map);
     Samples(samples.items.tail, Sample(samples.items.head, map));
   };
 
-  M.Map@<Int@> counts = Samples(profile.samples, M.Empty<Int@>);
+  Map@ counts = Samples(profile.samples, Empty);
 
-  Sort(M.ForEach(counts, Empty<Entry@>,
+  Sort(ForEach(counts, /Std/List%.Empty<Entry@>,
     (BlockId@ block, Int@ value, List@<Entry@> l) {
       Items(Entry@(List[block], value), l);
     }));

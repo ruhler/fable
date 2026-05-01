@@ -23,7 +23,7 @@ State@ = *(Cars@ cars, Grid@<Dir@> routing, Phase@ phase);
 
 (Cars@) { State@; }
 State = (Cars@ cars) {
-    State@(cars, Grid.Empty<Dir@>, Phase@(engines: Unit));
+    State@(cars, Grid<Dir@>.Empty, Phase@(engines: Unit));
 };
 
 (State@) { State@; }
@@ -34,36 +34,36 @@ FlipPhase = (State@ s) {
 
 (Coord@, State@) { State@; }
 RemoveCar = (Coord@ c, State@ s) {
-    s.@(cars: Grid.Delete(s.cars, c));
+    s.@(cars: Grid<Car@>.Delete(s.cars, c));
 };
 
 (Coord@, Car@, State@) { State@; }
 AddCar = (Coord@ c, Car@ v, State@ s) {
-    Cars@ cars = Grid.Insert(s.cars, c, v);
+    Cars@ cars = Grid<Car@>.Insert(s.cars, c, v);
     s.@(cars);
 };
 
 (Coord@, Coord@, Car@, State@) { State@; }
 MoveCar = (Coord@ src, Coord@ dest, Car@ v, State@ s) {
-    Cars@ removed = Grid.Delete(s.cars, src);
-    Cars@ cars = Grid.Insert(removed, dest, v);
+    Cars@ removed = Grid<Car@>.Delete(s.cars, src);
+    Cars@ cars = Grid<Car@>.Insert(removed, dest, v);
     s.@(cars);
 };
 
 # Check if the gate at the given location is currently routing a train through.
 (Coord@, State@) { Maybe@<Dir@>; }
 Routing = (Coord@ c, State@ s) {
-    Grid.Lookup(s.routing, c);
+    Grid<Dir@>.Lookup(s.routing, c);
 };
 
 (Coord@, State@) { State@; }
 ClearRouting = (Coord@ c, State@ s) {
-    s.@(routing: Grid.Delete(s.routing, c));
+    s.@(routing: Grid<Dir@>.Delete(s.routing, c));
 };
 
 (Coord@, State@, Dir@) { State@; }
 SetRouting = (Coord@ c, State@ s, Dir@ d) {
-    s.@(routing: Grid.Insert(s.routing, c, d));
+    s.@(routing: Grid<Dir@>.Insert(s.routing, c, d));
 };
 
 @(Phase@, State@, State,

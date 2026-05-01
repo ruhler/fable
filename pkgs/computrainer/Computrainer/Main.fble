@@ -207,7 +207,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
               antigate: background,
               gate: Drawings[background, DrawGate(mouse_tile, s.selected.gate)],
               anticar: {
-                Maybe@<Gate@> mgate = Grid.Lookup(s.model.gates, mouse_tile);
+                Maybe@<Gate@> mgate = Grid<Gate@>.Lookup(s.model.gates, mouse_tile);
                 Drawing@ gate = mgate.?(
                     just: DrawGate(mouse_tile, mgate.just),
                     nothing: Blank);
@@ -247,9 +247,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
                     nothing: {
                         # Rotate the gate at the mouse coordinates.
                         Coord@ tile = MouseTile(s);
-                        Maybe@<Gate@> mg = Grid.Lookup(s.model.gates, tile);
+                        Maybe@<Gate@> mg = Grid<Gate@>.Lookup(s.model.gates, tile);
                         mg.?(nothing: s);
-                        Gates@ gates = Grid.Insert(s.model.gates, tile, rotate(mg.just));
+                        Gates@ gates = Grid<Gate@>.Insert(s.model.gates, tile, rotate(mg.just));
                         s.@(model: s.model.@(gates));
                     },
                     antigate: s,
@@ -289,22 +289,22 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
 
         StepUI(s.selected.?(
             nothing: s,
-            antigate: s.@(model: s.model.@(gates: Grid.Delete(s.model.gates, MouseTile(s)))),
+            antigate: s.@(model: s.model.@(gates: Grid<Gate@>.Delete(s.model.gates, MouseTile(s)))),
             gate: {
                 Coord@ tile = MouseTile(s);
-                s.@(model: s.model.@(gates: Grid.Insert(s.model.gates, tile, s.selected.gate)));
+                s.@(model: s.model.@(gates: Grid<Gate@>.Insert(s.model.gates, tile, s.selected.gate)));
             },
             anticar: {
                 Coord@ tile = MouseTile(s);
                 s.@(model: s.model.@(
                     s: s.model.s.@(
-                    cars: Grid.Delete(s.model.s.cars, tile))));
+                    cars: Grid<Car@>.Delete(s.model.s.cars, tile))));
             },
             car: {
                 Coord@ tile = MouseTile(s);
                 s.@(model: s.model.@(
                     s: s.model.s.@(
-                    cars: Grid.Insert(s.model.s.cars, tile, s.selected.car))));
+                    cars: Grid<Car@>.Insert(s.model.s.cars, tile, s.selected.car))));
             }));
     });
 
@@ -320,7 +320,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
   String@ file = args.?(items: args.items.head, empty: Str|'model.ct');
   Maybe@<In@<M@>> istream := m.do(read(file));
   Model@ model := m.do({
-      istream.?(nothing: m.return(Model(Grid.Empty<Gate@>, Grid.Empty<Car@>)));
+      istream.?(nothing: m.return(Model(Grid<Gate@>.Empty, Grid<Car@>.Empty)));
       String@ text := m.do(GetText(m, istream.just));
       m.return(/Computrainer/Model/Load%.Model(text));
   });

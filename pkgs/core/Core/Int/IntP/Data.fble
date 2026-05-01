@@ -1,7 +1,7 @@
 
-Data@, Bit@ .= /Core/Data2%;
+Data@ .= /Core/Data2%;
 IntP@ .= /Std/Int/IntP%;
-Return, Do .= /Std/Stream%;
+Do .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 Data@<IntP@> Data = (IntP@ x) {

@@ -71,7 +71,7 @@ AddCar = (List@<String@> args, Model@ m) {
       x: /Std/Maybe%.Get(Int|0, /Std/Int/Parse%.Int(x)),
       y: /Std/Maybe%.Get(Int|0, /Std/Int/Parse%.Int(y)));
     Car@ car = ReadCar(v);
-    m.@(s: m.s.@(cars: Grid.Insert(m.s.cars, coord, car)));
+    m.@(s: m.s.@(cars: Grid<Car@>.Insert(m.s.cars, coord, car)));
 };
 
 (String@) { Dir@; }
@@ -104,7 +104,7 @@ AddGate = (List@<String@> args, Model@ m) {
         StrIs|'filter'(g).?(true: Gate.Filter(ReadCar(Get(args, 3)), ReadDir(Get(args, 4)), ReadDir(Get(args, 5))));
         /Std/Undef%.Undef.undef<Gate@>;
     };
-    m.@(gates: Grid.Insert(m.gates, coord, gate));
+    m.@(gates: Grid<Gate@>.Insert(m.gates, coord, gate));
 };
 
 (List@<String@>, Model@) { Model@; }
@@ -116,7 +116,7 @@ Routing = (List@<String@> args, Model@ m) {
       x: /Std/Maybe%.Get(0, /Std/Int/Parse%.Int(x)),
       y: /Std/Maybe%.Get(0, /Std/Int/Parse%.Int(y)));
     Dir@ dir = ReadDir(d);
-    m.@(s: m.s.@(routing: Grid.Insert(m.s.routing, coord, dir)));
+    m.@(s: m.s.@(routing: Grid<Dir@>.Insert(m.s.routing, coord, dir)));
 };
 
 (String@, Model@) { Model@; }
@@ -136,7 +136,7 @@ DoLine = (String@ line, Model@ m) {
 
 (String@) { Model@; }
 Model = (String@ lines) {
-    Model@ empty = /Computrainer/Model%.Model(Grid.Empty<Gate@>, Grid.Empty<Car@>);
+    Model@ empty = /Computrainer/Model%.Model(Grid<Gate@>.Empty, Grid<Car@>.Empty);
     /Std/List%.ForEach(SplitLines(lines), empty, DoLine);
 };
 

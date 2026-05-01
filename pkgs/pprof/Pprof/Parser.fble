@@ -35,25 +35,25 @@ Result@ = /Pprof/Result%.Result@;
 #   List of parsed sample types to extract from.
 #  @arg[List@<String@>][metrics] List of already extracted metrics.
 #  @returns[List@<String@>] The complete list of extracted metrics.
-(Map.Map@<String@>, List@<StringId@>, List@<String@>) { List@<String@>; }
+(Map<String@>.Map@, List@<StringId@>, List@<String@>) { List@<String@>; }
 Metrics = (
-  Map.Map@<String@> strings,
+  Map<String@>.Map@ strings,
   List@<StringId@> sample_types,
   List@<String@> metrics) {
   sample_types.?(empty: metrics);
 
   StringId@ sample_type = sample_types.items.head;
-  String@ metric = Map.Lookup(strings, sample_type).just;
+  String@ metric = Map<String@>.Lookup(strings, sample_type).just;
   Metrics(strings, sample_types.items.tail, Items(metric, metrics));
 };
 
 # Extracts info about a block from the profile.
 (ProtoProfile@, Location@) { Block@; }
 Block = (ProtoProfile@ parsed, Location@ location) {
-  Function@ function = Map.Lookup(parsed.functions, location.func_id).just;
+  Function@ function = Map<Function@>.Lookup(parsed.functions, location.func_id).just;
 
-  String@ name = Map.Lookup(parsed.strings, function.name).just;
-  String@ file = Map.Lookup(parsed.strings, function.file).just;
+  String@ name = Map<String@>.Lookup(parsed.strings, function.name).just;
+  String@ file = Map<String@>.Lookup(parsed.strings, function.file).just;
   Int@ line = location.line;
   Int@ column = location.col;
   @(name, file, line, column);
@@ -61,9 +61,9 @@ Block = (ProtoProfile@ parsed, Location@ location) {
 
 (ProtoProfile@) { Blocks@; }
 Blocks = (ProtoProfile@ parsed) {
-  Map.ForEach(parsed.locations, Map.Empty<Block@>,
+  Map<Location@>.ForEach(parsed.locations, Map<Block@>.Empty,
     (LocationId@ id, Location@ location, Blocks@ blocks) {
-       Map.Insert(blocks, id, Block(parsed, location));
+       Map<Block@>.Insert(blocks, id, Block(parsed, location));
     });
 };
 

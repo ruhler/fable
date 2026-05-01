@@ -1,8 +1,6 @@
 
 Eq@ = /Std/Eq%.Eq@;
 
-Map = /Core/Map/Data%.Map(/Hwdg/Addr%.Data);
-
 Memory@ = /Hwdg/Memory%.Memory@;
 
 Eq@<Memory@> Eq = /Core/Map/Eq%.Eq(/Hwdg/Addr/Eq%.Eq, /Hwdg/Data/Eq%.Eq);

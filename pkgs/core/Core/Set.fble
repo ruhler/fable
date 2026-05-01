@@ -35,13 +35,13 @@ ForEach = <@ K@>(Set@<K@> set)<@ B@>(B@ base, (K@, B@) { B@; } body) {
 };
 
 Set = <@ K@>(Data@<K@> data) {
-  Map = /Core/Map/Data%.Map(data);
+  Map = /Core/Map/Data%.Map(data)<Unit@>;
 
   Set@ .= @(Set@: Set@<K@>);
 
   # Empty -- 
   #   The empty set.
-  Set@ Empty = Map.Empty<Unit@>;
+  Set@ Empty = Map.Empty;
 
   # IsEmpty --
   #   Check if a set is empty.
@@ -54,7 +54,7 @@ Set = <@ K@>(Data@<K@> data) {
   #
   # Returns:
   #   True if the set is empty, false otherwise.
-  (Set@) { Bool@; } IsEmpty = Map.IsEmpty<Unit@>;
+  (Set@) { Bool@; } IsEmpty = Map.IsEmpty;
 
   # Contains --
   #   Test whether an element exists in a set.
@@ -112,7 +112,7 @@ Set = <@ K@>(Data@<K@> data) {
   # Example Use:
   #   % Delete = /Set%.Delete<String@>(/Core/String/Ord%.Ord);
   #   Delete(set, Str(Chars|foo));
-  (Set@, K@) { Set@; } Delete = Map.Delete<Unit@>;
+  (Set@, K@) { Set@; } Delete = Map.Delete;
 
 
   @(Set@, Empty, IsEmpty, Contains, Insert, Delete, ForEach: ForEach<K@>);

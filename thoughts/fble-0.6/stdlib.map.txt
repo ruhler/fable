@@ -554,3 +554,20 @@ try to start with not changing the traversal order?
 Hmm... Seems just as bad regardless, aside from the SIG 2. So performance
 doesn't feel too good with my new map implementation. Tough. Will need to
 think about what to do here.
+
+---
+
+This is worth taking the time to understand. I bet it's the difference between
+iterating directly over the bits of IntP@ and doing all these function
+allocations to enable putting of double the number of bits and traversal.
+
+---
+
+Exporting Map%.Map as a thing which takes a value directly seems to be working
+well. Convenient for struct import. In the rare case when I want to have maps
+with same key but different value, I can do Map<A@>.Foo and Map<B@>.Foo
+everywhere to pass the value type.
+
+Except for computrainer, which uses Grid heavily, and so now where we could
+rely on type inference before for most things, we no longer can.
+

@@ -37,7 +37,7 @@ Model = (Gates@ gates, Cars@ cars) {
 # Run activation for a gate, if any.
 (Gates@, State@) { State@; }
 GoGates = (Gates@ gates, State@ state) {
-    Grid.ForEach(gates, state, (Coord@ c, Gate@ g, State@ s) { Gate.Action(g, c, s); });
+    Grid<Gate@>.ForEach(gates, state, (Coord@ c, Gate@ g, State@ s) { Gate.Action(g, c, s); });
 };
 
 # Try advancing each of the engines in the list.
@@ -51,13 +51,13 @@ GoEngines = (Gates@ gates) {
     # nothing that wants moving.
     (Coord@, State@) { Maybe@<State@>; }
     GoAt = (Coord@ c, State@ s) {
-        Maybe@<Gate@> mg = Grid.Lookup(gates, c);
+        Maybe@<Gate@> mg = Grid<Gate@>.Lookup(gates, c);
 
         # We can't go to or at an empty tile.
         mg.?(nothing: Nothing<State@>);
         Gate@ g = mg.just;
 
-        Maybe@<Car@> mv = Grid.Lookup(s.cars, c);
+        Maybe@<Car@> mv = Grid<Car@>.Lookup(s.cars, c);
         Bool@ engine = {
             mv.?(nothing: False);
             mv.just.?(C: True);
@@ -74,7 +74,7 @@ GoEngines = (Gates@ gates) {
     # Does nothing if the engine is unable to advance.
     (Coord@, State@) { State@; }
     GoEngine = (Coord@ e, State@ s) {
-        Maybe@<Gate@> mg = Grid.Lookup(gates, e);
+        Maybe@<Gate@> mg = Grid<Gate@>.Lookup(gates, e);
         mg.?(nothing: s);
         Maybe@<State@> ms = Gate.Push(mg.just, GoAt, e, Just(Cars.C), s);
         ms.?(just: ms.just, nothing: s);
@@ -97,7 +97,7 @@ Tick = (Model@ m) {
         # Get the list of engines on the grid and try to move each on forward.
         # TODO: Who knows what order the engines come back in. Maybe we want to
         # make this more fair at some point.
-        List@<Coord@> engines = Grid.ForEach(m.s.cars, Empty<Coord@>,
+        List@<Coord@> engines = Grid<Car@>.ForEach(m.s.cars, Empty<Coord@>,
             (Coord@ k, Car@ v, List@<Coord@> es) {
                 v.?(C: Items(k, es), : es);
             });

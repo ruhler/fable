@@ -10,19 +10,15 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Addr@ = /Hwdg/Addr%.Addr@;
 Data@ = /Hwdg/Data%.Data@;
 
-Map = /Core/Map/Data%.Map(/Hwdg/Addr%.Data);
+Map@, ForEach, Insert, Lookup, Empty .= /Core/Map/Data%.Map(/Hwdg/Addr%.Data)<Data@>;
 
-Memory@ = Map.Map@<Data@>;
-
-# Empty -- 
-#   A completely empty memory.
-Memory@ Empty = Map.Empty<Data@>;
+Memory@ = Map@;
 
 # Insert all values from 'v' into 'm'.
 (Memory@, Memory@) { Memory@; }
 Override = (Memory@ m, Memory@ v) {
-    Map.ForEach(v, m, (Addr@ k, Data@ v, Memory@ s) {
-        Map.Insert(s, k, v);
+    ForEach(v, m, (Addr@ k, Data@ v, Memory@ s) {
+        Insert(s, k, v);
     });
 };
 
@@ -30,9 +26,9 @@ Override = (Memory@ m, Memory@ v) {
 (Memory@, Memory@) { Bool@; }
 Disjoint = (Memory@ a, Memory@ b) {
     # TODO: avoid iterating as soon as we find something in common.
-    Map.ForEach(a, True, (Addr@ k, Data@ _, Bool@ disjoint) {
+    ForEach(a, True, (Addr@ k, Data@ _, Bool@ disjoint) {
         disjoint.?(false: False);
-        Map.Lookup(b, k).?(just: False);
+        Lookup(b, k).?(just: False);
         True;
     });
 };
@@ -40,18 +36,13 @@ Disjoint = (Memory@ a, Memory@ b) {
 # Return true if the first memory contains the second.
 (Memory@, Memory@) { Bool@; }
 Contains = (Memory@ a, Memory@ b) {
-    Map.ForEach(b, True, (Addr@ k, Data@ vb, Bool@ contains) {
+    ForEach(b, True, (Addr@ k, Data@ vb, Bool@ contains) {
         contains.?(false: False);
-        Maybe@<Data@> mva = Map.Lookup(a, k);
+        Maybe@<Data@> mva = Lookup(a, k);
         mva.?(nothing: False);
         /Hwdg/Data/Eq%.Eq(vb, mva.just).?(false: False);
         True;
     });
-};
-
-(Memory@)<@ B@>(B@, (Addr@, Data@, B@) { B@; }) { B@; }
-ForEach = (Memory@ m)<@ B@>(B@ b, (Addr@, Data@, B@) { B@; } f) {
-    Map.ForEach(m, b, f);
 };
 
 # Memory literal. For example:
@@ -61,7 +52,7 @@ ForEach = (Memory@ m)<@ B@>(B@ b, (Addr@, Data@, B@) { B@; } f) {
 Memory = (List@<Addr@> addrs, List@<Data@> data) {
     addrs.?(empty: Empty);
     Memory@ tail = Memory(addrs.items.tail, data.items.tail);
-    Map.Insert(tail, addrs.items.head, data.items.head);
+    Insert(tail, addrs.items.head, data.items.head);
 };
 
 @(Memory@, Empty, Memory, Override, Disjoint, Contains, ForEach);

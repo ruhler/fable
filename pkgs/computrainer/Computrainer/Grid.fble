@@ -20,26 +20,26 @@ Data@<Coord@> CoordData = (Coord@ x) {
 
 Grid = /Core/Map/Data%.Map(CoordData);
 
-Grid@ = <@ T@> { Grid.Map@<T@>; };
+Grid@ = <@ T@> { Grid<T@>.Map@; };
 
 Entry@ = <@ T@> { *(Int@ x, Int@ y, T@ v); };
 
 <@ T@>(List@<Entry@<T@>>) { Grid@<T@>; }
 Entries = <@ T@>(List@<Entry@<T@>> xs) {
-    xs.?(empty: Grid.Empty<T@>);
+    xs.?(empty: Grid<T@>.Empty);
     Entry@<T@> head = xs.items.head;
-    Grid.Insert(Entries(xs.items.tail), Coord@(head.x, head.y), head.v);
+    Grid<T@>.Insert(Entries(xs.items.tail), Coord@(head.x, head.y), head.v);
 };
 
 # Helper for making grid literals.
 # You specify the coordinates of the first provided value, then a bunch of
 # subsequent values on the same row continuous to the right. It fills in the
 # grid for you.
-(Int@, Int@)<@ T@>(List@<Maybe@<T@>>, Grid.Map@<T@>) { Grid.Map@<T@>; }
-Row = (Int@ x, Int@ y)<@ T@>(List@<Maybe@<T@>> xs, Grid.Map@<T@> g) { 
+(Int@, Int@)<@ T@>(List@<Maybe@<T@>>, Grid<T@>.Map@) { Grid<T@>.Map@; }
+Row = (Int@ x, Int@ y)<@ T@>(List@<Maybe@<T@>> xs, Grid<T@>.Map@ g) { 
     xs.?(empty: g);
-    Grid.Map@<T@> inserted = xs.items.head.?(
-        just: Grid.Insert(g, Coord@(x, y), xs.items.head.just),
+    Grid<T@>.Map@ inserted = xs.items.head.?(
+        just: Grid<T@>.Insert(g, Coord@(x, y), xs.items.head.just),
         nothing: g);
     Row(Incr(x), y, xs.items.tail, inserted);
 };
@@ -47,9 +47,9 @@ Row = (Int@ x, Int@ y)<@ T@>(List@<Maybe@<T@>> xs, Grid.Map@<T@> g) {
 # Helper for making grid literals.
 # You specify the coordinates of the upper left most provided value, then
 # provide a bunch of subsequent (lower down) rows. It fills in the grid for you.
-(Int@, Int@)<@ T@>(List@<List@<Maybe@<T@>>>) { Grid.Map@<T@>; }
+(Int@, Int@)<@ T@>(List@<List@<Maybe@<T@>>>) { Grid<T@>.Map@; }
 Rows = (Int@ x, Int@ y)<@ T@>(List@<List@<Maybe@<T@>>> xs) { 
-    xs.?(empty: Grid.Empty<T@>);
+    xs.?(empty: Grid<T@>.Empty);
     Row(x, y, xs.items.head, Rows(x, Decr(y), xs.items.tail));
 };
 

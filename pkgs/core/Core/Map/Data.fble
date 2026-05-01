@@ -50,46 +50,44 @@ ForEach = <@ K@, @ V@>(Map@<K@, V@> map)<@ B@>(B@ base, (K@, V@, B@) { B@; } bod
   });
 };
 
-Map = <@ Key@>(Data@<Key@> data) {
-  Map@ .= @(Map@: Map@<Key@>);
+Map = <@ Key@>(Data@<Key@> data)<@ V@> {
+  Map@ .= @(Map@: Map@<Key@, V@>);
 
   # The empty map.
-  Map@ Empty = <@ V@> {
-    Map@<V@>(empty: Unit);
-  };
+  Map@ Empty = Map@(empty: Unit);
 
   # Returns true if the map is empty.
-  <@ V@>(Map@<V@>) { Bool@; }
-  IsEmpty = <@ V@>(Map@<V@> map) {
+  (Map@) { Bool@; }
+  IsEmpty = (Map@ map) {
     map.?(empty: True);
     False;
   };
 
   # Lookup a value in a map. Returns the value if present, Nothing otherwise.
-  <@ V@>(Map@<V@>, Key@) { Maybe@<V@>; }
-  Lookup = <@ V@>(Map@<V@> map, Key@ key) {
+  (Map@, Key@) { Maybe@<V@>; }
+  Lookup = (Map@ map, Key@ key) {
     # Given a map to look up in, returns the leaf map node where the entry
     # should be found.
-    S@ = (Map@<V@>) { Map@<V@>; };
+    S@ = (Map@) { Map@; };
 
-    return = (Map@<V@> m) { m; };
+    return = (Map@ m) { m; };
 
-    do = (S@ a, Lazy@<S@> b, Map@<V@> m) {
+    do = (S@ a, Lazy@<S@> b, Map@ m) {
       m.?(empty: m);
-      Map@<V@> ma = a(m);
+      Map@ ma = a(m);
       ma.?(empty: ma);
       b(Unit, ma);
     };
 
-    put = (Int@ x, Map@<V@> m) {
-      m.?(empty: m, entry: Empty<V@>);
+    put = (Int@ x, Map@ m) {
+      m.?(empty: m, entry: Empty);
 
-      Maybe@<Map@<V@>> child = IntMap.Lookup(m.children, x);
-      child.?(nothing: Empty<V@>);
+      Maybe@<Map@> child = IntMap.Lookup(m.children, x);
+      child.?(nothing: Empty);
       child.just;
     };
 
-    Map@<V@> lookup = data(key, Channel@(return, do, put), map);
+    Map@ lookup = data(key, Channel@(return, do, put), map);
     lookup.?(empty: Nothing<V@>);
 
     # If lookup.value access fails with wrong tag, it means your data type
@@ -99,11 +97,11 @@ Map = <@ Key@>(Data@<Key@> data) {
 
   # Insert a value into a map, taking into account whatever existing value is
   # in the map for the given key.
-  <@ V@>(Map@<V@>, Key@, (Maybe@<V@>) { V@; }) { Map@<V@>; }
-  InsertWith = <@ V@>(Map@<V@> map, Key@ key, (Maybe@<V@>) { V@; } with) {
+  (Map@, Key@, (Maybe@<V@>) { V@; }) { Map@; }
+  InsertWith = (Map@ map, Key@ key, (Maybe@<V@>) { V@; } with) {
     # Given a function that modifies the map at the current location, returns
     # the final modified map at the root location.
-    Modify@ = ((Map@<V@>) { Map@<V@>; }) { Map@<V@>; };
+    Modify@ = ((Map@) { Map@; }) { Map@; };
 
     S@ = (Modify@) { Modify@; };
 
@@ -113,32 +111,32 @@ Map = <@ Key@>(Data@<Key@> data) {
       b(Unit, a(current));
     };
 
-    put = (Int@ x, Modify@ modify_current, (Map@<V@>) { Map@<V@>; } modify_child) {
-      Map@<V@> current := modify_current;
+    put = (Int@ x, Modify@ modify_current, (Map@) { Map@; } modify_child) {
+      Map@ current := modify_current;
 
-      IntMap.Map@<Map@<V@>> children = {
-        current.?(empty: IntMap.Empty<Map@<V@>>);
+      IntMap.Map@<Map@> children = {
+        current.?(empty: IntMap.Empty<Map@>);
 
         # If current.children access fails with wrong tag, it means your data
         # type didn't satisfy the prefix code requirement.
         current.children;
       };
 
-      IntMap.Map@<Map@<V@>> nchildren = {
-        Maybe@<Map@<V@>> mchild := IntMap.InsertWith(children, x);
+      IntMap.Map@<Map@> nchildren = {
+        Maybe@<Map@> mchild := IntMap.InsertWith(children, x);
         modify_child({
           mchild.?(just: mchild.just);
-          Empty<V@>;
+          Empty;
         });
       };
 
       Map@(children: nchildren);
     };
 
-    Modify@ modify_root = ((Map@<V@>) { Map@<V@>; } f) { f(map); };
+    Modify@ modify_root = ((Map@) { Map@; } f) { f(map); };
     Modify@ modify_leaf = data(key, Channel@(return, do, put), modify_root);
 
-    modify_leaf((Map@<V@> leaf) {
+    modify_leaf((Map@ leaf) {
       V@ value = with({
         leaf.?(empty: Nothing<V@>);
 
@@ -152,18 +150,18 @@ Map = <@ Key@>(Data@<Key@> data) {
   };
 
   # Insert a value into a map.
-  <@ V@>(Map@<V@>, Key@, V@) { Map@<V@>; }
-  Insert = <@ V@>(Map@<V@> map, Key@ key, V@ value) {
+  (Map@, Key@, V@) { Map@; }
+  Insert = (Map@ map, Key@ key, V@ value) {
     InsertWith(map, key, (Maybe@<V@> _) { value; });
   };
 
   # Remove a value from the map if it is present.
-  <@ V@>(Map@<V@>, Key@) { Map@<V@>; }
-  Delete = <@ V@>(Map@<V@> map, Key@ key) {
+  (Map@, Key@) { Map@; }
+  Delete = (Map@ map, Key@ key) {
     # Given a function that optionally modifies the map at the current
     # location, returns the final modified map at the root location.
     # The modification may remove elements.
-    Modify@ = ((Map@<V@>) { Maybe@<Map@<V@>>; }) { Map@<V@>; };
+    Modify@ = ((Map@) { Maybe@<Map@>; }) { Map@; };
 
     S@ = (Modify@) { Modify@; };
 
@@ -173,45 +171,45 @@ Map = <@ Key@>(Data@<Key@> data) {
       b(Unit, a(current));
     };
 
-    put = (Int@ x, Modify@ modify_current, (Map@<V@>) { Maybe@<Map@<V@>>; } modify_child) {
-      Map@<V@> current := modify_current;
-      current.?(empty: Nothing<Map@<V@>>);
+    put = (Int@ x, Modify@ modify_current, (Map@) { Maybe@<Map@>; } modify_child) {
+      Map@ current := modify_current;
+      current.?(empty: Nothing<Map@>);
 
       # If current.children access fails with wrong tag, it means your data
       # type didn't satisfy the prefix code requirement.
-      Maybe@<Map@<V@>> mchild = IntMap.Lookup(current.children, x);
-      mchild.?(nothing: Nothing<Map@<V@>>);
+      Maybe@<Map@> mchild = IntMap.Lookup(current.children, x);
+      mchild.?(nothing: Nothing<Map@>);
 
-      Maybe@<Map@<V@>> nchild = modify_child(mchild.just);
-      nchild.?(nothing: Nothing<Map@<V@>>);
+      Maybe@<Map@> nchild = modify_child(mchild.just);
+      nchild.?(nothing: Nothing<Map@>);
 
       nchild.just.?(empty: {
-        IntMap.Map@<Map@<V@>> nchildren = IntMap.Delete(current.children, x);
-        IntMap.IsEmpty(nchildren).?(true: Just(Empty<V@>));
+        IntMap.Map@<Map@> nchildren = IntMap.Delete(current.children, x);
+        IntMap.IsEmpty(nchildren).?(true: Just(Empty));
         Just(Map@(children: nchildren));
       });
 
-      IntMap.Map@<Map@<V@>> nchildren = IntMap.Insert(current.children, x, nchild.just);
+      IntMap.Map@<Map@> nchildren = IntMap.Insert(current.children, x, nchild.just);
       Just(Map@(children: nchildren));
     };
 
-    Modify@ modify_root = ((Map@<V@>) { Maybe@<Map@<V@>>; } f) {
+    Modify@ modify_root = ((Map@) { Maybe@<Map@>; } f) {
       Get(map, f(map));
     };
 
     Modify@ modify_leaf = data(key, Channel@(return, do, put), modify_root);
 
-    modify_leaf((Map@<V@> leaf) {
+    modify_leaf((Map@ leaf) {
       # If you get undef here, then your data type violates the prefix
       # property.
-      leaf.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@<V@>>>);
+      leaf.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@>>);
 
-      leaf.?(empty: Nothing<Map@<V@>>);
-      Just(Empty<V@>);
+      leaf.?(empty: Nothing<Map@>);
+      Just(Empty);
     });
   };
 
-  ForEach .= @(ForEach: ForEach<Key@>);
+  ForEach .= @(ForEach: ForEach<Key@, V@>);
 
   @(
     Map@, Key@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach

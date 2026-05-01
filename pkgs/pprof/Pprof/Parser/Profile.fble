@@ -39,18 +39,18 @@ Function@ = *(FunctionId@ id, StringId@ name, StringId@ file);
 Profile@ = *(
   List@<StringId@> sample_types,          # reverse order
   List@<Sample@> samples,                 # reverse order
-  Map.Map@<Location@> locations,
-  Map.Map@<Function@> functions,
-  Map.Map@<String@> strings,
+  Map<Location@>.Map@ locations,
+  Map<Function@>.Map@ functions,
+  Map<String@>.Map@ strings,
   StringId@ next_string_id
 );
 
 Profile@ EmptyProfile = Profile@(
   Empty<StringId@>,
   Empty<Sample@>,
-  Map.Empty<Location@>,
-  Map.Empty<Function@>,
-  Map.Empty<String@>,
+  Map<Location@>.Empty,
+  Map<Function@>.Empty,
+  Map<String@>.Empty,
   0
 );
 
@@ -168,7 +168,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   LocationField = (Profile@ profile, Payload@ payload) {
     Int@ length := m.do(LengthFor(payload, Str|'location'));
     Location@ location := m.do(p.Message(Location@(0, 0, 0, 0), LocationFields, length));
-    Map.Map@<Location@> locations = Map.Insert(profile.locations, location.id, location);
+    Map<Location@>.Map@ locations = Map<Location@>.Insert(profile.locations, location.id, location);
     m.return(profile.@(locations));
   };
 
@@ -197,7 +197,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   FunctionField = (Profile@ profile, Payload@ payload) {
     Int@ length := m.do(LengthFor(payload, Str|'function'));
     Function@ function := m.do(p.Message(Function@(0, 0, 0), FunctionFields, length));
-    Map.Map@<Function@> functions = Map.Insert(profile.functions, function.id, function);
+    Map<Function@>.Map@ functions = Map<Function@>.Insert(profile.functions, function.id, function);
     m.return(profile.@(functions));
   };
 
@@ -205,7 +205,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   StringField = (Profile@ profile, Payload@ payload) {
     Int@ length := m.do(LengthFor(payload, Str|'string_table'));
     String@ str := m.do(p.String(length));
-    Map.Map@<String@> strings = Map.Insert(profile.strings,
+    Map<String@>.Map@ strings = Map<String@>.Insert(profile.strings,
       profile.next_string_id, str);
     Int@ next_string_id = Incr(profile.next_string_id);
     m.return(profile.@(strings, next_string_id));

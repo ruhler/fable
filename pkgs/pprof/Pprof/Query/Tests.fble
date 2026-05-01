@@ -39,7 +39,7 @@ B = (BlockId@ id, String@ name, String@ file, Int@ line, Int@ column) {
 
 (List@<Entry@>) { Blocks@; }
 Inserts = (List@<Entry@> xs) {
-  xs.?(empty: Blocks.Empty<Block@>);
+  xs.?(empty: Blocks.Empty);
   Entry@ entry = xs.items.head;
   Blocks.Insert(Inserts(xs.items.tail), entry.id, entry.block);
 };

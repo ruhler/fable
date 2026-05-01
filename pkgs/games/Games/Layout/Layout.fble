@@ -32,8 +32,6 @@ Nothing = /Std/Maybe%.Nothing;
 Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
 
-Map = /Core/Map/Data%.Map(/Core/Int/Data%.Data);
-
 Success = /Std/Io/Cli%.Success;
 
 String@ = /Std/String%.String@;
@@ -63,7 +61,8 @@ Node@ = Int@;
 Pos@ = *(Int@ x, Int@ y);
 
 # A layout is the mapping from node id to position.
-Layout@ = Map.Map@<Pos@>;
+Map = /Core/Map/Data%.Map(/Core/Int/Data%.Data)<Pos@>;
+Layout@ = Map.Map@;
 
 # An edge from node a to node b.
 Edge@ = *(Node@ a, Node@ b);
@@ -259,7 +258,7 @@ Draw = (State@ s) {
 # Create an initial layout for the n'th node and beyond.
 (Int@) { Layout@; }
 InitLayout = (Int@ n) {
-  /Std/Int/Eq%.Eq(n, NumNodes).?(true: Map.Empty<Pos@>);
+  /Std/Int/Eq%.Eq(n, NumNodes).?(true: Map.Empty);
   QR@ qr = /Std/Int/Div%.Div(n, Cols);
   Pos@ pos = @(x: qr.r, y: qr.q);
   Layout@ tail = InitLayout(Incr(n));

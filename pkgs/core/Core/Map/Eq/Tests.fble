@@ -22,20 +22,13 @@ Int@ A = Int|0;
 Int@ B = Int|1;
 Int@ C = Int|2;
 
-Map = /Core/Map/Data%.Map(/Core/Int/Data%.Data);
-Map@ = Map.Map@;
-Empty = Map.Empty;
-Insert = Map.Insert;
-Delete = Map.Delete;
-
+Map@, Empty, Insert, Delete .= /Core/Map/Data%.Map(/Core/Int/Data%.Data)<Bool@>;
 Eq = /Core/Map/Eq%.Eq(/Std/Int/Eq%.Eq);
 
 Test@ Tests = TestSuite(Str|Eq, List[
   Test(Str|'eq: equal', (Unit@ _) {
-    Map@<Bool@> a = Insert(Insert(Insert(
-          Empty<Bool@>, A, True), B, False), C, False);
-    Map@<Bool@> b = Insert(Insert(Insert(
-          Empty<Bool@>, A, True), B, False), C, False);
+    Map@ a = Insert(Insert(Insert(Empty, A, True), B, False), C, False);
+    Map@ b = Insert(Insert(Insert(Empty, A, True), B, False), C, False);
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
@@ -43,10 +36,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
   }),
 
   Test(Str|'eq: value mismatch', (Unit@ _) {
-    Map@<Bool@> a = Insert(Insert(Insert(
-          Empty<Bool@>, A, True), B, True), C, False);
-    Map@<Bool@> b = Insert(Insert(Insert(
-          Empty<Bool@>, A, True), B, False), C, False);
+    Map@ a = Insert(Insert(Insert(Empty, A, True), B, True), C, False);
+    Map@ b = Insert(Insert(Insert(Empty, A, True), B, False), C, False);
 
     Bool@ wnt = False;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
@@ -54,9 +45,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
   }),
 
   Test(Str|'eq: different number of elements', (Unit@ _) {
-    Map@<Bool@> a = Insert(Insert(Insert(
-          Empty<Bool@>, A, True), B, False), C, False);
-    Map@<Bool@> b = Insert(Insert(Empty<Bool@>, A, True), B, False);
+    Map@ a = Insert(Insert(Insert(Empty, A, True), B, False), C, False);
+    Map@ b = Insert(Insert(Empty, A, True), B, False);
 
     Bool@ wnt = False;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
@@ -64,8 +54,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
   }),
 
   Test(Str|'eq: deleted to empty', (Unit@ _) {
-    Map@<Bool@> a = Delete(Insert(Empty<Bool@>, A, True), A);
-    Map@<Bool@> b = Empty<Bool@>;
+    Map@ a = Delete(Insert(Empty, A, True), A);
+    Map@ b = Empty;
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
@@ -73,8 +63,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
   }),
 
   Test(Str|'eq: empty from deleted', (Unit@ _) {
-    Map@<Bool@> a = Empty<Bool@>;
-    Map@<Bool@> b = Delete(Insert(Empty<Bool@>, A, True), A);
+    Map@ a = Empty;
+    Map@ b = Delete(Insert(Empty, A, True), A);
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
@@ -82,8 +72,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
   }),
 
   Test(Str|'eq: empty from deleted pair second', (Unit@ _) {
-    Map@<Bool@> a = Insert(Empty<Bool@>, A, True);
-    Map@<Bool@> b = Delete(Insert(a, B, True), B);
+    Map@ a = Insert(Empty, A, True);
+    Map@ b = Delete(Insert(a, B, True), B);
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
@@ -91,8 +81,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
   }),
 
   Test(Str|'eq: empty from deleted pair first', (Unit@ _) {
-    Map@<Bool@> a = Insert(Empty<Bool@>, A, True);
-    Map@<Bool@> b = Delete(Insert(a, C, True), C);
+    Map@ a = Insert(Empty, A, True);
+    Map@ b = Delete(Insert(a, C, True), C);
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
@@ -100,10 +90,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
   }),
 
   Test(Str|'eq: equal any order', (Unit@ _) {
-    Map@<Bool@> a = Insert(Insert(Insert(
-          Empty<Bool@>, B, False), C, False), A, True);
-    Map@<Bool@> b = Insert(Insert(Insert(
-          Empty<Bool@>, A, True), B, False), C, False);
+    Map@ a = Insert(Insert(Insert(Empty, B, False), C, False), A, True);
+    Map@ b = Insert(Insert(Insert(Empty, A, True), B, False), C, False);
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);

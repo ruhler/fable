@@ -26,7 +26,7 @@ Dir = (Dir@ d) {
 
 (Gates@) { Stream@; }
 Gates = (Gates@ gates) {
-    Grid.ForEach(gates, Return, (Coord@ c, Gate@ g, Stream@ out) {
+    Grid<Gate@>.ForEach(gates, Return, (Coord@ c, Gate@ g, Stream@ out) {
         Stream@ head = Format|'gate %s %s '[
             /Std/Int/Show%.Show(c.x),
             /Std/Int/Show%.Show(c.y)
@@ -47,7 +47,7 @@ Gates = (Gates@ gates) {
 
 (Cars@) { Stream@; }
 Cars = (Cars@ cars) {
-    Grid.ForEach(cars, Return, (Coord@ c, Car@ car, Stream@ out) {
+    Grid<Car@>.ForEach(cars, Return, (Coord@ c, Car@ car, Stream@ out) {
         FormatE|'%scar %s %s %s\n'[
             out,
             /Std/Int/Show%.Show(c.x),
@@ -58,7 +58,7 @@ Cars = (Cars@ cars) {
 
 (Grid@<Dir@>) { Stream@; }
 Routing = (Grid@<Dir@> routing) {
-    Grid.ForEach(routing, Return, (Coord@ c, Dir@ dir, Stream@ out) {
+    Grid<Dir@>.ForEach(routing, Return, (Coord@ c, Dir@ dir, Stream@ out) {
         FormatE|'%srouting %s %s %s\n'[
             out,
             /Std/Int/Show%.Show(c.x),
