@@ -29,18 +29,27 @@ IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
 # Lookup a value in a map. Returns the value if present, Nothing otherwise.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
 Lookup = <@ K@>(Data@<K@> data)<@ V@> {
-  put = (Bit@ x, Map@<K@, V@> m) {
-    m.?(empty: m, entry: Empty<K@, V@>);
-    x.?(0: m.children.0, 1: m.children.1);
+  S@ = Map@<K@, V@>;
+  R@ = Maybe@<V@>;
+
+  r = (S@ m) {
+    m.?(empty: Nothing<V@>);
+
+    # If m.value access fails with wrong tag, it means your data type
+    # didn't satisfy the prefix code requirement.
+    Just(m.entry.value);
+  };
+
+  put = (Bit@ x, S@ m, (S@) { R@; } f) {
+    m.?(empty: Nothing<V@>);
+
+    # If m.children access fails with wrong tag, it means your data type
+    # didn't satisfy the prefix code requirement.
+    f(x.?(0: m.children.0, 1: m.children.1));
   };
 
   (Map@<K@, V@> map, K@ key) {
-    Map@<K@, V@> lookup = data(key, map, put);
-    lookup.?(empty: Nothing<V@>);
-
-    # If lookup.value access fails with wrong tag, it means your data type
-    # didn't satisfy the prefix code requirement.
-    Just(lookup.entry.value);
+    data(key, map, r, put);
   };
 };
 
@@ -48,34 +57,26 @@ Lookup = <@ K@>(Data@<K@> data)<@ V@> {
 # in the map for the given key.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>) { V@; }) { Map@<K@, V@>; }
 InsertWith = <@ K@>(Data@<K@> data)<@ V@> {
-  # Given a function that modifies the map at the current location, returns
-  # the final modified map at the root location.
-  Modify@ = ((Map@<K@, V@>) { Map@<K@, V@>; }) { Map@<K@, V@>; };
-  put = (Bit@ x, Modify@ modify_current, (Map@<K@, V@>) { Map@<K@, V@>; } modify_child) {
-    Map@<K@, V@> current := modify_current;
+  S@ = Map@<K@, V@>;
+  R@ = Map@<K@, V@>;
 
+  put = (Bit@ x, S@ m, (S@) { R@; } f) {
     children = {
-      current.?(empty: @(0: Empty<K@, V@>, 1: Empty<K@, V@>));
+      m.?(empty: @(0: Empty<K@, V@>, 1: Empty<K@, V@>));
 
-      # If current.children access fails with wrong tag, it means your data
+      # If m.children access fails with wrong tag, it means your data
       # type didn't satisfy the prefix code requirement.
-      current.children;
+      m.children;
     };
 
-    Map@<K@, V@> child = modify_child({
-      x.?(0: children.0, 1: children.1);
-    });
-
+    Map@<K@, V@> child = f(x.?(0: children.0, 1: children.1));
     x.?(
       0: Map@(children: children.@(0: child)),
       1: Map@(children: children.@(1: child)));
   };
 
   (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
-    Modify@ modify_root = ((Map@<K@, V@>) { Map@<K@, V@>; } f) { f(map); };
-    Modify@ modify_leaf = data(key, modify_root, put);
-
-    modify_leaf((Map@<K@, V@> leaf) {
+    r = (Map@<K@, V@> leaf) {
       V@ value = with({
         leaf.?(empty: Nothing<V@>);
 
@@ -85,7 +86,9 @@ InsertWith = <@ K@>(Data@<K@> data)<@ V@> {
       });
 
       Map@(entry: Entry@(key, value));
-    });
+    };
+
+    data(key, map, r, put);
   };
 };
 
@@ -101,44 +104,41 @@ Delete = <@ K@>(Data@<K@> data)<@ V@> {
   # Given a function that optionally modifies the map at the current
   # location, returns the final modified map at the root location.
   # The modification may remove elements.
-  Modify@ = ((Map@<K@, V@>) { Maybe@<Map@<K@, V@>>; }) { Map@<K@, V@>; };
-  put = (Bit@ x, Modify@ modify_current, (Map@<K@, V@>) { Maybe@<Map@<K@, V@>>; } modify_child) {
-    Map@<K@, V@> current := modify_current;
-    current.?(empty: Nothing<Map@<K@, V@>>);
+  S@ = Map@<K@, V@>;
+  R@ = Maybe@<Map@<K@, V@>>;
 
-    # If current.children access fails with wrong tag, it means your data
+  r = (Map@<K@, V@> leaf) {
+    # If you get undef here, then your data type violates the prefix
+    # property.
+    leaf.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@<K@, V@>>>);
+
+    leaf.?(empty: Nothing<Map@<K@, V@>>);
+    Just(Empty<K@, V@>);
+  };
+
+  put = (Bit@ x, S@ m, (S@) { R@; } f) {
+    m.?(empty: Nothing<Map@<K@, V@>>);
+
+    # If m.children access fails with wrong tag, it means your data
     # type didn't satisfy the prefix code requirement.
-    Map@<K@, V@> child = x.?(0: current.children.0, 1: current.children.1);
-    Maybe@<Map@<K@, V@>> nchild = modify_child(child);
+    Map@<K@, V@> child = x.?(0: m.children.0, 1: m.children.1);
+    Maybe@<Map@<K@, V@>> nchild = f(child);
     nchild.?(nothing: Nothing<Map@<K@, V@>>);
 
     nchild.just.?(empty: {
-      Bool@ empty = x.?(0: IsEmpty(current.children.1), 1: IsEmpty(current.children.0));
+      Bool@ empty = x.?(0: IsEmpty(m.children.1), 1: IsEmpty(m.children.0));
       empty.?(true: Just(Empty<K@, V@>));
 
-      x.?(0: Just(Map@(children: current.children.@(0: Empty<K@, V@>))));
-      Just(Map@(children: current.children.@(1: Empty<K@, V@>)));
+      x.?(0: Just(Map@(children: m.children.@(0: Empty<K@, V@>))));
+      Just(Map@(children: m.children.@(1: Empty<K@, V@>)));
     });
 
-    x.?(0: Just(Map@(children: current.children.@(0: nchild.just))));
-    Just(Map@(children: current.children.@(1: nchild.just)));
+    x.?(0: Just(Map@(children: m.children.@(0: nchild.just))));
+    Just(Map@(children: m.children.@(1: nchild.just)));
   };
 
   (Map@<K@, V@> map, K@ key) {
-    Modify@ modify_root = ((Map@<K@, V@>) { Maybe@<Map@<K@, V@>>; } f) {
-      Get(map, f(map));
-    };
-
-    Modify@ modify_leaf = data(key, modify_root, put);
-
-    modify_leaf((Map@<K@, V@> leaf) {
-      # If you get undef here, then your data type violates the prefix
-      # property.
-      leaf.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@<K@, V@>>>);
-
-      leaf.?(empty: Nothing<Map@<K@, V@>>);
-      Just(Empty<K@, V@>);
-    });
+    Get(map, data(key, map, r, put));
   };
 };
 

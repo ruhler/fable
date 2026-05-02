@@ -7,19 +7,33 @@ Bit@ = +(Unit@ 0, Unit@ 1);
 0 = Bit@(0: Unit);
 1 = Bit@(1: Unit);
 
-Stream@ = <@ S@>(S@, (Bit@, S@) { S@; }) { S@; };
+# Stream@
+#  @arg[@][S@] The type of state of the consumer of the stream.
+#  @arg[S@][s] The initial consumer state.
+#  @arg[@][R@] The type of the result produced by the consumer.
+#  @arg[(S@) { R@; }][r]
+#   The output to produce from the consumer state after consuming the entire
+#   stream.
+#  @arg[(Bit@, S@, (S@) { R@; })][f]
+#   A function that will be called for each element of the stream. It is
+#   passed the element of the stream, the current consumer state, and a
+#   function to call to finish consuming the rest of the elements of the
+#   stream.
+#  @returns[R@] The result produced by the consumer.
+Stream@ = <@ S@>(S@)<@ R@>((S@) { R@; }, (Bit@, S@, (S@) { R@; }) { R@; }) { R@; };
 
 Data@ = <@ A@>(A@) { Stream@; };
 
 (List@<Bit@>) { Stream@; }
-Data = (List@<Bit@> xs)<@ S@>(S@ base, (Bit@, S@) { S@; } body) {
-  xs.?(empty: base);
-  Data(xs.items.tail, body(xs.items.head, base), body);
+Data = (List@<Bit@> xs)<@ S@>(S@ s)<@ R@>((S@) { R@; } r, (Bit@, S@, (S@) { R@; }) { R@; } f) {
+  xs.?(empty: r(s));
+  S@ s := f(xs.items.head, s);
+  Data(xs.items.tail, s, r, f);
 };
 
 (Stream@, Stream@) { Stream@; }
-Append = (Stream@ a, Stream@ b)<@ S@>(S@ base, (Bit@, S@) { S@; } body) {
-  b(a(base, body), body);
+Append = (Stream@ a, Stream@ b)<@ S@>(S@ s)<@ R@>((S@) { R@; } r, (Bit@, S@, (S@) { R@; }) { R@; } f) {
+  a(s, (S@ s) { b(s, r, f); }, f);
 };
 
 @(Bit@, 0, 1, Stream@, Data@, Data, Append);

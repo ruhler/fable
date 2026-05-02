@@ -2,10 +2,21 @@
 Data@, Bit@, 0, 1 .= /Core/Data2%;
 IntP@ .= /Std/Int/IntP%;
 
-Data@<IntP@> Data = (IntP@ x)<@ S@>(S@ base, (Bit@, S@) { S@; } body) {
-  x.?(1: body(0, body(0, base)),
-    2p0: Data(x.2p0, body(1, body(0, base)), body),
-    2p1: Data(x.2p1, body(0, body(1, base)), body));
+Data@<IntP@> Data = (IntP@ x)<@ S@>(S@ s)<@ R@>((S@) { R@; } r, (Bit@, S@, (S@) { R@; }) { R@; } put) {
+  x.?(1: {
+      S@ s := put(0, s);
+      put(0, s, r);
+    },
+    2p0: {
+      S@ s := put(0, s);
+      S@ s := put(1, s);
+      Data(x.2p0, s, r, put);
+    },
+    2p1: {
+      S@ s := put(1, s);
+      S@ s := put(0, s);
+      Data(x.2p1, s, r, put);
+    });
 };
 
 @(Data);

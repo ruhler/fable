@@ -1209,3 +1209,33 @@ Well, that's quite easy, don't you think? But doesn't this look a lot like the
 original version with streams?
 
 Let's try it and see what the performance looks like.
+
+In this case, special case, C@ and R@ are the same and G is Id. Let's stick
+with that for now to keep things simple. We could generalize later.
+
+No. For InsertWith, we need to know when we are done, because we are passing
+in the original map, but we need to modify it. It's not the straight up output
+map.
+
+Nice thing about this approach: We can cut out of Lookup early if we hit
+nothing early. It gives us the ability to easily skip traversal of the rest of
+the stream.
+
+It's interesting, this actually feels like a more direct, cleaner way of
+writing things. Even if it does feel terribly complicated.
+
+Anyway, let's check performance now.
+
+  Time: 1:52.91 ==> 1:53.63 ==> 1:10.58 ==> 0:44.12 ==> 0:39.10
+  Memory: 42668 ==> 43376   ==> 40084   ==> 35564   ==> 32876
+
+A little bit better. Still not there though. We are twice as slow. Maybe
+that's because we are encoding every bit of IntP@ with 2 bits. So maybe that's
+what we expect or have to pay here.
+
+Wait. Why do I need 2 bits for IntP? Is one enough? Probably not... Else how
+do you know when the IntP is ended?
+
+But I should be able to put this to the test anyway, right, because I'm not
+concatenating two IntP@ together anywhere, right?
+
