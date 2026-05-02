@@ -1,9 +1,7 @@
 
 Bool@, True, False .= /Std/Bool%;
 Data@, Bit@ .= /Core/Data2%;
-Lazy@ .= /Std/Lazy%;
 Maybe@, Just, Nothing, Get .= /Std/Maybe%;
-Channel@ .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 # A Map that operates on Data@ types.
@@ -31,26 +29,13 @@ IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
 # Lookup a value in a map. Returns the value if present, Nothing otherwise.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
 Lookup = <@ K@>(Data@<K@> data)<@ V@> {
-  # Given a map to look up in, returns the leaf map node where the entry
-  # should be found.
-  S@ = (Map@<K@, V@>) { Map@<K@, V@>; };
-
-  return = (Map@<K@, V@> m) { m; };
-
-  do = (S@ a, Lazy@<S@> b, Map@<K@, V@> m) {
-    m.?(empty: m);
-    Map@<K@, V@> ma = a(m);
-    ma.?(empty: ma);
-    b(Unit, ma);
-  };
-
   put = (Bit@ x, Map@<K@, V@> m) {
     m.?(empty: m, entry: Empty<K@, V@>);
     x.?(0: m.children.0, 1: m.children.1);
   };
 
   (Map@<K@, V@> map, K@ key) {
-    Map@<K@, V@> lookup = data(key, Channel@(return, do, put), map);
+    Map@<K@, V@> lookup = data(key, map, put);
     lookup.?(empty: Nothing<V@>);
 
     # If lookup.value access fails with wrong tag, it means your data type
@@ -66,15 +51,6 @@ InsertWith = <@ K@>(Data@<K@> data)<@ V@> {
   # Given a function that modifies the map at the current location, returns
   # the final modified map at the root location.
   Modify@ = ((Map@<K@, V@>) { Map@<K@, V@>; }) { Map@<K@, V@>; };
-
-  S@ = (Modify@) { Modify@; };
-
-  return = (Modify@ modify) { modify; };
-
-  do = (S@ a, Lazy@<S@> b, Modify@ current) {
-    b(Unit, a(current));
-  };
-
   put = (Bit@ x, Modify@ modify_current, (Map@<K@, V@>) { Map@<K@, V@>; } modify_child) {
     Map@<K@, V@> current := modify_current;
 
@@ -97,7 +73,7 @@ InsertWith = <@ K@>(Data@<K@> data)<@ V@> {
 
   (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
     Modify@ modify_root = ((Map@<K@, V@>) { Map@<K@, V@>; } f) { f(map); };
-    Modify@ modify_leaf = data(key, Channel@(return, do, put), modify_root);
+    Modify@ modify_leaf = data(key, modify_root, put);
 
     modify_leaf((Map@<K@, V@> leaf) {
       V@ value = with({
@@ -126,15 +102,6 @@ Delete = <@ K@>(Data@<K@> data)<@ V@> {
   # location, returns the final modified map at the root location.
   # The modification may remove elements.
   Modify@ = ((Map@<K@, V@>) { Maybe@<Map@<K@, V@>>; }) { Map@<K@, V@>; };
-
-  S@ = (Modify@) { Modify@; };
-
-  return = (Modify@ modify) { modify; };
-
-  do = (S@ a, Lazy@<S@> b, Modify@ current) {
-    b(Unit, a(current));
-  };
-
   put = (Bit@ x, Modify@ modify_current, (Map@<K@, V@>) { Maybe@<Map@<K@, V@>>; } modify_child) {
     Map@<K@, V@> current := modify_current;
     current.?(empty: Nothing<Map@<K@, V@>>);
@@ -162,7 +129,7 @@ Delete = <@ K@>(Data@<K@> data)<@ V@> {
       Get(map, f(map));
     };
 
-    Modify@ modify_leaf = data(key, Channel@(return, do, put), modify_root);
+    Modify@ modify_leaf = data(key, modify_root, put);
 
     modify_leaf((Map@<K@, V@> leaf) {
       # If you get undef here, then your data type violates the prefix

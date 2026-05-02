@@ -872,3 +872,340 @@ to the abstractions I'm using for composing streams together.
 Step 3: Change the stream type to be a foreach like iteration with no option
 for pausing mid way through.
 
+It's interesting that my 'put' functions are all the same, I just do away with
+return and do functions for the channel.
+
+Anyway, with this change now:
+
+  Time: 1:52.91 ==> 1:53.63 ==> 1:10.58 ==> 0:44.12
+  Memory: 42668 ==> 43376 ==> 40084 ==> 35564
+
+Another decent boost to performance.
+
+We're still a factor of two off. Why? I must be allocating things on the
+critical path still, right?
+
+   6.061% 2993 [5]_int_malloc
+   6.2%   2728 [6]TailCall
+   5.078% 2616 [7]/Core/Map%.Delete.put
+   5.066% 2563 [8]FreeGcValue
+   5.019% 2352 [9]__libc_free
+   4.096% 2245 [10]FbleCall
+   4.082% 2185 [11]GcRealloc
+   4.033% 1960 [12]/Core/Map%.InsertWith.put
+   4.10%  1858 [13]__memcpy_generic
+   3.075% 1697 [14]GcAllocatedValueOf
+   3.035% 1517 [15]MoveTo
+   3.030% 1494 [16]_int_free_chunk
+   2.079% 1264 [17]/Core/Map%.Lookup.put
+   2.072% 1232 [18]FbleNewFuncValue
+   2.056% 1162 [19]Get
+   1.086% 845  [20]Clear
+   1.065% 748  [21]IsAlloced
+   1.050% 679  [22]IncrGc
+   1.048% 673  [23]FbleAllocRaw
+
+I bet it's this:
+
+                                    Sequence
+
+   99.074% 45128 [5]FbleCall
+   99.073% 45120 [6]TailCall
+   7.015%  3237  [7]/Core/Int/IntP/Data%.Data
+   5.076%  2610  [8]FbleCall
+   1.081%  823   [9]PartialApply
+   1.014%  519   [10]FbleNewFuncValue
+
+                                    Incoming
+
+   55.10%  286 [11]/Core/Map%.InsertWith
+   44.089% 233 [12]/Core/Map%.Delete
+
+Before, we were doing the traversal for InsertWith directly making use of the
+stack. Now I'm having to allocate a bunch of func values with the intermediate
+state.
+
+  <@ V@>(Map@<V@>, IntP@, (Maybe@<V@>) { V@; }) { Map@<V@>; }
+  InsertWith = <@ V@> (Map@<V@> map, IntP@ key, (Maybe@<V@>) { V@; } with) {
+    MapP@<V@> p = map.?(empty: EmptyP<V@>, p: map.p);
+
+    Map@(p: key.?(
+      1: p.@(1: Just(with(p.1))),
+      2p0: p.@(2p0: InsertWith(p.2p0, key.2p0, with)),
+      2p1: p.@(2p1: InsertWith(p.2p1, key.2p1, with))));
+  };
+
+It's the ability to traverse p.2p0 and key.2p0 together I think?
+
+  Data@<IntP@> Data = (IntP@ x)<@ S@>(S@ base, (Bit@, S@) { S@; } body) {
+    x.?(1: body(0, body(0, base)),
+      2p0: Data(x.2p0, body(1, body(0, base)), body),
+      2p1: Data(x.2p1, body(0, body(1, base)), body));
+  };
+
+I'm close. I think I'm close to figuring this out. Just need to see if there's
+a way to implement the above InsertWith function with the structure of the
+Data function.
+
+The ForEach function lets me do a constant space kind of thing. An iteration.
+But I can't implement InsertWith with a single for loop. I need to go down and
+back, right? How would I write InsertWith in C using a for loop?
+
+I want a generic recursive function that goes down and back.
+* S@ s + Bit@ ==> s' * ==> s ==> ...
+
+I want the final result of the iteration to come back to me, so I can adjust
+it. In other words, I want the body that I pass in to be responsible for
+making the recursive call? I want the consumer to drive control flow, not the
+producer?
+
+Maybe that captures the issue. Whoever drives control flow gets to use the
+stack. If it's the producer, then consumer has to allocate functions. If it's
+the consumer, then the producer has to allocation functions. It's only if we
+fuse together producer and consumer that we can avoid the issue?
+
+We need to use functions to be able to hide state. The state of the producer's
+traversal, or the state of the consumer's traversal. The only way to avoid
+allocating functions is to reveal the state of both sides at once?
+
+A producer can say: for all states S@ of the consumer, I iterate. The consumer
+can say: for all states S@ of the producer, I iterate. We can't compose two
+streams together if they have different internal types if we are exposing
+those internal types. We have to be able to hide the types here for
+composition. That's why we hide the types of the producers, but pass around S@
+of the consumer. Because we have a single consumer with multiple (sequenced)
+producers.
+
+Is there no way to define a generic traversal that is a recursion rather than
+a loop?
+
+Sure there is:
+  S@ - initial state of consumer
+  (A@, S@) { S@; } - advances state of consumer
+  (A@, S@, S@) { S@; } - reviews state of consumer
+
+
+  Data@<IntP@> Data = (IntP@ x)<@ S@>(S@ base,
+      (Bit@, S@) { S@; } fwd, (Bit@, S@, S@) { S@; } bwd) {
+
+    x.?(2p0: {
+      S@ a = fwd(0, base);
+      S@ b = fwd(1, a);
+      S@ c = Data(x.2p0, b, fwd, bwd);
+      S@ d = bwd(1, a, c);
+      S@ e = bwd(0, base, d);
+      e;
+    });
+    ...
+  };
+
+You get a way to store state across calls fwd to bwd.
+
+Is there no way to let the body function do the recursive call though? Can I
+use a fixed point operator or something to wire up the recursion between the
+producer and consumer?
+
+What I want is a single place where we have:
+* S@ - the current state of the consumer
+* Bit@ - the current output state of the producer
+* F - the recursive tail call function that does all the rest.
+
+The thing is, F depends on consumer, and consumer depends on F. But that's
+fine, right? We can do recursion? Fix point something or other?
+
+The goal is to write ultimately, a function where I'm traversing two things
+together: the producer state P@ and consumer state C@.
+
+It's exactly what I have in the fast version of InsertWith:
+
+  (Map@, IntP@) { Map@; }
+  InsertWith = (Map@ map, IntP@ key) {
+    MapP@ p = map.?(empty: EmptyP, p: map.p);
+
+    Map@(p: key.?(
+      1: p.@(1: Just(with(p.1))),
+      2p0: p.@(2p0: InsertWith(p.2p0, key.2p0)),
+      2p1: p.@(2p1: InsertWith(p.2p1, key.2p1)));
+  };
+
+  (P@, C@) { C@; }
+  F = (P@ p, C@ c) {
+    P(p,  ...
+  };
+
+Let's say the producer knows how to continue the traversal for all consumers.
+The consumer knows how to continue the traversal for all producers. And we
+just have to wire them up together?
+
+One challenge here: I want 2 bits for each IntP@. It's not lined up quite
+right.
+
+Let's look at both sides completely independently.
+
+On the producer side, I want to write something like:
+
+  P = (IntP@ x) {
+    x.?(1: F(0, F(0, G)),         # 0, then 0, then done
+      2p0: F(0, F(1, P(x.2p0))),  # 0, then 1, then recurse
+      2p1: F(1, F(0, P(x.2p1)))); # 1, then 0, then recurse
+  };
+
+On the consumer side, I want to write something like:
+
+  C = (Bit@ x, Map@ map) {
+    children = { x, map, ... };
+    child = { children, H, ... };   # H recurses
+    x.?(0: Map@(children: children.@(0: child)));
+  };
+
+That is, the producer wants a way to say:
+* F: here's the next thing and my updated state.
+* G: This is the final thing.
+
+The consumer wants a way to say:
+* Here's what I should do at the end.
+* H: Recurse.
+  
+More abstractly:
+* P: (P@) { R@; }
+   - producer traversal function from P@ to final result R@.
+    Has access to functions:
+       F: (A@, R@) { R@; } - given the next bit and recursive result R@
+       G: R@ - given the base final recursive result R@
+* C: (A@, C@) { R@; }
+   - consumer traversal function from A@, C@ to final result R@.
+    Has access to functions:
+       H: (C@) { R@; }  - recurse assuming C@.
+* And consumer can provide the implementation of 
+  I: (C@) { R@; } - the final base recursion, implementation of G.
+* And I want to produce a top level function:
+  J: (C@) { R@; }
+    Which has captured producer state P@ internally somewhere.
+  
+The trouble is, I can't capture internal state in a hidden way. I have to pass
+everything around explicitly. Is that possible? We have fixed top level
+functions. We only pass around state.
+
+  P = (IntP@ x, C@ c) {
+    x.?(1: { ...
+
+Here's the problem I'm running into:
+
+  F(0, G)
+
+There is some intermediate state C'.
+
+  The final result to pass to F depends on C'.
+  C' depends on what F does.
+
+But wait. We know how to deal with that, don't we?
+
+  r = F(0, c, G(r.c));
+  r.r;
+
+So it's like, we are giving the recursive result to F as if we already knew
+what the child state should be. And F is returning the next consumer state. It
+just better promise that is only based on '0' and not on the recursive result.
+
+But if we are doing that, we may as well just write:
+
+  r_c = F(0, c);
+  gr = G(r_c);
+  rr = F'(0, c, gr);
+
+Which is what I had when I did fwd and bwd.
+
+I think it's fair to say we update C@ for every A@ update. But a P@ may have
+multiple A@ associated with it. We can't capture that intermediate state where
+we have done some but not all of the A@ associated with a single P@, except to
+have it captured by control flow somewhere.
+
+To avoid partial function application, the producer has to do all the calls
+with A@ and C@. That means it needs to know the C@ somehow. Which means we
+need a way for the consumer to return the next C@ rather than keep that as
+internal local state.
+
+Can we let the consumer know about the producer state? Does that help with
+anything? Well... it doesn't help with the intermediate producer state. We
+would need to augment the state to something like (IntP@, Bool@), where the
+Bool@ tells us if we've output the first digit yet or not.
+
+---
+
+Idea: maybe it's fine to partially apply functions, so long as we never return
+those partially applied functions. Keep them stack allocated. That should make
+this doable, right?
+
+Consumer is given the function to call recursively with the given child C@
+state. In practice this will be a partially applied function from the
+producer. Maybe the producer is given the function to recall recursively given
+the next producer state@, or some such?
+
+Let me start with the consumer. I think that's more obvious.
+
+  (Bit@, Map@, (Map@) { R@; }) { R@; };
+  C = (Bit@ x, Map@ map, (Map@) { R@; } F) {
+    children = { x, map, ... };
+    child = F(x.?(0: children.0, 1: children.1));
+    x.?(0: Map@(children: children.@(0: child)), 1: ...);
+  };
+
+  (Map@) { R@; }
+  G = ...
+
+Easy. Now for the producer.
+
+  (P@, Lazy@<R@>, (Bit@) { R@; }) { R@; }
+  P = (IntP@ x, Lazy@<R@> end, (Bit@) { R@; } next) {
+    x.?(1:  ...
+
+I don't see how to pass both bits. I can pass one bit. But not two?
+
+What if the producer knew about the consumer state? That's reasonable, right?
+
+  (P@, C@, (C@) { R@; }, (Bit@, C@, (C@) { R@; }) { R@; }) { R@; }
+  P = (IntP@ x, C@ c, (C@) { R@; } end, (Bit@, C@, (C@) { R@; }) { R@; } next) {
+    x.?(1: {
+        next(0, c, (C@ nc) { next(0, nc, end); });
+      },
+      2p0: {
+        next(0, c, (C@ nc) { next(1, nc, (C@ nnc) { 
+          P(x.2p0, nnc, end, next);
+        }));
+      }, ...
+  ;
+
+Okay, but why can't I hide the map in a partially applied function too?
+
+The consumer wants:
+* The current A@, C@.
+* A function to traverse to the next element with a new C@ and get the result
+  from there.
+
+The producer wants:
+* The current P@.
+* A function to traverse to the next element and tell it how to proceed from
+  there.
+
+What if we just take C and G as given, and implement it as a direct traversal
+over P@? How would I implement it then? But I want the map hidden, so I can't
+do that. Unless you are okay passing the map around?
+
+  (IntP@, Map@) { R@; }
+  P = (IntP@ x, Map@ m) {
+    x.?(1: {
+      Map@ m := C(0, m);
+      Map@ m := C(0, m);
+      G(m);
+    },
+      2p0: {
+      Map@ m := C(0, m);
+      Map@ m := C(1, m);
+      P(x.2p0, m);
+    }
+  };
+
+Well, that's quite easy, don't you think? But doesn't this look a lot like the
+original version with streams?
+
+Let's try it and see what the performance looks like.

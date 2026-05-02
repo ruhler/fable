@@ -1,27 +1,12 @@
 
 Data@, Bit@, 0, 1 .= /Core/Data2%;
 Int@ .= /Std/Int%;
-Channel@ .= /Std/Stream%;
-Unit@ .= /Std/Unit%;
 
-Data@<Int@> Data = (Int@ x)<@ S@>(Channel@<Bit@, S@> ch) {
+Data@<Int@> Data = (Int@ x)<@ S@>(S@ base, (Bit@, S@) { S@; } body) {
   x.?(
-    n: {
-      Unit@ _ := ch.do(ch.put(0));
-      Unit@ _ := ch.do(ch.put(0));
-      /Core/Int/IntP/Data%.Data(x.n, ch);
-    },
-
-    0: {
-      Unit@ _ := ch.do(ch.put(0));
-      ch.put(1);
-    },
-
-    p: {
-      Unit@ _ := ch.do(ch.put(1));
-      Unit@ _ := ch.do(ch.put(0));
-      /Core/Int/IntP/Data%.Data(x.p, ch);
-    });
+    n: /Core/Int/IntP/Data%.Data(x.n, body(0, body(0, base)), body),
+    0: body(1, body(0, base)),
+    p: /Core/Int/IntP/Data%.Data(x.p, body(0, body(1, base)), body));
 };
 
 @(Data);

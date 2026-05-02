@@ -1,7 +1,5 @@
 
 List@ .= /Std/List%;
-Stream@ .= /Std/Stream%;
-Puts .= /Std/Stream/List%;
 Unit@, Unit .= /Std/Unit%;
 
 Bit@ = +(Unit@ 0, Unit@ 1);
@@ -9,8 +7,19 @@ Bit@ = +(Unit@ 0, Unit@ 1);
 0 = Bit@(0: Unit);
 1 = Bit@(1: Unit);
 
-Data@ = <@ A@>(A@) { Stream@<Bit@>; };
+Stream@ = <@ S@>(S@, (Bit@, S@) { S@; }) { S@; };
 
-(List@<Bit@>) { Stream@<Bit@>; } Data = Puts<Bit@>;
+Data@ = <@ A@>(A@) { Stream@; };
 
-@(Bit@, 0, 1, Data@, Data);
+(List@<Bit@>) { Stream@; }
+Data = (List@<Bit@> xs)<@ S@>(S@ base, (Bit@, S@) { S@; } body) {
+  xs.?(empty: base);
+  Data(xs.items.tail, body(xs.items.head, base), body);
+};
+
+(Stream@, Stream@) { Stream@; }
+Append = (Stream@ a, Stream@ b)<@ S@>(S@ base, (Bit@, S@) { S@; } body) {
+  b(a(base, body), body);
+};
+
+@(Bit@, 0, 1, Stream@, Data@, Data, Append);
