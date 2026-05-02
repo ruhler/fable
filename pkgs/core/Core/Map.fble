@@ -30,7 +30,7 @@ IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
 
 # Lookup a value in a map. Returns the value if present, Nothing otherwise.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
-Lookup = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
+Lookup = <@ K@>(Data@<K@> data)<@ V@> {
   # Given a map to look up in, returns the leaf map node where the entry
   # should be found.
   S@ = (Map@<K@, V@>) { Map@<K@, V@>; };
@@ -49,18 +49,20 @@ Lookup = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
     x.?(0: m.children.0, 1: m.children.1);
   };
 
-  Map@<K@, V@> lookup = data(key, Channel@(return, do, put), map);
-  lookup.?(empty: Nothing<V@>);
+  (Map@<K@, V@> map, K@ key) {
+    Map@<K@, V@> lookup = data(key, Channel@(return, do, put), map);
+    lookup.?(empty: Nothing<V@>);
 
-  # If lookup.value access fails with wrong tag, it means your data type
-  # didn't satisfy the prefix code requirement.
-  Just(lookup.entry.value);
+    # If lookup.value access fails with wrong tag, it means your data type
+    # didn't satisfy the prefix code requirement.
+    Just(lookup.entry.value);
+  };
 };
 
 # Insert a value into a map, taking into account whatever existing value is
 # in the map for the given key.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>) { V@; }) { Map@<K@, V@>; }
-InsertWith = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
+InsertWith = <@ K@>(Data@<K@> data)<@ V@> {
   # Given a function that modifies the map at the current location, returns
   # the final modified map at the root location.
   Modify@ = ((Map@<K@, V@>) { Map@<K@, V@>; }) { Map@<K@, V@>; };
@@ -93,20 +95,22 @@ InsertWith = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>)
       1: Map@(children: children.@(1: child)));
   };
 
-  Modify@ modify_root = ((Map@<K@, V@>) { Map@<K@, V@>; } f) { f(map); };
-  Modify@ modify_leaf = data(key, Channel@(return, do, put), modify_root);
+  (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
+    Modify@ modify_root = ((Map@<K@, V@>) { Map@<K@, V@>; } f) { f(map); };
+    Modify@ modify_leaf = data(key, Channel@(return, do, put), modify_root);
 
-  modify_leaf((Map@<K@, V@> leaf) {
-    V@ value = with({
-      leaf.?(empty: Nothing<V@>);
+    modify_leaf((Map@<K@, V@> leaf) {
+      V@ value = with({
+        leaf.?(empty: Nothing<V@>);
 
-      # If you get a wrong tag access error here on leaf.entry, then your
-      # data type violates the prefix property.
-      Just(leaf.entry.value);
+        # If you get a wrong tag access error here on leaf.entry, then your
+        # data type violates the prefix property.
+        Just(leaf.entry.value);
+      });
+
+      Map@(entry: Entry@(key, value));
     });
-
-    Map@(entry: Entry@(key, value));
-  });
+  };
 };
 
 # Insert a value into a map.
@@ -117,7 +121,7 @@ Insert = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
 
 # Remove a value from the map if it is present.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
-Delete = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
+Delete = <@ K@>(Data@<K@> data)<@ V@> {
   # Given a function that optionally modifies the map at the current
   # location, returns the final modified map at the root location.
   # The modification may remove elements.
@@ -153,20 +157,22 @@ Delete = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
     Just(Map@(children: current.children.@(1: nchild.just)));
   };
 
-  Modify@ modify_root = ((Map@<K@, V@>) { Maybe@<Map@<K@, V@>>; } f) {
-    Get(map, f(map));
+  (Map@<K@, V@> map, K@ key) {
+    Modify@ modify_root = ((Map@<K@, V@>) { Maybe@<Map@<K@, V@>>; } f) {
+      Get(map, f(map));
+    };
+
+    Modify@ modify_leaf = data(key, Channel@(return, do, put), modify_root);
+
+    modify_leaf((Map@<K@, V@> leaf) {
+      # If you get undef here, then your data type violates the prefix
+      # property.
+      leaf.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@<K@, V@>>>);
+
+      leaf.?(empty: Nothing<Map@<K@, V@>>);
+      Just(Empty<K@, V@>);
+    });
   };
-
-  Modify@ modify_leaf = data(key, Channel@(return, do, put), modify_root);
-
-  modify_leaf((Map@<K@, V@> leaf) {
-    # If you get undef here, then your data type violates the prefix
-    # property.
-    leaf.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@<K@, V@>>>);
-
-    leaf.?(empty: Nothing<Map@<K@, V@>>);
-    Just(Empty<K@, V@>);
-  });
 };
 
 # Iterate over elements of the map.

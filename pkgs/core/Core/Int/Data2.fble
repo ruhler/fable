@@ -1,21 +1,26 @@
 
-Data@ .= /Core/Data2%;
+Data@, Bit@, 0, 1 .= /Core/Data2%;
 Int@ .= /Std/Int%;
-Do .= /Std/Stream%;
+Channel@ .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
-Data@<Int@> Data = (Int@ x) {
+Data@<Int@> Data = (Int@ x)<@ S@>(Channel@<Bit@, S@> ch) {
   x.?(
     n: {
-      Unit@ _ := Do(/Core/Data2%.Data|00);
-      /Core/Int/IntP/Data%.Data(x.n);
+      Unit@ _ := ch.do(ch.put(0));
+      Unit@ _ := ch.do(ch.put(0));
+      /Core/Int/IntP/Data%.Data(x.n, ch);
     },
 
-    0: /Core/Data2%.Data|01,
+    0: {
+      Unit@ _ := ch.do(ch.put(0));
+      ch.put(1);
+    },
 
     p: {
-      Unit@ _ := Do(/Core/Data2%.Data|10);
-      /Core/Int/IntP/Data%.Data(x.p);
+      Unit@ _ := ch.do(ch.put(1));
+      Unit@ _ := ch.do(ch.put(0));
+      /Core/Int/IntP/Data%.Data(x.p, ch);
     });
 };
 

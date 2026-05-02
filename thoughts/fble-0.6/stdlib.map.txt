@@ -628,3 +628,247 @@ stream interface has all this overhead associated with putting values. What am
 I to do?
 
 I should do linux perf, see what's taking so long.
+
+---
+
+There's an opportunity here to learn about performance and to improve the
+Stream@ interface. Maybe. Or find a better interface for Data@ at least.
+
+Let's see if we can find a balance between theory and practice that gives
+something with decent complexity and good runtime performance.
+
+Let's start with theory while waiting for perf to get installed.
+
+Today:
+A. Stream is: Forall S, Return, Do, Put: S
+   Do is (S, (Unit@) { S; }) S;
+
+This means Do function gets to decide when the next part of output is
+traversed.
+
+Some alternatives we could consider:
+B. Stream is Forall S, Return, DoPut: S
+   Like the List ForAll function. DoPut is (A@, S@) { S@; }
+   DoPut = {
+     Do(Put(a), (Unit@) { s; });
+   };
+
+C. Stream is Forall S, Return, Do, Put: S
+   With Do (S@, S@) { S@; }
+   Do'(a, b) = Do(a, (Unit@) { b; });
+ 
+Practically speaking, (A) forces a function allocation for the Lazy@<S@>.
+
+Let's take implementation of Stream for a generic binary tree as an example?
+Or, how about a list.
+
+A.
+  (List@) { Stream@; }
+  Puts = (List@ values)<@ S@>(Channel@<S@> ch) {
+    values.?(empty: ch.return);
+    Unit@ _ := ch.do(ch.put(values.items.head));
+    Puts(values.items.tail, ch);
+  };
+
+B.
+  (List@) { Stream@; }
+  Puts = (List@ values)<@ S@>(Channel@<S@> ch) {
+    values.?(empty: ch.return);
+    ch.doput(values.items.head, Puts(values.items.tail, ch));
+  };
+
+C.
+  (List@) { Stream@; }
+  Puts = (List@ values)<@ S@>(Channel@<S@> ch) {
+    values.?(empty: ch.return);
+    ch.do(ch.put(values.items.head), Puts(values.items.tail, ch));
+  };
+
+Regardless of what you can come up with for the implementation of 'Do', (B)
+and (C) force you to traverse the entire list before calling do.
+
+Maybe this isn't a problem, because in all my current use cases for stream, I
+want to traverse the entire thing anyway.
+
+In either case, I can reverse the order of the traversal by allocating
+functions. Something like:
+
+  Do(a, b) = a(b(x));
+  Do(a, b) = b(a(x));
+  
+It feels like the important question isn't traversal order then. It's whether
+we are forced to traverse the entire thing first. Maybe also whether we can
+pause and later resume from where we left off.
+
+Abstractly, if I have a stream of elements I want to traverse, the kinds of
+things I want to do are:
+* Have control over when to access the next element in the stream.
+* Have the ability to not access the next element in the stream.
+* Have the ability to capture and return the rest of the stream without
+  accessing it.
+
+Perhaps the most direct way to do that would be if the stream was a lazy list.
+Or had an API equivalent to that.
+
+D. (S@) { Maybe@<*(A@ head, S@ tail)>; }
+
+Now I can totally traverse at will if you give me the stream. I control the
+program flow, rather than the stream controlling the program flow.
+
+On the flip side, if I want the stream to control the program flow, I guess we
+want to pass through some state, it can update the state bit by bit, at any
+point we might want to exit, and then it can return us our intermediate state
+and the rest of the stream. The stream function would be:
+
+E.  (S@, (A@, S@) { *(S@ next, Bool@ break); }) { *(S@ final, Stream@<A@> continue); }
+
+It traverses until you tell it to break or to the end. You get back the final
+result and the unconsumed part of the stream.
+
+How hard is it to produce and consume from these two interfaces? They feel
+like the most direct way to have the control I'm looking for. I worry about
+unnecessary performance overheads for the common case where you know ahead of
+time you want to traverse the entire stream though.
+
+Starting with D. Let's say I want to sum all the values of a list.
+
+  Puts = (List@ xs) {
+    ...
+
+I don't know what S@ is. Abstract? Common? I have a list. I think we need to
+update it to actually be a lazy list. No S@ about it.
+
+  Puts = (List@ xs, Unit@ _) {
+    xs.?(empty: Empty);
+    Items(xs.items.head, Puts(xs.items.tail));
+  }
+    
+Notice we have the partial function application of Puts. But what if we had a
+tree instead? It gets awkward, right? No easy way to append two lazy lists?
+
+  Append(a, b, Unit@) = {
+    a.?(empty; b);
+    Items(a.items.head, Append(a.items.tail, b));
+  };
+
+That's not bad.
+
+E.  
+  Puts = (List@ xs, S@ base, S@ f) {
+    xs.?(empty: base);
+    r = f(xs.items.head, base);
+    r.break.?(@(r.next, Puts(xs.items.tail)));
+    Puts(xs.items.tail, r.next, f);
+  }
+
+In this case, no partial function application unless break is requested.
+Whereas (D) always requires partial function application.
+
+Okay? So I see the options and considerations, right?
+* Partial function application is required if we want to stop mid way through.
+* We can do partial function application at every iteration, or only if/when
+  requested.
+
+Options to choose:
+1. Force full iteration always.
+2. Pause only on demand.
+3. Pause at every item.
+
+Presumably (1) is the fastest, (2) is hopefully pretty fast, (3) is probably
+slowest. Whichever one I pick, I can decide what the best way is to directly
+express that. I don't think we have to worry about iteration order, quadratic
+blowup, anything like that in any case.
+
+Let's look at perf data now. I'd like to understand the performance of (1),
+(2), and (3) to see how big a difference it makes. We have a nice opportunity
+here to find out. At least for how fble is implemented today.
+
+Linux perf with bits based, top self times:
+
+   11.073% 13619 [5]TailCall
+   8.065%  10045 [6]__memcpy_generic
+   5.5%    5868  [7]_int_malloc
+   4.095%  5745  [8]FbleNewFuncValue
+   4.078%  5550  [9]FbleCall
+   3.093%  4566  [10]GcRealloc
+   3.073%  4334  [11]__libc_free
+   3.061%  4195  [12]_int_free_chunk
+   3.048%  4043  [13]FreeGcValue
+   2.073%  3169  [14]MoveTo
+   2.053%  2944  [15]/Std/Stream/List%.Puts
+   2.047%  2874  [16]/Std/Stream%.Do
+   2.040%  2790  [17]/Core/Map%.Delete.put
+   2.025%  2620  [18]GcAllocatedValueOf
+   1.075%  2039  [19]/Core/Map%.InsertWith.put
+   1.061%  1872  [20]Clear
+   1.056%  1813  [21]Get
+   1.038%  1605  [22]PartialApplyImpl
+   1.033%  1544  [23]FbleNewStructValue
+
+Here are the source of allocations:
+
+   99.090% 115944 [5]FbleCall
+   99.090% 115938 [6]TailCall
+   34.014% 39620  [7]FblePopFrame
+   33.9%   38404  [8]MoveAllTo
+   32.093% 38224  [9]GcRealloc
+   29.049% 34224  [10]NewGcValueRaw
+   6.028%  7289   [11]MoveToAlloced
+   6.028%  7289   [12]MoveTo
+   5.098%  6943   [13]FbleAllocRaw
+
+                                    Incoming
+
+   20.058% 1429 [14]/Core/Map%.InsertWith
+   17.034% 1204 [15]/Sat/Solver%.RemoveClauseFromVar
+   15.044% 1072 [16]/Core/Map%.Delete.do
+   14.027% 991  [17]/Core/Map%.InsertWith.do
+   5.093%  412  [18]/Sat/Solver%.RemoveVarFromClause
+   5.032%  370  [19]/Std/Stream%.Do
+   5.017%  359  [20]/Sat/Solver%.AddClauseAt.vars
+
+Linux perf with Ints based:
+
+   5.089% 1251 [5]FbleCall
+   5.058% 1185 [6]_int_malloc
+   5.054% 1176 [7]FreeGcValue
+   5.043% 1152 [8]/Core/Int/IntP/Map%.Lookup
+   5.029% 1123 [9]GcRealloc
+   5.2%   1066 [10]__libc_free
+   4.094% 1048 [11]TailCall
+   4.034% 922  [12]GcAllocatedValueOf
+   3.028% 697  [13]/Core/Int/IntP/Map%.InsertWith
+   3.7%   652  [14]MoveTo
+   3.4%   646  [15]_int_free_chunk
+   2.058% 549  [16]__memcpy_generic
+   2.039% 508  [17]Get
+   2.021% 469  [18]/Core/Int/IntP/Map%.Delete
+   2.016% 460  [19]FbleNewStructValue
+   1.092% 409  [20]FbleNewFuncValue
+   1.068% 358  [21]IncrGc
+   1.065% 352  [22]IsAlloced
+   1.060% 341  [23]FblePopFrame
+
+I can't really tell from the perf profiles what matters or not. Let's start
+optimizing bit by bit and see.
+
+Step 1: avoid re-allocating func values unnecessarily in the Map
+implementation.
+
+  Time: 1:52.91 ==> 1:53.63
+  Memory: 42668 ==> 43376
+
+Interesting. Makes no difference.
+
+Step 2: make direct use of raw channel functions instead of using high level
+helpers for Puts, Do, etc.
+
+  Time: 1:52.91 ==> 1:53.63 ==> 1:10.58
+  Memory: 42668 ==> 43376 ==> 40084
+
+Ah. Now we're getting somewhere. Interesting. Looks like there's a real cost
+to the abstractions I'm using for composing streams together.
+
+Step 3: Change the stream type to be a foreach like iteration with no option
+for pausing mid way through.
+
