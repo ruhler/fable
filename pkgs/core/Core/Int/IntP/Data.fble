@@ -14,7 +14,6 @@ Data@<IntP@> Data = (IntP@ x)<@ S@>(S@ s)<@ R@>((S@) { R@; } r, (Bit@, S@, (S@) 
     },
     2p1: {
       S@ s := put(1, s);
-      S@ s := put(0, s);
       Data(x.2p1, s, r, put);
     });
 };

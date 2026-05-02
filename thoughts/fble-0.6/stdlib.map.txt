@@ -1239,3 +1239,84 @@ do you know when the IntP is ended?
 But I should be able to put this to the test anyway, right, because I'm not
 concatenating two IntP@ together anywhere, right?
 
+Apparently not. Yeah. Here's the problem:
+
+  VarS@ = *(ClauseIds@ pos, ClauseIds@ neg);
+  Vars = /Sat/Id%.Map<VarS@>;
+
+Any other way I could shorten the number of bits needed?
+
+I could go the other direction: double the number of bits needed. See if that
+doubles the cost ish? Not sure how useful it is, but maybe gives me a sense?
+
+Instead of: {00, 01, 10}, I could use: {0, 01, 10}, for example. We expect the
+last one to be relatively rare maybe?
+
+No wait. It's still just Int@ as the key. Why can't I use a single bit for
+each real bit? Because we can't distinguish between:
+
+  10011 and 1001
+
+If we store something at 1001, then we can't use 10011.
+
+Can I ditch the prefix property requirement? How bad would that be? If we did
+that, I could use... no way to do struct composition though. So I should keep
+the prefix property.
+
+Anyway, adding a couple extra bits for each IntP@, let's see how much it
+impacts running time. If it's close to 2x, and we get up to around 1:20, that
+suggests we've probably hit the limit of how close we can get to the raw IntP
+implementation, because of the need to double the number of bits.
+
+Yup:
+
+  Time: 1:15.68
+  Memory: 61328
+
+That looks to be the problem. So, seems like this new crazy but weirdly nice
+stream interface gives me the performance. The key thing must be not
+allocating a bunch of functions places where we have to return them. I can
+confirm that with perf I bet.
+
+If I use: {1: 00, 2p0: 01, 2p1: 1}, then let's see if we get a little faster
+at least. I picked that because I assume '1' is the least used, and 2p1 is
+slightly more often used than 2p0 in the case of long strings, because we know
+at least the most significant bit is set.
+
+Yeah. That helps:
+
+  Time: 1:52.91 ==> 1:53.63 ==> 1:10.58 ==> 0:44.12 ==> 0:39.10 ==> 0:32.21
+  Memory: 42668 ==> 43376   ==> 40084   ==> 35564   ==> 32876   ==> 28872
+
+Compare to where we would be if we didn't need to add those extra layers of
+bits:
+
+  Time: 0:20.68
+  Memory: 20560
+
+Where we've ended up:
+
+   7.084% 2394 [5]TailCall
+   6.011% 1865 [6]FreeGcValue
+   5.073% 1750 [7]_int_malloc
+   5.054% 1692 [8]/Core/Map%.Delete.put
+   5.027% 1610 [9]__libc_free
+   4.091% 1499 [10]GcRealloc
+   4.6%   1242 [11]GcAllocatedValueOf
+   3.092% 1197 [12]/Core/Int/IntP/Data%.Data
+   3.070% 1131 [13]/Core/Map%.InsertWith.put
+   3.067% 1122 [14]FbleCall
+   3.052% 1077 [15]__memcpy_generic
+   3.023% 988  [16]MoveTo
+   3.6%   935  [17]/Core/Map%.Lookup.put
+   2.067% 817  [18]Get
+   2.065% 809  [19]_int_free_chunk
+   2.045% 750  [20]FbleNewFuncValue
+   1.065% 504  [21]Clear
+   1.059% 488  [22]IsAlloced
+
+What am I allocating?
+
+ /Core/Map%.InsertWith.put
+
+I don't know.
