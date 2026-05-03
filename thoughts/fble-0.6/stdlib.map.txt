@@ -1908,3 +1908,7 @@ need it for IO or some such, I can switch to it later.
 Good. So, next step: try switching over /Std/Stream% to this new, simplified
 interface. See how it feels. See if anything breaks as a result. Keep the
 existing API as much as possible.
+
+---
+
+
