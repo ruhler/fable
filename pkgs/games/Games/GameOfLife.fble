@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
-Data@, Bit@ .= /Core/Data%;
+Data@, Datas .= /Core/Data%;
 
 Eq@ = /Std/Eq%.Eq@;
 
@@ -34,8 +34,8 @@ Eq@<Coord@> EqCoord = (Coord@ a, Coord@ b) {
   And(Eq(a.row, b.row), Eq(a.col, b.col));
 };
 
-Data@<Coord@> DataCoord = (Coord@ a)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
-  /Core/Int/Data%.Data(a.row, /Core/Int/Data%.Data(a.col, return, put), put);
+Data@<Coord@> DataCoord = (Coord@ a) {
+  Datas[/Core/Int/Data%.Data(a.row), /Core/Int/Data%.Data(a.col)];
 };
 
 Show@<Coord@> ShowCoord = (Coord@ a) {

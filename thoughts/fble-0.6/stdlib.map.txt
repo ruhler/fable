@@ -1809,3 +1809,102 @@ write stream interfaces. To what extent can we use composition for this?
 Maybe it only matters for high performance things like IntP@ and Int@? Can I
 leave the nice Do, Put interface otherwise?
 
+Here's where I'm at now. Can I simplify this?
+
+  Data@<IntP@>
+  Data = (IntP@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
+    x.?(1: put(0, put(0, return)),
+      2p0: put(0, put(1, Data(x.2p0, return, put))),
+      2p1: put(1, Data(x.2p1, return, put)));
+
+How much does performance drop if we reuse Data and Datas?
+
+Note to self:
+* Name conflict between /Core/Int/IntP/Data%.Data and /Core/Data%.Data is
+  super annoying.
+
+This is much nicer to write:
+
+  Data@<IntP@>
+  Data = (IntP@ x) {
+    x.?(1: Bits|00,
+      2p0: Datas[Bits|01, Data(x.2p0)],
+      2p1: Datas[Bits|1, Data(x.2p1)]);
+  };
+
+And that single change dropped me back from 30s to 52s.
+
+I want to try adding Lazy@ back in for return. I think that will make things
+more natural to write. I could do something like...
+
+Or actually, what I want is:
+
+  Data@<IntP@>
+  Data = (IntP@ x)<@ S@>(S@ return, (Bit@, Lazy@<S@>) { S@; } put) {
+    x.?(1: {
+        Unit@ _ := put(0);
+        Unit@ _ := put(0);
+        return
+      }, ...
+  };
+
+This might not be what I want. I might want every use of S@ to be Lazy@<S@>.
+
+Consider:
+
+  (List@<Stream@<Bit@>>) { Stream@<Bit@>; }
+  Datas = (List@<Stream@<Bit@>> xs)<@ S@>(S@ return, (Bit@, Lazy@<S@>) { S@; } put) {
+    xs.?(empty: return);
+    xs.items.head(Datas(xs.items.tail, return, put), put);
+  };
+
+versus:
+
+  (List@<Stream@<Bit@>>) { Stream@<Bit@>; }
+  Datas = (List@<Stream@<Bit@>> xs)<@ S@>(Lazy@<S@> return, (Bit@, Lazy@<S@>) { S@; } put) {
+    xs.?(empty: return);
+    Unit@ _ := xs.items.head(return, put);
+    Datas(xs.items.tail, return, put);
+  };
+
+Or something like that.
+
+Anyway, putting the Lazy around the second argument to put, performance goes
+to:
+
+  Time: 0:30.21
+  Memory: 27520
+
+Good. So we can do this without cost to performance. I feel like that's
+important.
+
+But what can we do about Datas?
+  
+  Datas = (List@<Stream@<Bit@>> xs)<@ S@>(S@ return, (Bit@, Lazy@<S@>) { S@; } put) {
+    xs.?(empty: return);
+    xs.items.head(Datas(xs.items.tail, return, put), put);
+  };
+
+Can I make use of laziness here? If not, what's the point of adding laziness
+aside from letting us use bind syntax for expressing code instead of function
+application?
+
+    2p0: put(0, put(1, Data(x.2p0, return, put))),
+
+    2p0: {
+      Unit@ _ := put(0);
+      Unit@ _ := put(1);
+      Data(x.2p0, return, put);
+    },
+
+    2p0: put(0) $
+         put(1) $
+         Data(x.2p0, return, put);
+
+Since I know Lazy won't hurt performance, but it complicates the interface for
+no clear reason, let me skip migrating to Lazy for now. If it turns out we
+need it for IO or some such, I can switch to it later.
+
+Good. So, next step: try switching over /Std/Stream% to this new, simplified
+interface. See how it feels. See if anything breaks as a result. Keep the
+existing API as much as possible.

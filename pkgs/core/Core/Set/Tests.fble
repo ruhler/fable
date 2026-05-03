@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
-Data@, Bit@, Data .= /Core/Data%;
+Data@, Data, Datas .= /Core/Data%;
 
 Eq@ = /Std/Eq%.Eq@;
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
@@ -55,8 +55,8 @@ Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
   And(EqBit1(a.h, b.h), EqBit1(a.l, b.l));
 };
 
-Data@<Bit2@> DataBit2 = (Bit2@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
-  DataBit1(x.h, DataBit1(x.l, return, put), put);
+Data@<Bit2@> DataBit2 = (Bit2@ x) {
+  Datas[DataBit1(x.h), DataBit1(x.l)];
 };
 
 Show@<Bit2@> ShowBit2 = (Bit2@ x) {

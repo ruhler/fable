@@ -1,5 +1,5 @@
 
-Data@, Bit@ .= /Core/Data%;
+Data@, Datas .= /Core/Data%;
 Int@ .= /Std/Int%;
 
 # A unique identifier for a location.
@@ -8,8 +8,8 @@ Int@ .= /Std/Int%;
 # the purposes of computation.
 Addr@ = *(Int@ x, Int@ y);
 
-Data@<Addr@> Data = (Addr@ a)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
-  /Core/Int/Data%.Data(a.x, /Core/Int/Data%.Data(a.y, return, put), put);
+Data@<Addr@> Data = (Addr@ a) {
+  Datas[/Core/Int/Data%.Data(a.x), /Core/Int/Data%.Data(a.y)];
 };
 
 @(Addr@, Data);
