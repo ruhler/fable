@@ -3,20 +3,7 @@
 
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Channel@, Stream@, In@, Out@ .= /Std/Stream%;
-
-# @func[Channel] Changes the output type of a channel.
-#  @arg[@][A@] The output type of the original channel.
-#  @arg[@][B@] The output type of the new channel.
-#  @arg[(B@) { A@; }][f] Function to convert output values.
-#  @arg[@][S@] The channel type.
-#  @arg[Channel@<A@, S@>][channel] The original channel implementation.
-#  @return[Channel@<B@, S@>]
-#   A new channel implementation that accepts the target output type.
-<@ A@, @ B@>((B@) { A@; })<@ S@>(Channel@<A@, S@>) { Channel@<B@, S@>; }
-Channel = <@ A@, @ B@>((B@) { A@; } f)<@ S@>(Channel@<A@, S@> channel) {
-  Channel@(channel.return, channel.do, (B@ a) { channel.put(f(a)); });
-};
+Stream@, In@, Out@ .= /Std/Stream%;
 
 # @func[Stream] Changes the output type of a stream.
 #  @arg[@][A@] The output type of the original stream.
@@ -26,8 +13,8 @@ Channel = <@ A@, @ B@>((B@) { A@; } f)<@ S@>(Channel@<A@, S@> channel) {
 #  @return[Stream@<B@>] A new stream that outputs the target output type.
 <@ A@, @ B@>((A@) { B@; }, Stream@<A@>) { Stream@<B@>; }
 Stream = <@ A@, @ B@>((A@) { B@; } f, Stream@<A@> s) {
-  <@ S@>(Channel@<B@, S@> channel) {
-    s(Channel(f, channel));
+  <@ S@>(S@ return, (B@, S@) { S@; } put) {
+    s(return, (A@ a, S@ t) { put(f(a), t); });
   };
 };
 
@@ -60,4 +47,4 @@ In = <@ A@, @ B@>((A@) { B@; } f)<<@>@ M@>(Monad@<M@> m, In@<A@, M@> in) {
   m.return(Just(f(ma.just)));
 };
 
-@(Channel, Stream, Out, In);
+@(Stream, Out, In);

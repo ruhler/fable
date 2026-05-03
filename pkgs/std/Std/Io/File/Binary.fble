@@ -8,21 +8,16 @@ Monad@ .= /Std/Monad%;
 Io@ .= /Std/Io%;
 Stream@, In@, Out@ .= /Std/Stream/Binary%;
 String@ .= /Std/String%;
-Unit@, Unit .= /Std/Unit%;
+Unit@ .= /Std/Unit%;
 
 File@, GetStdin, GetStdout, GetStderr, Open, Flush,
 GetByte, PutByte .= /Std/Io/File/Internal%;
 
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@) { M@<Unit@>; }
 Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@ output) {
-  S@ = M@<Unit@>;
-  S@ return = m.return(Unit);
-  (S@, (Unit@) { S@; }) { S@; } do = (S@ ma, (Unit@) { S@; } f) {
-    m.do(ma, f);
-  };
-  (Int@) { S@; } put = (Int@ c) { io.run(PutByte(file, c)); };
-  Unit@ _ := m.do(output(@(return, do, put)));
-  io.run(Flush(file));
+  Int@ c, M@<Unit@> return := output(io.run(Flush(file)));
+  Unit@ _ := m.do(io.run(PutByte(file, c)));
+  return;
 };
 
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@) { Out@<M@>; }

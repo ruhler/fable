@@ -2,8 +2,8 @@
 #  Utilities for converting between lists and streams.
 
 List@, Empty, Items .= /Std/List%;
-Channel@, Stream@, Return, Do, Put .= /Std/Stream%;
-Unit@, Unit .= /Std/Unit%;
+Stream@, Return, Do, Put .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
 
 # @func[Puts] Output a list of values.
 #  @arg[@][A@] The type of values to output.
@@ -35,17 +35,13 @@ Concat = <@ A@>(List@<Stream@<A@>> xs) {
 ToList = <@ A@> {
   # Output to a list given the tail of the list.
   S@ = (List@<A@>) { List@<A@>; };
-
-  Channel@<A@, S@> S = @(
-    return: (List@<A@> tail) { tail; },
-    do: (S@ a, (Unit@) { S@; } fb, List@<A@> tail) {
-      a(fb(Unit, tail));
-    },
-    put: Items<A@>
-  );
+  return = (List@<A@> x) { x; };
+  put = (A@ head, S@ f, List@<A@> tail) {
+    Items(head, f(tail));
+  };
 
   (Stream@<A@> output) {
-    output(S, Empty<A@>);
+    output(return, put, Empty<A@>);
   };
 };
 

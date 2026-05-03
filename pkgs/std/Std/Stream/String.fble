@@ -6,7 +6,7 @@ U .= /Std/Char/Lit%;
 List@, List, Items .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Channel@, Stream@, In@, Return, Do, Put .= /Std/Stream/Text%;
+Stream@, In@, Return, Do, Put .= /Std/Stream/Text%;
 Puts, ToList .= /Std/Stream/List%;
 String@ .= /Std/String%;
 IsNewline .= /Std/String/Lines%;
@@ -63,28 +63,27 @@ Char@ '%s' = U|73;
 #  @arg[List@<Stream@>[args] Format args.
 #  @return[Stream@] The formatted output.
 (String@, List@<Stream@>) { Stream@; }
-Format = (String@ fmt, List@<Stream@> args)<@ S@>(Channel@<S@> s) {
-  fmt.?(empty: s.return);
-  Char@ c = fmt.items.head;
-  /Std/Char/Eq%.Eq('%%', c).?(true: {
-    fmt.items.tail.?(empty: /Std/Undef%.Undef.undef<S@>);
-    Char@ e = fmt.items.tail.items.head;
+Format = (String@ fmt, List@<Stream@> args) {
+  <@ S@>(S@ return, (Char@, S@) { S@; } put) {
+    fmt.?(empty: return);
+    Char@ c = fmt.items.head;
+    /Std/Char/Eq%.Eq('%%', c).?(true: {
+      fmt.items.tail.?(empty: /Std/Undef%.Undef.undef<S@>);
+      Char@ e = fmt.items.tail.items.head;
 
-    /Std/Char/Eq%.Eq('%%', e).?(true: {
-      Unit@ _ := s.do(s.put(c));
-      Format(fmt.items.tail.items.tail, args, s);
+      /Std/Char/Eq%.Eq('%%', e).?(true: {
+        put(c, Format(fmt.items.tail.items.tail, args, return, put));
+      });
+
+      /Std/Char/Eq%.Eq('%s', e).?(true: {
+        args.items.head(Format(fmt.items.tail.items.tail, args.items.tail, return, put), put);
+      });
+
+      /Std/Undef%.Undef.undef<S@>;
     });
 
-    /Std/Char/Eq%.Eq('%s', e).?(true: {
-      Unit@ _ := s.do(args.items.head(s));
-      Format(fmt.items.tail.items.tail, args.items.tail, s);
-    });
-
-    /Std/Undef%.Undef.undef<S@>;
-  });
-
-  Unit@ _ := s.do(s.put(c));
-  Format(fmt.items.tail, args, s);
+    put(c, Format(fmt.items.tail, args, return, put));
+  };
 };
 
 # @func[ToString] Output to a String@.

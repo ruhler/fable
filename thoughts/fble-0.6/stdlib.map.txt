@@ -1911,4 +1911,47 @@ existing API as much as possible.
 
 ---
 
+Here's our current baseline for full benchmark suite, for reference.
 
+  Time: 1:40.89
+  Memory: 112032
+
+Hey look, this new proposed stream interface is exactly my ForEach interface.
+
+On the whole, this feels like a simplification for consumers of streams. It
+feels like a bit misleading for producers, because we have this lazy do thing,
+but we completely ignore it.
+
+On the consumer side, I can do fancy stuff like:
+
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@) { M@<Unit@>; }
+  Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@ output) {
+    Int@ c, M@<Unit@> return := output(io.run(Flush(file)));
+    Unit@ _ := m.do(io.run(PutByte(file, c)));
+    return;
+  };
+
+We call output, pass the final thing to do, it gives us a value and a return
+function, and we put this. That's 8 lines of boiler plate reduced to 3.
+
+Um, I messed something up. I'm getting outputs reversed in a few places. Let's
+track down where.
+
+ToDebug is reverse things.
+
+I think ForEach is reversing things too? But if so, why didn't my tests fail?
+Maybe I don't have a test for that.
+
+Yeah, I think I did that backwards. In Stream@, return is the last value, we
+build up to the first. In ForEach, base is the first value, we pass through to
+the last.
+
+I think this is a net positive change. It simplifies the consumers nicely, and
+no more need for Channel@ type. I just worry about the loss of lazy traversal.
+
+No performance impact from my benchmarks at least:
+
+  Time: 1:41.15
+  Memory: 82056
+
+Seems we've actually saved a decent amount of memory.

@@ -2,7 +2,7 @@
 #  An output channel for testing.
 
 Monad@ .= /Std/Monad%;
-Channel@, Stream@, Out@ .= /Std/Stream%;
+Stream@, Out@ .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 # @func[ToTest] Stream values to a Unit@.
@@ -15,17 +15,9 @@ Unit@, Unit .= /Std/Unit%;
 #  @arg[Stream@<A@>] The output to perform.
 #  @returns[Unit@] Nothing interesting.
 <@ A@>(Stream@<A@>) { Unit@; }
-ToTest = <@ A@> {
-  S@ = Unit@;
-  Channel@<A@, S@> S = @(
-    return: Unit,
-    do: (Unit@ u, (Unit@) { Unit@; } f) { f(u); },
-    put: (A@ _) { Unit; }
-  );
-
-  (Stream@<A@> output) {
-    output(S);
-  };
+ToTest = <@ A@>(Stream@<A@> output) {
+  A@ _, Unit@ u := output(Unit);
+  u;
 };
 
 # @func[TestOut] An Out@ for use in testing.

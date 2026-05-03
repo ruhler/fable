@@ -16,12 +16,16 @@ GetChar, PutChar .= /Std/Io/File/Internal%;
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@) { M@<Unit@>; }
 Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@ output) {
   S@ = M@<Unit@>;
+
   S@ return = m.return(Unit);
-  (S@, (Unit@) { S@; }) { S@; } do = (S@ ma, (Unit@) { S@; } f) {
-    m.do(ma, f);
+
+  (Char@, S@) { S@; }
+  put = (Char@ c, M@<Unit@> return) {
+    Unit@ _ := m.do(io.run(PutChar(file, c)));
+    return;
   };
-  (Char@) { S@; } put = (Char@ c) { io.run(PutChar(file, c)); };
-  Unit@ _ := m.do(output(@(return, do, put)));
+
+  Unit@ _ := m.do(output(return, put));
   io.run(Flush(file));
 };
 

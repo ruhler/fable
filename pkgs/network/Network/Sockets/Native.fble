@@ -25,13 +25,9 @@ Socket@ = *(Unit@ socket).%(@/Network/Sockets/Native%);
 Sockets = <<@>@ M@>(Io@<M@> io, Monad@<M@> m) {
   (Socket@, Stream@) { M@<Unit@>; }
   Output = (Socket@ socket, Stream@ output) {
-    S@ = M@<Unit@>;
-    S@ return = m.return(Unit);
-    (S@, (Unit@) { S@; }) { S@; } do = (S@ ma, (Unit@) { S@; } f) {
-      m.do(ma, f);
-    };
-    (Int@) { S@; } put = (Int@ c) { io.run(PutByte(socket, c)); };
-    output(@(return, do, put));
+    Int@ c, M@<Unit@> return := output(m.return(Unit));
+    Unit@ _ := m.do(io.run(PutByte(socket, c)));
+    return;
   };
 
   (Socket@) { InOut@<M@>; }

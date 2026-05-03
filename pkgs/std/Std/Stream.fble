@@ -5,30 +5,18 @@ Lazy@ .= /Std/Lazy%;
 Maybe@ .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 
-# @struct[Channel@] Interface of types S@ that you can stream output to.
-#  @field[@][A@] The type of value to stream to the channel.
-#  @field[@][S@] The type of the channel the interface applies to.
-#  @field[S@][return] Outputs nothing to the channel.
-#  @field[(S@, Lazy@<S@>) { S@; })][do]
-#   Output some things followed by other things.
-#  @field[(A@) { S@; }][put] Outputs a single value.
-Channel@ = <@ A@, @ S@> { *(
-  S@ return,
-  (S@, Lazy@<S@>) { S@; } do,
-  (A@) { S@; } put
-);};
-
-# @type@[Stream@] A computation that streams values to a channel.
+# @type@[Stream@] A computation that outputs a stream of values.
 #  @arg[@][A@] The type of value to output.
-#  @arg[@][S@] The type of channel to output to.
-#  @arg[Channel@<S@>][channel] Implementation of the channel interface.
-#  @returns[S@] The filled channel.
-Stream@ = <@ A@, @ S@>(Channel@<A@, S@>) { S@; };
+#  @arg[@][S@] The type to stream the outputs into.
+#  @arg[S@][return] Used to indicate the end of the computation.
+#  @arg[(A@, S@) { S@; }][put] Outputs a single value.
+#  @returns[S@] The final result.
+Stream@ = <@ A@, @ S@>(S@, (A@, S@) { S@; }) { S@; };
 
 # @value[Return] A computation that outputs nothing.
 #  @type[Stream@]
-Stream@ Return = <@ A@, @ S@>(Channel@<A@, S@> s) {
-  s.return;
+Stream@ Return = <@ A@, @ S@>(S@ return, (A@, S@) { S@; } _) {
+  return;
 };
 
 # @func[Do] Stream one thing after another.
@@ -39,8 +27,10 @@ Stream@ Return = <@ A@, @ S@>(Channel@<A@, S@> s) {
 #   A computation that streams out the first set of outputs, then calls the
 #   function f to get the second set of outputs to stream.
 <@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
-Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> f)<@ S@>(Channel@<A@, S@> s) {
-  s.do(ma(s), (Unit@ _) { f(Unit, s); });
+Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> f) {
+  <@ S@>(S@ return, (A@, S@) { S@; } put) {
+    ma(f(Unit, return, put), put);
+  };
 };
 
 # @func[Put] Output a single value.
@@ -48,8 +38,8 @@ Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> f)<@ S@>(Channel@<A@, S@> s) {
 #  @arg[A@][v] The value to output.
 #  @returns[Stream@] A computation that outputs the value.
 <@ A@>(A@) { Stream@<A@>; }
-Put = <@ A@>(A@ v)<@ S@>(Channel@<A@, S@> s) {
-  s.put(v);
+Put = <@ A@>(A@ v)<@ S@>(S@ return, (A@, S@) { S@; } put) {
+  put(v, return);
 };
 
 # @func[ForEach] Iterate over elements of a stream.
@@ -74,15 +64,11 @@ Put = <@ A@>(A@ v)<@ S@>(Channel@<A@, S@> s) {
 <@ A@>(Stream@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
 ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
   S@ = (B@) { B@; };
-
-  return = (B@ b) { b; };
-
-  do = (S@ a, Lazy@<S@> f, B@ b) {
-    B@ nb = a(b);
-    f(Unit, nb);
+  S@ return = (B@ b) { b; };
+  put = (A@ x, S@ f, B@ b) {
+    f(body(x, b));
   };
-
-  stream(Channel@(return, do, body), base);
+  stream(return, put, base);
 };
 
 # @type[In@] Monadic interface for getting from a stream of values.
@@ -96,9 +82,9 @@ Out@ = <@ A@, <@>@ M@>(Stream@<A@>) { M@<Unit@>; };
 
 # @value[Stream] Streams specialized for a given type.
 Stream = <@ A@> {
-  @(Channel@: Channel@<A@>, Stream@: Stream@<A@>,
+  @(Stream@: Stream@<A@>,
     In@: In@<A@>, Out@: Out@<A@>,
     Return: Return<A@>, Do: Do<A@>, Put: Put<A@>, ForEach: ForEach<A@>);
 };
 
-@(Channel@, Stream@, In@, Out@, Return, Do, Put, ForEach, Stream);
+@(Stream@, In@, Out@, Return, Do, Put, ForEach, Stream);

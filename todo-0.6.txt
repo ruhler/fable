@@ -4,6 +4,8 @@ Things to consider doing for the fble-0.6 release.
 
 * fble-pprof 'unable to serve' after ctrl-c to quit just before.
 
+* Add test that /Std/Stream%.ForEach iterates in the right order.
+
 * Change IntP Data traversal order to be natural order.
 
 * Figure out why we don't propagate an error

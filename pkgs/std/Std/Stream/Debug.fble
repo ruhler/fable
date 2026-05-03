@@ -4,7 +4,7 @@
 
 Char@ .= /Std/Char%;
 Monad@ .= /Std/Monad%;
-Channel@, Stream@, Out@ .= /Std/Stream/Text%;
+Stream@, Out@, ForEach .= /Std/Stream/Text%;
 Unit@, Unit .= /Std/Unit%;
 
 (Char@) { Unit@; } PutChar = @<PutChar>|PutChar;
@@ -16,17 +16,9 @@ Unit@, Unit .= /Std/Unit%;
 #  @arg[Stream@] The output to perform.
 #  @returns[Unit@] Nothing interesting.
 (Stream@) { Unit@; }
-ToDebug = {
-  S@ = Unit@;
-  Channel@<S@> S = @(
-    return: Unit,
-    do: (Unit@ u, (Unit@) { Unit@; } f) { f(u); },
-    put: PutChar
-  );
-
-  (Stream@ output) {
-    output(S);
-  };
+ToDebug = (Stream@ output) {
+  Char@ c, Unit@ _ := ForEach(output, Unit);
+  PutChar(c);
 };
 
 # @func[DebugOut] An Out@ that sends to the debug output stream.
