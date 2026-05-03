@@ -1,8 +1,5 @@
 
-Data@ .= /Core/Data%;
-
-Int@ .= /Std/Int%;
-Int .= /Std/Int/Lit%;
+Data@, Bit@, Data .= /Core/Data2%;
 
 List@ = /Std/List%.List@;
 List = /Std/List%.List;
@@ -12,7 +9,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
-Put, Do, Return .= /Std/Stream%;
+Do, Return .= /Core/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 Board@ = /Games/TicTacToe/Board%.Board@;
@@ -24,7 +21,7 @@ BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
 Move = /Games/TicTacToe/Board%.Move;
 
 Data@<Square@> SquareData = (Square@ x) {
-  Put(x.?(X: Int|0, O: Int|1, E: Int|2));
+  x.?(X: Data|00, O: Data|01, E: Data|1);
 };
 
 Data@<Board@> BoardData = (Board@ x) {
@@ -37,7 +34,7 @@ Data@<Board@> BoardData = (Board@ x) {
   Unit@ _ := Do(SquareData(x.ll));
   Unit@ _ := Do(SquareData(x.lc));
   Unit@ _ := Do(SquareData(x.lr));
-  Return<Int@>;
+  Return<Bit@>;
 };
 
 List@<Position@> Positions = List[
@@ -138,7 +135,7 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
-MemoTable@(.Map@), Empty, Lookup, Insert .= /Core/Map/Data%.Map(BoardData)<PositionResult@>;
+MemoTable@(.Map@), Empty, Lookup, Insert .= /Core/Map%.Map(BoardData)<PositionResult@>;
 
 MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
 

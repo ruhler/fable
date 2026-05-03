@@ -1336,3 +1336,211 @@ Rough thoughts:
    with stream@.
 * Review/adjust Map API and standardize it.
 
+---
+
+Unfortunately, use of Do, Put, Return instead of direct implementation of
+Stream@ for IntP@ slows us down from 30s ==> 40s. That's sad. It means we have
+to pay a cost for using the nice Do, Put, Return.
+
+Can I figure out why? Maybe there's a way to fix it?
+
+How about start with a new implementation. Replace use of Do with Append
+instead?
+
+Using Concat instead of Do gets us up to 51s. That's even worse. :(
+
+It's got to be because I'm allocating functions, composing the functions, then
+applying the state to them. Instead I should be passing state around
+everywhere explicitly, right?
+
+Maybe the issue is if we do a partial application and then pass that as a tail
+call?
+
+For example:
+
+  Data@<IntP@> Data = (IntP@ x) {
+    x.?(1: Concat[Put(0), Put(0)],
+      2p0: Concat[Put(0), Put(1), Data(x.2p0)],
+      2p1: Concat[Put(1), Data(x.2p1)]);
+  };
+
+Data(x.2p1) is a partial application? But it's not. But Put(0) and Put(1)
+definitely are partial applications, and we are passing them to Concat as a
+tail call, which means we are exporting the partial application of Put to the
+caller to call?
+
+---
+
+Let's figure out what the real issue is to make the Do approach 25% slower.
+
+30 second approach:
+
+  Data@<IntP@> Data = (IntP@ x)<@ S@>(S@ s)<@ R@>((S@) { R@; } r, (Bit@, S@, (S@) { R@; }) { R@; } put) {
+    x.?(1: {
+        S@ s := put(0, s);
+        put(0, s, r);
+      },
+      2p0: {
+        S@ s := put(0, s);
+        S@ s := put(1, s);
+        Data(x.2p0, s, r, put);
+      },
+      2p1: {
+        S@ s := put(1, s);
+        Data(x.2p1, s, r, put);
+      });
+  };
+
+40 second approach:
+
+  Data@<IntP@> Data = (IntP@ x) {
+    x.?(1: {
+        Unit@ _ := Do(Put(0));
+        Put(0);
+      },
+      2p0: {
+        Unit@ _ := Do(Put(0));
+        Unit@ _ := Do(Put(1));
+        Data(x.2p0);
+      },
+      2p1: {
+        Unit@ _ := Do(Put(1));
+        Data(x.2p1);
+      });
+  };
+
+My hypothesis is we'll see a big difference in number of functions allocated.
+My goal is to figure out which functions are being allocated why.
+
+Profiling suggests the following are up notably:
+* TailCall
+* __memcpy_generic
+* FbleNewFuncValue
+* /Core/Stream%.Do
+
+Let's start with those, see what shows up.
+
+TailCall is too hard to trace down.
+__memcpy_generic is specifically up due to:
+  /Core/Map%.InsertWith.put
+
+Maybe. It's unclear.
+
+Okay, FbleNewFuncValue is interesting.
+
+Before:
+                                     Sequence
+
+   3.057% 1094 [5]FbleNewFuncValue
+
+                                    Incoming
+
+   77.060% 849 [6]/Core/Int/IntP/Data%.Data
+   7.095%  87  [7]/Core/Map%.InsertWith
+   7.086%  86  [8]/Core/Int/Data2%.Data
+   2.037%  26  [9]/Core/Map%.Insert
+   1.018%  13  [10]TailCall 
+
+After:
+
+                                    Sequence
+
+   5.076% 2403 [5]FbleNewFuncValue
+
+                                    Incoming
+
+   32.095% 792 [6]/Core/Int/IntP/Data%.DataB
+   31.096% 768 [7]/Core/Stream%.Do
+   26.030% 632 [8]PartialApply
+   3.049%  84  [9]/Core/Int/Data2%.Data
+   2.037%  57  [10]/Core/Map%.InsertWith
+   1.041%  34  [11]/Core/Map%.Insert
+   0.070%  17  [12]TailCall
+
+It looks like we have tripled the number of function allocations from before.
+Before we just had it in IntP/Data%.Data. Now we have it in Data, Do, and
+PartialApply. I should be able to track these down, right?
+
+But FbleNewFuncValue allocates on the stack. Is that really that expensive?
+Let's consider the 2p1 case, for example:
+
+      2p1: {
+        S@ s := put(1, s);
+        Data(x.2p1, s, r, put);
+      });
+
+      2p1: {
+        Unit@ _ := Do(Put(1));
+        Data(x.2p1);
+      });
+
+1. We have a clear anonymous function allocation from the ':=' in Data.
+2. Do has a clear anonymous function allocation:
+    ma(s, (S@ s) { mf(Unit, s, r, f); }, f);
+3. The PartialApply must be coming from Put(1).
+
+So, in the first case, we're creating this function which we pass to 'put',
+which is the continuation function.
+
+In the second case, we're doing a partial application of Put, and a
+continuation function, we pass them both to Do, then do a wrapper around that
+partial continuation function, then apply that to the underlying 'put'
+function.
+
+What if I implemented a DoPut? Would that save us from any of these redundant
+allocations? It should. I would no longer need the partial function
+application from Put. I would still need the rewriting from Do though? Let's
+try it.
+
+Yeah, so we get rid of the partial application. But that's all.
+
+  Time: 0:35.88
+
+And it splits the difference. Exactly as we would expect if the
+FbleNewFuncValue calls are the main difference.
+
+I don't think I can get rid of the FbleNewFuncValue in DoPut.
+
+What if we gave a bigger limit to frame size? It's 4KB right now. What if I
+increase that to, say, 16KB? The question is if the small frame size is
+forcing us to export these stack allocated functions to the heap. If I go to
+16KB, we should reduce the cost of those by 25% maybe? It would show up
+significantly, don't you think? Though that would help both cases if it did.
+
+What if I ditch the Lazy part of DoPut? Remove the function allocation in Data
+itself?
+
+Apparently it makes no difference. We must be getting some value from doing
+things lazily? Or, the function allocation isn't the real cost. The real cost
+was the extra layers of function / tail calls?
+
+Just for the fun of it, let me try with increasing MERGE_LIMIT from 4KB to
+32KB. See if it makes any difference at all.
+
+It saves us about 4 seconds. Hmm...
+
+Anyway, I feel like at this point I'm micromanaging. I feel like the issue is
+my fble runtime implementation more than anything. I shouldn't be micro
+optimizing so much at the fble source code level.
+
+Let's stick with separate Do, Put for now. Take the performance hit. Follow up
+in a future release on how to optimize the implementation to minimize the
+overheads in this case.
+
+---
+
+Where does this leave us? What's next? Any easy simplifications I can make to
+my Stream@ definition? Or, shall we migrate over to the new map approach
+first, clean that up, then worry?
+
+Yeah. Let's continue migrating first. It's fine to use Do, Put everywhere.
+
+Here's a question: if we don't care about these low level performance issues,
+is there still a good reason to migrate to a new Stream@ type? Why not use the
+existing Stream@ type, clean everything up based on that, then consider
+switching later? What does the new stream type buy me?
+
+Well, it buys me a much more straight forward implementation of Map. Hmm...
+Let's keep going with things as planned: migrate to new Map, then migrate rest
+of stream over.
+

@@ -8,7 +8,7 @@ Decr = /Std/Int%.Decr;
 Maybe@ = /Std/Maybe%.Maybe@;
 
 List@ = /Std/List%.List@;
-Put, Do .= /Std/Stream%;
+Put, Do .= /Core/Stream%;
 
 Coord@ = *(Int@ x, Int@ y);
 
@@ -17,7 +17,7 @@ Data@<Coord@> CoordData = (Coord@ a) {
   Put(a.y);
 };
 
-Grid = /Core/Map/Data%.Map(CoordData);
+Grid = /Core/Map%.Map(CoordData);
 
 Grid@ = <@ T@> { Grid.Map@<T@>; };
 
