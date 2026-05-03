@@ -24,8 +24,8 @@ Unit@ = /Std/Unit%.Unit@;
 Int@ B = Int|2;
 Int@ C = Int|3;
 
-Map@, Empty, Insert .= /Core/Map/Data%.Map(/Core/Int/Data%.Data)<Bool@>;
-Show = /Core/Map/Show%.Show(/Std/Int/Show%.Show);
+Map@, Empty, Insert .= /Core/Map%.Map(/Core/Int/Data2%.Data)<Bool@>;
+Show = /Core/Map/Show2%.Show(/Std/Int/Show%.Show);
 
 Test@ Tests = TestSuite(Str|Show, List[
   Test(Str|'empty', (Unit@ _) {
