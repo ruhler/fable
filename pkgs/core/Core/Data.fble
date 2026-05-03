@@ -1,5 +1,5 @@
 
-Stream@, Return, Do, Put .= /Core/Stream%;
+Stream@ .= /Core/Stream%;
 
 List@ .= /Std/List%;
 Unit@, Unit .= /Std/Unit%;
@@ -12,10 +12,15 @@ Bit@ = +(Unit@ 0, Unit@ 1);
 Data@ = <@ A@>(A@) { Stream@<Bit@>; };
 
 (List@<Bit@>) { Stream@<Bit@>; }
-Data = (List@<Bit@> xs) {
-  xs.?(empty: Return<Bit@>);
-  Unit@ _ := Do(Put(xs.items.head));
-  Data(xs.items.tail);
+Data = (List@<Bit@> xs)<@ S@>(S@ empty, (Bit@, S@) { S@; } items) {
+  xs.?(empty: empty);
+  items(xs.items.head, Data(xs.items.tail, empty, items));
 };
 
-@(Data@, Bit@, 0, 1, Data);
+(List@<Stream@<Bit@>>) { Stream@<Bit@>; }
+Datas = (List@<Stream@<Bit@>> xs)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
+  xs.?(empty: return);
+  xs.items.head(Datas(xs.items.tail, return, put), put);
+};
+
+@(Data@, Bit@, 0, 1, Data, Datas);

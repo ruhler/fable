@@ -1,5 +1,5 @@
 
-Data@ .= /Core/Data%;
+Data@, Bit@ .= /Core/Data%;
 
 Drawing@ = /App/Drawing%.Drawing@;
 Color@ = /App/Drawing%.Color@;
@@ -26,12 +26,10 @@ Cmp@ = /Std/Cmp%.Cmp@;
 Compared@ = /Std/Cmp%.Compared@;
 
 Show@ = /Std/Show%.Show@;
-Do .= /Core/Stream%;
 
 Format = /Std/Char/Ascii/Stream%.Format;
 
 TestResult@ = /Std/Test%.TestResult@;
-Unit@ .= /Std/Unit%;
 
 (Point@, Point@) { Bool@; } EqPoint = (Point@ a, Point@ b) {
   Eq(a.x, b.x).?(false: False);
@@ -50,9 +48,8 @@ Cmp@<Point@> OrdPoint = (Point@ a, Point@ b) {
   r.?(equal: Ord(a.y, b.y), : r);
 };
 
-Data@<Point@> DataPoint = (Point@ a) {
-  Unit@ _ := Do(/Core/Int/Data%.Data(a.x));
-  /Core/Int/Data%.Data(a.y);
+Data@<Point@> DataPoint = (Point@ a)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
+  /Core/Int/Data%.Data(a.x, /Core/Int/Data%.Data(a.y, return, put), put);
 };
 
 Show@<Point@> ShowPoint = (Point@ x) {

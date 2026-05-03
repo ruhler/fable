@@ -1,7 +1,4 @@
 
-Lazy@ .= /Std/Lazy%;
-Unit .= /Std/Unit%;
-
 # Stream@
 #  @arg[@][A@] The type of value on the stream.
 #  @arg[@][S@] The type of state of the consumer of the stream.
@@ -18,22 +15,4 @@ Unit .= /Std/Unit%;
 #  @returns[R@] The result produced by the consumer.
 Stream@ = <@ A@, @ S@>(S@, (A@, S@) { S@; }) { S@; };
 
-Stream@ Return = <@ A@, @ S@>(S@ r, (A@, S@) { S@; } _) {
-  r;
-};
-
-<@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
-Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> mf) {
-  <@ S@>(S@ r, (A@, S@) { S@; } f) {
-    ma(mf(Unit, r, f), f);
-  };
-};
-
-<@ A@>(A@) { Stream@<A@>; }
-Put = <@ A@>(A@ x) {
-  <@ S@>(S@ r, (A@, S@) { S@; } f) {
-    f(x, r);
-  };
-};
-
-@(Stream@, Do, Return, Put);
+@(Stream@);

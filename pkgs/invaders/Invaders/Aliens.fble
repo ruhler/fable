@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 Or = /Std/Bool%.Or;
 
-Data@ .= /Core/Data%;
+Data@, Datas .= /Core/Data%;
 
 Drawing@ = /App/Drawing%.Drawing@;
 Blank = /App/Drawing%.Blank;
@@ -45,8 +45,6 @@ Empty = /Std/List%.Empty;
 Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
-
-Do .= /Core/Stream%;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
@@ -112,8 +110,7 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
 };
 
 Data@<Alien@> AlienData = (Alien@ x) {
-  Unit@ _ := Do(/Core/Int/Data%.Data(x.row));
-  /Core/Int/Data%.Data(x.col);
+  Datas[/Core/Int/Data%.Data(x.row), /Core/Int/Data%.Data(x.col)];
 };
 
 # Set@ --

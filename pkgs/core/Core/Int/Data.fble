@@ -1,24 +1,13 @@
 
-Data@, 0, 1 .= /Core/Data%;
+Data@, Bit@, 0, 1 .= /Core/Data%;
 Int@ .= /Std/Int%;
-Do, Put .= /Core/Stream%;
-Unit@ .= /Std/Unit%;
 
-Data@<Int@> Data = (Int@ x) {
+Data@<Int@>
+Data = (Int@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
   x.?(
-    n: {
-      Unit@ _ := Do(Put(0));
-      Unit@ _ := Do(Put(0));
-      /Core/Int/IntP/Data%.Data(x.n);
-    }, 
-    0: {
-      Unit@ _ := Do(Put(0));
-      Put(1);
-    },
-    p: {
-      Unit@ _ := Do(Put(1));
-      /Core/Int/IntP/Data%.Data(x.p);
-    });
+    n: put(0, put(0, /Core/Int/IntP/Data%.Data(x.n, return, put))),
+    0: put(0, put(1, return)),
+    p: put(1, /Core/Int/IntP/Data%.Data(x.p, return, put)));
 };
 
 @(Data);

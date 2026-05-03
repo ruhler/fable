@@ -1789,3 +1789,23 @@ change.
 What if people didn't use generic Do, Put, etc. and they worked directly with
 the simplified empty, items interface? How awkward is that, and would we get
 our performance back? Let's try it.
+
+First off, I lose my ability to be lazy somehow? Is that true?
+
+Yeah. I'm traversing to the end of the stream before returning the stream.
+Feels like a bad thing to do. Let's see how performance turns out. Maybe we
+can fix that by inserting a Lazy@ somewhere later.
+
+Wow. We're back to 30 seconds if we do that.
+
+It's a bit tedious to write out. But I can use Data and Datas to help compose
+things for the most part.
+
+Can we do away with the laziness of things? Is that legit?
+
+Let's not worry about that just yet. Let me worry about simplifying how we
+write stream interfaces. To what extent can we use composition for this?
+
+Maybe it only matters for high performance things like IntP@ and Int@? Can I
+leave the nice Do, Put interface otherwise?
+

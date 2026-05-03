@@ -1,5 +1,5 @@
 
-Data@, Bit@, Data .= /Core/Data%;
+Data@, Data, Datas .= /Core/Data%;
 
 List@ = /Std/List%.List@;
 List = /Std/List%.List;
@@ -9,8 +9,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
-Do, Return .= /Core/Stream%;
-Unit@, Unit .= /Std/Unit%;
+Unit .= /Std/Unit%;
 
 Board@ = /Games/TicTacToe/Board%.Board@;
 Player@ = /Games/TicTacToe/Board%.Player@;
@@ -25,16 +24,10 @@ Data@<Square@> SquareData = (Square@ x) {
 };
 
 Data@<Board@> BoardData = (Board@ x) {
-  Unit@ _ := Do(SquareData(x.ul));
-  Unit@ _ := Do(SquareData(x.uc));
-  Unit@ _ := Do(SquareData(x.ur));
-  Unit@ _ := Do(SquareData(x.ml));
-  Unit@ _ := Do(SquareData(x.mc));
-  Unit@ _ := Do(SquareData(x.mr));
-  Unit@ _ := Do(SquareData(x.ll));
-  Unit@ _ := Do(SquareData(x.lc));
-  Unit@ _ := Do(SquareData(x.lr));
-  Return<Bit@>;
+  Datas[
+    SquareData(x.ul), SquareData(x.uc), SquareData(x.ur),
+    SquareData(x.ml), SquareData(x.mc), SquareData(x.mr),
+    SquareData(x.ll), SquareData(x.lc), SquareData(x.lr)];
 };
 
 List@<Position@> Positions = List[
