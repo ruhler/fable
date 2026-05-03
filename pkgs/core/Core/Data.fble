@@ -1,7 +1,6 @@
 
-Stream@ .= /Core/Stream%;
-
 List@ .= /Std/List%;
+Stream@ .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 Bit@ = +(Unit@ 0, Unit@ 1);
