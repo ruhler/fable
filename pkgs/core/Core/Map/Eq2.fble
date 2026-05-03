@@ -1,0 +1,28 @@
+
+Bool@, True, False .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
+Map@, ForEach .= /Core/Map%;
+List@, Items, Empty .= /Std/List%;
+
+<@ K@>(Eq@<K@>)<@ V@>(Eq@<V@>, Map@<K@, V@>, Map@<K@, V@>) { Bool@; }
+Eq = <@ K@>(Eq@<K@> keq)<@ V@>(Eq@<V@> veq, Map@<K@, V@> a, Map@<K@, V@> b) {
+  Entry@ = *(K@ key, V@ value);
+
+  Eq@<Entry@> EqEntry = (Entry@ a, Entry@ b) {
+    keq(a.key, b.key).?(false: False);
+    veq(a.value, b.value).?(false: False);
+    True;
+  };
+
+  List@<Entry@> as = ForEach(a, Empty<Entry@>, (K@ k, V@ v, List@<Entry@> b) {
+    Items(Entry@(k, v), b);
+  });
+
+  List@<Entry@> bs = ForEach(b, Empty<Entry@>, (K@ k, V@ v, List@<Entry@> b) {
+    Items(Entry@(k, v), b);
+  });
+
+  /Std/List/Eq%.Eq(EqEntry, as, bs);
+};
+
+@(Eq);

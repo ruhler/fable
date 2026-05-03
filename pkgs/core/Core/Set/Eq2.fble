@@ -1,0 +1,13 @@
+
+Eq@ .= /Std/Eq%;
+List@, Items, Empty .= /Std/List%;
+Set@, ForEach .= /Core/Set2%;
+
+<@ K@>(Eq@<K@>) { Eq@<Set@<K@>>; }
+Eq = <@ K@>(Eq@<K@> keq, Set@<K@> a, Set@<K@> b) {
+  List@<K@> as = ForEach(a, Empty<K@>, Items<K@>);
+  List@<K@> bs = ForEach(b, Empty<K@>, Items<K@>);
+  /Std/List/Eq%.Eq(keq, as, bs);
+};
+
+@(Eq);

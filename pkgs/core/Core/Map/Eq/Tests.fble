@@ -22,8 +22,8 @@ Int@ A = Int|0;
 Int@ B = Int|1;
 Int@ C = Int|2;
 
-Map@, Empty, Insert, Delete .= /Core/Map/Data%.Map(/Core/Int/Data%.Data)<Bool@>;
-Eq = /Core/Map/Eq%.Eq(/Std/Int/Eq%.Eq);
+Map@, Empty, Insert, Delete .= /Core/Map%.Map(/Core/Int/Data2%.Data)<Bool@>;
+Eq = /Core/Map/Eq2%.Eq(/Std/Int/Eq%.Eq);
 
 Test@ Tests = TestSuite(Str|Eq, List[
   Test(Str|'eq: equal', (Unit@ _) {

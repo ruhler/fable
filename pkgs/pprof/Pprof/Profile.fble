@@ -10,7 +10,7 @@ BlockId@ = Int@;
 
 Block@ = *(String@ name, String@ file, Int@ line, Int@ column);
 
-Blocks = /Core/Map/Data%.Map(/Core/Int/Data%.Data)<Block@>;
+Blocks = /Core/Map%.Map(/Core/Int/Data2%.Data)<Block@>;
 Blocks@ = Blocks.Map@;
 
 Sequence@ = List@<BlockId@>;

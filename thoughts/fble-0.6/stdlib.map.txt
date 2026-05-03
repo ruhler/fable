@@ -1544,3 +1544,7 @@ Well, it buys me a much more straight forward implementation of Map. Hmm...
 Let's keep going with things as planned: migrate to new Map, then migrate rest
 of stream over.
 
+Things to remember to remove:
+* /Core/Data%, /Core/Int/Data%, /Core/Map/Data%, /Core/Set%
+* /Core/Map/Show%, /Core/Map/Eq%, /Core/Map/Test%
+* /Core/Set/Eq%, /Core/Set/Show%

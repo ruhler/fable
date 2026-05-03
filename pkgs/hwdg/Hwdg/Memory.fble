@@ -10,7 +10,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Addr@ = /Hwdg/Addr%.Addr@;
 Data@ = /Hwdg/Data%.Data@;
 
-Map@, ForEach, Insert, Lookup, Empty .= /Core/Map/Data%.Map(/Hwdg/Addr%.Data)<Data@>;
+Map@, ForEach, Insert, Lookup, Empty .= /Core/Map%.Map(/Hwdg/Addr%.Data)<Data@>;
 
 Memory@ = Map@;
 

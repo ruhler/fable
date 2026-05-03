@@ -1,5 +1,5 @@
 
-Data@ .= /Core/Data%;
+Data@ .= /Core/Data2%;
 
 Int@ = /Std/Int%.Int@;
 Incr = /Std/Int%.Incr;
@@ -8,17 +8,17 @@ Decr = /Std/Int%.Decr;
 Maybe@ = /Std/Maybe%.Maybe@;
 
 List@ = /Std/List%.List@;
-Put, Do .= /Std/Stream%;
+Do .= /Core/Stream%;
 Unit@ .= /Std/Unit%;
 
 Coord@ = *(Int@ x, Int@ y);
 
 Data@<Coord@> CoordData = (Coord@ x) {
-  Unit@ _ := Do(Put(x.x));
-  Put(x.y);
+  Unit@ _ := Do(/Core/Int/Data2%.Data(x.x));
+  /Core/Int/Data2%.Data(x.y);
 };
 
-Grid = /Core/Map/Data%.Map(CoordData);
+Grid = /Core/Map%.Map(CoordData);
 
 Grid@ = <@ T@> { Grid<T@>.Map@; };
 

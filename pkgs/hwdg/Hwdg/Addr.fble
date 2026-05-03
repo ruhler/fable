@@ -1,7 +1,7 @@
 
-Data@ .= /Core/Data%;
+Data@ .= /Core/Data2%;
 Int@ = /Std/Int%.Int@;
-Do, Put .= /Std/Stream%;
+Do .= /Core/Stream%;
 Unit@ .= /Std/Unit%;
 
 # A unique identifier for a location.
@@ -11,8 +11,8 @@ Unit@ .= /Std/Unit%;
 Addr@ = *(Int@ x, Int@ y);
 
 Data@<Addr@> Data = (Addr@ a) {
-  Unit@ _ := Do(Put(a.x));
-  Put(a.y);
+  Unit@ _ := Do(/Core/Int/Data2%.Data(a.x));
+  /Core/Int/Data2%.Data(a.y);
 };
 
 @(Addr@, Data);
