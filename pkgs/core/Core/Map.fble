@@ -40,7 +40,7 @@ Lookup = <@ K@>(Data@<K@> data)<@ V@> {
     Just(m.entry.value);
   };
 
-  put = (Bit@ x, S@ m, (S@) { R@; } f) {
+  put = (Bit@ x, (S@) { R@; } f, S@ m) {
     m.?(empty: Nothing<V@>);
 
     # If m.children access fails with wrong tag, it means your data type
@@ -60,7 +60,7 @@ InsertWith = <@ K@>(Data@<K@> data)<@ V@> {
   S@ = Map@<K@, V@>;
   R@ = Map@<K@, V@>;
 
-  put = (Bit@ x, S@ m, (S@) { R@; } f) {
+  put = (Bit@ x, (S@) { R@; } f, S@ m) {
     children = {
       m.?(empty: @(0: Empty<K@, V@>, 1: Empty<K@, V@>));
 
@@ -116,7 +116,7 @@ Delete = <@ K@>(Data@<K@> data)<@ V@> {
     Just(Empty<K@, V@>);
   };
 
-  put = (Bit@ x, S@ m, (S@) { R@; } f) {
+  put = (Bit@ x, (S@) { R@; } f, S@ m) {
     m.?(empty: Nothing<Map@<K@, V@>>);
 
     # If m.children access fails with wrong tag, it means your data

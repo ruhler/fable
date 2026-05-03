@@ -9,30 +9,30 @@ Unit .= /Std/Unit%;
 #  @arg[(S@) { R@; }][r]
 #   The output to produce from the consumer state after consuming the entire
 #   stream.
-#  @arg[(Bit@, S@, (S@) { R@; })][f]
+#  @arg[(Bit@, (S@) { R@; }, S@)][f]
 #   A function that will be called for each element of the stream. It is
 #   passed the element of the stream, the current consumer state, and a
 #   function to call to finish consuming the rest of the elements of the
 #   stream.
 #  @arg[S@][s] The initial consumer state.
 #  @returns[R@] The result produced by the consumer.
-Stream@ = <@ A@, @ S@, @ R@>((S@) { R@; }, (A@, S@, (S@) { R@; }) { R@; }, S@) { R@; };
+Stream@ = <@ A@, @ S@, @ R@>((S@) { R@; }, (A@, (S@) { R@; }, S@) { R@; }, S@) { R@; };
 
-Stream@ Return = <@ A@, @ S@, @ R@>((S@) { R@; } r, (A@, S@, (S@) { R@; }) { R@; } _, S@ s) {
+Stream@ Return = <@ A@, @ S@, @ R@>((S@) { R@; } r, (A@, (S@) { R@; }, S@) { R@; } _, S@ s) {
   r(s);
 };
 
 <@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
 Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> mf) {
-  <@ S@, @ R@>((S@) { R@; } r, (A@, S@, (S@) { R@; }) { R@; } f, S@ s) {
+  <@ S@, @ R@>((S@) { R@; } r, (A@, (S@) { R@; }, S@) { R@; } f, S@ s) {
     ma((S@ s) { mf(Unit, r, f, s); }, f, s);
   };
 };
 
 <@ A@>(A@) { Stream@<A@>; }
 Put = <@ A@>(A@ x) {
-  <@ S@, @ R@>((S@) { R@; } r, (A@, S@, (S@) { R@; }) { R@; } f, S@ s) {
-    f(x, s, r);
+  <@ S@, @ R@>((S@) { R@; } r, (A@, (S@) { R@; }, S@) { R@; } f, S@ s) {
+    f(x, r, s);
   };
 };
 

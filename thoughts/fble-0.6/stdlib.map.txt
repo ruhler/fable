@@ -1729,3 +1729,26 @@ cases mf is implement so that it can apply directly and return a function.
 
 Is there some similar thing we can do other places? Like, if functions
 returning functions are a problem, can we force an over-application in 'Do'?
+
+Anyway, here we are now:
+
+Stream@ = <@ A@, @ S@, @ R@>((S@) { R@; }, (A@, S@, (S@) { R@; }) { R@; }, S@) { R@; };
+
+What if I reordered the arguments to the put function too?
+
+Stream@ = <@ A@, @ S@, @ R@>((S@) { R@; }, (A@, (S@) { R@; }, S@) { R@; }, S@) { R@; };
+
+Then redefine (S@) { R@; } as, say s@:
+
+Stream@ = <@ A@, @ s@>(s@, (A@, s@) { s@; }) { s@; };
+
+Hey! Now that's interesting. Very simple. And directly corresponds to list
+construction, no?
+
+  <@ A@, @ S@>(S@ empty, (A@, S@) { S@; } items) { S@; };
+
+A stream is an abstract list. But that's exactly what we want, right? But how
+do I concatenate two lists reasonably?
+
+We can do it. It's not different. I'll show you.
+
