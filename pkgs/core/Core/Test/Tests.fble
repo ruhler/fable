@@ -3,7 +3,8 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-Stream@, Out@ .= /Std/Stream/Text%;
+Char@ .= /Std/Char%;
+Stream@, Out@ .= /Std/Stream%;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
@@ -30,7 +31,7 @@ Run = (Test@ test) {
   M@ = <@ A@> { A@; };
   return = <@ A@>(A@ x) { x; };
   do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f) { f(ma); };
-  Out@<M@> out = (Stream@ _) { Unit; };
+  Out@<Char@, M@> out = (Stream@<Char@> _) { Unit; };
   /Std/Test/Run%.Run(@(M@, return, do), out, Str|TestTest, test);
 };
 

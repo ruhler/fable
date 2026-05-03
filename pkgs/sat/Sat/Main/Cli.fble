@@ -1,5 +1,6 @@
 
-In@, Out@ .= /Std/Stream/Text%;
+Char@ .= /Std/Char%;
+In@, Out@ .= /Std/Stream%;
 String .= /Std/Stream/String%;
 
 List@ = /Std/List%.List@;
@@ -17,9 +18,9 @@ Str = /Std/Char/Ascii%.Str;
 Unit@ = /Std/Unit%.Unit@;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  Out@<M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
-  In@<M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  Out@<Char@, M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
+  In@<Char@, M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ := m.do(out(String(/Sat/Usage%)));

@@ -1,14 +1,15 @@
 
+Char@ .= /Std/Char%;
 Map@, ForEach .= /Core/Map%;
 Show@ .= /Std/Show%;
-Stream@, Do .= /Std/Stream/Text%;
+Stream@, Do .= /Std/Stream%;
 Format, String .= /Std/Char/Ascii/Stream%;
 Unit@ .= /Std/Unit%;
 
 <@ K@>(Show@<K@>)<@ V@>(Show@<V@>) { Show@<Map@<K@, V@>>; }
 Show = <@ K@>(Show@<K@> show_key)<@ V@>(Show@<V@> show_value, Map@<K@, V@> map) {
   Unit@ _ := Do(ForEach(map, String|'{ ',
-    (K@ k, V@ v, Stream@ shown) {
+    (K@ k, V@ v, Stream@<Char@> shown) {
       Unit@ _ := Do(shown);
       Format|'%s => %s; '[show_key(k), show_value(v)];
     }));

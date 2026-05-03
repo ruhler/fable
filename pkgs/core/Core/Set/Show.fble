@@ -1,7 +1,8 @@
 
+Char@ .= /Std/Char%;
 Set@, ForEach .= /Core/Set%;
 Show@ .= /Std/Show%;
-Stream@, Do .= /Std/Stream/Text%;
+Stream@, Do .= /Std/Stream%;
 Format, String .= /Std/Char/Ascii/Stream%;
 Unit@ .= /Std/Unit%;
 
@@ -16,7 +17,7 @@ Unit@ .= /Std/Unit%;
 <@ K@>(Show@<K@>) { Show@<Set@<K@>>; }
 Show = <@ K@>(Show@<K@> show_key, Set@<K@> s) {
   Unit@ _ := Do(ForEach(s, String|'{ ',
-    (K@ x, Stream@ shown) {
+    (K@ x, Stream@<Char@> shown) {
       Unit@ _ := Do(shown);
       Format|'%s; '[show_key(x)];
     }));

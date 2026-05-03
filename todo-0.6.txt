@@ -2,9 +2,16 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Remove /Std/Stream/Text% and /Std/Stream/Binary%.
+
 * fble-pprof 'unable to serve' after ctrl-c to quit just before.
 
 * Add test that /Std/Stream%.ForEach iterates in the right order.
+
+* Remove /Std/Stream%.Do?
+  Because we don't make use of the laziness of it anymore?
+  Or keep it, as a convenient way to do a sequence of nested function
+  application?
 
 * Change IntP Data traversal order to be natural order.
 

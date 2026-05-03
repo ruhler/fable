@@ -3,9 +3,9 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-Pos .= /Std/Char%;
+Char@, Pos .= /Std/Char%;
 Char = /Std/Char/Ascii%.Char;
-Out@ .= /Std/Stream/Text%;
+Out@ .= /Std/Stream%;
 GetLine .= /Std/Stream/String%;
 
 Main@ = /Std/Io/Cli%.Main@;
@@ -162,8 +162,8 @@ Percent = (Int@ numerator, Int@ denominator) {
 };
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
-  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  Out@<M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  Out@<Char@, M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
   (String@) { M@<Maybe@<BinaryIn@<M@>>>; } read = /Std/Io/File/Binary%.Read(m, io);
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets(io, m));
@@ -323,8 +323,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
       (Sequence@ s) { Append(seq, s); });
   };
 
-  (CharIn@<M@>, Out@<M@>) { M@<Unit@>; }
-  HandleConnection = (CharIn@<M@> is, Out@<M@> os) {
+  (CharIn@<M@>, Out@<Char@, M@>) { M@<Unit@>; }
+  HandleConnection = (CharIn@<M@> is, Out@<Char@, M@> os) {
     # Get the start line
     String@ start := m.do(GetLine(m, is));
 
@@ -393,7 +393,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   M@<Unit@> Serve = {
     # TODO: Don't assume ascii encoding of characters like this.
     InOut@<M@> ios := m.do(s);
-    Out@<M@> os = /Std/Stream/Map%.Out(Pos, ios.out);
+    Out@<Char@, M@> os = /Std/Stream/Map%.Out(Pos, ios.out);
     CharIn@<M@> is = /Std/Stream/Map%.In(/Std/Char%.Char, m, ios.in);
     Unit@ _ := m.do(HandleConnection(is, os));
     Unit@ _ := m.do(ios.close);

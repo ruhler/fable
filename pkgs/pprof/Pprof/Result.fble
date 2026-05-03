@@ -1,17 +1,14 @@
 
-False = /Std/Bool%.False;
-
-Eq@ = /Std/Eq%.Eq@;
-
-Show@ = /Std/Show%.Show@;
-Stream@ = /Std/Stream/Text%.Stream@;
-ToString = /Std/Stream/String%.ToString;
-
-Format = /Std/Char/Ascii/Stream%.Format;
-
+False .= /Std/Bool%;
+Char@ .= /Std/Char%;
+Eq@ .= /Std/Eq%;
+Show@ .= /Std/Show%;
+Stream@ .= /Std/Stream%;
+ToString .= /Std/Stream/String%;
+Format .= /Std/Char/Ascii/Stream%;
 
 Result@ = <@ A@> {
-  +(A@ ok, Stream@ error);
+  +(A@ ok, Stream@<Char@> error);
 };
 
 <@ A@>(A@) { Result@<A@>; }
@@ -19,8 +16,8 @@ Okay = <@ A@>(A@ x) {
   Result@(ok: x);
 };
 
-<@ A@>(Stream@) { Result@<A@>; }
-Error = <@ A@>(Stream@ msg) {
+<@ A@>(Stream@<Char@>) { Result@<A@>; }
+Error = <@ A@>(Stream@<Char@> msg) {
   Result@<A@>(error: msg);
 };
 

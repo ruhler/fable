@@ -1955,3 +1955,6 @@ No performance impact from my benchmarks at least:
   Memory: 82056
 
 Seems we've actually saved a decent amount of memory.
+
+Next step: get rid of use of Stream@ without explicit types. See how painful
+that is.
