@@ -3,7 +3,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
-Data@, Data, Append .= /Core/Data2%;
+Data@, Data .= /Core/Data2%;
 Eq@ = /Std/Eq%.Eq@;
 
 List = /Std/List%.List;
@@ -46,7 +46,8 @@ Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
 };
 
 Data@<Bit2@> DataBit2 = (Bit2@ x) {
-  Append(DataBit1(x.h), DataBit1(x.l));
+  Unit@ _ := /Core/Stream%.Do(DataBit1(x.h));
+  DataBit1(x.l);
 };
 
 Show@<Bit2@> ShowBit2 = (Bit2@ x) {

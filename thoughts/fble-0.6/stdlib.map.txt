@@ -1320,3 +1320,19 @@ What am I allocating?
  /Core/Map%.InsertWith.put
 
 I don't know.
+
+---
+
+Anyway, I'm satisfied with performance. It's worth spending some more time
+thinking about whether we can simplify the stream API, or testing if we can
+use nicer abstractions without hurting performance. But I think I should
+proceed with this.
+
+Rough thoughts:
+* Migrate everyone over to the new /Core/Map%. Get rid of the old ones.
+* Replace /Std/Stream% with this new approach.
+ - Move In@ and Out@ somewhere else.
+ - Remove /Text% and /Binary% variations. Just always supply the type to go
+   with stream@.
+* Review/adjust Map API and standardize it.
+
