@@ -248,6 +248,8 @@ Things to consider doing for the fble-0.6 release.
    of number of args expected and tail/non-tail possibilities.
  - Avoid redundant undef checks on values based on static info.
  - Use a special ref value instead of NULL to represent undefined values?
+ - Something to reduce overhead of use of 'Do'
+   See thoughts/fble-0.6/stdlib.map.txt for analysis and discussion.
 
 * Implement deflate algorithm.
  - Change --profile to produce gzip compressed profiles (doesn't need to be

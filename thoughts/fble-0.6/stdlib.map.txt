@@ -1559,3 +1559,173 @@ pkgs/core/Core/Data2.fble
 pkgs/core/Core/Set2.fble
 pkgs/core/Core/Set/Show2.fble
 pkgs/core/Core/Set/Eq2.fble
+
+---
+
+Map is migrated over. What's next? How to clean up the API and standardize it?
+Do we need to migrate /Std/Stream% first?
+
+Let's clean up Stream and migrate it over. I actually don't think it will be
+too difficult.
+
+First the cleanup: how to make it really pleasant to use? Let's consider the
+users:
+
+1. End producer. They can use Do, Put, Format.
+   Nothing needs to change.
+2. Core producer. Implementations of Do, Put, Format, etc.
+   Figure out how to make it easy to work with the new stream type.
+3. Consumer.
+   Figure out how to make it easy to consume the new stream type. 
+
+Core producers needs to know:
+  <@ S@>(S@ s)<@ R@>((S@) { R@; } r, (Bit@, S@, (S@) { R@; }) { R@; } put);
+
+Consumers need to know:
+  S@ = ...
+  r = (S@ m) { ... }
+  put = (A@ x, S@ m, (S@) { R@; } f) { ... }
+  stream(s, r, put)
+
+Things I can play around with:
+* order of arguments
+* names of arguments
+* type aliases, if useful.
+* grouping into structs, if useful.
+* note that (S@) { R@; } shows up a lot, especially if we reorganize.
+  Maybe we can make use of that to simplify things?
+
+Can I somehow generalize to reuse monadic types without loss of anything?
+
+My hunch tells me that Stream@ should be a function that takes a Monad@
+instance and a Put function. Let's see.
+
+  Stream@ = <@ A@, @ S@>(S@)<@ R@>((S@) { R@; }, (A@, S@, (S@) { R@; }) { R@; }) { R@; };
+
+Ignore the A@ for now.
+  
+  <@ S@>(S@)<@ R@>((S@) { R@; }, (X@, S@, (S@) { R@; }) { R@; }) { R@; };
+
+  <@ S@, R@>((S@) { R@; }, (X@, S@, (S@) { R@; }) { R@; }, S@) { R@; };
+  Let M@ = (S@) { R@; }
+
+  (M@, (X@, S@, M@) { R@; } { M@; }
+
+...
+
+What if I try to implement Stream@ as a monadic interface, and see if I can
+use that, and how difficult, to do the same kind of continuation passing style
+for the map code?
+
+  Stream@ = <<@>@ M@>(Monad@<M@>, (A@) { M@<Unit@>; }) { M@<Unit@>; }
+
+But this is exactly like my current stream interface?
+
+Now, obviously if I use a generic interface like this, IntP%.Data can't make
+use of the specialized thing. It will have to use Do, Put.
+
+Maybe the question is, assuming IntP%.Data uses Do, Put, and we are okay with
+that performance, can I reuse the existing Stream@ for /Core/Map% without loss
+of additional performance?
+
+Let's try it.
+
+Our baseline sat benchmark performance:
+
+  Time: 0:41.71
+  Memory: 27392
+
+Let's try the easy one, Lookup, first. But wait, didn't I already have this?
+What's different this time?
+
+Anyway, still, let's try it. I need:
+
+  S@ return,
+  (S@, Lazy@<S@>) { S@; } do,
+  (A@) { S@; } put
+
+One interesting thing: this forces us to return S@. But what if I want to
+return R@ instead? Is that the real difference?
+
+Rather than streaming a bunch of values over a state, think of it as a
+traversal? If I want to return something of type R@, keep my own state S@
+hidden, how would I describe things? It's up to the consumer to decide what
+they want to return at the end of the day?
+
+The weird thing is, the consumer gets to chose what they return from this
+function, not the producer. That suggests the return type should be a
+parameter of the interface.
+
+  (S@) { R@; } Return; # returns when we've reached the end of the stream.
+  M@<R@>;
+
+  (S@, Lazy@<S@>) { S@; } Do
+  <@ A@>(M@<A@>, (A@) { M@<B@>; }) { M@<B@>; } Do
+
+  (A@) { M@<A@>; } Put;
+
+Stream@ = <A@, <@>@ M@, @ R@>(M@<R@> return, Do, Put) { M@<R@>; }
+
+It doesn't feel right. I'm getting something mixed up.
+
+Do we just need to pick the right type for S@ to make things work out?
+
+  <@ s@>(s@)<@ R@>((s@) { R@; }, (A@, s@, (s@) { R@; }) { R@; }) { R@; };
+  S@ = (s@) { R@; }
+
+  Return = r;
+  Put is type (A@, s@) { R@; }
+  Do is (S@, (Unit@) { S@; }) { S@; }
+     = ((s@) { R@; }, s@) { R@; } ...
+
+Which looks real close to what I have. I just need to split my 'put' into
+separate 'do' and 'put', and then I bet things line up perfectly.
+
+Ugh. I feel like I'm going in circles. Shall we take another run around the
+loop then?
+
+Or is the real difference that I have A@ and the continuation at the same
+time, so I don't have to capture and pass A@ as the most recent state into do?
+
+Could we go the other way around? Morph /Std/Stream% closer to /Core/Stream%?
+
+Instead of:
+
+  S@ return,
+  (S@, Lazy@<S@>) { S@; } do,
+  (A@) { S@; } put
+
+Do something like:
+  S@ return
+  (A@, S@) { S@; } doput
+
+Or something like:
+  (S@) { R@; } Return;
+  (A@, S@, (S@) { R@; }) Put
+
+Stream@ = <@ S@, @ R@>((S@) { R@; } return, (A@, S@, (S@) { R@; }) { R@} ) ...
+
+This seems like a reasonable interface, no?
+* You want to do a streaming computation with state S@ that returns value R@.
+* Tell me what to return when I'm done. Tell me what to return after putting a
+  value?
+
+First step: move that state S@ to the last argument. The code feels a little
+cleaner all around this way. And now I can make a little more sense of what we
+are doing.
+
+  Time: 0:41.71 ==> 0:43.16
+  Memory: 27392 ==> 26996
+
+
+This is interesting:
+
+    ma((S@ s) { mf(Unit, r, f, s); }, f, s);
+    ma(mf(Unit, r, f), f, s);
+
+If instead of doing the partial application, we wait until we get the value
+for S@, we don't regress that second and a half. Presumably because in some
+cases mf is implement so that it can apply directly and return a function.
+
+Is there some similar thing we can do other places? Like, if functions
+returning functions are a problem, can we force an over-application in 'Do'?

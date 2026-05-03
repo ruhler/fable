@@ -49,7 +49,7 @@ Lookup = <@ K@>(Data@<K@> data)<@ V@> {
   };
 
   (Map@<K@, V@> map, K@ key) {
-    data(key, map, r, put);
+    data(key, r, put, map);
   };
 };
 
@@ -88,7 +88,7 @@ InsertWith = <@ K@>(Data@<K@> data)<@ V@> {
       Map@(entry: Entry@(key, value));
     };
 
-    data(key, map, r, put);
+    data(key, r, put, map);
   };
 };
 
@@ -138,7 +138,7 @@ Delete = <@ K@>(Data@<K@> data)<@ V@> {
   };
 
   (Map@<K@, V@> map, K@ key) {
-    Get(map, data(key, map, r, put));
+    Get(map, data(key, r, put, map));
   };
 };
 
