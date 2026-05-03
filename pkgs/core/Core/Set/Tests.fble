@@ -4,8 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
-Data@ .= /Core/Data%;
-Int .= /Std/Int/Lit%;
+Data@, Data .= /Core/Data2%;
 
 Eq@ = /Std/Eq%.Eq@;
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
@@ -18,7 +17,7 @@ Items = /Std/List%.Items;
 Show@ = /Std/Show%.Show@;
 ToString = /Std/Stream/String%.ToString;
 
-Do, Put .= /Std/Stream%;
+Do .= /Std/Stream%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -45,7 +44,7 @@ Eq@<Bit1@> EqBit1 = (Bit1@ a, Bit1@ b) {
 };
 
 Data@<Bit1@> DataBit1 = (Bit1@ x) {
-  x.?(0: Put(Int|0), 1: Put(Int|1));
+  x.?(0: Data|0, 1: Data|1);
 };
 
 Show@<Bit1@> ShowBit1 = (Bit1@ x) {
@@ -57,7 +56,7 @@ Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
 };
 
 Data@<Bit2@> DataBit2 = (Bit2@ x) {
-  Unit@ _ := Do(DataBit1(x.h));
+  Unit@ _ := /Core/Stream%.Do(DataBit1(x.h));
   DataBit1(x.l);
 };
 
@@ -66,7 +65,7 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
   ShowBit1(x.l);
 };
 
-Set = /Core/Set%.Set(DataBit2);
+Set = /Core/Set2%.Set(DataBit2);
 
 Set@ = Set.Set@;
 Empty = Set.Empty;
@@ -75,8 +74,8 @@ Insert = Set.Insert;
 Delete = Set.Delete;
 ForEach = Set.ForEach;
 
-Eq = /Core/Set/Eq%.Eq(EqBit2);
-Show = /Core/Set/Show%.Show(ShowBit2);
+Eq = /Core/Set/Eq2%.Eq(EqBit2);
+Show = /Core/Set/Show2%.Show(ShowBit2);
 
 Test@ Tests = TestSuite(Str|Set, List[
   Test(Str|'empty', (Unit@ _) {

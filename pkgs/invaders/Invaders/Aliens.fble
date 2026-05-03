@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 Or = /Std/Bool%.Or;
 
-Data@ .= /Core/Data%;
+Data@ .= /Core/Data2%;
 
 Drawing@ = /App/Drawing%.Drawing@;
 Blank = /App/Drawing%.Blank;
@@ -46,7 +46,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
-Put, Do .= /Std/Stream%;
+Do .= /Core/Stream%;
 
 Unit@ = /Std/Unit%.Unit@;
 Unit = /Std/Unit%.Unit;
@@ -112,14 +112,14 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
 };
 
 Data@<Alien@> AlienData = (Alien@ x) {
-  Unit@ _ := Do(Put(x.row));
-  Put(x.col);
+  Unit@ _ := Do(/Core/Int/Data2%.Data(x.row));
+  /Core/Int/Data2%.Data(x.col);
 };
 
 # Set@ --
 #   A set of aliens, to keep track of which aliens are alive or dead.
 # A set of aliens.
-Set = /Core/Set%.Set(AlienData);
+Set = /Core/Set2%.Set(AlienData);
 Set@ = Set.Set@;
 
 # AllAliens --

@@ -177,7 +177,6 @@ Test@ Tests = TestSuite(Str|Int, List[
   TEq(Str|Int, Int|151, (Unit@ _) { Int|151; }),
   TEq(Str|Hex, Int|151, (Unit@ _) { Hex|00_97; }),
 
-  /Core/Int/Map/Tests%.Tests,
   /Core/Int/Show/Tests%.Tests
 ]);
 

@@ -7,7 +7,6 @@ Test@ = /Std/Test%.Test@;
 TestSuite = /Std/Test%.TestSuite;
 
 Test@ Tests = TestSuite(Str|Map, List[
-  /Core/Map/Data/Tests%.Tests,
   /Core/Map/Data/Tests2%.Tests,
   /Core/Map/Eq/Tests%.Tests,
   /Core/Map/Show/Tests%.Tests
