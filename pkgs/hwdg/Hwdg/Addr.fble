@@ -1,5 +1,5 @@
 
-Data@ .= /Core/Data2%;
+Data@ .= /Core/Data%;
 Int@ = /Std/Int%.Int@;
 Do .= /Core/Stream%;
 Unit@ .= /Std/Unit%;
@@ -11,8 +11,8 @@ Unit@ .= /Std/Unit%;
 Addr@ = *(Int@ x, Int@ y);
 
 Data@<Addr@> Data = (Addr@ a) {
-  Unit@ _ := Do(/Core/Int/Data2%.Data(a.x));
-  /Core/Int/Data2%.Data(a.y);
+  Unit@ _ := Do(/Core/Int/Data%.Data(a.x));
+  /Core/Int/Data%.Data(a.y);
 };
 
 @(Addr@, Data);

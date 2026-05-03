@@ -1,6 +1,6 @@
 
 Bool@, True, False .= /Std/Bool%;
-Data@, Bit@ .= /Core/Data2%;
+Data@, Bit@ .= /Core/Data%;
 Maybe@, Just, Nothing, Get .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 

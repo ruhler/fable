@@ -1,13 +1,153 @@
 
-List = /Std/List%.List;
+Bool@, True, False, And .= /Std/Bool%;
+Data@, Data .= /Core/Data%;
+Eq@ .= /Std/Eq%;
+AssertEquals .= /Std/Eq/Assert%;
+Str .= /Std/Char/Ascii%;
+List@, List, Items .= /Std/List%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Show@ .= /Std/Show%;
+Do .= /Std/Stream/Text%;
+String, Format .= /Std/Char/Ascii/Stream%;
+Test@, TestSuite .= /Std/Test%;
+Unit@, Unit .= /Std/Unit%;
 
-Str = /Std/Char/Ascii%.Str;
+# A test suite for a Map@ implementation.
+# You provide:
+#   - An implementation of Map@ to test.
+#   - Implementations of Eq and Show for keys of the map.
+#   - Three distinct keys in iteration order.
+# It gives you back a test suite.
+<@ K@>(Data@<K@>, Eq@<K@>, Show@<K@>, K@, K@, K@) { Test@; }
+Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
+  TestSuite(Str|'Map', List[
+    /Std/Test%.Test(Str|'empty', (Unit@ _) {
+      Lookup, Empty .= /Core/Map%.Map(data)<Unit@>;
+      Maybe@<Unit@> wnt = Nothing<Unit@>;
+      Maybe@<Unit@> got = Lookup(Empty, b);
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/Unit/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/Unit/Show%.Show),
+        wnt, got);
+    }),
 
-Test@ = /Std/Test%.Test@;
-TestSuite = /Std/Test%.TestSuite;
+    /Std/Test%.Test(Str|'not found', (Unit@ _) {
+      Map@, Insert, Lookup, Empty .= /Core/Map%.Map(data)<Unit@>;
+      Map@ map = Insert(Empty, c, Unit);
+      Maybe@<Unit@> wnt = Nothing<Unit@>;
+      Maybe@<Unit@> got = Lookup(map, b);
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/Unit/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/Unit/Show%.Show),
+        wnt, got);
+    }),
+
+    /Std/Test%.Test(Str|'found', (Unit@ _) {
+      Map@, Insert, Lookup, Empty .= /Core/Map%.Map(data)<Bool@>;
+      Map@ map = Insert(Insert(Insert(Empty, a, False), b, True), c, False);
+      Maybe@<Bool@> wnt = Just(True);
+      Maybe@<Bool@> got = Lookup(map, b);
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
+        wnt, got);
+    }),
+
+    /Std/Test%.Test(Str|'replace', (Unit@ _) {
+      Map@, Insert, Lookup, Empty .= /Core/Map%.Map(data)<Bool@>;
+      Map@ map = Insert(Insert(Empty, b, False), b, True);
+      Maybe@<Bool@> wnt = Just(True);
+      Maybe@<Bool@> got = Lookup(map, b);
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
+        wnt, got);
+    }),
+
+    /Std/Test%.Test(Str|'delete', (Unit@ _) {
+      Map@, Insert, Lookup, Empty, Delete .= /Core/Map%.Map(data)<Bool@>;
+      Map@ map = Delete(Insert(Empty, b, False), b);
+      Maybe@<Bool@> wnt = Nothing<Bool@>;
+      Maybe@<Bool@> got = Lookup(map, b);
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
+        wnt, got);
+    }),
+  
+    /Std/Test%.Test(Str|'delete nothing', (Unit@ _) {
+      Map@, Insert, Lookup, Empty, Delete .= /Core/Map%.Map(data)<Bool@>;
+      Map@ map = Delete(Insert(Empty, b, False), a);
+      Maybe@<Bool@> wnt = Just(False);
+      Maybe@<Bool@> got = Lookup(map, b);
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show),
+        wnt, got);
+    }),
+
+    /Std/Test%.Test(Str|'foreach', (Unit@ _) {
+      Map@, Insert, ForEach, Empty .= /Core/Map%.Map(data)<Bool@>;
+      Map@ map = Insert(Insert(Insert(Empty, b, True), a, True), b, False);
+
+      # Note: A < B, we expect the ForEach to iterate in the order A, B. Because
+      # we add A to the end of the list before B, we expect the resulting list
+      # to be in the order B, A.
+      Entry@ = *(K@ key, Bool@ value);
+      List@<Entry@> wnt = List[Entry@(b, False), Entry@(a, True)];
+      List@<Entry@> got = ForEach(map, /Std/List%.Empty<Entry@>,
+        (K@ k, Bool@ v, List@<Entry@> l) {
+          Items(Entry@(k, v), l);
+        });
+      AssertEquals(
+        /Std/List/Eq%.Eq((Entry@ a, Entry@ b) {
+          And(eq(a.key, b.key), /Std/Bool/Eq%.Eq(a.value, b.value));
+        }),
+        /Std/List/Show%.Show((Entry@ e) {
+          Format|'%s: %s'[show(e.key), /Std/Bool/Show%.Show(e.value)];
+        }),
+        wnt, got);
+    })
+  ]);
+};
+
+Bit1@ = +(Unit@ 0, Unit@ 1);
+Bit2@ = *(Bit1@ h, Bit1@ l);
+
+Bit2@ A = Bit2@(Bit1@(0: Unit), Bit1@(0: Unit));
+Bit2@ B = Bit2@(Bit1@(0: Unit), Bit1@(1: Unit));
+Bit2@ C = Bit2@(Bit1@(1: Unit), Bit1@(0: Unit));
+
+Eq@<Bit1@> EqBit1 = (Bit1@ a, Bit1@ b) {
+  a.?(
+    0: b.?(0: True, 1: False),
+    1: b.?(0: False, 1: True));
+};
+
+Data@<Bit1@> DataBit1 = (Bit1@ x) {
+  x.?(0: Data|0, 1: Data|1);
+};
+
+Show@<Bit1@> ShowBit1 = (Bit1@ x) {
+  x.?(0: String|0, 1: String|1);
+};
+
+Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
+  And(EqBit1(a.h, b.h), EqBit1(a.l, b.l));
+};
+
+Data@<Bit2@> DataBit2 = (Bit2@ x) {
+  Unit@ _ := /Core/Stream%.Do(DataBit1(x.h));
+  DataBit1(x.l);
+};
+
+Show@<Bit2@> ShowBit2 = (Bit2@ x) {
+  Unit@ _ := Do(ShowBit1(x.h));
+  ShowBit1(x.l);
+};
 
 Test@ Tests = TestSuite(Str|Map, List[
-  /Core/Map/Data/Tests2%.Tests,
+  Test(DataBit2, EqBit2, ShowBit2, A, B, C),
   /Core/Map/Eq/Tests%.Tests,
   /Core/Map/Show/Tests%.Tests
 ]);

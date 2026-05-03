@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
-Data@ .= /Core/Data2%;
+Data@ .= /Core/Data%;
 
 Eq@ = /Std/Eq%.Eq@;
 
@@ -37,8 +37,8 @@ Eq@<Coord@> EqCoord = (Coord@ a, Coord@ b) {
 };
 
 Data@<Coord@> DataCoord = (Coord@ a) {
-  Unit@ _ := Do(/Core/Int/Data2%.Data(a.row));
-  /Core/Int/Data2%.Data(a.col);
+  Unit@ _ := Do(/Core/Int/Data%.Data(a.row));
+  /Core/Int/Data%.Data(a.col);
 };
 
 Show@<Coord@> ShowCoord = (Coord@ a) {
@@ -46,10 +46,10 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 };
 
 # The world is a set of Coord@ where there are live cells.
-Set = /Core/Set2%.Set(DataCoord);
+Set = /Core/Set%.Set(DataCoord);
 World@ = Set.Set@;
-EqWorld = /Core/Set/Eq2%.Eq(EqCoord);
-ShowWorld = /Core/Set/Show2%.Show(ShowCoord);
+EqWorld = /Core/Set/Eq%.Eq(EqCoord);
+ShowWorld = /Core/Set/Show%.Show(ShowCoord);
 W = @(
   Empty: Set.Empty,
   Insert: Set.Insert,

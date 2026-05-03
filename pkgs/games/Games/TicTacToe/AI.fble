@@ -1,5 +1,5 @@
 
-Data@, Bit@, Data .= /Core/Data2%;
+Data@, Bit@, Data .= /Core/Data%;
 
 List@ = /Std/List%.List@;
 List = /Std/List%.List;

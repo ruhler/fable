@@ -1548,3 +1548,14 @@ Things to remember to remove:
 * /Core/Data%, /Core/Int/Data%, /Core/Map/Data%, /Core/Set%
 * /Core/Map/Show%, /Core/Map/Eq%, /Core/Map/Test%
 * /Core/Set/Eq%, /Core/Set/Show%
+
+Things to rename now:
+
+pkgs/core/Core/Map/Show2.fble
+pkgs/core/Core/Map/Data/Tests2.fble
+pkgs/core/Core/Map/Test2.fble
+pkgs/core/Core/Map/Eq2.fble
+pkgs/core/Core/Data2.fble
+pkgs/core/Core/Set2.fble
+pkgs/core/Core/Set/Show2.fble
+pkgs/core/Core/Set/Eq2.fble

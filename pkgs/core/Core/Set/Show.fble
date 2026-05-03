@@ -1,5 +1,5 @@
 
-Set@, ForEach .= /Core/Set2%;
+Set@, ForEach .= /Core/Set%;
 Show@ .= /Std/Show%;
 Stream@, Do .= /Std/Stream/Text%;
 Format, String .= /Std/Char/Ascii/Stream%;

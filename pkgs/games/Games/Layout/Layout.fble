@@ -61,7 +61,7 @@ Node@ = Int@;
 Pos@ = *(Int@ x, Int@ y);
 
 # A layout is the mapping from node id to position.
-Map = /Core/Map%.Map(/Core/Int/Data2%.Data)<Pos@>;
+Map = /Core/Map%.Map(/Core/Int/Data%.Data)<Pos@>;
 Layout@ = Map.Map@;
 
 # An edge from node a to node b.

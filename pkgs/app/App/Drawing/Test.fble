@@ -1,5 +1,5 @@
 
-Data@ .= /Core/Data2%;
+Data@ .= /Core/Data%;
 
 Drawing@ = /App/Drawing%.Drawing@;
 Color@ = /App/Drawing%.Color@;
@@ -51,8 +51,8 @@ Cmp@<Point@> OrdPoint = (Point@ a, Point@ b) {
 };
 
 Data@<Point@> DataPoint = (Point@ a) {
-  Unit@ _ := Do(/Core/Int/Data2%.Data(a.x));
-  /Core/Int/Data2%.Data(a.y);
+  Unit@ _ := Do(/Core/Int/Data%.Data(a.x));
+  /Core/Int/Data%.Data(a.y);
 };
 
 Show@<Point@> ShowPoint = (Point@ x) {
@@ -75,8 +75,8 @@ Show@<Color@> ShowColor = (Color@ c) {
 };
 
 Drawn@(.Map@), Empty, Insert .= /Core/Map%.Map(DataPoint)<Color@>;
-Eq@<Drawn@> EqDrawn = /Core/Map/Eq2%.Eq(EqPoint, EqColor);
-Show@<Drawn@> ShowDrawn = /Core/Map/Show2%.Show(ShowPoint, ShowColor);
+Eq@<Drawn@> EqDrawn = /Core/Map/Eq%.Eq(EqPoint, EqColor);
+Show@<Drawn@> ShowDrawn = /Core/Map/Show%.Show(ShowPoint, ShowColor);
 
 Pixel@ = *(Int@ x, Int@ y, Color@ color);
 

@@ -1,5 +1,5 @@
 
-Data@, Bit@, 0, 1 .= /Core/Data2%;
+Data@, Bit@, 0, 1 .= /Core/Data%;
 IntP@ .= /Std/Int/IntP%;
 
 Data@<IntP@> Data = (IntP@ x)<@ S@>(S@ s)<@ R@>((S@) { R@; } r, (Bit@, S@, (S@) { R@; }) { R@; } put) {

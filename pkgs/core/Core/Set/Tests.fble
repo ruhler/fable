@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
-Data@, Data .= /Core/Data2%;
+Data@, Data .= /Core/Data%;
 
 Eq@ = /Std/Eq%.Eq@;
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
@@ -65,7 +65,7 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
   ShowBit1(x.l);
 };
 
-Set = /Core/Set2%.Set(DataBit2);
+Set = /Core/Set%.Set(DataBit2);
 
 Set@ = Set.Set@;
 Empty = Set.Empty;
@@ -74,8 +74,8 @@ Insert = Set.Insert;
 Delete = Set.Delete;
 ForEach = Set.ForEach;
 
-Eq = /Core/Set/Eq2%.Eq(EqBit2);
-Show = /Core/Set/Show2%.Show(ShowBit2);
+Eq = /Core/Set/Eq%.Eq(EqBit2);
+Show = /Core/Set/Show%.Show(ShowBit2);
 
 Test@ Tests = TestSuite(Str|Set, List[
   Test(Str|'empty', (Unit@ _) {

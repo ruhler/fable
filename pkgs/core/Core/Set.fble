@@ -1,6 +1,6 @@
 
 Bool@, True, False .= /Std/Bool%;
-Data@ .= /Core/Data2%;
+Data@ .= /Core/Data%;
 Unit@, Unit .= /Std/Unit%;
 
 # Set@ -- 
