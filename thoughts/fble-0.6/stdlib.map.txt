@@ -1752,3 +1752,40 @@ do I concatenate two lists reasonably?
 
 We can do it. It's not different. I'll show you.
 
+The key difference now, the only difference, is in Do:
+
+    ma(mf(Unit, r, f), f);
+
+And that cost us 7 seconds. Can I make it lazy instead?
+
+I can make it lazy, bit it doesn't help. If anything, it's a little worse.
+Hmm...
+
+    ma((S@ s) { mf(Unit, r, f, s); }, f, s);
+    ma(mf(Unit, r, f), f, s);
+
+    ma(mf(Unit, r, f), f);
+
+Well... I feel like the new Stream interface:
+
+  Stream@ = <@ A@, @ S@>(S@, (A@, S@) { S@; }) { S@; };
+
+Is at least nicer than the current standardized, right? It's just... sigh. Why
+is it forcing another 8 seconds on me?
+
+But wait, if streams work for all types, can I not have Do use the specialized
+type somehow? No, because Do isn't given access to the specialized type to
+work with. And Do is being called by people who should know nothing about the
+option to specialize.
+
+Well... nothing else much changes, right? The only difference is with the
+faster version, I'm saying it has to be a function. With the slower version,
+it doesn't have to be a function. I can always change that later, change the
+implementation of Do later. As long as all the users use functions, which
+honestly, I kind of guess they all do, there's no issue. I can switch back to
+the function version next later, and it should be a localized and simple
+change.
+
+What if people didn't use generic Do, Put, etc. and they worked directly with
+the simplified empty, items interface? How awkward is that, and would we get
+our performance back? Let's try it.
