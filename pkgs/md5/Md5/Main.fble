@@ -24,7 +24,7 @@ Main@ = /Std/Io/Cli%.Main@;
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
 
-In@ .= /Std/Stream/Binary%;
+In@ .= /Std/Stream%;
 
 Stream@, Out@ .= /Std/Stream/Text%;
 
@@ -42,13 +42,13 @@ Hash@ = /Md5/Hash%.Hash@;
 # Main --
 #   Main function for fble-md5 program.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-  In@<M@> in := m.do(/Std/Io/File/Binary%.Stdin(m, io));
+  In@<Int@, M@> in := m.do(/Std/Io/File/Binary%.Stdin(m, io));
   Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
   Out@<M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
-  (String@) { M@<Maybe@<In@<M@>>>; } read = /Std/Io/File/Binary%.Read(m, io);
+  (String@) { M@<Maybe@<In@<Int@, M@>>>; } read = /Std/Io/File/Binary%.Read(m, io);
 
   (String@) { M@<Bool@>; } md5 = (String@ filename) {
-    Maybe@<In@<M@>> istream := m.do({
+    Maybe@<In@<Int@, M@>> istream := m.do({
       /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(in)));
       read(filename);
     });

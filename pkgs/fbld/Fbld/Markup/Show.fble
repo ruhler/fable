@@ -1,6 +1,6 @@
 
 Show@ = /Std/Show%.Show@;
-Do = /Std/Stream/Text%.Do;
+Do .= /Std/Stream%;
 
 Format = /Std/Char/Ascii/Stream%.Format;
 String = /Std/Char/Ascii/Stream%.String;

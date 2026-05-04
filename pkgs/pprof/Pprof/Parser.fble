@@ -7,7 +7,7 @@ Reverse = /Std/List%.Reverse;
 
 Monad@ = /Std/Monad%.Monad@;
 
-In@ .= /Std/Stream/Binary%;
+In@ .= /Std/Stream%;
 
 String@ = /Std/String%.String@;
 
@@ -80,8 +80,8 @@ ProfileFromParsed = (ProtoProfile@ parsed) {
   @(metrics, blocks, samples);
 };
 
-<<@>@ M@>(Monad@<M@>, In@<M@>) { M@<Result@<Profile@>>; }
-Parse = <<@>@ M@>(Monad@<M@> m, In@<M@> in) {
+<<@>@ M@>(Monad@<M@>, In@<Int@, M@>) { M@<Result@<Profile@>>; }
+Parse = <<@>@ M@>(Monad@<M@> m, In@<Int@, M@> in) {
   Result@<ProtoProfile@> parsed := m.do(Run(ProfileParser, in, m));
   m.return(/Pprof/Result%.Apply(ProfileFromParsed, parsed));
 };

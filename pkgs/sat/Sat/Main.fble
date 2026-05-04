@@ -1,5 +1,7 @@
 
-In@, Out@ .= /Std/Stream/Text%;
+Char@ .= /Std/Char%;
+
+In@, Out@ .= /Std/Stream%;
 String, GetLine .= /Std/Stream/String%;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
@@ -30,8 +32,8 @@ Parse@ = /Sat/Dimacs%.Parse@;
 ParseLines = /Sat/Dimacs%.ParseLines;
 ShowResult = /Sat/Show%.ShowResult;
 
-<<@>@ M@>(Monad@<M@>, In@<M@>, Out@<M@>, Out@<M@>) { M@<Exit@>; }
-Main = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Out@<M@> out, Out@<M@> err) {
+<<@>@ M@>(Monad@<M@>, In@<Char@, M@>, Out@<Char@, M@>, Out@<Char@, M@>) { M@<Exit@>; }
+Main = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> in, Out@<Char@, M@> out, Out@<Char@, M@> err) {
   (List@<String@>) { M@<List@<String@>>; }
   PrependReversedLines = (List@<String@> lines) {
     String@ next := m.do(GetLine(m, in));

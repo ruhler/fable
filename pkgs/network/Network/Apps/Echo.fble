@@ -28,7 +28,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
 
-In@, Out@, Put .= /Std/Stream/Binary%;
+In@, Out@, Put .= /Std/Stream%;
 
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
@@ -112,8 +112,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets(io, m));
 
-  (In@<M@>, Out@<M@>) { M@<Unit@>; }
-  ForwardAll = (In@<M@> in, Out@<M@> out) {
+  (In@<Int@, M@>, Out@<Int@, M@>) { M@<Unit@>; }
+  ForwardAll = (In@<Int@, M@> in, Out@<Int@, M@> out) {
     Maybe@<Int@> mb := m.do(in);
     mb.?(nothing: m.return(Unit));
     Unit@ _ := m.do(out(Put(mb.just)));

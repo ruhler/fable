@@ -1,21 +1,18 @@
 
-In@, Out@ .= /Std/Stream/Text%;
-
-List@ = /Std/List%.List@;
-Maybe@ = /Std/Maybe%.Maybe@;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
-Main@ = /Std/Io/Cli%.Main@;
-
-String@ = /Std/String%.String@;
+Char@ .= /Std/Char%;
+List@ .= /Std/List%;
+Maybe@ .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
+Io@ .= /Std/Io%;
+Main@ .= /Std/Io/Cli%;
+String@ .= /Std/String%;
+In@, Out@ .= /Std/Stream%;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-  In@<M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
-  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  Out@<M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
-  (String@) { M@<Maybe@<In@<M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
+  In@<Char@, M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  Out@<Char@, M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
+  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
   /Fbld/Main%.Main(m, @(in, out, err, read), args);
 };
 

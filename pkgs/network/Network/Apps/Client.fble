@@ -1,9 +1,6 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
-Pos .= /Std/Char%;
+Bool@, True, False .= /Std/Bool%;
+Char@, Pos .= /Std/Char%;
 
 String = /Std/Stream/String%.String;
 StringE = /Std/Char/Ascii/Stream%.StringE;
@@ -14,8 +11,6 @@ Decr = /Std/Int%.Decr;
 Int = /Std/Int/Lit%.Int;
 IsZero = /Std/Int/Sign%.IsZero;
 
-Binary = /Std/Stream/Binary%;
-
 List@ = /Std/List%.List@;
 Concat = /Std/List%.Concat;
 
@@ -24,8 +19,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
 
-In@ .= /Std/Stream/Binary%;
-Out@ .= /Std/Stream/Text%;
+In@, Out@, Put .= /Std/Stream%;
 
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
@@ -111,24 +105,24 @@ GetArgs = (List@<String@> args, Args@ default) {
 };
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
-  Out@<M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
+  Out@<Char@, M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets<M@>(io, m));
 
-  (Int@, In@<M@>, Binary.Out@<M@>) { M@<Unit@>; }
-  ForwardN = (Int@ n, In@<M@> in, Binary.Out@<M@> out) {
+  (Int@, In@<Int@, M@>, Out@<Int@, M@>) { M@<Unit@>; }
+  ForwardN = (Int@ n, In@<Int@, M@> in, Out@<Int@, M@> out) {
     IsZero(n).?(true: m.return(Unit));
     Int@ nn = /Std/Int/Cmp%.Gt(n, Int|0).?(true: Decr(n), false: n);
 
     Maybe@<Int@> mb := m.do(in);
     mb.?(nothing: m.return(Unit));
-    Unit@ _ := m.do(out(Binary.Put(mb.just)));
+    Unit@ _ := m.do(out(Put(mb.just)));
     ForwardN(nn, in, out);
   };
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+    Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
     Unit@ _ := m.do(out(String(/Network/Apps/Echo/Usage%)));
     m.return(Success);
   });
@@ -146,8 +140,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   });
 
   InOut@<M@> ios = mios.just;
-  Out@<M@> os = /Std/Stream/Map%.Out(Pos, ios.out);
-  /Std/Stream/Binary%.Out@<M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
+  Out@<Char@, M@> os = /Std/Stream/Map%.Out(Pos, ios.out);
+  Out@<Int@, M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
 
   Unit@ _ := m.do(os(String(args.message)));
   Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, out));

@@ -3,8 +3,7 @@ Int@ .= /Std/Int%;
 Io@, External@ .= /Std/Io%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-In@, Out@ .= /Std/Stream/Binary%;
-Stream@ .= /Std/Stream%.Stream<Int@>;
+Stream@, In@, Out@ .= /Std/Stream%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -23,8 +22,8 @@ Socket@ = *(Unit@ socket).%(@/Network/Sockets/Native%);
 
 <<@>@ M@>(Io@<M@>, Monad@<M@>) { M@<Sockets@<M@>>; }
 Sockets = <<@>@ M@>(Io@<M@> io, Monad@<M@> m) {
-  (Socket@, Stream@) { M@<Unit@>; }
-  Output = (Socket@ socket, Stream@ output) {
+  (Socket@, Stream@<Int@>) { M@<Unit@>; }
+  Output = (Socket@ socket, Stream@<Int@> output) {
     Int@ c, M@<Unit@> return := output(m.return(Unit));
     Unit@ _ := m.do(io.run(PutByte(socket, c)));
     return;
@@ -32,8 +31,8 @@ Sockets = <<@>@ M@>(Io@<M@> io, Monad@<M@> m) {
 
   (Socket@) { InOut@<M@>; }
   InOut = (Socket@ socket) {
-    In@<M@> in = io.run(GetByte(socket));
-    Out@<M@> out = Output(socket);
+    In@<Int@, M@> in = io.run(GetByte(socket));
+    Out@<Int@, M@> out = Output(socket);
     M@<Unit@> end = io.run(Close(socket));
     InOut@(in, out, end);
   };

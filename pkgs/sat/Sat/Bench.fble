@@ -1,27 +1,18 @@
 
 Char@ .= /Std/Char%;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-NullOut = /Std/Stream/Null%.NullOut<Char@>;
-
-Out@ .= /Std/Stream/Text%;
-
-Exit@ = /Std/Io/Cli%.Exit@;
-Success = /Std/Io/Cli%.Success;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-
-Unit@ = /Std/Unit%.Unit@;
+AssertEquals .= /Std/Eq/Assert%;
+NullOut .= /Std/Stream/Null%;
+Out@ .= /Std/Stream%;
+Exit@, Success .= /Std/Io/Cli%;
+String@ .= /Std/String%;
+Str .= /Std/Char/Ascii%;
+Test@, Test .= /Std/Test%;
+Unit@ .= /Std/Unit%;
 
 Test@ Bench = Test(Str|Sat, (Unit@ _) {
   M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<String@>;
 
-  Out@<M@> null = NullOut(M);
+  Out@<Char@, M@> null = NullOut<Char@>(M);
   M@<Exit@> go = /Sat/Main%.Main(M, /Std/Stream/State%.In(M, S), null, null);
   Exit@ got = Eval(go, /Sat/Bench/Input%);
   Exit@ wnt = Success;
