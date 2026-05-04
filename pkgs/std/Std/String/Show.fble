@@ -4,7 +4,7 @@
 Char@ .= /Std/Char%;
 FormatE .= /Std/Char/Ascii/Stream%;
 U .= /Std/Char/Lit%;
-Do, Return .= /Std/Stream/Text%;
+Do, Return .= /Std/Stream%;
 String .= /Std/Stream/String%;
 Show@ .= /Std/Show%;
 String@ .= /Std/String%;
@@ -14,7 +14,7 @@ Char@ single_quote = U|27;
 
 # Show the characters of a string value, without the surrounding quotes.
 Show@<String@> Chars = (String@ s) {
-  s.?(empty: Return);
+  s.?(empty: Return<Char@>);
   Unit@ _ := Do({
     Char@ c = s.items.head;
     /Std/Char/Eq%.Eq(c, single_quote).?(true: String[single_quote, single_quote]);

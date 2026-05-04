@@ -1,7 +1,8 @@
 # @module[/Std/Show%]
 #  Interface for showing data in human readable form.
 
-Stream@ .= /Std/Stream/Text%;
+Char@ .= /Std/Char%;
+Stream@ .= /Std/Stream%;
 
 # @type[Show@] Interface for types that can be shown in human readable form.
 #  Common facility for converting values to human readable strings. Primarily
@@ -9,7 +10,7 @@ Stream@ .= /Std/Stream/Text%;
 #
 #  @arg[@][T@] The type that implements the interface.
 #  @arg[T@][x] The value to show.
-#  @returns[Stream@] A computation to output the value in human readable form.
-Show@ = <@ T@>(T@) { Stream@; };
+#  @returns[Stream@<Char@>] A computation to output the value in human readable form.
+Show@ = <@ T@>(T@) { Stream@<Char@>; };
 
 @(Show@);

@@ -1,6 +1,8 @@
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
+Char@ .= /Std/Char%;
+
 Int@ = /Std/Int%.Int@;
 Decr = /Std/Int%.Decr;
 IsZero = /Std/Int/Sign%.IsZero;
@@ -10,7 +12,7 @@ List = /Std/List%.List;
 
 Str = /Std/Char/Ascii%.Str;
 
-Stream@ = /Std/Stream/Text%.Stream@;
+Stream@ .= /Std/Stream%;
 ToString = /Std/Stream/String%.ToString;
 
 Test@ = /Std/Test%.Test@;
@@ -346,7 +348,7 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
 
   Test(Str|'Load Save', (Unit@ _) {
     Model@ model = Ticks(/Computrainer/Sample%.Sample);
-    Stream@ saved = /Computrainer/Model/Save%.Model(model);
+    Stream@<Char@> saved = /Computrainer/Model/Save%.Model(model);
     Model@ loaded = /Computrainer/Model/Load%.Model(ToString(saved));
     Model@ wnt = model;
     Model@ got = loaded;

@@ -1,4 +1,5 @@
 
+Char@ .= /Std/Char%;
 Ascii@ = /Std/Char/Ascii%.Ascii@;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
@@ -10,7 +11,7 @@ List@ = /Std/List%.List@;
 Get .= /Std/Maybe%;
 Monad@ = /Std/Monad%.Monad@;
 
-Stream@, In@, Out@ .= /Std/Stream/Text%;
+Stream@, In@, Out@ .= /Std/Stream%;
 
 String@ = /Std/String%.String@;
 Format = /Std/Char/Ascii/Stream%.Format;
@@ -24,10 +25,10 @@ Fannkuch@ = /Games/BenchmarkGame/FannkuchRedux%.Fannkuch@;
 FannkuchRedux = /Games/BenchmarkGame/FannkuchRedux%.FannkuchRedux;
 
 Main@
-Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Out@<M@> out, List@<String@> args) {
+Main = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> _in, Out@<Char@, M@> out, List@<String@> args) {
 
-  (List@<Ascii@>, List@<Stream@>) { M@<Unit@>; }
-  FmtL = (List@<Ascii@> fmt, List@<Stream@> args) {
+  (List@<Ascii@>, List@<Stream@<Char@>>) { M@<Unit@>; }
+  FmtL = (List@<Ascii@> fmt, List@<Stream@<Char@>> args) {
     out(FormatE|'%s\n'[Format(fmt, args)]);
   };
 

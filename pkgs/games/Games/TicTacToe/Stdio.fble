@@ -5,7 +5,7 @@ String = /Std/Char/Ascii/Stream%.String;
 Format = /Std/Char/Ascii/Stream%.Format;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
-In@, Out@ .= /Std/Stream/Text%;
+In@, Out@ .= /Std/Stream%;
 GetLine .= /Std/Stream/String%;
 
 List@ = /Std/List%.List@;
@@ -110,9 +110,9 @@ Input@ = +(Unit@ quit, Unit@ reset, Move@ move);
 
 # Play a game of tic-tac-toe.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
-  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
 
-  In@<M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
+  In@<Char@, M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
     Unit@ _ := m.do(out(ShowGame(game)));

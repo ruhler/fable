@@ -4,7 +4,7 @@
 
 Char@ .= /Std/Char%;
 Monad@ .= /Std/Monad%;
-Stream@, Out@, ForEach .= /Std/Stream/Text%;
+Stream@, Out@, ForEach .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 (Char@) { Unit@; } PutChar = @<PutChar>|PutChar;
@@ -13,10 +13,10 @@ Unit@, Unit .= /Std/Unit%;
 #  The destination is a platform implementation dependent debug output stream.
 #  This is inteded to be used for printf style debugging only.
 #
-#  @arg[Stream@] The output to perform.
+#  @arg[Stream@<Char@>] The output to perform.
 #  @returns[Unit@] Nothing interesting.
-(Stream@) { Unit@; }
-ToDebug = (Stream@ output) {
+(Stream@<Char@>) { Unit@; }
+ToDebug = (Stream@<Char@> output) {
   Char@ c, Unit@ _ := ForEach(output, Unit);
   PutChar(c);
 };
@@ -24,9 +24,9 @@ ToDebug = (Stream@ output) {
 # @func[DebugOut] An Out@ that sends to the debug output stream.
 #  @arg[<@>@][M@] Monadic type to work with.
 #  @arg[Monad@<M@>][m] The monadic interface.
-#  @returns[Out@<M@>] The null output port.
-<<@>@ M@>(Monad@<M@>) { Out@<M@>; }
-DebugOut = <<@>@ M@>(Monad@<M@> m, Stream@ s) {
+#  @returns[Out@<Char@, M@>] The null output port.
+<<@>@ M@>(Monad@<M@>) { Out@<Char@, M@>; }
+DebugOut = <<@>@ M@>(Monad@<M@> m, Stream@<Char@> s) {
   m.return(ToDebug(s));
 };
 

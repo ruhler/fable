@@ -1,5 +1,7 @@
 
-In@, Out@ .= /Std/Stream/Text%;
+Char@ .= /Std/Char%;
+
+Stream@, In@, Out@ .= /Std/Stream%;
 String, GetText .= /Std/Stream/String%;
 
 List@ = /Std/List%.List@;
@@ -15,7 +17,6 @@ Exit@ = /Std/Io/Cli%.Exit@;
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;
 
-Stream@ = /Std/Stream/Text%.Stream@;
 Format = /Std/Char/Ascii/Stream%.Format;
 
 String@ = /Std/String%.String@;
@@ -40,10 +41,10 @@ Text = /Fbld/Text%.Text;
 
 
 IO@ = <<@>@ M@> { *(
-  In@<M@> in,
-  Out@<M@> out,
-  Out@<M@> err,
-  (String@) { M@<Maybe@<In@<M@>>>; } read
+  In@<Char@, M@> in,
+  Out@<Char@, M@> out,
+  Out@<Char@, M@> err,
+  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read
 ); };
 
 # Main --
@@ -58,13 +59,13 @@ Main = <<@>@ M@>(Monad@<M@> m, IO@<M@> io, List@<String@> args) {
     tail.failed.?(true: m.return(tail));
 
     String@ filename = filenames.items.head;
-    Maybe@<In@<M@>> fin := m.do({
+    Maybe@<In@<Char@, M@>> fin := m.do({
       /Std/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(io.in)));
       io.read(filename);
     });
 
     fin.?(nothing: {
-      Stream@ msg = Format|'unable to open %s'[/Std/Stream/String%.String(filename)];
+      Stream@<Char@> msg = Format|'unable to open %s'[/Std/Stream/String%.String(filename)];
       m.return(Error<List@<Text@>>(Unknown, msg));
     });
 

@@ -1,6 +1,7 @@
 
 # Imports
-Stream@ .= /Std/Stream/Text%;
+Char@ .= /Std/Char%;
+Stream@ .= /Std/Stream%;
 Concat .= /Std/Stream/List%;
 Format, String .= /Std/Char/Ascii/Stream%;
 
@@ -30,15 +31,15 @@ Bit4@ Y = Bit4@(1, 0, 1, 0);
 Bit4@ Z = And4(X, Y);
 
 # String Conversions
-(Bit@) { Stream@; } ShowBit = (Bit@ a) {
+(Bit@) { Stream@<Char@>; } ShowBit = (Bit@ a) {
   a.?(0: String|0, 1: String|1);
 };
 
-(Bit4@) { Stream@; } ShowBit4 = (Bit4@ a) {
+(Bit4@) { Stream@<Char@>; } ShowBit4 = (Bit4@ a) {
   Concat[ShowBit(a.3), ShowBit(a.2), ShowBit(a.1), ShowBit(a.0)];
 };
 
-Stream@ output = Format|'%s AND %s = %s'[
+Stream@<Char@> output = Format|'%s AND %s = %s'[
   ShowBit4(X), ShowBit4(Y), ShowBit4(Z)
 ];
 

@@ -2,12 +2,11 @@
 Bit@ = /Md5/Digits%.Bit@;
 Hex@ = /Md5/Digits%.Hex@;
 
+Char@ .= /Std/Char%;
 List@ = /Std/List%.List@;
 
 Show@ = /Std/Show%.Show@;
-Stream@ = /Std/Stream/Text%.Stream@;
-Do = /Std/Stream/Text%.Do;
-Return = /Std/Stream/Text%.Return;
+Stream@, Do, Return .= /Std/Stream%;
 
 String = /Std/Char/Ascii/Stream%.String;
 
@@ -18,7 +17,7 @@ Show@<Bit@> ShowBit = (Bit@ b) {
 };
 
 Show@<List@<Bit@>> ShowBits = (List@<Bit@> bits) {
-  /Std/List%.ForEach(bits, Return, (Bit@ bit, Stream@ shown) {
+  /Std/List%.ForEach(bits, Return<Char@>, (Bit@ bit, Stream@<Char@> shown) {
     Unit@ _ := Do(shown);
     ShowBit(bit);
   });

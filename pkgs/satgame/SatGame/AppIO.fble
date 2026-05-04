@@ -1,4 +1,5 @@
 
+Char@ .= /Std/Char%;
 GetText .= /Std/Stream/String%;
 
 Int@ = /Std/Int%.Int@;
@@ -15,7 +16,7 @@ Io@ = /Std/Io%.Io@;
 
 Success = /Std/Io/Cli%.Success;
 
-In@, Out@ .= /Std/Stream/Text%;
+In@, Out@ .= /Std/Stream%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -63,15 +64,15 @@ GetArgs = (List@<String@> args, Args@ default) {
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
 	Maybe@<String@> home := m.do(/Std/Io/Env%.GetVar(m, io, Str|HOME));
-  (String@) { M@<Maybe@<In@<M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
-  (String@) { M@<Maybe@<Out@<M@>>>; } write = /Std/Io/File/Text%.Write(m, io);
+  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
+  (String@) { M@<Maybe@<Out@<Char@, M@>>>; } write = /Std/Io/File/Text%.Write(m, io);
 
   # Read and update the default seed value.
   Int@ seed := m.do({
     home.?(nothing: m.return(Int|0));
 
     String@ filename = Concat[home.just, Str|'/.fble-satgame'];
-    Maybe@<In@<M@>> istream := m.do(read(filename));
+    Maybe@<In@<Char@, M@>> istream := m.do(read(filename));
 
     Int@ seed := m.do({
       istream.?(nothing: m.return(Int|0));
@@ -79,7 +80,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
       m.return(Get(Int|0, /Std/Int/Parse%.Int(text)));
     });
 
-    Maybe@<Out@<M@>> ostream := m.do(write(filename));
+    Maybe@<Out@<Char@, M@>> ostream := m.do(write(filename));
     Unit@ _ := m.do({
       ostream.?(nothing: m.return(Unit));
       ostream.just(/Std/Int/Show%.Show(Incr(seed)));
@@ -88,7 +89,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     m.return(seed);
   });
 
-  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
   Args@ args = GetArgs(argv, DefaultArgs.@(seed));
   Unit@ _ := m.do(SatGame(m, out, app, width, height, args));
   m.return(Success);

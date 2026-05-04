@@ -2,12 +2,13 @@
 #  Test runner using a command line interface.
 
 Bool@ .= /Std/Bool%;
+Char@ .= /Std/Char%;
 Str .= /Std/Char/Ascii%;
 Io@ .= /Std/Io%;
 Main@, Success, Failure .= /Std/Io/Cli%;
 List@ .= /Std/List%;
 Monad@ .= /Std/Monad%;
-Out@ .= /Std/Stream/Text%;
+Out@ .= /Std/Stream%;
 String@ .= /Std/String%;
 Test@ .= /Std/Test%;
 
@@ -23,7 +24,7 @@ Run = (Test@ tests) {
       args.items.tail.items.head;
     };
 
-    Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+    Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
     Bool@ passed := m.do(/Std/Test/Run%.Run(m, out, prefix, tests));
     m.return(passed.?(true: Success, false: Failure));
   };

@@ -6,7 +6,7 @@ U .= /Std/Char/Lit%;
 List@, List, Items .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Stream@, In@, Return, Do, Put .= /Std/Stream/Text%;
+Stream@, In@, Return, Do, Put .= /Std/Stream%;
 Puts, ToList .= /Std/Stream/List%;
 String@ .= /Std/String%;
 IsNewline .= /Std/String/Lines%;
@@ -15,19 +15,19 @@ Unit@ .= /Std/Unit%;
 # @func[String] Output a string.
 #  @arg[String@][str] The string to output.
 #  @returns[Output] A computation that outputs the string.
-(String@) { Stream@; }
+(String@) { Stream@<Char@>; }
 String = (String@ s) {
   Puts(s);
 };
 
 # @func[Lines] Output a sequence of lines.
-#  @arg[List@<Stream@>] A list of lines to output.
+#  @arg[List@<Stream@<Char@>>] A list of lines to output.
 #  @returns[Output]
 #   A computation to output each line in turn, adding a newline character
 #   after every one.
-(List@<Stream@>) { Stream@; }
-Lines = (List@<Stream@> xs) {
-  xs.?(empty: Return);
+(List@<Stream@<Char@>>) { Stream@<Char@>; }
+Lines = (List@<Stream@<Char@>> xs) {
+  xs.?(empty: Return<Char@>);
   Unit@ _ := Do(xs.items.head);
   Unit@ _ := Do(Put(/Std/String/Lines%.Newline));
   Lines(xs.items.tail);
@@ -35,11 +35,11 @@ Lines = (List@<Stream@> xs) {
 
 # @func[Join] Output a sequence of outputs with separator in between.
 #  @arg[String@][sep] The separator to output between each given output.
-#  @arg[List@<Stream@>][xs] The elements to output.
-#  @return[Stream@] Outputs each element in turn, separated by @a[sep].
-(String@, List@<Stream@>) { Stream@; }
-Join = (String@ sep, List@<Stream@> xs) {
-  xs.?(empty: Return);
+#  @arg[List@<Stream@<Char@>>][xs] The elements to output.
+#  @return[Stream@<Char@>] Outputs each element in turn, separated by @a[sep].
+(String@, List@<Stream@<Char@>>) { Stream@<Char@>; }
+Join = (String@ sep, List@<Stream@<Char@>> xs) {
+  xs.?(empty: Return<Char@>);
   xs.items.tail.?(empty: xs.items.head);
   Unit@ _ := Do(xs.items.head);
   Unit@ _ := Do(String(sep));
@@ -57,13 +57,13 @@ Char@ '%s' = U|73;
 #  For example:
 #
 #  @code[fble] @
-#   Stream@ out = Format|'a: %s, b: %s'[String|'hello', String|'there'];
+#   Stream@<Char@> out = Format|'a: %s, b: %s'[String|'hello', String|'there'];
 #
 #  @arg[String@][fmt] The format specifier
-#  @arg[List@<Stream@>[args] Format args.
-#  @return[Stream@] The formatted output.
-(String@, List@<Stream@>) { Stream@; }
-Format = (String@ fmt, List@<Stream@> args) {
+#  @arg[List@<Stream@<Char@>>[args] Format args.
+#  @return[Stream@<Char@>] The formatted output.
+(String@, List@<Stream@<Char@>>) { Stream@<Char@>; }
+Format = (String@ fmt, List@<Stream@<Char@>> args) {
   <@ S@>(S@ return, (Char@, S@) { S@; } put) {
     fmt.?(empty: return);
     Char@ c = fmt.items.head;
@@ -87,10 +87,10 @@ Format = (String@ fmt, List@<Stream@> args) {
 };
 
 # @func[ToString] Output to a String@.
-#  @arg[Stream@] The output to render.
+#  @arg[Stream@<Char@>] The output to render.
 #  @returns[String@] A string with the output characters.
-(Stream@) { String@; }
-ToString = (Stream@ s) {
+(Stream@<Char@>) { String@; }
+ToString = (Stream@<Char@> s) {
   ToList(s);
 };
 
@@ -101,8 +101,8 @@ ToString = (Stream@ s) {
 #  @returns[M@<String@>]
 #   Everything up to and including the next newline character from the given
 #   input. The empty string in case of end of input.
-<<@>@ M@>(Monad@<M@>, In@<M@>) { M@<String@>; }
-GetLine = <<@>@ M@>(Monad@<M@> m, In@<M@> in) {
+<<@>@ M@>(Monad@<M@>, In@<Char@, M@>) { M@<String@>; }
+GetLine = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> in) {
   Maybe@<Char@> c := m.do(in);
   c.?(nothing: m.return(List<Char@>[]));
   IsNewline(c.just).?(true: m.return(List[c.just]));
@@ -116,8 +116,8 @@ GetLine = <<@>@ M@>(Monad@<M@> m, In@<M@> in) {
 #  @arg[Monad@<M@>][m] The monadic stream implementation.
 #  @arg[In<M@>][in] The input stream to read from.
 #  @returns[M@<String@>] Everything left in the input stream.
-<<@>@ M@>(Monad@<M@>, In@<M@>) { M@<String@>; }
-GetText = <<@>@ M@>(Monad@<M@> m, In@<M@> in) {
+<<@>@ M@>(Monad@<M@>, In@<Char@, M@>) { M@<String@>; }
+GetText = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> in) {
   Maybe@<Char@> c := m.do(in);
   c.?(nothing: m.return(List<Char@>[]));
 

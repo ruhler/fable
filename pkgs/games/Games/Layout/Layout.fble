@@ -3,7 +3,9 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-Out@ .= /Std/Stream/Text%;
+Char@ .= /Std/Char%;
+
+Out@ .= /Std/Stream%;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
 Int@ = /Std/Int%.Int@;
@@ -273,7 +275,7 @@ State@ InitialState = @(
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ _width, Int@ height, List@<String@> _args) {
-  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
 
   M@<Event@> FilterEvent = {
     Event@ e := m.do(app.event);

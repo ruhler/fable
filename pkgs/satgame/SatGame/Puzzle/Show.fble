@@ -1,7 +1,8 @@
 
+Char@ .= /Std/Char%;
+
 Show@ = /Std/Show%.Show@;
-Do = /Std/Stream/Text%.Do;
-Return = /Std/Stream/Text%.Return;
+Do, Return .= /Std/Stream%;
 
 String = /Std/Char/Ascii/Stream%.String;
 Format = /Std/Char/Ascii/Stream%.Format;
@@ -22,15 +23,15 @@ Show@<Literal@> Literal = (Literal@ literal) {
 };
 
 Show@<Clause@> Clause = (Clause@ clause) {
-  clause.?(empty: Return);
+  clause.?(empty: Return<Char@>);
   Unit@ _ := Do(Literal(clause.items.head));
-  clause.items.tail.?(empty: Return);
+  clause.items.tail.?(empty: Return<Char@>);
   Unit@ _ := Do(String|' ');
   Clause(clause.items.tail);
 };
 
 Show@<Puzzle@> Puzzle = (Puzzle@ puzzle) {
-  puzzle.?(empty: Return);
+  puzzle.?(empty: Return<Char@>);
   Unit@ _ := Do(FormatE|'%s\n'[Clause(puzzle.items.head)]);
   Puzzle(puzzle.items.tail);
 };

@@ -1,20 +1,21 @@
 # @module[/Std/Stream/String/Assert%]
 #  Test assertions related to text stream Stream@.
 
+Char@ .= /Std/Char%;
 AssertEquals .= /Std/Eq/Assert%;
-Stream@ .= /Std/Stream/Text%;
+Stream@ .= /Std/Stream%;
 ToString .= /Std/Stream/String%;
 String@ .= /Std/String%;
 TestResult@ .= /Std/Test%;
 
 # @func[AssertStream] Assert an stream generates the expected value.
 #  @arg[String@][expected] The expected output.
-#  @arg[Stream@][output] The actual output.
+#  @arg[Stream@<Char@>][output] The actual output.
 #  @returns[TestResult@]
 #   A passing test result if the output matches what's expected. A failing
 #   test result otherwise.
-(String@, Stream@) { TestResult@; }
-AssertStream = (String@ expected, Stream@ output) {
+(String@, Stream@<Char@>) { TestResult@; }
+AssertStream = (String@ expected, Stream@<Char@> output) {
   AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show,
     expected, ToString(output));
 };

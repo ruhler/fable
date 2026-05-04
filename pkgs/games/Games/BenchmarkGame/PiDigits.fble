@@ -1,6 +1,8 @@
 
 Bool@ = /Std/Bool%.Bool@;
 
+Char@ .= /Std/Char%;
+
 Int@ = /Std/Int%.Int@;
 Add = /Std/Int%.Add;
 Neg = /Std/Int%.Neg;
@@ -14,7 +16,7 @@ List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-In@, Out@ .= /Std/Stream/Text%;
+In@, Out@ .= /Std/Stream%;
 
 String@ = /Std/String%.String@;
 StringE = /Std/Char/Ascii/Stream%.StringE;
@@ -102,7 +104,7 @@ StreamResult@ = *(State@ state, Int@ output);
 # Output the digits of pi, one digit output for each input string, starting
 # from state 's'.
 Main@
-Main = <<@>@ M@>(Monad@<M@> m, In@<M@> _in, Out@<M@> out, List@<String@> args) {
+Main = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> _in, Out@<Char@, M@> out, List@<String@> args) {
   Int@ l = Int|10;
   Int@ n = /Std/Int/Parse%.Int(args.items.head).just;
 

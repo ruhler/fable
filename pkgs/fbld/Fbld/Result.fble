@@ -4,13 +4,15 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 Or = /Std/Bool%.Or;
 
+Char@ .= /Std/Char%;
+
 Maybe@ = /Std/Maybe%.Maybe@;
 Just = /Std/Maybe%.Just;
 Nothing = /Std/Maybe%.Nothing;
 
 Monad@ = /Std/Monad%.Monad@;
 
-Stream@ = /Std/Stream/Text%.Stream@;
+Stream@ .= /Std/Stream%;
 
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
@@ -29,26 +31,26 @@ Report = /Fbld/Loc%.Report;
 # * If failed is False, value is Just.
 Result@ = <@ T@> {
   *(
-    Stream@ errors,          # List of error messages reported.
+    Stream@<Char@> errors,  # List of error messages reported.
     Bool@ failed,           # True if there were any errors, false otherwise.
     Maybe@<T@> value        # The value of the result.
   );
 };
 
 <@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
-  Result@(/Std/Stream/Text%.Return, False, Just(x));
+  Result@(/Std/Stream%.Return<Char@>, False, Just(x));
 };
 
 # Indicate an error with location and error message.
-<@ T@>(Loc@, Stream@) { Result@<T@>; }
-Error = <@ T@>(Loc@ l, Stream@ msg) {
+<@ T@>(Loc@, Stream@<Char@>) { Result@<T@>; }
+Error = <@ T@>(Loc@ l, Stream@<Char@> msg) {
   Result@(Report(l, FormatE|'error: %s\n'[msg]), True, Nothing<T@>);
 };
 
 # Indicate an error with no error message.
 <@ T@> { Result@<T@>; }
 Fail = <@ T@> {
-  Result@(/Std/Stream/Text%.Return, True, Nothing<T@>);
+  Result@(/Std/Stream%.Return<Char@>, True, Nothing<T@>);
 };
 
 # Assuming the given result is an error, change its type.
@@ -72,8 +74,8 @@ Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
   ra.value.?(nothing: Raise<B@>(ra));
 
   Result@<B@> rb = f(ra.value.just);
-  Stream@ errors = {
-    Unit@ _ := /Std/Stream/Text%.Do(ra.errors);
+  Stream@<Char@> errors = {
+    Unit@ _ := /Std/Stream%.Do(ra.errors);
     rb.errors;
   };
   Result@(errors, Or(ra.failed, rb.failed), rb.value);

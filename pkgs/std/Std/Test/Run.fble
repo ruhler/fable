@@ -2,12 +2,13 @@
 #  Test runner for unit tests.
 
 Bool@, True, False, And .= /Std/Bool%;
+Char@ .= /Std/Char%;
 Str .= /Std/Char/Ascii%;
 FormatE, StringE .= /Std/Char/Ascii/Stream%;
 Concat, ForEach .= /Std/List%;
 Monad@ .= /Std/Monad%;
 String .= /Std/Stream/String%;
-Stream@, Out@ .= /Std/Stream/Text%;
+Stream@, Out@ .= /Std/Stream%;
 String@ .= /Std/String%;
 Test@, TestResult@ .= /Std/Test%;
 Unit@, Unit .= /Std/Unit%;
@@ -15,12 +16,12 @@ Unit@, Unit .= /Std/Unit%;
 # @func[Run] Runs a test or test suite.
 #  @arg[<@>@][M@] Monadic type to run the tests under.
 #  @arg[Monad@<M@>][m] Monad implementation.
-#  @arg[Out@<M@>][out] Stream to output progress information to.
+#  @arg[Out@<Char@, M@>][out] Stream to output progress information to.
 #  @arg[String@][prefix] Prefix to use for reported test names.
 #  @arg[Test@][test] The test or test suite to run.
 #  @returns[M@<Bool@>] True if all tests pass, false otherwise.
-<<@>@ M@>(Monad@<M@>, Out@<M@>, String@, Test@) { M@<Bool@>; }
-Run = <<@>@ M@>(Monad@<M@> m, Out@<M@> out, String@ prefix, Test@ test) {
+<<@>@ M@>(Monad@<M@>, Out@<Char@, M@>, String@, Test@) { M@<Bool@>; }
+Run = <<@>@ M@>(Monad@<M@> m, Out@<Char@, M@> out, String@ prefix, Test@ test) {
   test.?(
     case: {
       String@ name = Concat[prefix, test.case.name];
@@ -28,8 +29,8 @@ Run = <<@>@ M@>(Monad@<M@> m, Out@<M@> out, String@ prefix, Test@ test) {
 
       TestResult@ tr = test.case.test(Unit);
 
-      (Bool@, Stream@) { M@<Bool@>; }
-      Return = (Bool@ result, Stream@ output) { 
+      (Bool@, Stream@<Char@>) { M@<Bool@>; }
+      Return = (Bool@ result, Stream@<Char@> output) { 
         Unit@ _ := m.do(out(output));
         m.return(result);
       };

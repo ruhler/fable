@@ -3,7 +3,8 @@ Bool@ = /Std/Bool%.Bool@;
 True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
-In@, Out@ .= /Std/Stream/Text%;
+Char@ .= /Std/Char%;
+In@, Out@ .= /Std/Stream%;
 GetText .= /Std/Stream/String%;
 
 Int@ = /Std/Int%.Int@;
@@ -108,8 +109,8 @@ State@ = *(
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
-  (String@) { M@<Maybe@<In@<M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
-  (String@) { M@<Maybe@<Out@<M@>>>; } write = /Std/Io/File/Text%.Write(m, io);
+  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
+  (String@) { M@<Maybe@<Out@<Char@, M@>>>; } write = /Std/Io/File/Text%.Write(m, io);
 
   Int@ MenuScale = Int|8;
   Int@ MenuHeight = Add(Mul(MenuScale, W), Int|8);
@@ -318,7 +319,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
   };
 
   String@ file = args.?(items: args.items.head, empty: Str|'model.ct');
-  Maybe@<In@<M@>> istream := m.do(read(file));
+  Maybe@<In@<Char@, M@>> istream := m.do(read(file));
   Model@ model := m.do({
       istream.?(nothing: m.return(Model(Grid<Gate@>.Empty, Grid<Car@>.Empty)));
       String@ text := m.do(GetText(m, istream.just));
@@ -340,9 +341,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
 
   State@ final := m.do(StepUI(initial));
 
-  Maybe@<Out@<M@>> mostream := m.do(write(file));
+  Maybe@<Out@<Char@, M@>> mostream := m.do(write(file));
   mostream.?(nothing: m.return(Success));
-  Out@<M@> ostream = mostream.just;
+  Out@<Char@, M@> ostream = mostream.just;
   Unit@ _ := m.do(ostream(/Computrainer/Model/Save%.Model(final.model)));
 
   m.return(Success);

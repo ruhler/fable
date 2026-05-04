@@ -1,6 +1,0 @@
-# @module[/Std/Stream/Text%]
-#  Text based streams. This module provides specializations of the 
-#  /Std/Stream% types and functions for Char@ streams.
-
-/Std/Stream%.Stream</Std/Char%.Char@>;
-

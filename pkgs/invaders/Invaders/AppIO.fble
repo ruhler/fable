@@ -1,5 +1,6 @@
 
-In@, Out@ .= /Std/Stream/Text%;
+Char@ .= /Std/Char%;
+In@, Out@ .= /Std/Stream%;
 String, GetText .= /Std/Stream/String%;
 
 Int@ = /Std/Int%.Int@;
@@ -34,9 +35,9 @@ Invaders = /Invaders/App%.Invaders;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
 	Maybe@<String@> home := m.do(/Std/Io/Env%.GetVar(m, io, Str|'HOME'));
-  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  (String@) { M@<Maybe@<In@<M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
-  (String@) { M@<Maybe@<Out@<M@>>>; } write = /Std/Io/File/Text%.Write(m, io);
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
+  (String@) { M@<Maybe@<Out@<Char@, M@>>>; } write = /Std/Io/File/Text%.Write(m, io);
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ := m.do(out(String(/Invaders/Usage%)));
@@ -47,7 +48,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     home.?(nothing: m.return(Int|0));
 
     String@ filename = Append(home.just, Str|'/.fble-invaders');
-    Maybe@<In@<M@>> istream := m.do(read(filename));
+    Maybe@<In@<Char@, M@>> istream := m.do(read(filename));
     istream.?(nothing: m.return(Int|0));
 
     String@ text := m.do(GetText(m, istream.just));
@@ -58,7 +59,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     home.?(nothing: m.return(Unit));
 
     String@ filename = Append(home.just, Str|'/.fble-invaders');
-    Maybe@<Out@<M@>> ostream := m.do(write(filename));
+    Maybe@<Out@<Char@, M@>> ostream := m.do(write(filename));
     ostream.?(nothing: m.return(Unit));
     ostream.just(/Std/Int/Show%.Show(score));
   };

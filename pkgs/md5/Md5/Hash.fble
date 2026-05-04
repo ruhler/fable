@@ -3,6 +3,7 @@ Bool@ = /Std/Bool%.Bool@;
 And = /Std/Bool%.And;
 True = /Std/Bool%.True;
 
+Char@ .= /Std/Char%;
 String = /Std/Char/Ascii/Stream%.String;
 
 Hex@ = /Md5/Digits%.Hex@;
@@ -12,9 +13,7 @@ List = /Std/List%.List;
 ForEach = /Std/List%.ForEach;
 
 Show@ = /Std/Show%.Show@;
-Stream@ = /Std/Stream/Text%.Stream@;
-Do = /Std/Stream/Text%.Do;
-Return = /Std/Stream/Text%.Return;
+Stream@, Do, Return .= /Std/Stream%;
 
 Unit@ = /Std/Unit%.Unit@;
 
@@ -52,9 +51,9 @@ Show@<Hex@> Hex = (Hex@ h) {
     C: String|c, D: String|d, E: String|e, F: String|f);
 };
 
-(List@<Stream@>) { Stream@; }
-Seq = (List@<Stream@> xs) {
-  xs.?(empty: Return);
+(List@<Stream@<Char@>>) { Stream@<Char@>; }
+Seq = (List@<Stream@<Char@>> xs) {
+  xs.?(empty: Return<Char@>);
   Unit@ _ := Do(xs.items.head);
   Seq(xs.items.tail);
 };

@@ -3,7 +3,7 @@ Char@ .= /Std/Char%;
 
 Str = /Std/Char/Ascii%.Str;
 
-Stream@, In@, Out@, Return .= /Std/Stream/Text%;
+Stream@, In@, Out@, Return .= /Std/Stream%;
 NullOut = /Std/Stream/Null%.NullOut<Char@>;
 
 Exit@ = /Std/Io/Cli%.Exit@;
@@ -27,10 +27,10 @@ Unit@ = /Std/Unit%.Unit@;
 IO@ = /Fbld/Main%.IO@;
 
 Test@ Bench = Test(Str|Fbld, (Unit@ _) {
-  S@ = *(String@ in, Stream@ err);
+  S@ = *(String@ in, Stream@<Char@> err);
   M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<S@>;
 
-  In@<M@> in = /Std/Stream/State%.In(M, {
+  In@<Char@, M@> in = /Std/Stream/State%.In(M, {
     M@<String@> get = { S@ s := Gets(M, S); s.in; };
     (String@) { M@<Unit@>; } put = (String@ in) {
       S@ s := Modify(M, S); s.@(in);
@@ -38,18 +38,18 @@ Test@ Bench = Test(Str|Fbld, (Unit@ _) {
     State@<String@, M@>(get, put);
   });
 
-  Out@<M@> out = NullOut(M);
+  Out@<Char@, M@> out = NullOut(M);
 
-  Out@<M@> err = /Std/Stream/State%.Out(M, {
-    M@<Stream@> get = { S@ s := Gets(M, S); s.err; };
-    (Stream@) { M@<Unit@>; } put = (Stream@ err) {
+  Out@<Char@, M@> err = /Std/Stream/State%.Out(M, {
+    M@<Stream@<Char@>> get = { S@ s := Gets(M, S); s.err; };
+    (Stream@<Char@>) { M@<Unit@>; } put = (Stream@<Char@> err) {
       S@ s := Modify(M, S); s.@(err);
     };
-    State@<Stream@, M@>(get, put);
+    State@<Stream@<Char@>, M@>(get, put);
   });
 
-  (String@) { M@<Maybe@<In@<M@>>>; } read = (String@ _) {
-    M.return(Nothing<In@<M@>>);
+  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = (String@ _) {
+    M.return(Nothing<In@<Char@, M@>>);
   };
 
   IO@<M@> io = @(in, out, err, read);
@@ -63,7 +63,7 @@ Test@ Bench = Test(Str|Fbld, (Unit@ _) {
   };
 
   Maybe@<String@> wnt = Nothing<String@>;
-  Maybe@<String@> got = Eval(bench, S@(/Fbld/Bench/Input%, Return));
+  Maybe@<String@> got = Eval(bench, S@(/Fbld/Bench/Input%, Return<Char@>));
 
   AssertEquals(
     /Std/Maybe/Eq%.Eq(/Std/String/Eq%.Eq),

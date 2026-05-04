@@ -4,6 +4,8 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
+Char@ .= /Std/Char%;
+
 String = /Std/Stream/String%.String;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
@@ -26,7 +28,7 @@ Failure = /Std/Io/Cli%.Failure;
 
 In@ .= /Std/Stream%;
 
-Stream@, Out@ .= /Std/Stream/Text%;
+Stream@, Out@ .= /Std/Stream%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
@@ -43,8 +45,8 @@ Hash@ = /Md5/Hash%.Hash@;
 #   Main function for fble-md5 program.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   In@<Int@, M@> in := m.do(/Std/Io/File/Binary%.Stdin(m, io));
-  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  Out@<M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  Out@<Char@, M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
   (String@) { M@<Maybe@<In@<Int@, M@>>>; } read = /Std/Io/File/Binary%.Read(m, io);
 
   (String@) { M@<Bool@>; } md5 = (String@ filename) {
@@ -66,7 +68,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     };
 
     Hash@ hash := m.do(/Md5/Md5%.Md5(m, in));
-    Stream@ line = Format|'%s  %s'[/Md5/Hash%.Show(hash), /Std/Stream/String%.String(filename)];
+    Stream@<Char@> line = Format|'%s  %s'[/Md5/Hash%.Show(hash), /Std/Stream/String%.String(filename)];
     Unit@ _ := m.do(out(FormatE|'%s\n'[line]));
     m.return(True);
   };

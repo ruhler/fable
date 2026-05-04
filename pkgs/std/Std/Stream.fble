@@ -80,11 +80,4 @@ In@ = <@ A@, <@>@ M@> { M@<Maybe@<A@>>; };
 #  Puts the next values to output.
 Out@ = <@ A@, <@>@ M@>(Stream@<A@>) { M@<Unit@>; };
 
-# @value[Stream] Streams specialized for a given type.
-Stream = <@ A@> {
-  @(Stream@: Stream@<A@>,
-    In@: In@<A@>, Out@: Out@<A@>,
-    Return: Return<A@>, Do: Do<A@>, Put: Put<A@>, ForEach: ForEach<A@>);
-};
-
-@(Stream@, In@, Out@, Return, Do, Put, ForEach, Stream);
+@(Stream@, In@, Out@, Return, Do, Put, ForEach);

@@ -1,6 +1,7 @@
 # @module[/Std/Io/Cli/Demo%]
 #  A command line interface demo program.
 
+Char@ .= /Std/Char%;
 Str .= /Std/Char/Ascii%;
 Format, FormatE, StringE .= /Std/Char/Ascii/Stream%;
 Int@ .= /Std/Int%;
@@ -11,7 +12,7 @@ List@, ForEach, Join .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 String, Lines, GetLine .= /Std/Stream/String%;
-Stream@, In@, Out@ .= /Std/Stream/Text%;
+Stream@, In@, Out@ .= /Std/Stream%;
 String@ .= /Std/String%;
 Eq .= /Std/String/Eq%;
 Unit@, Unit .= /Std/Unit%;
@@ -19,10 +20,10 @@ Unit@, Unit .= /Std/Unit%;
 # @func[Demo] Demo command line interface program.
 #  Run with command line argument 'help' for usage info.
 Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-  Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  Out@<M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  Out@<Char@, M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
 
-  Stream@ Usage = Lines[
+  Stream@<Char@> Usage = Lines[
     StringE|'Usage: fble-cli-demo [COMMAND [ARGS]...]',
     StringE|'Commands:',
     StringE|'  help             Prints this usage info',
@@ -32,8 +33,8 @@ Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
     StringE|'  cat [FILE]...    Print out the contents of files'
   ];
 
-  (Stream@) { M@<Exit@>; }
-  Error = (Stream@ msg) {
+  (Stream@<Char@>) { M@<Exit@>; }
+  Error = (Stream@<Char@> msg) {
     Unit@ _ := m.do(err(FormatE|'%s\n%s'[msg, Usage]));
     m.return(Failure);
   };
@@ -82,10 +83,10 @@ Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
 
   # Prints out contents of files.
   Eq(Str|cat, cmd).?(true: {
-    (String@) { M@<Maybe@<In@<M@>>>; } Read = /Std/Io/File/Text%.Read(m, io);
+    (String@) { M@<Maybe@<In@<Char@, M@>>>; } Read = /Std/Io/File/Text%.Read(m, io);
 
-    (In@<M@>) { M@<Unit@>; }
-    Cat = (In@<M@> in) {
+    (In@<Char@, M@>) { M@<Unit@>; }
+    Cat = (In@<Char@, M@> in) {
       String@ line := m.do(GetLine(m, in));
       line.?(empty: m.return(Unit));
       Unit@ _ := m.do(out(String(line)));
@@ -94,7 +95,7 @@ Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
 
     ForEach(cmd_args, m.return(Success),
       (String@ path, M@<Exit@> return) {
-        Maybe@<In@<M@>> in := m.do(Read(path));
+        Maybe@<In@<Char@, M@>> in := m.do(Read(path));
         in.?(nothing: {
           Unit@ _ := m.do(err(FormatE|'%s: unable to open\n'[String(path)]));
           m.return(Failure);

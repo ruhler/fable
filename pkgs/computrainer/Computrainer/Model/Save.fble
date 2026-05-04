@@ -1,5 +1,6 @@
 
-Stream@, Return .= /Std/Stream/Text%;
+Char@ .= /Std/Char%;
+Stream@, Return .= /Std/Stream%;
 Concat = /Std/Stream/List%.Concat;
 Format, FormatE, String .= /Std/Char/Ascii/Stream%;
 
@@ -14,24 +15,24 @@ Gates@ = /Computrainer/Model%.Gates@;
 Model@ = /Computrainer/Model%.Model@;
 Phase@ = /Computrainer/State%.Phase@;
 
-(Car@) { Stream@; }
+(Car@) { Stream@<Char@>; }
 Car = (Car@ c) {
     c.?(C: String|C, 0: String|0, 1: String|1);
 };
 
-(Dir@) { Stream@; }
+(Dir@) { Stream@<Char@>; }
 Dir = (Dir@ d) {
     d.?(up: String|up, down: String|down, left: String|left, right: String|right);
 };
 
-(Gates@) { Stream@; }
+(Gates@) { Stream@<Char@>; }
 Gates = (Gates@ gates) {
-    Grid<Gate@>.ForEach(gates, Return, (Coord@ c, Gate@ g, Stream@ out) {
-        Stream@ head = Format|'gate %s %s '[
+    Grid<Gate@>.ForEach(gates, Return<Char@>, (Coord@ c, Gate@ g, Stream@<Char@> out) {
+        Stream@<Char@> head = Format|'gate %s %s '[
             /Std/Int/Show%.Show(c.x),
             /Std/Int/Show%.Show(c.y)
         ];
-        Stream@ body = g.?(
+        Stream@<Char@> body = g.?(
             stop: String|'stop',
             move: Format|'move %s'[Dir(g.move)],
             source: Format|'source %s %s'[Car(g.source.car), Dir(g.source.dir)],
@@ -45,9 +46,9 @@ Gates = (Gates@ gates) {
     });
 };
 
-(Cars@) { Stream@; }
+(Cars@) { Stream@<Char@>; }
 Cars = (Cars@ cars) {
-    Grid<Car@>.ForEach(cars, Return, (Coord@ c, Car@ car, Stream@ out) {
+    Grid<Car@>.ForEach(cars, Return<Char@>, (Coord@ c, Car@ car, Stream@<Char@> out) {
         FormatE|'%scar %s %s %s\n'[
             out,
             /Std/Int/Show%.Show(c.x),
@@ -56,9 +57,9 @@ Cars = (Cars@ cars) {
         });
 };
 
-(Grid@<Dir@>) { Stream@; }
+(Grid@<Dir@>) { Stream@<Char@>; }
 Routing = (Grid@<Dir@> routing) {
-    Grid<Dir@>.ForEach(routing, Return, (Coord@ c, Dir@ dir, Stream@ out) {
+    Grid<Dir@>.ForEach(routing, Return<Char@>, (Coord@ c, Dir@ dir, Stream@<Char@> out) {
         FormatE|'%srouting %s %s %s\n'[
             out,
             /Std/Int/Show%.Show(c.x),
@@ -67,14 +68,14 @@ Routing = (Grid@<Dir@> routing) {
         });
 };
 
-(Phase@) { Stream@; }
+(Phase@) { Stream@<Char@>; }
 Phase = (Phase@ phase) {
     FormatE|'phase %s\n'[phase.?(
         engines: String|engines,
         gates: String|gates)];
 };
 
-(Model@) { Stream@; }
+(Model@) { Stream@<Char@>; }
 Model = (Model@ model) {
     Concat[
         Gates(model.gates),

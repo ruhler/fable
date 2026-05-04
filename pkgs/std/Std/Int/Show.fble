@@ -1,7 +1,8 @@
 # @module[/Std/Int/Show%]
 #  The Show@ instance for Int@.
 
-Stream@, Do, Return .= /Std/Stream/Text%;
+Char@ .= /Std/Char%;
+Stream@, Do, Return .= /Std/Stream%;
 Format, String .= /Std/Char/Ascii/Stream%;
 
 Int@, Neg .= /Std/Int%;
@@ -25,19 +26,19 @@ Show@<Int@> Digit = (Int@ x) {
   Eq(x, Int|7).?(true: String|7);
   Eq(x, Int|8).?(true: String|8);
   Eq(x, Int|9).?(true: String|9);
-  /Std/Undef%.Undef.undef<Stream@>;
+  /Std/Undef%.Undef.undef<Stream@<Char@>>;
 };
 
 # Show a positive integer.
 Show@<Int@> Positive = (Int@ x) {
   QR@ qr = Div(x, Int|10);
-  Unit@ _ := Do(qr.q.?(0: Return, : Positive(qr.q)));
+  Unit@ _ := Do(qr.q.?(0: Return<Char@>, : Positive(qr.q)));
   Digit(qr.r);
 };
 
 # @func[Show] Show an Int@ value.
 #  @arg[Int@][x] The value to show.
-#  @returns[Stream@] Output that shows the value.
+#  @returns[Stream@<Char@>] Output that shows the value.
 Show@<Int@> Show = (Int@ x) {
   Sgn(x).?(
     '-': Format|'-%s'[Positive(Neg(x))],

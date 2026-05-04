@@ -1,11 +1,12 @@
 # @module[/Std/Io/Cli/Print%]
 #  A cli program that prints a stream of characters.
 
+Char@ .= /Std/Char%;
 Io@ .= /Std/Io%;
 Main@, Success .= /Std/Io/Cli%;
 List@ .= /Std/List%;
 Monad@ .= /Std/Monad%;
-Stream@, Out@ .= /Std/Stream/Text%;
+Stream@, Out@ .= /Std/Stream%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 
@@ -13,14 +14,14 @@ Unit@ .= /Std/Unit%;
 #  This is useful for implementing tutorial exercises or otherwise
 #  experimenting with the fble language.
 #
-#  @arg[Stream@][stream] The text to print.
+#  @arg[Stream@<Char@>][stream] The text to print.
 #  @returns[Main@]
 #   A cli program that prints the stream to standard out and exits with
 #   success.
-(Stream@) { Main@; }
-Print = (Stream@ stream) {
+(Stream@<Char@>) { Main@; }
+Print = (Stream@<Char@> stream) {
   <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
-    Out@<M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+    Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
     Unit@ _ := m.do(out(stream));
     m.return(Success);
   };
