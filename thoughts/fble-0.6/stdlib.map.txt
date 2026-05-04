@@ -1958,3 +1958,30 @@ Seems we've actually saved a decent amount of memory.
 
 Next step: get rid of use of Stream@ without explicit types. See how painful
 that is.
+
+---
+
+Wasn't too painful. Now what? Am I satisfied with my definition of Data@?
+Ready to standardize it? Am I satisfied with my Map@ and Set@ interfaces, or
+more work to do?
+
+Could we represent data more explicitly? Instead of a stream of bits, data is
+either: Unit@, Pair@, or Choice@, right? So, could we have:
+
+Data@ = <@ A@>(A@)<@ S@>(
+  S@ unit,
+  (S@, S@) { S@; } struct,
+  (Bool@, S@) { S@; } union
+);
+
+Is that any different from what I have now? I suppose what I have now combines
+the union and struct operations into a single put operation, and uses Bit@
+instead of Bool@.
+
+Should I reuse Bool@ instead of defining Bit@? Is it worth defining 'Data' and
+'Datas' helper functions, or should I ditch those? Rename 'Datas' to Struct
+and Data to 'Tag'? Change Tag to take a list of bits followed by a single
+argument?
+
+
+

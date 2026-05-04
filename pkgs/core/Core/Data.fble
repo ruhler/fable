@@ -10,16 +10,21 @@ Bit@ = +(Unit@ 0, Unit@ 1);
 
 Data@ = <@ A@>(A@) { Stream@<Bit@>; };
 
-(List@<Bit@>) { Stream@<Bit@>; }
-Data = (List@<Bit@> xs)<@ S@>(S@ empty, (Bit@, S@) { S@; } items) {
-  xs.?(empty: empty);
-  items(xs.items.head, Data(xs.items.tail, empty, items));
-};
-
 (List@<Stream@<Bit@>>) { Stream@<Bit@>; }
-Datas = (List@<Stream@<Bit@>> xs)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
-  xs.?(empty: return);
-  xs.items.head(Datas(xs.items.tail, return, put), put);
+Struct = (List@<Stream@<Bit@>> fields)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
+  fields.?(empty: return);
+  fields.items.head(Struct(fields.items.tail, return, put), put);
 };
 
-@(Data@, Bit@, 0, 1, Data, Datas);
+(List@<Bit@>) { Stream@<Bit@>; }
+Enum = (List@<Bit@> tag)<@ S@>(S@ empty, (Bit@, S@) { S@; } items) {
+  tag.?(empty: empty);
+  items(tag.items.head, Enum(tag.items.tail, empty, items));
+};
+
+(List@<Bit@>, Stream@<Bit@>) { Stream@<Bit@>; }
+Union = (List@<Bit@> tag, Stream@<Bit@> arg) {
+  Struct[Enum(tag), arg];
+};
+
+@(Bit@, 0, 1, Data@, Struct, Enum, Union);

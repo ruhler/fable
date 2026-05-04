@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
-Data@, Datas .= /Core/Data%;
+Data@, Struct .= /Core/Data%;
 
 Eq@ = /Std/Eq%.Eq@;
 
@@ -35,7 +35,7 @@ Eq@<Coord@> EqCoord = (Coord@ a, Coord@ b) {
 };
 
 Data@<Coord@> DataCoord = (Coord@ a) {
-  Datas[/Core/Int/Data%.Data(a.row), /Core/Int/Data%.Data(a.col)];
+  Struct[/Core/Int/Data%.Data(a.row), /Core/Int/Data%.Data(a.col)];
 };
 
 Show@<Coord@> ShowCoord = (Coord@ a) {

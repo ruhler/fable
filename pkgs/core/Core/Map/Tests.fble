@@ -1,6 +1,6 @@
 
 Bool@, True, False, And .= /Std/Bool%;
-Data@, Data, Datas .= /Core/Data%;
+Data@, Enum, Struct .= /Core/Data%;
 Eq@ .= /Std/Eq%;
 AssertEquals .= /Std/Eq/Assert%;
 Str .= /Std/Char/Ascii%;
@@ -125,7 +125,7 @@ Eq@<Bit1@> EqBit1 = (Bit1@ a, Bit1@ b) {
 };
 
 Data@<Bit1@> DataBit1 = (Bit1@ x) {
-  x.?(0: Data|0, 1: Data|1);
+  x.?(0: Enum|0, 1: Enum|1);
 };
 
 Show@<Bit1@> ShowBit1 = (Bit1@ x) {
@@ -137,7 +137,7 @@ Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
 };
 
 Data@<Bit2@> DataBit2 = (Bit2@ x) {
-  Datas[DataBit1(x.h), DataBit1(x.l)];
+  Struct[DataBit1(x.h), DataBit1(x.l)];
 };
 
 Show@<Bit2@> ShowBit2 = (Bit2@ x) {

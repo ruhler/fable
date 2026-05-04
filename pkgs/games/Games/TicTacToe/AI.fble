@@ -1,5 +1,5 @@
 
-Data@, Data, Datas .= /Core/Data%;
+Data@, Enum, Struct .= /Core/Data%;
 
 List@ = /Std/List%.List@;
 List = /Std/List%.List;
@@ -20,11 +20,11 @@ BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
 Move = /Games/TicTacToe/Board%.Move;
 
 Data@<Square@> SquareData = (Square@ x) {
-  x.?(X: Data|00, O: Data|01, E: Data|1);
+  x.?(X: Enum|00, O: Enum|01, E: Enum|1);
 };
 
 Data@<Board@> BoardData = (Board@ x) {
-  Datas[
+  Struct[
     SquareData(x.ul), SquareData(x.uc), SquareData(x.ur),
     SquareData(x.ml), SquareData(x.mc), SquareData(x.mr),
     SquareData(x.ll), SquareData(x.lc), SquareData(x.lr)];

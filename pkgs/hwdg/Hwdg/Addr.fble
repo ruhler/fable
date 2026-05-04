@@ -1,5 +1,5 @@
 
-Data@, Datas .= /Core/Data%;
+Data@, Struct .= /Core/Data%;
 Int@ .= /Std/Int%;
 
 # A unique identifier for a location.
@@ -9,7 +9,7 @@ Int@ .= /Std/Int%;
 Addr@ = *(Int@ x, Int@ y);
 
 Data@<Addr@> Data = (Addr@ a) {
-  Datas[/Core/Int/Data%.Data(a.x), /Core/Int/Data%.Data(a.y)];
+  Struct[/Core/Int/Data%.Data(a.x), /Core/Int/Data%.Data(a.y)];
 };
 
 @(Addr@, Data);

@@ -1,5 +1,5 @@
 
-Data@, Datas .= /Core/Data%;
+Data@, Struct .= /Core/Data%;
 
 Int@ = /Std/Int%.Int@;
 Incr = /Std/Int%.Incr;
@@ -12,7 +12,7 @@ List@ = /Std/List%.List@;
 Coord@ = *(Int@ x, Int@ y);
 
 Data@<Coord@> CoordData = (Coord@ x) {
-  Datas[/Core/Int/Data%.Data(x.x), /Core/Int/Data%.Data(x.y)];
+  Struct[/Core/Int/Data%.Data(x.x), /Core/Int/Data%.Data(x.y)];
 };
 
 Grid = /Core/Map%.Map(CoordData);

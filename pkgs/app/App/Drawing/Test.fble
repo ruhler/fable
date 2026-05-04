@@ -1,5 +1,5 @@
 
-Data@, Datas .= /Core/Data%;
+Data@, Struct .= /Core/Data%;
 
 Drawing@ = /App/Drawing%.Drawing@;
 Color@ = /App/Drawing%.Color@;
@@ -49,7 +49,7 @@ Cmp@<Point@> OrdPoint = (Point@ a, Point@ b) {
 };
 
 Data@<Point@> DataPoint = (Point@ a) {
-  Datas[/Core/Int/Data%.Data(a.x), /Core/Int/Data%.Data(a.y)];
+  Struct[/Core/Int/Data%.Data(a.x), /Core/Int/Data%.Data(a.y)];
 };
 
 Show@<Point@> ShowPoint = (Point@ x) {
