@@ -356,7 +356,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
     /Std/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
       List@<String@> ids = Split(Drop(path, Int|5), Str|',');
       os(SeqPage(/Std/List%.Map(ids, (String@ id) {
-          /Std/Maybe%.Get(Int|0, /Std/Int/Parse%.Int(id));
+          /Std/Maybe%.Default(Int|0, /Std/Int/Parse%.Int(id));
         })));
     });
 

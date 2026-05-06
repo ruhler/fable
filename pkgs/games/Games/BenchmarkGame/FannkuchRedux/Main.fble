@@ -8,7 +8,7 @@ Int = /Std/Int/Lit%.Int;
 
 List@ = /Std/List%.List@;
 
-Get .= /Std/Maybe%;
+Default .= /Std/Maybe%;
 Monad@ = /Std/Monad%.Monad@;
 
 Stream@, In@, Out@ .= /Std/Stream%;
@@ -34,7 +34,7 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> _in, Out@<Char@, M@> out, List@<St
 
   Int@ n = {
     args.?(empty: Int|7);
-    Get(Int|7, /Std/Int/Parse%.Int(args.items.head));
+    Default(Int|7, /Std/Int/Parse%.Int(args.items.head));
   };
   Fannkuch@ result = FannkuchRedux(n);
   Unit@ _ := m.do(FmtL|'%s'[/Std/Int/Show%.Show(result.checksum)]);

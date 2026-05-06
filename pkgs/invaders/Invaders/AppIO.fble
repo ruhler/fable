@@ -11,7 +11,7 @@ List@ = /Std/List%.List@;
 Append = /Std/List%.Append;
 Any = /Std/List/Search%.Any;
 
-Maybe@, Get .= /Std/Maybe%;
+Maybe@, Default .= /Std/Maybe%;
 
 Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
@@ -52,7 +52,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     istream.?(nothing: m.return(Int|0));
 
     String@ text := m.do(GetText(m, istream.just));
-    m.return(Get(Int|0, /Std/Int/Parse%.Int(text)));
+    m.return(Default(Int|0, /Std/Int/Parse%.Int(text)));
   };
 
   Put@<M@, Int@> put_high_score = (Int@ score) {

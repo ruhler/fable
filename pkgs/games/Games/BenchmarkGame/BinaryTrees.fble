@@ -14,7 +14,7 @@ Gt = /Std/Int/Cmp%.Gt;
 
 List@ = /Std/List%.List@;
 
-Get .= /Std/Maybe%;
+Default .= /Std/Maybe%;
 Monad@ = /Std/Monad%.Monad@;
 
 Stream@, In@, Out@ .= /Std/Stream%;
@@ -62,7 +62,7 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> _in, Out@<Char@, M@> out, List@<St
 
   Int@ n = {
     args.?(empty: 0);
-    Get(0, /Std/Int/Parse%.Int(args.items.head));
+    Default(0, /Std/Int/Parse%.Int(args.items.head));
   };
   Int@ max_depth = Gt(Add(2, MinDepth), n).?(
     true: Add(2, MinDepth),

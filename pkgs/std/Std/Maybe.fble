@@ -35,13 +35,13 @@ Maybe@ Nothing = <@ T@> {
   Maybe@<T@>(nothing: Unit);
 };
 
-# @func[Get] Gets the value of a Maybe@ or a default.
+# @func[Default] Gets the value of a Maybe@ or a default.
 #  @arg[@][T@] The type of value.
 #  @arg[T@][default] The default value.
 #  @arg[Maybe@<T@>][maybe] The Maybe@ to get the value from.
 #  @returns[T@] The value of the Maybe@ if present, else the default value.
 <@ T@>(T@, Maybe@<T@>) { T@; }
-Get = <@ T@>(T@ default, Maybe@<T@> maybe) {
+Default = <@ T@>(T@ default, Maybe@<T@> maybe) {
   maybe.?(just: maybe.just);
   default;
 };
@@ -110,4 +110,4 @@ Do = <@ A@>(Maybe@<A@> m)<@ B@>((A@) { Maybe@<B@>; } f) {
   f(m.just);
 };
 
-@(Maybe@, Just, Nothing, Get, JustGet, ForEach, Map, Do);
+@(Maybe@, Just, Nothing, Default, JustGet, ForEach, Map, Do);

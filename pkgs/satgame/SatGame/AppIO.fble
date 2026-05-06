@@ -9,7 +9,7 @@ Int = /Std/Int/Lit%.Int;
 List@ = /Std/List%.List@;
 Concat = /Std/List%.Concat;
 
-Maybe@, Get .= /Std/Maybe%;
+Maybe@, Default .= /Std/Maybe%;
 
 Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
@@ -37,7 +37,7 @@ GetArgs = (List@<String@> args, Args@ default) {
   args.items.tail.?(empty: default);
 
   String@ arg = args.items.head;
-  Int@ value = Get(Int|0, /Std/Int/Parse%.Int(args.items.tail.items.head));
+  Int@ value = Default(Int|0, /Std/Int/Parse%.Int(args.items.tail.items.head));
 
   Args@ nargs = {
     /Std/String/Eq%.Eq(arg, Str|'--vars').?(true: {
@@ -77,7 +77,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     Int@ seed := m.do({
       istream.?(nothing: m.return(Int|0));
       String@ text := m.do(GetText(m, istream.just));
-      m.return(Get(Int|0, /Std/Int/Parse%.Int(text)));
+      m.return(Default(Int|0, /Std/Int/Parse%.Int(text)));
     });
 
     Maybe@<Out@<Char@, M@>> ostream := m.do(write(filename));

@@ -1,7 +1,7 @@
 
 Bool@, True, False .= /Std/Bool%;
 Data@, Bit@ .= /Core/Data%;
-Maybe@, Just, Nothing, Get .= /Std/Maybe%;
+Maybe@, Just, Nothing, Default .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 
 # A Map that operates on Data@ types.
@@ -138,7 +138,7 @@ Delete = <@ K@>(Data@<K@> data)<@ V@> {
   };
 
   (Map@<K@, V@> map, K@ key) {
-    Get(map, data(key, r, put, map));
+    Default(map, data(key, r, put, map));
   };
 };
 

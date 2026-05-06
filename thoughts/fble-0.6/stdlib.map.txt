@@ -2254,3 +2254,5 @@ I don't currently use 'Default' anywhere. Is it really useful for anything?
 No. Default as a function application feels weird to me. Let's ditch that. We
 may as well write: Default(5, Map(mvalue, f));
 
+---
+
