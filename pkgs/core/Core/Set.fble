@@ -84,7 +84,7 @@ Insert = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
 #   Delete(set, Str(Chars|foo));
 <@ K@>(Data@<K@>, Set@<K@>, K@) { Set@<K@>; }
 Delete = <@ K@>(Data@<K@> data) {
-  /Core/Map%.Delete(data)<Unit@>;
+  /Core/Map%.Remove(data)<Unit@>;
 };
 
 # ForEach --

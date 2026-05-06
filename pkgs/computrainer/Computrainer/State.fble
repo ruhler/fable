@@ -34,7 +34,7 @@ FlipPhase = (State@ s) {
 
 (Coord@, State@) { State@; }
 RemoveCar = (Coord@ c, State@ s) {
-    s.@(cars: Grid<Car@>.Delete(s.cars, c));
+    s.@(cars: Grid<Car@>.Remove(s.cars, c));
 };
 
 (Coord@, Car@, State@) { State@; }
@@ -45,7 +45,7 @@ AddCar = (Coord@ c, Car@ v, State@ s) {
 
 (Coord@, Coord@, Car@, State@) { State@; }
 MoveCar = (Coord@ src, Coord@ dest, Car@ v, State@ s) {
-    Cars@ removed = Grid<Car@>.Delete(s.cars, src);
+    Cars@ removed = Grid<Car@>.Remove(s.cars, src);
     Cars@ cars = Grid<Car@>.Put(removed, dest, v);
     s.@(cars);
 };
@@ -58,7 +58,7 @@ Routing = (Coord@ c, State@ s) {
 
 (Coord@, State@) { State@; }
 ClearRouting = (Coord@ c, State@ s) {
-    s.@(routing: Grid<Dir@>.Delete(s.routing, c));
+    s.@(routing: Grid<Dir@>.Remove(s.routing, c));
 };
 
 (Coord@, State@, Dir@) { State@; }

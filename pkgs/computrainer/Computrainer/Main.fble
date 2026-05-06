@@ -290,7 +290,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
 
         StepUI(s.selected.?(
             nothing: s,
-            antigate: s.@(model: s.model.@(gates: Grid<Gate@>.Delete(s.model.gates, MouseTile(s)))),
+            antigate: s.@(model: s.model.@(gates: Grid<Gate@>.Remove(s.model.gates, MouseTile(s)))),
             gate: {
                 Coord@ tile = MouseTile(s);
                 s.@(model: s.model.@(gates: Grid<Gate@>.Put(s.model.gates, tile, s.selected.gate)));
@@ -299,7 +299,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
                 Coord@ tile = MouseTile(s);
                 s.@(model: s.model.@(
                     s: s.model.s.@(
-                    cars: Grid<Car@>.Delete(s.model.s.cars, tile))));
+                    cars: Grid<Car@>.Remove(s.model.s.cars, tile))));
             },
             car: {
                 Coord@ tile = MouseTile(s);

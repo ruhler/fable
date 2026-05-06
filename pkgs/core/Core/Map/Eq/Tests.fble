@@ -22,7 +22,7 @@ Int@ A = Int|0;
 Int@ B = Int|1;
 Int@ C = Int|2;
 
-Map@, Empty, Put, Delete .= /Core/Map%.Map(/Core/Int/Data%.Data)<Bool@>;
+Map@, Empty, Put, Remove .= /Core/Map%.Map(/Core/Int/Data%.Data)<Bool@>;
 Eq = /Core/Map/Eq%.Eq(/Std/Int/Eq%.Eq);
 
 Test@ Tests = TestSuite(Str|Eq, List[
@@ -54,7 +54,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
   }),
 
   Test(Str|'eq: deleted to empty', (Unit@ _) {
-    Map@ a = Delete(Put(Empty, A, True), A);
+    Map@ a = Remove(Put(Empty, A, True), A);
     Map@ b = Empty;
 
     Bool@ wnt = True;
@@ -64,7 +64,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
 
   Test(Str|'eq: empty from deleted', (Unit@ _) {
     Map@ a = Empty;
-    Map@ b = Delete(Put(Empty, A, True), A);
+    Map@ b = Remove(Put(Empty, A, True), A);
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
@@ -73,7 +73,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
 
   Test(Str|'eq: empty from deleted pair second', (Unit@ _) {
     Map@ a = Put(Empty, A, True);
-    Map@ b = Delete(Put(a, B, True), B);
+    Map@ b = Remove(Put(a, B, True), B);
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
@@ -82,7 +82,7 @@ Test@ Tests = TestSuite(Str|Eq, List[
 
   Test(Str|'eq: empty from deleted pair first', (Unit@ _) {
     Map@ a = Put(Empty, A, True);
-    Map@ b = Delete(Put(a, C, True), C);
+    Map@ b = Remove(Put(a, C, True), C);
 
     Bool@ wnt = True;
     Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);

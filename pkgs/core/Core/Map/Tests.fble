@@ -65,8 +65,8 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'delete', (Unit@ _) {
-      Map@, Put, Get, Empty, Delete .= /Core/Map%.Map(data)<Bool@>;
-      Map@ map = Delete(Put(Empty, b, False), b);
+      Map@, Put, Get, Empty, Remove .= /Core/Map%.Map(data)<Bool@>;
+      Map@ map = Remove(Put(Empty, b, False), b);
       Maybe@<Bool@> wnt = Nothing<Bool@>;
       Maybe@<Bool@> got = Get(map, b);
       AssertEquals(
@@ -76,8 +76,8 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
   
     /Std/Test%.Test(Str|'delete nothing', (Unit@ _) {
-      Map@, Put, Get, Empty, Delete .= /Core/Map%.Map(data)<Bool@>;
-      Map@ map = Delete(Put(Empty, b, False), a);
+      Map@, Put, Get, Empty, Remove .= /Core/Map%.Map(data)<Bool@>;
+      Map@ map = Remove(Put(Empty, b, False), a);
       Maybe@<Bool@> wnt = Just(False);
       Maybe@<Bool@> got = Get(map, b);
       AssertEquals(

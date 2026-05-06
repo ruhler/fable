@@ -38,7 +38,7 @@ Int@ BaseY = Int|36;
 
 # Bases@ --
 #   Map from x coordinate to the slice of base, if any, at that x coordinate.
-Map@, Empty, Get, Delete, Put, ForEach .= /Core/Map%.Map(/Core/Int/Data%.Data)<Slice@>;
+Map@, Empty, Get, Remove, Put, ForEach .= /Core/Map%.Map(/Core/Int/Data%.Data)<Slice@>;
 Bases@ = Map@;
 
 # BaseSpec --
@@ -111,7 +111,7 @@ BombHit = (Int@ x, Int@ y, Bases@ bases) {
     HitResult@(True, Put(bases, x, Slice@(slice.just.min, max)));
   });
 
-  HitResult@(True, Delete(bases, x));
+  HitResult@(True, Remove(bases, x));
 };
 
 # BulletHit --
@@ -134,7 +134,7 @@ BulletHit = (Int@ x, Int@ y, Bases@ bases) {
     HitResult@(True, Put(bases, x, Slice@(min, slice.just.max)));
   });
 
-  HitResult@(True, Delete(bases, x));
+  HitResult@(True, Remove(bases, x));
 };
 
 # Draw --

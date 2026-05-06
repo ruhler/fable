@@ -100,7 +100,7 @@ Put = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
 
 # Remove a value from the map if it is present.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
-Delete = <@ K@>(Data@<K@> data)<@ V@> {
+Remove = <@ K@>(Data@<K@> data)<@ V@> {
   # Given a function that optionally modifies the map at the current
   # location, returns the final modified map at the root location.
   # The modification may remove elements.
@@ -180,11 +180,11 @@ Map = <@ K@>(Data@<K@> data)<@ V@> {
     IsEmpty: IsEmpty<K@, V@>,
     Put: Put(data)<V@>,
     Update: Update(data)<V@>,
-    Delete: Delete(data)<V@>,
+    Remove: Remove(data)<V@>,
     Get: Get(data)<V@>,
     ForEach: ForEach<K@, V@>
   );
 };
 
-@(Entry@, Map@, Empty, IsEmpty, Get, Update, Put, Delete, ForEach,
+@(Entry@, Map@, Empty, IsEmpty, Get, Update, Put, Remove, ForEach,
   Map);

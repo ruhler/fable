@@ -246,7 +246,7 @@ RemoveClause = (ClauseId@ id, Solver@ s) {
 
   Clause@ cs = mcs.just;
   Solver@ ns = /Std/List%.ForEach(cs, s, RemoveClauseFromVar(id));
-  ns.@(clauses: Clauses.Delete(ns.clauses, id));
+  ns.@(clauses: Clauses.Remove(ns.clauses, id));
 };
 
 # Caller is responsible for ensuring no conflict arises as a result of
@@ -280,7 +280,7 @@ RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
   VarS@ vs = mvs.just;
 
   Solver@ ns = s.@(
-    vars: Vars.Delete(s.vars, var.id),
+    vars: Vars.Remove(s.vars, var.id),
     assigns: Items(var, s.assigns));
 
   ClauseIds@ match = var.pos.?(true: vs.pos, false: vs.neg);
