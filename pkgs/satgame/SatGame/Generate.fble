@@ -28,7 +28,7 @@ Var@ = /SatGame/Var%.Var@;
 
 Shuffle = /Std/List/Random%.Shuffle;
 
-Map@, Empty, Lookup, Insert .= /Core/Map%.Map(/Core/Int/Data%.Data)<Var@>;
+Map@, Empty, Get, Insert .= /Core/Map%.Map(/Core/Int/Data%.Data)<Var@>;
 
 Prng = /Std/Random/Lfsr%.Lfsr24;
 M@, M(.Monad), Rng .= /Std/Random/Prng/Pure%.Pure(Prng);
@@ -59,7 +59,7 @@ Eval .= /Std/State/Pure%;
 
     (Int@) { M@<Var@>; } RandVar = (Int@ max) {
       Int@ index := M.do(UpTo(M, Rng, max));
-      M.return(Lookup(vars, index).just);
+      M.return(Get(vars, index).just);
     };
 
     (Int@) { M@<Literal@>; } RandLiteral = (Int@ max) {
@@ -98,7 +98,7 @@ Eval .= /Std/State/Pure%;
       Range(params.num_literals_per_clause, params.num_vars), M.return(/Std/List%.Empty<Clause@>),
       (Int@ i, M@<Puzzle@> mp) {
         Bool@ pos := M.do(/Std/Bool/Random%.Uniform(M, Rng));
-        Literal@ var = Literal@(Lookup(vars, i).just, pos);
+        Literal@ var = Literal@(Get(vars, i).just, pos);
         /Std/Stream%.ForEach(Range(Int|0, clauses_per_variable), mp,
           (Int@ _, M@<Puzzle@> mp) {
             Puzzle@ tail := M.do(mp);

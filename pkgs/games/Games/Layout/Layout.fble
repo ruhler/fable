@@ -76,8 +76,8 @@ Cost = (Layout@ layout, List@<Edge@> edges) {
   edges.?(empty: Int|0);
 
   Edge@ head = edges.items.head;
-  Pos@ a = Map.Lookup(layout, head.a).just;
-  Pos@ b = Map.Lookup(layout, head.b).just;
+  Pos@ a = Map.Get(layout, head.a).just;
+  Pos@ b = Map.Get(layout, head.b).just;
   Int@ dx = Sub(a.x, b.x);
   Int@ dy = Sub(a.y, b.y);
   Int@ cost = Add(Mul(dx, dx), Mul(dy, dy));
@@ -216,8 +216,8 @@ DrawEdge = (Pos@ a, Pos@ b) {
 (Layout@, List@<Edge@>) { Drawing@; }
 DrawEdges = (Layout@ layout, List@<Edge@> edges) {
   Drawings(/Std/List%.Map(edges, (Edge@ edge) {
-    Pos@ a = Map.Lookup(layout, edge.a).just;
-    Pos@ b = Map.Lookup(layout, edge.b).just;
+    Pos@ a = Map.Get(layout, edge.a).just;
+    Pos@ b = Map.Get(layout, edge.b).just;
     DrawEdge(a, b);
   }));
 };

@@ -10,7 +10,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Addr@ = /Hwdg/Addr%.Addr@;
 Data@ = /Hwdg/Data%.Data@;
 
-Map@, ForEach, Insert, Lookup, Empty .= /Core/Map%.Map(/Hwdg/Addr%.Data)<Data@>;
+Map@, ForEach, Insert, Get, Empty .= /Core/Map%.Map(/Hwdg/Addr%.Data)<Data@>;
 
 Memory@ = Map@;
 
@@ -28,7 +28,7 @@ Disjoint = (Memory@ a, Memory@ b) {
     # TODO: avoid iterating as soon as we find something in common.
     ForEach(a, True, (Addr@ k, Data@ _, Bool@ disjoint) {
         disjoint.?(false: False);
-        Lookup(b, k).?(just: False);
+        Get(b, k).?(just: False);
         True;
     });
 };
@@ -38,7 +38,7 @@ Disjoint = (Memory@ a, Memory@ b) {
 Contains = (Memory@ a, Memory@ b) {
     ForEach(b, True, (Addr@ k, Data@ vb, Bool@ contains) {
         contains.?(false: False);
-        Maybe@<Data@> mva = Lookup(a, k);
+        Maybe@<Data@> mva = Get(a, k);
         mva.?(nothing: False);
         /Hwdg/Data/Eq%.Eq(vb, mva.just).?(false: False);
         True;

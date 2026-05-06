@@ -169,7 +169,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
       seq.?(empty: Return<Char@>);
 
       BlockId@ block = seq.items.head;
-      Maybe@<Block@> mname = Blocks.Lookup(profile.blocks, block);
+      Maybe@<Block@> mname = Blocks.Get(profile.blocks, block);
       Stream@<Char@> name = { 
         mname.?(just: /Std/Stream/String%.String(mname.just.name));
         Unit@ _ = ToDebug(Format|'block %s not found'[/Std/Int/Show%.Show(block)]);

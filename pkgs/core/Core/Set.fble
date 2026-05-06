@@ -44,7 +44,7 @@ IsEmpty = <@ K@> { /Core/Map%.IsEmpty<K@, Unit@>; };
 #   Contains(set, value);
 <@ K@>(Data@<K@>, Set@<K@>, K@) { Bool@; }
 Contains = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
-  /Core/Map%.Lookup(data, set, element).?(just: True, nothing: False);
+  /Core/Map%.Get(data, set, element).?(just: True, nothing: False);
 };
 
 # Insert --

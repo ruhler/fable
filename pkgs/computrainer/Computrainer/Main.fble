@@ -208,7 +208,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
               antigate: background,
               gate: Drawings[background, DrawGate(mouse_tile, s.selected.gate)],
               anticar: {
-                Maybe@<Gate@> mgate = Grid<Gate@>.Lookup(s.model.gates, mouse_tile);
+                Maybe@<Gate@> mgate = Grid<Gate@>.Get(s.model.gates, mouse_tile);
                 Drawing@ gate = mgate.?(
                     just: DrawGate(mouse_tile, mgate.just),
                     nothing: Blank);
@@ -248,7 +248,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
                     nothing: {
                         # Rotate the gate at the mouse coordinates.
                         Coord@ tile = MouseTile(s);
-                        Maybe@<Gate@> mg = Grid<Gate@>.Lookup(s.model.gates, tile);
+                        Maybe@<Gate@> mg = Grid<Gate@>.Get(s.model.gates, tile);
                         mg.?(nothing: s);
                         Gates@ gates = Grid<Gate@>.Insert(s.model.gates, tile, rotate(mg.just));
                         s.@(model: s.model.@(gates));

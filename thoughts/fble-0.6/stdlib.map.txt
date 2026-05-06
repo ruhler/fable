@@ -2256,3 +2256,12 @@ may as well write: Default(5, Map(mvalue, f));
 
 ---
 
+Haskell has the following map combining functions:
+* Union - prefers elements from left map.
+* Union With - function to say what to do if its in both maps: V -> V -> V
+* Difference - removes elements from the first map that are in the second.
+* DifferenceWith - V -> V -> Maybe V, called for each element in both maps.
+  With the option to keep the value or remove. This is like non-inserting.
+* Intersection - values from first map, if in both.
+* Intersection With: V -> V -> V
+  Like union, except discards elements not in both instead of preserving them.

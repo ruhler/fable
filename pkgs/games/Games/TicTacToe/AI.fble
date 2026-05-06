@@ -128,7 +128,7 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
-MemoTable@(.Map@), Empty, Lookup, Insert .= /Core/Map%.Map(BoardData)<PositionResult@>;
+MemoTable@(.Map@), Empty, Get, Insert .= /Core/Map%.Map(BoardData)<PositionResult@>;
 
 MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
 
@@ -166,7 +166,7 @@ MoveResult = (MemoTable@ m, Board@ b, Player@ x, Position@ p) {
 # The results are undefined if there are no moves left to make.
 (MemoTable@, Board@, Player@){MemoState@<PositionResult@>;}
 ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
-  Maybe@<PositionResult@> cached = Lookup(m, b);
+  Maybe@<PositionResult@> cached = Get(m, b);
   cached.?(just: MemoState@(m, cached.just));
 
   MemoState@<Maybe@<PositionResult@>> best =

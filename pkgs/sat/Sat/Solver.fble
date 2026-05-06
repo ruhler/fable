@@ -201,13 +201,13 @@ AddClauses = (Solver@ solver, List@<Clause@> clauses) {
 # Adds a clause to the solver state for the given conflict.
 (ClauseId@, Conflict@, Solver@) { Solver@; }
 AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
-  Maybe@<Clause@> ma = Clauses.Lookup(s.clauses, conflict.a);
+  Maybe@<Clause@> ma = Clauses.Get(s.clauses, conflict.a);
   Clause@ a = Clause.RemoveVar(conflict.var, {
     ma.?(nothing: Empty<Var@>);
     ma.just;
   });
 
-  Maybe@<Clause@> mb = Clauses.Lookup(s.clauses, conflict.b);
+  Maybe@<Clause@> mb = Clauses.Get(s.clauses, conflict.b);
   Clause@ b = Clause.RemoveVar(conflict.var, {
     mb.?(nothing: Empty<Var@>);
     mb.just;
@@ -219,7 +219,7 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
 # Removes a clause from a Vars@ var entry.
 (ClauseId@, Var@, Solver@) { Solver@; }
 RemoveClauseFromVar = (ClauseId@ clause, Var@ var, Solver@ s) {
-  Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
+  Maybe@<VarS@> mvs = Vars.Get(s.vars, var.id);
   mvs.?(nothing: s);
   VarS@ vs = mvs.just;
 
@@ -241,7 +241,7 @@ RemoveClauseFromVar = (ClauseId@ clause, Var@ var, Solver@ s) {
 # Removes a clause from the solver.
 (ClauseId@, Solver@) { Solver@; }
 RemoveClause = (ClauseId@ id, Solver@ s) {
-  Maybe@<Clause@> mcs = Clauses.Lookup(s.clauses, id);
+  Maybe@<Clause@> mcs = Clauses.Get(s.clauses, id);
   mcs.?(nothing: s);
 
   Clause@ cs = mcs.just;
@@ -253,7 +253,7 @@ RemoveClause = (ClauseId@ id, Solver@ s) {
 # removing the variable.
 (VarId@, ClauseId@, Solver@) { Solver@; }
 RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
-  Maybe@<Clause@> mcs = Clauses.Lookup(s.clauses, clause);
+  Maybe@<Clause@> mcs = Clauses.Get(s.clauses, clause);
   mcs.?(nothing: s);
 
   List@<Var@> nvars = Clause.RemoveVar(var, mcs.just);
@@ -272,7 +272,7 @@ RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
 # It is the callers responsibility to ensure no conflict is encountered during
 # assignment.
 (Var@, Solver@) { Solver@; } Assign = (Var@ var, Solver@ s) {
-  Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
+  Maybe@<VarS@> mvs = Vars.Get(s.vars, var.id);
 
   # If the variable doesn't exist, we must have already made an assignment for
   # it. Ignore this assignment attempt.
@@ -336,7 +336,7 @@ ApplyLearnedClauses = (Solver@ to, Solver@ from) {
   /Std/Stream%.ForEach(
       /Std/Int/Stream%.Range(to.clause_id, from.clause_id), s,
       (Id@ i, Solver@ s) {
-        Maybe@<Conflict@> conflict = Conflicts.Lookup(s.conflicts, i);
+        Maybe@<Conflict@> conflict = Conflicts.Get(s.conflicts, i);
         AddConflictClause(i, conflict.just, s);
       });
 };

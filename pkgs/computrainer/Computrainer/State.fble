@@ -53,7 +53,7 @@ MoveCar = (Coord@ src, Coord@ dest, Car@ v, State@ s) {
 # Check if the gate at the given location is currently routing a train through.
 (Coord@, State@) { Maybe@<Dir@>; }
 Routing = (Coord@ c, State@ s) {
-    Grid<Dir@>.Lookup(s.routing, c);
+    Grid<Dir@>.Get(s.routing, c);
 };
 
 (Coord@, State@) { State@; }

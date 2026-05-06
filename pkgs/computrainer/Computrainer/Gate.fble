@@ -114,7 +114,7 @@ Source = {
     (Source@) { Action@; }
     Action = (Source@ g, Coord@ c, State@ s) {
         # Place a car if there's nothing there already.
-        Maybe@<Car@> mv = Grid<Car@>.Lookup(s.cars, c);
+        Maybe@<Car@> mv = Grid<Car@>.Get(s.cars, c);
         mv.?(just: s);
         AddCar(c, g.car, s);
     };
@@ -185,7 +185,7 @@ Wait@ = Dir@;
 Wait = {
     (Wait@) { Action@; } Action = (Wait@ g, Coord@ c, State@ s) {
         Routing(c, s).?(just: s);      # Block for routing to finish.
-        Maybe@<Car@> mcar = Grid<Car@>.Lookup(s.cars, Dest(c, g));
+        Maybe@<Car@> mcar = Grid<Car@>.Get(s.cars, Dest(c, g));
         mcar.?(nothing: s);            # Block for output to be occupied
         mcar.just.?(C: s);             # A C car in output doesn't count.
         SetRouting(c, s, g);           # Route to output.
@@ -232,8 +232,8 @@ Filter = {
     (Filter@) { Action@; } Action = (Filter@ g, Coord@ c, State@ s) {
         Routing(c, s).?(just: s);             # Block for routing to finish.
 
-        Maybe@<Car@> mv = Grid<Car@>.Lookup(s.cars, c);
-        Grid<Car@>.Lookup(s.cars, c).?(nothing: s); # Block for car to show up.
+        Maybe@<Car@> mv = Grid<Car@>.Get(s.cars, c);
+        Grid<Car@>.Get(s.cars, c).?(nothing: s); # Block for car to show up.
         Car@ v = mv.just;
         /Computrainer/Car/Eq%.Car(v, g.car).?(true: SetRouting(c, s, g.match));
         SetRouting(c, s, g.default);

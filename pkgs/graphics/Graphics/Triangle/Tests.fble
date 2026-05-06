@@ -308,8 +308,8 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     Drawn@ drawn = Draw(drawing);
 
     # Verify we don't have a hole in the lower left corner.
-    Lookup .= /Core/Map%.Map(DataPoint)<Color@>;
-    Maybe@<Color@> got = Lookup(drawn, Point@(Neg(Int|32), Neg(Int|24)));
+    Get .= /Core/Map%.Map(DataPoint)<Color@>;
+    Maybe@<Color@> got = Get(drawn, Point@(Neg(Int|32), Neg(Int|24)));
     Maybe@<Color@> wnt = Just(Color.Green);
       
     # TODO: debug this test passing.

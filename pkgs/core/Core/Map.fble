@@ -26,9 +26,9 @@ IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
   False;
 };
 
-# Lookup a value in a map. Returns the value if present, Nothing otherwise.
+# Get a value in a map. Returns the value if present, Nothing otherwise.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
-Lookup = <@ K@>(Data@<K@> data)<@ V@> {
+Get = <@ K@>(Data@<K@> data)<@ V@> {
   S@ = Map@<K@, V@>;
   R@ = Maybe@<V@>;
 
@@ -181,10 +181,10 @@ Map = <@ K@>(Data@<K@> data)<@ V@> {
     Insert: Insert(data)<V@>,
     InsertWith: InsertWith(data)<V@>,
     Delete: Delete(data)<V@>,
-    Lookup: Lookup(data)<V@>,
+    Get: Get(data)<V@>,
     ForEach: ForEach<K@, V@>
   );
 };
 
-@(Entry@, Map@, Empty, IsEmpty, Lookup, InsertWith, Insert, Delete, ForEach,
+@(Entry@, Map@, Empty, IsEmpty, Get, InsertWith, Insert, Delete, ForEach,
   Map);
