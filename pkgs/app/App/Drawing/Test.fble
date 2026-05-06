@@ -71,7 +71,7 @@ Show@<Color@> ShowColor = (Color@ c) {
     /Std/Int/Show%.Show(c.b)];
 };
 
-Drawn@(.Map@), Empty, Insert .= /Core/Map%.Map(DataPoint)<Color@>;
+Drawn@(.Map@), Empty, Put .= /Core/Map%.Map(DataPoint)<Color@>;
 Eq@<Drawn@> EqDrawn = /Core/Map/Eq%.Eq(EqPoint, EqColor);
 Show@<Drawn@> ShowDrawn = /Core/Map/Show%.Show(ShowPoint, ShowColor);
 
@@ -83,7 +83,7 @@ Pixel@ = *(Int@ x, Int@ y, Color@ color);
   pixels.?(empty: Empty);
 
   Pixel@ head = pixels.items.head;
-  Insert(Drawn(pixels.items.tail), Point@(head.x, head.y), head.color);
+  Put(Drawn(pixels.items.tail), Point@(head.x, head.y), head.color);
 };
 
 # Draw --
@@ -112,7 +112,7 @@ Draw_ = {
 
         /Std/Stream%.ForEach(Range(xmin, xmax), drawn, (Int@ x, Drawn@ d) {
           /Std/Stream%.ForEach(Range(ymin, ymax), d, (Int@ y, Drawn@ d) {
-            Insert(d, Point@(x, y), drawing.rect.color);
+            Put(d, Point@(x, y), drawing.rect.color);
           });
         });
       },

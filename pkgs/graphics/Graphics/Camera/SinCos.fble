@@ -14,7 +14,7 @@ SinCos@ = *(Int@ sin, Int@ cos);
 
 # Table@ --
 #   Mapping from angle to sin and cosing of that angle.
-Map@, Insert, Empty, Get .= /Core/Map%.Map(/Core/Int/Data%.Data)<SinCos@>;
+Map@, Put, Empty, Get .= /Core/Map%.Map(/Core/Int/Data%.Data)<SinCos@>;
 Table@ = Map@;
 
 Table@ Table = {
@@ -28,7 +28,7 @@ Table@ Table = {
   Inserts = (Table@ table, List@<Entry@> entries) {
     entries.?(empty: table);
     Inserts(
-      Insert(table, entries.items.head.angle, entries.items.head.sincos),
+      Put(table, entries.items.head.angle, entries.items.head.sincos),
       entries.items.tail);
   };
 

@@ -152,7 +152,7 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
 
   # Check for empty clause.
   clause.?(empty: {
-    s.@(unsat: True, clauses: Clauses.Insert(s.clauses, id, Empty<Var@>));
+    s.@(unsat: True, clauses: Clauses.Put(s.clauses, id, Empty<Var@>));
   });
 
   List@<Assign@> todo = {
@@ -174,7 +174,7 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
         });
     });
 
-  Clauses@ clauses = Clauses.Insert(s.clauses, id, clause);
+  Clauses@ clauses = Clauses.Put(s.clauses, id, clause);
   s.@(vars, clauses, todo);
 };
 
@@ -235,7 +235,7 @@ RemoveClauseFromVar = (ClauseId@ clause, Var@ var, Solver@ s) {
     true: @(pos: ncls, neg: vs.neg),
     false: @(pos: vs.pos, neg: ncls));
 
-  s.@(vars: Vars.Insert(s.vars, var.id, nvs), todo);
+  s.@(vars: Vars.Put(s.vars, var.id, nvs), todo);
 };
 
 # Removes a clause from the solver.
@@ -265,7 +265,7 @@ RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
     Todo(nvars.items.head, Inferred(clause), s.todo);
   };
 
-  s.@(clauses: Clauses.Insert(s.clauses, clause, nvars), todo);
+  s.@(clauses: Clauses.Put(s.clauses, clause, nvars), todo);
 };
 
 # Assign a value to a variable.
@@ -394,7 +394,7 @@ Solve = {
       s.@(
         unsat: True,
         clause_id: Incr(id),
-        conflicts: Conflicts.Insert(s.conflicts, id, conflict.just));
+        conflicts: Conflicts.Put(s.conflicts, id, conflict.just));
     });
 
     # Apply the next assignment in the todo list.

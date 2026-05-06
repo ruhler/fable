@@ -10,7 +10,7 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Addr@ = /Hwdg/Addr%.Addr@;
 Data@ = /Hwdg/Data%.Data@;
 
-Map@, ForEach, Insert, Get, Empty .= /Core/Map%.Map(/Hwdg/Addr%.Data)<Data@>;
+Map@, ForEach, Put, Get, Empty .= /Core/Map%.Map(/Hwdg/Addr%.Data)<Data@>;
 
 Memory@ = Map@;
 
@@ -18,7 +18,7 @@ Memory@ = Map@;
 (Memory@, Memory@) { Memory@; }
 Override = (Memory@ m, Memory@ v) {
     ForEach(v, m, (Addr@ k, Data@ v, Memory@ s) {
-        Insert(s, k, v);
+        Put(s, k, v);
     });
 };
 
@@ -52,7 +52,7 @@ Contains = (Memory@ a, Memory@ b) {
 Memory = (List@<Addr@> addrs, List@<Data@> data) {
     addrs.?(empty: Empty);
     Memory@ tail = Memory(addrs.items.tail, data.items.tail);
-    Insert(tail, addrs.items.head, data.items.head);
+    Put(tail, addrs.items.head, data.items.head);
 };
 
 @(Memory@, Empty, Memory, Override, Disjoint, Contains, ForEach);

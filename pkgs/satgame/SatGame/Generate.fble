@@ -28,7 +28,7 @@ Var@ = /SatGame/Var%.Var@;
 
 Shuffle = /Std/List/Random%.Shuffle;
 
-Map@, Empty, Get, Insert .= /Core/Map%.Map(/Core/Int/Data%.Data)<Var@>;
+Map@, Empty, Get, Put .= /Core/Map%.Map(/Core/Int/Data%.Data)<Var@>;
 
 Prng = /Std/Random/Lfsr%.Lfsr24;
 M@, M(.Monad), Rng .= /Std/Random/Prng/Pure%.Pure(Prng);
@@ -52,7 +52,7 @@ Eval .= /Std/State/Pure%;
       S@ = *(Int@ i, Map@ map);
       Map@ map = /Std/List%.ForEach(list, S@(Int|0, Empty),
         (Var@ vid, S@ s) {
-          S@(Incr(s.i), Insert(s.map, s.i, vid));
+          S@(Incr(s.i), Put(s.map, s.i, vid));
         }).map;
       M.return(map);
     });

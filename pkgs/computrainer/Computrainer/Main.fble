@@ -250,7 +250,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
                         Coord@ tile = MouseTile(s);
                         Maybe@<Gate@> mg = Grid<Gate@>.Get(s.model.gates, tile);
                         mg.?(nothing: s);
-                        Gates@ gates = Grid<Gate@>.Insert(s.model.gates, tile, rotate(mg.just));
+                        Gates@ gates = Grid<Gate@>.Put(s.model.gates, tile, rotate(mg.just));
                         s.@(model: s.model.@(gates));
                     },
                     antigate: s,
@@ -293,7 +293,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
             antigate: s.@(model: s.model.@(gates: Grid<Gate@>.Delete(s.model.gates, MouseTile(s)))),
             gate: {
                 Coord@ tile = MouseTile(s);
-                s.@(model: s.model.@(gates: Grid<Gate@>.Insert(s.model.gates, tile, s.selected.gate)));
+                s.@(model: s.model.@(gates: Grid<Gate@>.Put(s.model.gates, tile, s.selected.gate)));
             },
             anticar: {
                 Coord@ tile = MouseTile(s);
@@ -305,7 +305,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
                 Coord@ tile = MouseTile(s);
                 s.@(model: s.model.@(
                     s: s.model.s.@(
-                    cars: Grid<Car@>.Insert(s.model.s.cars, tile, s.selected.car))));
+                    cars: Grid<Car@>.Put(s.model.s.cars, tile, s.selected.car))));
             }));
     });
 

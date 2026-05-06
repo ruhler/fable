@@ -39,14 +39,14 @@ RemoveCar = (Coord@ c, State@ s) {
 
 (Coord@, Car@, State@) { State@; }
 AddCar = (Coord@ c, Car@ v, State@ s) {
-    Cars@ cars = Grid<Car@>.Insert(s.cars, c, v);
+    Cars@ cars = Grid<Car@>.Put(s.cars, c, v);
     s.@(cars);
 };
 
 (Coord@, Coord@, Car@, State@) { State@; }
 MoveCar = (Coord@ src, Coord@ dest, Car@ v, State@ s) {
     Cars@ removed = Grid<Car@>.Delete(s.cars, src);
-    Cars@ cars = Grid<Car@>.Insert(removed, dest, v);
+    Cars@ cars = Grid<Car@>.Put(removed, dest, v);
     s.@(cars);
 };
 
@@ -63,7 +63,7 @@ ClearRouting = (Coord@ c, State@ s) {
 
 (Coord@, State@, Dir@) { State@; }
 SetRouting = (Coord@ c, State@ s, Dir@ d) {
-    s.@(routing: Grid<Dir@>.Insert(s.routing, c, d));
+    s.@(routing: Grid<Dir@>.Put(s.routing, c, d));
 };
 
 @(Phase@, State@, State,

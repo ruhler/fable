@@ -63,7 +63,7 @@ Contains = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
 #   Insert(set, Str(Chars|foo));
 <@ K@>(Data@<K@>, Set@<K@>, K@) { Set@<K@>; }
 Insert = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
-  /Core/Map%.Insert(data, set, element, Unit);
+  /Core/Map%.Put(data, set, element, Unit);
 };
 
 # Delete --

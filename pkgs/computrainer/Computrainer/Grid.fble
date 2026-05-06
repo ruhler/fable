@@ -25,7 +25,7 @@ Entry@ = <@ T@> { *(Int@ x, Int@ y, T@ v); };
 Entries = <@ T@>(List@<Entry@<T@>> xs) {
     xs.?(empty: Grid<T@>.Empty);
     Entry@<T@> head = xs.items.head;
-    Grid<T@>.Insert(Entries(xs.items.tail), Coord@(head.x, head.y), head.v);
+    Grid<T@>.Put(Entries(xs.items.tail), Coord@(head.x, head.y), head.v);
 };
 
 # Helper for making grid literals.
@@ -36,7 +36,7 @@ Entries = <@ T@>(List@<Entry@<T@>> xs) {
 Row = (Int@ x, Int@ y)<@ T@>(List@<Maybe@<T@>> xs, Grid<T@>.Map@ g) { 
     xs.?(empty: g);
     Grid<T@>.Map@ inserted = xs.items.head.?(
-        just: Grid<T@>.Insert(g, Coord@(x, y), xs.items.head.just),
+        just: Grid<T@>.Put(g, Coord@(x, y), xs.items.head.just),
         nothing: g);
     Row(Incr(x), y, xs.items.tail, inserted);
 };

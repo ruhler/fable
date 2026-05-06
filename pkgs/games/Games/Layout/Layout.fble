@@ -106,7 +106,7 @@ NodeAt = (Layout@ layout, Pos@ pos) {
 Swap = (Layout@ layout, Pos@ a, Pos@ b) {
   Node@ an = NodeAt(layout, a).just;
   Node@ bn = NodeAt(layout, b).just;
-  Map.Insert(Map.Insert(layout, bn, a), an, b);
+  Map.Put(Map.Put(layout, bn, a), an, b);
 };
 
 # Grid dimensions.
@@ -264,7 +264,7 @@ InitLayout = (Int@ n) {
   QR@ qr = /Std/Int/Div%.Div(n, Cols);
   Pos@ pos = @(x: qr.r, y: qr.q);
   Layout@ tail = InitLayout(Incr(n));
-  Map.Insert(tail, n, pos);
+  Map.Put(tail, n, pos);
 };
 
 State@ InitialState = @(

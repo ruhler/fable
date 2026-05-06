@@ -38,7 +38,7 @@ Int@ BaseY = Int|36;
 
 # Bases@ --
 #   Map from x coordinate to the slice of base, if any, at that x coordinate.
-Map@, Empty, Get, Delete, Insert, ForEach .= /Core/Map%.Map(/Core/Int/Data%.Data)<Slice@>;
+Map@, Empty, Get, Delete, Put, ForEach .= /Core/Map%.Map(/Core/Int/Data%.Data)<Slice@>;
 Bases@ = Map@;
 
 # BaseSpec --
@@ -68,7 +68,7 @@ AddSlices = {
     slices.?(empty: bases);
     Slice@ head = slices.items.head;
     Slice@ slice = Slice@(Add(BaseY, head.min), Add(BaseY, head.max));
-    Bases@ inserted = Insert(bases, x, slice);
+    Bases@ inserted = Put(bases, x, slice);
     AddSlices(Add(x, Int|1), slices.items.tail, inserted);
   };
 };
@@ -108,7 +108,7 @@ BombHit = (Int@ x, Int@ y, Bases@ bases) {
   Int@ max = Sub(y, Damage);
 
   Lt(slice.just.min, max).?(true: {
-    HitResult@(True, Insert(bases, x, Slice@(slice.just.min, max)));
+    HitResult@(True, Put(bases, x, Slice@(slice.just.min, max)));
   });
 
   HitResult@(True, Delete(bases, x));
@@ -131,7 +131,7 @@ BulletHit = (Int@ x, Int@ y, Bases@ bases) {
   Int@ min = Add(y, Damage);
 
   Lt(min, slice.just.max).?(true: {
-    HitResult@(True, Insert(bases, x, Slice@(min, slice.just.max)));
+    HitResult@(True, Put(bases, x, Slice@(min, slice.just.max)));
   });
 
   HitResult@(True, Delete(bases, x));

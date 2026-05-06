@@ -168,7 +168,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   LocationField = (Profile@ profile, Payload@ payload) {
     Int@ length := m.do(LengthFor(payload, Str|'location'));
     Location@ location := m.do(p.Message(Location@(0, 0, 0, 0), LocationFields, length));
-    Map<Location@>.Map@ locations = Map<Location@>.Insert(profile.locations, location.id, location);
+    Map<Location@>.Map@ locations = Map<Location@>.Put(profile.locations, location.id, location);
     m.return(profile.@(locations));
   };
 
@@ -197,7 +197,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   FunctionField = (Profile@ profile, Payload@ payload) {
     Int@ length := m.do(LengthFor(payload, Str|'function'));
     Function@ function := m.do(p.Message(Function@(0, 0, 0), FunctionFields, length));
-    Map<Function@>.Map@ functions = Map<Function@>.Insert(profile.functions, function.id, function);
+    Map<Function@>.Map@ functions = Map<Function@>.Put(profile.functions, function.id, function);
     m.return(profile.@(functions));
   };
 
@@ -205,7 +205,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   StringField = (Profile@ profile, Payload@ payload) {
     Int@ length := m.do(LengthFor(payload, Str|'string_table'));
     String@ str := m.do(p.String(length));
-    Map<String@>.Map@ strings = Map<String@>.Insert(profile.strings,
+    Map<String@>.Map@ strings = Map<String@>.Put(profile.strings,
       profile.next_string_id, str);
     Int@ next_string_id = Incr(profile.next_string_id);
     m.return(profile.@(strings, next_string_id));

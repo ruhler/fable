@@ -63,7 +63,7 @@ Block = (ProtoProfile@ parsed, Location@ location) {
 Blocks = (ProtoProfile@ parsed) {
   Map<Location@>.ForEach(parsed.locations, Map<Block@>.Empty,
     (LocationId@ id, Location@ location, Blocks@ blocks) {
-       Map<Block@>.Insert(blocks, id, Block(parsed, location));
+       Map<Block@>.Put(blocks, id, Block(parsed, location));
     });
 };
 

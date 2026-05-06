@@ -32,8 +32,8 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'not found', (Unit@ _) {
-      Map@, Insert, Get, Empty .= /Core/Map%.Map(data)<Unit@>;
-      Map@ map = Insert(Empty, c, Unit);
+      Map@, Put, Get, Empty .= /Core/Map%.Map(data)<Unit@>;
+      Map@ map = Put(Empty, c, Unit);
       Maybe@<Unit@> wnt = Nothing<Unit@>;
       Maybe@<Unit@> got = Get(map, b);
       AssertEquals(
@@ -43,8 +43,8 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'found', (Unit@ _) {
-      Map@, Insert, Get, Empty .= /Core/Map%.Map(data)<Bool@>;
-      Map@ map = Insert(Insert(Insert(Empty, a, False), b, True), c, False);
+      Map@, Put, Get, Empty .= /Core/Map%.Map(data)<Bool@>;
+      Map@ map = Put(Put(Put(Empty, a, False), b, True), c, False);
       Maybe@<Bool@> wnt = Just(True);
       Maybe@<Bool@> got = Get(map, b);
       AssertEquals(
@@ -54,8 +54,8 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'replace', (Unit@ _) {
-      Map@, Insert, Get, Empty .= /Core/Map%.Map(data)<Bool@>;
-      Map@ map = Insert(Insert(Empty, b, False), b, True);
+      Map@, Put, Get, Empty .= /Core/Map%.Map(data)<Bool@>;
+      Map@ map = Put(Put(Empty, b, False), b, True);
       Maybe@<Bool@> wnt = Just(True);
       Maybe@<Bool@> got = Get(map, b);
       AssertEquals(
@@ -65,8 +65,8 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'delete', (Unit@ _) {
-      Map@, Insert, Get, Empty, Delete .= /Core/Map%.Map(data)<Bool@>;
-      Map@ map = Delete(Insert(Empty, b, False), b);
+      Map@, Put, Get, Empty, Delete .= /Core/Map%.Map(data)<Bool@>;
+      Map@ map = Delete(Put(Empty, b, False), b);
       Maybe@<Bool@> wnt = Nothing<Bool@>;
       Maybe@<Bool@> got = Get(map, b);
       AssertEquals(
@@ -76,8 +76,8 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
   
     /Std/Test%.Test(Str|'delete nothing', (Unit@ _) {
-      Map@, Insert, Get, Empty, Delete .= /Core/Map%.Map(data)<Bool@>;
-      Map@ map = Delete(Insert(Empty, b, False), a);
+      Map@, Put, Get, Empty, Delete .= /Core/Map%.Map(data)<Bool@>;
+      Map@ map = Delete(Put(Empty, b, False), a);
       Maybe@<Bool@> wnt = Just(False);
       Maybe@<Bool@> got = Get(map, b);
       AssertEquals(
@@ -87,8 +87,8 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'foreach', (Unit@ _) {
-      Map@, Insert, ForEach, Empty .= /Core/Map%.Map(data)<Bool@>;
-      Map@ map = Insert(Insert(Insert(Empty, b, True), a, True), b, False);
+      Map@, Put, ForEach, Empty .= /Core/Map%.Map(data)<Bool@>;
+      Map@ map = Put(Put(Put(Empty, b, True), a, True), b, False);
 
       # Note: A < B, we expect the ForEach to iterate in the order A, B. Because
       # we add A to the end of the list before B, we expect the resulting list
