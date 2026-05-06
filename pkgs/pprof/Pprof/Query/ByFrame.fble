@@ -21,7 +21,7 @@ Query@ = /Pprof/Query%.Query@;
 MetricOf = /Pprof/Query/Util%.MetricOf;
 Sort = /Pprof/Query/Util%.Sort;
 
-Map@, Empty, InsertWith, ForEach .= /Core/Map%.Map(/Core/Int/Data%.Data)<Int@>;
+Map@, Empty, Update, ForEach .= /Core/Map%.Map(/Core/Int/Data%.Data)<Int@>;
 
 (List@<BlockId@>, BlockId@) { Bool@; }
 ContainsBlock = (List@<BlockId@> l, BlockId@ id) {
@@ -56,10 +56,9 @@ Query = ((Sequence@) { List@<BlockId@>; } frames, Profile@ profile) {
     Int@ count = MetricOf(sample.values);
 
     /Std/List%.ForEach(set, map, (BlockId@ block, Map@ m) {
-      InsertWith(m, block, (Maybe@<Int@> mx) {
-        mx.?(just: Add(mx.just, count));
-        count;
-      });
+      Maybe@<Int@> mx := Update(m, block);
+      mx.?(just: Add(mx.just, count));
+      count;
     });
   };
 

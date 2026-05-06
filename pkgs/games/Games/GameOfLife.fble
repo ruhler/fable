@@ -93,7 +93,7 @@ Cand@ = C.Map@;
   #     Incr neighbors for each neighbor cell
   Cand@ candidates = W.ForEach(w, C.Empty,
     (Coord@ coord, Cand@ cand_in) {
-      Cand@ cand_alive = C.InsertWith(cand_in, coord, (Maybe@<Status@> ms) {
+      Cand@ cand_alive = C.Update(cand_in, coord, (Maybe@<Status@> ms) {
         ms.?(just: Status@(True, ms.just.neighbors),
              nothing: Status@(True, Count@(0: Unit)));
       });
@@ -109,7 +109,7 @@ Cand@ = C.Map@;
         Coord@(Incr(coord.row), Incr(coord.col))];
 
       ForEach(neighbors, cand_alive, (Coord@ n, Cand@ c) {
-        C.InsertWith(c, n, (Maybe@<Status@> ms) {
+        C.Update(c, n, (Maybe@<Status@> ms) {
           ms.?(just: Status@(ms.just.alive, IncCount(ms.just.neighbors)),
                nothing: Status@(False, Count@(1: Unit)));
         });

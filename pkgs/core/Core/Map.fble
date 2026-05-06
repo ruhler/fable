@@ -56,7 +56,7 @@ Get = <@ K@>(Data@<K@> data)<@ V@> {
 # Insert a value into a map, taking into account whatever existing value is
 # in the map for the given key.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>) { V@; }) { Map@<K@, V@>; }
-InsertWith = <@ K@>(Data@<K@> data)<@ V@> {
+Update = <@ K@>(Data@<K@> data)<@ V@> {
   S@ = Map@<K@, V@>;
   R@ = Map@<K@, V@>;
 
@@ -95,7 +95,7 @@ InsertWith = <@ K@>(Data@<K@> data)<@ V@> {
 # Insert a value into a map.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
 Put = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
-  InsertWith(data, map, key, (Maybe@<V@> _) { value; });
+  Update(data, map, key, (Maybe@<V@> _) { value; });
 };
 
 # Remove a value from the map if it is present.
@@ -179,12 +179,12 @@ Map = <@ K@>(Data@<K@> data)<@ V@> {
     Empty: Empty<K@, V@>,
     IsEmpty: IsEmpty<K@, V@>,
     Put: Put(data)<V@>,
-    InsertWith: InsertWith(data)<V@>,
+    Update: Update(data)<V@>,
     Delete: Delete(data)<V@>,
     Get: Get(data)<V@>,
     ForEach: ForEach<K@, V@>
   );
 };
 
-@(Entry@, Map@, Empty, IsEmpty, Get, InsertWith, Put, Delete, ForEach,
+@(Entry@, Map@, Empty, IsEmpty, Get, Update, Put, Delete, ForEach,
   Map);

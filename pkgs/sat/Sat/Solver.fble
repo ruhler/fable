@@ -164,7 +164,7 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
   # Update Vars@ data structure.
   Vars@ vars = /Std/List%.ForEach(clause, s.vars,
     (Var@ v, Vars@ vs) {
-      Vars.InsertWith(vs, v.id, (Maybe@<VarS@> mx) {
+      Vars.Update(vs, v.id, (Maybe@<VarS@> mx) {
           VarS@ x = mx.?(
             just: mx.just,
             nothing: VarS@(ClauseIds.Empty, ClauseIds.Empty));
