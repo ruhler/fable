@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Should Map Put, Update, Replace functions update the key value or leave it
+  as is? Add tests for this case.
+
 * Move In@, Out@ out of /Std/Stream%.
   There must be a better place for them.
 

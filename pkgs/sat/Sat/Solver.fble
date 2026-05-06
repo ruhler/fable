@@ -169,8 +169,8 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
             just: mx.just,
             nothing: VarS@(ClauseIds.Empty, ClauseIds.Empty));
           v.pos.?(
-            true: VarS@(ClauseIds.Insert(x.pos, id), x.neg),
-            false: VarS@(x.pos, ClauseIds.Insert(x.neg, id)));
+            true: VarS@(ClauseIds.Add(x.pos, id), x.neg),
+            false: VarS@(x.pos, ClauseIds.Add(x.neg, id)));
         });
     });
 
@@ -224,7 +224,7 @@ RemoveClauseFromVar = (ClauseId@ clause, Var@ var, Solver@ s) {
   VarS@ vs = mvs.just;
 
   ClauseIds@ match = var.pos.?(true: vs.pos, false: vs.neg);
-  ClauseIds@ ncls = ClauseIds.Delete(match, clause);
+  ClauseIds@ ncls = ClauseIds.Remove(match, clause);
 
   List@<Assign@> todo = {
     ClauseIds.IsEmpty(ncls).?(false: s.todo);

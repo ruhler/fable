@@ -25,7 +25,7 @@ Set@ Empty = <@ K@> { /Core/Map%.Empty<K@, Unit@>; };
 <@ K@>(Set@<K@>) { Bool@; }
 IsEmpty = <@ K@> { /Core/Map%.IsEmpty<K@, Unit@>; };
 
-# Contains --
+# Has --
 #   Test whether an element exists in a set.
 #
 # Type Parameters:
@@ -40,15 +40,15 @@ IsEmpty = <@ K@> { /Core/Map%.IsEmpty<K@, Unit@>; };
 #   True if the element belongs to the map, false otherwise.
 #
 # Example Use:
-#   % Contains = /Set%.Contains<String@>(/Core/String/Ord%.Ord);
-#   Contains(set, value);
+#   % Has = /Set%.Has<String@>(/Core/String/Ord%.Ord);
+#   Has(set, value);
 <@ K@>(Data@<K@>, Set@<K@>, K@) { Bool@; }
-Contains = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
+Has = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
   /Core/Map%.Get(data, set, element).?(just: True, nothing: False);
 };
 
-# Insert --
-#   Insert an element into the set.
+# Add --
+#   Add an element into the set.
 #
 # Type Parameters:
 #   T@ - the type of element in the set.
@@ -59,14 +59,14 @@ Contains = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
 #   element - the element to insert.
 #
 # Example Use:
-#   % Insert = /Set%.Insert<String@>(/Core/String/Ord%.Ord);
-#   Insert(set, Str(Chars|foo));
+#   % Add = /Set%.Add<String@>(/Core/String/Ord%.Ord);
+#   Add(set, Str(Chars|foo));
 <@ K@>(Data@<K@>, Set@<K@>, K@) { Set@<K@>; }
-Insert = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
+Add = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
   /Core/Map%.Put(data, set, element, Unit);
 };
 
-# Delete --
+# Remove --
 #   Removes an element from the set.
 #
 # Has no effect if the element is not present in the set.
@@ -80,10 +80,10 @@ Insert = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
 #   element - the element to remove.
 #
 # Example Use:
-#   % Delete = /Set%.Delete<String@>(/Core/String/Ord%.Ord);
-#   Delete(set, Str(Chars|foo));
+#   % Remove = /Set%.Remove<String@>(/Core/String/Ord%.Ord);
+#   Remove(set, Str(Chars|foo));
 <@ K@>(Data@<K@>, Set@<K@>, K@) { Set@<K@>; }
-Delete = <@ K@>(Data@<K@> data) {
+Remove = <@ K@>(Data@<K@> data) {
   /Core/Map%.Remove(data)<Unit@>;
 };
 
@@ -118,11 +118,11 @@ Set = <@ K@>(Data@<K@> data) {
     Set@: Set@<K@>,
     Empty: Empty<K@>,
     IsEmpty: IsEmpty<K@>,
-    Contains: Contains(data),
-    Insert: Insert(data),
-    Delete: Delete(data),
+    Has: Has(data),
+    Add: Add(data),
+    Remove: Remove(data),
     ForEach: ForEach<K@>
   );
 };
 
-@(Set@, Empty, IsEmpty, Contains, Insert, Delete, ForEach, Set);
+@(Set@, Empty, IsEmpty, Has, Add, Remove, ForEach, Set);

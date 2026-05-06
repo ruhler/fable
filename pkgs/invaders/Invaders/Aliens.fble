@@ -126,7 +126,7 @@ Set@ AllAliens = {
     (Int@ row, Set@ set) {
       /Std/Stream%.ForEach(Range(Int|0, NumCols), set,
         (Int@ col, Set@ set) {
-          Set.Insert(set, Alien@(row, col));
+          Set.Add(set, Alien@(row, col));
         });
       });
 };
@@ -135,11 +135,11 @@ Set@ AllAliens = {
 
 # Contains --
 #   Returns true if the set contains the given alien, false otherwise.
-(Set@, Alien@) { Bool@; } Contains = Set.Contains;
+(Set@, Alien@) { Bool@; } Contains = Set.Has;
 
 # Remove --
 #   Remove an element of the set.
-(Set@, Alien@) { Set@; } Remove = Set.Delete;
+(Set@, Alien@) { Set@; } Remove = Set.Remove;
 
 # NextAlive --
 #   Returns the next live alien in the given set, or Nothing if we have

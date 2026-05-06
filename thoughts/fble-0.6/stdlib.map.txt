@@ -2265,3 +2265,134 @@ Haskell has the following map combining functions:
 * Intersection - values from first map, if in both.
 * Intersection With: V -> V -> V
   Like union, except discards elements not in both instead of preserving them.
+
+Maybe I have something like:
+  V -> V -> Maybe V: function to call if present in both maps.
+  V -> Maybe V: function to call if present in one map
+    But you don't know which map it's from.
+
+Now we can do:
+* Union: take first if both present. Otherwise take the only one.
+* Union With: combining function if both present, otherwise take one.
+* Difference: Remove if both present, otherwise... we don't know which ones to
+  take and which to ignore.
+* Intersection: take if both present, otherwise get rid of.
+
+I guess what I want is really: Maybe V, Maybe V -> Maybe V. Just dealing with
+the fact that we promise you'll never get Nothing, Nothing.
+
+Maybe I would call this a Join function?
+
+It's like a non-inserting in the sense that you can't add something that
+wasn't in at least one of the maps. From that point of view, it's like an
+Update function?
+
+From a performance point of view, the question is: if a bunch of things aren't
+present in one map, can I avoid calling any functions at all. That requires we
+assume something like intersection.
+
+What I really want is:
+1. If value in both maps, V -> V -> Maybe V
+2. If one map empty, how to deal with it?
+  E, M ==> M
+  E, M ==> E
+  M, E ==> M
+  M, E ==> E
+
+That way (2) are treated as efficient, batching operations. Does this look
+like a binary operation to you though? Could we specify it as such?
+
+ (Bool@ l, Bool@ r) { Bool@; }
+
+Pass IsEmpty(m) on each side. If the result is False, return the empty map. If
+the result is True, return whichever map is non-empty. If both maps are
+non-empty, recurse, eventually getting down to V -> V -> Maybe@<V@>.
+
+But this gives us only 4 options, right?
+
+  E, M ==> M: Union.
+  E, M ==> E: Intersection.
+  M, E ==> M: Union.
+  M, E ==> E: Intersection.
+
+But that's only two options: Union or Intersection.
+
+What case is difference?
+  E, M ==> E: Intersection
+  M, E ==> M: Union
+
+It's a mix.
+
+So really I want to specify 2 bits, plus a combining function:
+1. E, M ==> is it E or M?
+2. M, E ==> is it E or M?
+3. V, V ==> V?
+
+2 bits has four options:
+EE: Intersection
+EM: Difference
+ME: Reverse Difference
+MM: Union
+
+The user can always swap the order of arguments. So we end up with three
+options, and three options only:
+* Union, Intersection, Difference.
+
+All with variations on V -> V -> ?
+
+It feels close now. The question is, does V -> V -> M<V> make sense for all
+three cases, or we want V -> V -> V for one or more of them?
+
+Standard Union and Intersection keep what's in both. Standard difference
+removes what's in both.
+
+---
+
+ReplaceAll should be allowed to change the type of value.
+ (Map@<K@, A@>, (A@) { Maybe@<B@>; }) { Map@<K@, B@>; }
+
+Intersection/And should be allowed to change the type of value, and also
+remove values. Think of it like two layers: outer layer is to make sure the
+value appears in both maps. Inner layer may do further reductions. Like, maybe
+we have a map of maps, and the inner layer does its own intersection. If the
+inner layer intersection results in the empty map, we want to remove from the
+outer map.
+
+The intersection function is: A@ -> B@ -> Maybe@<C@>. We can intersect two
+different types of map and get back a third type.
+
+Union/Or and Difference/Sub can't change the type of the map, because it
+leaves bulk elements as is. In the case of 'Sub', it makes sense applying the
+same logic as for 'And' to allow removing something that appears on both
+sides. That's like defining how to do sub on the line where they equal. So,
+Sub function is: V@ -> V@ -> Maybe@<V@>.
+
+Union/Or can't change the type of the map. Do we want to allow removing
+objects? There's a slight performance cost perhaps if we otherwise could
+assume we don't empty any of the submaps in the process. In the spirit of
+union, I feel like it's better to say it's a non-removing operation. So the
+type is: V@ -> V@ -> V@.
+
+Thus I have a proposal for three combining functions. Do we want basic and
+non-basic forms? The basic forms would be: pick either left or right for
+union. Remove in the case of sub.
+
+These calls are more rare. How about only having the non-basic forms for them?
+
+Oh. Another thing to worry about. We might have two different 'equal' key
+values in the maps. So probably we need to provide the keys themselves? But
+if you can chose the key, you can create a new key, and that feels messed up.
+
+Perhaps you use the order to specify which key you want to keep? Like, we
+always keep the key from the first map. If you want the key from the second,
+you have to switch order?
+
+But we probably do want to have the key to make the decision about what to do
+with the value?
+
+I don't know. This feels complicated. Maybe we don't need these combining
+functions for now?
+
+Except... Set probably wants Union and Intersection, right?
+
+Oh, and ReplaceAll will want the key to work with.

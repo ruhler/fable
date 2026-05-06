@@ -1,0 +1,28 @@
+Set Library
+===========
+Closely related to map. What do I want?
+
+What we have for Map@ today:
+* Empty, IsEmpty, Put, Update, Remove, Replace, Get, ForEach
+
+What we have for Set@ today:
+* Empty, IsEmpty, Contains, Insert, Delete, ForEach
+
+What I suggest changing Set@ to:
+* Empty, IsEmpty, Add, Remove, Contains/Has?, ForEach
+
+For List, I use Contains instead of Has. But for map I use 'Get'. And doesn't
+'Has' sound nicer and it's shorter? I kind of vote for Has.
+
+Contains means something else for list. It's the sublist. Not the element.
+Otherwise we would use the Any function. But that doesn't do quite the same
+for set, because it assumes linear search. So 'Has' makes sense to use.
+
+What corresponds to Update and Replace? Update says add but combine values. We
+don't have values to combine. So no need for it. Replace says maybe remove
+depending on the value. But we don't have values, so again, no need.
+
+Which leaves us with questions for bulk and combining operations.
+
+The bulk operation would be a bulk remove. RemoveIf kind of thing.
+
