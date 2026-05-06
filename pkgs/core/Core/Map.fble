@@ -98,23 +98,14 @@ Put = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
   Update(data, map, key, (Maybe@<V@> _) { value; });
 };
 
-# Remove a value from the map if it is present.
-<@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
-Remove = <@ K@>(Data@<K@> data)<@ V@> {
+# Replace or optionally delete a value from the map if it is present.
+<@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (V@) { Maybe@<V@>; }) { Map@<K@, V@>; }
+Replace = <@ K@>(Data@<K@> data)<@ V@> {
   # Given a function that optionally modifies the map at the current
   # location, returns the final modified map at the root location.
   # The modification may remove elements.
   S@ = Map@<K@, V@>;
   R@ = Maybe@<Map@<K@, V@>>;
-
-  r = (Map@<K@, V@> leaf) {
-    # If you get undef here, then your data type violates the prefix
-    # property.
-    leaf.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@<K@, V@>>>);
-
-    leaf.?(empty: Nothing<Map@<K@, V@>>);
-    Just(Empty<K@, V@>);
-  };
 
   put = (Bit@ x, (S@) { R@; } f, S@ m) {
     m.?(empty: Nothing<Map@<K@, V@>>);
@@ -137,9 +128,26 @@ Remove = <@ K@>(Data@<K@> data)<@ V@> {
     Just(Map@(children: m.children.@(1: nchild.just)));
   };
 
-  (Map@<K@, V@> map, K@ key) {
+  (Map@<K@, V@> map, K@ key, (V@) { Maybe@<V@>; } with) {
+    r = (Map@<K@, V@> leaf) {
+      # If you get undef here, then your data type violates the prefix
+      # property.
+      leaf.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@<K@, V@>>>);
+
+      leaf.?(empty: Nothing<Map@<K@, V@>>);
+      Maybe@<V@> value = with(leaf.entry.value);
+      value.?(nothing: Just(Empty<K@, V@>));
+      Just(Map@(entry: leaf.entry.@(value: value.just)));
+    };
+
     Default(map, data(key, r, put, map));
   };
+};
+
+# Remove a value from the map if it is present.
+<@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
+Remove = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
+  Replace(data, map, key, (V@ _) { Nothing<V@>; });
 };
 
 # Iterate over elements of the map.
@@ -181,10 +189,11 @@ Map = <@ K@>(Data@<K@> data)<@ V@> {
     Put: Put(data)<V@>,
     Update: Update(data)<V@>,
     Remove: Remove(data)<V@>,
+    Replace: Replace(data)<V@>,
     Get: Get(data)<V@>,
     ForEach: ForEach<K@, V@>
   );
 };
 
-@(Entry@, Map@, Empty, IsEmpty, Get, Update, Put, Remove, ForEach,
+@(Entry@, Map@, Empty, IsEmpty, Get, Update, Put, Remove, Replace, ForEach,
   Map);
