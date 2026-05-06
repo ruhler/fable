@@ -58,21 +58,6 @@ JustGet = <@ T@>(Maybe@<T@> maybe) {
   maybe.just;
 };
 
-# @func[Default] Applies a function to the value if present.
-#  @arg[@][B@] The function return type.
-#  @arg[B@][default] The default return value.
-#  @arg[@][A@] The function argument type.
-#  @arg[Maybe@<A@>][maybe] The possible argument to the function.
-#  @arg[(A@) { B@; }][f] The function to apply.
-#  @returns[B@]
-#   The result of applying the function on the argument value if present.
-#   The default value otherwise.
-<@ B@>(B@)<@ A@>(Maybe@<A@>, (A@) { B@; }) { B@; }
-Default = <@ B@>(B@ default)<@ A@>(Maybe@<A@> maybe, (A@) { B@; } f) {
-  maybe.?(nothing: default);
-  f(maybe.just);
-};
-
 # @func[ForEach] Iterate over the element of a maybe.
 #  Analogous to /Std/List%.ForEach when treating Maybe@ as a list of no more
 #  than one element. See /Std/List%.ForEach for more information.
@@ -125,4 +110,4 @@ Do = <@ A@>(Maybe@<A@> m)<@ B@>((A@) { Maybe@<B@>; } f) {
   f(m.just);
 };
 
-@(Maybe@, Just, Nothing, Get, JustGet, Default, ForEach, Map, Do);
+@(Maybe@, Just, Nothing, Get, JustGet, ForEach, Map, Do);

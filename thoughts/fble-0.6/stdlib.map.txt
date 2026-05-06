@@ -1983,5 +1983,274 @@ Should I reuse Bool@ instead of defining Bit@? Is it worth defining 'Data' and
 and Data to 'Tag'? Change Tag to take a list of bits followed by a single
 argument?
 
+---
 
+I changed the names to Struct, Enum, Union. That's nice and clear. Ignoring
+the performance concerns of using the abstractions, I think these are the
+right abstractions to want to have. Fine to keep using Bit@ I guess. Bool@
+just feels too weird.
+
+We could implement equality from data by doing it from stream. We know how to
+do equality of streams by converting to lists first. Is there a more direct
+and more efficient way? Does it matter?
+
+Let's move on to the Map interface. What cleanup do I really want? What's my
+proposal for how it ought to look like?
+
+Brainstorm of potential changes:
+* InsertWith variation that can remove elements.
+* InsertAll, InsertAllWith variations to bulk add.
+* Rename Delete to Remove?
+* Add Size.
+* Rename Insert to Put? Lookup to Get?
+* Add Has/Contains function.
+
+Let me reimagine things from the start. I don't want to support Size in
+constant time. If people want the size, they can use ForEach and count the
+elements themselves.
+
+/Std/Map%:
+ Map@, Empty, IsEmpty
+ Put, Get,
+ Remove
+ ForEach
+
+Those are the easy ones. The harder ones are:
+* InsertWith equivalent
+* PutAll/PutAllWith equivalent
+* GetOrDefault equivalent
+* Has/Contains Key/Value
+
+If /Std/Maybe% used Default as the name instead of Get, then we could do:
+
+  Default(x, Get(map, key));
+
+Instead of:
+  GetOrDefault(map, key, x)
+
+But honestly, GetDefault(map, key, default) isn't bad. Maybe we should change
+/Std/Maybe% to use GetDefault too, with the default second?
+
+   GetDefault(mvalue, Int|3);
+
+Or:
+   GetDefault(Int|3, mvalue);
+   GetDefault(Int|3, map, key);
+   Default(Int|3, mvalue);
+   Default(Int|3, Get(map, key));
+
+So, two approaches sound reasonable to me:
+1. Maybe: GetDefault(maybe, default), Map: GetDefault(map, key, default)
+2. Maybe: Default(default, maybe), Map: Get(map, key)
+
+(2) feels better from a composition point of view. I also like having the
+default value first. Let's go with that.
+
+---
+
+For per-key operations, the most general is, let's call it, 'Modify':
+
+  (Map@<K@, V@>, K@, (Maybe@<V@>) { Maybe@<V@>; }) { Map@<K@, V@>; }
+
+If Map@<K@, V@> is a collection of key value pairs, and Maybe@<V@> is a single
+key value pair, this is way to say: you tell me how to transform the single
+item, I'll make that update to the map. There are a bunch of different things
+you could do with this interface:
+
+* Insert a new value.
+* Remove a value.
+* Insert a new value based on the existing value.
+* Chose to remove a value based on the existing value.
+* Nothing at all.
+
+There are some performance implications about how to implement Modify that a
+little extra information could help speed up:
+1. If the map is empty and you have a deep key, if you know you won't insert,
+you can avoid traversing down the rest of the key and creating the
+intermediate empty structure along the way.
+2. If you know you are only inserting, after inserting, you don't have to
+check if an intermediate map became empty to replace it with Empty.
+3. If you have a value to insert directly, you don't have a function you have
+to call.
+
+So the question is:
+* What subset of the variations of single key operations do I want to support,
+  and what names should they have?
+
+Brainstorm:
+
+From what I already have:
+* Insert, Put, put:
+ Insert given value, ignoring previous value.
+* InsertWith, PutWith, Update:
+ Insert, given maybe previous value to decide what to insert.
+* Remove, Delete, remove:
+ Remove a value if present.
+
+Unlike Java, it's awkward for me to modify the map and get a value from it at
+the same time. So let's see if we can't limit it to modify or getting a value.
+
+Additional from Java:
+* computeIfPresent:
+  Insert given previous value, only if that value existed before.
+* merge:
+  Insert using given value or a transformation of the previous.
+  We can do this just as easily with an InsertWith.
+* putIfAbsent:
+  Insert given value, except keep the old value if that already existed.
+* remove(key, value):
+  Remove, but only if the value matches what's given.
+  I don't have or want equality on values, so ditch this one.
+* replace:
+  Insert, but only if there was a value there before.
+  
+I'm not seeing much from elsewhere.
+
+Clearly I want: Put, Remove. Those are the most basic.
+
+I also clearly want an InsertWith. Maybe call it Update? PutWith?
+
+Do we want some of these others?
+* Modify - fully general?
+* Replace, ReplaceWith - only does something if it existed in the map?
+* RemoveIf - filter/conditional remove?
+
+Again, in terms of implementation, it's nice to know:
+* Are you only inserting? Then we don't have to check if you deleted.
+* Are you only deleting? Then we don't have to make intermediate nodes.
+
+Is there any legitimate case where we don't know in advance if we are
+inserting or deleting? A version of Modify we would call where if it doesn't
+exist, we would insert, but if it exists, we might remove?
+
+Here's what I'm thinking we should do. Separate into Insert based function and
+Remove based functions. Every function should always fall into one category or
+another. Have the basic version: where you don't care about what's already in
+the map. Have the advanced version, where you get to see what's in the map.
+That sounds like 4 possible options. Here's what they look like:
+
+* Put: Basic Insert: you give key, value, it puts that, overwriting what's
+  there.
+* Update: Advanced Insert: you give key and function from Maybe@ to Value@
+  It inserts whatever you return.
+* Remove: Basic remove: you give key, it makes that go away.
+* RemoveIf: Advanced remove: You give key, boolean function on value. It optionally deletes.
+
+I like this. Simple. General. Complete, in some sense.
+
+Next question: how these generalize to PutAll style functions.
+
+---
+
+Slight revision to proposal:
+* Put: Basic insert. Overwrites anything existing with the given value.
+* Update: non-removing modification. You give function from Maybe@ to Value@,
+  it inserts whatever you return.
+* Remove: Basic removal.
+* Replace: non-inserting modification. You give function from Value@ to
+  Maybe@, it gets called only if the element was there, and either removes or
+  modifies the existing value.
+
+There's a version of a bulk operation on a single map:
+* ReplaceAll: Calls your Value@ to Maybe@ function on all keys present in the
+  map.
+
+There's no corresponding UpdateAll function, because we don't have a set of
+valid keys to draw from.
+
+'Map' and 'Filter' functions can be provided as special cases of ReplaceAll.
+Probably we should align with List@ type on naming for these.
+
+Now we can start to discuss operations that work with two maps.
+
+---
+
+The most general form for merging two maps is you give a function:
+
+  (Maybe@<Value@>, Maybe@<Value@>) { Maybe@<Value@>; }
+
+Java has methods for:
+* putAll - Puts everything in the right map into the left map as if by calling
+  put repeatedly.
+
+Things I might want to do:
+* Union, Intersect, Difference
+
+We could have bulk variations for most of the single key things, and treat
+those all like PutAll: apply for each key value pair in the right hand map.
+That would look like:
+* Bulk Put - does what you want and expect
+* Bulk Update - non-removing modification. You give function from Maybe@, Value@
+  to Value@. It gets called for each value in the right hand side map. Any key
+  not in the right hand side is left as is from the left hand side map.
+* Bulk Remove - Doesn't quite make sense. How do you plan to use the value in
+  the right hand side? May as well pass a set of keys instead of a map from
+  key to value.
+* Bulk Replace - Only called for elements in both maps. You give a
+  function from Value@ to Value@ to Maybe@?
+
+Union can be done with Bulk Put. Bulk Update isn't quite as general as we
+want, because maybe we want to apply a function in case there was a value in
+the left map but not the right map.
+
+Intersection is ... hmm...
+
+Difference is like a bulk remove.
+
+If we use the same approach as for single item: insert versus remove, basic
+versus advanced, what would we get here?
+
+Non-removing means if you see it in one of the maps, it ends up in the final
+map: (Maybe@<Value@>, Maybe@<Value@>) { Value@; }
+
+Non-inserting means if you have to see it in at least one of the maps? Then
+the function is: (Maybe@<Value@>, Maybe@<Value@>) { Maybe@<Value@>; }, but
+only called if it exists in one of the maps?
+
+It bothers me that you have to give something for the case of Nothing,
+Nothing, even thought that case should never happen.
+
+From that point of view, it's maybe more straight forward to pose this as your
+second map being a list of key value pairs to bulk update from your first map.
+How would I implement Union, UnionWith, Intersect, IntersectWith, Difference
+using something like that?
+
+* Union: Bulk Put. Easy.
+* UnionWith: Bulk Update. Right?
+ - For each key, value, you do a replace.
+   Nothing, Nothing ==> function not called. You end with Nothing.
+   Just, Nothing ==> function not called. You keep the Just as is.
+   Nothing, Just ==> function called, you can transform as you will.
+   Just, Just ==> function called, you can combine as you will.
+ - What you can't do is modify an existing value that doesn't show up in your
+   right hand map. You can only update values from the map. But you can get
+   union that way.
+* Intersect: ???
+   Nothing, Nothing ==> function not called. You end with Nothing.
+   Just, Nothing ==> function not called. You end up with Just.
+    That's not what we want for intersection.
+
+Seems like we can't get Intersection with the interpretation of a bulk
+operation.
+
+* Difference:
+   Nothing, Nothing ==> nothing.
+   Just, Nothing ==> function not called. You keep the Just. Good. 
+   Just, Just ==> non-inserting could return Nothing in this case.
+   Nothing, Just ==> 
+  Feels like a bulk update? Maybe@, Value@ => Maybe@? Not quite.
+
+---
+
+Digression: I had suggested renaming Maybe% Get to Default. But I already have
+a Default function for maybe, involving function application.
+
+Sigh.
+
+I don't currently use 'Default' anywhere. Is it really useful for anything?
+
+ Default(5, mvalue, f);
+
+No. Default as a function application feels weird to me. Let's ditch that. We
+may as well write: Default(5, Map(mvalue, f));
 
