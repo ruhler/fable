@@ -2464,3 +2464,21 @@ and Add/Remove for Set?
 That sounds like a reasonable proposal.
 
 Which leaves us with just ReplaceAll which feels like an awkward name.
+
+Just keep it. ReplaceAll is fine.
+
+I have my proposal. Let's implement it and see if we can call this done:
+* Meet, Join, Diff
+* ReplaceAll, Map, Keep, Omit 
+
+---
+
+Trouble: 'Map' conflicts with my Map helper for specializing for a given type.
+Grumble.
+
+Maybe rename the existing 'Map' to Of?
+
+ Foo .= /Core/Map%.Of<Int@, Bool@>;
+
+Sounds reasonable to me, no?
+
