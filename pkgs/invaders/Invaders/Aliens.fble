@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 Or = /Std/Bool%.Or;
 
-Data@, Struct .= /Core/Data%;
+Data@, Struct .= /Std/Data%;
 
 Drawing@ = /App/Drawing%.Drawing@;
 Blank = /App/Drawing%.Blank;

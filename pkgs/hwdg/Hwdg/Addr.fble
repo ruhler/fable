@@ -1,5 +1,5 @@
 
-Data@, Struct .= /Core/Data%;
+Data@, Struct .= /Std/Data%;
 Int@ .= /Std/Int%;
 
 # A unique identifier for a location.

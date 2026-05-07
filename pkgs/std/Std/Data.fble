@@ -1,0 +1,94 @@
+# @module[/Std/Data%]
+#  Interface for pure data types.
+
+List@ .= /Std/List%;
+Stream@ .= /Std/Stream%;
+Unit@, Unit .= /Std/Unit%;
+
+# @type[Bit@] A single bit of data.
+#  @field[Unit@][0] The zero bit.
+#  @field[Unit@][1] The one bit.
+Bit@ = +(Unit@ 0, Unit@ 1);
+
+# @value[0] The zero bit.
+#  @type[Bit@]
+0 = Bit@(0: Unit);
+
+# @value[1] The one bit.
+#  @type[Bit@]
+1 = Bit@(1: Unit);
+
+# @type[Data@] An interface for pure data types.
+#  A pure data type can be represented as a stream of bits. Implement the
+#  Data@ interface for your type to be able to use it as a key type for
+#  /Std/Map% or in /Std/Set%.
+#
+#  To form a valid instance of Data@, the stream of bits produced for a data
+#  type must satisfy a prefix property: the generated stream for some value X
+#  must not be a prefix of the generated stream for any other different value
+#  Y. You will run into undefined runtime behavior if this property doesn't
+#  hold.
+#
+#  Use the Struct, Enum, and Union helper functions to implement your instance
+#  of Data@.
+#
+#  @arg[@][A@] The type implementing the interface.
+#  @arg[A@][x] A value to convert to its corresponding data stream.
+#  @returns[Stream@<Bit@>] A stream of bits representing the data.
+Data@ = <@ A@>(A@) { Stream@<Bit@>; };
+
+# @func[Struct] Generates a bit stream for a struct type.
+#  @arg[List@<Stream@<Bit@>>][fields]
+#   The bit streams for each field of the structure.
+#  @returns[Stream@<Bit@>] A bit stream for the entire structure.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Pair@ = +(Int@ a, Int@ b);
+#   Data@<Pair@> Data = (Pair@ x) {
+#     Struct[/Std/Int/Data%.Data(x.a), /Std/Int/Data%.Data(x.b)];
+#   };
+(List@<Stream@<Bit@>>) { Stream@<Bit@>; }
+Struct = (List@<Stream@<Bit@>> fields)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
+  fields.?(empty: return);
+  fields.items.head(Struct(fields.items.tail, return, put), put);
+};
+
+# @func[Enum] Generates a bit stream for an enum.
+#  @arg[List@<Bit@>][tag] A sequence of bits describing the tag.
+#  @returns[Stream@<Bit@>] A bit stream for the enum.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Enum@ = +(Unit@ a, Unit@ b, Unit@ c);
+#   Data@<Enum@> Data = (Enum@ x) {
+#     x.?(a: Enum|0, b: Enum|10, c: Enum|11);
+#
+#  The tags for all the enum values must satisfy the prefix property.
+(List@<Bit@>) { Stream@<Bit@>; }
+Enum = (List@<Bit@> tag)<@ S@>(S@ empty, (Bit@, S@) { S@; } items) {
+  tag.?(empty: empty);
+  items(tag.items.head, Enum(tag.items.tail, empty, items));
+};
+
+# @func[Union] Generates a bit stream for a union value.
+#  @arg[List@<Bit@>][tag] The tag to use for this value.
+#  @arg[Stream@<Bit@>][arg] The bit stream for the union arg.
+#  @returns[Stream@<Bit@>] A bit stream for the union value.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Maybe@ = +(Unit@ nothing, Int@ just);
+#   Data@<Maybe@> Data = (Maybe@ m) {
+#     m.?(nothing: Enum|0);
+#     Union|1(/Std/Int/Data%.Data(m.just));
+#   };
+(List@<Bit@>, Stream@<Bit@>) { Stream@<Bit@>; }
+Union = (List@<Bit@> tag, Stream@<Bit@> arg) {
+  Struct[Enum(tag), arg];
+};
+
+@(Bit@, 0, 1, Data@, Struct, Enum, Union);

@@ -1,5 +1,5 @@
 
-Data@, Struct .= /Core/Data%;
+Data@, Struct .= /Std/Data%;
 
 Int@ = /Std/Int%.Int@;
 Incr = /Std/Int%.Incr;

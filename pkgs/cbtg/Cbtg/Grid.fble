@@ -1,5 +1,5 @@
 
-Data@ .= /Core/Data%;
+Data@ .= /Std/Data%;
 
 Int@ = /Std/Int%.Int@;
 Incr = /Std/Int%.Incr;

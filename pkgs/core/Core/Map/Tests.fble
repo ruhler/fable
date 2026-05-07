@@ -1,6 +1,6 @@
 
 Bool@, True, False, And, Not .= /Std/Bool%;
-Data@, Enum, Struct .= /Core/Data%;
+Data@, Enum, Struct .= /Std/Data%;
 Eq@ .= /Std/Eq%;
 AssertEquals .= /Std/Eq/Assert%;
 Str .= /Std/Char/Ascii%;

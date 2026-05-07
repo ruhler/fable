@@ -1,5 +1,5 @@
 
-Data@, Struct .= /Core/Data%;
+Data@, Struct .= /Std/Data%;
 
 Drawing@ = /App/Drawing%.Drawing@;
 Color@ = /App/Drawing%.Color@;

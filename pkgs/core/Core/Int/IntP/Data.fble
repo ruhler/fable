@@ -1,5 +1,5 @@
 
-Data@, Bit@, 0, 1 .= /Core/Data%;
+Data@, Bit@, 0, 1 .= /Std/Data%;
 IntP@ .= /Std/Int/IntP%;
 
 Data@<IntP@>

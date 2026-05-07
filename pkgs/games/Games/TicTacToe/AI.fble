@@ -1,5 +1,5 @@
 
-Data@, Enum, Struct .= /Core/Data%;
+Data@, Enum, Struct .= /Std/Data%;
 
 List@ = /Std/List%.List@;
 List = /Std/List%.List;

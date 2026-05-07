@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 And = /Std/Bool%.And;
 
-Data@, Struct .= /Core/Data%;
+Data@, Struct .= /Std/Data%;
 
 Eq@ = /Std/Eq%.Eq@;
 
