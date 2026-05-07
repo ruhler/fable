@@ -1,6 +1,7 @@
 
 Bool@, True, False .= /Std/Bool%;
 Data@ .= /Core/Data%;
+Just, Nothing .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 
 # Set@ -- 
@@ -113,6 +114,44 @@ ForEach = <@ K@>(Set@<K@> set)<@ B@>(B@ base, (K@, B@) { B@; } body) {
   /Core/Map%.ForEach(set, base, (K@ x, Unit@ _, B@ b) { body(x, b); });
 };
 
+# Intersection of two sets: returns a set containing keys in the first and
+# second set.
+<@ K@>(Set@<K@>, Set@<K@>) { Set@<K@>; }
+And = <@ K@>(Set@<K@> a, Set@<K@> b) {
+  K@ _, Unit@ _, Unit@ _ := /Core/Map%.Meet(a, b);
+  Just(Unit);
+};
+
+# Union of two sets: returns a set containing keys in the first or
+# second set.
+<@ K@>(Set@<K@>, Set@<K@>) { Set@<K@>; }
+Or = <@ K@>(Set@<K@> a, Set@<K@> b) {
+  K@ _, Unit@ _, Unit@ _ := /Core/Map%.Join(a, b);
+  Unit;
+};
+
+# Difference of two sets: returns a set containing keys in the first but not
+# the second set.
+<@ K@>(Set@<K@>, Set@<K@>) { Set@<K@>; }
+Diff = <@ K@>(Set@<K@> a, Set@<K@> b) {
+  K@ _, Unit@ _, Unit@ _ := /Core/Map%.Diff(a, b);
+  Nothing<Unit@>;
+};
+
+# Keep elements from the set that satisfy the given predicate.
+<@ K@>(Set@<K@>, (K@) { Bool@; }) { Set@<K@>; }
+Keep = <@ K@>(Set@<K@> s, (K@) { Bool@; } f) {
+  K@ k, Unit@ _ := /Core/Map%.Keep(s);
+  f(k);
+};
+
+# Remove elements from the set that satisfy the given predicate.
+<@ K@>(Set@<K@>, (K@) { Bool@; }) { Set@<K@>; }
+Omit = <@ K@>(Set@<K@> s, (K@) { Bool@; } f) {
+  K@ k, Unit@ _ := /Core/Map%.Omit(s);
+  f(k);
+};
+
 # The methods of Set specialized for the given key.
 Of = <@ K@>(Data@<K@> data) {
   @(
@@ -122,8 +161,14 @@ Of = <@ K@>(Data@<K@> data) {
     Has: Has(data),
     Add: Add(data),
     Remove: Remove(data),
-    ForEach: ForEach<K@>
+    ForEach: ForEach<K@>,
+    And: And<K@>,
+    Or: Or<K@>,
+    Diff: Diff<K@>,
+    Keep: Keep<K@>,
+    Omit: Omit<K@>
   );
 };
 
-@(Set@, Empty, IsEmpty, Has, Add, Remove, ForEach, Of);
+@(Set@, Empty, IsEmpty, Has, Add, Remove, ForEach,
+  And, Or, Diff, Keep, Omit, Of);

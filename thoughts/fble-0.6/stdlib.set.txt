@@ -50,3 +50,7 @@ Proposal:
   satisfy the predicate.
   Uh... but Remove is overloaded. Hmm...
 
+---
+
+Proposal summary of things to add:
+* And, Or, Diff, Keep, Omit,
