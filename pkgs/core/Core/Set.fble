@@ -113,7 +113,8 @@ ForEach = <@ K@>(Set@<K@> set)<@ B@>(B@ base, (K@, B@) { B@; } body) {
   /Core/Map%.ForEach(set, base, (K@ x, Unit@ _, B@ b) { body(x, b); });
 };
 
-Set = <@ K@>(Data@<K@> data) {
+# The methods of Set specialized for the given key.
+Of = <@ K@>(Data@<K@> data) {
   @(
     Set@: Set@<K@>,
     Empty: Empty<K@>,
@@ -125,4 +126,4 @@ Set = <@ K@>(Data@<K@> data) {
   );
 };
 
-@(Set@, Empty, IsEmpty, Has, Add, Remove, ForEach, Set);
+@(Set@, Empty, IsEmpty, Has, Add, Remove, ForEach, Of);

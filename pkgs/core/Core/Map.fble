@@ -266,7 +266,8 @@ Diff = <@ K@, @ V@>(Map@<K@, V@> a, Map@<K@, V@> b, (K@, V@, V@) { Maybe@<V@>; }
   Map@(children: @(0, 1));
 };
 
-Map = <@ K@>(Data@<K@> data)<@ V@> {
+# Map functions specialized for the given key and value types.
+Of = <@ K@>(Data@<K@> data)<@ V@> {
   @(
     Map@: Map@<K@, V@>,
     Key@: K@,
@@ -286,4 +287,4 @@ Map = <@ K@>(Data@<K@> data)<@ V@> {
 };
 
 @(Entry@, Map@, Empty, IsEmpty, Get, Update, Put, Remove, Replace, ForEach,
-  ReplaceAll, Meet, Join, Diff, Map);
+  ReplaceAll, Meet, Join, Diff, Of);

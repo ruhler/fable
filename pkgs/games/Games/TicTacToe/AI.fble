@@ -128,7 +128,7 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
-MemoTable@(.Map@), Empty, Get, Put .= /Core/Map%.Map(BoardData)<PositionResult@>;
+MemoTable@(.Map@), Empty, Get, Put .= /Core/Map%.Of(BoardData)<PositionResult@>;
 
 MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
 

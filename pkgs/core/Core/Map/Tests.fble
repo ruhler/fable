@@ -22,7 +22,7 @@ Unit@, Unit .= /Std/Unit%;
 Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
   TestSuite(Str|'Map', List[
     /Std/Test%.Test(Str|'empty', (Unit@ _) {
-      Get, Empty .= /Core/Map%.Map(data)<Unit@>;
+      Get, Empty .= /Core/Map%.Of(data)<Unit@>;
       Maybe@<Unit@> wnt = Nothing<Unit@>;
       Maybe@<Unit@> got = Get(Empty, b);
       AssertEquals(
@@ -32,7 +32,7 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'not found', (Unit@ _) {
-      Map@, Put, Get, Empty .= /Core/Map%.Map(data)<Unit@>;
+      Map@, Put, Get, Empty .= /Core/Map%.Of(data)<Unit@>;
       Map@ map = Put(Empty, c, Unit);
       Maybe@<Unit@> wnt = Nothing<Unit@>;
       Maybe@<Unit@> got = Get(map, b);
@@ -43,7 +43,7 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'found', (Unit@ _) {
-      Map@, Put, Get, Empty .= /Core/Map%.Map(data)<Bool@>;
+      Map@, Put, Get, Empty .= /Core/Map%.Of(data)<Bool@>;
       Map@ map = Put(Put(Put(Empty, a, False), b, True), c, False);
       Maybe@<Bool@> wnt = Just(True);
       Maybe@<Bool@> got = Get(map, b);
@@ -54,7 +54,7 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'replace', (Unit@ _) {
-      Map@, Put, Get, Empty .= /Core/Map%.Map(data)<Bool@>;
+      Map@, Put, Get, Empty .= /Core/Map%.Of(data)<Bool@>;
       Map@ map = Put(Put(Empty, b, False), b, True);
       Maybe@<Bool@> wnt = Just(True);
       Maybe@<Bool@> got = Get(map, b);
@@ -65,7 +65,7 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'delete', (Unit@ _) {
-      Map@, Put, Get, Empty, Remove .= /Core/Map%.Map(data)<Bool@>;
+      Map@, Put, Get, Empty, Remove .= /Core/Map%.Of(data)<Bool@>;
       Map@ map = Remove(Put(Empty, b, False), b);
       Maybe@<Bool@> wnt = Nothing<Bool@>;
       Maybe@<Bool@> got = Get(map, b);
@@ -76,7 +76,7 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
   
     /Std/Test%.Test(Str|'delete nothing', (Unit@ _) {
-      Map@, Put, Get, Empty, Remove .= /Core/Map%.Map(data)<Bool@>;
+      Map@, Put, Get, Empty, Remove .= /Core/Map%.Of(data)<Bool@>;
       Map@ map = Remove(Put(Empty, b, False), a);
       Maybe@<Bool@> wnt = Just(False);
       Maybe@<Bool@> got = Get(map, b);
@@ -87,7 +87,7 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'replace update', (Unit@ _) {
-      Map@, Put, Get, Empty, Replace .= /Core/Map%.Map(data)<Bool@>;
+      Map@, Put, Get, Empty, Replace .= /Core/Map%.Of(data)<Bool@>;
       Map@ map = {
         Bool@ x := Replace(Put(Empty, b, False), b);
         Just(Not(x));
@@ -101,7 +101,7 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'replace absent', (Unit@ _) {
-      Map@, Put, Get, Empty, Replace .= /Core/Map%.Map(data)<Bool@>;
+      Map@, Put, Get, Empty, Replace .= /Core/Map%.Of(data)<Bool@>;
       Map@ map = {
         Bool@ x := Replace(Put(Empty, b, False), a);
         Just(Not(x));
@@ -115,7 +115,7 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'replace remove', (Unit@ _) {
-      Map@, Put, Get, Empty, Replace .= /Core/Map%.Map(data)<Bool@>;
+      Map@, Put, Get, Empty, Replace .= /Core/Map%.Of(data)<Bool@>;
       Map@ map = {
         Bool@ _ := Replace(Put(Empty, b, False), b);
         Nothing<Bool@>;
@@ -129,7 +129,7 @@ Test = <@ K@>(Data@<K@> data, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
     }),
 
     /Std/Test%.Test(Str|'foreach', (Unit@ _) {
-      Map@, Put, ForEach, Empty .= /Core/Map%.Map(data)<Bool@>;
+      Map@, Put, ForEach, Empty .= /Core/Map%.Of(data)<Bool@>;
       Map@ map = Put(Put(Put(Empty, b, True), a, True), b, False);
 
       # Note: A < B, we expect the ForEach to iterate in the order A, B. Because

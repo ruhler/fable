@@ -15,7 +15,7 @@ Data@<Coord@> CoordData = (Coord@ x) {
   Struct[/Core/Int/Data%.Data(x.x), /Core/Int/Data%.Data(x.y)];
 };
 
-Grid = /Core/Map%.Map(CoordData);
+Grid = /Core/Map%.Of(CoordData);
 
 Grid@ = <@ T@> { Grid<T@>.Map@; };
 

@@ -21,7 +21,7 @@ Query@ = /Pprof/Query%.Query@;
 MetricOf = /Pprof/Query/Util%.MetricOf;
 Sort = /Pprof/Query/Util%.Sort;
 
-Map@, Empty, Update, ForEach .= /Core/Map%.Map(/Core/Int/Data%.Data)<Int@>;
+Map@, Empty, Update, ForEach .= /Core/Map%.Of(/Core/Int/Data%.Data)<Int@>;
 
 (List@<BlockId@>, BlockId@) { Bool@; }
 ContainsBlock = (List@<BlockId@> l, BlockId@ id) {

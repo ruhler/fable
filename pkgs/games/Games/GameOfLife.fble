@@ -43,7 +43,7 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 };
 
 # The world is a set of Coord@ where there are live cells.
-Set = /Core/Set%.Set(DataCoord);
+Set = /Core/Set%.Of(DataCoord);
 World@ = Set.Set@;
 EqWorld = /Core/Set/Eq%.Eq(EqCoord);
 ShowWorld = /Core/Set/Show%.Show(ShowCoord);
@@ -82,7 +82,7 @@ Status@ = *(Bool@ alive, Count@ neighbors);
 };
 
 # Map from Coord to the status of the cell.
-C = /Core/Map%.Map(DataCoord)<Status@>;
+C = /Core/Map%.Of(DataCoord)<Status@>;
 Cand@ = C.Map@;
 
 # Advance the world by one unit of time.
