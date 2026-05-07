@@ -197,6 +197,29 @@ ReplaceAll = <@ K@, @ A@>(Map@<K@, A@> m)<@ B@>((K@, A@) { Maybe@<B@>; } f) {
   Map@(children: @(0, 1));
 };
 
+# Apply a function to all values in a map.
+<@ K@, @ A@>(Map@<K@, A@>)<@ B@>((K@, A@) { B@; }) { Map@<K@, B@>; }
+Map = <@ K@, @ A@>(Map@<K@, A@> m)<@ B@>((K@, A@) { B@; } f) {
+  K@ k, A@ a := ReplaceAll(m);
+  Just(f(k, a));
+};
+
+# Keep all elements in the map matching the given predicate.
+<@ K@, @ A@>(Map@<K@, A@>, (K@, A@) { Bool@; }) { Map@<K@, A@>; }
+Keep = <@ K@, @ A@>(Map@<K@, A@> m, (K@, A@) { Bool@; } f) {
+  K@ k, A@ a := ReplaceAll(m);
+  f(k, a).?(true: Just(a));
+  Nothing<A@>;
+};
+
+# Keep all elements in the map not matching the given predicate.
+<@ K@, @ A@>(Map@<K@, A@>, (K@, A@) { Bool@; }) { Map@<K@, A@>; }
+Omit = <@ K@, @ A@>(Map@<K@, A@> m, (K@, A@) { Bool@; } f) {
+  K@ k, A@ a := ReplaceAll(m);
+  f(k, a).?(true: Nothing<A@>);
+  Just(a);
+};
+
 # Intersection of two maps, with combining function.
 # The combining function is called for keys that exist in both maps.
 # The result is included in the final map if not Nothing.
@@ -280,6 +303,9 @@ Of = <@ K@>(Data@<K@> data)<@ V@> {
     Get: Get(data)<V@>,
     ForEach: ForEach<K@, V@>,
     ReplaceAll: ReplaceAll<K@, V@>,
+    Map: Map<K@, V@>,
+    Keep: Keep<K@, V@>,
+    Omit: Omit<K@, V@>,
     Meet: Meet<K@, V@>,
     Join: Join<K@, V@>,
     Diff: Diff<K@, V@>
@@ -287,4 +313,4 @@ Of = <@ K@>(Data@<K@> data)<@ V@> {
 };
 
 @(Entry@, Map@, Empty, IsEmpty, Get, Update, Put, Remove, Replace, ForEach,
-  ReplaceAll, Meet, Join, Diff, Of);
+  ReplaceAll, Map, Keep, Omit, Meet, Join, Diff, Of);

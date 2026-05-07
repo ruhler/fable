@@ -2482,3 +2482,8 @@ Maybe rename the existing 'Map' to Of?
 
 Sounds reasonable to me, no?
 
+---
+
+Question for Map, Keep, Omit functions: should we provide the key to the
+function being called, or just the value? Probably the key is worth passing,
+right? It's easy to ignore if so desired.
