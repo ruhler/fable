@@ -2396,3 +2396,71 @@ functions for now?
 Except... Set probably wants Union and Intersection, right?
 
 Oh, and ReplaceAll will want the key to work with.
+
+---
+
+Here's my proposal:
+* Join: given two maps and a join function of type
+  (Key@, Value@, Value@) { Value@; }
+  Gives the union of the two maps, calling the given join function for any key
+  that appears in both maps. Takes the key from the first map in that case.
+  You can call it with arguments swapped if you want the key from the other
+  map.
+* Meet: given two maps and a meet function of type
+  (Key@, A@, B@) { Maybe@<C@>; }
+  Gives the intersection of the two maps, calling the given meet function for
+  any key that appears in both maps. Takes the key from the first map in that
+  case, if you don't drop that key.
+* Diff: given two maps and a diff function of type
+  (Key@, Value@, Value@) { Maybe@<Value@>; }
+  Gives the difference of the two maps: all elements in the first map
+  not in the second map, with the diff function called for keys in both maps.
+* No basic variations of these function. You can call these directly with
+  simple functions if you want intersection, union, or simple set difference.
+* ReplaceAll: given a map and a replace function of type
+  (Key@, A@) { Maybe@<B@>; }
+  Gives a new map with the values replaced according to the replace function.
+* Map: Applies a function of type (A@) { B@; } to all values in the map.
+* Keep: Given a predicate of type (Key@, V@) { Bool@; }, filters out any
+  entries not satisfying the given predicate.
+* Omit: Given a predicate of type (Key@, V@) { Bool@; }, filters out any
+  entries satisfying the given predicate.
+  TODO: Avoid name conflict with single element remove.
+  
+Questions:
+* Is there a better name than ReplaceAll?
+* /Std/List/Search% has Keep and Remove. Can we also have Remove, or that
+  conflicts with my existing Remove function?
+
+Let's start with thinking about a different name for ReplaceAll. It's like
+Map, but lets you remove things. It's like Replace, called for every key
+present.
+
+I don't know. Let's just stick with ReplaceAll?
+
+How about remove? A lot of languages call it 'Delete'. That's what I used to
+call it. But that, to me, suggests some memory management going on.
+
+RemoveAll? KeepAll?
+
+I wish I could reuse Keep, Remove for filter. What's the opposite of Put
+though? It's remove. Take? Unput? Delete? Remove?
+
+Umm... 'Meet' and 'Join' might not be legit uses of those terms
+mathematically. They are supposed to be least upper bound and greatest lower
+bounds. Perhaps it depends which field of math we are talking about?
+
+RemoveKey?
+
+ Drop?
+
+How about Omit? You are omitting any elements that match? Like, keep the map,
+except with everything matching being omitted.
+
+I could update the list Remove function to be list Omit? Then we have
+Keep/Omit, consistent across List, Map, and Set. And we get Put/Remove for map
+and Add/Remove for Set?
+
+That sounds like a reasonable proposal.
+
+Which leaves us with just ReplaceAll which feels like an awkward name.

@@ -37,16 +37,16 @@ Keep = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   Items(list.items.head, tail);
 };
 
-# @func[Remove] Removes all elements of the list that satisfy a condition.
+# @func[Omit] Removes all elements of the list that satisfy a condition.
 #  @arg[@][T@] The type of element on the list.
 #  @arg[List@<T@>][list] The list to check.
 #  @arg[(T@) { Bool@; }][p] The condition to check for.
 #  @returns[List@<T>]
 #   All elements on the list except those that satisfy the condition.
 <@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
-Remove = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+Omit = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   list.?(empty: list);
-  List@<T@> tail = Remove(list.items.tail, p);
+  List@<T@> tail = Omit(list.items.tail, p);
   p(list.items.head).?(true: tail);
   Items(list.items.head, tail);
 };
@@ -219,7 +219,7 @@ Break = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
 };
 
 @(
-  Any, Keep, Remove, Split,
+  Any, Keep, Omit, Split,
   Search, SearchR, Skip, Until, While,
   Trim, Strip,
   Span@, Span, Break

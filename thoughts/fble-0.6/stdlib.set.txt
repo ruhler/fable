@@ -26,3 +26,27 @@ Which leaves us with questions for bulk and combining operations.
 
 The bulk operation would be a bulk remove. RemoveIf kind of thing.
 
+The combining operations are maybe simpler now, because we don't have to merge
+values in any way? Perhaps it is as simple as: And, Or, Sub?
+
+And gives you the set of keys that in both. Or gives you the set that are in
+either. Sub gives you the keys in the first but not the second. No combining
+function. Maybe we just always take the key from the first set in case of
+conflict, and you can turn them around the other way if you want the key in
+the second set, except for Sub?
+
+---
+
+Proposal:
+* And: Given two sets, returns the intersection of them.
+  That is, all keys that appear in the first AND second map.
+* Or: Given two sets, returns the union of them.
+  All keys that appear in the first OR second map.
+* Diff: Given sets A and B, returns all keys that appear in A but not B.
+  This is set difference.
+* Keep: Given a predicate of type (Key@) { Bool@; }, keeps all keys that
+  satisfy the predicate.
+* Omit: Given a predicate of type (Key@) { Bool@; }, removes all keys that
+  satisfy the predicate.
+  Uh... but Remove is overloaded. Hmm...
+

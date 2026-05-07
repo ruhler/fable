@@ -18,7 +18,7 @@ List@, List .= /Std/List%;
 
 Any = /Std/List/Search%.Any;
 Keep = /Std/List/Search%.Keep;
-Remove = /Std/List/Search%.Remove;
+Omit = /Std/List/Search%.Omit;
 Split = /Std/List/Search%.Split;
 Search = /Std/List/Search%.Search;
 SearchR = /Std/List/Search%.SearchR;
@@ -62,10 +62,10 @@ Test@ Tests = TestSuite|Search[
     AssertEquals(Eqs, Shows, wnt, got);
   }),
 
-  Test|Remove({
+  Test|Omit({
     Unit@ _ := Lazy;
     List@<Elem@> wnt = Elems|ACCDDE;
-    List@<Elem@> got = Remove(Elems|ABBCCDDE, Eq(Elem.B));
+    List@<Elem@> got = Omit(Elems|ABBCCDDE, Eq(Elem.B));
     AssertEquals(Eqs, Shows, wnt, got);
   }),
 
