@@ -1,0 +1,160 @@
+
+Bool@, True, False .= /Std/Bool%;
+Data@ .= /Std/Data%;
+Just, Nothing .= /Std/Maybe%;
+Unit@, Unit .= /Std/Unit%;
+
+# @type[Set@] A set of elements.
+#  Supporting any type T@ that implements Data@<T@>.
+Set@ = <@ T@> { /Std/Map%.Map@<T@, Unit@>; };
+
+# @func[Empty] The empty set.
+#  @arg[@][T@] The type of values in the set.
+#  @returns[Set@<T@>] An empty set.
+Set@ Empty = <@ T@> { /Std/Map%.Empty<T@, Unit@>; };
+
+# @func[IsEmpty] Test if a set is empty or not.
+#  @arg[@][T@] The type of value in the set.
+#  @arg[Set@<T@>][set] The set to check.
+#  @returns[Bool@] True if the set is empty. False otherwise.
+<@ T@>(Set@<T@>) { Bool@; }
+IsEmpty = <@ T@> { /Std/Map%.IsEmpty<T@, Unit@>; };
+
+# @func[Has] Test if the set contains the given element.
+#  @arg[@][T@] The type of value in the set.
+#  @arg[Data@<T@>][data] The Data@ implementation for type T@.
+#  @arg[Set@<T@>][set] The set to check.
+#  @arg[T@][element] The element to check for.
+#  @returns[Bool@] True if the set contains the given value, false otherwise.
+<@ T@>(Data@<T@>, Set@<T@>, T@) { Bool@; }
+Has = <@ T@>(Data@<T@> data, Set@<T@> set, T@ element) {
+  /Std/Map%.Get(data, set, element).?(just: True, nothing: False);
+};
+
+# @func[Add] Add an element to a set.
+#  @arg[@][T@] The element type.
+#  @arg[Data@<K@>][data] The Data@ instance for the element type.
+#  @arg[Set@<T@>][set] The set to add the element to.
+#  @arg[T@][element] The element to add to the set.
+#  @return[Set@<T@>] The set with the added element.
+<@ T@>(Data@<T@>, Set@<T@>, T@) { Set@<T@>; }
+Add = <@ T@>(Data@<T@> data, Set@<T@> set, T@ element) {
+  /Std/Map%.Put(data, set, element, Unit);
+};
+
+# @func[Remove] Remove an element from the set.
+#  @arg[@][T@] The element type.
+#  @arg[Data@<K@>][data] The Data@ instance for the element type.
+#  @arg[Set@<T@>][set] The set to remove the element from.
+#  @arg[T@][element] The element to remove from the set.
+#  @return[Set@<T@>] The set with the element removed.
+<@ T@>(Data@<T@>, Set@<T@>, T@) { Set@<T@>; }
+Remove = <@ T@>(Data@<T@> data) {
+  /Std/Map%.Remove(data)<Unit@>;
+};
+
+# @func[ForEach] Iterate over elements of a set.
+#  @arg[@][T@] The type of element.
+#  @arg[Set@<T@>][set] The set to iterate over.
+#  @arg[B@][base] The value to return for an empty set.
+#  @arg[(T@, B@) { B@; }][body]
+#   A function to update the value to return given the next element of the
+#   set.
+#  @returns[B@]
+#   The result of applying the body consecutively to the base value, once for
+#   each element in the set. The order of iteration corresponds to
+#   lexicographical ordering of the stream of bits associated with each key.
+#
+# Conceptually the behavior is like:
+#
+# @code[fble] @
+#  B@ b = base
+#  foreach (v) in set:
+#    b = body(v, b)
+#  return b
+<@ T@>(Set@<T@>)<@ B@>(B@, (T@, B@) { B@; }) { B@; }
+ForEach = <@ T@>(Set@<T@> set)<@ B@>(B@ base, (T@, B@) { B@; } body) {
+  /Std/Map%.ForEach(set, base, (T@ x, Unit@ _, B@ b) { body(x, b); });
+};
+
+# @func[And] Intersection of two sets.
+#  @arg[@][T@] The element type of the set.
+#  @arg[Set@<T@>][a] The first set.
+#  @arg[Set@<T@>][b] The second set.
+#  @returns[Set@<T@>] The set of elements that appear in both input sets.
+<@ T@>(Set@<T@>, Set@<T@>) { Set@<T@>; }
+And = <@ T@>(Set@<T@> a, Set@<T@> b) {
+  T@ _, Unit@ _, Unit@ _ := /Std/Map%.Meet(a, b);
+  Just(Unit);
+};
+
+# @func[And] Union of two sets.
+#  @arg[@][T@] The element type of the set.
+#  @arg[Set@<T@>][a] The first set.
+#  @arg[Set@<T@>][b] The second set.
+#  @returns[Set@<T@>] The set of elements that appear in either input set.
+<@ T@>(Set@<T@>, Set@<T@>) { Set@<T@>; }
+Or = <@ T@>(Set@<T@> a, Set@<T@> b) {
+  T@ _, Unit@ _, Unit@ _ := /Std/Map%.Join(a, b);
+  Unit;
+};
+
+# @func[Diff] Difference between two sets.
+#  @arg[@][T@] The element type of the set.
+#  @arg[Set@<T@>][a] The first set.
+#  @arg[Set@<T@>][b] The second set.
+#  @returns[Set@<T@>]
+#   The elements in the first set that are not also in the second set.
+<@ T@>(Set@<T@>, Set@<T@>) { Set@<T@>; }
+Diff = <@ T@>(Set@<T@> a, Set@<T@> b) {
+  T@ _, Unit@ _, Unit@ _ := /Std/Map%.Diff(a, b);
+  Nothing<Unit@>;
+};
+
+# @func[Keep] Keeps only the specified elements of the set.
+#  @arg[@][T@] The set element type.
+#  @arg[Set@<T@>][set] The set to keep values from.
+#  @arg[(T@) { Bool@; }][p] Predicate specifying which values to keep.
+#  @returns[Set@<T@>]
+#   The set with only those elements the predicate indicates to keep.
+<@ T@>(Set@<T@>, (T@) { Bool@; }) { Set@<T@>; }
+Keep = <@ T@>(Set@<T@> set, (T@) { Bool@; } p) {
+  T@ k, Unit@ _ := /Std/Map%.Keep(set);
+  p(k);
+};
+
+# @func[Omit] Removes specified elements from the set.
+#  @arg[@][T@] The set element type.
+#  @arg[Set@<T@>][set] The set to keep values from.
+#  @arg[(T@) { Bool@; }][p] Predicate specifying which values to remove.
+#  @returns[Set@<T@>]
+#   The set without those elements the predicate indicates to remove.
+<@ T@>(Set@<T@>, (T@) { Bool@; }) { Set@<T@>; }
+Omit = <@ T@>(Set@<T@> set, (T@) { Bool@; } p) {
+  T@ k, Unit@ _ := /Std/Map%.Omit(set);
+  p(k);
+};
+
+# @func[Of] Set functions specialized for the given type.
+#  @arg[@][T@] The set element type.
+#  @arg[Data@<K@>][data] The Data@ instance to use with the set.
+#  @returns[...] The Set methods specialized for the given type.
+Of = <@ T@>(Data@<T@> data) {
+  @(
+    Set@: Set@<T@>,
+    Empty: Empty<T@>,
+    IsEmpty: IsEmpty<T@>,
+    Has: Has(data),
+    Add: Add(data),
+    Remove: Remove(data),
+    ForEach: ForEach<T@>,
+    And: And<T@>,
+    Or: Or<T@>,
+    Diff: Diff<T@>,
+    Keep: Keep<T@>,
+    Omit: Omit<T@>
+  );
+};
+
+@(Set@, Empty, IsEmpty, Has, Add, Remove, ForEach,
+  And, Or, Diff, Keep, Omit, Of);

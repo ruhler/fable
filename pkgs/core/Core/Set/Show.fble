@@ -1,6 +1,6 @@
 
 Char@ .= /Std/Char%;
-Set@, ForEach .= /Core/Set%;
+Set@, ForEach .= /Std/Set%;
 Show@ .= /Std/Show%;
 Stream@, Do .= /Std/Stream%;
 Format, String .= /Std/Char/Ascii/Stream%;

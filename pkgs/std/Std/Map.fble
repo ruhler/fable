@@ -277,8 +277,7 @@ Map = <@ K@, @ A@>(Map@<K@, A@> m)<@ B@>((K@, A@) { B@; } f) {
 #  @arg[@][K@] The type of key.
 #  @arg[@][A@] The type of value on the map.
 #  @arg[Map@<K@, A@>][map] The map to keep elements from.
-#  @arg[(K@, A@) { Bool@; }][p]
-#   Function specifying which values to keep.
+#  @arg[(K@, A@) { Bool@; }][p] Function specifying which values to keep.
 #  @return[Map@<K@, A@>]
 #   The map with only those entries the function indicates to keep.
 <@ K@, @ A@>(Map@<K@, A@>, (K@, A@) { Bool@; }) { Map@<K@, A@>; }

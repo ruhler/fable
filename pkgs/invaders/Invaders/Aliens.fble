@@ -116,7 +116,7 @@ Data@<Alien@> AlienData = (Alien@ x) {
 # Set@ --
 #   A set of aliens, to keep track of which aliens are alive or dead.
 # A set of aliens.
-Set = /Core/Set%.Of(AlienData);
+Set = /Std/Set%.Of(AlienData);
 Set@ = Set.Set@;
 
 # AllAliens --

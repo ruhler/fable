@@ -64,7 +64,7 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
   ShowBit1(x.l);
 };
 
-Set@, Empty, Has, Add, Remove, ForEach .= /Core/Set%.Of(DataBit2);
+Set@, Empty, Has, Add, Remove, ForEach .= /Std/Set%.Of(DataBit2);
 
 Eq = /Core/Set/Eq%.Eq(EqBit2);
 Show = /Core/Set/Show%.Show(ShowBit2);
