@@ -454,3 +454,16 @@ Okay. It was good to put things in this perspective. Let me go back to
 stdlib.stdio.txt for discussion on how to split of /Std/Stream% if/as
 appropriate.
 
+---
+
+Status update: I hereby declare stdlib complete for this release.
+
+It's not perfect, but it's a huge step forward. Documentation and performance
+will need work, but leave that for later. Some things are probably missing
+(think conversions between maps and streams, using Data@ to implement Eq@ and
+Cmp@, stuff like that), but this is a great start. I'll also punt on full test
+coverage, because honestly, it seems like busy work without much practical
+value at this stage of library development.
+
+I'm not going to try standardizing anything that was outside of core yet.
+Network stuff, app stuff, for example. I've done enough for this release.

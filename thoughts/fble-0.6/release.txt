@@ -175,3 +175,19 @@ Other modules:
 * pkgs/core/Core/Maybe.fble       ==> [REMOVED]
 
 Getting closer...
+
+---
+
+I'm done populating /Std/* with all the packages I want. I think we're ready
+to start the release burndown.
+
+High level tasks:
+* Get rid of core package entirely
+ - Migrate remaining Tests.fble files to std-test
+ - Move native code to std
+ - Remove build file and any dependencies on it by other packages.
+* Rewrite all the tutorials.
+* Todo item burndown.
+ - Consider writing some rosetta code stuff
+ - Consider rewriting all the existing fble to make it more idiomatic.
+

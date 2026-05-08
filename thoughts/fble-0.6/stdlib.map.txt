@@ -2487,3 +2487,10 @@ Sounds reasonable to me, no?
 Question for Map, Keep, Omit functions: should we provide the key to the
 function being called, or just the value? Probably the key is worth passing,
 right? It's easy to ignore if so desired.
+
+We particularly need the key to make these reusable for Set@, so let's just
+keep it.
+
+---
+
+Done? Done. I think done.
