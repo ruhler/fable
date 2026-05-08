@@ -1,0 +1,66 @@
+
+Bool@, True, False, And .= /Std/Bool%;
+Data@, Enum, Struct .= /Std/Data%;
+Eq@ .= /Std/Eq%;
+Show@ .= /Std/Show%;
+Do .= /Std/Stream%;
+String .= /Std/Char/Ascii/Stream%;
+Unit@, Unit .= /Std/Unit%;
+
+Bit1@ = +(Unit@ 0, Unit@ 1);
+Bit2@ = *(Bit1@ h, Bit1@ l);
+
+Bit2@ A = Bit2@(Bit1@(0: Unit), Bit1@(0: Unit));
+Bit2@ B = Bit2@(Bit1@(0: Unit), Bit1@(1: Unit));
+Bit2@ C = Bit2@(Bit1@(1: Unit), Bit1@(0: Unit));
+
+Bit1 = {
+  Eq@<Bit1@> Eq = (Bit1@ a, Bit1@ b) {
+    a.?(
+      0: b.?(0: True, 1: False),
+      1: b.?(0: False, 1: True));
+  };
+
+  Data@<Bit1@> Data = (Bit1@ x) {
+    x.?(0: Enum|0, 1: Enum|1);
+  };
+
+  Show@<Bit1@> Show = (Bit1@ x) {
+    x.?(0: String|0, 1: String|1);
+  };
+
+  @(Eq, Data, Show);
+};
+
+Bit2 = {
+  Eq@<Bit2@> Eq = (Bit2@ a, Bit2@ b) {
+    And(Bit1.Eq(a.h, b.h), Bit1.Eq(a.l, b.l));
+  };
+
+  Data@<Bit2@> Data = (Bit2@ x) {
+    Struct[Bit1.Data(x.h), Bit1.Data(x.l)];
+  };
+
+  Show@<Bit2@> Show = (Bit2@ x) {
+    Unit@ _ := Do(Bit1.Show(x.h));
+    Bit1.Show(x.l);
+  };
+
+  @(Eq, Data, Show);
+};
+
+Key@ = Bit2@;
+Key = Bit2;
+
+Value@ = Bool@;
+Value = {
+  Eq = /Std/Bool/Eq%.Eq;
+  Show = /Std/Bool/Show%.Show;
+  @(Eq, Show);
+};
+Bool@ X = True;
+Bool@ Y = False;
+
+Map = /Std/Map%.Of(Bit2.Data)<Bool@>;
+
+@(Key@, Value@, Map, A, B, C, Key, Value, X, Y);

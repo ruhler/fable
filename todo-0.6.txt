@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Add Map.Entries function?
+  To make it easy to initialize a map from a list.
+
 * Add instances of Data@ for more standard data types.
   Unit@, Bool@, Maybe@, Char@, List@, String@, etc.
 
