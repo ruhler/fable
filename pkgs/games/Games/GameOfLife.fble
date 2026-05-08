@@ -45,7 +45,7 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 # The world is a set of Coord@ where there are live cells.
 Set = /Std/Set%.Of(DataCoord);
 World@ = Set.Set@;
-EqWorld = /Core/Set/Eq%.Eq(EqCoord);
+EqWorld = /Std/Set/Eq%.Eq(EqCoord);
 ShowWorld = /Std/Set/Show%.Show(ShowCoord);
 W = @(
   Empty: Set.Empty,

@@ -1,0 +1,18 @@
+# @module[/Std/Set/Eq%]
+#  Eq@ instance for Set.
+
+Eq@ .= /Std/Eq%;
+Set@ .= /Std/Set%;
+
+# @func[Eq] Check if two sets are equal.
+#  @arg[@][T@] The set element type.
+#  @arg[Eq@<T@>][eq] Equality function for elements.
+#  @arg[Set@<T@>][a] The first set.
+#  @arg[Set@<T@>][b] The second set.
+#  @returns[Bool@] True if the two sets are equal, false otherwise.
+<@ K@>(Eq@<K@>) { Eq@<Set@<K@>>; }
+Eq = <@ K@>(Eq@<K@> eq, Set@<K@> a, Set@<K@> b) {
+  /Std/Map/Eq%.Eq(eq, /Std/Unit/Eq%.Eq, a, b);
+};
+
+@(Eq);

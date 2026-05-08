@@ -13,6 +13,6 @@ Eq@<Coord@> Coord = (Coord@ a, Coord@ b) {
     True;
 };
 
-<@ T@> (Eq@<T@>) { Eq@<Grid@<T@>>; } Eq = /Core/Map/Eq%.Eq(Coord);
+<@ T@> (Eq@<T@>) { Eq@<Grid@<T@>>; } Eq = /Std/Map/Eq%.Eq(Coord);
 
 @(Eq);

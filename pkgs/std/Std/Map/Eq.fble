@@ -1,8 +1,18 @@
+# @module[/Std/Map/Eq%]
+#  Eq@ instance for Map.
 
 Bool@, True, False .= /Std/Bool%;
 Eq@ .= /Std/Eq%;
 Map@ .= /Std/Map%;
 
+# @func[Eq] Check if two maps are equal.
+#  @arg[@][K@] The key type.
+#  @arg[Eq@<K@>][eq_key] Equality function for keys.
+#  @arg[@][V@] The value type.
+#  @arg[Eq@<V@>][eq_value] Equality function for values.
+#  @arg[Map@<K@, V@>][a] The first map.
+#  @arg[Map@<K@, V@>][b] The second map.
+#  @returns[Bool@] True if the two maps are equal, false otherwise.
 <@ K@>(Eq@<K@>)<@ V@>(Eq@<V@>, Map@<K@, V@>, Map@<K@, V@>) { Bool@; }
 Eq = <@ K@>(Eq@<K@> eq_key)<@ V@>(Eq@<V@> eq_value, Map@<K@, V@> a, Map@<K@, V@> b) {
   a.?(empty: b.?(empty: True, : False));
