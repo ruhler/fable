@@ -11,7 +11,7 @@ Int@ = +(
   IntP@ n,   # Negative integers
   Unit@ 0,
   IntP@ p    # Positive integers
-);  # TODO: .%(@/Std/Int%);
+).%(@/Std/Int%);
 
 # Helper functions for constructing positive and negative integers.
 (IntP@) { Int@; } N = (IntP@ x) { Int@(n: x); };

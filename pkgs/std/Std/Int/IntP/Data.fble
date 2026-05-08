@@ -16,4 +16,4 @@ Data = (IntP@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
     2p1: put(1, Data(x.2p1, return, put)));
 };
 
-@(Data);
+@(Data).%(@/Std/Int%);

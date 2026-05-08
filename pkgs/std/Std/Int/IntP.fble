@@ -82,4 +82,4 @@ IntP@ 10 = IntP@(2p0: 5);
     2p1: Mul(2, Exp2(IntP@(2p0: a.2p1))));
 };
 
-@(IntP@, 1, 10, Add, Add1, Mul, Exp2); # TODO: .%(@/Std/Int%);
+@(IntP@, 1, 10, Add, Add1, Mul, Exp2).%(@/Std/Int%);

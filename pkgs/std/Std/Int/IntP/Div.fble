@@ -78,4 +78,4 @@ QR@ = *(Int@ q, Int@ r);
                }));
 };
 
-@(QR@, Div); # TODO: .%(@/Std/Int%);
+@(QR@, Div).%(@/Std/Int%);
