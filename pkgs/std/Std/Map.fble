@@ -1,0 +1,435 @@
+# @module[/Std/Map%]
+#  Map type and basic operations.
+
+Bool@, True, False, And .= /Std/Bool%;
+Data@, Bit@ .= /Std/Data%;
+Maybe@, Just, Nothing, Default .= /Std/Maybe%;
+Unit@, Unit .= /Std/Unit%;
+
+Entry@ = <@ Key@, @ Value@> { *(Key@ key, Value@ value); };
+
+# @type[Map@] A mapping from keys to values.
+#  Supporting any key type Key@ that implements Data@<Key@>.
+Map@ = <@ Key@, @ Value@> {
+  M@ = +(Unit@ empty, Entry@<Key@, Value@> entry, *(M@ 0, M@ 1) children);
+  M@;
+};
+
+# @func[Empty] The empty map.
+#  @arg[@][K@] The type of key.
+#  @arg[@][V@] The type of value.
+#  @returns[Map@<K@, V@>] An empty map.
+Map@ Empty = <@ K@, @ V@> {
+  Map@<K@, V@>(empty: Unit);
+};
+
+# @func[IsEmpty] Test if a map is empty or not.
+#  @arg[@][K@] The type of key.
+#  @arg[@][V@] The type of value.
+#  @arg[Map@<K@, V@>][map] The map to check.
+#  @returns[Bool@] True if the map is empty. False otherwise.
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
+IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map.?(empty: True);
+  False;
+};
+
+# @func[Get] Look up a value in the map.
+#  @arg[@][K@] The type of key.
+#  @arg[Data@<K@>][data] The Data@ instance for the key type.
+#  @arg[@][V@] The type of value.
+#  @arg[Map@<K@, V@>][map] The map to look up in.
+#  @arg[K@][key] The key to search for.
+#  @returns[Maybe@<V@>]
+#   The value in the map associated with the given key if present. Nothing
+#   otherwise.
+<@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
+Get = <@ K@>(Data@<K@> data)<@ V@> {
+  S@ = Map@<K@, V@>;
+  R@ = Maybe@<V@>;
+
+  r = (S@ m) {
+    m.?(empty: Nothing<V@>);
+
+    # If m.value access fails with wrong tag, it means your data type
+    # didn't satisfy the prefix code requirement.
+    Just(m.entry.value);
+  };
+
+  put = (Bit@ x, (S@) { R@; } f, S@ m) {
+    m.?(empty: Nothing<V@>);
+
+    # If m.children access fails with wrong tag, it means your data type
+    # didn't satisfy the prefix code requirement.
+    f(x.?(0: m.children.0, 1: m.children.1));
+  };
+
+  (Map@<K@, V@> map, K@ key) {
+    data(key, r, put, map);
+  };
+};
+
+# @func[Update] Insert a value into a map, with combining function.
+#  @arg[@][K@] The type of key.
+#  @arg[Data@<K@>][data] The Data@ instance for the key type.
+#  @arg[@][V@] The type of value.
+#  @arg[Map@<K@, V@>][map] The map to insert into.
+#  @arg[K@][key] The key to insert a value for.
+#  @arg[(Maybe@<V@>) { V@; }][with]
+#   A combining function to determine the value to insert. If there is already
+#   a value associated with the key in the map, that will be passed to this
+#   function to determine the ultimate value to insert. Otherwise Nothing will be
+#   passed to this function to determine the value to insert.
+#  @return[Map@<K@, V@>] The map with the updated value.
+<@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>) { V@; }) { Map@<K@, V@>; }
+Update = <@ K@>(Data@<K@> data)<@ V@> {
+  S@ = Map@<K@, V@>;
+  R@ = Map@<K@, V@>;
+
+  put = (Bit@ x, (S@) { R@; } f, S@ m) {
+    children = {
+      m.?(empty: @(0: Empty<K@, V@>, 1: Empty<K@, V@>));
+
+      # If m.children access fails with wrong tag, it means your data
+      # type didn't satisfy the prefix code requirement.
+      m.children;
+    };
+
+    Map@<K@, V@> child = f(x.?(0: children.0, 1: children.1));
+    x.?(
+      0: Map@(children: children.@(0: child)),
+      1: Map@(children: children.@(1: child)));
+  };
+
+  (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
+    r = (Map@<K@, V@> leaf) {
+      V@ value = with({
+        leaf.?(empty: Nothing<V@>);
+
+        # If you get a wrong tag access error here on leaf.entry, then your
+        # data type violates the prefix property.
+        Just(leaf.entry.value);
+      });
+
+      Map@(entry: Entry@(key, value));
+    };
+
+    data(key, r, put, map);
+  };
+};
+
+# @func[Put] Inserts a value into a map.
+#  @arg[@][K@] The type of key.
+#  @arg[Data@<K@>][data] The Data@ instance for the key type.
+#  @arg[@][V@] The type of value.
+#  @arg[Map@<K@, V@>][map] The map to insert into.
+#  @arg[K@][key] The key to insert a value for.
+#  @arg[V@][value] The value to insert.
+#  @return[Map@<K@, V@>]
+#   The map with the inserted value. The inserted value overwrites any
+#   previous value associated with that key in the map.
+<@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
+Put = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
+  Update(data, map, key, (Maybe@<V@> _) { value; });
+};
+
+# @func[Replace] Replace or delete a value already present in a map.
+#  @arg[@][K@] The type of key.
+#  @arg[Data@<K@>][data] The Data@ instance for the key type.
+#  @arg[@][V@] The type of value.
+#  @arg[Map@<K@, V@>][map] The map to update.
+#  @arg[K@][key] The key associated with the value to replace.
+#  @arg[(V@) { Maybe@<V@>; }][replace]
+#   A combining function to specify how to replace the existing value in the
+#   map. The function is passed the existing value in the map. It should
+#   return Nothing to remove the value from the map, or Just(v) to update the
+#   value to v.
+#  @return[Map@<K@, V@>]
+#   The map with the replaced value. If no value was associated with the key
+#   in the original map, the original map is returned unmodified.
+<@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (V@) { Maybe@<V@>; }) { Map@<K@, V@>; }
+Replace = <@ K@>(Data@<K@> data)<@ V@> {
+  # Given a function that optionally modifies the map at the current
+  # location, returns the final modified map at the root location.
+  # The modification may remove elements.
+  S@ = Map@<K@, V@>;
+  R@ = Maybe@<Map@<K@, V@>>;
+
+  put = (Bit@ x, (S@) { R@; } f, S@ m) {
+    m.?(empty: Nothing<Map@<K@, V@>>);
+
+    # If m.children access fails with wrong tag, it means your data
+    # type didn't satisfy the prefix code requirement.
+    Map@<K@, V@> child = x.?(0: m.children.0, 1: m.children.1);
+    Maybe@<Map@<K@, V@>> nchild = f(child);
+    nchild.?(nothing: Nothing<Map@<K@, V@>>);
+
+    nchild.just.?(empty: {
+      Bool@ empty = x.?(0: IsEmpty(m.children.1), 1: IsEmpty(m.children.0));
+      empty.?(true: Just(Empty<K@, V@>));
+
+      x.?(0: Just(Map@(children: m.children.@(0: Empty<K@, V@>))));
+      Just(Map@(children: m.children.@(1: Empty<K@, V@>)));
+    });
+
+    x.?(0: Just(Map@(children: m.children.@(0: nchild.just))));
+    Just(Map@(children: m.children.@(1: nchild.just)));
+  };
+
+  (Map@<K@, V@> map, K@ key, (V@) { Maybe@<V@>; } with) {
+    r = (Map@<K@, V@> leaf) {
+      # If you get undef here, then your data type violates the prefix
+      # property.
+      leaf.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@<K@, V@>>>);
+
+      leaf.?(empty: Nothing<Map@<K@, V@>>);
+      Maybe@<V@> value = with(leaf.entry.value);
+      value.?(nothing: Just(Empty<K@, V@>));
+      Just(Map@(entry: leaf.entry.@(value: value.just)));
+    };
+
+    Default(map, data(key, r, put, map));
+  };
+};
+
+# @func[Remove] Remove a value from the map.
+#  @arg[@][K@] The type of key.
+#  @arg[Data@<K@>][data] The Data@ instance for the key type.
+#  @arg[@][V@] The type of value.
+#  @arg[Map@<K@, V@>][map] The map to update.
+#  @arg[K@][key] The key associated with the value to remove.
+#  @returns[Map@<K@, V@>]
+#   The map with no value associated with the given key. If the map didn't
+#   contain the key in the first place, the original map is unchanged.
+#   Otherwise the entry for that key is removed.
+<@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
+Remove = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
+  Replace(data, map, key, (V@ _) { Nothing<V@>; });
+};
+
+# @func[ForEach] Iterate over elements of a map.
+#  @arg[@][K@] The type of key.
+#  @arg[@][V@] The type of value.
+#  @arg[Map@<K@, V@>][map] The map to iterate over.
+#  @arg[B@][base] The value to return for an empty map.
+#  @arg[(K@, V@, B@) { B@; }][body]
+#   A function to update the value to return given the next element of the
+#   map.
+#  @returns[B@]
+#   The result of applying the body consecutively to the base value, once for
+#   each element in the map. The order of iteration corresponds to
+#   lexicographical ordering of the stream of bits associated with each key.
+#
+# Conceptually the behavior is like:
+#
+# @code[fble] @
+#  B@ b = base
+#  foreach (k, v) in map:
+#    b = body(k, v, b)
+#  return b
+<@ K@, @ V@>(Map@<K@, V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; }
+ForEach = <@ K@, @ V@>(Map@<K@, V@> map)<@ B@>(B@ base, (K@, V@, B@) { B@; } body) {
+  map.?(empty: base);
+  map.?(entry: body(map.entry.key, map.entry.value, base));
+  ForEach(map.children.1, ForEach(map.children.0, base, body), body);
+};
+
+# @func[ReplaceAll] Replaces all elements in a map.
+#  @arg[@][K@] The type of key.
+#  @arg[@][A@] The type of value on the input map.
+#  @arg[Map@<K@, A@>][map] The map to replace the values of.
+#  @arg[@][B@] The type of the replaced values.
+#  @arg[(K@, A@) { Maybe@<B@>; }][replace]
+#   A combining function to specify how to replace values in the map. The
+#   function is called for each entry in the map with key and existing value.
+#   It should return Nothing to remove the value from the map, or Just(v) to
+#   update the value to v.
+#  @return[Map@<K@, B@>] The map with the replaced values.
+<@ K@, @ A@>(Map@<K@, A@>)<@ B@>((K@, A@) { Maybe@<B@>; }) { Map@<K@, B@>; }
+ReplaceAll = <@ K@, @ A@>(Map@<K@, A@> m)<@ B@>((K@, A@) { Maybe@<B@>; } replace) {
+  m.?(empty: Empty<K@, B@>);
+  m.?(entry: {
+    Maybe@<B@> b = replace(m.entry.key, m.entry.value);
+    b.?(nothing: Empty<K@, B@>);
+    Map@(entry: Entry@(m.entry.key, b.just));
+  });
+
+  Map@<K@, B@> 0 = ReplaceAll(m.children.0, replace);
+  Map@<K@, B@> 1 = ReplaceAll(m.children.1, replace);
+  And(IsEmpty(0), IsEmpty(1)).?(true: Empty<K@, B@>);
+  Map@(children: @(0, 1));
+};
+
+# @func[Map] Applies a function to all values in a map.
+#  @arg[@][K@] The type of key.
+#  @arg[@][A@] The type of value on the input map.
+#  @arg[Map@<K@, A@>][map] The map to map the function over.
+#  @arg[@][B@] The type of the replaced values.
+#  @arg[(K@, A@) { B@; }][f] The function to apply.
+#  @return[Map@<K@, B@>] The new map of values.
+<@ K@, @ A@>(Map@<K@, A@>)<@ B@>((K@, A@) { B@; }) { Map@<K@, B@>; }
+Map = <@ K@, @ A@>(Map@<K@, A@> m)<@ B@>((K@, A@) { B@; } f) {
+  K@ k, A@ a := ReplaceAll(m);
+  Just(f(k, a));
+};
+
+# @func[Keep] Keeps only the specified entries in a map.
+#  @arg[@][K@] The type of key.
+#  @arg[@][A@] The type of value on the map.
+#  @arg[Map@<K@, A@>][map] The map to keep elements from.
+#  @arg[(K@, A@) { Bool@; }][p]
+#   Function specifying which values to keep.
+#  @return[Map@<K@, A@>]
+#   The map with only those entries the function indicates to keep.
+<@ K@, @ A@>(Map@<K@, A@>, (K@, A@) { Bool@; }) { Map@<K@, A@>; }
+Keep = <@ K@, @ A@>(Map@<K@, A@> m, (K@, A@) { Bool@; } p) {
+  K@ k, A@ a := ReplaceAll(m);
+  p(k, a).?(true: Just(a));
+  Nothing<A@>;
+};
+
+# @func[Omit] Removes entries in a map that satisfy a predicate.
+#  @arg[@][K@] The type of key.
+#  @arg[@][A@] The type of value on the map.
+#  @arg[Map@<K@, A@>][map] The map to remove elements from.
+#  @arg[(K@, A@) { Bool@; }][p]
+#   Function specifying which values to remove.
+#  @return[Map@<K@, A@>]
+#   The map without any of those entries the function indicates to omit.
+<@ K@, @ A@>(Map@<K@, A@>, (K@, A@) { Bool@; }) { Map@<K@, A@>; }
+Omit = <@ K@, @ A@>(Map@<K@, A@> m, (K@, A@) { Bool@; } p) {
+  K@ k, A@ a := ReplaceAll(m);
+  p(k, a).?(true: Nothing<A@>);
+  Just(a);
+};
+
+# @func[Meet] Intersection of two maps, with combining function.
+#  @arg[@][K@] The type of key.
+#  @arg[@][A@] The type of value on the first map.
+#  @arg[Map@<K@, A@>][a] The first map.
+#  @arg[@][B@] The type of value on the second map.
+#  @arg[Map@<K@, B@>][b] The second map.
+#  @arg[@][C@] The type of value in the resulting map.
+#  @arg[(K@, A@, B@) { Maybe@<C@>; }][meet]
+#   A combining function that is called for keys that exist in both maps.
+#   The result is included in the resulting map if not Nothing.
+#  @returns[Map@<K@, C@>]
+#   The intersection of the two maps, using the result from the meet function.
+#
+#  The key passed to the function is the key from the first map and the key
+#  that will be used in the result map if the value is kept.
+#
+#  Behavior is undefined if you aren't using the same Data@ implementation for
+#  both maps.
+<@ K@, @ A@>(Map@<K@, A@>)<@ B@>(Map@<K@, B@>)<@ C@>((K@, A@, B@) { Maybe@<C@>; }) { Map@<K@, C@>; }
+Meet = <@ K@, @ A@>(Map@<K@, A@> a)<@ B@>(Map@<K@, B@> b)<@ C@>((K@, A@, B@) { Maybe@<C@>; } meet) {
+  a.?(empty: Empty<K@, C@>);
+  b.?(empty: Empty<K@, C@>);
+  a.?(entry: {
+    Maybe@<C@> c = meet(a.entry.key, a.entry.value, b.entry.value);
+    c.?(nothing: Empty<K@, C@>);
+    Map@(entry: Entry@(a.entry.key, c.just));
+  });
+
+  Map@<K@, C@> 0 = Meet(a.children.0, b.children.0, meet);
+  Map@<K@, C@> 1 = Meet(a.children.1, b.children.1, meet);
+  And(IsEmpty(0), IsEmpty(1)).?(true: Empty<K@, C@>);
+  Map@(children: @(0, 1));
+};
+
+# @func[Join] Union of two maps, with combining function.
+#  @arg[@][K@] The type of key.
+#  @arg[@][V@] The type of value in the maps.
+#  @arg[Map@<K@, V@>][a] The first map.
+#  @arg[Map@<K@, V@>][b] The second map.
+#  @arg[(K@, V@, V@) { V@; }][join]
+#   A combining function that is called for keys that exist in both maps.
+#  @returns[Map@<K@, V@>]
+#   The union of the two maps. For values that occur in both maps, the result
+#   of the combining function is used.
+#
+#  The key passed to the function is the key from the first map and the key
+#  that will be used in the result map if the value is kept.
+#
+#  Behavior is undefined if you aren't using the same Data@ implementation for
+#  both maps.
+<@ K@, @ V@>(Map@<K@, V@>, Map@<K@, V@>, (K@, V@, V@) { V@; }) { Map@<K@, V@>; }
+Join = <@ K@, @ V@>(Map@<K@, V@> a, Map@<K@, V@> b, (K@, V@, V@) { V@; } join) {
+  a.?(empty: b);
+  b.?(empty: a);
+  a.?(entry: {
+    V@ value = join(a.entry.key, a.entry.value, b.entry.value);
+    Map@(entry: a.entry.@(value));
+  });
+
+  Map@<K@, V@> 0 = Join(a.children.0, b.children.0, join);
+  Map@<K@, V@> 1 = Join(a.children.1, b.children.1, join);
+  Map@(children: @(0, 1));
+};
+
+# @func[Diff] Difference of two maps, with combining function.
+#  @arg[@][K@] The type of key.
+#  @arg[@][V@] The type of value in the maps.
+#  @arg[Map@<K@, V@>][a] The first map.
+#  @arg[Map@<K@, V@>][b] The second map.
+#  @arg[(K@, V@, V@) { Maybe@<V@>; }][diff]
+#   A combining function that is called for keys that exist in both maps.
+#   The result is included in the resulting map if not Nothing.
+#  @returns[Map@<K@, V@>]
+#   All the elements in the first map that are not in the second map. For
+#   values that occur in both maps, the result of the combining function is
+#   used.
+#
+#  The key passed to the function is the key from the first map and the key
+#  that will be used in the result map if the value is kept.
+#
+#  Behavior is undefined if you aren't using the same Data@ implementation for
+#  both maps.
+<@ K@, @ V@>(Map@<K@, V@>, Map@<K@, V@>, (K@, V@, V@) { Maybe@<V@>; }) { Map@<K@, V@>; }
+Diff = <@ K@, @ V@>(Map@<K@, V@> a, Map@<K@, V@> b, (K@, V@, V@) { Maybe@<V@>; } f) {
+  a.?(empty: a);
+  b.?(empty: a);
+  a.?(entry: {
+    Maybe@<V@> v = f(a.entry.key, a.entry.value, b.entry.value);
+    v.?(nothing: Empty<K@, V@>);
+    Map@(entry: Entry@(a.entry.key, v.just));
+  });
+
+  Map@<K@, V@> 0 = Diff(a.children.0, b.children.0, f);
+  Map@<K@, V@> 1 = Diff(a.children.1, b.children.1, f);
+  And(IsEmpty(0), IsEmpty(1)).?(true: Empty<K@, V@>);
+  Map@(children: @(0, 1));
+};
+
+# @func[Of] Map functions specialized for the given key and value types.
+#  @arg[@][K@] The key type.
+#  @arg[Data@<K@>][data] The Data@ instance to use with the map.
+#  @arg[@][V@] The value type.
+#  @returns[...] The Map methods specialized for the given key and value.
+Of = <@ K@>(Data@<K@> data)<@ V@> {
+  @(
+    Map@: Map@<K@, V@>,
+    Key@: K@,
+    Empty: Empty<K@, V@>,
+    IsEmpty: IsEmpty<K@, V@>,
+    Put: Put(data)<V@>,
+    Update: Update(data)<V@>,
+    Remove: Remove(data)<V@>,
+    Replace: Replace(data)<V@>,
+    Get: Get(data)<V@>,
+    ForEach: ForEach<K@, V@>,
+    ReplaceAll: ReplaceAll<K@, V@>,
+    Map: Map<K@, V@>,
+    Keep: Keep<K@, V@>,
+    Omit: Omit<K@, V@>,
+    Meet: Meet<K@, V@>,
+    Join: Join<K@, V@>,
+    Diff: Diff<K@, V@>
+  );
+};
+
+@(
+  Entry@, Map@,
+  Empty, IsEmpty, Get, Update, Put, Remove, Replace,
+  ForEach, ReplaceAll, Map, Keep, Omit, Meet, Join, Diff, Of
+);

@@ -22,7 +22,7 @@ Int@ A = Int|0;
 Int@ B = Int|1;
 Int@ C = Int|2;
 
-Map@, Empty, Put, Remove .= /Core/Map%.Of(/Core/Int/Data%.Data)<Bool@>;
+Map@, Empty, Put, Remove .= /Std/Map%.Of(/Core/Int/Data%.Data)<Bool@>;
 Eq = /Core/Map/Eq%.Eq(/Std/Int/Eq%.Eq);
 
 Test@ Tests = TestSuite(Str|Eq, List[

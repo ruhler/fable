@@ -6,11 +6,11 @@ Unit@, Unit .= /Std/Unit%;
 
 # Set@ -- 
 #   A set of elements.
-Set@ = <@ Key@> { /Core/Map%.Map@<Key@, Unit@>; };
+Set@ = <@ Key@> { /Std/Map%.Map@<Key@, Unit@>; };
 
 # Empty -- 
 #   The empty set.
-Set@ Empty = <@ K@> { /Core/Map%.Empty<K@, Unit@>; };
+Set@ Empty = <@ K@> { /Std/Map%.Empty<K@, Unit@>; };
 
 # IsEmpty --
 #   Check if a set is empty.
@@ -24,7 +24,7 @@ Set@ Empty = <@ K@> { /Core/Map%.Empty<K@, Unit@>; };
 # Returns:
 #   True if the set is empty, false otherwise.
 <@ K@>(Set@<K@>) { Bool@; }
-IsEmpty = <@ K@> { /Core/Map%.IsEmpty<K@, Unit@>; };
+IsEmpty = <@ K@> { /Std/Map%.IsEmpty<K@, Unit@>; };
 
 # Has --
 #   Test whether an element exists in a set.
@@ -45,7 +45,7 @@ IsEmpty = <@ K@> { /Core/Map%.IsEmpty<K@, Unit@>; };
 #   Has(set, value);
 <@ K@>(Data@<K@>, Set@<K@>, K@) { Bool@; }
 Has = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
-  /Core/Map%.Get(data, set, element).?(just: True, nothing: False);
+  /Std/Map%.Get(data, set, element).?(just: True, nothing: False);
 };
 
 # Add --
@@ -64,7 +64,7 @@ Has = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
 #   Add(set, Str(Chars|foo));
 <@ K@>(Data@<K@>, Set@<K@>, K@) { Set@<K@>; }
 Add = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
-  /Core/Map%.Put(data, set, element, Unit);
+  /Std/Map%.Put(data, set, element, Unit);
 };
 
 # Remove --
@@ -85,7 +85,7 @@ Add = <@ K@>(Data@<K@> data, Set@<K@> set, K@ element) {
 #   Remove(set, Str(Chars|foo));
 <@ K@>(Data@<K@>, Set@<K@>, K@) { Set@<K@>; }
 Remove = <@ K@>(Data@<K@> data) {
-  /Core/Map%.Remove(data)<Unit@>;
+  /Std/Map%.Remove(data)<Unit@>;
 };
 
 # ForEach --
@@ -111,14 +111,14 @@ Remove = <@ K@>(Data@<K@> data) {
 #   return b
 <@ K@>(Set@<K@>)<@ B@>(B@, (K@, B@) { B@; }) { B@; }
 ForEach = <@ K@>(Set@<K@> set)<@ B@>(B@ base, (K@, B@) { B@; } body) {
-  /Core/Map%.ForEach(set, base, (K@ x, Unit@ _, B@ b) { body(x, b); });
+  /Std/Map%.ForEach(set, base, (K@ x, Unit@ _, B@ b) { body(x, b); });
 };
 
 # Intersection of two sets: returns a set containing keys in the first and
 # second set.
 <@ K@>(Set@<K@>, Set@<K@>) { Set@<K@>; }
 And = <@ K@>(Set@<K@> a, Set@<K@> b) {
-  K@ _, Unit@ _, Unit@ _ := /Core/Map%.Meet(a, b);
+  K@ _, Unit@ _, Unit@ _ := /Std/Map%.Meet(a, b);
   Just(Unit);
 };
 
@@ -126,7 +126,7 @@ And = <@ K@>(Set@<K@> a, Set@<K@> b) {
 # second set.
 <@ K@>(Set@<K@>, Set@<K@>) { Set@<K@>; }
 Or = <@ K@>(Set@<K@> a, Set@<K@> b) {
-  K@ _, Unit@ _, Unit@ _ := /Core/Map%.Join(a, b);
+  K@ _, Unit@ _, Unit@ _ := /Std/Map%.Join(a, b);
   Unit;
 };
 
@@ -134,21 +134,21 @@ Or = <@ K@>(Set@<K@> a, Set@<K@> b) {
 # the second set.
 <@ K@>(Set@<K@>, Set@<K@>) { Set@<K@>; }
 Diff = <@ K@>(Set@<K@> a, Set@<K@> b) {
-  K@ _, Unit@ _, Unit@ _ := /Core/Map%.Diff(a, b);
+  K@ _, Unit@ _, Unit@ _ := /Std/Map%.Diff(a, b);
   Nothing<Unit@>;
 };
 
 # Keep elements from the set that satisfy the given predicate.
 <@ K@>(Set@<K@>, (K@) { Bool@; }) { Set@<K@>; }
 Keep = <@ K@>(Set@<K@> s, (K@) { Bool@; } f) {
-  K@ k, Unit@ _ := /Core/Map%.Keep(s);
+  K@ k, Unit@ _ := /Std/Map%.Keep(s);
   f(k);
 };
 
 # Remove elements from the set that satisfy the given predicate.
 <@ K@>(Set@<K@>, (K@) { Bool@; }) { Set@<K@>; }
 Omit = <@ K@>(Set@<K@> s, (K@) { Bool@; } f) {
-  K@ k, Unit@ _ := /Core/Map%.Omit(s);
+  K@ k, Unit@ _ := /Std/Map%.Omit(s);
   f(k);
 };
 

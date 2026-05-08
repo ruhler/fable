@@ -82,7 +82,7 @@ Status@ = *(Bool@ alive, Count@ neighbors);
 };
 
 # Map from Coord to the status of the cell.
-C = /Core/Map%.Of(DataCoord)<Status@>;
+C = /Std/Map%.Of(DataCoord)<Status@>;
 Cand@ = C.Map@;
 
 # Advance the world by one unit of time.

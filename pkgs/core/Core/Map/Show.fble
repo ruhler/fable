@@ -1,6 +1,6 @@
 
 Char@ .= /Std/Char%;
-Map@, ForEach .= /Core/Map%;
+Map@, ForEach .= /Std/Map%;
 Show@ .= /Std/Show%;
 Stream@, Do .= /Std/Stream%;
 Format, String .= /Std/Char/Ascii/Stream%;

@@ -11,7 +11,7 @@ In@ .= /Std/Stream%;
 
 String@ = /Std/String%.String@;
 
-Map = /Core/Map%.Of(/Core/Int/Data%.Data);
+Map = /Std/Map%.Of(/Core/Int/Data%.Data);
 
 Block@ = /Pprof/Profile%.Block@;
 Blocks@ = /Pprof/Profile%.Blocks@;

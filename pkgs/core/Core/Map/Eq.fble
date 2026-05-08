@@ -1,7 +1,7 @@
 
 Bool@, True, False .= /Std/Bool%;
 Eq@ .= /Std/Eq%;
-Map@, ForEach .= /Core/Map%;
+Map@, ForEach .= /Std/Map%;
 List@, Items, Empty .= /Std/List%;
 
 <@ K@>(Eq@<K@>)<@ V@>(Eq@<V@>, Map@<K@, V@>, Map@<K@, V@>) { Bool@; }

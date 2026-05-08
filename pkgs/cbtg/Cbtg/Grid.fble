@@ -17,7 +17,7 @@ Data@<Coord@> CoordData = (Coord@ a) {
   Put(a.y);
 };
 
-Grid = /Core/Map%.Map(CoordData);
+Grid = /Std/Map%.Map(CoordData);
 
 Grid@ = <@ T@> { Grid.Map@<T@>; };
 

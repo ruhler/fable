@@ -24,7 +24,7 @@ Unit@ = /Std/Unit%.Unit@;
 Int@ B = Int|2;
 Int@ C = Int|3;
 
-Map@, Empty, Put .= /Core/Map%.Of(/Core/Int/Data%.Data)<Bool@>;
+Map@, Empty, Put .= /Std/Map%.Of(/Core/Int/Data%.Data)<Bool@>;
 Show = /Core/Map/Show%.Show(/Std/Int/Show%.Show);
 
 Test@ Tests = TestSuite(Str|Show, List[

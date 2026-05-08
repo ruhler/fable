@@ -10,7 +10,7 @@ BlockId@ = Int@;
 
 Block@ = *(String@ name, String@ file, Int@ line, Int@ column);
 
-Blocks = /Core/Map%.Of(/Core/Int/Data%.Data)<Block@>;
+Blocks = /Std/Map%.Of(/Core/Int/Data%.Data)<Block@>;
 Blocks@ = Blocks.Map@;
 
 Sequence@ = List@<BlockId@>;

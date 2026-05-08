@@ -38,7 +38,7 @@ Int@ BaseY = Int|36;
 
 # Bases@ --
 #   Map from x coordinate to the slice of base, if any, at that x coordinate.
-Map@, Empty, Get, Remove, Put, ForEach .= /Core/Map%.Of(/Core/Int/Data%.Data)<Slice@>;
+Map@, Empty, Get, Remove, Put, ForEach .= /Std/Map%.Of(/Core/Int/Data%.Data)<Slice@>;
 Bases@ = Map@;
 
 # BaseSpec --
