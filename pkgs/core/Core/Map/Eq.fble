@@ -1,28 +1,25 @@
 
 Bool@, True, False .= /Std/Bool%;
 Eq@ .= /Std/Eq%;
-Map@, ForEach .= /Std/Map%;
-List@, Items, Empty .= /Std/List%;
+Map@ .= /Std/Map%;
 
 <@ K@>(Eq@<K@>)<@ V@>(Eq@<V@>, Map@<K@, V@>, Map@<K@, V@>) { Bool@; }
-Eq = <@ K@>(Eq@<K@> keq)<@ V@>(Eq@<V@> veq, Map@<K@, V@> a, Map@<K@, V@> b) {
-  Entry@ = *(K@ key, V@ value);
+Eq = <@ K@>(Eq@<K@> eq_key)<@ V@>(Eq@<V@> eq_value, Map@<K@, V@> a, Map@<K@, V@> b) {
+  a.?(empty: b.?(empty: True, : False));
 
-  Eq@<Entry@> EqEntry = (Entry@ a, Entry@ b) {
-    keq(a.key, b.key).?(false: False);
-    veq(a.value, b.value).?(false: False);
+  a.?(entry: b.?(entry: {
+    eq_key(a.entry.key, b.entry.key).?(false: False);
+    eq_value(a.entry.value, b.entry.value).?(false: False);
     True;
-  };
+  }, : False));
 
-  List@<Entry@> as = ForEach(a, Empty<Entry@>, (K@ k, V@ v, List@<Entry@> b) {
-    Items(Entry@(k, v), b);
-  });
+  a.?(children: b.?(children: {
+    Eq(eq_key, eq_value, a.children.0, b.children.0).?(false: False);
+    Eq(eq_key, eq_value, a.children.1, b.children.1).?(false: False);
+    True;
+  }, : False));
 
-  List@<Entry@> bs = ForEach(b, Empty<Entry@>, (K@ k, V@ v, List@<Entry@> b) {
-    Items(Entry@(k, v), b);
-  });
-
-  /Std/List/Eq%.Eq(EqEntry, as, bs);
+  False;
 };
 
 @(Eq);
