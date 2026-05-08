@@ -46,7 +46,7 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 Set = /Std/Set%.Of(DataCoord);
 World@ = Set.Set@;
 EqWorld = /Core/Set/Eq%.Eq(EqCoord);
-ShowWorld = /Core/Set/Show%.Show(ShowCoord);
+ShowWorld = /Std/Set/Show%.Show(ShowCoord);
 W = @(
   Empty: Set.Empty,
   Add: Set.Add,

@@ -73,7 +73,7 @@ Show@<Color@> ShowColor = (Color@ c) {
 
 Drawn@(.Map@), Empty, Put .= /Std/Map%.Of(DataPoint)<Color@>;
 Eq@<Drawn@> EqDrawn = /Core/Map/Eq%.Eq(EqPoint, EqColor);
-Show@<Drawn@> ShowDrawn = /Core/Map/Show%.Show(ShowPoint, ShowColor);
+Show@<Drawn@> ShowDrawn = /Std/Map/Show%.Show(ShowPoint, ShowColor);
 
 Pixel@ = *(Int@ x, Int@ y, Color@ color);
 

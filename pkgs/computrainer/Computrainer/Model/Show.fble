@@ -21,7 +21,7 @@ Show@<Car@> Value = (Car@ v) {
     v.?(C: String|C, 0: String|0, 1: String|1);
 };
 
-Show@<Cars@> Cars = /Core/Map/Show%.Show(Coord, Value);
+Show@<Cars@> Cars = /Std/Map/Show%.Show(Coord, Value);
 
 Show@<State@> State = (State@ a) {
     # TODO: Show state?

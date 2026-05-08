@@ -1,11 +1,20 @@
+# @module[/Std/Map/Show%]
+#  The Show@ instance for Map@.
 
 Char@ .= /Std/Char%;
+Format, String .= /Std/Char/Ascii/Stream%;
 Map@, ForEach .= /Std/Map%;
 Show@ .= /Std/Show%;
 Stream@, Do .= /Std/Stream%;
-Format, String .= /Std/Char/Ascii/Stream%;
 Unit@ .= /Std/Unit%;
 
+# @func[Show] Show a Map@ value.
+#  @arg[@][K@] The key type.
+#  @arg[Show@<K@>][show_key] How to show a key.
+#  @arg[@][V@] The value type.
+#  @arg[Show@<V@>][show_value] How to show a value.
+#  @arg[Map@<K@, V@>][map] The map to show.
+#  @returns[Stream@] Output that shows the contents of the map.
 <@ K@>(Show@<K@>)<@ V@>(Show@<V@>) { Show@<Map@<K@, V@>>; }
 Show = <@ K@>(Show@<K@> show_key)<@ V@>(Show@<V@> show_value, Map@<K@, V@> map) {
   Unit@ _ := Do(ForEach(map, String|'{ ',

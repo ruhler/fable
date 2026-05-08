@@ -1,0 +1,26 @@
+# @module[/Std/Set/Show%]
+#  The Show@ instance for Set@.
+
+Char@ .= /Std/Char%;
+Format, String .= /Std/Char/Ascii/Stream%;
+Set@, ForEach .= /Std/Set%;
+Show@ .= /Std/Show%;
+Stream@, Do .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
+
+# @func[Show] Show a Set@ value.
+#  @arg[@][T@] The element type.
+#  @arg[Show@<T@>][show] How to show an element.
+#  @arg[Set@<T@>][set] The set to show.
+#  @returns[Stream@] Output that shows the contents of the map.
+<@ T@>(Show@<T@>) { Show@<Set@<T@>>; }
+Show = <@ T@>(Show@<T@> show, Set@<T@> set) {
+  Unit@ _ := Do(ForEach(set, String|'{ ',
+    (T@ x, Stream@<Char@> shown) {
+      Unit@ _ := Do(shown);
+      Format|'%s; '[show(x)];
+    }));
+  String|'}';
+};
+
+@(Show);

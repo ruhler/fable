@@ -67,7 +67,7 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
 Set@, Empty, Has, Add, Remove, ForEach .= /Std/Set%.Of(DataBit2);
 
 Eq = /Core/Set/Eq%.Eq(EqBit2);
-Show = /Core/Set/Show%.Show(ShowBit2);
+Show = /Std/Set/Show%.Show(ShowBit2);
 
 Test@ Tests = TestSuite(Str|Set, List[
   Test(Str|'empty', (Unit@ _) {
