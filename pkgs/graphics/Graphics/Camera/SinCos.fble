@@ -14,7 +14,7 @@ SinCos@ = *(Int@ sin, Int@ cos);
 
 # Table@ --
 #   Mapping from angle to sin and cosing of that angle.
-Map@, Put, Empty, Get .= /Std/Map%.Of(/Core/Int/Data%.Data)<SinCos@>;
+Map@, Put, Empty, Get .= /Std/Map%.Of(/Std/Int/Data%.Data)<SinCos@>;
 Table@ = Map@;
 
 Table@ Table = {

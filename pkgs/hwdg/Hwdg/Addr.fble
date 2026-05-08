@@ -9,7 +9,7 @@ Int@ .= /Std/Int%;
 Addr@ = *(Int@ x, Int@ y);
 
 Data@<Addr@> Data = (Addr@ a) {
-  Struct[/Core/Int/Data%.Data(a.x), /Core/Int/Data%.Data(a.y)];
+  Struct[/Std/Int/Data%.Data(a.x), /Std/Int/Data%.Data(a.y)];
 };
 
 @(Addr@, Data);

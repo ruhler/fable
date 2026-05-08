@@ -4,8 +4,8 @@ Int@ = /Std/Int%.Int@;
 Id@ = Int@;
 EqId = /Std/Int/Eq%.Eq;
 
-Map = /Std/Map%.Of(/Core/Int/Data%.Data);
-Set = /Std/Set%.Of(/Core/Int/Data%.Data);
+Map = /Std/Map%.Of(/Std/Int/Data%.Data);
+Set = /Std/Set%.Of(/Std/Int/Data%.Data);
 Show = /Std/Map/Show%.Show;
 
 @(Id@, EqId, Map, Set, Show);

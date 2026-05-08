@@ -17,7 +17,7 @@ Str = /Std/Char/Ascii%.Str;
 
 Unit@ = /Std/Unit%.Unit@;
 
-Map = /Std/Map%.Of(/Core/Int/Data%.Data);
+Map = /Std/Map%.Of(/Std/Int/Data%.Data);
 
 Sample@ = /Pprof/Profile%.Sample@;
 Sequence@ = /Pprof/Profile%.Sequence@;

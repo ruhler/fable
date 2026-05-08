@@ -1,7 +1,14 @@
+# @module[/Std/Int/IntP/Data%]
+#  The Data@ instance for IntP@.
+#
+#  This module is for internal use only.
 
 Data@, Bit@, 0, 1 .= /Std/Data%;
 IntP@ .= /Std/Int/IntP%;
 
+# @func[Data] Convert an IntP@ to a data bit stream.
+#  @arg[IntP@][x] The integer to convert.
+#  @returns[Stream@<Bit@>] The stream of bits describing the IntP@.
 Data@<IntP@>
 Data = (IntP@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
   x.?(1: put(0, put(0, return)),

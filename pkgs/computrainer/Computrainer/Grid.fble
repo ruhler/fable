@@ -12,7 +12,7 @@ List@ = /Std/List%.List@;
 Coord@ = *(Int@ x, Int@ y);
 
 Data@<Coord@> CoordData = (Coord@ x) {
-  Struct[/Core/Int/Data%.Data(x.x), /Core/Int/Data%.Data(x.y)];
+  Struct[/Std/Int/Data%.Data(x.x), /Std/Int/Data%.Data(x.y)];
 };
 
 Grid = /Std/Map%.Of(CoordData);

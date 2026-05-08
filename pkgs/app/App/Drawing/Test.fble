@@ -49,7 +49,7 @@ Cmp@<Point@> OrdPoint = (Point@ a, Point@ b) {
 };
 
 Data@<Point@> DataPoint = (Point@ a) {
-  Struct[/Core/Int/Data%.Data(a.x), /Core/Int/Data%.Data(a.y)];
+  Struct[/Std/Int/Data%.Data(a.x), /Std/Int/Data%.Data(a.y)];
 };
 
 Show@<Point@> ShowPoint = (Point@ x) {

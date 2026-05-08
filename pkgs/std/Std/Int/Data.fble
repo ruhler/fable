@@ -1,0 +1,18 @@
+# @module[/Std/Int/Data%]
+#  The Data@ instance for Int@.
+
+Data@, Bit@, 0, 1 .= /Std/Data%;
+Int@ .= /Std/Int%;
+
+# @func[Data] Convert an Int@ to a data bit stream.
+#  @arg[Int@][x] The integer to convert.
+#  @returns[Stream@<Bit@>] The stream of bits describing the Int@.
+Data@<Int@>
+Data = (Int@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
+  x.?(
+    n: put(0, put(0, /Std/Int/IntP/Data%.Data(x.n, return, put))),
+    0: put(0, put(1, return)),
+    p: put(1, /Std/Int/IntP/Data%.Data(x.p, return, put)));
+};
+
+@(Data);

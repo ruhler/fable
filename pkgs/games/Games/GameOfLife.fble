@@ -35,7 +35,7 @@ Eq@<Coord@> EqCoord = (Coord@ a, Coord@ b) {
 };
 
 Data@<Coord@> DataCoord = (Coord@ a) {
-  Struct[/Core/Int/Data%.Data(a.row), /Core/Int/Data%.Data(a.col)];
+  Struct[/Std/Int/Data%.Data(a.row), /Std/Int/Data%.Data(a.col)];
 };
 
 Show@<Coord@> ShowCoord = (Coord@ a) {

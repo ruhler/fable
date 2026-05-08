@@ -28,7 +28,7 @@ Var@ = /SatGame/Var%.Var@;
 
 Shuffle = /Std/List/Random%.Shuffle;
 
-Map@, Empty, Get, Put .= /Std/Map%.Of(/Core/Int/Data%.Data)<Var@>;
+Map@, Empty, Get, Put .= /Std/Map%.Of(/Std/Int/Data%.Data)<Var@>;
 
 Prng = /Std/Random/Lfsr%.Lfsr24;
 M@, M(.Monad), Rng .= /Std/Random/Prng/Pure%.Pure(Prng);

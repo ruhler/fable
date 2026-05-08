@@ -110,7 +110,7 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
 };
 
 Data@<Alien@> AlienData = (Alien@ x) {
-  Struct[/Core/Int/Data%.Data(x.row), /Core/Int/Data%.Data(x.col)];
+  Struct[/Std/Int/Data%.Data(x.row), /Std/Int/Data%.Data(x.col)];
 };
 
 # Set@ --
