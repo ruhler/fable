@@ -1,0 +1,28 @@
+
+OnAscii .= /Std/Char/Ascii%;
+Hex .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+Rand48 .= /Std/Random/Lcg%;
+AssertSequence .= /Std/Random/Prng/Assert%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Test@ Tests = TestSuite|Lcg[
+  Test|Rand48({
+    Unit@ _ := Lazy;
+    AssertSequence(
+      /Std/Int/Eq%.Eq, /Std/Int/Show%.Show, Rand48)[
+        Hex|000000000000,
+        Hex|00000000000B,
+        Hex|0040942dE6BA,
+        Hex|0AA8544E593D,
+        Hex|2D3873C4Cd04,
+        Hex|5D5692ACE2Bf,
+        Hex|17617168255E,
+        Hex|17A0D1925D11];
+  })
+];
+
+@(Tests);

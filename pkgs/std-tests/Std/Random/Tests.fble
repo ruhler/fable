@@ -1,0 +1,12 @@
+
+
+OnAscii .= /Std/Char/Ascii%;
+Test@ .= /Std/Test%;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+
+Test@ Tests = TestSuite|Random[
+  /Std/Random/Lcg/Tests%.Tests,
+  /Std/Random/Lfsr/Tests%.Tests
+];
+
+@(Tests);

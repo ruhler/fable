@@ -1,0 +1,33 @@
+
+Bool@, True, False .= /Std/Bool%;
+OnAscii .= /Std/Char/Ascii%;
+Lazy .= /Std/Lazy%;
+List@ .= /Std/List%;
+Lfsr3 .= /Std/Random/Lfsr%;
+AssertSequence .= /Std/Random/Prng/Assert%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Bit@ = +(Unit@ 0, Unit@ 1);
+
+(List@<Bit@>) { List@<Bool@>; }
+S = (List@<Bit@> xs) {
+  Bit@ bit := /Std/List%.Map(xs);
+  bit.?(0: False, 1: True);
+};
+
+Test@ Tests = TestSuite|Lfsr[
+  Test|Basic({
+    # Validate the full sequence of a 3 bit LFSR.
+    Unit@ _ := Lazy;
+    AssertSequence(
+      /Std/List/Eq%.Eq(/Std/Bool/Eq%.Eq),
+      /Std/List/Show%.Show(/Std/Bool/Show%.Show), Lfsr3)[
+        S|010, S|101, S|011, S|111,
+        S|110, S|100, S|001, S|010];
+  })
+];
+
+@(Tests);
