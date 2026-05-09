@@ -1,0 +1,21 @@
+
+OnAscii .= /Std/Char/Ascii%;
+StringE .= /Std/Char/Ascii/Stream%;
+Lazy .= /Std/Lazy%;
+ToNull .= /Std/Stream/Null%;
+Test@, Pass .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Test@ Tests = TestSuite|Null[
+  Test|ToNull({
+    # Assuming we run this in a testsuite that looks specially for @FAIL,
+    # this should at least test we aren't printing that out.
+    Unit@ _ := Lazy;
+    Unit@ _ = ToNull(StringE|'@FAIL: no output expected\n');
+    Pass;
+  })
+];
+
+@(Tests);

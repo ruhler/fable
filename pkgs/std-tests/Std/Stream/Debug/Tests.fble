@@ -1,0 +1,21 @@
+
+OnAscii .= /Std/Char/Ascii%;
+StringE .= /Std/Char/Ascii/Stream%;
+Lazy .= /Std/Lazy%;
+ToDebug .= /Std/Stream/Debug%;
+Test@, Pass .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Test@ Tests = TestSuite|Debug[
+  Test|ToDebug({
+    # All we can really do is test that it doesn't crash. There's no way
+    # to observe the traced output from within fble.
+    Unit@ _ := Lazy;
+    Unit@ _ = ToDebug(StringE|'Std.Stream.Debug.ToDebug test output\n');
+    Pass;
+  })
+];
+
+@(Tests);

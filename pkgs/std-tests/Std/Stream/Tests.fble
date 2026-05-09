@@ -1,0 +1,11 @@
+
+OnAscii .= /Std/Char/Ascii%;
+Test@ .= /Std/Test%;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+
+Test@ Tests = TestSuite|Stream[
+  /Std/Stream/Debug/Tests%.Tests,
+  /Std/Stream/Null/Tests%.Tests
+];
+
+@(Tests);

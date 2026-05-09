@@ -24,7 +24,7 @@ ToDebug = (Stream@<Char@> output) {
 # @func[DebugOut] An Out@ that sends to the debug output stream.
 #  @arg[<@>@][M@] Monadic type to work with.
 #  @arg[Monad@<M@>][m] The monadic interface.
-#  @returns[Out@<Char@, M@>] The null output port.
+#  @returns[Out@<Char@, M@>] The debug output port.
 <<@>@ M@>(Monad@<M@>) { Out@<Char@, M@>; }
 DebugOut = <<@>@ M@>(Monad@<M@> m, Stream@<Char@> s) {
   m.return(ToDebug(s));
