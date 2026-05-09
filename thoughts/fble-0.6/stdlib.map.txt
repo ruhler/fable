@@ -2494,3 +2494,18 @@ keep it.
 ---
 
 Done? Done. I think done.
+
+---
+
+I want an easy way to construct a map from a list of key value pairs.
+
+We don't depend on List@ yet for Map@. Do I want to take the dependency, or
+move it to a separate module?
+
+ /Std/Map/Lit% maybe?
+
+Or just have it as /Std/Map%.Entries?
+
+Sigh. Let's put it with /Std/Map% for now.
+
+

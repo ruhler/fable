@@ -24,26 +24,26 @@ Unit@ = /Std/Unit%.Unit@;
 Int@ B = Int|2;
 Int@ C = Int|3;
 
-Map@, Empty, Put .= /Std/Map%.Of(/Std/Int/Data%.Data)<Bool@>;
+Map@, Entry@, Entries .= /Std/Map%.Of(/Std/Int/Data%.Data)<Bool@>;
 Show = /Std/Map/Show%.Show(/Std/Int/Show%.Show);
 
 Test@ Tests = TestSuite(Str|Show, List[
   Test(Str|'empty', (Unit@ _) {
-    Map@ map = Empty;
+    Map@ map = Entries[];
     String@ wnt = Str|'{ }';
     String@ got = ToString(Show(/Std/Bool/Show%.Show, map));
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|'single', (Unit@ _) {
-    Map@ map = Put(Empty, B, False);
+    Map@ map = Entries[Entry@(B, False)];
     String@ wnt = Str|'{ 2 => False; }';
     String@ got = ToString(Show(/Std/Bool/Show%.Show, map));
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|'multi', (Unit@ _) {
-    Map@ map = Put(Put(Empty, B, False), C, True);
+    Map@ map = Entries[Entry@(B, False), Entry@(C, True)];
     String@ wnt = Str|'{ 2 => False; 3 => True; }';
     String@ got = ToString(Show(/Std/Bool/Show%.Show, map));
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
