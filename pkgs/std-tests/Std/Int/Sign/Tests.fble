@@ -1,0 +1,57 @@
+
+Bool@, True, False .= /Std/Bool%;
+Ascii@, OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@, Neg .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+IsZero, IsPositive, IsNegative, Abs .= /Std/Int/Sign%;
+Lazy .= /Std/Lazy%;
+List@ .= /Std/List%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+(List@<Ascii@>, (Int@) { Bool@; }, Int@, Bool@) { Test@; }
+UnaryP = (List@<Ascii@> name, (Int@) { Bool@; } f, Int@ a, Bool@ z) {
+  Test(name, {
+    Unit@ _ := Lazy;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, z, f(a));
+  });
+};
+
+(List@<Ascii@>, (Int@) { Int@; }, Int@, Int@) { Test@; }
+UnaryF = (List@<Ascii@> name, (Int@) { Int@; } f, Int@ a, Int@ z) {
+  Test(name, {
+    Unit@ _ := Lazy;
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, z, f(a));
+  });
+};
+
+Test@ Tests = TestSuite|Sign[
+  TestSuite|IsZero[
+    UnaryP|P(IsZero, Int|1298, False),
+    UnaryP|0(IsZero, Int|0, True),
+    UnaryP|N(IsZero, Neg(Int|1298), False)
+  ],
+
+  TestSuite|IsNegative[
+    UnaryP|P(IsNegative, Int|1298, False),
+    UnaryP|0(IsNegative, Int|0, False),
+    UnaryP|N(IsNegative, Neg(Int|1298), True)
+  ],
+
+  TestSuite|IsPositive[
+    UnaryP|P(IsPositive, Int|1298, True),
+    UnaryP|0(IsPositive, Int|0, False),
+    UnaryP|N(IsPositive, Neg(Int|1298), False)
+  ],
+
+  TestSuite|Abs[
+    UnaryF|P(Abs, Int|1298, Int|1298),
+    UnaryF|0(Abs, Int|0, Int|0),
+    UnaryF|N(Abs, Neg(Int|1298), Int|1298)
+  ]
+];
+
+@(Tests);

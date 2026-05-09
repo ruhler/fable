@@ -33,8 +33,6 @@ Ge = /Std/Int/Cmp%.Ge;
 Min = /Std/Int/Cmp%.Min;
 Max = /Std/Int/Cmp%.Max;
 IOrd = /Std/Int/Cmp%.Cmp;
-IsZero = /Std/Int/Sign%.IsZero;
-Abs = /Std/Int/Sign%.Abs;
 
 Bin = /Std/Int/Lit%.Bin;
 Oct = /Std/Int/Lit%.Oct;
@@ -79,9 +77,6 @@ TOrd = (String@ name, Compared@ a, (Unit@) { Compared@; } b) {
 };
 
 Test@ Tests = TestSuite(Str|Int, List[
-  T(Str|IsZero_0, (Unit@ _) { IsZero(0); }),
-  F(Str|IsZero_3, (Unit@ _) { IsZero(3); }),
-
   F(Str|Lt_4_2, (Unit@ _) { Lt(4, 2); }),
   F(Str|Lt_4_3, (Unit@ _) { Lt(4, 3); }),
   F(Str|Lt_4_4, (Unit@ _) { Lt(4, 4); }),
@@ -148,10 +143,6 @@ Test@ Tests = TestSuite(Str|Int, List[
   TEq(Str|Min_3_0, Int|0, (Unit@ _) { Min(3, 0); }),
   TEq(Str|Max_0_5, Int|5, (Unit@ _) { Max(0, 5); }),
   TEq(Str|Max_3_0, Int|3, (Unit@ _) { Max(3, 0); }),
-
-  TEq(Str|Abs_0, Int|0, (Unit@ _) { Abs(0); }),
-  TEq(Str|Abs_3, Int|3, (Unit@ _) { Abs(3); }),
-  TEq(Str|Abs_m3, Int|3, (Unit@ _) { Abs(Neg(3)); }),
 
   TEq(Str|Sqrt_0_q, Int|0, (Unit@ _) { Sqrt(Int|0).q; }),
   TEq(Str|Sqrt_0_r, Int|0, (Unit@ _) { Sqrt(Int|0).r; }),
