@@ -132,8 +132,7 @@ Tests = TestSuite(Str|'Map')[
       wnt, got);
   }),
 
-  /Core/Map/Eq/Tests%.Tests,
-  /Core/Map/Show/Tests%.Tests
+  /Core/Map/Eq/Tests%.Tests
 ];
 
 @(Tests);

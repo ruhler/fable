@@ -10,6 +10,7 @@ Test@ Tests = TestSuite|Std[
   /Std/Char/Tests%.Tests,
   /Std/Int/Tests%.Tests,
   /Std/List/Tests%.Tests,
+  /Std/Map/Tests%.Tests,
   /Std/Maybe/Tests%.Tests,
   /Std/Random/Tests%.Tests,
   /Std/Stream/Tests%.Tests,
