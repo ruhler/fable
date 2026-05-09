@@ -96,6 +96,9 @@ Things to consider doing for the fble-0.6 release.
 
 * Why don't interpreted cli tests output when running them during build?
  - I have to go to the generated file to see the outputs?
+ - Because we generate the output first, then interpret as a test output.
+   It's slightly awkward to get the dependencies passed directly to the 
+   testsuite helper?
 
 * Remove kinds from let expressions in all the examples in the spec and
   tutorials and everywhere for the new syntax.

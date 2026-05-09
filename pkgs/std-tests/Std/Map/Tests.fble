@@ -1,9 +1,277 @@
 
+Bool@, True, False, Not, And, Xor .= /Std/Bool%;
+Char@ .= /Std/Char%;
 OnAscii .= /Std/Char/Ascii%;
+Format .= /Std/Char/Ascii/Stream%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+IsZero, IsPositive .= /Std/Int/Sign%;
+Lazy .= /Std/Lazy%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Stream@, Return .= /Std/Stream%;
+AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
 Test@ .= /Std/Test%;
 TestSuite = OnAscii(/Std/Test%.TestSuite);
+Test = OnAscii(/Std/Test%.Test);
+Unit@ .= /Std/Unit%;
+
+Map@, Entry@, Entries, IsEmpty, Get, Put, Update, Remove, Replace,
+  ForEach, ReplaceAll, Map, Keep, Omit, Meet, Join, Diff
+  .= /Std/Map%.Of(/Std/Int/Data%.Data)<Bool@>;
+Eq = /Std/Map/Eq%.Eq(/Std/Int/Eq%.Eq, /Std/Bool/Eq%.Eq);
+Show = /Std/Map/Show%.Show(/Std/Int/Show%.Show, /Std/Bool/Show%.Show);
+
+Int@ A = Int|0;
+Int@ B = Int|1;
+Int@ C = Int|2;
 
 Test@ Tests = TestSuite|Map[
+  TestSuite|IsEmpty[
+    Test|T({
+      Unit@ _ := Lazy;
+      Map@ map = Entries[];
+      Bool@ got = IsEmpty(map);
+      Bool@ wnt = True;
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|F({
+      Unit@ _ := Lazy;
+      Map@ map = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, True)];
+      Bool@ got = IsEmpty(map);
+      Bool@ wnt = False;
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    })
+  ],
+
+  TestSuite|Get[
+    Test|Empty({
+      Unit@ _ := Lazy;
+      Map@ map = Entries[];
+      Maybe@<Bool@> got = Get(map, B);
+      Maybe@<Bool@> wnt = Nothing<Bool@>;
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show), wnt, got);
+    }),
+
+    Test|Present({
+      Unit@ _ := Lazy;
+      Map@ map = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, True)];
+      Maybe@<Bool@> got = Get(map, B);
+      Maybe@<Bool@> wnt = Just(False);
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show), wnt, got);
+    }),
+
+    Test|Absent({
+      Unit@ _ := Lazy;
+      Map@ map = Entries[Entry@(A, True), Entry@(C, True)];
+      Maybe@<Bool@> got = Get(map, B);
+      Maybe@<Bool@> wnt = Nothing<Bool@>;
+      AssertEquals(
+        /Std/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
+        /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show), wnt, got);
+    })
+  ],
+
+  TestSuite|Put[
+    Test|Absent({
+      Unit@ _ := Lazy;
+      Map@ map = Entries[Entry@(A, True), Entry@(C, True)];
+      Map@ got = Put(map, B, False);
+      Map@ wnt = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, True)];
+      AssertEquals(Eq, Show, wnt, got);
+    }),
+
+    Test|Present({
+      Unit@ _ := Lazy;
+      Map@ map = Entries[Entry@(A, True), Entry@(B, True), Entry@(C, True)];
+      Map@ got = Put(map, B, False);
+      Map@ wnt = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, True)];
+      AssertEquals(Eq, Show, wnt, got);
+    })
+  ],
+
+  TestSuite|Update[
+    Test|Absent({
+      Unit@ _ := Lazy;
+      Map@ map = Entries[Entry@(A, True), Entry@(C, True)];
+      Map@ got = {
+        Maybe@<Bool@> value := Update(map, B);
+        value.?(just: True, nothing: False);
+      };
+      Map@ wnt = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, True)];
+      AssertEquals(Eq, Show, wnt, got);
+    }),
+
+    Test|Present({
+      Unit@ _ := Lazy;
+      Map@ map = Entries[Entry@(A, True), Entry@(B, True), Entry@(C, True)];
+      Map@ got = {
+        Maybe@<Bool@> value := Update(map, B);
+        value.?(just: Not(value.just), nothing: True);
+      };
+      Map@ wnt = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, True)];
+      AssertEquals(Eq, Show, wnt, got);
+    })
+  ],
+
+  TestSuite|Remove[
+    Test|Present({
+      Unit@ _ := Lazy;
+      Map@ map = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, True)];
+      Map@ got = Remove(map, B);
+      Map@ wnt = Entries[Entry@(A, True), Entry@(C, True)];
+      AssertEquals(Eq, Show, wnt, got);
+    }),
+
+    Test|Absent({
+      Unit@ _ := Lazy;
+      Map@ map = Entries[Entry@(A, True), Entry@(C, True)];
+      Map@ got = Remove(map, B);
+      Map@ wnt = Entries[Entry@(A, True), Entry@(C, True)];
+      AssertEquals(Eq, Show, wnt, got);
+    })
+  ],
+
+  TestSuite|Replace[
+    TestSuite|Present[
+      Test|Keep({
+        Unit@ _ := Lazy;
+        Map@ map = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, True)];
+        Map@ got = {
+          Bool@ value := Replace(map, B);
+          Just(Not(value));
+        };
+
+        Map@ wnt = Entries[Entry@(A, True), Entry@(B, True), Entry@(C, True)];
+        AssertEquals(Eq, Show, wnt, got);
+      }),
+
+      Test|Remove({
+        Unit@ _ := Lazy;
+        Map@ map = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, True)];
+        Map@ got = {
+          Bool@ _ := Replace(map, B);
+          Nothing<Bool@>;
+        };
+
+        Map@ wnt = Entries[Entry@(A, True), Entry@(C, True)];
+        AssertEquals(Eq, Show, wnt, got);
+      })
+    ],
+
+    Test|Absent({
+      Unit@ _ := Lazy;
+      Map@ map = Entries[Entry@(A, True), Entry@(C, True)];
+      Map@ got = {
+        Bool@ value := Replace(map, B);
+        Just(Not(value));
+      };
+
+      Map@ wnt = Entries[Entry@(A, True), Entry@(C, True)];
+      AssertEquals(Eq, Show, wnt, got);
+    })
+  ],
+
+  Test|ForEach({
+    Unit@ _ := Lazy;
+    Map@ map = Entries[Entry@(Int|0, True), Entry@(Int|1, False), Entry@(Int|2, True)];
+    Stream@<Char@> got = ForEach(map, Return<Char@>,
+      (Int@ key, Bool@ value, Stream@<Char@> tail) {
+        Format|'%s:%s,%s'[
+          /Std/Int/Show%.Show(key),
+          /Std/Bool/Show%.Show(value),
+          tail];
+      });
+    AssertStream|'2:True,1:False,0:True,'(got);
+  }),
+
+  Test|ReplaceAll({
+    Unit@ _ := Lazy;
+    Map@ map = Entries[Entry@(Int|0, True), Entry@(Int|1, False), Entry@(Int|2, True)];
+    Map@ got = {
+      Int@ key, Bool@ value := ReplaceAll(map);
+      IsZero(key).?(true: Nothing<Bool@>);
+      Just(Not(value));
+    };
+    Map@ wnt = Entries[Entry@(Int|1, True), Entry@(Int|2, False)];
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test|Map({
+    Unit@ _ := Lazy;
+    Map@ map = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, True)];
+    Map@ got = {
+      Int@ _, Bool@ value := Map(map);
+      Not(value);
+    };
+    Map@ wnt = Entries[Entry@(A, False), Entry@(B, True), Entry@(C, False)];
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test|Keep({
+    Unit@ _ := Lazy;
+    Map@ map = Entries[Entry@(Int|0, True), Entry@(Int|1, False), Entry@(Int|2, True)];
+    Map@ got = {
+      Int@ key, Bool@ _ := Keep(map);
+      IsPositive(key);
+    };
+    Map@ wnt = Entries[Entry@(Int|1, False), Entry@(Int|2, True)];
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test|Omit({
+    Unit@ _ := Lazy;
+    Map@ map = Entries[Entry@(Int|0, True), Entry@(Int|1, False), Entry@(Int|2, True)];
+    Map@ got = {
+      Int@ key, Bool@ _ := Omit(map);
+      IsPositive(key);
+    };
+    Map@ wnt = Entries[Entry@(Int|0, True)];
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test|Meet({
+    Unit@ _ := Lazy;
+    Map@ a = Entries[Entry@(A, True), Entry@(B, True), Entry@(C, True)];
+    Map@ b = Entries[Entry@(B, True), Entry@(C, False)];
+    Map@ got = {
+      Int@ _, Bool@ va, Bool@ vb := Meet(a, b);
+      And(va, vb).?(true: Just(False));
+      Nothing<Bool@>;
+    };
+    Map@ wnt = Entries[Entry@(B, False)];
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test|Join({
+    Unit@ _ := Lazy;
+    Map@ a = Entries[Entry@(B, True), Entry@(C, True)];
+    Map@ b = Entries[Entry@(B, True), Entry@(A, False)];
+    Map@ got = {
+      Int@ _, Bool@ va, Bool@ vb := Join(a, b);
+      Xor(va, vb);
+    };
+    Map@ wnt = Entries[Entry@(A, False), Entry@(B, False), Entry@(C, True)];
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test|Diff({
+    Unit@ _ := Lazy;
+    Map@ a = Entries[Entry@(A, False), Entry@(B, True)];
+    Map@ b = Entries[Entry@(B, True), Entry@(C, False)];
+    Map@ got = {
+      Int@ _, Bool@ va, Bool@ vb := Diff(a, b);
+      Just(Xor(va, vb));
+    };
+    Map@ wnt = Entries[Entry@(A, False), Entry@(B, False)];
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
   /Std/Map/Eq/Tests%.Tests,
   /Std/Map/Show/Tests%.Tests
 ];
