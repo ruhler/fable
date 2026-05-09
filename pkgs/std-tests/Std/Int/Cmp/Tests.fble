@@ -1,0 +1,174 @@
+
+Bool@, True, False .= /Std/Bool%;
+Ascii@, OnAscii .= /Std/Char/Ascii%;
+Compared@, Less, Greater, Equal .= /Std/Cmp%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@, Neg .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Lt, Le, Gt, Ge, Min, Max, Cmp .= /Std/Int/Cmp%;
+Lazy .= /Std/Lazy%;
+List@ .= /Std/List%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+(List@<Ascii@>, (Int@, Int@) { Bool@; }, Int@, Int@, Bool@) { Test@; }
+BinaryP = (List@<Ascii@> name, (Int@, Int@) { Bool@; } f, Int@ a, Int@ b, Bool@ z) {
+  Test(name, {
+    Unit@ _ := Lazy;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, z, f(a, b));
+  });
+};
+
+(List@<Ascii@>, (Int@, Int@) { Int@; }, Int@, Int@, Int@) { Test@; }
+BinaryF = (List@<Ascii@> name, (Int@, Int@) { Int@; } f, Int@ a, Int@ b, Int@ z) {
+  Test(name, {
+    Unit@ _ := Lazy;
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, z, f(a, b));
+  });
+};
+
+(List@<Ascii@>, (Int@, Int@) { Compared@; }, Int@, Int@, Compared@) { Test@; }
+BinaryC = (List@<Ascii@> name, (Int@, Int@) { Compared@; } f, Int@ a, Int@ b, Compared@ z) {
+  Test(name, {
+    Unit@ _ := Lazy;
+    AssertEquals(/Std/Cmp/Eq%.Eq, /Std/Cmp/Show%.Show, z, f(a, b));
+  });
+};
+
+Test@ Tests = TestSuite|Cmp[
+  TestSuite|Lt[
+    TestSuite|Even[
+      BinaryP|2(Lt, Int|4, Int|2, False),
+      BinaryP|3(Lt, Int|4, Int|3, False),
+      BinaryP|4(Lt, Int|4, Int|4, False),
+      BinaryP|5(Lt, Int|4, Int|5, True),
+      BinaryP|6(Lt, Int|4, Int|6, True)
+    ],
+
+    TestSuite|Odd[
+      BinaryP|3(Lt, Int|5, Int|3, False),
+      BinaryP|4(Lt, Int|5, Int|4, False),
+      BinaryP|5(Lt, Int|5, Int|5, False),
+      BinaryP|6(Lt, Int|5, Int|6, True),
+      BinaryP|7(Lt, Int|5, Int|7, True)
+    ],
+
+    TestSuite|Neg[
+      BinaryP|F(Lt, Neg(Int|5), Neg(Int|7), False),
+      BinaryP|T(Lt, Neg(Int|7), Neg(Int|5), True)
+    ],
+
+    TestSuite|Zero[
+      BinaryP|0P(Lt, Int|0, Int|7, True),
+      BinaryP|P0(Lt, Int|7, Int|0, False),
+      BinaryP|0N(Lt, Int|0, Neg(Int|7), False),
+      BinaryP|N0(Lt, Neg(Int|7), Int|0, True)
+    ]
+  ],
+
+  TestSuite|Le[
+    TestSuite|Even[
+      BinaryP|2(Le, Int|4, Int|2, False),
+      BinaryP|3(Le, Int|4, Int|3, False),
+      BinaryP|4(Le, Int|4, Int|4, True),
+      BinaryP|5(Le, Int|4, Int|5, True),
+      BinaryP|6(Le, Int|4, Int|6, True)
+    ],
+
+    TestSuite|Odd[
+      BinaryP|3(Le, Int|5, Int|3, False),
+      BinaryP|4(Le, Int|5, Int|4, False),
+      BinaryP|5(Le, Int|5, Int|5, True),
+      BinaryP|6(Le, Int|5, Int|6, True),
+      BinaryP|7(Le, Int|5, Int|7, True)
+    ]
+  ],
+
+  TestSuite|Gt[
+    TestSuite|Even[
+      BinaryP|2(Gt, Int|4, Int|2, True),
+      BinaryP|3(Gt, Int|4, Int|3, True),
+      BinaryP|4(Gt, Int|4, Int|4, False),
+      BinaryP|5(Gt, Int|4, Int|5, False),
+      BinaryP|6(Gt, Int|4, Int|6, False)
+    ],
+
+    TestSuite|Odd[
+      BinaryP|3(Gt, Int|5, Int|3, True),
+      BinaryP|4(Gt, Int|5, Int|4, True),
+      BinaryP|5(Gt, Int|5, Int|5, False),
+      BinaryP|6(Gt, Int|5, Int|6, False),
+      BinaryP|7(Gt, Int|5, Int|7, False)
+    ],
+
+    TestSuite|Neg[
+      BinaryP|T(Gt, Neg(Int|5), Neg(Int|7), True),
+      BinaryP|F(Gt, Neg(Int|7), Neg(Int|5), False)
+    ]
+  ],
+
+  TestSuite|Ge[
+    TestSuite|Even[
+      BinaryP|2(Ge, Int|4, Int|2, True),
+      BinaryP|3(Ge, Int|4, Int|3, True),
+      BinaryP|4(Ge, Int|4, Int|4, True),
+      BinaryP|5(Ge, Int|4, Int|5, False),
+      BinaryP|6(Ge, Int|4, Int|6, False)
+    ],
+
+    TestSuite|Odd[
+      BinaryP|3(Ge, Int|5, Int|3, True),
+      BinaryP|4(Ge, Int|5, Int|4, True),
+      BinaryP|5(Ge, Int|5, Int|5, True),
+      BinaryP|6(Ge, Int|5, Int|6, False),
+      BinaryP|7(Ge, Int|5, Int|7, False)
+    ],
+
+    TestSuite|Neg[
+      BinaryP|T(Ge, Neg(Int|5), Neg(Int|5), True),
+      BinaryP|F(Ge, Neg(Int|7), Neg(Int|5), False)
+    ]
+  ],
+
+  TestSuite|Min[
+    BinaryF|0P(Min, Int|0, Int|5, Int|0),
+    BinaryF|pP(Min, Int|3, Int|5, Int|3),
+    BinaryF|P0(Min, Int|5, Int|0, Int|0),
+    BinaryF|Pp(Min, Int|5, Int|3, Int|3),
+    BinaryF|00(Min, Int|0, Int|0, Int|0),
+    BinaryF|0N(Min, Int|0, Neg(Int|5), Neg(Int|5)),
+    BinaryF|N0(Min, Neg(Int|5), Int|0, Neg(Int|5)),
+    BinaryF|Nn(Min, Neg(Int|5), Neg(Int|3), Neg(Int|5)),
+    BinaryF|nN(Min, Neg(Int|3), Neg(Int|5), Neg(Int|5))
+  ],
+
+  TestSuite|Max[
+    BinaryF|0P(Max, Int|0, Int|5, Int|5),
+    BinaryF|pP(Max, Int|3, Int|5, Int|5),
+    BinaryF|P0(Max, Int|5, Int|0, Int|5),
+    BinaryF|Pp(Max, Int|5, Int|3, Int|5),
+    BinaryF|00(Max, Int|0, Int|0, Int|0),
+    BinaryF|0N(Max, Int|0, Neg(Int|5), Int|0),
+    BinaryF|N0(Max, Neg(Int|5), Int|0, Int|0),
+    BinaryF|Nn(Max, Neg(Int|5), Neg(Int|3), Neg(Int|3)),
+    BinaryF|nN(Max, Neg(Int|3), Neg(Int|5), Neg(Int|3))
+  ],
+
+  TestSuite|Cmp[
+    BinaryC|pP(Cmp, Int|3, Int|5, Less),
+    BinaryC|PP(Cmp, Int|5, Int|5, Equal),
+    BinaryC|Pp(Cmp, Int|5, Int|3, Greater),
+    BinaryC|0P(Cmp, Int|0, Int|5, Less),
+    BinaryC|00(Cmp, Int|0, Int|0, Equal),
+    BinaryC|P0(Cmp, Int|5, Int|0, Greater),
+    BinaryC|nN(Cmp, Neg(Int|3), Neg(Int|5), Greater),
+    BinaryC|NN(Cmp, Neg(Int|5), Neg(Int|5), Equal),
+    BinaryC|Nn(Cmp, Neg(Int|5), Neg(Int|3), Less),
+    BinaryC|0N(Cmp, Int|0, Neg(Int|5), Greater),
+    BinaryC|N0(Cmp, Neg(Int|5), Int|0, Less)
+  ]
+];
+
+@(Tests);

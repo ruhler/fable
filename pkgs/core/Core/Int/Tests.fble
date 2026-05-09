@@ -1,66 +1,25 @@
 
-Bool@ = /Std/Bool%.Bool@;
-Not = /Std/Bool%.Not;
-
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-Ord = /Std/Cmp%;
-Compared@ = Ord.Compared@;
 
 List = /Std/List%.List;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
-String = /Std/Char/Ascii/Stream%.String;
 
 Test@ = /Std/Test%.Test@;
 Test = /Std/Test%.Test;
 TestSuite = /Std/Test%.TestSuite;
-Pass = /Std/Test%.Pass;
-Fail = /Std/Test%.Fail;
 
 Unit@ = /Std/Unit%.Unit@;
 
 Int@ = /Std/Int%.Int@;
-Neg = /Std/Int%.Neg;
 
 Sqrt = /Std/Int/Sqrt%.Sqrt;
-
-Lt = /Std/Int/Cmp%.Lt;
-Le = /Std/Int/Cmp%.Le;
-Gt = /Std/Int/Cmp%.Gt;
-Ge = /Std/Int/Cmp%.Ge;
-Min = /Std/Int/Cmp%.Min;
-Max = /Std/Int/Cmp%.Max;
-IOrd = /Std/Int/Cmp%.Cmp;
 
 Bin = /Std/Int/Lit%.Bin;
 Oct = /Std/Int/Lit%.Oct;
 Int = /Std/Int/Lit%.Int;
 Hex = /Std/Int/Lit%.Hex;
-
-Int@ 0 = Int|0;
-Int@ 1 = Int|1;
-Int@ 2 = Int|2;
-Int@ 3 = Int|3;
-Int@ 4 = Int|4;
-Int@ 5 = Int|5;
-Int@ 6 = Int|6;
-Int@ 7 = Int|7;
-
-(String@, (Unit@) { Bool@; }) { Test@; }
-T = (String@ name, (Unit@) { Bool@; } p) {
-  Test(name, (Unit@ u) {
-    p(u).?(true: Pass, : Fail(String|failed));
-  });
-};
-
-(String@, (Unit@) { Bool@; }) { Test@; }
-F = (String@ name, (Unit@) { Bool@; } p) {
-  Test(name, (Unit@ u) {
-    p(u).?(false: Pass, : Fail(String|failed));
-  });
-};
 
 (String@, Int@, (Unit@) { Int@; }) { Test@; }
 TEq = (String@ name, Int@ a, (Unit@) { Int@; } b) {
@@ -69,99 +28,13 @@ TEq = (String@ name, Int@ a, (Unit@) { Int@; } b) {
   });
 };
 
-(String@, Compared@, (Unit@) { Compared@; }) { Test@; }
-TOrd = (String@ name, Compared@ a, (Unit@) { Compared@; } b) {
-  Test(name, (Unit@ u) {
-    AssertEquals(/Std/Cmp/Eq%.Eq, /Std/Cmp/Show%.Show, a, b(u));
-  });
-};
-
 Test@ Tests = TestSuite(Str|Int, List[
-  F(Str|Lt_4_2, (Unit@ _) { Lt(4, 2); }),
-  F(Str|Lt_4_3, (Unit@ _) { Lt(4, 3); }),
-  F(Str|Lt_4_4, (Unit@ _) { Lt(4, 4); }),
-  T(Str|Lt_4_5, (Unit@ _) { Lt(4, 5); }),
-  T(Str|Lt_4_6, (Unit@ _) { Lt(4, 6); }),
-
-  F(Str|Lt_5_3, (Unit@ _) { Lt(5, 3); }),
-  F(Str|Lt_5_4, (Unit@ _) { Lt(5, 4); }),
-  F(Str|Lt_5_5, (Unit@ _) { Lt(5, 5); }),
-  T(Str|Lt_5_6, (Unit@ _) { Lt(5, 6); }),
-  T(Str|Lt_5_7, (Unit@ _) { Lt(5, 7); }),
-
-  T(Str|Lt_m5_m7, (Unit@ _) { Not(Lt(Neg(5), Neg(7))); }),
-  T(Str|Lt_m7_m5, (Unit@ _) { Lt(Neg(7), Neg(5)); }),
-
-  T(Str|Lt_0_7, (Unit@ _) { Lt(0, 7); }),
-  T(Str|Lt_7_0, (Unit@ _) { Not(Lt(7, 0)); }),
-  T(Str|Lt_0_m7, (Unit@ _) { Not(Lt(0, Neg(7))); }),
-  T(Str|Lt_m7_0, (Unit@ _) { Lt(Neg(7), 0); }),
-
-  T(Str|Le_4_2, (Unit@ _) { Not(Le(4, 2)); }),
-  T(Str|Le_4_3, (Unit@ _) { Not(Le(4, 3)); }),
-  T(Str|Le_4_4, (Unit@ _) { Le(4, 4); }),
-  T(Str|Le_4_5, (Unit@ _) { Le(4, 5); }),
-  T(Str|Le_4_6, (Unit@ _) { Le(4, 6); }),
-
-  T(Str|Le_5_3, (Unit@ _) { Not(Le(5, 3)); }),
-  T(Str|Le_5_4, (Unit@ _) { Not(Le(5, 4)); }),
-  T(Str|Le_5_5, (Unit@ _) { Le(5, 5); }),
-  T(Str|Le_5_6, (Unit@ _) { Le(5, 6); }),
-  T(Str|Le_5_7, (Unit@ _) { Le(5, 7); }),
-
-  T(Str|Gt_4_2, (Unit@ _) { Gt(4, 2); }),
-  T(Str|Gt_4_3, (Unit@ _) { Gt(4, 3); }),
-  T(Str|Gt_4_4, (Unit@ _) { Not(Gt(4, 4)); }),
-  T(Str|Gt_4_5, (Unit@ _) { Not(Gt(4, 5)); }),
-  T(Str|Gt_4_6, (Unit@ _) { Not(Gt(4, 6)); }),
-
-  T(Str|Gt_5_3, (Unit@ _) { Gt(5, 3); }),
-  T(Str|Gt_5_4, (Unit@ _) { Gt(5, 4); }),
-  T(Str|Gt_5_5, (Unit@ _) { Not(Gt(5, 5)); }),
-  T(Str|Gt_5_6, (Unit@ _) { Not(Gt(5, 6)); }),
-  T(Str|Gt_5_7, (Unit@ _) { Not(Gt(5, 7)); }),
-
-  T(Str|Gt_m5_m7, (Unit@ _) { Gt(Neg(5), Neg(7)); }),
-  T(Str|Gt_m7_m5, (Unit@ _) { Not(Gt(Neg(7), Neg(5))); }),
-
-  T(Str|Ge_4_2, (Unit@ _) { Ge(4, 2); }),
-  T(Str|Ge_4_3, (Unit@ _) { Ge(4, 3); }),
-  T(Str|Ge_4_4, (Unit@ _) { Ge(4, 4); }),
-  T(Str|Ge_4_5, (Unit@ _) { Not(Ge(4, 5)); }),
-  T(Str|Ge_4_6, (Unit@ _) { Not(Ge(4, 6)); }),
-
-  T(Str|Ge_5_3, (Unit@ _) { Ge(5, 3); }),
-  T(Str|Ge_5_4, (Unit@ _) { Ge(5, 4); }),
-  T(Str|Ge_5_5, (Unit@ _) { Ge(5, 5); }),
-  T(Str|Ge_5_6, (Unit@ _) { Not(Ge(5, 6)); }),
-  T(Str|Ge_5_7, (Unit@ _) { Not(Ge(5, 7)); }),
-
-  T(Str|Ge_m5_0, (Unit@ _) { Not(Ge(Neg(5), 0)); }),
-  T(Str|Ge_m5_1, (Unit@ _) { Not(Ge(Neg(5), 1)); }),
-
-  TEq(Str|Min_0_5, Int|0, (Unit@ _) { Min(0, 5); }),
-  TEq(Str|Min_3_0, Int|0, (Unit@ _) { Min(3, 0); }),
-  TEq(Str|Max_0_5, Int|5, (Unit@ _) { Max(0, 5); }),
-  TEq(Str|Max_3_0, Int|3, (Unit@ _) { Max(3, 0); }),
-
   TEq(Str|Sqrt_0_q, Int|0, (Unit@ _) { Sqrt(Int|0).q; }),
   TEq(Str|Sqrt_0_r, Int|0, (Unit@ _) { Sqrt(Int|0).r; }),
   TEq(Str|Sqrt_29_q, Int|5, (Unit@ _) { Sqrt(Int|29).q; }),
   TEq(Str|Sqrt_29_r, Int|4, (Unit@ _) { Sqrt(Int|29).r; }),
   TEq(Str|Sqrt_12345_q, Int|111, (Unit@ _) { Sqrt(Int|12345).q; }),
   TEq(Str|Sqrt_12345_r, Int|24, (Unit@ _) { Sqrt(Int|12345).r; }),
-
-  TOrd(Str|Ord_3_5, Ord.Less, (Unit@ _) { IOrd(3, 5); }),
-  TOrd(Str|Ord_5_3, Ord.Greater, (Unit@ _) { IOrd(5, 3); }),
-  TOrd(Str|Ord_5_5, Ord.Equal, (Unit@ _) { IOrd(5, 5); }),
-  TOrd(Str|Ord_0_5, Ord.Less, (Unit@ _) { IOrd(0, 5); }),
-  TOrd(Str|Ord_5_0, Ord.Greater, (Unit@ _) { IOrd(5, 0); }),
-  TOrd(Str|Ord_0_0, Ord.Equal, (Unit@ _) { IOrd(0, 0); }),
-  TOrd(Str|Ord_3_m5, Ord.Greater, (Unit@ _) { IOrd(3, Neg(5)); }),
-  TOrd(Str|Ord_m5_3, Ord.Less, (Unit@ _) { IOrd(Neg(5), 3); }),
-  TOrd(Str|Ord_m5_m5, Ord.Equal, (Unit@ _) { IOrd(Neg(5), Neg(5)); }),
-  TOrd(Str|Ord_0_m5, Ord.Greater, (Unit@ _) { IOrd(0, Neg(5)); }),
-  TOrd(Str|Ord_m5_0, Ord.Less, (Unit@ _) { IOrd(Neg(5), 0); }),
 
   TEq(Str|Bin, Int|151, (Unit@ _) { Bin|1001_0111; }),
   TEq(Str|Oct, Int|151, (Unit@ _) { Oct|227; }),
