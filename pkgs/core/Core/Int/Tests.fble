@@ -16,10 +16,7 @@ Int@ = /Std/Int%.Int@;
 
 Sqrt = /Std/Int/Sqrt%.Sqrt;
 
-Bin = /Std/Int/Lit%.Bin;
-Oct = /Std/Int/Lit%.Oct;
 Int = /Std/Int/Lit%.Int;
-Hex = /Std/Int/Lit%.Hex;
 
 (String@, Int@, (Unit@) { Int@; }) { Test@; }
 TEq = (String@ name, Int@ a, (Unit@) { Int@; } b) {
@@ -34,12 +31,7 @@ Test@ Tests = TestSuite(Str|Int, List[
   TEq(Str|Sqrt_29_q, Int|5, (Unit@ _) { Sqrt(Int|29).q; }),
   TEq(Str|Sqrt_29_r, Int|4, (Unit@ _) { Sqrt(Int|29).r; }),
   TEq(Str|Sqrt_12345_q, Int|111, (Unit@ _) { Sqrt(Int|12345).q; }),
-  TEq(Str|Sqrt_12345_r, Int|24, (Unit@ _) { Sqrt(Int|12345).r; }),
-
-  TEq(Str|Bin, Int|151, (Unit@ _) { Bin|1001_0111; }),
-  TEq(Str|Oct, Int|151, (Unit@ _) { Oct|227; }),
-  TEq(Str|Int, Int|151, (Unit@ _) { Int|151; }),
-  TEq(Str|Hex, Int|151, (Unit@ _) { Hex|00_97; })
+  TEq(Str|Sqrt_12345_r, Int|24, (Unit@ _) { Sqrt(Int|12345).r; })
 ]);
 
 @(Tests);

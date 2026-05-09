@@ -1,0 +1,42 @@
+
+OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@ .= /Std/Int%;
+Bin, Oct, Int, Hex .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Test@ Tests = TestSuite|Lit[
+  Test|Bin({
+    Unit@ _ := Lazy;
+    Int@ got = Bin|1001_0111;
+    Int@ wnt = Int|151;
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+  }),
+
+  Test|Oct({
+    Unit@ _ := Lazy;
+    Int@ got = Oct|227;
+    Int@ wnt = Int|151;
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+  }),
+
+  Test|Int({
+    Unit@ _ := Lazy;
+    Int@ got = Int|151;
+    Int@ wnt = Int|151;
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+  }),
+
+  Test|Hex({
+    Unit@ _ := Lazy;
+    Int@ got = Hex|00_97;
+    Int@ wnt = Int|151;
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+  })
+];
+
+@(Tests);
