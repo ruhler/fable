@@ -1,0 +1,86 @@
+
+Bool@, True, False .= /Std/Bool%;
+OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Map@, Entry@, Entries .= /Std/Map%.Of(/Std/Int/Data%.Data)<Bool@>;
+Eq = /Std/Map/Eq%.Eq(/Std/Int/Eq%.Eq, /Std/Bool/Eq%.Eq);
+
+Int@ A = Int|0;
+Int@ B = Int|1;
+Int@ C = Int|2;
+
+Test@ Tests = TestSuite|Eq[
+  Test|Empty({
+    Unit@ _ := Lazy;
+    Map@ a = Entries[];
+    Map@ b = Entries[];
+    Bool@ wnt = True;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test|NonEmpty({
+    Unit@ _ := Lazy;
+    Map@ a = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, False)];
+    Map@ b = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, False)];
+    Bool@ wnt = True;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test|EmptyAndNot({
+    Unit@ _ := Lazy;
+    Map@ a = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, False)];
+    Map@ b = Entries[];
+    Bool@ wnt = False;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test|Reordered({
+    Unit@ _ := Lazy;
+    Map@ a = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, False)];
+    Map@ b = Entries[Entry@(C, False), Entry@(A, True), Entry@(B, False)];
+    Bool@ wnt = True;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+
+  Test|DiffValue({
+    Unit@ _ := Lazy;
+    Map@ a = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, False)];
+    Map@ b = Entries[Entry@(A, True), Entry@(B, True), Entry@(C, False)];
+    Bool@ wnt = False;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test|DiffKey({
+    Unit@ _ := Lazy;
+    Map@ a = Entries[Entry@(A, True), Entry@(B, False)];
+    Map@ b = Entries[Entry@(A, True), Entry@(C, False)];
+    Bool@ wnt = False;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test|SubMap({
+    Unit@ _ := Lazy;
+    Map@ a = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, False)];
+    Map@ b = Entries[Entry@(A, True), Entry@(B, False)];
+    Bool@ wnt = False;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  })
+];
+
+@(Tests);

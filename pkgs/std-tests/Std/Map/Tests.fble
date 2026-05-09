@@ -4,6 +4,7 @@ Test@ .= /Std/Test%;
 TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Test@ Tests = TestSuite|Map[
+  /Std/Map/Eq/Tests%.Tests,
   /Std/Map/Show/Tests%.Tests
 ];
 
