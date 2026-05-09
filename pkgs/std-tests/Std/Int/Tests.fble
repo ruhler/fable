@@ -141,7 +141,8 @@ Test@ Tests = TestSuite|Int[
   /Std/Int/Lit/Tests%.Tests,
   /Std/Int/Parse/Tests%.Tests,
   /Std/Int/Show/Tests%.Tests,
-  /Std/Int/Sign/Tests%.Tests
+  /Std/Int/Sign/Tests%.Tests,
+  /Std/Int/Sqrt/Tests%.Tests
 ];
 
 @(Tests);

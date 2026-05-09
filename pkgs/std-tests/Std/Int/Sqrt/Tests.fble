@@ -1,0 +1,36 @@
+
+Ascii@, OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Sqrt .= /Std/Int/Sqrt%;
+Lazy .= /Std/Lazy%;
+List@ .= /Std/List%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+# Test the various ways of calling sqrt for the given arguments.
+(List@<Ascii@>, Int@, Int@, Int@) { Test@; }
+SqrtTest = (List@<Ascii@> name, Int@ a, Int@ q, Int@ r) {
+  TestSuite(name)[
+    Test|Q({
+      Unit@ _ := Lazy;
+      AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, q, Sqrt(a).q);
+    }),
+
+    Test|R({
+      Unit@ _ := Lazy;
+      AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, r, Sqrt(a).r);
+    })
+  ];
+};
+
+Test@ Tests = TestSuite|Sqrt[
+  SqrtTest|0(Int|0, Int|0, Int|0),
+  SqrtTest|29(Int|29, Int|5, Int|4),
+  SqrtTest|12345(Int|12345, Int|111, Int|24)
+];
+
+@(Tests);
