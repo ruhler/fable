@@ -1,9 +1,176 @@
 
+Bool@, True, False .= /Std/Bool%;
 OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+List@, List, Items .= /Std/List%;
 Test@ .= /Std/Test%;
 TestSuite = OnAscii(/Std/Test%.TestSuite);
+Test = OnAscii(/Std/Test%.Test);
+Unit@ .= /Std/Unit%;
+
+Set@, Set, IsEmpty, Has, Add, Remove, ForEach, And, Or, Diff,
+  Keep, Omit .= /Std/Set%.Of(/Std/Int/Data%.Data);
+Eq = /Std/Set/Eq%.Eq(/Std/Int/Eq%.Eq);
+Show = /Std/Set/Show%.Show(/Std/Int/Show%.Show);
+
+Int@ A = Int|0;
+Int@ B = Int|1;
+Int@ C = Int|2;
 
 Test@ Tests = TestSuite|Set[
+  TestSuite|IsEmpty[
+    Test|T({
+      Unit@ _ := Lazy;
+      Set@ set = Set[];
+      Bool@ got = IsEmpty(set);
+      Bool@ wnt = True;
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|F({
+      Unit@ _ := Lazy;
+      Set@ set = Set[A, B, C];
+      Bool@ got = IsEmpty(set);
+      Bool@ wnt = False;
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    })
+  ],
+
+  TestSuite|Has[
+    Test|E({
+      Unit@ _ := Lazy;
+      Set@ set = Set[];
+      Bool@ got = Has(set, A);
+      Bool@ wnt = False;
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|T({
+      Unit@ _ := Lazy;
+      Set@ set = Set[A, B];
+      Bool@ got = Has(set, A);
+      Bool@ wnt = True;
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|F({
+      Unit@ _ := Lazy;
+      Set@ set = Set[A, B];
+      Bool@ got = Has(set, C);
+      Bool@ wnt = False;
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    })
+  ],
+
+  TestSuite|Add[
+    Test|Empty({
+      Unit@ _ := Lazy;
+      Set@ set = Set[];
+      Set@ got = Add(set, A);
+      Set@ wnt = Set[A];
+      AssertEquals(Eq, Show, wnt, got);
+    }),
+
+    Test|Absent({
+      Unit@ _ := Lazy;
+      Set@ set = Set[A, B];
+      Set@ got = Add(set, C);
+      Set@ wnt = Set[A, B, C];
+      AssertEquals(Eq, Show, wnt, got);
+    }),
+
+    Test|Present({
+      Unit@ _ := Lazy;
+      Set@ set = Set[A, B];
+      Set@ got = Add(set, B);
+      Set@ wnt = Set[A, B];
+      AssertEquals(Eq, Show, wnt, got);
+    })
+  ],
+
+  TestSuite|Remove[
+    Test|Empty({
+      Unit@ _ := Lazy;
+      Set@ set = Set[];
+      Set@ got = Remove(set, A);
+      Set@ wnt = Set[];
+      AssertEquals(Eq, Show, wnt, got);
+    }),
+
+    Test|Present({
+      Unit@ _ := Lazy;
+      Set@ set = Set[A, B];
+      Set@ got = Remove(set, B);
+      Set@ wnt = Set[A];
+      AssertEquals(Eq, Show, wnt, got);
+    }),
+
+    Test|Absent({
+      Unit@ _ := Lazy;
+      Set@ set = Set[A, B];
+      Set@ got = Remove(set, C);
+      Set@ wnt = Set[A, B];
+      AssertEquals(Eq, Show, wnt, got);
+    })
+  ],
+
+  Test|ForEach({
+    Unit@ _ := Lazy;
+    Set@ set = Set[B, A, C];
+    List@<Int@> wnt = List[C, B, A]; # Reverse order expected.
+    List@<Int@> got = ForEach(set, /Std/List%.Empty<Int@>, Items<Int@>);
+    AssertEquals(
+      /Std/List/Eq%.Eq(/Std/Int/Eq%.Eq),
+      /Std/List/Show%.Show(/Std/Int/Show%.Show),
+      wnt, got);
+  }),
+
+  Test|And({
+    Unit@ _ := Lazy;
+    Set@ a = Set[A, B];
+    Set@ b = Set[B, C];
+    Set@ got = And(a, b);
+    Set@ wnt = Set[B];
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test|Or({
+    Unit@ _ := Lazy;
+    Set@ a = Set[A, B];
+    Set@ b = Set[B, C];
+    Set@ got = Or(a, b);
+    Set@ wnt = Set[A, B, C];
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test|Diff({
+    Unit@ _ := Lazy;
+    Set@ a = Set[A, B];
+    Set@ b = Set[B, C];
+    Set@ got = Diff(a, b);
+    Set@ wnt = Set[A];
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test|Keep({
+    Unit@ _ := Lazy;
+    Set@ set = Set[A, B, C];
+    Set@ got = Keep(set, /Std/Int/Eq%.Eq(B));
+    Set@ wnt = Set[B];
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test|Omit({
+    Unit@ _ := Lazy;
+    Set@ set = Set[A, B, C];
+    Set@ got = Omit(set, /Std/Int/Eq%.Eq(B));
+    Set@ wnt = Set[A, C];
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
   /Std/Set/Eq/Tests%.Tests,
   /Std/Set/Show/Tests%.Tests
 ];
