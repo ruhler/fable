@@ -175,9 +175,7 @@ Test@ Tests = TestSuite(Str|Int, List[
   TEq(Str|Bin, Int|151, (Unit@ _) { Bin|1001_0111; }),
   TEq(Str|Oct, Int|151, (Unit@ _) { Oct|227; }),
   TEq(Str|Int, Int|151, (Unit@ _) { Int|151; }),
-  TEq(Str|Hex, Int|151, (Unit@ _) { Hex|00_97; }),
-
-  /Core/Int/Show/Tests%.Tests
+  TEq(Str|Hex, Int|151, (Unit@ _) { Hex|00_97; })
 ]);
 
 @(Tests);

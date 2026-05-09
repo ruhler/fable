@@ -137,6 +137,7 @@ Test@ Tests = TestSuite|Int[
 
   /Std/Int/Div/Tests%.Tests,
   /Std/Int/Eq/Tests%.Tests,
+  /Std/Int/Parse/Tests%.Tests,
   /Std/Int/Show/Tests%.Tests
 ];
 

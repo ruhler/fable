@@ -1,8 +1,8 @@
 
 True, False .= /Std/Bool%;
 OnAscii .= /Std/Char/Ascii%;
-AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
 Lazy .= /Std/Lazy%;
+AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
 Test@ .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
