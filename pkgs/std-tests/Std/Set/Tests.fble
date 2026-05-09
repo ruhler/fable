@@ -1,0 +1,11 @@
+
+OnAscii .= /Std/Char/Ascii%;
+Test@ .= /Std/Test%;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+
+Test@ Tests = TestSuite|Set[
+  /Std/Set/Eq/Tests%.Tests,
+  /Std/Set/Show/Tests%.Tests
+];
+
+@(Tests);

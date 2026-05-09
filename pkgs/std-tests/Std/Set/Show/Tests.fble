@@ -1,5 +1,4 @@
 
-Bool@, True, False .= /Std/Bool%;
 OnAscii .= /Std/Char/Ascii%;
 Int .= /Std/Int/Lit%;
 Lazy .= /Std/Lazy%;
@@ -9,26 +8,26 @@ Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
 Unit@ .= /Std/Unit%;
 
-Map@, Entry@, Entries .= /Std/Map%.Of(/Std/Int/Data%.Data)<Bool@>;
-Show = /Std/Map/Show%.Show(/Std/Int/Show%.Show, /Std/Bool/Show%.Show);
+Set@, Set .= /Std/Set%.Of(/Std/Int/Data%.Data);
+Show = /Std/Set/Show%.Show(/Std/Int/Show%.Show);
 
 Test@ Tests = TestSuite|Show[
   Test|Empty({
     Unit@ _ := Lazy;
-    Map@ map = Entries[];
+    Set@ map = Set[];
     AssertStream|'{ }'(Show(map));
   }),
 
   Test|Single({
     Unit@ _ := Lazy;
-    Map@ map = Entries[Entry@(Int|2, False)];
-    AssertStream|'{ 2 => False; }'(Show(map));
+    Set@ map = Set[Int|2];
+    AssertStream|'{ 2; }'(Show(map));
   }),
 
   Test|Multi({
     Unit@ _ := Lazy;
-    Map@ map = Entries[Entry@(Int|2, False), Entry@(Int|3, True)];
-    AssertStream|'{ 2 => False; 3 => True; }'(Show(map));
+    Set@ map = Set[Int|2, Int|3];
+    AssertStream|'{ 2; 3; }'(Show(map));
   })
 ];
 

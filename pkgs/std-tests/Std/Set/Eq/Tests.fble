@@ -1,0 +1,76 @@
+
+Bool@, True, False .= /Std/Bool%;
+OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Set@, Set .= /Std/Set%.Of(/Std/Int/Data%.Data);
+Eq = /Std/Set/Eq%.Eq(/Std/Int/Eq%.Eq);
+
+Int@ A = Int|0;
+Int@ B = Int|1;
+Int@ C = Int|2;
+
+Test@ Tests = TestSuite|Eq[
+  Test|Empty({
+    Unit@ _ := Lazy;
+    Set@ a = Set[];
+    Set@ b = Set[];
+    Bool@ wnt = True;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test|NonEmpty({
+    Unit@ _ := Lazy;
+    Set@ a = Set[A, B, C];
+    Set@ b = Set[A, B, C];
+    Bool@ wnt = True;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test|EmptyAndNot({
+    Unit@ _ := Lazy;
+    Set@ a = Set[A, B, C];
+    Set@ b = Set[];
+    Bool@ wnt = False;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test|Reordered({
+    Unit@ _ := Lazy;
+    Set@ a = Set[A, B, C];
+    Set@ b = Set[C, A, B];
+    Bool@ wnt = True;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test|DiffElem({
+    Unit@ _ := Lazy;
+    Set@ a = Set[A, B];
+    Set@ b = Set[A, C];
+    Bool@ wnt = False;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test|SubSet({
+    Unit@ _ := Lazy;
+    Set@ a = Set[A, B, C];
+    Set@ b = Set[A, B];
+    Bool@ wnt = False;
+    Bool@ got = Eq(a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  })
+];
+
+@(Tests);

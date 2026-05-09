@@ -7,6 +7,7 @@ Things to consider doing for the fble-0.6 release.
 
 * Break dependency of /Std/Map% on /Std/List%?
   By moving the Entries function somewhere else?
+  Same for /Std/Set%.
 
 * Add instances of Data@ for more standard data types.
   Unit@, Bool@, Maybe@, Char@, List@, String@, etc.

@@ -13,6 +13,7 @@ Test@ Tests = TestSuite|Std[
   /Std/Map/Tests%.Tests,
   /Std/Maybe/Tests%.Tests,
   /Std/Random/Tests%.Tests,
+  /Std/Set/Tests%.Tests,
   /Std/Stream/Tests%.Tests,
   /Std/Unit/Tests%.Tests
 ];
