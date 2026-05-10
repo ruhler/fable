@@ -101,3 +101,28 @@ Which suggests maybe I should go back to use cases and figure out what checks
 I need. Also, let me make sure I have check that you can't apply a poly to
 something if higher type level.
 
+---
+
+Let's go through again, use case by use case. How about CheckNameSpace first.
+That has nothing to do with kinds.
+
+It takes a type as input. Good.
+
+The type is the type of the variable. I want to know if this represents a
+normal value, a normal type, or something more.
+
+Maybe I should have: GetValueTypeLevel(FbleType*)? So, given the type of a
+value, tells you the type level of the value. Slightly more clear than
+GetTypeLevel? Maybe. Maybe not.
+
+Anyway. Let me implement it. Switch over this use case. That should be an
+easy first step.
+
+---
+
+Question: Can we have a private type that's not type level 1? Like:
+  @ Foo@ = @<Unit@>.%(@/Foo%);
+
+Seems dangerous. Also seems easy to disallow. But I should probably clarify
+in the spec and add a spec test for it.
+  

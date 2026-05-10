@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Clarify in spec and tests if you can have a private higher type level type
+  e.g. @<Unit@>.%(...), and what the type level of that is.
+
 * Distinguish between type levels and kinds in the implementation.
 
 * Language spec cleanup:

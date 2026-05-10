@@ -816,6 +816,18 @@ bool FbleIsUnitType(FbleTypeHeap* heap, FbleType* a)
 }
 
 // See documentation in type.h.
+size_t FbleGetTypeLevel(FbleType* type)
+{
+  size_t level = 0;
+  while (type->tag == FBLE_TYPE_TYPE) {
+    level++;
+    FbleTypeType* type_type = (FbleTypeType*)type;
+    type = type_type->type;
+  }
+  return level;
+}
+
+// See documentation in type.h.
 FbleKind* FbleGetKind(FbleModulePath* context, FbleType* type)
 {
   switch (type->tag) {

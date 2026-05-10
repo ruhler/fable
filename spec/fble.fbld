@@ -757,6 +757,7 @@
    with the abstract type variables substituted for the corresponding concrete
    type values provided as argument to the poly application.
 
+   It is a type error if the type argument is not a normal, type level 1 type.
    It is a type error if the kind of the type argument is not compatible with
    the kind of the argument expected by the poly.
   

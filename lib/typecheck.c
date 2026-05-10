@@ -581,16 +581,13 @@ static void ReportError(FbleLoc loc, const char* fmt, ...)
  */
 static bool CheckNameSpace(FbleName name, FbleType* type)
 {
-  FbleKind* kind = FbleGetKind(NULL, type);
-  size_t kind_level = FbleGetKindLevel(kind);
-  FbleFreeKind(kind);
-
-  bool match = (kind_level == 0 && name.space == FBLE_NORMAL_NAME_SPACE)
-            || (kind_level == 1 && name.space == FBLE_TYPE_NAME_SPACE);
+  size_t level = FbleGetTypeLevel(type);
+  bool match = (level == 0 && name.space == FBLE_NORMAL_NAME_SPACE)
+            || (level == 1 && name.space == FBLE_TYPE_NAME_SPACE);
 
   if (!match) {
     ReportError(name.loc,
-        "the namespace of '%n' is not appropriate for something of type %t\n", name, type);
+        "the namespace of '%n' is not appropriate for something of type %t with type level %i\n", name, type, level);
   }
   return match;
 }

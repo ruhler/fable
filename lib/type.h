@@ -218,6 +218,17 @@ typedef struct {
 } FbleTypeAssignmentV;
 
 /**
+ * @func[FbleGetTypeLevel] Gets the type level for a value with the given type.
+ *  @arg[FbleType*][type] The type of the value to get the type level for.
+ *  @returns[size_t]
+ *   The type level of the value that has this type. Note: the returned level
+ *   is for the type level of the value, not the type level of the type. Type
+ *   level is 0 for normal, non-type values, 1 for a normal type, 2 for a type
+ *   of a type, 3 for type of a type of a type, and so on.
+ */
+size_t FbleGetTypeLevel(FbleType* type);
+
+/**
  * @func[FbleGetKind] Gets the kind of a value with the given type.
  *  @arg[FbleModulePath*][context]
  *   The context to use for resolution of private types. NULL can be used for
