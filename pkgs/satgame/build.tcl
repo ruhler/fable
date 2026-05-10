@@ -1,5 +1,5 @@
 namespace eval "pkgs/satgame" {
-  pkg satgame [list std core app] "" ""
+  pkg satgame [list std app] "" ""
 
   # SatGame/Tests compiled
   # --allow-shlib-undefined because we know this doesn't use the part of the

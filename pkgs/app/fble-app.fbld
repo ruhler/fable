@@ -32,5 +32,5 @@
   @def[5] Other error.
  
  @examples
-  @ex[fble-app -p core -p app -m /App/Demo% --fps]
+  @ex[fble-app -p std -p app -m /App/Demo% --fps]
    Launches the demo app and reports FPS histogram when done.

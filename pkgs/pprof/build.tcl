@@ -2,7 +2,7 @@ namespace eval "pkgs/pprof" {
 
   fbld_help_fble_usage $::b/pkgs/pprof/Pprof/Usage.fble $::s/pkgs/pprof/fble-pprof.fbld
 
-  pkg pprof [list std core network] $::b/pkgs/pprof/Pprof/Usage.fble ""
+  pkg pprof [list std network] $::b/pkgs/pprof/Pprof/Usage.fble ""
 
   set ldflags ""
   if {[string first "_NT" [exec uname -s]] != -1} {

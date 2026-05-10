@@ -1,5 +1,5 @@
 namespace eval "pkgs/fbld" {
-  pkg fbld [list std core] "" ""
+  pkg fbld [list std] "" ""
 
   # Fbld/Tests compiled
   cli $::b/pkgs/fbld/fbld-tests "/Fbld/Tests%" "fbld" ""

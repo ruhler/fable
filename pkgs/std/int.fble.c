@@ -16,7 +16,7 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x);
 static int64_t ReadIntP(FbleValue* num);
 
 /**
- * @func[MakeIntP] Makes an FbleValue of type @l{/Core/Int/Core/IntP%.IntP@}.
+ * @func[MakeIntP] Makes an FbleValue of type @l{/Std/Int/IntP%.IntP@}.
  *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
  *  @arg[int64_t][x] The integer value. Must be greater than 0.
  *
@@ -38,7 +38,7 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x)
 }
 
 /**
- * @func[ReadIntP] Reads a number of type @l{/Core/Int/Core/IntP%.IntP@}.
+ * @func[ReadIntP] Reads a number of type @l{/Std/Int/IntP%.IntP@}.
  *  @arg[FbleValue*][x] The value of the number.
  *
  *  @returns[int64_t]

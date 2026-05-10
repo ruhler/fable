@@ -5,7 +5,7 @@ namespace eval "pkgs/network" {
   foreach {x} { sockets.fble } {
     lappend objs $::b/pkgs/network/$x.o
     obj $::b/pkgs/network/$x.o $::s/pkgs/network/$x.c \
-      "-I $::s/include -I $::s/pkgs/std -I $::s/pkgs/core"
+      "-I $::s/include -I $::s/pkgs/std"
   }
 
   set usages [list \
@@ -13,7 +13,7 @@ namespace eval "pkgs/network" {
     $::b/pkgs/network/Network/Apps/Echo/Usage.fble \
   ]
 
-  pkg network [list std core] $usages $objs
+  pkg network [list std] $usages $objs
 
   # Check doc comments
   foreach {x} [build_glob $::s/pkgs/network -tails "*.h" "*.c"] {

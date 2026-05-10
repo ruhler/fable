@@ -2,8 +2,8 @@
  * @file char.fble.h
  *  Header for @l{Char@} type routines.
  */
-#ifndef FBLE_CORE_CHAR_FBLE_H_
-#define FBLE_CORE_CHAR_FBLE_H_
+#ifndef FBLE_STD_CHAR_FBLE_H_
+#define FBLE_STD_CHAR_FBLE_H_
 
 #include <stddef.h>            // for wchar_t
 
@@ -34,4 +34,4 @@ FbleValue* FbleNewCharValue(FbleValueHeap* heap, wchar_t c);
  */
 wchar_t FbleCharValueAccess(FbleValue* c);
 
-#endif // FBLE_CORE_CHAR_FBLE_H_
+#endif // FBLE_STD_CHAR_FBLE_H_

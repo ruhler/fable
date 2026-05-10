@@ -3,8 +3,8 @@
  *  Header for @l{/Std/Io/Env%}.
  */
 
-#ifndef FBLE_CORE_ENV_FBLE_H_
-#define FBLE_CORE_ENV_FBLE_H_
+#ifndef FBLE_STD_ENV_FBLE_H_
+#define FBLE_STD_ENV_FBLE_H_
 
 #include <fble/fble-function.h>   // for FbleForeign
 
@@ -15,4 +15,4 @@
  */
 extern FbleForeign _Fble_2f_Std_2f_Io_2f_Env_25__2e_GetVar;
 
-#endif // FBLE_CORE_ENV_FBLE_H_
+#endif // FBLE_STD_ENV_FBLE_H_

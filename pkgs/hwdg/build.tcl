@@ -1,8 +1,8 @@
 namespace eval "pkgs/hwdg" {
-  pkg hwdg [list std core app] "" ""
+  pkg hwdg [list std app] "" ""
 
   # /Hwdg/Tests% interpreted
-  set cflags "-I $::s/pkgs/hwdg -I $::s/pkgs/app -I $::s/pkgs/std -I $::s/pkgs/core"
+  set cflags "-I $::s/pkgs/hwdg -I $::s/pkgs/app -I $::s/pkgs/std"
   run_cli_tests $::b/pkgs/hwdg/Hwdg/tests.tr "$cflags -m /Hwdg/Tests%" ""
 
   # /Hwdg/Tests% compiled

@@ -1,5 +1,5 @@
 namespace eval "pkgs/computrainer" {
-  pkg computrainer [list std core app] "" ""
+  pkg computrainer [list std app] "" ""
 
   # Computrainer/Tests compiled
   # --allow-shlib-undefined because we know this doesn't use the part of the

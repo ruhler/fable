@@ -1,3 +1,3 @@
 namespace eval "pkgs/rosetta" {
-  pkg rosetta [list core] "" ""
+  pkg rosetta [list std] "" ""
 }

@@ -1,5 +1,5 @@
 namespace eval "pkgs/benchmark" {
-  pkg benchmark [list std core app fbld games graphics invaders md5 pinball sat] "" ""
+  pkg benchmark [list std app fbld games graphics invaders md5 pinball sat] "" ""
 
   # fble-benchmark
   cli $::b/pkgs/benchmark/fble-benchmark "/Benchmark/Main%" "app fbld games graphics invaders md5 pinball sat benchmark" ""

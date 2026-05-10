@@ -1,10 +1,10 @@
 namespace eval "pkgs/invaders" {
   fbld_help_fble_usage $::b/pkgs/invaders/Invaders/Usage.fble $::s/pkgs/invaders/fble-invaders.fbld
 
-  pkg invaders [list std core app] $::b/pkgs/invaders/Invaders/Usage.fble ""
+  pkg invaders [list std app] $::b/pkgs/invaders/Invaders/Usage.fble ""
 
   # /Invaders/Tests% interpreted
-  set cflags "-I $::s/pkgs/invaders -I $::b/pkgs/invaders -I $::s/pkgs/app -I $::s/pkgs/std -I $::s/pkgs/core"
+  set cflags "-I $::s/pkgs/invaders -I $::b/pkgs/invaders -I $::s/pkgs/app -I $::s/pkgs/std"
   run_cli_tests $::b/pkgs/invaders/tests-interpreted.tr "$cflags -m /Invaders/Tests%" $::b/pkgs/invaders/Invaders/Usage.fble
 
   # /Invaders/Tests% compiled

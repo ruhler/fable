@@ -3,8 +3,8 @@
  *  Routines for interacting with @l{Int@} type values.
  */
 
-#ifndef FBLE_CORE_INT_FBLE_H_
-#define FBLE_CORE_INT_FBLE_H_
+#ifndef FBLE_STD_INT_FBLE_H_
+#define FBLE_STD_INT_FBLE_H_
 
 #include <fble/fble-value.h>
 
@@ -31,4 +31,4 @@ FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x);
  */
 int64_t FbleIntValueAccess(FbleValue* x);
 
-#endif // FBLE_CORE_INT_FBLE_H_
+#endif // FBLE_STD_INT_FBLE_H_

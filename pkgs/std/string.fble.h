@@ -2,8 +2,8 @@
  * @file string.fble.h
  *  Header for interacting with @l{String@} values.
  */
-#ifndef FBLE_CORE_STRING_FBLE_H_
-#define FBLE_CORE_STRING_FBLE_H_
+#ifndef FBLE_STD_STRING_FBLE_H_
+#define FBLE_STD_STRING_FBLE_H_
 
 #include <fble/fble-value.h>
 
@@ -57,5 +57,5 @@ char* FbleStringValueAccess(FbleValue* str);
  */
 void FbleDebugTrace(FbleValue* str);
 
-#endif // FBLE_STRING_FBLE_H_
+#endif // FBLE_STD_STRING_FBLE_H_
 

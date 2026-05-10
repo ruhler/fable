@@ -3,8 +3,8 @@
  *  Routines for interacting with @l{/Std/Io/Cli%}.
  */
 
-#ifndef FBLE_CORE_CLI_FBLE_H_
-#define FBLE_CORE_CLI_FBLE_H_
+#ifndef FBLE_STD_CLI_FBLE_H_
+#define FBLE_STD_CLI_FBLE_H_
 
 #include <fble/fble-main.h>      // for FbleMainStatus
 #include <fble/fble-program.h>   // for FblePreloadedModule
@@ -61,4 +61,4 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
  */
 FbleValue* FbleCliArgs(FbleValueHeap* heap, int argc, const char** argv);
 
-#endif // FBLE_CORE_CLI_FBLE_H_
+#endif // FBLE_STD_CLI_FBLE_H_

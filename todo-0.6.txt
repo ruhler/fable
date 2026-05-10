@@ -2,8 +2,21 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Add Map.Entries function?
-  To make it easy to initialize a map from a list.
+* Clean up std native code
+  - Maybe worth moving a bunch of these simple helper functions together into
+    a single file? The simple ones include:
+    - Simple: char, debug, [list], [maybe], env, int,
+    - Keep separate: cli, io?, stdio, string?
+  - Add some native code to help work with lists?
+    Empty, Items equivalents.
+  - Add some native code to help with maybe?
+    Nothing, Just equivalents.
+  - The header ifdefs will need to change from CORE to STD presumably.
+  - What to do about FbleStringValueAccess. Is it used anywhere? For debugging?
+
+* Add some tests/build target for cbtg
+  - Or get rid of it. Because it clearly isn't getting compiled.
+* Double check rosetta package is getting compiled.
 
 * Break dependency of /Std/Map% on /Std/List%?
   By moving the Entries function somewhere else?
@@ -19,6 +32,8 @@ Things to consider doing for the fble-0.6 release.
   There must be a better place for them.
 
 * Clean up all imports to use import expression in all the apps.
+
+* Rename 'import' to struct import and implicit type to struct export?
 
 * Update style guide for struct import and other new features.
 
@@ -142,9 +157,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Figure out what FbleStringValueAccess should do in terms of unicode.
 
-* Add tests for Output ToString and ToNull
- - Assuming we don't already have them.
-
 * Verify all api is listed in include/build.tcl.
 
 * Add spec tests for full test coverage.
@@ -227,8 +239,6 @@ Things to consider doing for the fble-0.6 release.
 * Should I add @example as a doc comment field? Seems useful?
 * Reorder arguments in body function passed to ForEach?
 
-* Restrict Int@ type internals to /Std/Int%.
-* Restrict /Std/Int/IntP* modules to /Std/Int%.
 * Update references to /Core/Int in tutorials.
 * Update references to /Core/List in tutorials.
 
@@ -239,8 +249,6 @@ Things to consider doing for the fble-0.6 release.
 * Rename /Core/Unit% to /Std/Unit% in tutorials, if there are any references.
 
 * Revamp the standard library.
- - Redesign from the ground up, looking at existing standard libraries for
-   guidance.
  - Test and document (and tutorialize?) all functions.
  - Implement rosettacode.org tasks under pkgs/rosetta to test it out.
 

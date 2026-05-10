@@ -1,11 +1,11 @@
 namespace eval "pkgs/sat" {
   fbld_help_fble_usage $::b/pkgs/sat/Sat/Usage.fble $::s/pkgs/sat/fble-sat.fbld
 
-  pkg sat [list std core] "$::b/pkgs/sat/Sat/Usage.fble" ""
+  pkg sat [list std] "$::b/pkgs/sat/Sat/Usage.fble" ""
 
   # /Sat/Tests% interpreted
   run_cli_tests $::b/pkgs/sat/tests-interpreted.tr \
-    "-I $::s/pkgs/std -I $::s/pkgs/core -I $::s/pkgs/sat -I $::b/pkgs/sat -m /Sat/Tests%" \
+    "-I $::s/pkgs/std -I $::s/pkgs/sat -I $::b/pkgs/sat -m /Sat/Tests%" \
     $::b/pkgs/sat/Sat/Usage.fble
 
   # /Sat/Tests% compiled

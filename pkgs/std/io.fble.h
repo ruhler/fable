@@ -3,8 +3,8 @@
  *  Routines for interacting with @l{/Std/Io%}.
  */
 
-#ifndef FBLE_CORE_IO_FBLE_H_
-#define FBLE_CORE_IO_FBLE_H_
+#ifndef FBLE_STD_IO_FBLE_H_
+#define FBLE_STD_IO_FBLE_H_
 
 #include <fble/fble-main.h>      // for FbleMainStatus
 #include <fble/fble-program.h>   // for FblePreloadedModule
@@ -29,4 +29,4 @@ FbleValue* FbleIo(FbleValueHeap* heap, FbleProfile* profile);
  */
 FbleValue* FbleIoMonad(FbleValueHeap* heap, FbleProfile* profile);
 
-#endif // FBLE_CORE_IO_FBLE_H_
+#endif // FBLE_STD_IO_FBLE_H_

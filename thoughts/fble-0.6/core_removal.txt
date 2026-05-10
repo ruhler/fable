@@ -1,0 +1,57 @@
+Core Removal
+============
+Goal is to remove the core package. Everything cleaned up and moved into std
+or std-tests instead.
+
+I've already moved out all the .fble code. What's left is native code and
+build.tcl:
+
+  pkgs/core/char.fble.h
+  pkgs/core/string.fble.c
+  pkgs/core/char.fble.c
+  pkgs/core/debug.fble.h
+  pkgs/core/fble-cli.fbld
+  pkgs/core/int.fble.h
+  pkgs/core/env.fble.h
+  pkgs/core/build.tcl
+  pkgs/core/cli.fble.h
+  pkgs/core/stdio.fble.c
+  pkgs/core/fble-cli.c
+  pkgs/core/env.fble.c
+  pkgs/core/io.fble.c
+  pkgs/core/debug.fble.c
+  pkgs/core/stdio.fble.h
+  pkgs/core/cli.fble.c
+  pkgs/core/string.fble.h
+  pkgs/core/int.fble.c
+  pkgs/core/io.fble.h
+
+I could move them wholesale to std, but maybe I should clean them up along the
+way? Take this opportunity to review the code?
+
+Let's look through what we have, and see if anything stands out to me to clean
+up. Also review my todo list and summarize any relevant todos.
+
+Review of existing code:
+* Maybe worth moving a bunch of these simple helper functions together into a
+  single file? The simple ones include:
+  - Simple: char, debug, [list], [maybe], env, int,
+  - Keep separate: cli, io?, stdio, string?
+* Add some native code to help work with lists?
+  Empty, Items equivalents.
+* Add some native code to help with maybe?
+  Nothing, Just equivalents.
+* The header ifdefs will need to change from CORE to STD presumably.
+* What to do about FbleStringValueAccess. Is it used anywhere? For debugging?
+
+Here are relevant todos from before:
+* Add maybe.c helper functions for working with maybe types at native level.
+* Make sure setlocal gets called for compiled stdio code
+* Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
+* Figure out what FbleStringValueAccess should do in terms of unicode.
+
+How about we be honest: all of these things can be done separately from the
+core removal. Let me just bulk move over the code to std, get rid of core
+package, then clean up as separate todos.
+
+There. Simple. Easy. Done.

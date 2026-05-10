@@ -20,7 +20,7 @@
 #include "env.fble.h"           // for /Std/Io/Env%
 #include "int.fble.h"           // for FbleNewIntValue, FbleIntValueAccess
 #include "io.fble.h"            // for FbleIoM
-#include "stdio.fble.h"         // for /Core/Stdio/FFI%
+#include "stdio.fble.h"         // for /Std/Io/File/Internal%
 #include "string.fble.h"        // for FbleNewStringValue, FbleStringValueAccess
 
 #define LIST_TAGWIDTH 1
