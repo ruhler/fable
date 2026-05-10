@@ -76,8 +76,8 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
-    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
-      FbleStructValueImplicitTypeExpr* e = (FbleStructValueImplicitTypeExpr*)expr;
+    case FBLE_STRUCT_EXPORT_EXPR: {
+      FbleStructExportExpr* e = (FbleStructExportExpr*)expr;
       for (size_t i = 0; i < e->args.size; ++i) {
         FbleFreeName(e->args.xs[i].name);
         FbleFreeExpr(e->args.xs[i].expr);

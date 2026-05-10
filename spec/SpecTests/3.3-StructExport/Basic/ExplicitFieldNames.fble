@@ -5,7 +5,7 @@ Bool@ true = Bool@(true: Unit@());
 Maybe@ = +(Unit@ nothing, Bool@ just);
 Maybe@ nothing = Maybe@(nothing: Unit@());
 
-# Implicit type struct value with explicit field names.
+# Struct export with explicit field names.
 S@ = *(Bool@ x, Maybe@ y);
 S@ s = @(x: true, y: nothing);
 Unit@ _a = s.x.true;

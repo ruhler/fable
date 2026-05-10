@@ -132,8 +132,8 @@ static void Expr(FbleExpr* expr, Vars* vars)
       return;
     }
 
-    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
-      FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
+    case FBLE_STRUCT_EXPORT_EXPR: {
+      FbleStructExportExpr* struct_expr = (FbleStructExportExpr*)expr;
       for (size_t i = 0; i < struct_expr->args.size; ++i) {
         Expr(struct_expr->args.xs[i].expr, vars);
       }

@@ -255,3 +255,15 @@ And here's a question: do I need syntax for normal kinded things? Is there any
 value in having that anymore? Where could you ever use it?
 
 Okay. Sounds like a round of spec cleanup is warranted.
+
+---
+
+I need to take spec cleanup for structs one step at a time, otherwise I'll
+miss things. The steps are:
+
+1. Rename explicit type struct value to just struct value.
+2. Rename implicit type struct value to struct export.
+3. Switch order of struct export and struct access in spec.
+4. Move import into struct section, call it struct import.
+5. Reread through spec and make sure it is coherent.
+

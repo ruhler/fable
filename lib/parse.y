@@ -367,8 +367,8 @@ expr:
       $$ = &apply_expr->_base;
    }
  | '@' '(' implicit_tagged_expr_s ')' {
-      FbleStructValueImplicitTypeExpr* expr = FbleAlloc(FbleStructValueImplicitTypeExpr);
-      expr->_base.tag = FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR;
+      FbleStructExportExpr* expr = FbleAlloc(FbleStructExportExpr);
+      expr->_base.tag = FBLE_STRUCT_EXPORT_EXPR;
       expr->_base.loc = FbleCopyLoc(@$);
       expr->args = $3;
       $$ = &expr->_base;

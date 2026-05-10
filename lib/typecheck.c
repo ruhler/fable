@@ -1352,8 +1352,8 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       return MkTc(body.type, &undef_tc->_base);
     }
 
-    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
-      FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
+    case FBLE_STRUCT_EXPORT_EXPR: {
+      FbleStructExportExpr* struct_expr = (FbleStructExportExpr*)expr;
 
       FbleDataType* struct_type = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, expr->loc);
       struct_type->datatype = FBLE_STRUCT_DATATYPE;
@@ -2409,7 +2409,7 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
     case FBLE_LET_EXPR:
     case FBLE_UNDEF_EXPR:
     case FBLE_DATA_ACCESS_EXPR:
-    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
+    case FBLE_STRUCT_EXPORT_EXPR:
     case FBLE_STRUCT_COPY_EXPR:
     case FBLE_UNION_VALUE_EXPR:
     case FBLE_UNION_SELECT_EXPR:

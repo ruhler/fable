@@ -274,8 +274,8 @@
   struct. Individual components of a struct can be accessed by field name.
   
   Struct values can be used for namespaces, by grouping together a collection
-  of types and normal values. Syntax is provided for creating struct values
-  with implicit types to facilitate this use case.
+  of types and normal values. Syntax is provided for bulk exporting and
+  importing of variables via struct values to facilitate this use case.
   
   @subsection 3.1 Struct Type
    @AbstractSyntax @
@@ -315,9 +315,9 @@
    Runtime is O(N) plus the runtimes of the arguments, where N is the number
    of arguments.
   
-  @subsection 3.3 Struct Value Implicit Type
+  @subsection 3.3 Struct Export
    @AbstractSyntax @
-    Expr: struct_value_implicit_type (args : [(Name, Expr)])
+    Expr: struct_export (args : [(Name, Expr)])
   
    @ConcreteSyntax @
     expr = '@(', [field_arg, {',', field_arg}] ')'
@@ -326,11 +326,11 @@
     @(x: 3, y: 5)
     @(Bool@, True, False, Not: NotInternal)
   
-   Allows you to construct a struct value with an implicit type. When defining
-   structs used as namespaces, it is tedious to have to repeat the types of
-   the entities being defined and to worry about what order they are defined
-   in. The anonymous struct value makes it more convenient to define structs
-   used as namespaces.
+   Allows you to export values to a struct easily by constructing a struct
+   value with an implicit type. When defining structs used as namespaces, it
+   is tedious to have to repeat the types of the entities being defined and to
+   worry about what order they are defined in. The struct export expression
+   makes it more convenient to define structs used as namespaces.
   
    As a syntactic sugar, if no value for a field is provided, its value is
    assumed to be the variable with same name as the field. For example, the
@@ -340,8 +340,9 @@
     @(Bool@: Bool@, True: True, False: False, Not: NotInternal)
   
    The type of the struct value is a struct type with fields defined in the
-   same order as the implicit value struct: the name of the field is the name
-   provided and the type of the field is the type of the argument provided.
+   same order as the struct export expression: the name of the field is the
+   name provided and the type of the field is the type of the argument
+   provided.
   
    The expression is evaluated by evaluating all arguments and creating a
    struct value with the results. The arguments may be evaluated in any order,
@@ -388,8 +389,8 @@
    Allows you to construct a new struct value by copying from an existing
    struct value. The resulting value has the same type as the source
    expression. The contents of the new struct value come from the provided
-   arguments as in a struct value implicit type expression; any fields not
-   included in arguments take their values from the source struct value.
+   arguments as in a struct export expression; any fields not included in
+   arguments take their values from the source struct value.
 
    In the above example, the definition of @L{w} is equivalent to:
   
@@ -400,8 +401,8 @@
    provided. Arguments must be provided in the same order as the fields in the
    struct type.
 
-   As with implicit type struct values, if no value for a field is provided,
-   its value is assumed to be the variable with same name as the field.
+   As with struct export expressions, if no value for a field is provided, its
+   value is assumed to be the variable with same name as the field.
 
    The expression is evaluated by evaluating the source and all arguments and
    creating a struct value with the results. The arguments may be evaluated in
@@ -1402,8 +1403,8 @@
    private type @L{Bool@.%(@/Foo/Bar%)}.
 
    This is mostly useful for constructing values where the type of the value
-   is not mentioned expicitly during construction, such as implicit struct
-   values and function values.
+   is not mentioned expicitly during construction, such as in the case of
+   struct export expressions and function values.
 
    It is a type error if you don't have access to the type of value you are
    casting to.
@@ -1526,7 +1527,7 @@
    
     | struct_type (fields : [(Type, Name)])
     | struct_value_explicit_type (type : Type) (args : [Expr])
-    | struct_value_implicit_type (args : [(Name, Expr)])
+    | struct_export (args : [(Name, Expr)])
     | struct_access (object : Expr) (field : Name)
     | struct_copy (src : Expr) (args : [(Name, Expr)])
    
@@ -1624,7 +1625,7 @@
     
      | '*(', [type, name, {',', type, name}], ')'      (* struct_type *)
      | type, '(', [expr, {',', expr}], ')'             (* struct_value_explicit_type *)
-     | '@(', [field_arg, {',', field_arg}] ')'         (* struct_value_implicit_type *)
+     | '@(', [field_arg, {',', field_arg}] ')'         (* struct_export *)
      | expr, '.', name                                 (* struct_access *)
      | expr, '.@(', field_arg, {',', field_arg}, ')'   (* struct_copy *)
 

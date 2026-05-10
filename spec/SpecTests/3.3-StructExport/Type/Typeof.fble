@@ -1,9 +1,11 @@
-# @@fble-test@@ runtime-error 9:11
+# @@fble-test@@ no-error
 Unit@ = *();
 Bool@ = +(Unit@ true, Unit@ false);
 Bool@ true = Bool@(true: Unit@());
 Maybe@ = +(Unit@ nothing, Bool@ just);
 Maybe@ nothing = Maybe@(nothing: Unit@());
 
-# The implicit-type struct value is strict in its arguments.
-@(x: true.false, y: nothing);
+# Test that the type of a struct export matches what we expect.
+S@ = *(Bool@ x, Maybe@ y);
+S@ s = @(x: true, y: nothing);
+s;
