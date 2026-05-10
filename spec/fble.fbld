@@ -293,9 +293,9 @@
   
    Runtime is O(1).
   
-  @subsection 3.2 Struct Value Explicit Type
+  @subsection 3.2 Struct Value
    @AbstractSyntax @
-    Expr: struct_value_explicit_type (type : Type) (args : [Expr])
+    Expr: struct_value (type : Type) (args : [Expr])
   
    @ConcreteSyntax @
     expr = type, '(', [expr, {',', expr}], ')'
@@ -768,11 +768,10 @@
   
   @subsection 6.4 Type Inference
    Type inference allows you to use poly values in place of struct types,
-   union types, and function values in struct_value_explicit_type,
-   union_value, and func_apply respectively. The type arguments of the poly
-   are inferred and automatically applied by the compiler based on the types
-   of the arguments to the struct_value_explicit_type, union_value, or
-   func_apply.
+   union types, and function values in struct_value, union_value, and
+   func_apply respectively. The type arguments of the poly are inferred and
+   automatically applied by the compiler based on the types of the arguments
+   to the struct_value, union_value, or func_apply.
   
    For example, assume you have a polymorphic function @L{fromJust} of type:
   
@@ -799,7 +798,7 @@
   
    The type and runtime behavior of a poly inference expression is the same as
    the type and runtime behavior of the target combined poly application and
-   struct_value_explicit_type/union_value/func_apply expression.
+   struct_value/union_value/func_apply expression.
  
  @section 7. Syntactic Sugar
   We introduce syntax for describing lists and literals to make it less
@@ -1526,7 +1525,7 @@
     | module_path (path : Path)
    
     | struct_type (fields : [(Type, Name)])
-    | struct_value_explicit_type (type : Type) (args : [Expr])
+    | struct_value (type : Type) (args : [Expr])
     | struct_export (args : [(Name, Expr)])
     | struct_access (object : Expr) (field : Name)
     | struct_copy (src : Expr) (args : [(Name, Expr)])
@@ -1624,7 +1623,7 @@
      | path                                            (* module_path *)
     
      | '*(', [type, name, {',', type, name}], ')'      (* struct_type *)
-     | type, '(', [expr, {',', expr}], ')'             (* struct_value_explicit_type *)
+     | type, '(', [expr, {',', expr}], ')'             (* struct_value *)
      | '@(', [field_arg, {',', field_arg}] ')'         (* struct_export *)
      | expr, '.', name                                 (* struct_access *)
      | expr, '.@(', field_arg, {',', field_arg}, ')'   (* struct_copy *)
@@ -1682,9 +1681,8 @@
     used to distinguish between the two kinds of expressions.
 
    @item
-    Explicit type struct value, and function apply share the same form. The
-    type of the expr is used to distinguish between these kinds of
-    expressions.
+    Struct value and function apply share the same form. The type of the expr
+    is used to distinguish between these kinds of expressions.
 
    @item
     The concrete syntax for private type and private value are identical. The

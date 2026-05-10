@@ -25,7 +25,7 @@ typedef enum {
   FBLE_DATA_TYPE_EXPR,    // struct and union types.
   FBLE_DATA_ACCESS_EXPR,  // struct and union field access.
 
-  // FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR = FBLE_MISC_APPLY_EXPR
+  // FBLE_STRUCT_VALUE_EXPR = FBLE_MISC_APPLY_EXPR
   FBLE_STRUCT_EXPORT_EXPR,
   FBLE_STRUCT_COPY_EXPR,
 
@@ -466,7 +466,7 @@ typedef struct {
  * @struct[FbleApplyExpr] FBLE_MISC_APPLY_EXPR
  *  Application expressions. Used for:
  *
- *  @i FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR
+ *  @i FBLE_STRUCT_VALUE_EXPR
  *  @i FBLE_FUNC_APPLY_EXPR
  *
  *  @field[FbleTypeExpr][_base] FbleExpr base class.
