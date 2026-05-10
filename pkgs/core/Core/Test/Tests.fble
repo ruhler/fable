@@ -1,28 +1,15 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
+Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
+OnAscii, Str .= /Std/Char/Ascii%;
+String .= /Std/Char/Ascii/Stream%;
 Stream@, Out@ .= /Std/Stream%;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-List = /Std/List%.List;
-
-Str = /Std/Char/Ascii%.Str;
-
-String = /Std/Char/Ascii/Stream%.String;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-Pass = /Std/Test%.Pass;
-Fail = /Std/Test%.Fail;
-ExpectFails = /Std/Test%.ExpectFails;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+AssertEquals .= /Std/Eq/Assert%;
+Lazy .= /Std/Lazy%;
+Test@, Pass, Fail, ExpectFails, Skip .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@, Unit .= /Std/Unit%;
 
 # Run a test with the test runner, for testing purposes.
 # Returns whether the test passed or failed.
@@ -35,55 +22,70 @@ Run = (Test@ test) {
   /Std/Test/Run%.Run(@(M@, return, do), out, Str|TestTest, test);
 };
 
-Test@ pass = Test(Str|pass, (Unit@ _) { Pass; });
-Test@ fail = Test(Str|fail, (Unit@ _) { Fail(String|Failed); });
+Test@ pass = Test|pass({
+  Unit@ _ := Lazy;
+  Pass;
+});
 
-Test@ xfail = Test(Str|xfail, (Unit@ _) {
+Test@ fail = Test|fail({
+  Unit@ _ := Lazy;
+  Fail(String|Failed);
+});
+
+Test@ xfail = Test|xfail({
+  Unit@ _ := Lazy;
   ExpectFails(Str|Failed, Fail(String|Failed));
 });
 
-Test@ Tests = TestSuite(Str|'Test', List[
-  Test(Str|'RunTest.pass_passes', (Unit@ _) {
+Test@ skip = Test|skip({
+  Unit@ _ := Lazy;
+  Skip(String|Skipped);
+});
+
+Test@ Tests = TestSuite|Test[
+  Test|Pass({
+    Unit@ _ := Lazy;
     Bool@ wnt = True;
     Bool@ got = Run(pass);
     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
-  Test(Str|'RunTest.fail_fails', (Unit@ _) {
+  Test|Fail({
+    Unit@ _ := Lazy;
     Bool@ wnt = False;
     Bool@ got = Run(fail);
     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
-  Test(Str|'RunTest.xfail_passes', (Unit@ _) {
+  Test|XFail({
+    Unit@ _ := Lazy;
     Bool@ wnt = True;
     Bool@ got = Run(xfail);
     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
-  Test(Str|'RunTest.SuitePass', (Unit@ _) {
-    Test@ suite = TestSuite(Str|'Suite', List[
-      Test(Str|a, (Unit@ _) { Pass; }),
-      Test(Str|b, (Unit@ _) { Pass; }),
-      Test(Str|c, (Unit@ _) { ExpectFails(Str|Failed, Fail(String|Failed)); }),
-      Test(Str|d, (Unit@ _) { Pass; })]);
+  Test|Skip({
+    Unit@ _ := Lazy;
+    Bool@ wnt = True;
+    Bool@ got = Run(skip);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
 
+  Test|SuitePass({
+    Unit@ _ := Lazy;
+    Test@ suite = TestSuite|Suite[pass, skip, xfail, pass];
     Bool@ wnt = True;
     Bool@ got = Run(suite);
     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),
 
-  Test(Str|'RunTest.SuiteFail', (Unit@ _) {
-    Test@ suite = TestSuite(Str|'Suite', List[
-      Test(Str|a, (Unit@ _) { Pass; }),
-      Test(Str|b, (Unit@ _) { Fail(String|Oops); }),
-      Test(Str|c, (Unit@ _) { ExpectFails(Str|Failed, Fail(String|Failed)); }),
-      Test(Str|d, (Unit@ _) { Pass; })]);
-
+  Test|SuiteFail({
+    Unit@ _ := Lazy;
+    Test@ suite = TestSuite|Suite[pass, skip, xfail, fail, pass];
     Bool@ wnt = False;
     Bool@ got = Run(suite);
     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   })
-]);
+];
 
 @(Tests);
