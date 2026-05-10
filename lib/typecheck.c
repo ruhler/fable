@@ -920,6 +920,15 @@ static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_
 
   FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(FbleTypeHeapGetContext(th), poly.type);
   if (poly_kind->_base.tag == FBLE_POLY_KIND) {
+    size_t level = FbleGetTypeLevel(arg_type);
+    if (level != 1) {
+      ReportError(arg_loc,
+          "unable to poly apply something of type %t with type level %i\n",
+          arg_type, level);
+      FbleFreeKind(&poly_kind->_base);
+      return TC_FAILED;
+    }
+
     // poly_apply
     FbleKind* expected_kind = poly_kind->arg;
     FbleKind* actual_kind = FbleGetKind(FbleTypeHeapGetContext(th), arg_type);
