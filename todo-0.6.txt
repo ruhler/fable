@@ -2,9 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Distinguish between type levels and kinds in the implementation.
+
 * Language spec cleanup:
- - Remove syntax for normal kind. It shouldn't be needed anymore.
- - Move discussion of kinds to polymorphism section.
  - Rename explicit type struct value to just struct value.
  - Rename implicit type struct value to struct export.
  - Move import into struct section, call it struct import.
