@@ -1949,13 +1949,15 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleType* ntype = FbleNewPrivateType(th, expr->loc, arg.type, normal->path);
       CleanType(cleaner, ntype);
 
-      FbleKind* kind = FbleGetKind(NULL, arg.type);
-      size_t kind_level = FbleGetKindLevel(kind);
-      FbleFreeKind(kind);
-
-      if (kind_level == 0 && !FbleTypesEqual(th, arg.type, ntype)) {
+      size_t level = FbleGetTypeLevel(arg.type);
+      if (level == 0 && !FbleTypesEqual(th, arg.type, ntype)) {
         ReportError(expr->loc, "Unable to cast %t to %t from module %m\n",
             arg.type, ntype, scope->module);
+        return TC_FAILED;
+      }
+
+      if (level > 1) {
+        ReportError(expr->loc, "Type of type %t is not allowed to be a private type\n", arg.type);
         return TC_FAILED;
       }
 

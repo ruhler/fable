@@ -1,0 +1,7 @@
+# @@fble-test@@ compile-error 6:8
+Unit@ = *();
+
+# The arg part of the private type is a type of a type.
+# That's not allowed.
+Foo@ = @<Unit@>.%(@/SpecTests%);
+Foo@;

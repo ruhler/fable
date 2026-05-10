@@ -1361,6 +1361,8 @@
 
    It is a type error if the package argument is not of package type.
 
+   It is a type error if the type is not a normal type level 1 type.
+
    Two private types are considered equal if their underlying types are equal
    and either their package types are equal or the module where the equality
    check is being performed is granted access to both types.

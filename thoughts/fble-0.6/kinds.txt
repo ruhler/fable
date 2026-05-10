@@ -125,4 +125,11 @@ Question: Can we have a private type that's not type level 1? Like:
 
 Seems dangerous. Also seems easy to disallow. But I should probably clarify
 in the spec and add a spec test for it.
-  
+
+Good. Done.
+
+---
+
+The last place I should have to update for type levels is adding a check for
+the type level of arguments to poly apply. I think that's it. After that, we
+can just remove kind levels entirely.
