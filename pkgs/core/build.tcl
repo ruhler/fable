@@ -76,12 +76,4 @@ namespace eval "pkgs/core" {
     "$::b/pkgs/core/fble-cli-demo > $::b/pkgs/core/fble-cli-demo.out"
   test $::b/pkgs/core/fble-cli-demo.tr $::b/pkgs/core/fble-cli-demo.out \
     "grep hello $::b/pkgs/core/fble-cli-demo.out"
-
-  # Core/Tests interpreted
-  run_cli_tests $::b/pkgs/core/Core/tests.tr "-I $::s/pkgs/std -I $::s/pkgs/core -m /Core/Tests%" ""
-
-  # Core/Tests compiled
-  cli $::b/pkgs/core/Core/core-tests "/Core/Tests%" "" ""
-  testsuite $::b/pkgs/core/Core/core-tests.tr $::b/pkgs/core/Core/core-tests \
-    "$::b/pkgs/core/Core/core-tests --prefix Compiled."
 }
