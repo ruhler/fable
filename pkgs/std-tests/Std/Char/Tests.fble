@@ -23,7 +23,8 @@ Test@ Tests = TestSuite|Char[
     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, Int|65, Pos(A));
   }),
 
-  /Std/Char/Ascii/Tests%.Tests
+  /Std/Char/Ascii/Tests%.Tests,
+  /Std/Char/Lit/Tests%.Tests
 ];
 
 @(Tests);

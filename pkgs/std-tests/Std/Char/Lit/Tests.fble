@@ -1,0 +1,35 @@
+
+Char@ .= /Std/Char%;
+Compose .= /Std/Char/Lit%;
+OnAscii, Char, Str .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Lazy .= /Std/Lazy%;
+String@ .= /Std/String%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Test@ Tests = TestSuite|Lit[
+  Test|Compose({
+    Unit@ _ := Lazy;
+
+    Alpha@ = +(Unit@ a, Unit@ b, Unit@ c);
+    (Alpha@) { Char@; } AlphaToChar = (Alpha@ a) {
+      a.?(a: Char|a, b: Char|b, c: Char|c);
+    };
+
+    Digit@ = +(Unit@ 0, Unit@ 1, Unit@ 2);
+    (Digit@) { Char@; } DigitToChar = (Digit@ a) {
+      a.?(0: Char|0, 1: Char|1, 2: Char|2);
+    };
+
+    S = /Std/Char/Lit%.Str(Compose(AlphaToChar, DigitToChar));
+
+    String@ wnt = Str|ab01c2;
+    String@ got = S|ab01c2;
+    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+  })
+];
+
+@(Tests);

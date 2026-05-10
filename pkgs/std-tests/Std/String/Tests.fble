@@ -5,7 +5,8 @@ TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 Test@ Tests = TestSuite|String[
   /Std/String/Eq/Tests%.Tests,
-  /Std/String/Lines/Tests%.Tests
+  /Std/String/Lines/Tests%.Tests,
+  /Std/String/Show/Tests%.Tests
 ];
 
 @(Tests);

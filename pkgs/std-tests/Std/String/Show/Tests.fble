@@ -1,0 +1,25 @@
+
+OnAscii, Str, StrE .= /Std/Char/Ascii%;
+Lazy .= /Std/Lazy%;
+AssertStream .= /Std/Stream/String/Assert%;
+String@ .= /Std/String%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Test@ Tests = TestSuite|Show[
+  Test|Basic({
+    Unit@ _ := Lazy;
+    String@ wnt = Str|'''hello''';
+    AssertStream(wnt, /Std/String/Show%.Show(Str|hello));
+  }),
+
+  Test|Quote({
+    Unit@ _ := Lazy;
+    String@ wnt = StrE|'\qdon\q\qt\q';
+    AssertStream(wnt, /Std/String/Show%.Show(StrE|'don\qt'));
+  })
+];
+
+@(Tests);

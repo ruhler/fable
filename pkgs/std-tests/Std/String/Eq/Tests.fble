@@ -3,6 +3,9 @@ Bool@, True, False .= /Std/Bool%;
 OnAscii, Str .= /Std/Char/Ascii%;
 AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
+List@, List .= /Std/List%;
+String@ .= /Std/String%;
+Eq, StartsWith, Contains, Split .= /Std/String/Eq%;
 Test@ = /Std/Test%.Test@;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
@@ -15,14 +18,14 @@ Test@ Tests = TestSuite|Eq[
     Test|T({
       Unit@ _ := Lazy;
       Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.Eq(Str|'A string!', Str|'A string!');
+      Bool@ got = Eq(Str|'A string!', Str|'A string!');
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     }),
 
     Test|F({
       Unit@ _ := Lazy;
       Bool@ wnt = False;
-      Bool@ got = /Std/String/Eq%.Eq(Str|'A string!', Str|'nope');
+      Bool@ got = Eq(Str|'A string!', Str|'nope');
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     })
   ],
@@ -31,42 +34,42 @@ Test@ Tests = TestSuite|Eq[
     Test|EE({
       Unit@ _ := Lazy;
       Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.StartsWith(Str|'', Str|'');
+      Bool@ got = StartsWith(Str|'', Str|'');
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     }),
 
     Test|ES({
       Unit@ _ := Lazy;
       Bool@ wnt = False;
-      Bool@ got = /Std/String/Eq%.StartsWith(Str|'', Str|hello);
+      Bool@ got = StartsWith(Str|'', Str|hello);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     }),
 
     Test|SE({
       Unit@ _ := Lazy;
       Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.StartsWith(Str|hello, Str|'');
+      Bool@ got = StartsWith(Str|hello, Str|'');
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     }),
 
     Test|Ss({
       Unit@ _ := Lazy;
       Bool@ wnt = False;
-      Bool@ got = /Std/String/Eq%.StartsWith(Str|'hello', Str|'there');
+      Bool@ got = StartsWith(Str|'hello', Str|'there');
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     }),
 
     Test|Prefix({
       Unit@ _ := Lazy;
       Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.StartsWith(Str|hello, Str|hel);
+      Bool@ got = StartsWith(Str|hello, Str|hel);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     }),
 
     Test|Suffix({
       Unit@ _ := Lazy;
       Bool@ wnt = False;
-      Bool@ got = /Std/String/Eq%.StartsWith(Str|'xhello', Str|'hello');
+      Bool@ got = StartsWith(Str|'xhello', Str|'hello');
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     })
   ],
@@ -75,38 +78,48 @@ Test@ Tests = TestSuite|Eq[
     Test|EE({
       Unit@ _ := Lazy;
       Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.Contains(Str|'', Str|'');
+      Bool@ got = Contains(Str|'', Str|'');
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     }),
 
     Test|ES({
       Unit@ _ := Lazy;
       Bool@ wnt = False;
-      Bool@ got = /Std/String/Eq%.Contains(Str|'', Str|hello);
+      Bool@ got = Contains(Str|'', Str|hello);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     }),
 
     Test|SE({
       Unit@ _ := Lazy;
       Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.Contains(Str|hello, Str|'');
+      Bool@ got = Contains(Str|hello, Str|'');
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     }),
 
     Test|Ss({
       Unit@ _ := Lazy;
       Bool@ wnt = False;
-      Bool@ got = /Std/String/Eq%.Contains(Str|hello, Str|there);
+      Bool@ got = Contains(Str|hello, Str|there);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     }),
 
     Test|Suffix({
       Unit@ _ := Lazy;
       Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.Contains(Str|xhello, Str|hello);
+      Bool@ got = Contains(Str|xhello, Str|hello);
       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
     })
-  ]
+  ],
+
+  Test|Split({
+    Unit@ _ := Lazy;
+    List@<String@> wnt = List[Str|hello, Str|there, Str|how, Str|are, Str|'you?'];
+    List@<String@> got = Split(Str|'hello there how are you?', Str|' ');
+    AssertEquals(
+      /Std/List/Eq%.Eq(/Std/String/Eq%.Eq),
+      /Std/List/Show%.Show(/Std/String/Show%.Show),
+      wnt, got);
+  })
 ];
 
 @(Tests);
