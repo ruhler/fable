@@ -1,7 +1,7 @@
 # @@fble-test@@ no-error
 #
 # Regression test for a bug where we accidentally forgot to copy over the
-# number of fields in an import expression when rewriting var ids for
+# number of fields in a struct import expression when rewriting var ids for
 # multi argument function merging.
 
 Unit@ = *();

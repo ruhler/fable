@@ -315,7 +315,30 @@
    Runtime is O(N) plus the runtimes of the arguments, where N is the number
    of arguments.
   
-  @subsection 3.3 Struct Export
+  @subsection 3.3 Struct Access
+   @AbstractSyntax @
+    Expr: struct_access (object : Expr) (field : Name)
+  
+   @ConcreteSyntax @
+    expr = expr, '.', name
+  
+   @Example @
+    x.first
+  
+   Returns the value passed to the struct at the corresponding field position
+   when the struct was constructed.
+  
+   The object must be a struct value. The field must refer to a field of that
+   struct value. The type of the expression is the type of the field being
+   accessed.
+  
+   The expression is evaluated by evaluating the object, then accessing its
+   field value.
+  
+   Runtime is O(log(N)) plus the runtime of the struct object, where N is the
+   number of fields in the struct.
+
+  @subsection 3.4 Struct Export
    @AbstractSyntax @
     Expr: struct_export (args : [(Name, Expr)])
   
@@ -350,29 +373,6 @@
   
    Runtime is O(N) plus the runtimes of the arguments, where N is the number
    of arguments.
-  
-  @subsection 3.4 Struct Access
-   @AbstractSyntax @
-    Expr: struct_access (object : Expr) (field : Name)
-  
-   @ConcreteSyntax @
-    expr = expr, '.', name
-  
-   @Example @
-    x.first
-  
-   Returns the value passed to the struct at the corresponding field position
-   when the struct was constructed.
-  
-   The object must be a struct value. The field must refer to a field of that
-   struct value. The type of the expression is the type of the field being
-   accessed.
-  
-   The expression is evaluated by evaluating the object, then accessing its
-   field value.
-  
-   Runtime is O(log(N)) plus the runtime of the struct object, where N is the
-   number of fields in the struct.
 
   @subsection 3.5 Struct Copy
    @AbstractSyntax @
@@ -413,6 +413,71 @@
   
    Runtime is O(N) plus the runtimes of the arguments, where N is the number
    of fields of the struct.
+
+  @subsection [3.6 Struct Import]
+   @AbstractSyntax @
+    Expr: struct_import (imports : [(Type, Name, Name)]) (def : Expr) (body : Expr)
+
+   @ConcreteSyntax @
+    stmt = [type], name, ['(.' name ')'] {', [type], name, ['(.' name ')']}, '.=', expr, ';', stmt 
+
+   @Example @
+    Bool@, True, False .= /Std/Bool%;
+    Int@ q, Int@ r .= Div(x, y);
+
+   The struct import expression is short hand for a let expression that brings
+   into scope multiple fields of a struct value.
+
+   In its more general form, for each field to import, you list the type of
+   the variable to define, the name of the variable to define, and the name of
+   the field from the struct used to supply the value of the variable.
+
+   If a type is supplied for a variable, it must match the type of the field
+   being imported. Otherwise the type is inferred from the type of the field
+   being imported.
+
+   The field name may be omitted, in which case it is taken to be the same
+   name as the variable being defined.
+
+   The defined variables are visible in the body of the struct import
+   expression. They are not visible in the type specifications of subsequent
+   variables in the collection to import, nor are they visible in the
+   expression describing the struct value to import from.
+
+   The value of the struct import expression is the value of its body. The
+   type of the struct import expression is the type of its body.
+
+   It is a type error if the definition expression is not of struct type, if
+   any of the named fields to import do not belong to the type of the struct
+   value, or if the types of those fields do not match the types of the
+   variables being defined.
+
+   Conceptually the struct import expression desugars into a let expression.
+   For example, the struct import:
+
+   @code[fble] @
+    Bool@, T(.True), F(.False) .= /Std/Bool%;
+    ...
+
+   Is desugard to:
+
+   @code[fble] @
+    _ = /Std/Bool%;
+    Bool@ = _.Bool@;
+    T = _.True;
+    F = _.False;
+    ...
+
+   Except it doesn't introduce the variable @l{_} for the temporary struct
+   value.
+
+   The rationale for providing special syntax for struct import expressions is
+   to improve quality of life for the common case of importing values from
+   other modules. It helps with returning multiple values from a function. And
+   it is as close as we can get to provide abstractions for defining and
+   importing a collection of variables while preserving the design goal of
+   having every defined variable explicitly named in the source file where it
+   is defined.
 
  @section @label[unions][4. Unions]
   A union value is a particular value chosen from a group of possible values.
@@ -810,9 +875,6 @@
   function as its only argument. This is useful for using reusable glue logic
   to compose operations in a monadic style.
 
-  We introduce import expressions to facilitate importing collections of
-  variables from namespace structs into the local scope.
-  
   @subsection @label[lists][7.1 List]
    @AbstractSyntax @
     Expr: list (func : Expr) (args : [Expr])
@@ -1073,71 +1135,6 @@
    syntax, even though they share a similar concrete syntax to function
    application.
 
-  @subsection [7.4 Import]
-   @AbstractSyntax @
-    Expr: import (imports : [(Type, Name, Name)]) (def : Expr) (body : Expr)
-
-   @ConcreteSyntax @
-    stmt = [type], name, ['(.' name ')'] {', [type], name, ['(.' name ')']}, '.=', expr, ';', stmt 
-
-   @Example @
-    Bool@, True, False .= /Std/Bool%;
-    Int@ q, Int@ r .= Div(x, y);
-    M@, M(.Monad), S(.State) .= /Std/State/Pure%.Pure<Int@>;
-
-   The import expression is short hand for a let expression that brings into
-   scope multiple fields of a struct value.
-
-   In its more general form, for each field to import, you list the type of
-   the variable to define, the name of the variable to define, and the name of
-   the field from the struct used to supply the value of the variable.
-
-   If a type is supplied for a variable, it must match the type of the field
-   being imported. Otherwise the type is inferred from the type of the field
-   being imported.
-
-   The field name may be omitted, in which case it is taken to be the same
-   name as the variable being defined.
-
-   The defined variables are visible in the body of the let expression. They
-   are not visible in the type specifications of subsequence variables in the
-   collection to import, nor are they visible in the expression describing the
-   struct value to import from.
-
-   The value of the import expression is the value of its body. The type of
-   the import expression is the type of its body.
-
-   It is a type error if the definition expression is not of struct type, if
-   any of the named fields to import do not belong to the type of the struct
-   value, or if the types of those fields do not match the types of the
-   variables being defined.
-
-   Conceptually the import expression desugars into a let expression. For
-   example, the struct import:
-
-   @code[fble] @
-    M@, M(.Monad), S(.State) .= /Std/State/Pure%.Pure<Int@>;
-    ...
-
-   Is desugard to:
-
-   @code[fble] @
-    _ = /Std/State/Pure%.Pure<Int@>;
-    M@ = _.M@;
-    M = _.Monad;
-    S = _.State;
-    ...
-
-   Except it doesn't introduce the variable @l{_} for the temporary struct
-   value.
-
-   The rationale for providing special syntax for import expressions is to
-   improve quality of life for the common case of importing values from other
-   modules. It helps with returning multiple values from a function. And it is
-   as close as we can get to provide abstractions for defining and importing a
-   collection of variables while preserving the design goal of having every
-   defined variable explicitly named in the source file where it is defined.
- 
  @section @label[modules][8. Modules]
   Fble code is organized into a hierarchy of reusable modules. Each module
   describes a value that may depend on the value of other modules. A program
@@ -1526,9 +1523,10 @@
    
     | struct_type (fields : [(Type, Name)])
     | struct_value (type : Type) (args : [Expr])
-    | struct_export (args : [(Name, Expr)])
     | struct_access (object : Expr) (field : Name)
+    | struct_export (args : [(Name, Expr)])
     | struct_copy (src : Expr) (args : [(Name, Expr)])
+    | struct_import (imports : [(Type, Name, Name)]) (def : Expr) (body : Expr)
    
     | union_type (fields : [(Type, Name)])
     | union_value (type : Type) (field : Name) (arg : Expr)
@@ -1545,7 +1543,6 @@
     | list (func : Expr) (args : [Expr])
     | literal (func : Expr) (letters : word)
     | bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
-    | import (imports : [(Type, Name, Name)]) (def : Expr) (body : Expr)
    
     | package_type (path : Path)
     | private_type (type : Type) (package : Type)
@@ -1624,8 +1621,8 @@
     
      | '*(', [type, name, {',', type, name}], ')'      (* struct_type *)
      | type, '(', [expr, {',', expr}], ')'             (* struct_value *)
-     | '@(', [field_arg, {',', field_arg}] ')'         (* struct_export *)
      | expr, '.', name                                 (* struct_access *)
+     | '@(', [field_arg, {',', field_arg}] ')'         (* struct_export *)
      | expr, '.@(', field_arg, {',', field_arg}, ')'   (* struct_copy *)
 
      | '+(', type, name, {',', type, name}, ')'        (* union_type *)
@@ -1662,13 +1659,13 @@
        expr, ';'
      | [type], name, '=', expr,                        (* let *)
        {',', [type], name, '=', expr}, ';', stmt       
+     | [type], name, [':' name] {', [type], name, [':' name]},
+       '.=', expr, ';', stmt                           (* struct_import *)
      | stmt = type, name, ';', stmt                    (* undef *)
      | expr, '.?(', name, ':', expr,                   (* union_select *)
                 {',', name, ':', expr} ')', ';', stmt
      | type, name,                                     (* bind *)
        {',', type, name}, ':=', expr, ';', stmt                 
-     | [type], name, [':' name] {', [type], name, [':' name]},
-       '.=', expr, ';', stmt                           (* import *)
      ;
     
     module = stmt                                      (* module_value *)

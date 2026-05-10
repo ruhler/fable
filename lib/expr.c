@@ -99,6 +99,20 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
+    case FBLE_STRUCT_IMPORT_EXPR: {
+      FbleStructImportExpr* e = (FbleStructImportExpr*)expr;
+      for (size_t i = 0; i < e->imports.size; ++i) {
+        FbleFreeExpr(e->imports.xs[i].type);
+        FbleFreeName(e->imports.xs[i].name);
+        FbleFreeName(e->imports.xs[i].field);
+      }
+      FbleFreeVector(e->imports);
+      FbleFreeExpr(e->def);
+      FbleFreeExpr(e->body);
+      FbleFree(expr);
+      return;
+    }
+
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* e = (FbleUnionValueExpr*)expr;
       FbleFreeExpr(e->type);
@@ -173,20 +187,6 @@ void FbleFreeExpr(FbleExpr* expr)
       FbleFreeExpr(e->func);
       FbleFreeLoc(e->word_loc);
       FbleFree((char*)e->word);
-      FbleFree(expr);
-      return;
-    }
-
-    case FBLE_IMPORT_EXPR: {
-      FbleImportExpr* e = (FbleImportExpr*)expr;
-      for (size_t i = 0; i < e->imports.size; ++i) {
-        FbleFreeExpr(e->imports.xs[i].type);
-        FbleFreeName(e->imports.xs[i].name);
-        FbleFreeName(e->imports.xs[i].field);
-      }
-      FbleFreeVector(e->imports);
-      FbleFreeExpr(e->def);
-      FbleFreeExpr(e->body);
       FbleFree(expr);
       return;
     }

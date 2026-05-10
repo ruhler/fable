@@ -571,8 +571,8 @@ stmt:
         }
       }
 
-      FbleImportExpr* import_expr = FbleAlloc(FbleImportExpr);
-      import_expr->_base.tag = FBLE_IMPORT_EXPR;
+      FbleStructImportExpr* import_expr = FbleAlloc(FbleStructImportExpr);
+      import_expr->_base.tag = FBLE_STRUCT_IMPORT_EXPR;
       import_expr->_base.loc = FbleCopyLoc(@$);
       import_expr->imports = $1;
       import_expr->def = $3;

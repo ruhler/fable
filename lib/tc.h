@@ -43,6 +43,7 @@ typedef enum {
   FBLE_STRUCT_VALUE_TC,
   FBLE_STRUCT_ACCESS_TC,
   FBLE_STRUCT_COPY_TC,
+  FBLE_STRUCT_IMPORT_TC,
   FBLE_UNION_VALUE_TC,
   FBLE_UNION_ACCESS_TC,
   FBLE_UNION_SELECT_TC,
@@ -50,7 +51,6 @@ typedef enum {
   FBLE_FUNC_APPLY_TC,
   FBLE_LIST_TC,
   FBLE_LITERAL_TC,
-  FBLE_IMPORT_TC,
   FBLE_FOREIGN_VALUE_TC,
 } FbleTcTag;
 
@@ -220,6 +220,48 @@ typedef struct {
 } FbleStructCopyTc;
 
 /**
+ * @struct[FbleTcImport] Information for an import.
+ *  @field[FbleName][name] The name of the variable to define.
+ *  @field[size_t][field] The field to import.
+ */
+typedef struct {
+  FbleName name;
+  size_t field;
+} FbleTcImport;
+
+/**
+ * @struct[FbleTcImportV] Vector of FbleTcImport.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleTcImport*][xs] The elements.
+ */
+typedef struct {
+  size_t size;
+  FbleTcImport* xs;
+} FbleTcImportV;
+
+/**
+ * @struct[FbleStructImportTc] FBLE_STRUCT_IMPORT_TC
+ *  A struct import expression.
+ *
+ *  The imports are bound to variables implicitly based on the position of
+ *  the import in the import expression and the position of the import
+ *  expression in its parent expression as specified for FbleVar.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleTc*][def] The object to import fields from.
+ *  @field[size_t][fieldc] The number of fields in the type.
+ *  @field[FbleTcImportV][imports] The fields to import.
+ *  @field[FbleTc*][body] The body of the import.
+ */
+typedef struct {
+  FbleTc _base;
+  FbleTc* def;
+  size_t fieldc;
+  FbleTcImportV imports;
+  FbleTc* body;
+} FbleStructImportTc;
+
+/**
  * @struct[FbleUnionValueTc] FBLE_UNION_VALUE_TC
  *  A union value expression.
  *
@@ -360,48 +402,6 @@ typedef struct {
   FbleTc _base;
   FbleTagV prgm;
 } FbleLiteralTc;
-
-/**
- * @struct[FbleTcImport] Information for an import.
- *  @field[FbleName][name] The name of the variable to define.
- *  @field[size_t][field] The field to import.
- */
-typedef struct {
-  FbleName name;
-  size_t field;
-} FbleTcImport;
-
-/**
- * @struct[FbleTcImportV] Vector of FbleTcImport.
- *  @field[size_t][size] Number of elements.
- *  @field[FbleTcImport*][xs] The elements.
- */
-typedef struct {
-  size_t size;
-  FbleTcImport* xs;
-} FbleTcImportV;
-
-/**
- * @struct[FbleImportTc] FBLE_IMPORT_TC
- *  An import expression.
- *
- *  The imports are bound to variables implicitly based on the position of
- *  the import in the import expression and the position of the import
- *  expression in its parent expression as specified for FbleVar.
- *
- *  @field[FbleTc][_base] FbleTc base class.
- *  @field[FbleTc*][def] The object to import fields from.
- *  @field[size_t][fieldc] The number of fields in the type.
- *  @field[FbleTcImportV][imports] The fields to import.
- *  @field[FbleTc*][body] The body of the import.
- */
-typedef struct {
-  FbleTc _base;
-  FbleTc* def;
-  size_t fieldc;
-  FbleTcImportV imports;
-  FbleTc* body;
-} FbleImportTc;
 
 /**
  * @struct[FbleForeignValueTc] FBLE_FOREIGN_VALUE_TC

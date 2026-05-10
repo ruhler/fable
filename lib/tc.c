@@ -123,6 +123,18 @@ void FbleFreeTc(FbleTc* tc)
       return;
     }
 
+    case FBLE_STRUCT_IMPORT_TC: {
+      FbleStructImportTc* import_tc = (FbleStructImportTc*)tc;
+      FbleFreeTc(import_tc->def);
+      for (size_t i = 0; i < import_tc->imports.size; ++i) {
+        FbleFreeName(import_tc->imports.xs[i].name);
+      }
+      FbleFreeVector(import_tc->imports);
+      FbleFreeTc(import_tc->body);
+      FbleFree(tc);
+      return;
+    }
+
     case FBLE_UNION_VALUE_TC: {
       FbleUnionValueTc* uv = (FbleUnionValueTc*)tc;
       FbleFreeTc(uv->arg);
@@ -190,18 +202,6 @@ void FbleFreeTc(FbleTc* tc)
     case FBLE_LITERAL_TC: {
       FbleLiteralTc* v = (FbleLiteralTc*)tc;
       FbleFreeVector(v->prgm);
-      FbleFree(tc);
-      return;
-    }
-
-    case FBLE_IMPORT_TC: {
-      FbleImportTc* import_tc = (FbleImportTc*)tc;
-      FbleFreeTc(import_tc->def);
-      for (size_t i = 0; i < import_tc->imports.size; ++i) {
-        FbleFreeName(import_tc->imports.xs[i].name);
-      }
-      FbleFreeVector(import_tc->imports);
-      FbleFreeTc(import_tc->body);
       FbleFree(tc);
       return;
     }

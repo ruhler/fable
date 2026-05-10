@@ -149,6 +149,32 @@ static void Expr(FbleExpr* expr, Vars* vars)
       return;
     }
 
+    case FBLE_STRUCT_IMPORT_EXPR: {
+      FbleStructImportExpr* import_expr = (FbleStructImportExpr*)expr;
+      Expr(import_expr->def, vars);
+
+      size_t varc = import_expr->imports.size;
+      Vars nvars[varc];
+      for (size_t i = 0; i < varc; ++i) {
+        Expr(import_expr->imports.xs[i].type, vars);
+        nvars[i].name = import_expr->imports.xs[i].name;
+        nvars[i].used = import_expr->imports.xs[i].name.name->str[0] == '_';
+        nvars[i].next = (i == 0) ? vars : (nvars + i - 1);
+      }
+
+      Expr(import_expr->body, nvars + varc - 1);
+
+      for (size_t i = 0; i < varc; ++i) {
+        if(!nvars[i].used) {
+          FbleReportWarning("variable '", nvars[i].name.loc);
+          FblePrintName(stderr, nvars[i].name);
+          fprintf(stderr, "' defined but not used\n");
+        }
+      }
+
+      return;
+    }
+
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
       Expr(union_value_expr->type, vars);
@@ -216,32 +242,6 @@ static void Expr(FbleExpr* expr, Vars* vars)
     case FBLE_LITERAL_EXPR: {
       FbleLiteralExpr* literal_expr = (FbleLiteralExpr*)expr;
       Expr(literal_expr->func, vars);
-      return;
-    }
-
-    case FBLE_IMPORT_EXPR: {
-      FbleImportExpr* import_expr = (FbleImportExpr*)expr;
-      Expr(import_expr->def, vars);
-
-      size_t varc = import_expr->imports.size;
-      Vars nvars[varc];
-      for (size_t i = 0; i < varc; ++i) {
-        Expr(import_expr->imports.xs[i].type, vars);
-        nvars[i].name = import_expr->imports.xs[i].name;
-        nvars[i].used = import_expr->imports.xs[i].name.name->str[0] == '_';
-        nvars[i].next = (i == 0) ? vars : (nvars + i - 1);
-      }
-
-      Expr(import_expr->body, nvars + varc - 1);
-
-      for (size_t i = 0; i < varc; ++i) {
-        if(!nvars[i].used) {
-          FbleReportWarning("variable '", nvars[i].name.loc);
-          FblePrintName(stderr, nvars[i].name);
-          fprintf(stderr, "' defined but not used\n");
-        }
-      }
-
       return;
     }
 

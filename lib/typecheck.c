@@ -1482,6 +1482,101 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       return MkTc(FbleRetainType(th, &struct_type->_base), &struct_copy->_base);
     }
 
+    case FBLE_STRUCT_IMPORT_EXPR: {
+      FbleStructImportExpr* import_expr = (FbleStructImportExpr*)expr;
+
+      Tc def = TypeCheckExpr(th, scope, import_expr->def);
+      CleanTc(cleaner, def);
+      if (def.type == NULL) {
+        return TC_FAILED;
+      }
+
+      FbleDataType* normal = (FbleDataType*)FbleNormalType(th, def.type);
+      CleanType(cleaner, &normal->_base);
+      if (normal->_base.tag != FBLE_DATA_TYPE
+          || normal->datatype != FBLE_STRUCT_DATATYPE) {
+        ReportError(import_expr->def->loc, 
+            "expected value of struct type, but found value of type %t\n",
+            def.type);
+        return TC_FAILED;
+      }
+
+      FbleTaggedTypeV* fields = &normal->fields;
+
+      bool error = false;
+      size_t field_ids[import_expr->imports.size];
+      FbleType* types[import_expr->imports.size];
+      for (size_t i = 0; i < import_expr->imports.size; ++i) {
+        FbleImport* import = import_expr->imports.xs + i;
+
+        // Type check the type specification if any.
+        types[i] = NULL;
+        if (import->type != NULL) {
+          types[i] = TypeCheckType(th, scope, import->type);
+          CleanType(cleaner, types[i]);
+          error = error || (types[i] == NULL);
+        }
+
+        // Get the field and get/check the type.
+        size_t field;
+        for (field = 0; field < fields->size; ++field) {
+          if (FbleNamesEqual(import->field, fields->xs[field].name)) {
+            field_ids[i] = field;
+
+            FbleType* field_type = fields->xs[field].type;
+            if (types[i] == NULL) {
+              types[i] = FbleRetainType(th, field_type);
+              CleanType(cleaner, types[i]);
+            } else if (!FbleTypesEqual(th, types[i], field_type)) {
+              ReportError(types[i]->loc, "expected type %t, but found %t\n", types[i], field_type);
+              error = true;
+            }
+            break;
+          }
+        }
+
+        if (field == fields->size) {
+          ReportError(import->field.loc, "'%n' is not a field of type %t\n",
+              import->field, def.type);
+          error = true;
+        }
+      }
+
+      if (error) {
+        return TC_FAILED;
+      }
+
+      // Push the variables on scope.
+      for (size_t i = 0; i < import_expr->imports.size; ++i) {
+        VarName name = { .normal = import_expr->imports.xs[i].name, .module = NULL };
+        PushLocalVar(scope, name, FbleRetainType(th, types[i]));
+      }
+
+      Tc body = TypeCheckExpr(th, scope, import_expr->body);
+
+      for (size_t i = 0; i < import_expr->imports.size; ++i) {
+        PopLocalVar(th, scope);
+      }
+
+      if (body.type == NULL) {
+        return TC_FAILED;
+      }
+
+      FbleStructImportTc* import_tc = FbleNewTc(FbleStructImportTc, FBLE_STRUCT_IMPORT_TC, expr->loc);
+      import_tc->def = FbleCopyTc(def.tc);
+      import_tc->fieldc = fields->size;
+
+      FbleInitVector(import_tc->imports);
+      for (size_t i = 0; i < import_expr->imports.size; ++i) {
+        FbleTcImport* import = FbleExtendVector(import_tc->imports);
+        import->name = FbleCopyName(import_expr->imports.xs[i].name);
+        import->field = field_ids[i];
+      }
+      import_tc->body = body.tc;
+
+      return MkTc(body.type, &import_tc->_base);
+    }
+
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
       FbleType* type = TypeCheckType(th, scope, union_value_expr->type);
@@ -1966,101 +2061,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       return MkTc(FbleRetainType(th, ntype), FbleCopyTc(arg.tc));
     }
 
-    case FBLE_IMPORT_EXPR: {
-      FbleImportExpr* import_expr = (FbleImportExpr*)expr;
-
-      Tc def = TypeCheckExpr(th, scope, import_expr->def);
-      CleanTc(cleaner, def);
-      if (def.type == NULL) {
-        return TC_FAILED;
-      }
-
-      FbleDataType* normal = (FbleDataType*)FbleNormalType(th, def.type);
-      CleanType(cleaner, &normal->_base);
-      if (normal->_base.tag != FBLE_DATA_TYPE
-          || normal->datatype != FBLE_STRUCT_DATATYPE) {
-        ReportError(import_expr->def->loc, 
-            "expected value of struct type, but found value of type %t\n",
-            def.type);
-        return TC_FAILED;
-      }
-
-      FbleTaggedTypeV* fields = &normal->fields;
-
-      bool error = false;
-      size_t field_ids[import_expr->imports.size];
-      FbleType* types[import_expr->imports.size];
-      for (size_t i = 0; i < import_expr->imports.size; ++i) {
-        FbleImport* import = import_expr->imports.xs + i;
-
-        // Type check the type specification if any.
-        types[i] = NULL;
-        if (import->type != NULL) {
-          types[i] = TypeCheckType(th, scope, import->type);
-          CleanType(cleaner, types[i]);
-          error = error || (types[i] == NULL);
-        }
-
-        // Get the field and get/check the type.
-        size_t field;
-        for (field = 0; field < fields->size; ++field) {
-          if (FbleNamesEqual(import->field, fields->xs[field].name)) {
-            field_ids[i] = field;
-
-            FbleType* field_type = fields->xs[field].type;
-            if (types[i] == NULL) {
-              types[i] = FbleRetainType(th, field_type);
-              CleanType(cleaner, types[i]);
-            } else if (!FbleTypesEqual(th, types[i], field_type)) {
-              ReportError(types[i]->loc, "expected type %t, but found %t\n", types[i], field_type);
-              error = true;
-            }
-            break;
-          }
-        }
-
-        if (field == fields->size) {
-          ReportError(import->field.loc, "'%n' is not a field of type %t\n",
-              import->field, def.type);
-          error = true;
-        }
-      }
-
-      if (error) {
-        return TC_FAILED;
-      }
-
-      // Push the variables on scope.
-      for (size_t i = 0; i < import_expr->imports.size; ++i) {
-        VarName name = { .normal = import_expr->imports.xs[i].name, .module = NULL };
-        PushLocalVar(scope, name, FbleRetainType(th, types[i]));
-      }
-
-      Tc body = TypeCheckExpr(th, scope, import_expr->body);
-
-      for (size_t i = 0; i < import_expr->imports.size; ++i) {
-        PopLocalVar(th, scope);
-      }
-
-      if (body.type == NULL) {
-        return TC_FAILED;
-      }
-
-      FbleImportTc* import_tc = FbleNewTc(FbleImportTc, FBLE_IMPORT_TC, expr->loc);
-      import_tc->def = FbleCopyTc(def.tc);
-      import_tc->fieldc = fields->size;
-
-      FbleInitVector(import_tc->imports);
-      for (size_t i = 0; i < import_expr->imports.size; ++i) {
-        FbleTcImport* import = FbleExtendVector(import_tc->imports);
-        import->name = FbleCopyName(import_expr->imports.xs[i].name);
-        import->field = field_ids[i];
-      }
-      import_tc->body = body.tc;
-
-      return MkTc(body.type, &import_tc->_base);
-    }
-
     case FBLE_MODULE_PATH_EXPR: {
       FbleModulePathExpr* path_expr = (FbleModulePathExpr*)expr;
 
@@ -2411,6 +2411,7 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
     case FBLE_DATA_ACCESS_EXPR:
     case FBLE_STRUCT_EXPORT_EXPR:
     case FBLE_STRUCT_COPY_EXPR:
+    case FBLE_STRUCT_IMPORT_EXPR:
     case FBLE_UNION_VALUE_EXPR:
     case FBLE_UNION_SELECT_EXPR:
     case FBLE_FUNC_VALUE_EXPR:
@@ -2418,7 +2419,6 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
-    case FBLE_IMPORT_EXPR:
     case FBLE_MODULE_PATH_EXPR:
     case FBLE_PRIVATE_EXPR:
     case FBLE_MISC_APPLY_EXPR:
