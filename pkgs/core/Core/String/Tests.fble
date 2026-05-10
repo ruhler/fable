@@ -1,8 +1,4 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
 Char@ = /Std/Char%.Char@;
 Compose = /Std/Char/Lit%.Compose;
 
@@ -30,88 +26,6 @@ Unit@ = /Std/Unit%.Unit@;
 # Tests --
 #  A test suite to test the /Std/String% module and friends.
 Test@ Tests = TestSuite(Str|String, List[
-  Test(Str|Eq, (Unit@ _) {
-    Bool@ wnt = True;
-    Bool@ got = /Std/String/Eq%.Eq(Str|'A string!', Str|'A string!');
-    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Ne, (Unit@ _) {
-    Bool@ wnt = False;
-    Bool@ got = /Std/String/Eq%.Eq(Str|'A string!', Str|'nope');
-    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-  }),
-
-  TestSuite(Str|StartsWith, List[
-    Test(Str|NulNul, (Unit@ _) {
-      Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.StartsWith(Str|'', Str|'');
-      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }),
-
-    Test(Str|NulNonNul, (Unit@ _) {
-      Bool@ wnt = False;
-      Bool@ got = /Std/String/Eq%.StartsWith(Str|'', Str|'hello');
-      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }),
-
-    Test(Str|NonNulNul, (Unit@ _) {
-      Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.StartsWith(Str|'hello', Str|'');
-      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }),
-
-    Test(Str|No, (Unit@ _) {
-      Bool@ wnt = False;
-      Bool@ got = /Std/String/Eq%.StartsWith(Str|'hello', Str|'there');
-      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }),
-
-    Test(Str|Yes, (Unit@ _) {
-      Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.StartsWith(Str|'hello', Str|'hel');
-      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }),
-
-    Test(Str|Contains, (Unit@ _) {
-      Bool@ wnt = False;
-      Bool@ got = /Std/String/Eq%.StartsWith(Str|'xhello', Str|'hello');
-      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    })
-  ]),
-
-  TestSuite(Str|Contains, List<Test@>[
-    Test(Str|NulNul, (Unit@ _) {
-      Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.Contains(Str|'', Str|'');
-      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }),
-
-    Test(Str|NulNonNul, (Unit@ _) {
-      Bool@ wnt = False;
-      Bool@ got = /Std/String/Eq%.Contains(Str|'', Str|'hello');
-      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }),
-
-    Test(Str|NonNulNul, (Unit@ _) {
-      Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.Contains(Str|'hello', Str|'');
-      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }),
-
-    Test(Str|No, (Unit@ _) {
-      Bool@ wnt = False;
-      Bool@ got = /Std/String/Eq%.Contains(Str|'hello', Str|'there');
-      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    }),
-
-    Test(Str|Yes, (Unit@ _) {
-      Bool@ wnt = True;
-      Bool@ got = /Std/String/Eq%.Contains(Str|'xhello', Str|'hello');
-      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-    })
-  ]),
-
   Test(Str|Show, (Unit@ _) {
     String@ wnt = Str|'''hello''';
     String@ got = ToString(/Std/String/Show%.Show(Str|hello));

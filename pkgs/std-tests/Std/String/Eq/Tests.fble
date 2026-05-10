@@ -1,0 +1,112 @@
+
+Bool@, True, False .= /Std/Bool%;
+OnAscii, Str .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Lazy .= /Std/Lazy%;
+Test@ = /Std/Test%.Test@;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+# Tests --
+#  A test suite to test the /Std/String% module and friends.
+Test@ Tests = TestSuite|Eq[
+  TestSuite|Eq[
+    Test|T({
+      Unit@ _ := Lazy;
+      Bool@ wnt = True;
+      Bool@ got = /Std/String/Eq%.Eq(Str|'A string!', Str|'A string!');
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|F({
+      Unit@ _ := Lazy;
+      Bool@ wnt = False;
+      Bool@ got = /Std/String/Eq%.Eq(Str|'A string!', Str|'nope');
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    })
+  ],
+
+  TestSuite|StartsWith[
+    Test|EE({
+      Unit@ _ := Lazy;
+      Bool@ wnt = True;
+      Bool@ got = /Std/String/Eq%.StartsWith(Str|'', Str|'');
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|ES({
+      Unit@ _ := Lazy;
+      Bool@ wnt = False;
+      Bool@ got = /Std/String/Eq%.StartsWith(Str|'', Str|hello);
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|SE({
+      Unit@ _ := Lazy;
+      Bool@ wnt = True;
+      Bool@ got = /Std/String/Eq%.StartsWith(Str|hello, Str|'');
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|Ss({
+      Unit@ _ := Lazy;
+      Bool@ wnt = False;
+      Bool@ got = /Std/String/Eq%.StartsWith(Str|'hello', Str|'there');
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|Prefix({
+      Unit@ _ := Lazy;
+      Bool@ wnt = True;
+      Bool@ got = /Std/String/Eq%.StartsWith(Str|hello, Str|hel);
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|Suffix({
+      Unit@ _ := Lazy;
+      Bool@ wnt = False;
+      Bool@ got = /Std/String/Eq%.StartsWith(Str|'xhello', Str|'hello');
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    })
+  ],
+
+  TestSuite|Contains[
+    Test|EE({
+      Unit@ _ := Lazy;
+      Bool@ wnt = True;
+      Bool@ got = /Std/String/Eq%.Contains(Str|'', Str|'');
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|ES({
+      Unit@ _ := Lazy;
+      Bool@ wnt = False;
+      Bool@ got = /Std/String/Eq%.Contains(Str|'', Str|hello);
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|SE({
+      Unit@ _ := Lazy;
+      Bool@ wnt = True;
+      Bool@ got = /Std/String/Eq%.Contains(Str|hello, Str|'');
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|Ss({
+      Unit@ _ := Lazy;
+      Bool@ wnt = False;
+      Bool@ got = /Std/String/Eq%.Contains(Str|hello, Str|there);
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    }),
+
+    Test|Suffix({
+      Unit@ _ := Lazy;
+      Bool@ wnt = True;
+      Bool@ got = /Std/String/Eq%.Contains(Str|xhello, Str|hello);
+      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+    })
+  ]
+];
+
+@(Tests);
