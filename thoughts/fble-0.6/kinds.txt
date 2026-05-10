@@ -133,3 +133,32 @@ Good. Done.
 The last place I should have to update for type levels is adding a check for
 the type level of arguments to poly apply. I think that's it. After that, we
 can just remove kind levels entirely.
+
+---
+
+Tricky spot: FbleNewVarType. A var type can be kind level 0 or kind level 1.
+I'm not sure which when.
+
+Uses of FbleNewVarType:
+* Subst: Creates a copy of an existing type variable.
+  Should only be called if kind level is 0?
+* Let implicit type:
+  - For Foo variable - type level 0
+  - For Foo@ variable - type level 1
+* Creating the arg type for a poly
+  - Should be kind level 0 I think, because the value of type A@ is a normal
+    value, not a type.
+
+FbleAssignVarType needs some help here maybe.
+
+So I think what I want to do is this:
+* FbleNewVarType takes a boolean to say if its a type or a type type.
+  - If it's a type type, we wrap it in typeof.
+
+Um... we can't really refer to this properly.
+
+I want to pass the level explicitly instead of via kind. Let's see if I can
+make that work correctly first.
+ 
+
+

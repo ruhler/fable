@@ -1188,8 +1188,8 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           // very confusing to show the type of True as True@.
           char renamed[strlen(binding->name.name->str) + 3];
           renamed[0] = '\0';
-          size_t kind_level = (binding->name.space == FBLE_NORMAL_NAME_SPACE) ? 0 : 1;
-          if (kind_level == 0) {
+          size_t level = (binding->name.space == FBLE_NORMAL_NAME_SPACE) ? 0 : 1;
+          if (level == 0) {
             strcat(renamed, "__");
           } 
           strcat(renamed, binding->name.name->str);
@@ -1200,8 +1200,8 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             .loc = binding->name.loc,
           };
 
-          FbleKind* kind = FbleNewBasicKind(binding->name.loc, kind_level);
-          types[i] = FbleNewVarType(th, binding->name.loc, kind, type_name);
+          FbleKind* kind = FbleNewBasicKind(binding->name.loc, level);
+          types[i] = FbleNewVarType(th, binding->name.loc, level, kind, type_name);
           FbleFreeKind(kind);
           FbleFreeString(type_name.name);
         } else {
@@ -1746,7 +1746,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      FbleType* arg_type = FbleNewVarType(th, poly->arg.name.loc, poly->arg.kind, poly->arg.name);
+      FbleType* arg_type = FbleNewVarType(th, poly->arg.name.loc, 1, poly->arg.kind, poly->arg.name);
       FbleType* arg = FbleValueOfType(th, arg_type);
       CleanType(cleaner, arg);
       assert(arg != NULL);

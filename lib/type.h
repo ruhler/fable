@@ -428,6 +428,7 @@ void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
  *
  *  @arg[FbleTypeHeap*][heap] The heap to allocate the type on.
  *  @arg[FbleLoc][loc] The location for the type. Borrowed.
+ *  @arg[size_t][level] The type level of a value of this type.
  *  @arg[FbleKind*][kind] The kind of a value of this type. Borrowed.
  *  @arg[FbleName][name] The name of the type variable. Borrowed.
  *
@@ -441,7 +442,7 @@ void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
  *   The caller is responsible for calling FbleReleaseType on the returned
  *   type when it is no longer needed.
  */
-FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleName name);
+FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, size_t level, FbleKind* kind, FbleName name);
 
 /**
  * @func[FbleAssignVarType] Assigns a value to the given abstract type.

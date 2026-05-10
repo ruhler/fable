@@ -589,7 +589,7 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* t
         }
       }
 
-      FbleType* svar = FbleNewVarType(heap, type->loc, var->kind, var->name);
+      FbleType* svar = FbleNewVarType(heap, type->loc, 0, var->kind, var->name);
 
       TypePairs ntp = {
         .a = var->value,
@@ -1012,11 +1012,9 @@ FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleL
 }
 
 // See documentation in type.h.
-FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleName name)
+FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, size_t level, FbleKind* kind, FbleName name)
 {
   assert(name.space == FBLE_TYPE_NAME_SPACE && "bad namespace for var type");
-
-  size_t level = FbleGetKindLevel(kind);
 
   FbleVarType* var = FbleNewType(heap, FbleVarType, FBLE_VAR_TYPE, loc);
   var->name = FbleCopyName(name);
