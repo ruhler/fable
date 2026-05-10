@@ -7,7 +7,6 @@ Char@ = /Std/Char%.Char@;
 Compose = /Std/Char/Lit%.Compose;
 
 Char = /Std/Char/Ascii%.Char;
-Ascii = /Std/Char/Ascii%.Ascii;
 
 AssertEquals = /Std/Eq/Assert%.AssertEquals;
 
@@ -19,8 +18,6 @@ ToString = /Std/Stream/String%.ToString;
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;
 StrE = /Std/Char/Ascii%.StrE;
-Lines = /Std/String/Lines%.Lines;
-SplitLines = /Std/String/Lines%.SplitLines;
 
 Split = /Std/String/Eq%.Split;
 
@@ -33,64 +30,6 @@ Unit@ = /Std/Unit%.Unit@;
 # Tests --
 #  A test suite to test the /Std/String% module and friends.
 Test@ Tests = TestSuite(Str|String, List[
-  Test(Str|StrE, (Unit@ _) {
-    String@ wnt = List[
-      Char|a, Ascii.nl,
-      Char|b, Ascii.tab,
-      Char|c, Char|'\',
-      Char|d];
-    String@ got = StrE|'a\nb\tc\\d';
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|StrE_u, (Unit@ _) {
-    String@ wnt = Str|'abc';
-    String@ got = StrE|'a\u62;c';
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Lines, (Unit@ _) {
-    String@ wnt = StrE|'hello\nthere\n';
-    String@ got = Lines[Str|'hello', Str|'there'];
-    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|SplitLines, (Unit@ _) {
-    List@<String@> wnt = List[Str|'hello', Str|'there'];
-    List@<String@> got = SplitLines(StrE|'hello\nthere\n');
-    AssertEquals(
-      /Std/List/Eq%.Eq(/Std/String/Eq%.Eq),
-      /Std/List/Show%.Show(/Std/String/Show%.Show),
-      wnt, got);
-  }),
-
-  Test(Str|SplitLines_empty, (Unit@ _) {
-    List@<String@> wnt = List<String@>[];
-    List@<String@> got = SplitLines(Str|'');
-    AssertEquals(
-      /Std/List/Eq%.Eq(/Std/String/Eq%.Eq),
-      /Std/List/Show%.Show(/Std/String/Show%.Show),
-      wnt, got);
-  }),
-
-  Test(Str|SplitLines_nonewline, (Unit@ _) {
-    List@<String@> wnt = List[Str|'hello'];
-    List@<String@> got = SplitLines(Str|'hello');
-    AssertEquals(
-      /Std/List/Eq%.Eq(/Std/String/Eq%.Eq),
-      /Std/List/Show%.Show(/Std/String/Show%.Show),
-      wnt, got);
-  }),
-
-  Test(Str|SplitLines_newline, (Unit@ _) {
-    List@<String@> wnt = List[Str|''];
-    List@<String@> got = SplitLines(StrE|'\n');
-    AssertEquals(
-      /Std/List/Eq%.Eq(/Std/String/Eq%.Eq),
-      /Std/List/Show%.Show(/Std/String/Show%.Show),
-      wnt, got);
-  }),
-
   Test(Str|Eq, (Unit@ _) {
     Bool@ wnt = True;
     Bool@ got = /Std/String/Eq%.Eq(Str|'A string!', Str|'A string!');

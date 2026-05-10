@@ -21,7 +21,9 @@ Test@ Tests = TestSuite|Char[
   Test|Pos({
     Unit@ _ := Lazy;
     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, Int|65, Pos(A));
-  })
+  }),
+
+  /Std/Char/Ascii/Tests%.Tests
 ];
 
 @(Tests);

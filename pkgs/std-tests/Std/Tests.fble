@@ -15,6 +15,7 @@ Test@ Tests = TestSuite|Std[
   /Std/Random/Tests%.Tests,
   /Std/Set/Tests%.Tests,
   /Std/Stream/Tests%.Tests,
+  /Std/String/Tests%.Tests,
   /Std/Test/Tests%.Tests,
   /Std/Unit/Tests%.Tests
 ];
