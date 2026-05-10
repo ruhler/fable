@@ -1,0 +1,8 @@
+# @@fble-test@@ compile-error 8:8
+Unit@ = *();
+Unit = Unit@();
+
+Maybe@ = <@ A@> { +(A@ just, Unit@ nothing); };
+
+# The type argument is a value rather than a type.
+Maybe@<Unit>(nothing: Unit@());

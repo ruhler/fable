@@ -35,3 +35,69 @@ which I assume is... complex and a bit scary.
 
 Let me try updating the spec to start. See how it feels.
 
+---
+
+The spec change feels pretty good now. How do we update the implementation
+internally to match?
+
+Type level is just a number. I don't think I need anything special for that
+type wise. Hmm...
+
+The challenge presumably is that when I pass around kind, some times I'm using
+it for polymorphism and some times I'm using it for type level. But the type
+level, presumably, we can ask from the type directly? Maybe not?
+
+Maybe the trick is to figure out every place I refer to type level. See how to
+extract that out. Once that's extracted out, clean up kinds.
+
+The way to clean up the kind is to remove level from FbleBasicKind. It's as
+easy as that, once we have that other ways. Let's check on uses of level to
+start.
+
+* FbleBasicKind level field.
+* FbleNewBasicKind takes a level.
+* LevelAdjustedKind in type.c
+* FbleGetKind is used to get the kind of a type.
+* FbleGetKindLevel to get the level of a kind.
+* FbleKindCompatible checks level too?
+* PrintKind prints the level.
+* FbleVarType has a kind associated with it.
+  - Should just be normal or type, right?
+* CheckNameSpace gets the kind and then the level from that.
+
+Okay, so I think the first step should be to figure out how to provide a
+function FbleGetTypeLevel that works independent of kinds. Once I have that,
+it should be straight forward to get rid of levels from kinds. That will clean
+some stuff up.
+
+How would I implement it? What should it take as input?
+
+There's nothing to stop us from doing something like: Foo<@<X@>>, which means
+we will need a way to pass the level around and check that it's right. But
+maybe separately. Poly apply should always be done to level 1 types. So worry
+about that later.
+
+Let's see how to implement FbleGetTypeLevel, given an FbleType*.
+
+* Data, Func, Package: kind level 0 (not 1?).
+* Private: call through, or set to 0.
+* Poly:...
+
+It's all easy except var type, which should be level 0 or 1. Let me add a
+separate field to FBLE_VAR_TYPE to track that, then implement
+FbleGetTypeLevel. Also, try to clarify if the level is the level of the value
+of that type, or the level of the type itself. I think the level of the value
+itself?
+
+But wait. Var type is always type 1, right? It can't be anything else? The
+only thing that matters for type level is typeof, right? I should be able to
+implement GetTypeLevel easily by just looping over typeof types.
+
+What's more... I should only really care about whether a type is level 1 or
+not. If it's a type, we know it's not 0. If it's more than 1, we don't care,
+right?
+
+Which suggests maybe I should go back to use cases and figure out what checks
+I need. Also, let me make sure I have check that you can't apply a poly to
+something if higher type level.
+
