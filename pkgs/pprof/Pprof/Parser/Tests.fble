@@ -15,7 +15,7 @@ List = /Std/List%.List;
 Items = /Std/List%.Items;
 Empty = /Std/List%.Empty;
 
-In@ .= /Std/Stream%;
+In@ .= /Std/Stream/Io%;
 
 String@ = /Std/String%.String@;
 Str = /Std/Char/Ascii%.Str;

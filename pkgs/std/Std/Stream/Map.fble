@@ -3,7 +3,8 @@
 
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Stream@, In@, Out@ .= /Std/Stream%;
+Stream@ .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 
 # @func[Stream] Changes the output type of a stream.
 #  @arg[@][A@] The output type of the original stream.

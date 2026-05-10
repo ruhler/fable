@@ -5,7 +5,7 @@ False = /Std/Bool%.False;
 
 Char@, Pos .= /Std/Char%;
 Char = /Std/Char/Ascii%.Char;
-Out@ .= /Std/Stream%;
+Out@ .= /Std/Stream/Io%;
 GetLine .= /Std/Stream/String%;
 
 Main@ = /Std/Io/Cli%.Main@;
@@ -40,7 +40,7 @@ Io@ = /Std/Io%.Io@;
 Stream@, Do, Put, Return .= /Std/Stream%;
 String .= /Std/Stream/String%;
 Split .= /Std/String/Eq%;
-In@ .= /Std/Stream%;
+In@ .= /Std/Stream/Io%;
 Lines .= /Std/Stream/String%;
 ToDebug .= /Std/Stream/Debug%;
 

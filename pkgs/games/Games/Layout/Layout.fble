@@ -5,7 +5,7 @@ False = /Std/Bool%.False;
 
 Char@ .= /Std/Char%;
 
-Out@ .= /Std/Stream%;
+Out@ .= /Std/Stream/Io%;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
 Int@ = /Std/Int%.Int@;

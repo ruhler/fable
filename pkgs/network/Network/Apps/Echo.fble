@@ -29,7 +29,8 @@ Maybe@ = /Std/Maybe%.Maybe@;
 Monad@ = /Std/Monad%.Monad@;
 Io@ = /Std/Io%.Io@;
 
-In@, Out@, Put .= /Std/Stream%;
+Put .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 
 Success = /Std/Io/Cli%.Success;
 Failure = /Std/Io/Cli%.Failure;

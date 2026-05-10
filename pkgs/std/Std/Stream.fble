@@ -2,8 +2,7 @@
 #  Types and utilities for streaming data out.
 
 Lazy@ .= /Std/Lazy%;
-Maybe@ .= /Std/Maybe%;
-Unit@, Unit .= /Std/Unit%;
+Unit .= /Std/Unit%;
 
 # @type@[Stream@] A computation that outputs a stream of values.
 #  @arg[@][A@] The type of value to output.
@@ -71,13 +70,4 @@ ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
   stream(return, put, base);
 };
 
-# @type[In@] Monadic interface for getting from a stream of values.
-#  Get the next value from the stream. It returns Nothing if the end of the
-#  stream has been reached.
-In@ = <@ A@, <@>@ M@> { M@<Maybe@<A@>>; };
-
-# @type[Out@] Monadic interface for outputting values to a stream.
-#  Puts the next values to output.
-Out@ = <@ A@, <@>@ M@>(Stream@<A@>) { M@<Unit@>; };
-
-@(Stream@, In@, Out@, Return, Do, Put, ForEach);
+@(Stream@, Return, Do, Put, ForEach);

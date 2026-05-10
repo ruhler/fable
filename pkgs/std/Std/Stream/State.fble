@@ -5,7 +5,8 @@ List@ .= /Std/List%;
 Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 State@ .= /Std/State%;
-Stream@, In@, Out@, Do .= /Std/Stream%;
+Stream@, Do .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 Unit@ .= /Std/Unit%;
 
 # @func[In] An input port that consumes from a list.

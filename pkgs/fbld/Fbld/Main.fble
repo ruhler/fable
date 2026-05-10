@@ -1,7 +1,8 @@
 
 Char@ .= /Std/Char%;
 
-Stream@, In@, Out@ .= /Std/Stream%;
+Stream@ .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 String, GetText .= /Std/Stream/String%;
 
 List@ = /Std/List%.List@;

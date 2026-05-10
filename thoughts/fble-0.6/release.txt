@@ -191,3 +191,24 @@ High level tasks:
  - Consider writing some rosetta code stuff
  - Consider rewriting all the existing fble to make it more idiomatic.
 
+---
+
+Core package has been removed. Before rewriting the tutorials, I want to
+address any todos that might impact how I rewrite the tutorials. These come to
+mind:
+* Move In@, Out@ out of /Std/Stream%.
+* Rename 'import' to struct import and implicit type to struct export?
+* Figure out how to organize std packages
+
+Where should In@, Out@ move to? Also any other reference to In@ and Out@ under
+/Std/Stream/.
+
+* /Std/Io% is already taken to mean something else.
+* Maybe: /Std/Stream/Io%? /Std/Monad/Io%?
+
+/Std/Stream/Io% sounds reasonable. It's a specific type of io that works with
+streams of data. Let me try moving it. See how terrible it feels.
+
+I made the change. It doesn't feel great or terrible. Lots of places we need
+both Stream@ and In@/Out@. Some places we don't. Oh well.
+

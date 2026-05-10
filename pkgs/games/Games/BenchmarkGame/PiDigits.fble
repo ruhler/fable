@@ -16,7 +16,7 @@ List@ = /Std/List%.List@;
 
 Monad@ = /Std/Monad%.Monad@;
 
-In@, Out@ .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 
 String@ = /Std/String%.String@;
 StringE = /Std/Char/Ascii/Stream%.StringE;

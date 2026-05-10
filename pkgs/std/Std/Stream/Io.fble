@@ -1,0 +1,17 @@
+# @module[/Std/Stream/Io%]
+#  Standard types for monadic streaming of data.
+
+Maybe@ .= /Std/Maybe%;
+Stream@ .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
+
+# @type[In@] Monadic interface for getting from a stream of values.
+#  Get the next value from the stream. It returns Nothing if the end of the
+#  stream has been reached.
+In@ = <@ A@, <@>@ M@> { M@<Maybe@<A@>>; };
+
+# @type[Out@] Monadic interface for outputting values to a stream.
+#  Puts the next values to output.
+Out@ = <@ A@, <@>@ M@>(Stream@<A@>) { M@<Unit@>; };
+
+@(In@, Out@);

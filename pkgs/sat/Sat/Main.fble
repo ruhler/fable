@@ -1,7 +1,7 @@
 
 Char@ .= /Std/Char%;
 
-In@, Out@ .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 String, GetLine .= /Std/Stream/String%;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 

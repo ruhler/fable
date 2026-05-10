@@ -2,7 +2,8 @@
 #  An output channel that ignores all output.
 
 Monad@ .= /Std/Monad%;
-Stream@, Out@ .= /Std/Stream%;
+Stream@ .= /Std/Stream%;
+Out@ .= /Std/Stream/Io%;
 Unit@, Unit .= /Std/Unit%;
 
 # @func[ToNull] Stream discarder.

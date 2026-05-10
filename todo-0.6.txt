@@ -11,7 +11,6 @@ Things to consider doing for the fble-0.6 release.
     Empty, Items equivalents.
   - Add some native code to help with maybe?
     Nothing, Just equivalents.
-  - The header ifdefs will need to change from CORE to STD presumably.
   - What to do about FbleStringValueAccess. Is it used anywhere? For debugging?
 
 * Add some tests/build target for cbtg
@@ -27,9 +26,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Should Map Put, Update, Replace functions update the key value or leave it
   as is? Add tests for this case.
-
-* Move In@, Out@ out of /Std/Stream%.
-  There must be a better place for them.
 
 * Clean up all imports to use import expression in all the apps.
 

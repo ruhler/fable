@@ -1,6 +1,6 @@
 
 Char@ .= /Std/Char%;
-In@, Out@ .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 String .= /Std/Stream/String%;
 
 List@ = /Std/List%.List@;

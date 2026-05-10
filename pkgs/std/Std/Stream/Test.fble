@@ -2,7 +2,8 @@
 #  An output channel for testing.
 
 Monad@ .= /Std/Monad%;
-Stream@, Out@ .= /Std/Stream%;
+Stream@ .= /Std/Stream%;
+Out@ .= /Std/Stream/Io%;
 Unit@, Unit .= /Std/Unit%;
 
 # @func[ToTest] Stream values to a Unit@.

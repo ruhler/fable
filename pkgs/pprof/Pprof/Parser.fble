@@ -7,7 +7,7 @@ Reverse = /Std/List%.Reverse;
 
 Monad@ = /Std/Monad%.Monad@;
 
-In@ .= /Std/Stream%;
+In@ .= /Std/Stream/Io%;
 
 String@ = /Std/String%.String@;
 

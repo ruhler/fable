@@ -5,7 +5,7 @@ String = /Std/Char/Ascii/Stream%.String;
 Format = /Std/Char/Ascii/Stream%.Format;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
-In@, Out@ .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 GetLine .= /Std/Stream/String%;
 
 List@ = /Std/List%.List@;

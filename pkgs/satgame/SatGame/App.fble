@@ -1,6 +1,6 @@
 
 Char@ .= /Std/Char%;
-Out@ .= /Std/Stream%;
+Out@ .= /Std/Stream/Io%;
 
 Int@ = /Std/Int%.Int@;
 Sub = /Std/Int%.Sub;

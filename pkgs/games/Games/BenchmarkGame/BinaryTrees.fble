@@ -17,7 +17,8 @@ List@ = /Std/List%.List@;
 Default .= /Std/Maybe%;
 Monad@ = /Std/Monad%.Monad@;
 
-Stream@, In@, Out@ .= /Std/Stream%;
+Stream@ .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 
 String@ = /Std/String%.String@;
 Format = /Std/Char/Ascii/Stream%.Format;

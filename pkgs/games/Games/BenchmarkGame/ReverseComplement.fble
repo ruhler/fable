@@ -4,7 +4,8 @@ Char = /Std/Char/Ascii%.Char;
 Ascii = /Std/Char/Ascii%.Ascii;
 IsNewline .= /Std/String/Lines%;
 
-Stream@, In@, Out@, Put, Do .= /Std/Stream%;
+Stream@, Put, Do .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 FormatE = /Std/Char/Ascii/Stream%.FormatE;
 
 String = /Std/Stream/String%.String;

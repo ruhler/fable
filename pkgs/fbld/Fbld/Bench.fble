@@ -3,7 +3,8 @@ Char@ .= /Std/Char%;
 
 Str = /Std/Char/Ascii%.Str;
 
-Stream@, In@, Out@, Return .= /Std/Stream%;
+Stream@, Return .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 NullOut = /Std/Stream/Null%.NullOut<Char@>;
 
 Exit@ = /Std/Io/Cli%.Exit@;

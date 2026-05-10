@@ -4,7 +4,8 @@
 
 Char@ .= /Std/Char%;
 Monad@ .= /Std/Monad%;
-Stream@, Out@, ForEach .= /Std/Stream%;
+Stream@, ForEach .= /Std/Stream%;
+Out@ .= /Std/Stream/Io%;
 Unit@, Unit .= /Std/Unit%;
 
 (Char@) { Unit@; } PutChar = @<PutChar>|PutChar;

@@ -2,7 +2,7 @@
 Char@ .= /Std/Char%;
 AssertEquals .= /Std/Eq/Assert%;
 NullOut .= /Std/Stream/Null%;
-Out@ .= /Std/Stream%;
+Out@ .= /Std/Stream/Io%;
 Exit@, Success .= /Std/Io/Cli%;
 String@ .= /Std/String%;
 Str .= /Std/Char/Ascii%;

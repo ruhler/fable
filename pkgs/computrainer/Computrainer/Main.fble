@@ -4,7 +4,7 @@ True = /Std/Bool%.True;
 False = /Std/Bool%.False;
 
 Char@ .= /Std/Char%;
-In@, Out@ .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 GetText .= /Std/Stream/String%;
 
 Int@ = /Std/Int%.Int@;

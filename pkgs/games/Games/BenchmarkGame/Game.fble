@@ -1,7 +1,8 @@
 
 Char@ .= /Std/Char%;
 
-Stream@, In@, Out@, Return .= /Std/Stream%;
+Stream@, Return .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
 ToString .= /Std/Stream/String%;
 
 NullOut = /Std/Stream/Null%.NullOut<Char@>;
