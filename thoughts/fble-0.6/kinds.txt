@@ -1,0 +1,37 @@
+Kind Cleanup
+============
+Turns out, since updating the let syntax, we don't need any way to describe a
+normal kind in the language. Which leads to the question...
+
+How to clean up kind specification? There are two separate concepts that maybe
+need different names:
+1. normal/type/type of type/...
+  Needed early on. Has to do with variable and field naming.
+2. basic kind/poly kind
+  Only needed for polymorphism.
+
+In the implementation, we have basic kind and poly kind. But honestly, it's a
+bit weird now. Like there's some fundamental cleanup we should be able to do
+internally. Specifically: it doesn't make sense to have an arg kind to a poly
+that is not a type kind. Right?
+
+I'm starting to believe we should have two separate concepts with two separate
+names. But let's double check.
+
+The claim is, I'll never need to do anything but basic type level kind when
+constructing poly kinds. Internally or externally. Externally I can believe:
+there's no syntax for it anyway. Internally is less obvious to me.
+
+Note: Haskell uses 'kind' more for the polymorphic case. Maybe best to stick
+with that convention to avoid confusion.
+
+Then what should I call the type order of a variable? How about "type order"?
+Or, internally, I call it 'type level'. That sounds reasonable to me. Type
+level. Kind.
+
+Cool. I have new names for the concepts. I should update the spec, which I
+assume is relatively straight forward. I should update the implementation,
+which I assume is... complex and a bit scary.
+
+Let me try updating the spec to start. See how it feels.
+

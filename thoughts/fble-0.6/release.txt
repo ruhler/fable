@@ -255,10 +255,3 @@ And here's a question: do I need syntax for normal kinded things? Is there any
 value in having that anymore? Where could you ever use it?
 
 Okay. Sounds like a round of spec cleanup is warranted.
-
-How to clean up kind specification? There are two separate concepts that maybe
-need different names:
-1. normal/type/type of type/...
-  Needed early on. Has to do with variable and field naming.
-2. basic kind/poly kind
-  Only needed for polymorphism.

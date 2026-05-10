@@ -41,7 +41,7 @@
    Additional syntax is provided to make structs suitable for describing and
    manipulating namespaces.
  
- @section @label[variables][2. Types, Kinds, and Variables]
+ @section @label[variables][2. Types and Variables]
   @subsection 2.1 Types
    Data values and the expressions that describe them are strongly typed. A
    value's type describes the kinds of operations that can legally be
@@ -76,55 +76,35 @@
    the special unit value for types may exist at runtime when using an fble
    native interface.
 
-  @subsection 2.2 Kinds
-   @AbstractSyntax @
-    Kind: basic_normal_kind
-    Kind: basic_type_kind
+  @subsection 2.2 Type Levels
+   Type levels are used to classify whether a value is a normal value, a type
+   value, or something else. Using the example in the previous section:
   
-   @ConcreteSyntax @
-    kind = '%'    (* normal_kind *)
-    kind = '@'    (* type_kind *)
+   @item @L{True} is a normal value. It has type level 0.
+   @item @L{Bool@} is a type value. It has type level 1.
+   @item @L{@<Bool@>} is a type of a type value. It has type level 2.
+   @item @L{@<@<Bool@>>} has type level 3, and so on.
   
-   @Example @
-    %
-    @
-  
-   Kinds are used to classify whether a value is a normal value, a type value,
-   or something else. Using the example in the previous section:
-  
-   @item @L{True} is a normal value. It is of normal kind.
-   @item @L{Bool@} is a type value. It is of type kind.
-   @item @L{@<Bool@>} is a type of a type value. It is of higher kind.
-   @item @L{@<@<Bool@>>} is also of higher kind.
-  
-   Kinds are analogous to types in that they describe what operations are
-   supported by a particular value, but they are much more restricted in the
-   operations they allow. A value of normal kind cannot be used where a type
-   is expected, for example. Unlike types, kinds do not act as values and
-   cannot be described using expressions.
-  
-   The kind of a value is uniquely determined by the type of the value.
+   The type level of a value is uniquely determined by the type of the value.
   
    It is useful to be able to recognize immediately whether a variable refers
    to a normal value, a type value, or something else. For that reason, we
-   require different namespaces be used for different kinds of values. In the
-   concrete syntax, names of normal variables are unadorned, while names of
-   type variables must be followed with the character @L{@}. So, for example,
-   @L{True} is a normal value, and @L{Bool@} is a type value.
+   require different namespaces be used for different type levels of values.
+   In the concrete syntax, names of normal variables are unadorned, while
+   names of type variables must be followed with the character @L{@}. So, for
+   example, @L{True} is a normal value, and @L{Bool@} is a type value.
   
    The @L{@} character is not considered part of the variable, but rather is
    an indicator of the namespace of the variable. So, for example @L{'Foo'@}
    is a type variable named @L{Foo}, and @L{'Foo@'} is a normal variable named
    @L{Foo@}.
   
-   You are not allowed to use a variable to refer to a higher kinded value,
+   You are not allowed to use variables to refer to higher type level values,
    because then using @L{@} in variable names to distinguish between normal
-   variables and type variables would be insufficient. In practice this should
-   not be a significant limitation because you should be able to use a type
-   variable for the value of the type and use the typeof operator to get the
-   type of the type as needed. For this reason, there is no syntax for
-   describing a higher kind, though it is possible to describe types and
-   expressions of higher kind.
+   variables and type variables would be insufficient. In practice this is not
+   a significant limitation because you can use a type variable for the value
+   of the type and use the typeof operator to get the type of the type as
+   needed.
   
   @subsection 2.3 Typeof
    @AbstractSyntax @
@@ -157,9 +137,8 @@
    recursively.
   
    Expressions are evaluated in a context that maps variable names to values,
-   along with their types and kinds. The value, type, and kind of the variable
-   expression is the value, type, and kind associated with the variable name
-   in the context.
+   along with their types. The value and type of the variable expression is
+   the value and type associated with the variable name in the context.
   
    In general it is legal to declare a new variable with the same name as an
    existing variable in scope. In this case, the new variable shadows the
@@ -213,11 +192,7 @@
    supported by the value of the variable.
 
    The type may optionally be omitted, in which case the type of the value is
-   inferred from its definition for use in the body of the let expression. As
-   a restriction to ensure type checking is possible, the kind of the variable
-   is treated as a basic kind in the bindings expressions. This restricts the
-   set of recursive types that can be described to ones that the type checker
-   can handle without difficulty.  
+   inferred from its definition for use in the body of the let expression.
 
    If a type is used when defining a variable, that type is used for the type
    of the variable in the binding expressions. It must match the type of the
@@ -249,7 +224,7 @@
    Implementations are encouraged to emit warnings for unused variables, with
    the convention that no warnings should be produced for variables starting
    with @L{_} in their name. This allows the programmer to annotate a variable
-   as intentionally unused, which is occasionally useful in practice.
+   as intentionally unused, which is often useful in practice.
 
    Runtime is O(N log(M)) plus the runtimes of the bindings and the runtime of
    the body, where N is the number of bindings and M is the number of
@@ -688,23 +663,32 @@
    instead of stack space.
  
  @section @label[polymorphism][6. Polymorphism]
-  Polymorphism allows expressions to be parameterized by types.
-  
-  @subsection 6.1 Poly Kind
+  Polymorphism allows types and values to be parameterized by types.
+
+  @subsection 6.1 Kinds
    @AbstractSyntax @
+    Kind: type_kind
     Kind: poly_kind (arg : Kind) (return : Kind)
   
    @ConcreteSyntax @
-    kind = '<', kind, {',', kind}, '>', kind
+    kind = '@'                                  (* type_kind *)
+    kind = '<', kind, {',', kind}, '>', kind    (* poly_kind *)
   
    @Example @
-    <@>@
-    <@,@>%
-  
-   A poly kind describes the kind of a polymorphic value. It describes what
-   kinds of values can be used as arguments to polymorphic values.
-  
-   Two poly kinds are equal if they have the same argument and return kinds.
+    @
+    <@,@>@
+    <@,<@>@>@
+
+   Kinds describe how many type parameters a polymorphic type expects. A type
+   that isn't parameterized is called non-polymorphic and has type kind @L{@}.
+
+   A polymorphic type parameterized by a single type has poly kind @L{<@>@}. A
+   polymorphic type parameterized by two types has poly kind @L{<@,@>@}, and
+   so on.
+
+   Polymorphism also supports higher order type parameters: type parameters
+   that are themselves polymorphic and can have types applied to them. Poly
+   kinds are used to describe these higher order type parameters.
 
    A kind is compatible with another kind if it is at least as polymorphic as
    the other kind. For example, something of kind @L{<@>@} is compatible for
@@ -712,14 +696,15 @@
    A poly kind is compatible with another poly kind if both its argument and
    return kinds are compatible with the other argument and return.
   
-   A poly kind is considered a normal kind if its result kind is a normal
-   kind, and a type kind of its result kind is a type kind.
-  
-   The argument kind of a poly kind must be a type kind.
-  
+   When using a let expression to declare a polymorphic recursive type
+   variable, the kind of the type variable is treated as non-polymorphic
+   anywhere it appears in the let bindings. This restriction ensures type
+   checking is possible by restricting the set of recursive types that can be
+   described to ones that the type checker can handle without difficulty.  
+
    The concrete syntax allows you to specify multiple arguments in a poly
    kind. This is syntactic sugar for nested single argument poly kinds. For
-   example, the following two expressions describe the same kind:
+   example, the following two variations describe the same kind:
   
    @code[fble] @
     <@,@,@>@
@@ -737,10 +722,8 @@
     <@ T@>(T@ x){ Maybe@<T@>(just: x); }
   
    A polymorphic value is a value that is parameterized by one or more
-   abstract types. Poly arguments must be of type kind, not normal kind. The
-   type of a polymorphic value depends on the value of the poly arguments, but
-   the runtime value does not. Use a function instead of a poly if you want a
-   runtime value that changes depending on the value of its arguments.
+   abstract types. The type of a polymorphic value depends on the type
+   arguments you supply it, but the runtime value does not.
   
    The type of a poly value is a poly type value with the same arguments as
    the poly value whose body describes the type of the poly body. For example,
@@ -1525,8 +1508,7 @@
     ;
    
    Kind:
-      basic_normal_kind
-    | basic_type_kind
+      type_kind
     | poly_kind (arg : Kind) (result : Kind)
     ;
    
@@ -1624,7 +1606,6 @@
     path = '/', name, {'/', name}, '%' ;
     
     kind =
-       '%'                                             (* normal_kind *)
      | '@'                                             (* type_kind *)
      | '<', kind, {',', kind}, '>', kind               (* poly_kind *)
      ;
