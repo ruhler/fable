@@ -52,18 +52,9 @@ typedef struct {
 /**
  * @struct[FbleBasicKind] FBLE_BASIC_KIND: A basic kind.
  *  @field[FbleKind][_base] FbleKind base class.
- *  @field[size_t][level]
- *   The level of the kind.
- *   
- *   0: A normal, non-type value.
- *   1: A normal type. A type of a level 0.
- *   2: A type of a type of a value.
- *   3: A type of a type of a type of a value.
- *   etc.
  */
 typedef struct {
   FbleKind _base;
-  size_t level;
 } FbleBasicKind;
 
 /**
@@ -81,16 +72,13 @@ typedef struct {
 /**
  * @func[FbleNewBasicKind] Creates a basic kind of given level.
  *  @arg[FbleLoc][loc] Location for the kind.
- *  @arg[size_t][level] The level to use for the kind.
- * 
- *  @returns[FbleKind*]
- *   A basic kind of the given level.
+ *  @returns[FbleKind*] A newly allocated basic kind.
  *
  *  @sideeffects
  *   Allocates a kind that should be freed using FbleFreeKind when no longer
  *   needed.
  */
-FbleKind* FbleNewBasicKind(FbleLoc loc, size_t level);
+FbleKind* FbleNewBasicKind(FbleLoc loc);
 
 /**
  * @func[FbleCopyKind] Makes a (refcount) copy of a kind.

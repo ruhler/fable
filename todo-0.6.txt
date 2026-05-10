@@ -2,8 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Distinguish between type levels and kinds in the implementation.
-
 * Language spec cleanup:
  - Rename explicit type struct value to just struct value.
  - Rename implicit type struct value to struct export.

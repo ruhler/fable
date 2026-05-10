@@ -264,7 +264,7 @@ module_path:
 
 kind:
    '@' {
-      $$ = FbleNewBasicKind(@$, 1);
+      $$ = FbleNewBasicKind(@$);
    }
  | '<' kind_p '>' kind {
       FbleKind* kind = $4;

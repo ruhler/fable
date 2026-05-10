@@ -159,6 +159,9 @@ Um... we can't really refer to this properly.
 
 I want to pass the level explicitly instead of via kind. Let's see if I can
 make that work correctly first.
- 
 
+Got it. I was messing up the arg type for poly. It should be 1. Don't ask me
+why. I trust the tests and assertions in the code.
 
+Yeah, so this is some nice cleanup. Clean up to the spec. Clean up to the
+syntax, the implementation.

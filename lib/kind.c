@@ -11,13 +11,12 @@
 #include <fble/fble-alloc.h>   // for FbleFree
 
 // FbleNewBasicKind -- see documentation in kind.h
-FbleKind* FbleNewBasicKind(FbleLoc loc, size_t level)
+FbleKind* FbleNewBasicKind(FbleLoc loc)
 {
   FbleBasicKind* kind = FbleAlloc(FbleBasicKind);
   kind->_base.tag = FBLE_BASIC_KIND;
   kind->_base.loc = FbleCopyLoc(loc);
   kind->_base.refcount = 1;
-  kind->level = level;
   return &kind->_base;
 }
 

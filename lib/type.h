@@ -128,7 +128,7 @@ typedef struct {
  *  Used for the value of type parameters and recursive type values.
  *
  *  We maintain an invariant when constructing FbleVarTypes that the value is
- *  not an FBLE_TYPE_TYPE. In other words, the kind must have kind level 0.
+ *  not an FBLE_TYPE_TYPE. In other words, the type must have type level 0.
  *  Construct var types using FbleNewVarType to enforce this invariant.
  *
  *  @field[FbleType][_base] FbleType base class.
@@ -243,19 +243,6 @@ size_t FbleGetTypeLevel(FbleType* type);
  *   kind when it is no longer needed.
  */
 FbleKind* FbleGetKind(FbleModulePath* context, FbleType* type);
-
-/**
- * @func[FbleGetKindLevel]
- * @ Returns the level of the fully applied version of this kind.
- *  @arg[FbleKind*][kind] The kind to get the fully applied level of.
- *
- *  @returns[size_t]
- *   The level of the kind after it has been fully applied.
- *
- *  @sideeffects
- *   None.
- */
-size_t FbleGetKindLevel(FbleKind* kind);
 
 /**
  * @func[FbleKindsEqual] Tests whether the two given compiled kinds are equal.
@@ -423,8 +410,8 @@ void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
 
 /**
  * @func[FbleNewVarType] Constructs a VarType.
- *  Maintains the invariant the that a higher kinded var types is constructed
- *  as typeof a lower kinded var type.
+ *  Maintains the invariant the that a higher type level var types are
+ *  constructed as typeof a lower type level var types.
  *
  *  @arg[FbleTypeHeap*][heap] The heap to allocate the type on.
  *  @arg[FbleLoc][loc] The location for the type. Borrowed.

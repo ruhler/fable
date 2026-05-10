@@ -51,8 +51,6 @@ typedef struct TypePairs {
   struct TypePairs* next;
 } TypePairs;
 
-static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment);
-
 static void Ref(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
 
 static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizing);
@@ -60,57 +58,6 @@ static bool HasParam(FbleTypeAssignmentV vars, FbleType* type);
 static bool HasParam_(FbleTypeAssignmentV vars, FbleType* param);
 static FbleType* Subst(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* src, TypePairs* tps);
 static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypePairs* eq);
-
-/**
- * @func[LevelAdjustedKind]
- * @ Constructs a level adjusted version of the given kind.
- *  @arg[FbleKind*][kind] The kind to use as the basis.
- *  @arg[FbleKind*][increment]
- *   The kind level increment amount. May be negative to decrease the kind
- *   level.
- *
- *  @returns[FbleKind*]
- *   A new kind that is the same as the given kind except with level
- *   incremented by the given increment.
- *
- *  @sideeffects
- *   @item
- *    The caller is responsible for calling FbleFreeKind on the returned kind
- *    when it is no longer needed. This function does not take ownership of
- *    the given kind.
- *   @item
- *    Behavior is undefined if the increment causes the resulting kind level
- *    to be less than 0.
- */
-static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment)
-{
-  switch (kind->tag) {
-    case FBLE_BASIC_KIND: {
-      FbleBasicKind* basic = (FbleBasicKind*)kind;
-      assert((int)basic->level + increment >= 0);
-
-      FbleBasicKind* adjusted = FbleAlloc(FbleBasicKind);
-      adjusted->_base.tag = FBLE_BASIC_KIND;
-      adjusted->_base.loc = FbleCopyLoc(kind->loc);
-      adjusted->_base.refcount = 1;
-      adjusted->level = basic->level + increment;
-      return &adjusted->_base;
-    }
-
-    case FBLE_POLY_KIND: {
-      FblePolyKind* poly = (FblePolyKind*)kind;
-      FblePolyKind* adjusted = FbleAlloc(FblePolyKind);
-      adjusted->_base.tag = FBLE_POLY_KIND;
-      adjusted->_base.loc = FbleCopyLoc(kind->loc);
-      adjusted->_base.refcount = 1;
-      adjusted->arg = FbleCopyKind(poly->arg);
-      adjusted->rkind = LevelAdjustedKind(poly->rkind, increment);
-      return &adjusted->_base;
-    }
-  }
-  FbleUnreachable("Should never get here");
-  return NULL;
-}
 
 /**
  * @func[Ref] Helper function for implementing Refs.
@@ -834,7 +781,7 @@ FbleKind* FbleGetKind(FbleModulePath* context, FbleType* type)
     case FBLE_DATA_TYPE:
     case FBLE_FUNC_TYPE:
     case FBLE_PACKAGE_TYPE: {
-      return FbleNewBasicKind(type->loc, 0);
+      return FbleNewBasicKind(type->loc);
     }
 
     case FBLE_PRIVATE_TYPE: {
@@ -843,7 +790,7 @@ FbleKind* FbleGetKind(FbleModulePath* context, FbleType* type)
       if (context == NULL || FbleModuleBelongsToPackage(context, private->package)) {
         return FbleGetKind(context, private->arg);
       }
-      return FbleNewBasicKind(type->loc, 0);
+      return FbleNewBasicKind(type->loc);
     }
 
     case FBLE_POLY_TYPE: {
@@ -852,21 +799,7 @@ FbleKind* FbleGetKind(FbleModulePath* context, FbleType* type)
       kind->_base.tag = FBLE_POLY_KIND;
       kind->_base.loc = FbleCopyLoc(type->loc);
       kind->_base.refcount = 1;
-
-      // This is tricky. Consider: <@ A@> { ... }
-      // poly->arg is the type A@. A@ has kind level 0, because it is the type
-      // of a normal value (e.g. Unit) whose type is A@ (e.g. Unit@).
-      //
-      // The kind of the poly captures what kind of type values can be
-      // substituted for A@. So now we are talking about values of type @<A@>,
-      // which has kind level 1.
-      //
-      // In short, we have to increment the level of the argument kind to get
-      // the proper kind for the poly.
-      FbleKind* arg_kind = FbleGetKind(context, poly->arg);
-      kind->arg = LevelAdjustedKind(arg_kind, 1);
-      FbleFreeKind(arg_kind);
-
+      kind->arg = FbleGetKind(context, poly->arg);
       kind->rkind = FbleGetKind(context, poly->body);
       return &kind->_base;
     }
@@ -891,34 +824,12 @@ FbleKind* FbleGetKind(FbleModulePath* context, FbleType* type)
 
     case FBLE_TYPE_TYPE: {
       FbleTypeType* type_type = (FbleTypeType*)type;
-
-      FbleKind* arg_kind = FbleGetKind(context, type_type->type);
-      FbleKind* kind = LevelAdjustedKind(arg_kind, 1);
-      FbleFreeKind(arg_kind);
-      return kind;
+      return FbleGetKind(context, type_type->type);
     }
   }
 
   FbleUnreachable("Should never get here");
   return NULL;
-}
-
-// See documentation in type.h.
-size_t FbleGetKindLevel(FbleKind* kind)
-{
-  switch (kind->tag) {
-    case FBLE_BASIC_KIND: {
-      FbleBasicKind* basic = (FbleBasicKind*)kind;
-      return basic->level;
-    }
-
-    case FBLE_POLY_KIND: {
-      FblePolyKind* poly = (FblePolyKind*)kind;
-      return FbleGetKindLevel(poly->rkind);
-    }
-  }
-  FbleUnreachable("Should never get here");
-  return -1;
 }
 
 // See documentation in type.h.
@@ -930,9 +841,7 @@ bool FbleKindsEqual(FbleKind* a, FbleKind* b)
 
   switch (a->tag) {
     case FBLE_BASIC_KIND: {
-      FbleBasicKind* ba = (FbleBasicKind*)a;
-      FbleBasicKind* bp = (FbleBasicKind*)b;
-      return ba->level == bp->level;
+      return true;
     }
 
     case FBLE_POLY_KIND: {
@@ -952,7 +861,7 @@ bool FbleKindCompatible(FbleKind* expected, FbleKind* actual)
 {
   switch (expected->tag) {
     case FBLE_BASIC_KIND: {
-      return FbleGetKindLevel(expected) == FbleGetKindLevel(actual);
+      return true;
     }
 
     case FBLE_POLY_KIND: {
@@ -976,12 +885,7 @@ void FblePrintKind(FbleKind* kind)
 {
   switch (kind->tag) {
     case FBLE_BASIC_KIND: {
-      FbleBasicKind* basic = (FbleBasicKind*)kind;
-      switch (basic->level) {
-        case 0: fprintf(stderr, "%%"); break;
-        case 1: fprintf(stderr, "@"); break;
-        default: fprintf(stderr, "@%zi", basic->level); break;
-      }
+      fprintf(stderr, "@");
       break;
     }
 
@@ -1018,7 +922,7 @@ FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, size_t level, FbleKind
 
   FbleVarType* var = FbleNewType(heap, FbleVarType, FBLE_VAR_TYPE, loc);
   var->name = FbleCopyName(name);
-  var->kind = LevelAdjustedKind(kind, -(int)level);
+  var->kind = FbleCopyKind(kind);
   var->value = NULL;
 
   FbleType* type = &var->_base;
@@ -1029,7 +933,6 @@ FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, size_t level, FbleKind
     FbleReleaseType(heap, type);
     type = &type_type->_base;
   }
-
   return type;
 }
 
@@ -1269,11 +1172,9 @@ void FblePrintType(FbleType* type)
         FblePolyType* pt = (FblePolyType*)type;
         fprintf(stderr, "%s", prefix);
 
-        FbleKind* value_kind = FbleGetKind(NULL, pt->arg);
-        FbleKind* type_kind = LevelAdjustedKind(value_kind, 1);
-        FblePrintKind(type_kind);
-        FbleFreeKind(type_kind);
-        FbleFreeKind(value_kind);
+        FbleKind* kind = FbleGetKind(NULL, pt->arg);
+        FblePrintKind(kind);
+        FbleFreeKind(kind);
 
         fprintf(stderr, " ");
         FblePrintType(pt->arg);

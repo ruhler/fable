@@ -1178,18 +1178,17 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         if (binding->type == NULL) {
           // We don't know the type, so create an abstract type variable to
           // represent the type. If it's an abstract type, such as
-          //   @ Unit@ = ...
+          //   Unit@ = ...
           // Then we'll use the type name Unit@ as is.
           //
           // If it's an abstract value, such as
-          //   % True = ...
+          //   True = ...
           //
           // Then we'll use the slightly different name __True@, because it is
           // very confusing to show the type of True as True@.
           char renamed[strlen(binding->name.name->str) + 3];
           renamed[0] = '\0';
-          size_t level = (binding->name.space == FBLE_NORMAL_NAME_SPACE) ? 0 : 1;
-          if (level == 0) {
+          if (binding->name.space == FBLE_NORMAL_NAME_SPACE) {
             strcat(renamed, "__");
           } 
           strcat(renamed, binding->name.name->str);
@@ -1200,7 +1199,8 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             .loc = binding->name.loc,
           };
 
-          FbleKind* kind = FbleNewBasicKind(binding->name.loc, level);
+          size_t level = binding->name.space == FBLE_NORMAL_NAME_SPACE ? 0 : 1;
+          FbleKind* kind = FbleNewBasicKind(binding->name.loc);
           types[i] = FbleNewVarType(th, binding->name.loc, level, kind, type_name);
           FbleFreeKind(kind);
           FbleFreeString(type_name.name);
@@ -1731,13 +1731,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
     case FBLE_POLY_VALUE_EXPR: {
       FblePolyValueExpr* poly = (FblePolyValueExpr*)expr;
-
-      if (FbleGetKindLevel(poly->arg.kind) != 1) {
-        ReportError(poly->arg.kind->loc,
-            "expected a type kind, but found %k\n",
-            poly->arg.kind);
-        return TC_FAILED;
-      }
 
       if (poly->arg.name.space != FBLE_TYPE_NAME_SPACE) {
         ReportError(poly->arg.name.loc,
