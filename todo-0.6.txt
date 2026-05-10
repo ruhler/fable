@@ -2,6 +2,15 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Language spec cleanup:
+ - Remove syntax for normal kind. It shouldn't be needed anymore.
+ - Move discussion of kinds to polymorphism section.
+ - Rename explicit type struct value to just struct value.
+ - Rename implicit type struct value to struct export.
+ - Move import into struct section, call it struct import.
+ - Move bind into function section, call it function bind.
+ - Rename section on syntactic sugar to literals.
+
 * Clean up std native code
   - Maybe worth moving a bunch of these simple helper functions together into
     a single file? The simple ones include:

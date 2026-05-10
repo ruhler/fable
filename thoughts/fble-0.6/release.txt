@@ -212,3 +212,53 @@ streams of data. Let me try moving it. See how terrible it feels.
 I made the change. It doesn't feel great or terrible. Lots of places we need
 both Stream@ and In@/Out@. Some places we don't. Oh well.
 
+---
+
+Next is fble spec work. Should be transparent to the user, but will help
+organize tutorials better. Proposal:
+
+     | '*(', [type, name, {',', type, name}], ')'      (* struct_type *)
+     | type, '(', [expr, {',', expr}], ')'             (* struct_value_explicit_type *)
+     | '@(', [field_arg, {',', field_arg}] ')'         (* struct_value_implicit_type *)
+     | expr, '.', name                                 (* struct_access *)
+     | expr, '.@(', field_arg, {',', field_arg}, ')'   (* struct_copy *)
+
+     | [type], name, [':' name] {', [type], name, [':' name]},
+       '.=', expr, ';', stmt                           (* import *)
+
+Turns into:
+
+     | '*(', [type, name, {',', type, name}], ')'      (* struct_type *)
+     | type, '(', [expr, {',', expr}], ')'             (* struct_value *)
+     | expr, '.', name                                 (* struct_access *)
+     | '@(', [field_arg, {',', field_arg}] ')'         (* struct_export *)
+     | expr, '.@(', field_arg, {',', field_arg}, ')'   (* struct_copy *)
+
+     | [type], name, [':' name] {', [type], name, [':' name]},
+       '.=', expr, ';', stmt                           (* struct_import *)
+
+All go into the same section of the spec. We stop treating struct import like
+syntactic sugar. Much nicer way to distinguish between struct value and struct
+export.
+
+Another question while we are at it: how about moving function bind into the
+function section? Call it function_bind?
+
+And then, perhaps, rename syntactic sugar section to literals section?
+
+And another thought: now that we have removed kinds from let, does it make
+sense to move kind into the section on polymorphism? Yes. I think that makes
+sense. We only need to distinguish between types and normal values and higher
+kinded things.
+
+And here's a question: do I need syntax for normal kinded things? Is there any
+value in having that anymore? Where could you ever use it?
+
+Okay. Sounds like a round of spec cleanup is warranted.
+
+How to clean up kind specification? There are two separate concepts that maybe
+need different names:
+1. normal/type/type of type/...
+  Needed early on. Has to do with variable and field naming.
+2. basic kind/poly kind
+  Only needed for polymorphism.

@@ -95,8 +95,8 @@ while (0)
 
 %type <name> name
 %type <module_path> path module_path
-%type <kind> tkind nkind kind
-%type <kinds> tkind_p
+%type <kind> kind
+%type <kinds> kind_p
 %type <tagged_kinds> tagged_kind_p
 %type <expr> expr block stmt
 %type <exprs> expr_p expr_s
@@ -262,32 +262,11 @@ module_path:
    }
  ;
 
-nkind:
-   '%' {
-      $$ = FbleNewBasicKind(@$, 0);
-   }
- | '<' tkind_p '>' nkind {
-      FbleKind* kind = $4;
-      for (size_t i = 0; i < $2.size; ++i) {
-        FbleKind* arg = $2.xs[$2.size - 1 - i];
-        FblePolyKind* poly_kind = FbleAlloc(FblePolyKind);
-        poly_kind->_base.tag = FBLE_POLY_KIND;
-        poly_kind->_base.loc = FbleCopyLoc(@$);
-        poly_kind->_base.refcount = 1;
-        poly_kind->arg = arg;
-        poly_kind->rkind = kind;
-        kind = &poly_kind->_base;
-      }
-      FbleFreeVector($2);
-      $$ = kind;
-   }
- ;
-
-tkind:
+kind:
    '@' {
       $$ = FbleNewBasicKind(@$, 1);
    }
- | '<' tkind_p '>' tkind {
+ | '<' kind_p '>' kind {
       FbleKind* kind = $4;
       for (size_t i = 0; i < $2.size; ++i) {
         FbleKind* arg = $2.xs[$2.size - 1 - i];
@@ -304,14 +283,12 @@ tkind:
    }
  ;
 
-kind: nkind | tkind ;
-
-tkind_p:
-   tkind {
+kind_p:
+   kind {
      FbleInitVector($$);
      FbleAppendToVector($$, $1);
    }
- | tkind_p ',' tkind {
+ | kind_p ',' kind {
      $$ = $1;
      FbleAppendToVector($$, $3);
    }
