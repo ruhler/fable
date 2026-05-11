@@ -2,6 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Add section of module imports to tutorials/Features.fbld?
+
 * Clean up std native code
   - Maybe worth moving a bunch of these simple helper functions together into
     a single file? The simple ones include:
@@ -28,8 +30,6 @@ Things to consider doing for the fble-0.6 release.
   as is? Add tests for this case.
 
 * Clean up all imports to use import expression in all the apps.
-
-* Rename 'import' to struct import and implicit type to struct export?
 
 * Update style guide for struct import and other new features.
 

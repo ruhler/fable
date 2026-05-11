@@ -13,14 +13,14 @@
  @section Primitive Data Types
   Fble does not have builtin primitive data types such as bool, char, int, or
   float. These data types can be implemented without special language support;
-  they are available in the core library modules @L{/Std/Bool%},
-  @L{/Core/Char%}, and @L{/Core/Int%}. Library support for floating point
+  they are available in the standard library modules @L{/Std/Bool%},
+  @L{/Std/Char%}, and @L{/Std/Int%}. Library support for floating point
   numbers has not yet been implemented.
 
   @subsection Integer Literals
-   Fble has special syntax for user-defined literals. The core library module
-   @L{/Core/Int/Lit%} provides a decimal integer literal. The library could
-   also provide hexidecimal or other integer literals if needed:
+   Fble has special syntax for user-defined literals. The standard library
+   module @L{/Std/Int/Lit%} provides binary, octal, decimal, and hexidecimal
+   integer literals.
 
    @code fble @
     Int@ year = Int|2023;
@@ -52,7 +52,7 @@
   union value to track which field of the union is valid. For example:
 
   @code fble @
-   @ Expr@ = +(
+   Expr@ = +(
       *(Expr@ a, Expr@ b) add,
       *(Expr@ a, Expr@ b) sub,
       *(Expr@ a) neg,
@@ -71,7 +71,7 @@
   Fble supports enums as a special case of union types. For example:
 
   @code fble @
-   @ Move@ = +(Unit@ rock, Unit@ paper, Unit@ scissors);
+   Move@ = +(Unit@ rock, Unit@ paper, Unit@ scissors);
 
    Move@ Rock = Move@(rock: Unit);
    Move@ Paper = Move@(paper: Unit);
@@ -82,11 +82,11 @@
    };
 
  @section Arrays
-  Fble does not have an array type. You can use a map from the @L{/Core/Map%}
+  Fble does not have an array type. You can use a map from the @L{/Std/Map%}
   library instead to map integer indices to values.
 
  @section Lists
-  The core library module @L{/Core/List%} defines a list type and functions
+  The standard library module @L{/Std/List%} defines a list type and functions
   for working on lists.
 
   Fble has special syntax for constructing list-like values.
@@ -95,12 +95,12 @@
    List@ numbers = List[1, 4, f(3), 7];
 
  @section Strings
-  Fble does not have a builtin string type. The core library module
-  @L{/Core/String%} provides a string type you can use if you like.
+  Fble does not have a builtin string type. The standard library module
+  @L{/Std/String%} provides a string type you can use if you like.
 
   @subsection String Literals
-   Fble has special syntax for user-defined literals. The core library module
-   @L{/Core/String%} provides some string literal variants:
+   Fble has special syntax for user-defined literals. The standard library
+   module @L{/Std/Char/Ascii%} provides some string literal variants:
 
    @code fble @
     String@ text = Str|'hello, world';
@@ -109,7 +109,7 @@
  @section Pointers
   Fble does not have a pointer type. Automatic memory management takes care of
   the allocation and freeing of objects on the heap automatically. You can use
-  a map from the @L{/Core/Map%} library to simulate pointers in the language.
+  a map from the @L{/Std/Map%} library to simulate pointers in the language.
 
  @section Garbage Collection
   Fble uses a garbage collector for automatic memory management. Garbage
@@ -160,7 +160,7 @@
    };
 
    # Looping using a library function.
-   Int@ total = /Core/List%.ForEach(list, 0, (Int@ elem, Int@ sum) {
+   Int@ total = /Std/List%.ForEach(list, 0, (Int@ elem, Int@ sum) {
      Add(elem, sum);
    });
 
@@ -192,30 +192,33 @@
     Int@ sum_to_4 = Sum[1, 2, 3, 4];
     Int@ sum_to_5 = Sum[1, 2, 3, 4, 5];
 
-
   @subsection Nested Functions
    Fble supports arbitrary nesting of function, type, and other definitions.
 
-   Here's an example from the core library code to convert a string to an
-   integer. It defines inner helper functions @L{Digit} and @L{ReadP}.
+   Here's an example from the standard library code for implementing a Map get
+   function. It defines inner helper types @L{S@} and @L{R@} and functions
+   @L{return} and @L{put}.
 
    @code fble @
-    (String@) { Int@; } Read = {
-      (Char@) { Int@; } Digit = (Char@ c) {
-        c.?(
-          '0': Int|0, '1': Int|1, '2': Int|2, '3': Int|3, '4': Int|4,
-          '5': Int|5, '6': Int|6, '7': Int|7, '8': Int|8, '9': Int|9,
-          : Int|0);
+    <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
+    Get = <@ K@>(Data@<K@> data)<@ V@> {
+      S@ = Map@<K@, V@>;
+      R@ = Maybe@<V@>;
+
+      (S@) { Maybe@<V@>; }
+      Return = (S@ m) {
+        m.?(empty: Nothing<V@>);
+        Just(m.entry.value);
       };
 
-      (Int@, String@) { Int@; } ReadP = (Int@ x, String@ s) {
-        s.?(nil: x);
-        ReadP(Add(Mul(Int|10, x), Digit(s.cons.head)), s.cons.tail);
+      (Bit@, (S@) { R@; }, S@) { R@; }
+      Put = (Bit@ x, (S@) { R@; } f, S@ m) {
+        m.?(empty: Nothing<V@>);
+        f(x.?(0: m.children.0, 1: m.children.1));
       };
-      
-      (String@ s) {
-        s.?(nil: Int|0);
-        s.cons.head.?('-': Neg(ReadP(Int|0, s.cons.tail)), : ReadP(Int|0, s));
+
+      (Map@<K@, V@> map, K@ key) {
+        data(key, Return, Put, map);
       };
     };
     
@@ -253,8 +256,8 @@
   @code fble @
    <@ A@, @ B@>(List@<A@>, (A@) { B@; }) { List@<B@>; }
    Map = <@ A@, @ B@>(List@<A@> a, (A@) { B@; } f) {
-     a.?(nil: Nil<B@>);
-     Cons(f(a.cons.head), Map(a.cons.tail, f));
+     a.?(empty: Empty<B@>);
+     Items(f(a.items.head), Map(a.items.tail, f));
    };
 
    # With explicit types:
@@ -284,7 +287,7 @@
   object hashing and equality:
   
   @code fble @
-   <@>@ Hashable@ = <@ T@> {
+   Hashable@ = <@ T@> {
      *(
        (T@, T@) { Bool@; } equals;
        (T@) { Int@: } hash;
@@ -321,10 +324,10 @@
 
   @code fble @
    M@<Command@> ParseCommand = {
-     String@ name <- Do(ParseName);
-     name.?(nil: Error<Command@>(Str|'missing command name'));
+     String@ name := Do(ParseName);
+     name.?(empty: Error<Command@>(Str|'missing command name'));
 
-     List@<Markup@> args <- Do(ParseArgs);
+     List@<Markup@> args := Do(ParseArgs);
      Return(Command(name, args));
    };
 
@@ -336,10 +339,10 @@
 
   @code fble @
    M@<Command@> ParseCommand = {
-     String@ name <- Do(ParseName);
+     String@ name := Do(ParseName);
      name.?(nil: Error<Command@>(Str|'missing command name'));
 
-     List@<Markup@> args <- Do(ParseArgs);
+     List@<Markup@> args := Do(ParseArgs);
      Return(Command(name, args));
    };
 
@@ -353,53 +356,25 @@
   Fble has a separate private type feature that can be used to restrict access
   to internals of a module or a group of modules.
 
-  For example, here's part of the @L{/Core/String%} module, which re-uses code
-  from the @L{/Core/Char%} and @L{/Core/String%} modules in its
-  implementation:
+  For example, here's part of the @L{/Std/Cmp%} module, which re-uses code
+  from the @L{/Std/Bool%} and @L{/Std/Unit%} modules in its implementation:
 
   @code fble @
-   @ Char@ = /Core/Char%.Char@;
-   % Chars = /Core/Char%.Chars;
+   Bool@, True, False .= /Std/Bool%;
+   Unit@, Unit .= /Std/Unit%;
 
-   <@>@ List@ = /Core/List%.List@;
-   <@>% List = /Core/List%.List;
-   <@>% Cons = /Core/List%.Cons;
-   <@>% Append = /Core/List%.Append;
+   Compared@ = +(Unit@ less, Unit@ equal, Unit@ greater);
+   Compared@ Less = Compared@(less: Unit);
+   Compared@ Equal = Compared@(equal: Unit);
+   Compared@ Greater = Compared@(greater: Unit);
+   Cmp@ = <@ T@>(T@, T@) { Compared@; };
 
-   # String@ --
-   #   A character string.
-   @ String@ = List@<Char@>;
-
-   # StrE --
-   #   A string literal that supports the following escape sequences:
-   #   \\ - backslash
-   #   \n - newline
-   #   \t - tab
-   # 
-   # Any other use of \ is undefined.
-   (List@<Char@>) { String@; } StrE = (List@<Char@> chars) {
-     chars.?(nil: chars);
-     chars.cons.head.?('\': {
-       chars.cons.tail.?(nil: /Core/Undef%.Undef<String@>.undefined);
-       String@ tail = StrE(chars.cons.tail.cons.tail);
-       Char@ head = chars.cons.tail.cons.head.?(
-         '\': Chars.'\',
-         'n': Chars.nl,
-         't': Chars.tab,
-         : /Core/Undef%.Undef<Char@>.undefined);
-       Cons(head, tail);
-     });
-     Cons(chars.cons.head, StrE(chars.cons.tail));
+   <@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
+   Eq = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
+     cmp(a, b).?(equal: True, : False);
    };
 
-   # Strs --
-   #   Concatenates a list of strings together.
-   #
-   # Example Use:
-   #   String@ s = Strs[StrE|'x is ', Show(x), StrE|'.']
-   (List@<String@>) { String@; } Strs = /Core/List%.Concat<Char@>;
-
-   @(String@, StrE, Strs);
+   @(Compared@, Cmp@, Less, Equal, Greater, Eq);
 
  @section Threading and Concurrency
   Fble does not have builtin support for threading or concurrency.
@@ -413,7 +388,20 @@
   included in the fble release has an example of this.
 
  @section Foreign Function Interface
-  Fble does not have a standardized foreign function interface defined yet.
+  Fble provides a way to declare foreign functions, with marshalling of data
+  types provided as part of the implementation of the foreign function. For
+  example:
+
+  @code[fble] @
+   # Declare a foreign function called PutChar:
+   (Char@) { Unit@; } PutChar = @<PutChar>|PutChar;
+
+   # Call that function like any normal function:
+   (Stream@<Char@>) { Unit@; }
+   ToDebug = (Stream@<Char@> output) {
+     Char@ c, Unit@ _ := ForEach(output, Unit);
+     PutChar(c);
+   };
   
   The reference implementation has a C API for manipulating fble values at
   runtime. This is how standard IO and graphics are implemented in fble. The C

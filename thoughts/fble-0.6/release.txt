@@ -322,3 +322,7 @@ can.
 
 Well, it's a little funny. But at least I'm more precise in the spec now. We
 can decide to relax the spec later on if I find motivation to do so.
+
+---
+
+Spec is cleaned up. I should now feel free to redo the tutorials.
