@@ -2,9 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Language spec cleanup:
- - Rename section on syntactic sugar to literals.
-
 * Clean up std native code
   - Maybe worth moving a bunch of these simple helper functions together into
     a single file? The simple ones include:

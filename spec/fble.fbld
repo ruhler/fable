@@ -956,7 +956,7 @@
    the type and runtime behavior of the target combined poly application and
    struct_value/union_value/func_apply expression.
  
- @section 7. Syntactic Sugar
+ @section 7. Literals
   We introduce syntax for describing lists and literals to make it less
   tedious to write code involving sequences of elements of the same type and
   raw sequences of data without the overhead of punctuation between data
