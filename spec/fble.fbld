@@ -620,7 +620,8 @@
   Functions are described using the fble expression language. A function can
   be applied to an argument of appropriate type to produce a value with the
   return type of the function. Syntactic sugar is provided to make it easier
-  to describe multi-argument functions.
+  to describe multi-argument functions and for the special case of calling a
+  function with an anonymous function value passed as an argument.
   
   @subsection 5.1 Function Type
    @AbstractSyntax @
@@ -677,10 +678,11 @@
 
    The concrete syntax allows you to specify multiple arguments in a function
    value. This is syntactic sugar for nested single argument function values.
-   For example, the following two expressions describe the same function:
+   For example, the following three expressions describe the same function:
   
    @code[fble] @
     (Bool@ a, Bool@ b) { a.?(true: b, false: False); }
+    (Bool@ a)(Bool@ b) { a.?(true: b, false: False); }
     (Bool@ a) { (Bool@ b) { a.?(true: b, false: False); }; }
   
    Runtime is O(N log(M)), where N is the number of variables in scope that
@@ -727,6 +729,95 @@
    of magnitude stack space as there is heap space available. Programmers
    should not need to convert non-tail recursive functions to use heap space
    instead of stack space.
+
+  @subsection @label[bind][5.4 Function Bind]
+   @AbstractSyntax @
+    Expr: func_bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
+  
+   @ConcreteSyntax @
+    stmt = type, name, {',', type, name}, ':=', expr, ';', stmt                 
+  
+   @Example @
+    Int@ x := Map(l); f(x, y)
+  
+   Function bind is syntactic sugar for calling a function with an anonymous
+   function as its argument. It is equivalent to:
+  
+   @code[txt] @
+    func_apply func (func_value args [body])
+  
+   For example, the expression:
+  
+   @code[fble] @
+    Int@ x := Map(l);
+    f(x, y)
+  
+   Desugars to:
+  
+   @code[fble] @
+    Map(l, (Int@ x) { f(x, y); });
+
+   Multiple arguments can be provided in the bind syntax to form a multi
+   argument function. For exmaple:
+
+   @code[fble] @
+    Int@ x, Bool@ y := Map(l);
+    f(x, y)
+  
+   Desugars to:
+  
+   @code[fble] @
+    Map(l, (Int@ x, Bool@ y) { f(x, y); });
+  
+   Function bind is particularly suited for abstracting glue logic that
+   manipulates how program statements are combined. For example, it can be
+   used to hide error propagation based on a @L{Maybe@} monad.
+  
+   Instead of:
+  
+   @code[fble] @
+    Maybe@ a = f(x);
+    a.?(
+      just: {
+        Maybe@ b = g(a.just);
+        b.?(just: h(b.just), nothing: Nothing);
+      },
+      nothing: Nothing);
+  
+   And instead of the slightly better:
+  
+   @code[fble] @
+    (Maybe@, (X@) { Maybe@; }) { Maybe@; }
+    Maybe = (Maybe@ m, (X@) { Maybe@; } f) {
+      m.?(just: f(x.just), nothing: Nothing);
+    };
+    
+    Maybe(f(x), (X@ a) {
+      Maybe(g(a), (X@ b) {
+        h(b);
+      };
+    };
+  
+   You can write:
+  
+   @code[fble] @
+    (Maybe@)((X@) { Maybe@; }) { Maybe@; }
+    Maybe = (Maybe@ m)((X@) { Maybe@; } f) {
+      m.?(just: f(x.just), nothing: Nothing);
+    };
+    
+    X@ a := Maybe(f(x));
+    X@ b := Maybe(g(x));
+    h(b);
+  
+   Which more clearly separates the glue logic from the meat of the program.
+  
+   The function provided in the bind expression may be a polymorphic function
+   value, in which case type inference is performed as with func_apply
+   expressions.
+  
+   Struct types types cannot be used for the function in bind syntax, even
+   though they share a similar concrete syntax to function application.
  
  @section @label[polymorphism][6. Polymorphism]
   Polymorphism allows types and values to be parameterized by types.
@@ -848,9 +939,9 @@
   
    The motivation for supporting type inference is to prevent cluttering the
    code with types that are otherwise straight forward to infer. This is
-   particularly important when used in combination with function bind
-   (described later), where the common use case requires specifying the return
-   type repeatedly for each call in a function bind chain.
+   particularly important when used in combination with function bind, where
+   the common use case requires specifying the return type repeatedly for each
+   call in a function bind chain.
     
    It is a type error if the compiler is unable to unambiguously infer all the
    type parameters to the poly based on the arguments. For example, it would
@@ -871,10 +962,6 @@
   raw sequences of data without the overhead of punctuation between data
   elements.
   
-  We introduce bind syntax to facilitate calling a function with an anonymous
-  function as its only argument. This is useful for using reusable glue logic
-  to compose operations in a monadic style.
-
   @subsection @label[lists][7.1 List]
    @AbstractSyntax @
     Expr: list (func : Expr) (args : [Expr])
@@ -1045,96 +1132,6 @@
      Int@ 6 = Binary|110;
      Int@ x = Binary[first_bit, second_bit, third_bit];
   
-  @subsection @label[bind][7.3 Bind]
-   @AbstractSyntax @
-    Expr: bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
-  
-   @ConcreteSyntax @
-    stmt = type, name, {',', type, name}, ':=', expr, ';', stmt                 
-  
-   @Example @
-    Int@ x := Map(l); f(x, y)
-  
-   Bind is syntactic sugar for calling a function with an anonymous function
-   as its argument. It is equivalent to:
-  
-   @code[txt] @
-    func_apply func (func_value args [body])
-  
-   For example, the expression:
-  
-   @code[fble] @
-    Int@ x := Map(l);
-    f(x, y)
-  
-   Desugars to:
-  
-   @code[fble] @
-    Map(l)((Int@ x) { f(x, y); });
-
-   Multiple arguments can be provided in the bind syntax to form a multi
-   argument function. For exmaple:
-
-   @code[fble] @
-    Int@ x, Bool@ y := Map(l);
-    f(x, y)
-  
-   Desugars to:
-  
-   @code[fble] @
-    Map(l)((Int@ x, Bool@ y) { f(x, y); });
-  
-   Bind is particularly suited for abstracting glue logic that manipulates how
-   program statements are combined. For example, it can be used to hide error
-   propagation based on a @L{Maybe@} monad.
-  
-   Instead of:
-  
-   @code[fble] @
-    Maybe@ a = f(x);
-    a.?(
-      just: {
-        Maybe@ b = g(a.just);
-        b.?(just: h(b.just), nothing: Nothing);
-      },
-      nothing: Nothing);
-  
-   And instead of the slightly better:
-  
-   @code[fble] @
-    (Maybe@, (X@) { Maybe@; }) { Maybe@; }
-    Maybe = (Maybe@ m, (X@) { Maybe@; } f) {
-      m.?(just: f(x.just), nothing: Nothing);
-    };
-    
-    Maybe(f(x), (X@ a) {
-      Maybe(g(a), (X@ b) {
-        h(b);
-      };
-    };
-  
-   You can write:
-  
-   @code[fble] @
-    (Maybe@)((X@) { Maybe@; }) { Maybe@; }
-    Maybe = (Maybe@ m)((X@) { Maybe@; } f) {
-      m.?(just: f(x.just), nothing: Nothing);
-    };
-    
-    X@ a := Maybe(f(x));
-    X@ b := Maybe(g(x));
-    h(b);
-  
-   Which more clearly separates the glue logic from the meat of the program.
-  
-   The function provided in the bind expression may be a polymorphic function
-   value, in which case type inference is performed as with func_apply
-   expressions.
-  
-   Struct types and package types cannot be used for the function in bind
-   syntax, even though they share a similar concrete syntax to function
-   application.
-
  @section @label[modules][8. Modules]
   Fble code is organized into a hierarchy of reusable modules. Each module
   describes a value that may depend on the value of other modules. A program
@@ -1536,13 +1533,13 @@
     | func_type (arg : Type) (result : Type)
     | func_value (arg : (Type, Name)) (body : Expr)
     | func_apply (func : Expr) (arg : Expr)
+    | func_bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
    
     | poly_value (arg : (Kind, Name)) (body : Expr)
     | poly_apply (poly : Expr) (arg : Expr)
    
     | list (func : Expr) (args : [Expr])
     | literal (func : Expr) (letters : word)
-    | bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
    
     | package_type (path : Path)
     | private_type (type : Type) (package : Type)
@@ -1659,12 +1656,12 @@
        expr, ';'
      | [type], name, '=', expr,                        (* let *)
        {',', [type], name, '=', expr}, ';', stmt       
-     | [type], name, [':' name] {', [type], name, [':' name]},
-       '.=', expr, ';', stmt                           (* struct_import *)
      | stmt = type, name, ';', stmt                    (* undef *)
+     | [type], name, [':' name]                        (* struct_import *)
+       {', [type], name, [':' name]}, '.=', expr, ';', stmt
      | expr, '.?(', name, ':', expr,                   (* union_select *)
                 {',', name, ':', expr} ')', ';', stmt
-     | type, name,                                     (* bind *)
+     | type, name,                                     (* func_bind *)
        {',', type, name}, ':=', expr, ';', stmt                 
      ;
     

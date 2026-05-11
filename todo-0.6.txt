@@ -3,7 +3,6 @@ Fble 0.6 TODO
 Things to consider doing for the fble-0.6 release.
 
 * Language spec cleanup:
- - Move bind into function section, call it function bind.
  - Rename section on syntactic sugar to literals.
 
 * Clean up std native code
