@@ -1,0 +1,46 @@
+Tutorial Updates
+================
+
+I need to at least review and update all the existing tutorials for all the
+changes that have happened in the language and standard library.
+
+I feel like it might be good to also expand the standard library tutorials.
+Maybe have three separate tutorial tracks:
+
+1. Intro
+2. Language
+3. Standard Library
+
+Anyway, let's first review all the existing tutorials.
+
+tutorials/Introduction.fbld [REVIEWED]
+tutorials/Features.fbld [REVIEWED]
+tutorials/Install.fbld [REVIEWED]
+
+tutorials/Basics.fbld
+tutorials/Bind.fbld
+tutorials/Core.fbld
+tutorials/DebugGuide.fbld
+tutorials/Functions.fbld
+tutorials/HelloWorld.fbld
+tutorials/Lists.fbld
+tutorials/Literals.fbld
+tutorials/Modules.fbld
+tutorials/Polymorphism.fbld
+tutorials/PrivateTypes.fbld
+tutorials/ProfilingGuide.fbld
+tutorials/Stdio.fbld
+tutorials/Structs.fbld
+tutorials/tutorial.lib.fbld
+tutorials/Tutorials.fbld
+tutorials/Unions.fbld
+tutorials/Variables.fbld
+
+---
+
+I need to figure out how to structure the hello world tutorial. It's more
+complicated now that we have streams instead of just strings.
+
+The language points covered by the existing tutorial:
+* Comments, type and function imports, variables
+* Printing different kinds of things.

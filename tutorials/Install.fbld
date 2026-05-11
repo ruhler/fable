@@ -54,10 +54,10 @@
    this:
 
    @code[txt] @
-    Test Summary: 1406 passed, 4 xfailed, 0 failed, 1410 total
+    Test Summary: OK (expected failures=5) of 1836 tests
 
-   Some tests are marked as 'xfailed', which means they are known to fail.
-   Those expected failures can safely be ignored.
+   Some tests are marked as expected failures, which means they are known to
+   fail. Those expected failures can safely be ignored.
  
  @section Environment Setup
   Subsequent tutorials all assume the environment has been set up for easy
@@ -72,15 +72,15 @@
    export PATH=$INSTALL/bin:$PATH
    export LD_LIBRARY_PATH=$INSTALL/lib:$LD_LIBRARY_PATH
  
-  To test your environment is properly set up, try running a hello world
-  program that ships with the fble installation.
+  To test your environment is properly set up, try running a demo program that
+  ships with the fble installation.
  
   @code[sh] @
-   fble-stdio -p core -m /Core/Stdio/HelloWorld%
+   fble-cli -p std -m /Std/Io/Cli/Demo%
  
   If all goes well, you should see @l{"hello, world"} printed to the terminal.
   Make sure to use the full command, including the final @l{%} character which
-  is part of the syntax for identifying the hello world program.
+  is part of the syntax for identifying the demo program.
 
   You're now ready to work through the rest of the fble tutorials to learn all
   about fble.

@@ -2,16 +2,14 @@
 #  The Show@ instance for Int@.
 
 Char@ .= /Std/Char%;
-Stream@, Do, Return .= /Std/Stream%;
 Format, String .= /Std/Char/Ascii/Stream%;
-
 Int@, Neg .= /Std/Int%;
 Eq .= /Std/Int/Eq%;
 Int .= /Std/Int/Lit%;
 Sgn .= /Std/Int/Sign%;
-
 QR@, Div .= /Std/Int/Div%;
 Show@ .= /Std/Show%;
+Stream@, Do, Return .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # Show an int value in the range [0-9].

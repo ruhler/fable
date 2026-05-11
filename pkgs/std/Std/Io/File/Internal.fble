@@ -3,8 +3,8 @@
 
 Char@ .= /Std/Char%;
 Int@ .= /Std/Int%;
-Maybe@ .= /Std/Maybe%;
 External@ .= /Std/Io%;
+Maybe@ .= /Std/Maybe%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 

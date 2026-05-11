@@ -10,16 +10,13 @@
   The following is a complete hello world program in fble:
 
   @code[fble] @
-   # Import string type and literal from the core library.
-   @ String@ = /Core/String%.String@;
-   % Str = /Core/String%.Str;
-
-   # Specify the output string.
-   String@ output = Str|'hello, world';
+   # Import string format function from the core library.
+   FormatE .= /Std/Char/Ascii/Stream%;
+   String@ .= /Std/String%;
 
    # Call the helper function for a main function
-   # that outputs a single string value.
-   /Core/Stdio/StringO%.Run(output);
+   # that outputs a formatted value.
+   /Std/Io/Cli/Print%.Print(StringE|'hello, world\n');
 
   We'll break this down piece by piece in the following sections.
 

@@ -9,17 +9,16 @@ Lines .= /Std/Stream/String%;
 Stream@ .= /Std/Stream%;
 String, Format .= /Std/Char/Ascii/Stream%;
 
-# Specify the output string.
-Char@ c = Char|A;
-Int@ x = Int|42;
-Stream@<Char@> output = Lines[
-  String|'hello, world',
-  Format|'A boolean: %s'[/Std/Bool/Show%.Show(True)],
-  Format|'A character: %s'[/Std/Char/Show%.Show(c)],
-  Format|'A list: %s'[
-    /Std/List/Show%.Show(/Std/Bool/Show%.Show)[True, False, False]],
-  Format|'An integer: '[/Std/Int/Show%.Show(x)]];
-
 # Call the helper function for a main function
 # that outputs a single string value.
-/Std/Io/Cli/Print%.Print(output);
+/Std/Io/Cli/Print%.Print({
+  Char@ c = Char|A;
+  Int@ x = Int|42;
+  Lines[
+    String|'hello, world',
+    Format|'A boolean: %s'[/Std/Bool/Show%.Show(True)],
+    Format|'A character: %s'[/Std/Char/Show%.Show(c)],
+    Format|'A list: %s'[
+      /Std/List/Show%.Show(/Std/Bool/Show%.Show)[True, False, False]],
+    Format|'An integer: '[/Std/Int/Show%.Show(x)]];
+});

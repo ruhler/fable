@@ -3,8 +3,8 @@
 
 Int@, Add, Sub, Shl, Shr .= /Std/Int%;
 Le .= /Std/Int/Cmp%;
-Rng@ .= /Std/Random/Rng%;
 Prng@ .= /Std/Random/Prng%;
+Rng@ .= /Std/Random/Rng%;
 Modify .= /Std/State%;
 Pure@, Monad, State .= /Std/State/Pure%;
 Unit@ .= /Std/Unit%;

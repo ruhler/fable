@@ -5,8 +5,8 @@
 Bool@ .= /Std/Bool%;
 Char@ .= /Std/Char%;
 CharEq(.Eq) .= /Std/Char/Eq%;
-List@ .= /Std/List%;
 Eq@ .= /Std/Eq%;
+List@ .= /Std/List%;
 String@ .= /Std/String%;
 
 # @func[Eq] Check if two strings are equal.

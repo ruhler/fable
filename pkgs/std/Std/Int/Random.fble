@@ -2,9 +2,9 @@
 #  Generation of random integer values.
 
 Int@, Incr, Add, Sub, Shr .= /Std/Int%;
-IsZero .= /Std/Int/Sign%;
 Lt .= /Std/Int/Cmp%;
 Int .= /Std/Int/Lit%;
+IsZero .= /Std/Int/Sign%;
 
 Monad@ .= /Std/Monad%;
 Rng@ .= /Std/Random/Rng%;

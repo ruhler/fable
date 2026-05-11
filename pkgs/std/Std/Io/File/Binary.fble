@@ -3,9 +3,9 @@
 
 Str .= /Std/Char/Ascii%;
 Int@ .= /Std/Int%;
+Io@ .= /Std/Io%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Io@ .= /Std/Io%;
 Stream@ .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
 String@ .= /Std/String%;

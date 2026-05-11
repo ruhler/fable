@@ -4,8 +4,8 @@
 Char@ .= /Std/Char%;
 Ascii@, ToChar, StrE .= /Std/Char/Ascii%;
 StrLit .= /Std/Char/Lit%;
-Stream@ .= /Std/Stream%;
 List@ .= /Std/List%;
+Stream@ .= /Std/Stream%;
 
 # @func[String] Output a string.
 #  @arg[List<Ascii@>][str] The string to output.

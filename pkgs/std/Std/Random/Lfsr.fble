@@ -12,8 +12,8 @@
 Bool@, True, False, And, Xor .= /Std/Bool%;
 Int@, Decr .= /Std/Int%;
 QR@, Div .= /Std/Int/Div%;
-IsZero .= /Std/Int/Sign%;
 Int .= /Std/Int/Lit%;
+IsZero .= /Std/Int/Sign%;
 List@, List, Items, Empty, Append .= /Std/List%;
 Drop .= /Std/List/Index%;
 Prng@ .= /Std/Random/Prng%;

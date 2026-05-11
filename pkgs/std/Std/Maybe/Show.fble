@@ -1,9 +1,9 @@
 # @module[/Std/Maybe/Show%]
 #  The Show@ instance for Maybe@.
 
+Format, String .= /Std/Char/Ascii/Stream%;
 Maybe@ .= /Std/Maybe%;
 Show@ .= /Std/Show%;
-Format, String .= /Std/Char/Ascii/Stream%;
 
 # Show --
 #   Implementation of Show@ for Maybe@<T@>. See documentation of /Show%.Show@.

@@ -3,8 +3,8 @@
 
 Bool@, True, False .= /Std/Bool%;
 Char@, Pos .= /Std/Char%;
-Lt, Gt .= /Std/Cmp%.Cmp(/Std/Char/Cmp%.Cmp);
 Char .= /Std/Char/Ascii%;
+Lt, Gt .= /Std/Cmp%.Cmp(/Std/Char/Cmp%.Cmp);
 Int@, Add, Sub, Neg, Mul .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 Maybe@, Just, Nothing, Do, Map .= /Std/Maybe%;

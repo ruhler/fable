@@ -382,3 +382,31 @@ Experience report:
 * Renaming modules is much more convenient with import statements, because
   there are a lot fewer places where we name the module that need to be
   updated.
+
+---
+
+Next goal is to clean up all the use of imports in all the packages.
+
+Style guide is:
+* All one block at the top of the file, sorted alphabetically by module
+  imported from.
+
+std [DONE]
+
+std-tests
+app
+benchmark
+cbtg
+computrainer
+fbld
+games
+graphics
+hwdg
+invaders
+md5
+network
+pinball
+pprof
+rosetta
+sat
+satgame

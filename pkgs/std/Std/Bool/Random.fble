@@ -2,11 +2,9 @@
 #  Generation of random boolean values.
 
 Bool@, Not .= /Std/Bool%;
-
 Int@ .= /Std/Int%;
 IsZero .= /Std/Int/Sign%;
 Int .= /Std/Int/Lit%;
-
 Monad@ .= /Std/Monad%;
 Rng@ .= /Std/Random/Rng%;
 

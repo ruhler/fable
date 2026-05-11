@@ -3,12 +3,12 @@
 
 Bool@ .= /Std/Bool%;
 Char@ .= /Std/Char%;
+String, Format .= /Std/Char/Ascii/Stream%;
 Lazy@ .= /Std/Lazy%;
 List@ .= /Std/List%;
 Stream@ .= /Std/Stream%;
 ToString .= /Std/Stream/String%;
 String@ .= /Std/String%;
-String, Format .= /Std/Char/Ascii/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 # @union[TestResult@] The result of running a test.
