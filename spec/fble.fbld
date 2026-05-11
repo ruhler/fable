@@ -419,7 +419,7 @@
     Expr: struct_import (imports : [(Type, Name, Name)]) (def : Expr) (body : Expr)
 
    @ConcreteSyntax @
-    stmt = [type], name, ['(.' name ')'] {', [type], name, ['(.' name ')']}, '.=', expr, ';', stmt 
+    stmt = [type], name, ['(.' name ')'] {',' [type], name, ['(.' name ')']}, '.=', expr, ';', stmt 
 
    @Example @
     Bool@, True, False .= /Std/Bool%;
@@ -1661,7 +1661,7 @@
        {',', [type], name, '=', expr}, ';', stmt       
      | stmt = type, name, ';', stmt                    (* undef *)
      | [type], name, ['(.' name ')']                   (* struct_import *)
-       {', [type], name, ['(.' name ')']}, '.=', expr, ';', stmt 
+       {',' [type], name, ['(.' name ')']}, '.=', expr, ';', stmt 
      | expr, '.?(', name, ':', expr,                   (* union_select *)
                 {',', name, ':', expr} ')', ';', stmt
      | type, name,                                     (* func_bind *)
