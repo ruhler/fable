@@ -1,0 +1,11 @@
+# @@fble-test@@ compile-error 8:37
+Unit@ = *();
+Unit@ Unit = Unit@();
+
+Pkg@ = @/SpecTests/'9.2-PrivateType'%;
+
+# Whitespace is not allowed between '.' and '%'.
+Bool@ = +(Unit@ true, Unit@ false). %(Pkg@);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+False.?(true: False, false: True).true;

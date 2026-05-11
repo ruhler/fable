@@ -86,6 +86,11 @@ while (0)
 %parse-param {FbleExpr** result} {FbleModulePathV* deps}
 
 %token END 0 "end of file"
+%token STAR_OPEN_PAREN "*("
+%token DOT_AT_OPEN_PAREN ".@("
+%token PLUS_OPEN_PAREN "+("
+%token DOT_QUESTION_OPEN_PAREN ".?("
+%token DOT_PERCENT_OPEN_PAREN ".%("
 %token DOT_EQUALS ".="
 %token COLON_EQUALS ":="
 %token OPEN_PAREN_DOT "(."
@@ -349,12 +354,12 @@ expr:
         FbleAppendToVector(*deps, FbleCopyModulePath(path_expr->path));
       }
    }
- | '*' '(' tagged_type_s ')' {
+ | "*(" tagged_type_s ')' {
       FbleDataTypeExpr* struct_type = FbleAlloc(FbleDataTypeExpr);
       struct_type->_base.tag = FBLE_DATA_TYPE_EXPR;
       struct_type->_base.loc = FbleCopyLoc(@$);
       struct_type->datatype = FBLE_STRUCT_DATATYPE;
-      struct_type->fields = $3;
+      struct_type->fields = $2;
       $$ = &struct_type->_base;
    }
  | expr '(' expr_s ')' {
@@ -381,20 +386,20 @@ expr:
       access_expr->field = $3;
       $$ = &access_expr->_base;
    }
- | expr '.' '@' '(' implicit_tagged_expr_p ')' {
+ | expr ".@(" implicit_tagged_expr_p ')' {
       FbleStructCopyExpr* expr = FbleAlloc(FbleStructCopyExpr);
       expr->_base.tag = FBLE_STRUCT_COPY_EXPR;
       expr->_base.loc = FbleCopyLoc(@$);
       expr->src = $1;
-      expr->args = $5;
+      expr->args = $3;
       $$ = &expr->_base;
    }
- | '+' '(' tagged_type_p ')' {
+ | "+(" tagged_type_p ')' {
       FbleDataTypeExpr* union_type = FbleAlloc(FbleDataTypeExpr);
       union_type->_base.tag = FBLE_DATA_TYPE_EXPR;
       union_type->_base.loc = FbleCopyLoc(@$);
       union_type->datatype = FBLE_UNION_DATATYPE;
-      union_type->fields = $3;
+      union_type->fields = $2;
       $$ = &union_type->_base;
    }
  | expr '(' name ':' expr ')' {
@@ -406,22 +411,22 @@ expr:
       union_value_expr->arg = $5;
       $$ = &union_value_expr->_base;
    }
- | expr '.' '?' '(' tagged_expr_p ')' {
+ | expr ".?(" tagged_expr_p ')' {
       FbleUnionSelectExpr* select_expr = FbleAlloc(FbleUnionSelectExpr);
       select_expr->_base.tag = FBLE_UNION_SELECT_EXPR;
       select_expr->_base.loc = FbleCopyLoc(@$);
       select_expr->condition = $1;
-      select_expr->choices = $5;
+      select_expr->choices = $3;
       select_expr->default_ = NULL;
       $$ = &select_expr->_base;
    }
- | expr '.' '?' '(' tagged_expr_p ',' ':' expr ')' {
+ | expr ".?(" tagged_expr_p ',' ':' expr ')' {
       FbleUnionSelectExpr* select_expr = FbleAlloc(FbleUnionSelectExpr);
       select_expr->_base.tag = FBLE_UNION_SELECT_EXPR;
       select_expr->_base.loc = FbleCopyLoc(@$);
       select_expr->condition = $1;
-      select_expr->choices = $5;
-      select_expr->default_ = $8;
+      select_expr->choices = $3;
+      select_expr->default_ = $6;
       $$ = &select_expr->_base;
    }
  | expr '<' expr_p '>' {
@@ -436,12 +441,12 @@ expr:
       }
       FbleFreeVector($3);
    }
- | expr '.' '%' '(' expr ')' {
+ | expr ".%(" expr ')' {
      FblePrivateExpr* private_expr = FbleAlloc(FblePrivateExpr);
      private_expr->_base.tag = FBLE_PRIVATE_EXPR;
      private_expr->_base.loc = FbleCopyLoc(@$);
      private_expr->arg = $1;
-     private_expr->package = $5;
+     private_expr->package = $3;
      $$ = &private_expr->_base;
    }
  | expr '[' expr_s ']' {
@@ -911,21 +916,57 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex)
     int c = lex->c;
     ReadNextChar(lex);
 
-    if (c == '.' && lex->c == '=') {
-      ReadNextChar(lex);
-      return DOT_EQUALS;
-    }
+    // Handle multi-token punctuation characters.
+    switch (c) {
+      case '*':
+        switch (lex->c) {
+          case '(': ReadNextChar(lex); return STAR_OPEN_PAREN;
+        }
+        break;
 
-    if (c == ':' && lex->c == '=') {
-      ReadNextChar(lex);
-      return COLON_EQUALS;
-    }
+      case '.':
+        switch (lex->c) {
+          case '=': ReadNextChar(lex); return DOT_EQUALS;
+          case '%':
+            ReadNextChar(lex);
+            switch (lex->c) {
+              case '(': ReadNextChar(lex); return DOT_PERCENT_OPEN_PAREN;
+              default: lex->c = '%'; return c;  // let parser error out
+            }
+          case '@':
+            ReadNextChar(lex);
+            switch (lex->c) {
+              case '(': ReadNextChar(lex); return DOT_AT_OPEN_PAREN;
+              default: lex->c = '@'; return c;  // let parser error out
+            }
+          case '?':
+            ReadNextChar(lex);
+            switch (lex->c) {
+              case '(': ReadNextChar(lex); return DOT_QUESTION_OPEN_PAREN;
+              default: lex->c = '?'; return c;  // let parser error out
+            }
+        }
+        break;
 
-    if (c == '(' && lex->c == '.') {
-      ReadNextChar(lex);
-      return OPEN_PAREN_DOT;
+      case '+':
+        switch (lex->c) {
+          case '(': ReadNextChar(lex); return PLUS_OPEN_PAREN;
+        }
+        break;
+
+      case ':':
+        switch (lex->c) {
+          case '=': ReadNextChar(lex); return COLON_EQUALS;
+        }
+        break;
+
+      case '(':
+        switch (lex->c) {
+          case '.': ReadNextChar(lex); return OPEN_PAREN_DOT;
+        }
+        break;
     }
-    
+        
     return c;
   };
 

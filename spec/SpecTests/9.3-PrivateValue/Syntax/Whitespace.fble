@@ -1,0 +1,8 @@
+# @@fble-test@@ compile-error 7:21
+Bool@ = /SpecTests/'9.2-PrivateType'/Private%.Bool@;
+
+Pkg@ = @/SpecTests/'9.2-PrivateType'/Private%;
+
+# Whitespace is not allowed between the '.' and the '%'.
+(Bool@) { Bool@; }. %(Pkg@) Not2 = /SpecTests/'9.2-PrivateType'/Private%.Not2;
+Not2;

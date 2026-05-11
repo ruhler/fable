@@ -1,0 +1,10 @@
+# @@fble-test@@ compile-error 9:4
+Unit@ = *();
+Unit@ Unit = Unit@();
+
+Bool@ = +(Unit@ true, Unit@ false);
+Bool@ t = Bool@(true: Unit);
+
+# Whitespace is not allowed between '.' and '?'.
+t. ?(true: Unit);
+Unit;

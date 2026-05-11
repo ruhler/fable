@@ -93,14 +93,6 @@ Things to consider doing for the fble-0.6 release.
 * See if there is more opportunity to typecheck more stuff before erroring
   out?
 
-* Document/test/do something with the fact that "(.", ":=", and ".=" are
-  treated specially in the parser, but other such constructs aren't.
-  - And it makes a difference in what whitespace you can or cannot use in an
-    fble program.
-
-* Clean up bnf syntax in spec.
- - What do I use for list versus optional? Why sometimes [] sometimes {}?
-
 * Add test that LSFR won't seed itself to 0.
 
 * Why is the invaders ship dying animation so messed up on linux console?

@@ -111,7 +111,7 @@
     Type: typeof (expr : Expr)
   
    @ConcreteSyntax @
-    type = '@', '<', expr, '>'
+    type = '@' '<', expr, '>'
   
    @Example @
     @<x>
@@ -343,7 +343,7 @@
     Expr: struct_export (args : [(Name, Expr)])
   
    @ConcreteSyntax @
-    expr = '@(', [field_arg, {',', field_arg}] ')'
+    expr = '@' '(', [field_arg, {',', field_arg}] ')'
   
    @Example @
     @(x: 3, y: 5)
@@ -1590,6 +1590,9 @@
    word.
   
   @subsection 12.2 Concrete Syntax Reference
+   The concrete syntax is described here using Extended Backus–Naur form as
+   described in ISO/IEC 14977.
+
    @code[ebnf] @
     word = ? word as described in the section on lexical syntax ?
     normal_name = word
@@ -1612,14 +1615,14 @@
     field_arg = name, [':', expr] ;                    (* implicit tagged expr *)
     
     expr = 
-       '@', '<', expr, '>'                             (* typeof *)
+       '@' '<', expr, '>'                              (* typeof *)
      | name                                            (* var *)
      | path                                            (* module_path *)
     
      | '*(', [type, name, {',', type, name}], ')'      (* struct_type *)
      | type, '(', [expr, {',', expr}], ')'             (* struct_value *)
      | expr, '.', name                                 (* struct_access *)
-     | '@(', [field_arg, {',', field_arg}] ')'         (* struct_export *)
+     | '@' '(', [field_arg, {',', field_arg}] ')'      (* struct_export *)
      | expr, '.@(', field_arg, {',', field_arg}, ')'   (* struct_copy *)
 
      | '+(', type, name, {',', type, name}, ')'        (* union_type *)
@@ -1657,8 +1660,8 @@
      | [type], name, '=', expr,                        (* let *)
        {',', [type], name, '=', expr}, ';', stmt       
      | stmt = type, name, ';', stmt                    (* undef *)
-     | [type], name, [':' name]                        (* struct_import *)
-       {', [type], name, [':' name]}, '.=', expr, ';', stmt
+     | [type], name, ['(.' name ')']                   (* struct_import *)
+       {', [type], name, ['(.' name ')']}, '.=', expr, ';', stmt 
      | expr, '.?(', name, ':', expr,                   (* union_select *)
                 {',', name, ':', expr} ')', ';', stmt
      | type, name,                                     (* func_bind *)

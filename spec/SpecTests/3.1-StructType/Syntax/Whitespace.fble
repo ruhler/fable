@@ -1,0 +1,6 @@
+# @@fble-test@@ compile-error 6:1
+Unit@ = *();
+S1@ = *(Unit@ x);
+
+# Whitespace is not allowed between '*' and '('
+* (Unit@ a, Unit@ b);

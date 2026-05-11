@@ -1,0 +1,8 @@
+# @@fble-test@@ no-error
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+
+# Whitespace is allowed between '@' and '<'.
+@ <True> False = Bool@(false: Unit@());
+False.false;

@@ -267,3 +267,58 @@ miss things. The steps are:
 4. Move import into struct section, call it struct import.
 5. Reread through spec and make sure it is coherent.
 
+---
+
+While on the topic of the spec, let's clarify :=, (., and .= as atomic
+punctuation. First off... is there any other punctuation we might want to
+join to this group? Maybe:...
+* '@<' used in typeof
+* '*(' used for struct type.
+* '@(' used for struct export.
+* '.@(' used for struct copy.
+* '.?(' used for union select.
+* '.%(' used for private types
+
+Why don't I just set them up to be precise tokens? Then I can use a blanket
+statement in the concrete syntax that lists them as tokens in the input that
+cannot be separated by whitespace?
+
+And... how about we update our use of ebnf while we are at it for better
+consistency?
+
+Extended Backus–Naur Form, from wikipedia:
+
+There is an ISO standard: ISO/IEC 14977. Can we stick with that?
+
+What syntax am I using? What syntax do I like? What syntax do other people
+use?
+
+Currently I'm using:
+* name = ... | ... | ... ; to define a nonterminal.
+* a, b, c to define a sequence of terms.
+* 'xx' to define a literal string value.
+* {...} to define optionally repeating values, zero or more times.
+* [...] to define optional value, zero or 1 times.
+* (* ... *) as a comment.
+
+It can be a bit verbose with all the single quotes and commas everywhere. Oh
+well.
+
+Let's see what other people do:
+* Double quotes instead of single quotes. But looks like I'm still to spec.
+  Single quote is allowed.
+
+Cool. In that case, seems like I'm doing the right thing? Let's just double
+check the syntax.
+
+Trouble: Stream@<... conflicts with my '@<' requirement.
+
+Hmm... What should I do here?
+
+There are a few things, like '@(' that are similar. Let me just be explicit in
+the spec that those are '@' '(' instead of '@('. Have the spec tests match.
+Have the lexer implementation match. Group things together otherwise where we
+can.
+
+Well, it's a little funny. But at least I'm more precise in the spec now. We
+can decide to relax the spec later on if I find motivation to do so.

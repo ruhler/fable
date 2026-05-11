@@ -1,0 +1,19 @@
+# @@fble-test@@ compile-error 4:22
+
+# Whitespace is not allowed between the '.' and the '='.
+Bool@, True, False . = {
+  Unit@ = *();
+  Unit = Unit@();
+
+  Bool@ = +(Unit@ true, Unit@ false);
+  True = Bool@(true: Unit);
+  False = Bool@(false: Unit);
+
+  @(Bool@, True, False);
+};
+
+(Bool@) { Bool@; } Not = (Bool@ x) {
+  x.?(true: False, false: True);
+};
+
+Not(False).true;
