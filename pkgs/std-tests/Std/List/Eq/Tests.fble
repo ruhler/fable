@@ -1,41 +1,17 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
-OnAscii = /Std/Char/Ascii%.OnAscii;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-Test@ = /Std/Test%.Test@;
-Test = OnAscii(/Std/Test%.Test);
-TestSuite = OnAscii(/Std/Test%.TestSuite);
-
-Unit@ = /Std/Unit%.Unit@;
-
+Bool@, True, False .= /Std/Bool%;
+OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
 List@, List .= /Std/List%;
+HasItems, IsEmpty, StartsWith, EndsWith, Contains, Skip,
+Trim, Strip, Search, SearchR, Until, Break, Split, Replace .= /Std/List/Eq%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
-HasItems = /Std/List/Eq%.HasItems;
-IsEmpty = /Std/List/Eq%.IsEmpty;
-StartsWith = /Std/List/Eq%.StartsWith;
-EndsWith = /Std/List/Eq%.EndsWith;
-Contains = /Std/List/Eq%.Contains;
-Skip = /Std/List/Eq%.Skip;
-Trim = /Std/List/Eq%.Trim;
-Strip = /Std/List/Eq%.Strip;
-Search = /Std/List/Eq%.Search;
-SearchR = /Std/List/Eq%.SearchR;
-Until = /Std/List/Eq%.Until;
-Break = /Std/List/Eq%.Break;
-Split = /Std/List/Eq%.Split;
-Replace = /Std/List/Eq%.Replace;
-
-Elem@ = /Std/List/Tests/Elem%.Elem@;
-Elems = /Std/List/Tests/Elem%.Elems;
-Eq = /Std/List/Tests/Elem%.Eq;
-Eqs = /Std/List/Tests/Elem%.Eqs;
-Shows = /Std/List/Tests/Elem%.Shows;
+Elem@, Elems, Eq, Eqs, Shows .= /Std/List/Tests/Elem%;
 
 Test@ Tests = TestSuite|Eq[
   TestSuite|HasItems[

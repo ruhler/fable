@@ -1,24 +1,32 @@
 
-# Import required types and values used.
-True, False .= /Std/Bool%;
+# Import required types and values.
+Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
-Char .= /Std/Char/Ascii%;
+Char, Str .= /Std/Char/Ascii%;
 Int@ .= /Std/Int%;
 Int .= /Std/Int/Lit%;
-Lines .= /Std/Stream/String%;
-Stream@ .= /Std/Stream%;
-String, Format .= /Std/Char/Ascii/Stream%;
+List@, List .= /Std/List%;
+Do, Return .= /Std/Stream%;
+String .= /Std/Stream/String%;
+String@ .= /Std/String%;
+FormatE .= /Std/Char/Ascii/Stream%;
+Unit@ .= /Std/Unit%;
 
-# Call the helper function for a main function
-# that outputs a single string value.
+# Call the helper function for a main function that prints to standard output.
 /Std/Io/Cli/Print%.Print({
+  String@ msg = Str|'hello, world';
+  Unit@ _ := Do(FormatE|'%s\n'[String(msg)]);
+
+  Unit@ _ := Do(FormatE|'A boolean: %s\n'[/Std/Bool/Show%.Show(True)]);
+
   Char@ c = Char|A;
+  Unit@ _ := Do(FormatE|'A character: %s\n'[/Std/Char/Show%.Show(c)]);
+
   Int@ x = Int|42;
-  Lines[
-    String|'hello, world',
-    Format|'A boolean: %s'[/Std/Bool/Show%.Show(True)],
-    Format|'A character: %s'[/Std/Char/Show%.Show(c)],
-    Format|'A list: %s'[
-      /Std/List/Show%.Show(/Std/Bool/Show%.Show)[True, False, False]],
-    Format|'An integer: '[/Std/Int/Show%.Show(x)]];
+  Unit@ _ := Do(FormatE|'An integer: %s\n'[/Std/Int/Show%.Show(x)]);
+
+  List@<Bool@> l = List[True, False, False];
+  Unit@ _ := Do(FormatE|'A list: %s\n'[/Std/List/Show%.Show(/Std/Bool/Show%.Show, l)]);
+
+  Return<Char@>;
 });

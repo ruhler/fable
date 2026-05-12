@@ -1,38 +1,19 @@
 # @module[/Std/Maybe/Tests%]
 #  Tests for /Std/Maybe%.
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-
-Char@ = /Std/Char%.Char@;
-
-OnAscii = /Std/Char/Ascii%.OnAscii;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
+Bool@, True .= /Std/Bool%;
+Char@ .= /Std/Char%;
+OnAscii, Str .= /Std/Char/Ascii%;
+String .= /Std/Char/Ascii/Stream%;
+AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
 Tail, Append .= /Std/List%;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-Default = /Std/Maybe%.Default;
-JustGet = /Std/Maybe%.JustGet;
-ForEach = /Std/Maybe%.ForEach;
-Map = /Std/Maybe%.Map;
-Do = /Std/Maybe%.Do;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-String = /Std/Char/Ascii/Stream%.String;
-
-Test@ = /Std/Test%.Test@;
+Maybe@, Just, Nothing, Default, JustGet, ForEach, Map, Do .= /Std/Maybe%;
+String@ .= /Std/String%;
+Test@, Pass, Fail .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
-Pass = /Std/Test%.Pass;
-Fail = /Std/Test%.Fail;
-
-Unit@ = /Std/Unit%.Unit@;
+Unit@ .= /Std/Unit%;
 
 # @value[Tests] Test suite for /Std/Maybe%
 #  @type[Test@]

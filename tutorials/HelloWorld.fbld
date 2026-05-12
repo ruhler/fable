@@ -10,13 +10,20 @@
   The following is a complete hello world program in fble:
 
   @code[fble] @
-   # Import string format function from the core library.
+   # Import required types and functions.
+   Str .= /Std/Char/Ascii%;
    FormatE .= /Std/Char/Ascii/Stream%;
+   String .= /Std/Stream/String%;
    String@ .= /Std/String%;
 
-   # Call the helper function for a main function
-   # that outputs a formatted value.
-   /Std/Io/Cli/Print%.Print(StringE|'hello, world\n');
+   # Call the helper function for a main function that prints formatted output
+   # to standard output.
+   /Std/Io/Cli/Print%.Print({
+     # Declare a string variable with the message to output.
+     String@ msg = Str|'hello, world';
+
+     FormatE|'%s\n'[String(msg)];
+   });
 
   We'll break this down piece by piece in the following sections.
 
@@ -25,115 +32,135 @@
    the line. For example:
 
    @code fble @
-    # Import string type and literal from the core library.
+    # Import required types and functions.
 
   @subsection Module Imports
-   The first few lines of code of the hello world program import the
-   @L{String@} type and @L{Str} string literal function from the core library.
+   The next few lines of code of the hello world program import from the
+   standard library the @L{String@} type and functions @L{Str}, @L{FormatE},
+   and @L{String} which we use for string literals, formatted output, and
+   turning a string into formatted output respectively.
 
    @code[fble] @
-    @ String@ = /Core/String%.String@;
-    % Str = /Core/String%.Str;
+    # Import required types and functions.
+    Str .= /Std/Char/Ascii%;
+    FormatE .= /Std/Char/Ascii/Stream%;
+    String .= /Std/Stream/String%;
+    String@ .= /Std/String%;
    
    Names ending in the @l{@} character are types. Names without @L{@} are
    values. In this case @L{String@} is a type and @L{Str} is a value.
 
-   Names ending in @l{%} are names of modules. @L{/Core/String%} is a module
-   from the core library that defines the string type and related functions.
+   Names ending in @l{%} are names of modules. @L{/Std/String%} is a module
+   from the standard library that defines the string type and related
+   functions.
 
    Modules are located by searching module directories of the package search
-   path. The source code for module @L{/Core/String%} will be in a file
-   @l{Core/String.fble}. You can see the default package search path
+   path. The source code for module @L{/Std/String%} will be in a file
+   @l{Std/String.fble}. You can see the default package search path
    for your installation by running @l{fble-stdio --help}, or set your own
    package search path using the FBLE_PACKAGE_PATH environment variable and/or
    @l{-I} and @l{-p} options to @l{fble-stdio}.
    
   @subsection Variable Declaration
-   Next we declare a variable called @L{output} whose value is the string
-   literal for @l{hello, world}.
+   Next we declare a variable called @L{msg} whose value is the string message
+   we want to output.
  
    @code[fble] @
-    String@ output = Str|'hello, world';
+    String@ msg = Str|'hello, world';
 
   @subsection The Module Value
    The last thing we do is specify the @L{/HelloWorld%} module value,
    which will be used as the main function for the program.
  
    @code[fble] @
-    /Core/Stdio/StringO%.Run(output);
+    /Std/Io/Cli/Print%.Print({
+      FormatE|'%s\n'[String(msg)];
+    });
 
-   This uses a helper function from the @L{/Core/Stdio/StringO%} module which
-   defines a main function that outputs a single string when run. The @L{Run}
-   function returns a main function that can be run by the @l{fble-stdio}
-   program.
+   This uses a helper function @L{Print} from the @L{/Std/Io/Cli/Print%}
+   module which defines a main function that outputs formatted output to
+   standard output when run. The @L{Print} function returns a main function
+   that can be run by the @l{fble-cli} program.
 
  @section Running Hello World
-  We use the @l{fble-stdio} program to run our @l{HelloWorld.fble} program:
+  We use the @l{fble-cli} program to run our @l{HelloWorld.fble} program:
  
   @code[sh] @
-   fble-stdio -p core -I . -m /HelloWorld%
+   fble-cli -p std -I . -m /HelloWorld%
  
   If all goes well, this should output the string @l{hello, world}.
  
-  The @l{-p} option to @l{fble-stdio} says our program relies on modules from
-  the @l{core} package. The @l{-I} option says to look for your
+  The @l{-p} option to @l{fble-cli} says our program relies on modules from
+  the @l{std} package. The @l{-I} option says to look for your
   @l{HelloWorld.fble} file in the current directory, and the @l{-m} option says
   to execute code from the @L{/HelloWorld%} module you just defined.
  
  @section Printing Different Kinds of Things
   An important motivation for the hello world program is to show you how to
   print things to the output, so you can see the results of trying
-  different things in subsequent tutorials. Fble doesn't have a printf
-  function or format strings. Instead, many of the types defined in
-  the core library define a @L{Show} function to convert them to strings. You
-  can concatenate strings directly together using the @L{/Core/String%.Strs}
-  function or join them as separate lines using the @L{/Core/String%.Lines}
-  function.
- 
+  different things in subsequent tutorials.
+
+  The @L{FormatE} function from the standard library can be used for printf
+  like format like strings, except the only format specifier allowed is
+  @L{%s}, which expects formatted output. We use different helpers, such as
+  the @L{String} helper function above to convert different types to formatted
+  output that can be passed as the extra arguments to @L{FormatE}. The
+  conventional name for the function to convert some type of data to formatted
+  output is called @L{Show}.
+
   For example, try updating your hello world program to print some of the
   following different types of values.
 
   @subsection Booleans
    @code[fble] @
-    @ Bool@ = /Std/Bool%.Bool@;
-    Bool@ True = /Std/Bool%.True;
-    Bool@ False = /Std/Bool%.False;
+    Bool@, True, False .= /Std/Bool%;
 
-    String@ output = Strs[Str|'A boolean: ', /Core/Bool/Show%.Show(True)];
+    FormatE|'A boolean: %s\n'[/Std/Bool/Show%.Show(True)];
 
   @subsection Characters
    @code[fble] @
-    @ Char@ = /Core/Char%.Char@;
-    % Chars = /Core/Char%.Chars;
+    Char@ .= /Std/Char%;
+    Char .= /Std/Char/Ascii%;
 
-    Char@ c = Chars.A;
-    String@ output = Strs[Str|'A character: ', c];
-
-  @subsection Lists
-   @code[fble] @
-    String@ output = Strs[Str|'A list: ',
-      /Core/List/Show%.Show(/Core/Bool/Show%.Show)[True, False, True]];
+    Char@ c = Chars|A;
+    FormatE|'A character: %s\n'[/Std/Char/Show%.Show(c)];
 
   @subsection Integers
    @code[fble] @
-    @ Int@ = /Core/Int%.Int@;
-    % Int = /Core/Int/Lit%.Int;
+    Int@ .= /Std/Int%;
+    Int .= /Std/Int/Lit%;
 
     Int@ x = Int|42;
-    String@ output = Strs[Str|'An integer: ', x];
+    FormatE|'An integer: %s\n'[/Std/Int/Show%.Show(c)];
+
+  @subsection Lists
+   @code[fble] @
+    List@, List .= /Std/List%;
+    
+    List@<Bool@> l = List[True, False, False];
+    FormatE|'A list: %s\n'[/Std/List/Show%.Show(/Std/Bool/Show%.Show, l)];
+
+  If you want to print out multiple things, one after another, you can use the
+  @L{Do} function from @L{/Std/Stream%}. For example:
+
+  @code[fble] @
+   String@ msg = Str|'hello, world';
+   Unit@ _ := Do(FormatE|'%s\n'[String(msg)]);
+   Unit@ _ := Do(FormatE|'A boolean: %s\n'[/Std/Bool/Show%.Show(True)]);
+   Return<Char@>;
 
  @section Exercises
   @exercise
    Update your hello world program to output all of the different types shown
-   above in a single string. Compare your hello world program with the sample
+   in the same program. Compare your hello world program with the sample
    one in at @l{tutorials/HelloWorld/HelloWorld.fble} included with this
    tutorial.
 
   @exercise
    Sometimes we import values from other modules, other times we use them
    directly. It's your choice. Try removing the import for @L{String@} and using
-   the value directly from the @L{/Core/String%} module. Try importing the
-   @L{/Core/Stdio/StringO%.Run} function before using it.
+   the value directly from the @L{/Std/String%} module. Try importing the
+   @L{/Std/Io/Cli/Print%.Print} function before using it.
  
   @exercise
    String literals are introduced using @L{Str|}, not from single quotes. If

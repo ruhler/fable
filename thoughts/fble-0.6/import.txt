@@ -392,8 +392,8 @@ Style guide is:
   imported from.
 
 std [DONE]
+std-tests [DONE]
 
-std-tests
 app
 benchmark
 cbtg

@@ -1,26 +1,16 @@
 
-OnAscii = /Std/Char/Ascii%.OnAscii;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
+OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
 List@ .= /Std/List%;
 Head, Last, Concat .= /Std/List/Maybe%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
-
-Test@ = /Std/Test%.Test@;
+Test@ .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
-Unit@ = /Std/Unit%.Unit@;
-
-Elem@ = /Std/List/Tests/Elem%.Elem@;
-Elem = /Std/List/Tests/Elem%.Elem;
-Elems = /Std/List/Tests/Elem%.Elems;
-Eq = /Std/List/Tests/Elem%.Eq;
-Show = /Std/List/Tests/Elem%.Show;
-Eqs = /Std/List/Tests/Elem%.Eqs;
-Shows = /Std/List/Tests/Elem%.Shows;
+Elem@, Elem, Elems, Eq, Show, Eqs, Shows .= /Std/List/Tests/Elem%;
 
 Test@ Tests = TestSuite|Maybe[
   TestSuite|List[

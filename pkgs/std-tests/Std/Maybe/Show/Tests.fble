@@ -1,30 +1,18 @@
 # @module[/Std/Maybe/Show/Tests%]
 #  Tests for /Std/Maybe/Show%.
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-
-OnAscii = /Std/Char/Ascii%.OnAscii;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
+Bool@, True .= /Std/Bool%;
+Str, OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Show@ = /Std/Show%.Show@;
-ToString = /Std/Stream/String%.ToString;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Show@ .= /Std/Show%;
+ToString .= /Std/Stream/String%;
+String@ .= /Std/String%;
+Test@ .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
-
-Unit@ = /Std/Unit%.Unit@;
+Unit@ .= /Std/Unit%;
 
 Show@<Maybe@<Bool@>> Show = /Std/Maybe/Show%.Show(/Std/Bool/Show%.Show);
 

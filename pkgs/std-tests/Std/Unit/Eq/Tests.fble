@@ -1,13 +1,8 @@
 
-AssertTrue = /Std/Bool/Assert%.AssertTrue;
-
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+AssertTrue .= /Std/Bool/Assert%;
+Str .= /Std/Char/Ascii%;
+Test@, Test .= /Std/Test%;
+Unit@, Unit .= /Std/Unit%;
 
 # @value[Tests] Test suite for /Std/Unit/Eq%.
 #  @type[Test@]

@@ -1,26 +1,13 @@
 # @module[/Std/List/Tests/Elem%]
 #  Element type for use in list tests.
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
-Cmp@ = /Std/Cmp%.Cmp@;
-Less = /Std/Cmp%.Less;
-Equal = /Std/Cmp%.Equal;
-Greater = /Std/Cmp%.Greater;
-
-Eq@ = /Std/Eq%.Eq@;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-
-Show@ = /Std/Show%.Show@;
-
-String = /Std/Char/Ascii/Stream%.String;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Bool@, True, False .= /Std/Bool%;
+String .= /Std/Char/Ascii/Stream%;
+Cmp@, Less, Equal, Greater .= /Std/Cmp%;
+Eq@ .= /Std/Eq%;
+List@, List .= /Std/List%;
+Show@ .= /Std/Show%;
+Unit@, Unit .= /Std/Unit%;
 
 
 Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);

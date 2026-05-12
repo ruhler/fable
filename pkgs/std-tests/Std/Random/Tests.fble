@@ -1,5 +1,4 @@
 
-
 OnAscii .= /Std/Char/Ascii%;
 Test@ .= /Std/Test%;
 TestSuite = OnAscii(/Std/Test%.TestSuite);

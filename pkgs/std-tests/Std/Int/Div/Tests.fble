@@ -1,24 +1,15 @@
 
-Ascii@ = /Std/Char/Ascii%.Ascii@;
-OnAscii = /Std/Char/Ascii%.OnAscii;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-Int@ = /Std/Int%.Int@;
-Div = /Std/Int/Div%.Div;
-Quot = /Std/Int/Div%.Quot;
-Mod = /Std/Int/Div%.Mod;
-Neg = /Std/Int%.Neg;
-Int = /Std/Int/Lit%.Int;
-
+Ascii@, OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@, Neg .= /Std/Int%;
+Div, Quot, Mod .= /Std/Int/Div%;
+Int .= /Std/Int/Lit%;
 Lazy .= /Std/Lazy%;
 List@ .= /Std/List%;
-
-Test@ = /Std/Test%.Test@;
+Test@ .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
-
-Unit@ = /Std/Unit%.Unit@;
+Unit@ .= /Std/Unit%;
 
 # Test the various ways of calling division for the given arguments.
 (List@<Ascii@>, Int@, Int@, Int@, Int@) { Test@; }

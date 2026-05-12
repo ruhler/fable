@@ -1,7 +1,6 @@
 
-OnAscii = /Std/Char/Ascii%.OnAscii;
-
-Test@ = /Std/Test%.Test@;
+OnAscii .= /Std/Char/Ascii%;
+Test@ .= /Std/Test%;
 TestSuite = OnAscii(/Std/Test%.TestSuite);
 
 # @value[Tests] Test suite for /Std/Unit%

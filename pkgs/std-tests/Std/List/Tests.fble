@@ -1,32 +1,18 @@
 # @module[/Std/List/Tests%]
 #  Tests for /Std/List%.
 
-OnAscii = /Std/Char/Ascii%.OnAscii;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
+OnAscii .= /Std/Char/Ascii%;
+String .= /Std/Char/Ascii/Stream%;
+AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
-
 List@, List, Items, Empty, Append, Concat,
 Join, Head, Tail, Last,Init, Map, Do, ForEach, Reverse .= /Std/List%;
-
-String = /Std/Char/Ascii/Stream%.String;
-
-Test@ = /Std/Test%.Test@;
+Test@, Pass, Fail .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
-Pass = /Std/Test%.Pass;
-Fail = /Std/Test%.Fail;
+Unit@ .= /Std/Unit%;
 
-Unit@ = /Std/Unit%.Unit@;
-
-Elem@ = /Std/List/Tests/Elem%.Elem@;
-Elem = /Std/List/Tests/Elem%.Elem;
-Elems = /Std/List/Tests/Elem%.Elems;
-Eq = /Std/List/Tests/Elem%.Eq;
-Show = /Std/List/Tests/Elem%.Show;
-Eqs = /Std/List/Tests/Elem%.Eqs;
-Shows = /Std/List/Tests/Elem%.Shows;
+Elem@, Elem, Elems, Eq, Show, Eqs, Shows .= /Std/List/Tests/Elem%;
 
 # @value[Tests] Test suite for /Std/List%
 #  @type[Test@]

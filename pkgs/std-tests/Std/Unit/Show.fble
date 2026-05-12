@@ -1,9 +1,9 @@
 # @module[/Std/Unit/Show%]
 #  The Show@ instance for Unit@.
 
-Show@ = /Std/Show%.Show@;
-String = /Std/Char/Ascii/Stream%.String;
-Unit@ = /Std/Unit%.Unit@;
+String .= /Std/Char/Ascii/Stream%;
+Show@ .= /Std/Show%;
+Unit@ .= /Std/Unit%;
 
 # @func[Show] Show a Unit@ value.
 #  @arg[Unit@][x] The value to show.

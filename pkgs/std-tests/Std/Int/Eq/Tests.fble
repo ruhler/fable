@@ -1,26 +1,15 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
-Ascii@ = /Std/Char/Ascii%.Ascii@;
-OnAscii = /Std/Char/Ascii%.OnAscii;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-Int@ = /Std/Int%.Int@;
-Neg = /Std/Int%.Neg;
-Int = /Std/Int/Lit%.Int;
-Eq = /Std/Int/Eq%.Eq;
-Ne = /Std/Int/Eq%.Ne;
-
+Bool@, True, False .= /Std/Bool%;
+Ascii@, OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@, Neg .= /Std/Int%;
+Eq, Ne .= /Std/Int/Eq%;
+Int .= /Std/Int/Lit%;
 List@ .= /Std/List%;
-
-Test@ = /Std/Test%.Test@;
+Test@ .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
-
-Unit@ = /Std/Unit%.Unit@;
+Unit@ .= /Std/Unit%;
 
 (List@<Ascii@>, (Int@, Int@) { Bool@; }, Int@, Int@, Bool@) { Test@; }
 Binary = (List@<Ascii@> name, (Int@, Int@) { Bool@; } f, Int@ a, Int@ b, Bool@ z) {

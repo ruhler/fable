@@ -5,10 +5,9 @@ AssertEquals .= /Std/Eq/Assert%;
 Int .= /Std/Int/Lit%;
 Lazy .= /Std/Lazy%;
 Test@ .= /Std/Test%;
-Unit@ .= /Std/Unit%;
-
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
 Char@ A = /Std/Char/Ascii%.Char|A;
 

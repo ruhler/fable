@@ -1,7 +1,7 @@
 
 Char@ .= /Std/Char%;
-Compose .= /Std/Char/Lit%;
 OnAscii, Char, Str .= /Std/Char/Ascii%;
+Compose .= /Std/Char/Lit%;
 AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
 String@ .= /Std/String%;

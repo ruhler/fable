@@ -1,14 +1,10 @@
 
-OnAscii = /Std/Char/Ascii%.OnAscii;
-
-AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
-
+OnAscii .= /Std/Char/Ascii%;
 Lazy .= /Std/Lazy%;
-Test@ = /Std/Test%.Test@;
+AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
+Test@ .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Unit@, Unit .= /Std/Unit%;
 
 # @value[Tests] Test suite for /Std/Unit/Show%.
 #  @type[Test@]
