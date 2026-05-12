@@ -1,28 +1,14 @@
 
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Unit@, Unit .= /Std/Unit%;
 
 Car = /Computrainer/Car%;
-Car@ = Car.Car@;
-
+Car@ .= Car;
 Dir = /Computrainer/Dir%;
-Dir@ = Dir.Dir@;
-Dest = Dir.Dest;
-
-Coord@ = /Computrainer/Grid%.Coord@;
-Grid = /Computrainer/Grid%.Grid;
-
-State@ = /Computrainer/State%.State@;
-AddCar = /Computrainer/State%.AddCar;
-MoveCar = /Computrainer/State%.MoveCar;
-RemoveCar = /Computrainer/State%.RemoveCar;
-Routing = /Computrainer/State%.Routing;
-SetRouting = /Computrainer/State%.SetRouting;
-ClearRouting = /Computrainer/State%.ClearRouting;
+Dir@, Dest .= Dir;
+Coord@, Grid .= /Computrainer/Grid%;
+State@, AddCar, MoveCar, RemoveCar,
+Routing, SetRouting, ClearRouting .= /Computrainer/State%;
 
 # A gate action: updates the state of the world for the gate at the given coordinates.
 Action@ = (Coord@, State@) { State@; };

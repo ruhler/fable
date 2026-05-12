@@ -1,39 +1,24 @@
 
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
 Char@ .= /Std/Char%;
-
-Int@ = /Std/Int%.Int@;
-Decr = /Std/Int%.Decr;
-IsZero = /Std/Int/Sign%.IsZero;
-Int = /Std/Int/Lit%.Int;
-
-List = /Std/List%.List;
-
-Str = /Std/Char/Ascii%.Str;
-
+OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@, Decr .= /Std/Int%;
+IsZero .= /Std/Int/Sign%;
+Int .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
 Stream@ .= /Std/Stream%;
-ToString = /Std/Stream/String%.ToString;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Entries = /Computrainer/Grid%.Entries;
+ToString .= /Std/Stream/String%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
 Car = /Computrainer/Car%;
-Car@ = Car.Car@;
-Cars@ = Car.Cars@;
-
+Car@, Cars@ .= Car;
 Dir = /Computrainer/Dir%;
 Gate = /Computrainer/Gate%;
-
-Model@ = /Computrainer/Model%.Model@;
-Gates@ = /Computrainer/Model%.Gates@;
-Model = /Computrainer/Model%.Model;
-Tick = /Computrainer/Model%.Tick;
+Entries .= /Computrainer/Grid%;
+Model@, Gates@, Model, Tick .= /Computrainer/Model%;
 
 (Int@, Model@) { Model@; }
 TickN = (Int@ n, Model@ m) {
@@ -44,8 +29,10 @@ TickN = (Int@ n, Model@ m) {
 # Do a bunch ish of ticks.
 (Model@) { Model@; } Ticks = TickN(Int|20);
 
-Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
-  Test(Str|'Stop', (Unit@ _) {
+Test@ Tests = TestSuite|Computrainer[
+  Test|Stop({
+    Unit@ _ := Lazy;
+
     # Cars don't move out of a stop gate.
     Gates@ gates = Entries[
         @(x: Int|3, y: Int|3, v: Gate.Stop)
@@ -59,7 +46,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Move_C', (Unit@ _) {
+  Test|Move_C({
+    Unit@ _ := Lazy;
+
     # The caboose pushes through Move gates.
     Gates@ gates = Entries[
         @(x: Int|3, y: Int|3, v: Gate.Move(Dir.Right)),
@@ -75,7 +64,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Move_0', (Unit@ _) {
+  Test|Move_0({
+    Unit@ _ := Lazy;
+
     # Non-caboose doesn't push through Move gates.
     Gates@ gates = Entries[
         @(x: Int|3, y: Int|3, v: Gate.Move(Dir.Right)),
@@ -91,7 +82,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Move_C0', (Unit@ _) {
+  Test|Move_C0({
+    Unit@ _ := Lazy;
+
     # Caboose pushes other cars through Move gates.
     Gates@ gates = Entries[
         @(x: Int|2, y: Int|3, v: Gate.Move(Dir.Right)),
@@ -112,7 +105,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Source', (Unit@ _) {
+  Test|Source({
+    Unit@ _ := Lazy;
+
     Gates@ gates = Entries[
         @(x: Int|2, y: Int|3, v: Gate.Source(Car.C, Dir.Right)),
         @(x: Int|3, y: Int|3, v: Gate.Move(Dir.Right)),
@@ -131,7 +126,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Sink', (Unit@ _) {
+  Test|Sink({
+    Unit@ _ := Lazy;
+
     Gates@ gates = Entries[
         @(x: Int|2, y: Int|3, v: Gate.Move(Dir.Right)),
         @(x: Int|3, y: Int|3, v: Gate.Move(Dir.Right)),
@@ -148,7 +145,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Dup', (Unit@ _) {
+  Test|Dup({
+    Unit@ _ := Lazy;
+
     Gates@ gates = Entries[
         @(x: Int|2, y: Int|3, v: Gate.Move(Dir.Right)),
         @(x: Int|3, y: Int|3, v: Gate.Move(Dir.Right)),
@@ -173,7 +172,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Dup_output_blocked', (Unit@ _) {
+  Test|Dup_output_blocked({
+    Unit@ _ := Lazy;
+
     # If one of the outputs is blocked, that prevents the other output from advancing.
     Gates@ gates = Entries[
         @(x: Int|2, y: Int|3, v: Gate.Move(Dir.Right)),
@@ -197,7 +198,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Wait_forever', (Unit@ _) {
+  Test|Wait_forever({
+    Unit@ _ := Lazy;
+
     # Engine goes to the wait gait and waits forevery.
     Gates@ gates = Entries[
         @(x: Int|3, y: Int|3, v: Gate.Move(Dir.Right)),
@@ -215,7 +218,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Wait_one', (Unit@ _) {
+  Test|Wait_one({
+    Unit@ _ := Lazy;
+
     Gates@ gates = Entries[
         @(x: Int|4, y: Int|3, v: Gate.Source(Car.C, Dir.Right)),
         @(x: Int|5, y: Int|3, v: Gate.Wait(Dir.Right)),
@@ -237,7 +242,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Split', (Unit@ _) {
+  Test|Split({
+    Unit@ _ := Lazy;
+
     Gates@ gates = Entries[
         @(x: Int|1, y: Int|3, v: Gate.Move(Dir.Right)),
         @(x: Int|2, y: Int|3, v: Gate.Move(Dir.Right)),
@@ -265,7 +272,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Split_C', (Unit@ _) {
+  Test|Split_C({
+    Unit@ _ := Lazy;
+
     # C train goes straight through, without having anything split off.
     Gates@ gates = Entries[
         @(x: Int|1, y: Int|3, v: Gate.Move(Dir.Right)),
@@ -290,7 +299,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Filter Match', (Unit@ _) {
+  Test|'Filter Match'({
+    Unit@ _ := Lazy;
+
     Gates@ gates = Entries[
         @(x: Int|1, y: Int|3, v: Gate.Move(Dir.Right)),
         @(x: Int|2, y: Int|3, v: Gate.Move(Dir.Right)),
@@ -318,7 +329,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Filter Default', (Unit@ _) {
+  Test|'Filter Default'({
+    Unit@ _ := Lazy;
+
     Gates@ gates = Entries[
         @(x: Int|1, y: Int|3, v: Gate.Move(Dir.Right)),
         @(x: Int|2, y: Int|3, v: Gate.Move(Dir.Right)),
@@ -346,7 +359,9 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   }),
 
-  Test(Str|'Load Save', (Unit@ _) {
+  Test|'Load Save'({
+    Unit@ _ := Lazy;
+
     Model@ model = Ticks(/Computrainer/Sample%.Sample);
     Stream@<Char@> saved = /Computrainer/Model/Save%.Model(model);
     Model@ loaded = /Computrainer/Model/Load%.Model(ToString(saved));
@@ -354,6 +369,6 @@ Test@ Tests = TestSuite(Str|Computrainer, List<Test@>[
     Model@ got = loaded;
     AssertEquals(/Computrainer/Model/Eq%.Model, /Computrainer/Model/Show%.Model, wnt, got);
   })
-]);
+];
 
 /Std/Test/Cli%.Run(Tests);

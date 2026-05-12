@@ -1,17 +1,12 @@
 
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-List@ = /Std/List%.List@;
-
-Unit@ = /Std/Unit%.Unit@;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+List@ .= /Std/List%;
+Unit@ .= /Std/Unit%;
 
 Car = /Computrainer/Car%;
 Dir = /Computrainer/Dir%;
-
 Gate = /Computrainer/Gate%;
-Gate@ = Gate.Gate@;
+Gate@ .= Gate;
 
 # TODO: Add more gates as needed.
 Lit@ = +(

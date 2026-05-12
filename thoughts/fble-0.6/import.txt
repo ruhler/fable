@@ -395,9 +395,8 @@ std [DONE]
 std-tests [DONE]
 app [DONE]
 benchmark [DONE]
+computrainer [DONE]
 
-cbtg
-computrainer
 fbld
 games
 graphics
@@ -407,6 +406,8 @@ md5
 network
 pinball
 pprof
-rosetta
 sat
 satgame
+
+cbtg
+rosetta

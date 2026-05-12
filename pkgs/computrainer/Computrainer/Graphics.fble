@@ -1,21 +1,13 @@
 
-Mul = /Std/Int%.Mul;
+Mul .= /Std/Int%;
+Drawing@, Drawings, Blank, Over, Translate .= /App/Drawing%;
 
-Drawing@ = /App/Drawing%.Drawing@;
-Drawings = /App/Drawing%.Drawings;
-Blank = /App/Drawing%.Blank;
-Over = /App/Drawing%.Over;
-Translate = /App/Drawing%.Translate;
-
-Coord@ = /Computrainer/Grid%.Coord@;
-Grid = /Computrainer/Grid%.Grid;
-
-Gate@ = /Computrainer/Gate%.Gate@;
-Model@ = /Computrainer/Model%.Model@;
-Car@ = /Computrainer/Car%.Car@;
-
-W = /Computrainer/Graphics/Sprites%.W;
+Car@ .= /Computrainer/Car%;
+Gate@ .= /Computrainer/Gate%;
+Coord@, Grid .= /Computrainer/Grid%;
 Sprites = /Computrainer/Graphics/Sprites%;
+W .= Sprites;
+Model@ .= /Computrainer/Model%;
 
 
 (Coord@, Car@) { Drawing@; }

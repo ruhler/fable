@@ -1,16 +1,12 @@
 
-Int = /Std/Int/Lit%.Int;
+Int .= /Std/Int/Lit%;
 
-Entries = /Computrainer/Grid%.Entries;
-Rows = /Computrainer/Grid%.Rows;
-
-Gates@ = /Computrainer/Model%.Gates@;
-Cars@ = /Computrainer/Car%.Cars@;
-Model@ = /Computrainer/Model%.Model@;
-Model = /Computrainer/Model%.Model;
 Car = /Computrainer/Car%;
+Cars@ .= Car;
+Gates .= /Computrainer/Gates/Lit%;
+Entries, Rows .= /Computrainer/Grid%;
+Gates@, Model@, Model .= /Computrainer/Model%;
 
-Gates = /Computrainer/Gates/Lit%.Gates;
 
 Gates@ Mvp1 = Rows(Int|1, Int|5)[
   Gates|'M v  |M  < |M  < |M  < |M  < |M  < |M  < |M  < |',

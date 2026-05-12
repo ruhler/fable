@@ -1,11 +1,8 @@
 
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+True, False .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
+Car@, Cars@ .= /Computrainer/Car%;
 
-Eq@ = /Std/Eq%.Eq@;
-
-Car@ = /Computrainer/Car%.Car@;
-Cars@ = /Computrainer/Car%.Cars@;
 
 Eq@<Car@> Car = (Car@ a, Car@ b) {
     a.?(

@@ -1,19 +1,16 @@
 
 Char@ .= /Std/Char%;
-Stream@, Return .= /Std/Stream%;
-Concat = /Std/Stream/List%.Concat;
 Format, FormatE, String .= /Std/Char/Ascii/Stream%;
+Concat .= /Std/Stream/List%;
+Stream@, Return .= /Std/Stream%;
 
-Car@ = /Computrainer/Car%.Car@;
-Cars@ = /Computrainer/Car%.Cars@;
-Dir@ = /Computrainer/Dir%.Dir@;
-Coord@ = /Computrainer/Grid%.Coord@;
-Grid@ = /Computrainer/Grid%.Grid@;
-Grid = /Computrainer/Grid%.Grid;
-Gate@ = /Computrainer/Gate%.Gate@;
-Gates@ = /Computrainer/Model%.Gates@;
-Model@ = /Computrainer/Model%.Model@;
-Phase@ = /Computrainer/State%.Phase@;
+Car@, Cars@ .= /Computrainer/Car%;
+Dir@ .= /Computrainer/Dir%;
+Coord@, Grid@, Grid .= /Computrainer/Grid%;
+Gate@ .= /Computrainer/Gate%;
+Gates@, Model@ .= /Computrainer/Model%;
+Phase@ .= /Computrainer/State%;
+
 
 (Car@) { Stream@<Char@>; }
 Car = (Car@ c) {

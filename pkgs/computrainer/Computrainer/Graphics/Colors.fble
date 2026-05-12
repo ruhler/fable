@@ -1,9 +1,7 @@
 
-Int = /Std/Int/Lit%.Int;
-
-Color@ = /App/Drawing%.Color@;
-
-Car@ = /Computrainer/Car%.Car@;
+Int .= /Std/Int/Lit%;
+Color@ .= /App/Drawing%;
+Car@ .= /Computrainer/Car%;
 
 Color@ Background = Color@(Int|13, Int|31, Int|45);
 Color@ Gate = Color@(Int|201, Int|203, Int|207);

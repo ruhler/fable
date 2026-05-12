@@ -1,19 +1,13 @@
 
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-And = /Std/Bool%.And;
+True, False, And .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
 
-Eq@ = /Std/Eq%.Eq@;
+Dir(.Eq) .= /Computrainer/Dir/Eq%;
+Car, Cars .= /Computrainer/Car/Eq%;
+Gate@ .= /Computrainer/Gate%;
+Gates@, Model@ .= /Computrainer/Model%;
+State@ .= /Computrainer/State%;
 
-Dir = /Computrainer/Dir/Eq%.Eq;
-
-Car = /Computrainer/Car/Eq%.Car;
-Cars = /Computrainer/Car/Eq%.Cars;
-
-Gate@ = /Computrainer/Gate%.Gate@;
-Gates@ = /Computrainer/Model%.Gates@;
-Model@ = /Computrainer/Model%.Model@;
-State@ = /Computrainer/State%.State@;
 
 Eq@<Gate@> Gate = (Gate@ a, Gate@ b) {
     a.?(stop: b.?(stop: True, : False),

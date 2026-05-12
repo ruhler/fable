@@ -1,18 +1,12 @@
 
-Maybe@ = /Std/Maybe%.Maybe@;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Coord@ = /Computrainer/Grid%.Coord@;
-Grid@ = /Computrainer/Grid%.Grid@;
-Grid = /Computrainer/Grid%.Grid;
-
-Dir@ = /Computrainer/Dir%.Dir@;
+Maybe@ .= /Std/Maybe%;
+Unit@, Unit .= /Std/Unit%;
 
 Cars = /Computrainer/Car%;
-Car@ = Cars.Car@;
-Cars@ = Cars.Cars@;
+Car@, Cars@ .= Cars;
+Dir@ .= /Computrainer/Dir%;
+Coord@, Grid@, Grid .= /Computrainer/Grid%;
+
 
 # Whether the next thing to go is the engines or the gates.
 Phase@ = +(Unit@ engines, Unit@ gates);

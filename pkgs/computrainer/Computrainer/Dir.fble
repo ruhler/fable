@@ -1,12 +1,8 @@
 
-Int@ = /Std/Int%.Int@;
-Incr = /Std/Int%.Incr;
-Decr = /Std/Int%.Decr;
+Int@, Incr, Decr .= /Std/Int%;
+Unit@, Unit .= /Std/Unit%;
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Coord@ = /Computrainer/Grid%.Coord@;
+Coord@ .= /Computrainer/Grid%;
 
 Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
 

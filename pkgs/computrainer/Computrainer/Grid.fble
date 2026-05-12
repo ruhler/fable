@@ -1,13 +1,9 @@
 
 Data@, Struct .= /Std/Data%;
+Int@, Incr, Decr .= /Std/Int%;
+Maybe@ .= /Std/Maybe%;
+List@ .= /Std/List%;
 
-Int@ = /Std/Int%.Int@;
-Incr = /Std/Int%.Incr;
-Decr = /Std/Int%.Decr;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-
-List@ = /Std/List%.List@;
 
 Coord@ = *(Int@ x, Int@ y);
 
