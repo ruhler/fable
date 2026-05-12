@@ -393,8 +393,8 @@ Style guide is:
 
 std [DONE]
 std-tests [DONE]
+app [DONE]
 
-app
 benchmark
 cbtg
 computrainer

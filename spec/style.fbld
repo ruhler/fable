@@ -73,9 +73,23 @@
    Foo { a; b; c; }
 
  @item
-  Module imports should come first in a file, grouped by import module, sorted
-  by import module path. Within a group, import types first followed by
-  values. Sort imports by name.
+  Module imports should come first in a file, grouped by package module,
+  sorted within each back by import module path. Within a single import,
+  import types first followed by values. For example:
+
+  @code[fble] @
+   Int@, Sub .= /Std/Int%;
+   Int .= /Std/Int/Lit%;
+   Io@ .= /Std/Io%;
+   Success .= /Std/Io/Cli%;
+   List@ .= /Std/List%;
+   Monad@ .= /Std/Monad%;
+   String@ .= /Std/String%;
+   Unit@, Unit .= /Std/Unit%;
+
+   App@, Event@, Effect@ .= /App/App%;
+   Drawing@, Color@, Color, Drawings, Rect .= /App/Drawing%;
+   Main@ .= /App/Native%;
 
  @item
   Use @l{_} as the name of unused variables.

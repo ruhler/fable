@@ -1,11 +1,8 @@
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Int@ = /Std/Int%.Int@;
-Int = /Std/Int/Lit%.Int;
-
-List@ = /Std/List%.List@;
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+List@ .= /Std/List%;
+Unit@, Unit .= /Std/Unit%;
 
 Int@ 1 = Int|1;
 

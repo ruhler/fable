@@ -1,11 +1,8 @@
 
-List = /Std/List%.List;
+OnAscii .= /Std/Char/Ascii%;
+Test@ .= /Std/Test%;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-TestSuite = /Std/Test%.TestSuite;
-
-Test@ Tests = TestSuite(Str|App, List<Test@>[]);
+Test@ Tests = TestSuite|App[];
 
 /Std/Test/Cli%.Run(Tests);

@@ -1,35 +1,19 @@
 
+Bool@, True, False .= /Std/Bool%;
+Format .= /Std/Char/Ascii/Stream%;
+Cmp@, Compared@ .= /Std/Cmp%;
 Data@, Struct .= /Std/Data%;
+Eq@ .= /Std/Eq%;
+Int@, Add, Mul .= /Std/Int%;
+Cmp, Lt .= /Std/Int/Cmp%;
+Eq .= /Std/Int/Eq%;
+Int .= /Std/Int/Lit%;
+List@ .= /Std/List%;
+Range .= /Std/Int/Stream%;
+Show@ .= /Std/Show%;
+TestResult@ .= /Std/Test%;
 
-Drawing@ = /App/Drawing%.Drawing@;
-Color@ = /App/Drawing%.Color@;
-Point@ = /App/Drawing%.Point@;
-
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
-Eq@ = /Std/Eq%.Eq@;
-
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Mul = /Std/Int%.Mul;
-Eq = /Std/Int/Eq%.Eq;
-Lt = /Std/Int/Cmp%.Lt;
-Int = /Std/Int/Lit%.Int;
-Range = /Std/Int/Stream%.Range;
-Ord = /Std/Int/Cmp%.Cmp;
-
-List@ = /Std/List%.List@;
-
-Cmp@ = /Std/Cmp%.Cmp@;
-Compared@ = /Std/Cmp%.Compared@;
-
-Show@ = /Std/Show%.Show@;
-
-Format = /Std/Char/Ascii/Stream%.Format;
-
-TestResult@ = /Std/Test%.TestResult@;
+Drawing@, Color@, Point@ .= /App/Drawing%;
 
 (Point@, Point@) { Bool@; } EqPoint = (Point@ a, Point@ b) {
   Eq(a.x, b.x).?(false: False);
@@ -44,8 +28,8 @@ TestResult@ = /Std/Test%.TestResult@;
 };
 
 Cmp@<Point@> OrdPoint = (Point@ a, Point@ b) {
-  Compared@ r = Ord(a.x, b.x);
-  r.?(equal: Ord(a.y, b.y), : r);
+  Compared@ r = Cmp(a.x, b.x);
+  r.?(equal: Cmp(a.y, b.y), : r);
 };
 
 Data@<Point@> DataPoint = (Point@ a) {

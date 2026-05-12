@@ -1,12 +1,12 @@
 
-Exit@ = /Std/Io/Cli%.Exit@;
-Int@ = /Std/Int%.Int@;
-List@ = /Std/List%.List@;
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-String@ = /Std/String%.String@;
+Int@ .= /Std/Int%;
+Io@ .= /Std/Io%;
+Exit@ .= /Std/Io/Cli%;
+List@ .= /Std/List%;
+Monad@ .= /Std/Monad%;
+String@ .= /Std/String%;
 
-App@ = /App/App%.App@;
+App@ .= /App/App%;
 
 Main@ = <<@>@ M@>(Monad@<M@>, Io@<M@>, App@<M@>, Int@, Int@, List@<String@>) { M@<Exit@>; };
 

@@ -1,9 +1,8 @@
 
-Drawing@ = /App/Drawing%.Drawing@;
+Int@ .= /Std/Int%;
+Unit@ .= /Std/Unit%;
 
-Int@ = /Std/Int%.Int@;
-
-Unit@ = /Std/Unit%.Unit@;
+Drawing@ .= /App/Drawing%;
 
 Key@ = +(
   Unit@ a, Unit@ d, Unit@ h, Unit@ j, Unit@ k, Unit@ l,

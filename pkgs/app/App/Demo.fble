@@ -1,31 +1,16 @@
 
-Int@ = /Std/Int%.Int@;
-Sub = /Std/Int%.Sub;
+Int@, Sub .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Io@ .= /Std/Io%;
+Success .= /Std/Io/Cli%;
+List@ .= /Std/List%;
+Monad@ .= /Std/Monad%;
+String@ .= /Std/String%;
+Unit@, Unit .= /Std/Unit%;
 
-Int = /Std/Int/Lit%.Int;
-
-List@ = /Std/List%.List@;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
-Success = /Std/Io/Cli%.Success;
-
-String@ = /Std/String%.String@;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-App@ = /App/App%.App@;
-Main@ = /App/Native%.Main@;
-Event@ = /App/App%.Event@;
-Effect@ = /App/App%.Effect@;
-
-Drawing@ = /App/Drawing%.Drawing@;
-Color@ = /App/Drawing%.Color@;
-Color = /App/Drawing%.Color;
-Drawings = /App/Drawing%.Drawings;
-Rect = /App/Drawing%.Rect;
+App@, Event@, Effect@ .= /App/App%;
+Drawing@, Color@, Color, Drawings, Rect .= /App/Drawing%;
+Main@ .= /App/Native%;
 
 
 State@ = *(
