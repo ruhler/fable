@@ -394,8 +394,8 @@ Style guide is:
 std [DONE]
 std-tests [DONE]
 app [DONE]
+benchmark [DONE]
 
-benchmark
 cbtg
 computrainer
 fbld

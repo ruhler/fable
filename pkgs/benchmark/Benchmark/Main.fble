@@ -1,12 +1,10 @@
 
-List = /Std/List%.List;
+OnAscii .= /Std/Char/Ascii%;
+Test@ .= /Std/Test%;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
-Test@ = /Std/Test%.Test@;
-TestSuite = /Std/Test%.TestSuite;
 
-Str = /Std/Char/Ascii%.Str;
-
-Test@ Benchmarks = TestSuite(Str|Benchmarks, List[
+Test@ Benchmarks = TestSuite|Benchmarks[
   /Fbld/Bench%.Bench,
   /Games/Sudoku/Tests%.Bench,
   /Games/Snake/Bench%.Bench,
@@ -18,6 +16,6 @@ Test@ Benchmarks = TestSuite(Str|Benchmarks, List[
   /Pinball/Bench%.Bench,
   /Md5/Bench%.Bench,
   /Sat/Bench%.Bench
-]);
+];
 
 /Std/Test/Cli%.Run(Benchmarks);
