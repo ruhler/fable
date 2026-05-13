@@ -397,6 +397,7 @@ app [DONE]
 benchmark [DONE]
 computrainer [DONE]
 fbld [DONE]
+cbtg [REMOVED]
 
 games
 graphics
@@ -409,5 +410,4 @@ pprof
 sat
 satgame
 
-cbtg
 rosetta
