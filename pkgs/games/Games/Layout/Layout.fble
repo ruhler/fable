@@ -1,60 +1,25 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
+Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
-
+FormatE .= /Std/Char/Ascii/Stream%;
+Int@, Incr, Decr, Add, Sub, Neg, Mul, Shr .= /Std/Int%;
+Max, Min .= /Std/Int/Cmp%;
+Io@ .= /Std/Io%;
+Success .= /Std/Io/Cli%;
+Int .= /Std/Int/Lit%;
+Abs .= /Std/Int/Sign%;
+QR@, Quot .= /Std/Int/Div%;
+List@, Items, Empty .= /Std/List%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
 Out@ .= /Std/Stream/Io%;
-FormatE = /Std/Char/Ascii/Stream%.FormatE;
+String@ .= /Std/String%;
+Unit@, Unit .= /Std/Unit%;
 
-Int@ = /Std/Int%.Int@;
-Incr = /Std/Int%.Incr;
-Decr = /Std/Int%.Decr;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Neg = /Std/Int%.Neg;
-Mul = /Std/Int%.Mul;
-Shr = /Std/Int%.Shr;
-Int = /Std/Int/Lit%.Int;
-Max = /Std/Int/Cmp%.Max;
-Min = /Std/Int/Cmp%.Min;
-Abs = /Std/Int/Sign%.Abs;
-QR@ = /Std/Int/Div%.QR@;
-Quot = /Std/Int/Div%.Quot;
-
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
-Success = /Std/Io/Cli%.Success;
-
-String@ = /Std/String%.String@;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-App@ = /App/App%.App@;
-Main@ = /App/Native%.Main@;
-Event@ = /App/App%.Event@;
-Effect@ = /App/App%.Effect@;
-
-Drawing@ = /App/Drawing%.Drawing@;
-Point@ = /App/Drawing%.Point@;
-Affine = /App/Drawing%.Affine;
-Blank = /App/Drawing%.Blank;
-Rect = /App/Drawing%.Rect;
-Triangle = /App/Drawing%.Triangle;
-Color = /App/Drawing%.Color;
-Over = /App/Drawing%.Over;
-Drawings = /App/Drawing%.Drawings;
+App@, Event@, Effect@ .= /App/App%;
+Drawing@, Point@, Affine, Blank, Rect, Triangle,
+Color, Over, Drawings .= /App/Drawing%;
+Main@ .= /App/Native%;
 
 # Nodes are identified by integer.
 Node@ = Int@;

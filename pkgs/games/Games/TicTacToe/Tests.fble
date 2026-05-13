@@ -1,37 +1,23 @@
 
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
+OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Lazy .= /Std/Lazy%;
+Test@, Pass .= /Std/Test%;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Test = OnAscii(/Std/Test%.Test);
+Unit@, Unit .= /Std/Unit%;
 
-List = /Std/List%.List;
-
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-TestSuite = /Std/Test%.TestSuite;
-Test = /Std/Test%.Test;
-Pass = /Std/Test%.Pass;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-AIR@ = /Games/TicTacToe/AI%.AIR@;
 AI = /Games/TicTacToe/AI%;
-
-Board@ = /Games/TicTacToe/Board%.Board@;
-Player@ = /Games/TicTacToe/Board%.Player@;
-Square@ = /Games/TicTacToe/Board%.Square@;
-Status@ = /Games/TicTacToe/Board%.Status@;
-Position@ = /Games/TicTacToe/Board%.Position@;
-BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
-EmptyBoard = /Games/TicTacToe/Board%.EmptyBoard;
-
+AIR@ .= AI;
+Board@, Player@, Square@, Status@, Position@,
+BoardStatus, EmptyBoard .= /Games/TicTacToe/Board%;
 Eq = /Games/TicTacToe/Board/Eq%;
 Show = /Games/TicTacToe/Board/Show%;
 
-# Import to test compilation.
-_ = /Games/TicTacToe/Stdio%;
+Test@ Tests = TestSuite|TicTacToe[
+  Test|TestBoardStatus({
+    Unit@ _ := Lazy;
 
-Test@ Tests = TestSuite(Str|TicTacToe, List[
-  Test(Str|TestBoardStatus, (Unit@ _) {
     Status@ want = Status@(O: Unit);
     Status@ got = BoardStatus(Board@(
         Square@(X: Unit), Square@(O: Unit), Square@(O: Unit),
@@ -40,7 +26,9 @@ Test@ Tests = TestSuite(Str|TicTacToe, List[
     AssertEquals(Eq.Status, Show.Status, want, got);
   }),
 
-  Test(Str|TestChooseBestMoveWin, (Unit@ _) {
+  Test|TestChooseBestMoveWin({
+    Unit@ _ := Lazy;
+
     AIR@ air = AI.Move(AI.Initial,
       Board@(Square@(X: Unit), Square@(X: Unit), Square@(E: Unit),
              Square@(O: Unit), Square@(O: Unit), Square@(E: Unit),
@@ -51,7 +39,9 @@ Test@ Tests = TestSuite(Str|TicTacToe, List[
     AssertEquals(Eq.Position, Show.Position, want, got);
   }),
 
-  Test(Str|TestChooseBestMoveNoLose, (Unit@ _) {
+  Test|TestChooseBestMoveNoLose({
+    Unit@ _ := Lazy;
+
     AIR@ air = AI.Move(AI.Initial,
       Board@(Square@(E: Unit), Square@(E: Unit), Square@(E: Unit),
              Square@(X: Unit), Square@(X: Unit), Square@(O: Unit),
@@ -61,10 +51,12 @@ Test@ Tests = TestSuite(Str|TicTacToe, List[
     Position@ got = air.position;
     AssertEquals(Eq.Position, Show.Position, want, got);
   })
-]);
+];
 
 # Benchmark for TicTacToe AI that takes about 1 minute to run.
-Test@ Bench = Test(Str|TicTacToe, (Unit@ _) {
+Test@ Bench = Test|TicTacToe({
+  Unit@ _ := Lazy;
+
   AIR@ _ = AI.Move(AI.Initial, EmptyBoard, Player@(X: Unit));
   Pass;
 });

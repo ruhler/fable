@@ -1,37 +1,21 @@
 
-Char@ = /Std/Char%.Char@;
-Char = /Std/Char/Ascii%.Char;
-Ascii = /Std/Char/Ascii%.Ascii;
-IsNewline .= /Std/String/Lines%;
-
+Char@ .= /Std/Char%;
+Ascii, Char, Str .= /Std/Char/Ascii%;
+FormatE .= /Std/Char/Ascii/Stream%;
+Int@, Sub .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+IsZero .= /Std/Int/Sign%;
+List@, Items, Append, Reverse, Map .= /Std/List%;
+Maybe@ .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
 Stream@, Put, Do .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
-FormatE = /Std/Char/Ascii/Stream%.FormatE;
+String .= /Std/Stream/String%;
+String@ .= /Std/String%;
+IsNewline .= /Std/String/Lines%;
+Unit@, Unit .= /Std/Unit%;
 
-String = /Std/Stream/String%.String;
-
-Int@ = /Std/Int%.Int@;
-Sub = /Std/Int%.Sub;
-Int = /Std/Int/Lit%.Int;
-IsZero = /Std/Int/Sign%.IsZero;
-
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Append = /Std/List%.Append;
-Reverse = /Std/List%.Reverse;
-Map = /Std/List%.Map;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-
-Monad@ = /Std/Monad%.Monad@;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Main@ = /Games/BenchmarkGame/Game%.Main@;
+Main@ .= /Games/BenchmarkGame/Game%;
 
 # Header includes the initial '>' character, for convenience.
 Seq@ = *(String@ header, String@ codes);

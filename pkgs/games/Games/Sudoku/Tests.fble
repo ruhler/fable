@@ -1,48 +1,21 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-And = /Std/Bool%.And;
-
+Bool@, True, False, And .= /Std/Bool%;
 Char@ .= /Std/Char%;
-
-Eq@ = /Std/Eq%.Eq@;
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-List = /Std/List%.List;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
+OnAscii .= /Std/Char/Ascii%;
+String, StringE .= /Std/Char/Ascii/Stream%;
+Eq@ .= /Std/Eq%;
+AssertEquals .= /Std/Eq/Assert%;
+Lazy .= /Std/Lazy%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
 Stream@, Return .= /Std/Stream%;
+Test@, TestResult@, Pass .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
-Str = /Std/Char/Ascii%.Str;
-String = /Std/Char/Ascii/Stream%.String;
-StringE = /Std/Char/Ascii/Stream%.StringE;
-
-Test@ = /Std/Test%.Test@;
-TestResult@ = /Std/Test%.TestResult@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-Pass = /Std/Test%.Pass;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Symbol@ = /Games/Sudoku%.Symbol@;
-Input@ = /Games/Sudoku%.Input@;
-Solved@ = /Games/Sudoku%.Solved@;
-1 = /Games/Sudoku%.1;
-2 = /Games/Sudoku%.2;
-3 = /Games/Sudoku%.3;
-4 = /Games/Sudoku%.4;
-5 = /Games/Sudoku%.5;
-6 = /Games/Sudoku%.6;
-7 = /Games/Sudoku%.7;
-8 = /Games/Sudoku%.8;
-9 = /Games/Sudoku%.9;
-Symbols = /Games/Sudoku%.Symbols;
-Solve = /Games/Sudoku%.Solve;
+Symbol@, Input@, Solved@,
+1, 2, 3, 4, 5, 6, 7, 8, 9,
+Symbols, Solve .= /Games/Sudoku%;
 
 (Symbol@, Symbol@) { Bool@; } EqSymbol = (Symbol@ a, Symbol@ b) {
   a.?(1: b.?(1: True, : False),
@@ -228,8 +201,9 @@ Input@ ExpertInput = {
     Array(_,9,_,  _,_,_,  _,8,_));
 };
 
-Test@ Tests = TestSuite(Str|Sudoku, List[
-  Test(Str|sample, (Unit@ _) {
+Test@ Tests = TestSuite|Sudoku[
+  Test|Sample({
+    Unit@ _ := Lazy;
     Maybe@<Solved@> want = Just(SampleSolved);
     Maybe@<Solved@> got = Solve(SampleInput);
     AssertEquals(
@@ -237,7 +211,7 @@ Test@ Tests = TestSuite(Str|Sudoku, List[
       /Std/Maybe/Show%.Show(ShowBoard(False)),
       want, got);
   })
-]);
+];
 
 (Input@, Unit@) { TestResult@; }
 BenchTest = (Input@ input, Unit@ _) {
@@ -245,12 +219,12 @@ BenchTest = (Input@ input, Unit@ _) {
   Pass;
 };
 
-Test@ Bench = TestSuite(Str|Sudoku, List[
-  Test(Str|Sample, BenchTest(SampleInput)),
-  Test(Str|Easy, BenchTest(EasyInput)),
-  Test(Str|Medium, BenchTest(MediumInput)),
-  Test(Str|Hard, BenchTest(HardInput)),
-  Test(Str|Expert, BenchTest(ExpertInput))]
-);
+Test@ Bench = TestSuite|Sudoku[
+  Test|Sample(BenchTest(SampleInput)),
+  Test|Easy(BenchTest(EasyInput)),
+  Test|Medium(BenchTest(MediumInput)),
+  Test|Hard(BenchTest(HardInput)),
+  Test|Expert(BenchTest(ExpertInput))
+];
 
 @(Tests, Bench);

@@ -1,14 +1,12 @@
 
-Str = /Std/Char/Ascii%.Str;
+OnAscii, Str .= /Std/Char/Ascii%;
+List .= /Std/List%;
+Test@ .= /Std/Test%;
 
-List = /Std/List%.List;
-
-Test@ = /Std/Test%.Test@;
-
-Test = /Games/BenchmarkGame/Game%.Test;
+Test = OnAscii(/Games/BenchmarkGame/Game%.Test);
 BinaryTrees = /Games/BenchmarkGame/BinaryTrees%;
 
-Test@ Tests = Test(Str|BinaryTrees, BinaryTrees.Main, Str|'', List[Str|10], Str|
+Test@ Tests = Test|BinaryTrees(BinaryTrees.Main, Str|'', List[Str|10], Str|
 'stretch tree of depth 11	 check: 4095
 1024	 trees of depth 4	 check: 31744
 256	 trees of depth 6	 check: 32512

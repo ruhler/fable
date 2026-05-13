@@ -1,19 +1,13 @@
 
-List = /Std/List%.List;
+OnAscii .= /Std/Char/Ascii%;
+Test@ .= /Std/Test%;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-TestSuite = /Std/Test%.TestSuite;
-
-# Import to test compilation.
-_ = /Games/BenchmarkGame/Bench%;
-
-Test@ Tests = TestSuite(Str|BenchmarkGame, List[
+Test@ Tests = TestSuite|BenchmarkGame[
   /Games/BenchmarkGame/BinaryTrees/Tests%.Tests,
   /Games/BenchmarkGame/FannkuchRedux/Tests%.Tests,
   /Games/BenchmarkGame/PiDigits/Tests%.Tests,
   /Games/BenchmarkGame/ReverseComplement/Tests%.Tests
-]);
+];
 
 @(Tests);

@@ -1,26 +1,19 @@
 
-Int@ = /Std/Int%.Int@;
-Decr = /Std/Int%.Decr;
-IsNegative = /Std/Int/Sign%.IsNegative;
-Int = /Std/Int/Lit%.Int;
+OnAscii .= /Std/Char/Ascii%;
+Int@, Decr .= /Std/Int%;
+Const .= /Std/Func%;
+Int .= /Std/Int/Lit%;
+IsNegative .= /Std/Int/Sign%;
+Lazy .= /Std/Lazy%;
+Test@, Pass .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+Unit@, Unit .= /Std/Unit%;
 
-Str = /Std/Char/Ascii%.Str;
+App@, Key@, Event@, Effect@ .= /App/App%;
 
-Const = /Std/Func%.Const;
+Test@ Bench = Test|GameOfLife({
+  Unit@ _ := Lazy;
 
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-Pass = /Std/Test%.Pass;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-App@ = /App/App%.App@;
-Key@ = /App/App%.Key@;
-Event@ = /App/App%.Event@;
-Effect@ = /App/App%.Effect@;
-
-Test@ Bench = Test(Str|'GameOfLife', (Unit@ _) {
   # The GameOfLife App is set to run for 200 iterations. Use a little less
   # than that for the benchmark to avoid deadlock.
   Int@ n = Int|180;

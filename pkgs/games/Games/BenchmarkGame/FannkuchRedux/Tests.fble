@@ -1,32 +1,21 @@
 
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
+AssertEquals .= /Std/Eq/Assert%;
+OnAscii, Str, StrE .= /Std/Char/Ascii%;
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+List@, List, Empty, Append .= /Std/List%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
-Int@ = /Std/Int%.Int@;
-Int = /Std/Int/Lit%.Int;
+Fannkuch@, FannkuchRedux, Flip, Flips,
+RotateRight, Permutes .= /Games/BenchmarkGame/FannkuchRedux%;
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Empty = /Std/List%.Empty;
-Append = /Std/List%.Append;
-
-Str = /Std/Char/Ascii%.Str;
-StrE = /Std/Char/Ascii%.StrE;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Fannkuch@ = /Games/BenchmarkGame/FannkuchRedux%.Fannkuch@;
-FannkuchRedux = /Games/BenchmarkGame/FannkuchRedux%.FannkuchRedux;
-Flip = /Games/BenchmarkGame/FannkuchRedux%.Flip;
-Flips = /Games/BenchmarkGame/FannkuchRedux%.Flips;
-RotateRight = /Games/BenchmarkGame/FannkuchRedux%.RotateRight;
-Permutes = /Games/BenchmarkGame/FannkuchRedux%.Permutes;
-
-Test@ Tests = TestSuite(Str|FannkuchRedux, List[
-  Test(Str|Flip, (Unit@ _) {
+Test@ Tests = TestSuite|FannkuchRedux[
+  Test|Flip({
+    Unit@ _ := Lazy;
     List@<Int@> input = List[Int|4, Int|2, Int|1, Int|5, Int|3];
     List@<Int@> wnt = List[Int|5, Int|1, Int|2, Int|4, Int|3];
     List@<Int@> got = Flip(Int|4, Empty<Int@>, input);
@@ -36,14 +25,16 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
       wnt, got);
   }),
 
-  Test(Str|Flips, (Unit@ _) {
+  Test|Flips({
+    Unit@ _ := Lazy;
     List@<Int@> input = List[Int|4, Int|2, Int|1, Int|5, Int|3];
     Int@ wnt = Int|5;
     Int@ got = Flips(Int|0, input);
     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
   }),
 
-  Test(Str|RotateRight, (Unit@ _) {
+  Test|RotateRight({
+    Unit@ _ := Lazy;
     List@<Int@> input = List[Int|1, Int|2, Int|3, Int|4, Int|5];
     List@<Int@> wnt = List[Int|5, Int|1, Int|2, Int|3, Int|4];
     List@<Int@> got = RotateRight(input);
@@ -53,7 +44,8 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
       wnt, got);
   }),
 
-  Test(Str|Permutes, (Unit@ _) {
+  Test|Permutes({
+    Unit@ _ := Lazy;
     List@<Int@> input = List[Int|3, Int|2, Int|1];
     List@<List@<Int@>> wnt = List[
       List[Int|1, Int|2, Int|3],
@@ -79,7 +71,8 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
       wnt, got);
   }),
 
-  Test(Str|FannkuchRedux, (Unit@ _) {
+  Test|FannkuchRedux({
+    Unit@ _ := Lazy;
     Fannkuch@ result = FannkuchRedux(Int|6);
     List@<Int@> got = List[result.checksum, result.max_flips];
     List@<Int@> wnt = List[Int|49, Int|10];
@@ -94,6 +87,6 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
     /Games/BenchmarkGame/FannkuchRedux/Main%.Main,
     Str|'', List[Str|6],
     StrE|'49\nPfannkuchen(6) = 10\n')
-]);
+];
 
 @(Tests);

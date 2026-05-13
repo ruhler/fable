@@ -398,8 +398,9 @@ benchmark [DONE]
 computrainer [DONE]
 fbld [DONE]
 cbtg [REMOVED]
+rosetta [DONE]
+games [DONE]
 
-games
 graphics
 hwdg
 invaders
@@ -410,4 +411,3 @@ pprof
 sat
 satgame
 
-rosetta

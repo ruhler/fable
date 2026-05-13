@@ -1,54 +1,20 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-And = /Std/Bool%.And;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Init = /Std/List%.Init;
-Items = /Std/List%.Items;
-ForEach = /Std/List%.ForEach;
-
-Int@ = /Std/Int%.Int@;
-Incr = /Std/Int%.Incr;
-Decr = /Std/Int%.Decr;
-Add = /Std/Int%.Add;
-Neg = /Std/Int%.Neg;
-Mul = /Std/Int%.Mul;
-Sub = /Std/Int%.Sub;
-
-Eq = /Std/Int/Eq%.Eq;
-Lt = /Std/Int/Cmp%.Lt;
-Gt = /Std/Int/Cmp%.Gt;
-Abs = /Std/Int/Sign%.Abs;
-
-Int = /Std/Int/Lit%.Int;
-
-Div = /Std/Int/Div%.Div;
-
-Range = /Std/Int/Random%.Range;
-
-Monad@ = /Std/Monad%.Monad@;
-
+Bool@, True, False, And .= /Std/Bool%;
+Int@, Incr, Decr, Add, Neg, Mul, Sub .= /Std/Int%;
+Eq .= /Std/Int/Eq%;
+Lt, Gt .= /Std/Int/Cmp%;
+Div .= /Std/Int/Div%;
+Int .= /Std/Int/Lit%;
+Range .= /Std/Int/Random%;
+Abs .= /Std/Int/Sign%;
+List@, List, Init, Items, ForEach .= /Std/List%;
+Monad@ .= /Std/Monad%;
 Exec, Run .= /Std/State/Pure%;
+Unit@, Unit .= /Std/Unit%;
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-App@ = /App/App%.App@;
-Event@ = /App/App%.Event@;
-Effect@ = /App/App%.Effect@;
-
-Color@ = /App/Drawing%.Color@;
-Drawing@ = /App/Drawing%.Drawing@;
-Point@ = /App/Drawing%.Point@;
-Blank = /App/Drawing%.Blank;
-Color = /App/Drawing%.Color;
-Drawings = /App/Drawing%.Drawings;
-Rect = /App/Drawing%.Rect;
-Over = /App/Drawing%.Over;
-Affine = /App/Drawing%.Affine;
+App@, Event@, Effect@ .= /App/App%;
+Color@, Drawing@, Point@, Blank, Color, Drawings,
+Rect, Over, Affine .= /App/Drawing%;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;

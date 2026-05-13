@@ -1,23 +1,11 @@
 
 Data@, Enum, Struct .= /Std/Data%;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-ForEach = /Std/List%.ForEach;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
+List@, List, ForEach .= /Std/List%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
 Unit .= /Std/Unit%;
 
-Board@ = /Games/TicTacToe/Board%.Board@;
-Player@ = /Games/TicTacToe/Board%.Player@;
-Position@ = /Games/TicTacToe/Board%.Position@;
-Result@ = /Games/TicTacToe/Board%.Result@;
-Square@ = /Games/TicTacToe/Board%.Square@;
-BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
-Move = /Games/TicTacToe/Board%.Move;
+Board@, Player@, Position@, Result@, Square@,
+BoardStatus, Move .= /Games/TicTacToe/Board%;
 
 Data@<Square@> SquareData = (Square@ x) {
   x.?(X: Enum|00, O: Enum|01, E: Enum|1);

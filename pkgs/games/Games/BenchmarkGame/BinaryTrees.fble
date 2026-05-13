@@ -1,32 +1,20 @@
 
 Char@ .= /Std/Char%;
-FormatE = /Std/Char/Ascii/Stream%.FormatE;
-
-Ascii@ = /Std/Char/Ascii%.Ascii@;
-
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Mul = /Std/Int%.Mul;
-Int = /Std/Int/Lit%.Int;
-Eq = /Std/Int/Eq%.Eq;
-Gt = /Std/Int/Cmp%.Gt;
-
-List@ = /Std/List%.List@;
-
+Ascii@ .= /Std/Char/Ascii%;
+Format, FormatE .= /Std/Char/Ascii/Stream%;
+Int@, Add, Sub, Mul .= /Std/Int%;
+Gt .= /Std/Int/Cmp%;
+Eq .= /Std/Int/Eq%;
+Int .= /Std/Int/Lit%;
+List@ .= /Std/List%;
 Default .= /Std/Maybe%;
-Monad@ = /Std/Monad%.Monad@;
-
+Monad@ .= /Std/Monad%;
 Stream@ .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
+String@ .= /Std/String%;
+Unit@, Unit .= /Std/Unit%;
 
-String@ = /Std/String%.String@;
-Format = /Std/Char/Ascii/Stream%.Format;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Main@ = /Games/BenchmarkGame/Game%.Main@;
+Main@ .= /Games/BenchmarkGame/Game%;
 
 Int@ MinDepth = Int|4;
 

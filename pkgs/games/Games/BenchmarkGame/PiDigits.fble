@@ -1,30 +1,18 @@
 
-Bool@ = /Std/Bool%.Bool@;
-
+Bool@ .= /Std/Bool%;
 Char@ .= /Std/Char%;
-
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Neg = /Std/Int%.Neg;
-Mul = /Std/Int%.Mul;
-Div = /Std/Int/Div%.Div;
-Eq = /Std/Int/Eq%.Eq;
-Int = /Std/Int/Lit%.Int;
-Incr = /Std/Int%.Incr;
-
-List@ = /Std/List%.List@;
-
-Monad@ = /Std/Monad%.Monad@;
-
+StringE .= /Std/Char/Ascii/Stream%;
+Int@, Incr, Add, Neg, Mul .= /Std/Int%;
+Div .= /Std/Int/Div%;
+Eq .= /Std/Int/Eq%;
+Int .= /Std/Int/Lit%;
+List@ .= /Std/List%;
+Monad@ .= /Std/Monad%;
 In@, Out@ .= /Std/Stream/Io%;
-
 String@ = /Std/String%.String@;
-StringE = /Std/Char/Ascii/Stream%.StringE;
+Unit@, Unit .= /Std/Unit%;
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Main@ = /Games/BenchmarkGame/Game%.Main@;
+Main@ .= /Games/BenchmarkGame/Game%;
 
 
 LFT@ = *(Int@ q, Int@ r, Int@ s, Int@ t);

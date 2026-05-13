@@ -1,10 +1,8 @@
 
-Show@ = /Std/Show%.Show@;
+String .= /Std/Char/Ascii/Stream%;
+Show@ .= /Std/Show%;
 
-String = /Std/Char/Ascii/Stream%.String;
-
-Position@ = /Games/TicTacToe/Board%.Position@;
-Status@ = /Games/TicTacToe/Board%.Status@;
+Position@, Status@ .= /Games/TicTacToe/Board%;
 
 Show@<Position@> Position = (Position@ a) {
   a.?(

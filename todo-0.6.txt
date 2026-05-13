@@ -16,10 +16,6 @@ Things to consider doing for the fble-0.6 release.
     Nothing, Just equivalents.
   - What to do about FbleStringValueAccess. Is it used anywhere? For debugging?
 
-* Add some tests/build target for cbtg
-  - Or get rid of it. Because it clearly isn't getting compiled.
-* Double check rosetta package is getting compiled.
-
 * Break dependency of /Std/Map% on /Std/List%?
   By moving the Entries function somewhere else?
   Same for /Std/Set%.

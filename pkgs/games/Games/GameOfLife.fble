@@ -1,32 +1,15 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-And = /Std/Bool%.And;
-
+Bool@, True, False, And .= /Std/Bool%;
+Format .= /Std/Char/Ascii/Stream%;
 Data@, Struct .= /Std/Data%;
-
-Eq@ = /Std/Eq%.Eq@;
-
-Int@ = /Std/Int%.Int@;
-Incr = /Std/Int%.Incr;
-Decr = /Std/Int%.Decr;
-
-IsZero = /Std/Int/Sign%.IsZero;
-Eq = /Std/Int/Eq%.Eq;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-ForEach = /Std/List%.ForEach;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-
-Show@ = /Std/Show%.Show@;
-
-Format = /Std/Char/Ascii/Stream%.Format;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Eq@ .= /Std/Eq%;
+Int@, Incr, Decr .= /Std/Int%;
+Eq .= /Std/Int/Eq%;
+IsZero .= /Std/Int/Sign%;
+List@, List, ForEach .= /Std/List%;
+Maybe@ .= /Std/Maybe%;
+Show@ .= /Std/Show%;
+Unit@, Unit .= /Std/Unit%;
 
 Coord@ = *(Int@ row, Int@ col);
 

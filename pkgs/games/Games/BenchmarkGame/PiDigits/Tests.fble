@@ -1,14 +1,11 @@
 
-List = /Std/List%.List;
+OnAscii, Str, StrE .= /Std/Char/Ascii%;
+List .= /Std/List%;
+Test@ .= /Std/Test%;
 
-Str = /Std/Char/Ascii%.Str;
-StrE = /Std/Char/Ascii%.StrE;
-
-Test@ = /Std/Test%.Test@;
-Test = /Games/BenchmarkGame/Game%.Test;
-
+Test = OnAscii(/Games/BenchmarkGame/Game%.Test);
 PiDigits = /Games/BenchmarkGame/PiDigits%;
 
-Test@ Tests = Test(Str|PiDigits, PiDigits.Main, Str|'', List[Str|10], StrE|'3141592653\t:10\n');
+Test@ Tests = Test|PiDigits(PiDigits.Main, Str|'', List[Str|10], StrE|'3141592653\t:10\n');
 
 @(Tests);

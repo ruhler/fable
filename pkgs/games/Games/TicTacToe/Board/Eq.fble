@@ -1,11 +1,8 @@
 
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+True, False .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
 
-Eq@ = /Std/Eq%.Eq@;
-
-Position@ = /Games/TicTacToe/Board%.Position@;
-Status@ = /Games/TicTacToe/Board%.Status@;
+Position@, Status@ .= /Games/TicTacToe/Board%;
 
 Eq@<Position@> Position = (Position@ a, Position@ b) {
   a.?(
