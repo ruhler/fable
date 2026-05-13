@@ -1,22 +1,12 @@
 
-Drawing@ = /App/Drawing%.Drawing@;
-Color@ = /App/Drawing%.Color@;
-Point@ = /App/Drawing%.Point@;
-Blank = /App/Drawing%.Blank;
-Over = /App/Drawing%.Over;
-Rect = /App/Drawing%.Rect;
+Int@, Add, Sub .= /Std/Int%;
+Le, Max, Min .= /Std/Int/Cmp%;
+Int .= /Std/Int/Lit%;
+IsNegative .= /Std/Int/Sign%;
+Range .= /Std/Int/Stream%;
+ForEach .= /Std/Stream%;
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Int = /Std/Int/Lit%.Int;
-Le = /Std/Int/Cmp%.Le;
-Max = /Std/Int/Cmp%.Max;
-Min = /Std/Int/Cmp%.Min;
-IsNegative = /Std/Int/Sign%.IsNegative;
-Range = /Std/Int/Stream%.Range;
-
-ForEach = /Std/Stream%.ForEach;
+Drawing@, Color@, Point@, Blank, Over, Rect .= /App/Drawing%;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;

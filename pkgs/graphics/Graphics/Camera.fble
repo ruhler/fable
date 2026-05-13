@@ -1,26 +1,13 @@
 
-Point@ = /App/Drawing%.Point@;
+Int@, Add, Sub, Mul, Neg .= /Std/Int%;
+Lt, Ge .= /Std/Int/Cmp%;
+Div .= /Std/Int/Div%;
+Int .= /Std/Int/Lit%;
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Mul = /Std/Int%.Mul;
-Neg = /Std/Int%.Neg;
-Lt = /Std/Int/Cmp%.Lt;
-Ge = /Std/Int/Cmp%.Ge;
-Div = /Std/Int/Div%.Div;
-Int = /Std/Int/Lit%.Int;
+Point@ .= /App/Drawing%;
 
-Mat@ = /Graphics/3D%.Mat@;
-Vec@ = /Graphics/3D%.Vec@;
-AddV = /Graphics/3D%.AddV;
-SubV = /Graphics/3D%.SubV;
-MulMV = /Graphics/3D%.MulMV;
-DivVS = /Graphics/3D%.DivVS;
-Transpose = /Graphics/3D%.Transpose;
-
-SinCos@ = /Graphics/Camera/SinCos%.SinCos@;
-SinCos = /Graphics/Camera/SinCos%.SinCos;
+Mat@, Vec@, AddV, SubV,MulMV, DivVS, Transpose .= /Graphics/3D%;
+SinCos@, SinCos .= /Graphics/Camera/SinCos%;
 
 # Rect@ --
 #   Describes a rectangle with the lower left corner at (x, y), of width w and

@@ -1,38 +1,16 @@
 
-Drawing@ = /App/Drawing%.Drawing@;
-Color@ = /App/Drawing%.Color@;
-Point@ = /App/Drawing%.Point@;
-Blank = /App/Drawing%.Blank;
-Rect = /App/Drawing%.Rect;
-Over = /App/Drawing%.Over;
+Bool@, True, False, And, Not .= /Std/Bool%;
+Int@,Add, Sub, Mul .= /Std/Int%;
+Le, Ge .= /Std/Int/Cmp%;
+Eq .= /Std/Int/Eq%;
+Int .= /Std/Int/Lit%;
+Unit@, Unit .= /Std/Unit%;
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-And = /Std/Bool%.And;
-Not = /Std/Bool%.Not;
+Drawing@, Color@, Point@, Blank, Rect, Over .= /App/Drawing%;
 
-Vec@ = /Graphics/3D%.Vec@;
-AddV = /Graphics/3D%.AddV;
-SubV = /Graphics/3D%.SubV;
-MulVS = /Graphics/3D%.MulVS;
-DivVS = /Graphics/3D%.DivVS;
+Vec@, AddV, SubV, MulVS, DivVS .= /Graphics/3D%;
+Camera@, Rect@, Perspective .= /Graphics/Camera%;
 
-Camera@ = /Graphics/Camera%.Camera@;
-Rect@ = /Graphics/Camera%.Rect@;
-Perspective = /Graphics/Camera%.Perspective;
-
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Mul = /Std/Int%.Mul;
-Eq = /Std/Int/Eq%.Eq;
-Le = /Std/Int/Cmp%.Le;
-Ge = /Std/Int/Cmp%.Ge;
-Int = /Std/Int/Lit%.Int;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
 
 # Draw@ --
 #   A function to draw a triangle in 3D.

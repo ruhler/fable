@@ -400,8 +400,8 @@ fbld [DONE]
 cbtg [REMOVED]
 rosetta [DONE]
 games [DONE]
+graphics [DONE]
 
-graphics
 hwdg
 invaders
 md5

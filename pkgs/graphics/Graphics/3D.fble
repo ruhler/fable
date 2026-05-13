@@ -1,9 +1,6 @@
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Mul = /Std/Int%.Mul;
-Div = /Std/Int/Div%.Div;
+Int@, Add, Sub, Mul .= /Std/Int%;
+Div .= /Std/Int/Div%;
 
 # Vec@ --
 #   A 3 element vector.

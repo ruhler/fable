@@ -1,30 +1,22 @@
 
-Int@ = /Std/Int%.Int@;
-Decr = /Std/Int%.Decr;
-IsNegative = /Std/Int/Sign%.IsNegative;
-Int = /Std/Int/Lit%.Int;
-
-Str = /Std/Char/Ascii%.Str;
-
-Const = /Std/Func%.Const;
-
+OnAscii .= /Std/Char/Ascii%;
+Const .= /Std/Func%;
+Int@, Decr .= /Std/Int%;
+IsNegative .= /Std/Int/Sign%;
+Int .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
 Pure, Eval .= /Std/State/Pure%;
+Test@, Pass .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+Unit@, Unit .= /Std/Unit%;
 
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-Pass = /Std/Test%.Pass;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-App@ = /App/App%.App@;
-Key@ = /App/App%.Key@;
-Event@ = /App/App%.Event@;
-Effect@ = /App/App%.Effect@;
+App@, Key@, Event@, Effect@ .= /App/App%;
 
 # The number of iterations is chosen so that the benchmark takes on the
 # order of 1 minute to run. The target goal is 60 frames a second.
-Test@ Bench = Test(Str|'Graphics', (Unit@ _) {
+Test@ Bench = Test|Graphics({
+  Unit@ _ := Lazy;
+
   Int@ n = Int|720;
   Int@ w = Int|640;
   Int@ h = Int|480;

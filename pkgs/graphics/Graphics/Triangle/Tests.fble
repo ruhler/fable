@@ -1,44 +1,33 @@
 
-Drawing@ = /App/Drawing%.Drawing@;
-Color@ = /App/Drawing%.Color@;
-Point@ = /App/Drawing%.Point@;
-Color = /App/Drawing%.Color;
-
-Drawn@ = /App/Drawing/Test%.Drawn@;
-Pixel@ = /App/Drawing/Test%.Pixel@;
-Drawn = /App/Drawing/Test%.Drawn;
-Draw = /App/Drawing/Test%.Draw;
-DataPoint = /App/Drawing/Test%.DataPoint;
-EqColor = /App/Drawing/Test%.EqColor;
-ShowColor = /App/Drawing/Test%.ShowColor;
-
-Vec@ = /Graphics/3D%.Vec@;
-
-Camera@ = /Graphics/Camera%.Camera@;
-Rect@ = /Graphics/Camera%.Rect@;
-Camera = /Graphics/Camera%.Camera;
-RotateY = /Graphics/Camera%.RotateY;
-Translate = /Graphics/Camera%.Translate;
-Vertex = /Graphics/Camera%.Vertex;
-
-Triangle = /Graphics/Triangle%.Triangle;
-
 Neg .= /Std/Int%;
 Int .= /Std/Int/Lit%;
-Lazy@ .= /Std/Lazy%;
-List@, List .= /Std/List%;
+Ascii@, OnAscii, Str .= /Std/Char/Ascii%;
+Lazy@, Lazy .= /Std/Lazy%;
+List@ .= /Std/List%;
 Maybe@, Just .= /Std/Maybe%;
-Ascii@, Str .= /Std/Char/Ascii%;
-Test@, TestResult@, Test, TestSuite .= /Std/Test%;
+Test@, TestResult@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 Unit@, Unit .= /Std/Unit%;
+
+Drawing@, Color@, Point@, Color .= /App/Drawing%;
+Drawn@, Pixel@, Drawn, Draw,
+DataPoint, EqColor, ShowColor .= /App/Drawing/Test%;
+
+Vec@ .= /Graphics/3D%;
+Camera@, Rect@, Camera, RotateY, Translate, Vertex .= /Graphics/Camera%;
+Triangle .= /Graphics/Triangle%;
+
 
 (List@<Ascii@>, Lazy@<TestResult@>) { TestResult@; }
 ExpectFails = (List@<Ascii@> msg, Lazy@<TestResult@> result) {
   /Std/Test%.ExpectFails(Str(msg), result(Unit));
 };
 
-Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
-  Test(Str|'Focus Triangle', (Unit@ _) {
+Test@ Tests = TestSuite|'Graphics.Triangle'[
+  Test|'Focus Triangle'({
+    Unit@ _ := Lazy;
+
     # A triangle drawn at the focus plane should appear normal size.
     Camera@ camera = Camera(Int|10, Rect@(Neg(Int|1), Neg(Int|1), Int|6, Int|6));
     Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|10));
@@ -64,7 +53,9 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'Far Triangle', (Unit@ _) {
+  Test|'Far Triangle'({
+    Unit@ _ := Lazy;
+
     # A triangle drawn at twice the distance from the focus plane should
     # appear half its actual size.
     Camera@ camera = Camera(Int|10, Rect@(Neg(Int|1), Neg(Int|1), Int|6, Int|6));
@@ -84,7 +75,9 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'Close Triangle', (Unit@ _) {
+  Test|'Close Triangle'({
+    Unit@ _ := Lazy;
+
     # A triangle drawn at half the distance to the focus plane should appear
     # twice its normal size.
     Camera@ camera = Camera(Int|10, Rect@(Neg(Int|1), Neg(Int|1), Int|6, Int|6));
@@ -111,7 +104,9 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'Translated Triangle', (Unit@ _) {
+  Test|'Translated Triangle'({
+    Unit@ _ := Lazy;
+
     # Test that translation moves the camera in the direction specified.
     Camera@ camera = Translate(Int|0, Int|0, Int|10,
       Camera(Int|10, Rect@(Neg(Int|1), Neg(Int|1), Int|6, Int|6)));
@@ -138,7 +133,9 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'Rotated Triangle', (Unit@ _) {
+  Test|'Rotated Triangle'({
+    Unit@ _ := Lazy;
+
     # Test that rotation rotates the camera in the direction specified.
     # Here we rotate the camera 90 degrees around the Y axis, so that the
     # camera is now looking in the -x direction.
@@ -167,7 +164,9 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'1 Vertex Clip Right', (Unit@ _) {
+  Test|'1 Vertex Clip Right'({
+    Unit@ _ := Lazy;
+
     # One of the vertices of the triangle is clipped, so that the result of
     # drawing a triangle looks like a trapezoid.
     Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|8));
@@ -191,7 +190,9 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'2 Vertex Clip Right', (Unit@ _) {
+  Test|'2 Vertex Clip Right'({
+    Unit@ _ := Lazy;
+
     # Two of the verticies of the triangle are clipped, so that the result of
     # drawing a triangle looks like a smaller triangle.
     Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|8));
@@ -211,7 +212,9 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'3 Vertex Clip Right', (Unit@ _) {
+  Test|'3 Vertex Clip Right'({
+    Unit@ _ := Lazy;
+
     # The entire triangle is outside the clipping region, so nothing should be
     # drawn.
     Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|8, Int|8));
@@ -227,7 +230,9 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'1 Vertex Clip Left', (Unit@ _) {
+  Test|'1 Vertex Clip Left'({
+    Unit@ _ := Lazy;
+
     # One of the verticies of the triangle is clipped on the left.
     Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|8));
     Vec@ a = Vertex(camera, Vec@(Neg(Int|2), Int|0, Int|10));
@@ -250,7 +255,9 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'Full Screen Clipped Triangle', (Unit@ _) {
+  Test|'Full Screen Clipped Triangle'({
+    Unit@ _ := Lazy;
+
     # The triangle takes up the entire available display, so you see a solid
     # color screen. Tests clipping on all sides.
     Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|2));
@@ -271,7 +278,9 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'Close Up Full Screen Clipped Triangle', (Unit@ _) {
+  Test|'Close Up Full Screen Clipped Triangle'({
+    Unit@ _ := Lazy;
+
     # Test that clipping rounds to outside the clip region in cases.
     # The full screen is taken up by the triangle, but the projection causes
     # rounding to be required.
@@ -295,7 +304,9 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'X/Y Clip Issue', (Unit@ _) {
+  Test|'X/Y Clip Issue'({
+    Unit@ _ := Lazy;
+
     # Regression test for a case where we clipped X, then clipped Y, but the
     # clipping of Y rounded the X clipped point inside of the X clipping
     # region, causing a hole to appear where there should not have been one.
@@ -320,7 +331,9 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
       /Std/Maybe/Show%.Show(ShowColor), wnt, got);
   }),
 
-  Test(Str|'Poked Eye Triangle', (Unit@ _) {
+  Test|'Poked Eye Triangle'({
+    Unit@ _ := Lazy;
+
     # A triangle at the origin, poking out the camera's eye.
     # In this case we expect the triangle to take up the entire display.
     Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|4, Int|4));
@@ -357,6 +370,6 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
   # * Add test for clipping where two vertices are outside the clip region
   #   but the line between them has parts inside the clip region?
   # * Add tests for clipping due to point behind the camera.
-]);
+];
 
 @(Tests);

@@ -1,26 +1,19 @@
 
 Char@ .= /Std/Char%;
-Str = /Std/Char/Ascii%.Str;
-
+Str .= /Std/Char/Ascii%;
+Success .= /Std/Io/Cli%;
+Int@ .= /Std/Int%;
+Io@ .= /Std/Io%;
+List@ .= /Std/List%;
+Any .= /Std/List/Search%;
+Monad@ .= /Std/Monad%;
 Out@ .= /Std/Stream/Io%;
 String .= /Std/Stream/String%;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
 
-Success = /Std/Io/Cli%.Success;
-
-Int@ = /Std/Int%.Int@;
-
-List@ = /Std/List%.List@;
-Any = /Std/List/Search%.Any;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
-String@ = /Std/String%.String@;
-
-Unit@ = /Std/Unit%.Unit@;
-
-App@ = /App/App%.App@;
-Main@ = /App/Native%.Main@;
+App@ .= /App/App%;
+Main@ .= /App/Native%;
 
 Main@
 Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args)

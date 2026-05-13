@@ -1,14 +1,11 @@
 
-List = /Std/List%.List;
+OnAscii .= /Std/Char/Ascii%;
+Test@ .= /Std/Test%;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-TestSuite = /Std/Test%.TestSuite;
-
-Test@ Tests = TestSuite(Str|Graphics, List[
+Test@ Tests = TestSuite|Graphics[
   /Graphics/2D/Tests%.Tests,
   /Graphics/Triangle/Tests%.Tests
-]);
+];
 
 /Std/Test/Cli%.Run(Tests);

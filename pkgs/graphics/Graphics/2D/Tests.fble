@@ -1,30 +1,22 @@
 
-Drawing@ = /App/Drawing%.Drawing@;
-Point@ = /App/Drawing%.Point@;
-Color = /App/Drawing%.Color;
-Drawings = /App/Drawing%.Drawings;
+OnAscii .= /Std/Char/Ascii%;
+Int .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
-Drawn@ = /App/Drawing/Test%.Drawn@;
-Pixel@ = /App/Drawing/Test%.Pixel@;
-Drawn = /App/Drawing/Test%.Drawn;
-Draw = /App/Drawing/Test%.Draw;
+Drawing@, Point@, Color, Drawings .= /App/Drawing%;
+Drawn@, Pixel@, Drawn, Draw .= /App/Drawing/Test%;
 
-Triangle = /Graphics/2D/Triangle%.Triangle;
+Triangle .= /Graphics/2D/Triangle%;
 
-Int = /Std/Int/Lit%.Int;
 
-List = /Std/List%.List;
+Test@ Tests = TestSuite|'Graphics.2D'[
+  Test|'Lower Left Right Triangle'({
+    Unit@ _ := Lazy;
 
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Test@ Tests = TestSuite(Str|'Graphics.2D', List[
-  Test(Str|'Lower Left Right Triangle', (Unit@ _) {
     Drawing@ drawing = Triangle(
       Point@(Int|0, Int|0),
       Point@(Int|0, Int|3),
@@ -44,7 +36,9 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'Upper Left Right Triangle', (Unit@ _) {
+  Test|'Upper Left Right Triangle'({
+    Unit@ _ := Lazy;
+
     Drawing@ drawing = Triangle(
       Point@(Int|0, Int|0),
       Point@(Int|0, Int|3),
@@ -61,7 +55,9 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List[
     /App/Drawing/Test%.AssertEquals(wnt, got);
   }),
 
-  Test(Str|'Adjacent Gap', (Unit@ _) {
+  Test|'Adjacent Gap'({
+    Unit@ _ := Lazy;
+
     # Regression test for an issue with rounding we had in the past where two
     # adjacent triangles could have a gap between them because we were using
     # inconsistent rounding.
@@ -85,6 +81,6 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List[
       
     /App/Drawing/Test%.AssertEquals(wnt, got);
   })
-]);
+];
 
 @(Tests);
