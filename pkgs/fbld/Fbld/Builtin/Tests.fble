@@ -1,35 +1,22 @@
 
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
+OnAscii, Str .= /Std/Char/Ascii%;
+String .= /Std/Char/Ascii/Stream%;
+AssertEquals .= /Std/Eq/Assert%;
+Int .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+List@, List .= /Std/List%;
+String@ .= /Std/String%;
+Lines .= /Std/String/Lines%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
-Int = /Std/Int/Lit%.Int;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-String = /Std/Char/Ascii/Stream%.String;
-Lines = /Std/String/Lines%.Lines;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Loc@ = /Fbld/Loc%.Loc@;
-Start = /Fbld/Loc%.Start;
-
-Markup@ = /Fbld/Markup%.Markup@;
-ToString = /Fbld/Markup%.ToString;
-
-Text = /Fbld/Text%.Text;
-
-Result@ = /Fbld/Result%.Result@;
-Ok = /Fbld/Result%.Ok;
-Error = /Fbld/Result%.Error;
-r = /Fbld/Result%.Monad;
-ShowErrors = /Fbld/Result/Show%.ShowErrors;
+Loc@, Start .= /Fbld/Loc%;
+Markup@, ToString .= /Fbld/Markup%;
+Result@, Ok, Error, r(.Monad) .= /Fbld/Result%;
+ShowErrors .= /Fbld/Result/Show%;
+Text .= /Fbld/Text%;
 
 (List@<String@>) { Result@<String@>; } Run = (List@<String@> lines) {
   String@ text = Lines(lines);
@@ -38,8 +25,10 @@ ShowErrors = /Fbld/Result/Show%.ShowErrors;
   ToString(evaled);
 };
 
-Test@ Tests = TestSuite(Str|Builtin, List[
-  Test(Str|Define, (Unit@ _) {
+Test@ Tests = TestSuite|Builtin[
+  Test|Define({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@define[foo][a b] a: @a, b: @b @@',
       Str|'@foo[hello][there]'
@@ -50,7 +39,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|DefineArgEval, (Unit@ _) {
+  Test|DefineArgEval({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@define[a][] AAAA @@',
       Str|'@define[c][] CCCC @@',
@@ -63,7 +54,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|DefineSameArgEval, (Unit@ _) {
+  Test|DefineSameArgEval({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@define[a][] AAAA @@',
       Str|'@define[a][a] @a @@',
@@ -75,7 +68,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|Let, (Unit@ _) {
+  Test|Let({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@let[x] a @@',
       Str|'@let[y] @x@x @@',
@@ -88,7 +83,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|IfEq, (Unit@ _) {
+  Test|IfEq({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@ifeq[foo][bar][hello][there]',
       Str|'@ifeq[foo][foo][whats][up]'
@@ -99,7 +96,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|IfNEq, (Unit@ _) {
+  Test|IfNEq({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@ifneq[foo][bar][hello][there]',
       Str|'@ifneq[foo][foo][whats][up]'
@@ -110,7 +109,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|DefineRecursive, (Unit@ _) {
+  Test|DefineRecursive({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@define[foo][x]',
       Str|' @ifeq[@x][a][done][@foo[a]]',
@@ -123,7 +124,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|Head, (Unit@ _) {
+  Test|Head({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@head[foo]'
     ];
@@ -133,7 +136,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|Tail, (Unit@ _) {
+  Test|Tail({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@tail[foo]'
     ];
@@ -143,7 +148,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|Eval, (Unit@ _) {
+  Test|Eval({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@define[foo][x]',
       Str|' @define[cmd][y] hi @y @@',
@@ -159,7 +166,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|Plain, (Unit@ _) {
+  Test|Plain({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@define[foo][x]',
       Str|' @define[keep][y] @y @@',
@@ -174,7 +183,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|PlainEvalArg, (Unit@ _) {
+  Test|PlainEvalArg({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@define[foo][x]',
       Str|' @define[keep][y] @y @@',
@@ -190,7 +201,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|Error, (Unit@ _) {
+  Test|Error({
+    Unit@ _ := Lazy;
+
     Result@<String@> got = Run[
       Str|'@error[Oh no!]'
     ];
@@ -203,7 +216,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Std/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|MultiError, (Unit@ _) {
+  Test|MultiError({
+    Unit@ _ := Lazy;
+
     String@ got = /Std/Stream/String%.ToString(ShowErrors(Run[
       Str|'@error[Oh no!]',
       Str|'@error[Not good.]'
@@ -214,6 +229,6 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       Str|'foo.fbld:2:2: error: Not good.'];
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   })
-]);
+];
 
 @(Tests);

@@ -1,9 +1,8 @@
 
-False = /Std/Bool%.False;
+False .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
 
-Eq@ = /Std/Eq%.Eq@;
-
-Text@ = /Fbld/Text%.Text@;
+Text@ .= /Fbld/Text%;
 
 Eq@<Text@> Eq = (Text@ a, Text@ b) {
   /Fbld/Loc/Eq%.Eq(a.loc, b.loc).?(false: False);

@@ -1,25 +1,13 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-Or = /Std/Bool%.Or;
-
+Bool@, True, False, Or .= /Std/Bool%;
 Char@ .= /Std/Char%;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Monad@ = /Std/Monad%.Monad@;
-
+FormatE .= /Std/Char/Ascii/Stream%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
 Stream@ .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
 
-FormatE = /Std/Char/Ascii/Stream%.FormatE;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Loc@ = /Fbld/Loc%.Loc@;
-Report = /Fbld/Loc%.Report;
+Loc@, Report .= /Fbld/Loc%;
 
 # A result of an operation that may fail.
 # Note:

@@ -1,10 +1,8 @@
 
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+True, False .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
 
-Eq@ = /Std/Eq%.Eq@;
-
-Loc@ = /Fbld/Loc%.Loc@;
+Loc@ .= /Fbld/Loc%;
 
 Eq@<Loc@> Eq = (Loc@ a, Loc@ b) {
   /Std/String/Eq%.Eq(a.file, b.file).?(false: False);

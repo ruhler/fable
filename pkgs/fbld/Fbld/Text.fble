@@ -1,7 +1,7 @@
 
-String@ = /Std/String%.String@;
+String@ .= /Std/String%;
 
-Loc@ = /Fbld/Loc%.Loc@;
+Loc@ .= /Fbld/Loc%;
 
 # Text@ is a string with location information.
 Text@ = *(Loc@ loc, String@ text);

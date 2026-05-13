@@ -1,25 +1,15 @@
 
-List@ = /Std/List%.List@;
+Str .= /Std/Char/Ascii%;
+Format .= /Std/Char/Ascii/Stream%;
+List@ .= /Std/List%;
+Maybe@, Nothing .= /Std/Maybe%;
+String@ .= /Std/String%;
+Unit@, Unit .= /Std/Unit%;
 
-Maybe@ = /Std/Maybe%.Maybe@;
-Nothing = /Std/Maybe%.Nothing;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-Format = /Std/Char/Ascii/Stream%.Format;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Loc@ = /Fbld/Loc%.Loc@;
-
-Env@ = /Fbld/Env%.Env@;
-
-Result@ = /Fbld/Result%.Result@;
-Error = /Fbld/Result%.Error;
-r = /Fbld/Result%.Monad;
-
-Text@ = /Fbld/Text%.Text@;
+Env@ .= /Fbld/Env%;
+Loc@ .= /Fbld/Loc%;
+Result@, Error, r(.Monad) .= /Fbld/Result%;
+Text@ .= /Fbld/Text%;
 
 # Fbld marked up text.
 Command@ = *(Text@ name, Maybe@<Impl@> impl, List@<Markup@> args),

@@ -1,22 +1,13 @@
 
-Int = /Std/Int/Lit%.Int;
+Int .= /Std/Int/Lit%;
+Get .= /Std/List/Index%;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
 
-Get = /Std/List/Index%.Get;
-
-String@ = /Std/String%.String@;
-
-Unit@ = /Std/Unit%.Unit@;
-
-
-Impl@ = /Fbld/Markup%.Impl@;
-Markup@ = /Fbld/Markup%.Markup@;
-Command@ = /Fbld/Markup%.Command@;
-
+AssertArgCount .= /Fbld/Eval%;
+Impl@, Markup@, Command@ .= /Fbld/Markup%;
 Env@ = /Fbld/Env%.Env@<Impl@>;
-
-AssertArgCount = /Fbld/Eval%.AssertArgCount;
-
-r = /Fbld/Result%.Monad;
+r(.Monad) .= /Fbld/Result%;
 
 Impl@ Error = (Env@ env, Command@ cmd) {
   Unit@ _ := r.do(AssertArgCount(Int|1, cmd));

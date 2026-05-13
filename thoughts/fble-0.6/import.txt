@@ -396,8 +396,8 @@ std-tests [DONE]
 app [DONE]
 benchmark [DONE]
 computrainer [DONE]
+fbld [DONE]
 
-fbld
 games
 graphics
 hwdg

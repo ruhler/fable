@@ -1,43 +1,19 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+Bool@, True, False .= /Std/Bool%;
+Char@ .= /Std/Char%;
+Char, Str .= /Std/Char/Ascii%;
+String .= /Std/Char/Ascii/Stream%;
+Int@, Incr .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+List@, List, Items, Empty, Last, Concat .= /Std/List%;
+String@ .= /Std/String%;
+IsNewline .= /Std/String/Lines%;
+Unit@, Unit .= /Std/Unit%;
 
-Char@ = /Std/Char%.Char@;
-Char = /Std/Char/Ascii%.Char;
-IsNewline = /Std/String/Lines%.IsNewline;
-
-Int@ = /Std/Int%.Int@;
-Incr = /Std/Int%.Incr;
-Int = /Std/Int/Lit%.Int;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-Last = /Std/List%.Last;
-Concat = /Std/List%.Concat;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-String = /Std/Char/Ascii/Stream%.String;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Loc@ = /Fbld/Loc%.Loc@;
-Advance = /Fbld/Loc%.Advance;
-Unknown = /Fbld/Loc%.Unknown;
-
-Result@ = /Fbld/Result%.Result@;
-Ok = /Fbld/Result%.Ok;
-Fail = /Fbld/Result%.Fail;
-
-Text@ = /Fbld/Text%.Text@;
+Loc@, Advance, Unknown .= /Fbld/Loc%;
+Result@, Ok, Fail .= /Fbld/Result%;
+Text@ .= /Fbld/Text%;
 
 CharL@ = *(Char@ c, Loc@ l);
 

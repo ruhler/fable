@@ -1,44 +1,22 @@
 
 Char@ .= /Std/Char%;
-
+Str .= /Std/Char/Ascii%;
+Format .= /Std/Char/Ascii/Stream%;
+Exit@, Success, Failure .= /Std/Io/Cli%;
+List@, Items, Empty .= /Std/List%;
+Maybe@, Just .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
+String@ = /Std/String%.String@;
 Stream@ .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
 String, GetText .= /Std/Stream/String%;
+Unit@ .= /Std/Unit%;
 
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-
-Monad@ = /Std/Monad%.Monad@;
-
-Exit@ = /Std/Io/Cli%.Exit@;
-Success = /Std/Io/Cli%.Success;
-Failure = /Std/Io/Cli%.Failure;
-
-Format = /Std/Char/Ascii/Stream%.Format;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Unit@ = /Std/Unit%.Unit@;
-
-
-Start = /Fbld/Loc%.Start;
-Unknown = /Fbld/Loc%.Unknown;
-
-Markup@ = /Fbld/Markup%.Markup@;
-
-Result@ = /Fbld/Result%.Result@;
-Ok = /Fbld/Result%.Ok;
-Error = /Fbld/Result%.Error;
-r = /Fbld/Result%.Monad;
-ShowErrors = /Fbld/Result/Show%.ShowErrors;
-
-Text@ = /Fbld/Text%.Text@;
-Text = /Fbld/Text%.Text;
+Start, Unknown .= /Fbld/Loc%;
+Markup@ .= /Fbld/Markup%;
+Result@, Ok, Error, r(.Monad) .= /Fbld/Result%;
+ShowErrors .= /Fbld/Result/Show%;
+Text@, Text .= /Fbld/Text%;
 
 
 IO@ = <<@>@ M@> { *(

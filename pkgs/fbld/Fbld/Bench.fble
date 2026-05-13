@@ -1,33 +1,26 @@
 
 Char@ .= /Std/Char%;
-
-Str = /Std/Char/Ascii%.Str;
-
+OnAscii, Str .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Exit@, Success .= /Std/Io/Cli%;
+Lazy .= /Std/Lazy%;
+List@, List .= /Std/List%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+State@, Modify, Gets .= /Std/State%;
 Stream@, Return .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
 NullOut = /Std/Stream/Null%.NullOut<Char@>;
-
-Exit@ = /Std/Io/Cli%.Exit@;
-Success = /Std/Io/Cli%.Success;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-
-Maybe@, Just, Nothing .= /Std/Maybe%;
-State@, Modify, Gets .= /Std/State%;
 ToString .= /Std/Stream/String%;
-String@ = /Std/String%.String@;
+String@ .= /Std/String%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+Unit@ .= /Std/Unit%;
 
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
+IO@ .= /Fbld/Main%;
 
-Unit@ = /Std/Unit%.Unit@;
+Test@ Bench = Test|Fbld({
+  Unit@ _ := Lazy;
 
-IO@ = /Fbld/Main%.IO@;
-
-Test@ Bench = Test(Str|Fbld, (Unit@ _) {
   S@ = *(String@ in, Stream@<Char@> err);
   M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<S@>;
 

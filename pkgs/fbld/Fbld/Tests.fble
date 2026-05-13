@@ -1,14 +1,11 @@
 
-List = /Std/List%.List;
-
-Str = /Std/Char/Ascii%.Str;
-
+OnAscii .= /Std/Char/Ascii%;
 Test@ = /Std/Test%.Test@;
-TestSuite = /Std/Test%.TestSuite;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
-Test@ Tests = TestSuite(Str|Fbld, List[
+Test@ Tests = TestSuite|Fbld[
   /Fbld/Parse/Tests%.Tests,
   /Fbld/Builtin/Tests%.Tests
-]);
+];
 
 /Std/Test/Cli%.Run(Tests);

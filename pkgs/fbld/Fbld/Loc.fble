@@ -1,17 +1,14 @@
 
-Char@ = /Std/Char%.Char@;
-IsNewline = /Std/String/Lines%.IsNewline;
-
-Int@ = /Std/Int%.Int@;
-Incr = /Std/Int%.Incr;
-Int = /Std/Int/Lit%.Int;
-Int@ 1 = Int|1;
-
+Char@ .= /Std/Char%;
+Str .= /Std/Char/Ascii%;
+Format .= /Std/Char/Ascii/Stream%;
+Int@, Incr .= /Std/Int%;
+Int .= /Std/Int/Lit%;
 Stream@ .= /Std/Stream%;
+String@ .= /Std/String%;
+IsNewline .= /Std/String/Lines%;
 
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-Format = /Std/Char/Ascii/Stream%.Format;
+Int@ 1 = Int|1;
 
 # Location information used for error messages.
 Loc@ = *(String@ file, Int@ line, Int@ col);

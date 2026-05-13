@@ -1,41 +1,22 @@
 
-Ascii@ = /Std/Char/Ascii%.Ascii@;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-IntLit@ = /Std/Int/Lit%.IntLit@;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Concat = /Std/List%.Concat;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-StrE = /Std/Char/Ascii%.StrE;
-String = /Std/Char/Ascii/Stream%.String;
+Ascii@, OnAscii, Str, StrE .= /Std/Char/Ascii%;
+String .= /Std/Char/Ascii/Stream%;
+AssertEquals .= /Std/Eq/Assert%;
+IntLit@ .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+List@, Concat .= /Std/List%;
+String@ .= /Std/String%;
 Lines = /Std/String/Lines%.Lines;
+Test@, TestResult@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
-Test@ = /Std/Test%.Test@;
-TestResult@ = /Std/Test%.TestResult@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Loc@ = /Fbld/Loc%.Loc@;
-
-Markup@ = /Fbld/Markup%.Markup@;
-Command = /Fbld/Markup%.Command;
-Plain = /Fbld/Markup%.Plain;
-M = /Fbld/Markup%.Markups;
-
-Result@ = /Fbld/Result%.Result@;
-Ok = /Fbld/Result%.Ok;
-Error = /Fbld/Result%.Error;
-
-Parse = /Fbld/Parse%.Parse;
-
-Text@ = /Fbld/Text%.Text@;
+Loc@ .= /Fbld/Loc%;
+Markup@, Command, Plain, M(.Markups) .= /Fbld/Markup%;
+Parse .= /Fbld/Parse%;
+Result@, Ok, Error .= /Fbld/Result%;
+Text@ .= /Fbld/Text%;
 
 (IntLit@, IntLit@) { Loc@; }
 L = (IntLit@ line, IntLit@ col) {
@@ -75,8 +56,10 @@ AssertResultEquals = (Result@<Markup@> expected, Result@<Markup@> actual) {
     expected, actual);
 };
 
-Test@ Tests = TestSuite(Str|Parse, List[
-  Test(Str|Unescape, (Unit@ _) {
+Test@ Tests = TestSuite|Parse[
+  Test|Unescape({
+    Unit@ _ := Lazy;
+
     String@ text = Str|'a \\ a\[\]b\ncd\@';
     String@ want = StrE|'a \\ a[]b\ncd@';
 
@@ -85,7 +68,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|BasicInline, (Unit@ _) {
+  Test|BasicInline({
+    Unit@ _ := Lazy;
+
     String@ text = Str|'Inline @emph[text] with @SINGLE and @multi[abc][def] arg commands';
 
     Result@<Markup@> got = Parse[T|1|1(text)];
@@ -100,7 +85,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|InlineUnescapedBrackets, (Unit@ _) {
+  Test|InlineUnescapedBrackets({
+    Unit@ _ := Lazy;
+
     String@ text = Str|'Inline with [unescaped] brackets';
 
     Result@<Markup@> got = Parse[T|1|1(text)];
@@ -109,7 +96,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|NestedInline, (Unit@ _) {
+  Test|NestedInline({
+    Unit@ _ := Lazy;
+
     String@ text = Str|'Ab @c[de @f[gh] ij] kl';
 
     Result@<Markup@> got = Parse[T|1|1(text)];
@@ -123,7 +112,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|BasicBlock, (Unit@ _) {
+  Test|BasicBlock({
+    Unit@ _ := Lazy;
+
     String@ text = Lines[
       Str|'',
       Str|'@title A title',
@@ -150,7 +141,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|NestedBlockLoc, (Unit@ _) {
+  Test|NestedBlockLoc({
+    Unit@ _ := Lazy;
+
     String@ text = Lines[
       Str|'@foo',
       Str|' @bar',
@@ -165,7 +158,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|IndentedSequentialPlainBlocks, (Unit@ _) {
+  Test|IndentedSequentialPlainBlocks({
+    Unit@ _ := Lazy;
+
     String@ text = Lines[
       Str|'@doc',
       Str|' @section',
@@ -184,7 +179,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|Continuation, (Unit@ _) {
+  Test|Continuation({
+    Unit@ _ := Lazy;
+
     String@ text = Lines[
       Str|'@list[first][second]',
       Str|' third',
@@ -210,7 +207,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|Final, (Unit@ _) {
+  Test|Final({
+    Unit@ _ := Lazy;
+
     String@ text = Lines[
       Str|'@foo',
       Str|' here is some stuff.',
@@ -229,7 +228,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|SameLineFinal, (Unit@ _) {
+  Test|SameLineFinal({
+    Unit@ _ := Lazy;
+
     String@ text = Lines[
       Str|'@foo here is some stuff. @@',
       Str|'@bar here is the end.',
@@ -246,7 +247,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|NextLineLiteral, (Unit@ _) {
+  Test|NextLineLiteral({
+    Unit@ _ := Lazy;
+
     String@ text = Lines[
       Str|'@foo @',
       Str|' foo@bar \ blah @@ @\@\\@.',
@@ -261,7 +264,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|InlineLiteral, (Unit@ _) {
+  Test|InlineLiteral({
+    Unit@ _ := Lazy;
+
     String@ text = Lines[
       Str|'@foo{foo@bar \ blah @@{ @\@}\\@.}',
       Str|'@ done'
@@ -275,7 +280,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|ExplicitImplicitBlock, (Unit@ _) {
+  Test|ExplicitImplicitBlock({
+    Unit@ _ := Lazy;
+
     # The extra @ character indicates this should be parsed as implicit block
     # text without the @ character.
     String@ text = Str|'@@hello there!';
@@ -288,7 +295,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|EmptyContinuation, (Unit@ _) {
+  Test|EmptyContinuation({
+    Unit@ _ := Lazy;
+
     String@ text = Lines[
       Str|'@foo',
       Str|'@',
@@ -301,7 +310,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|BlankInlineInImplicitBlock, (Unit@ _) {
+  Test|BlankInlineInImplicitBlock({
+    Unit@ _ := Lazy;
+
     String@ text = Lines[
       Str|'Here is @a[command with...',
       Str|'',
@@ -318,7 +329,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|EndOfInputError, (Unit@ _) {
+  Test|EndOfInputError({
+    Unit@ _ := Lazy;
+
     # Regression test for when end of input would be reported at file ???
     # instead of the end of the last file.
     String@ text = Str|'@a[hello';
@@ -330,6 +343,6 @@ Test@ Tests = TestSuite(Str|Parse, List[
     );
     AssertResultEquals(wnt, got);
   })
-]);
+];
 
 @(Tests);

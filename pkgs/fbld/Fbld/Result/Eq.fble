@@ -1,11 +1,9 @@
 
-False = /Std/Bool%.False;
+False .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
+ToString .= /Std/Stream/String%;
 
-Eq@ = /Std/Eq%.Eq@;
-
-ToString = /Std/Stream/String%.ToString;
-
-Result@ = /Fbld/Result%.Result@;
+Result@ .= /Fbld/Result%;
 
 <@ T@>(Eq@<T@>) { Eq@<Result@<T@>>; }
 Eq = <@ T@>(Eq@<T@> eq, Result@<T@> a, Result@<T@> b) {

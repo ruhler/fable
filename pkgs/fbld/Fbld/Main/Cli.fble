@@ -1,10 +1,10 @@
 
 Char@ .= /Std/Char%;
+Io@ .= /Std/Io%;
+Main@ .= /Std/Io/Cli%;
 List@ .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Io@ .= /Std/Io%;
-Main@ .= /Std/Io/Cli%;
 String@ .= /Std/String%;
 In@, Out@ .= /Std/Stream/Io%;
 

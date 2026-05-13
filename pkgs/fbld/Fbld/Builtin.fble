@@ -1,11 +1,9 @@
 
-List@ = /Std/List%.List@;
+Str .= /Std/Char/Ascii%;
+List@ .= /Std/List%;
+String@ .= /Std/String%;
 
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Impl@ = /Fbld/Markup%.Impl@;
-
+Impl@ .= /Fbld/Markup%;
 Env@ = /Fbld/Env%.Env@<Impl@>;
 Empty = /Fbld/Env%.Empty<Impl@>;
 Insert = /Fbld/Env%.Insert<Impl@>;

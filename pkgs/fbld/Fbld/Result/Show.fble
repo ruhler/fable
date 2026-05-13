@@ -1,9 +1,8 @@
 
-Show@ = /Std/Show%.Show@;
+Format .= /Std/Char/Ascii/Stream%;
+Show@ .= /Std/Show%;
 
-Format = /Std/Char/Ascii/Stream%.Format;
-
-Result@ = /Fbld/Result%.Result@;
+Result@ .= /Fbld/Result%;
 
 <@ T@> { Show@<Result@<T@>>; }
 ShowErrors = <@ T@>(Result@<T@> r) {
