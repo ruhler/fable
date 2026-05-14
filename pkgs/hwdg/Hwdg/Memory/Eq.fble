@@ -1,7 +1,7 @@
 
-Eq@ = /Std/Eq%.Eq@;
+Eq@ .= /Std/Eq%;
 
-Memory@ = /Hwdg/Memory%.Memory@;
+Memory@ .= /Hwdg/Memory%;
 
 Eq@<Memory@> Eq = /Std/Map/Eq%.Eq(/Hwdg/Addr/Eq%.Eq, /Hwdg/Data/Eq%.Eq);
 

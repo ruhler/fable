@@ -401,8 +401,8 @@ cbtg [REMOVED]
 rosetta [DONE]
 games [DONE]
 graphics [DONE]
+hwdg [DONE]
 
-hwdg
 invaders
 md5
 network

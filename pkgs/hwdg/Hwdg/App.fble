@@ -1,48 +1,22 @@
 
-Int@ = /Std/Int%.Int@;
-Decr = /Std/Int%.Decr;
-Neg = /Std/Int%.Neg;
-Sub = /Std/Int%.Sub;
-Mul = /Std/Int%.Mul;
+Int@, Decr, Neg, Sub, Mul .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+IsZero .= /Std/Int/Sign%;
+Io@ .= /Std/Io%;
+Success .= /Std/Io/Cli%;
+List@ .= /Std/List%;
+Monad@ .= /Std/Monad%;
+String@ .= /Std/String%;
+Unit@, Unit .= /Std/Unit%;
 
-IsZero = /Std/Int/Sign%.IsZero;
+App@, Event@, Effect@ .= /App/App%;
+Drawing@, Color@, Point@, Color, Rect, Over, Affine .= /App/Drawing%;
+Main@ .= /App/Native%;
 
-Int = /Std/Int/Lit%.Int;
-
-List@ = /Std/List%.List@;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
-Success = /Std/Io/Cli%.Success;
-
-String@ = /Std/String%.String@;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-
-App@ = /App/App%.App@;
-Main@ = /App/Native%.Main@;
-Event@ = /App/App%.Event@;
-Effect@ = /App/App%.Effect@;
-
-Drawing@ = /App/Drawing%.Drawing@;
-Color@ = /App/Drawing%.Color@;
-Point@ = /App/Drawing%.Point@;
-Color = /App/Drawing%.Color;
-Rect = /App/Drawing%.Rect;
-Over = /App/Drawing%.Over;
-Affine = /App/Drawing%.Affine;
-
-Addr@ = /Hwdg/Addr%.Addr@;
-
-Data@ = /Hwdg/Data%.Data@;
-
-Design@ = /Hwdg/Design%.Design@;
-Apply = /Hwdg/Design%.Apply;
-
-Memory@ = /Hwdg/Memory%.Memory@;
+Addr@ .= /Hwdg/Addr%;
+Data@ .= /Hwdg/Data%;
+Design@, Apply .= /Hwdg/Design%;
+Memory@ .= /Hwdg/Memory%;
 
 # Width and height of an individual cell.
 Int@ W = Int|8;

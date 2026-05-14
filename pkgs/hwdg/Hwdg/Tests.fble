@@ -1,14 +1,8 @@
 
-Empty = /Std/List%.Empty;
+OnAscii .= /Std/Char/Ascii%;
+Test@ .= /Std/Test%;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-TestSuite = /Std/Test%.TestSuite;
-
-# Import to test compilation.
-_ = /Hwdg/App%;
-
-Test@ Tests = TestSuite(Str|Hwdg, Empty<Test@>);
+Test@ Tests = TestSuite|Hwdg[];
 
 /Std/Test/Cli%.Run(Tests);

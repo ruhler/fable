@@ -1,14 +1,10 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+Bool@, True, False .= /Std/Bool%;
+List@ .= /Std/List%;
+Maybe@ .= /Std/Maybe%;
 
-List@ = /Std/List%.List@;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-
-Addr@ = /Hwdg/Addr%.Addr@;
-Data@ = /Hwdg/Data%.Data@;
+Addr@ .= /Hwdg/Addr%;
+Data@ .= /Hwdg/Data%;
 
 Map@, ForEach, Put, Get, Empty .= /Std/Map%.Of(/Hwdg/Addr%.Data)<Data@>;
 

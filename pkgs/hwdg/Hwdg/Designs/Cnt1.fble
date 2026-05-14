@@ -1,26 +1,18 @@
 
-Addr@ = /Hwdg/Addr%.Addr@;
-
-Data = /Hwdg/Data%;
-
-Design@ = /Hwdg/Design%.Design@;
-Designs = /Hwdg/Design%.Designs;
-
-Build@ = /Hwdg/Build%.Build@;
-Return = /Hwdg/Build%.Return;
-Do = /Hwdg/Build%.Do;
-Addr = /Hwdg/Build%.Addr;
-
-Not = /Hwdg/Designs/Not%.Not;
-Wire = /Hwdg/Designs/Wire%.Wire;
+Addr@ .= /Hwdg/Addr%;
+Build@, Return, Do, Addr .= /Hwdg/Build%;
+0, 1 .= /Hwdg/Data%;
+Design@, Designs .= /Hwdg/Design%;
+Not .= /Hwdg/Designs/Not%;
+Wire .= /Hwdg/Designs/Wire%;
 
 # A 1 bit counter.
 # A NOT gate without output connected to input via a wire.
 Build@<Design@> Cnt1 = {
-    Addr@ in := Do(Addr(Data.1));
-    Addr@ in_ready := Do(Addr(Data.1));
-    Addr@ out := Do(Addr(Data.0));
-    Addr@ out_ready := Do(Addr(Data.0));
+    Addr@ in := Do(Addr(1));
+    Addr@ in_ready := Do(Addr(1));
+    Addr@ out := Do(Addr(0));
+    Addr@ out_ready := Do(Addr(0));
 
     Design@ not := Do(Not(in, in_ready, out, out_ready));
     Design@ wire := Do(Wire(out, out_ready, in, in_ready));

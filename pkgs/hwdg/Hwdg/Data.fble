@@ -1,6 +1,5 @@
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Unit@, Unit .= /Std/Unit%;
 
 Data@ = +(Unit@ 0, Unit@ 1);
 Data@ 0 = Data@(0: Unit);

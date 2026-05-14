@@ -1,9 +1,8 @@
 
-Format = /Std/Char/Ascii/Stream%.Format;
+Format .= /Std/Char/Ascii/Stream%;
+Show@ .= /Std/Show%;
 
-Show@ = /Std/Show%.Show@;
-
-Addr@ = /Hwdg/Addr%.Addr@;
+Addr@ .= /Hwdg/Addr%;
 
 Show@<Addr@> Show = (Addr@ x) {
   Format|'(%s, %s)'[/Std/Int/Show%.Show(x.x), /Std/Int/Show%.Show(x.y)];

@@ -1,19 +1,10 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+Bool@, True, False .= /Std/Bool%;
+List@ .= /Std/List%;
 
-List@ = /Std/List%.List@;
-
-Addr@ = /Hwdg/Addr%.Addr@;
-Data@ = /Hwdg/Data%.Data@;
-
-Memory@ = /Hwdg/Memory%.Memory@;
-Memory = /Hwdg/Memory%.Memory;
-Empty = /Hwdg/Memory%.Empty;
-Contains = /Hwdg/Memory%.Contains;
-Disjoint = /Hwdg/Memory%.Disjoint;
-Override = /Hwdg/Memory%.Override;
+Addr@ .= /Hwdg/Addr%;
+Data@ .= /Hwdg/Data%;
+Memory@, Memory, Empty, Contains, Disjoint, Override .= /Hwdg/Memory%;
 
 # A rule fires when the memory state is consistent with 'input'. The result of
 # firing a rule is to make the memory state consistent with 'output'

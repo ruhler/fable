@@ -1,8 +1,7 @@
 
-Cmp@ = /Std/Cmp%.Cmp@;
-Compared@ = /Std/Cmp%.Compared@;
+Cmp@, Compared@ .= /Std/Cmp%;
 
-Addr@ = /Hwdg/Addr%.Addr@;
+Addr@ .= /Hwdg/Addr%;
 
 Cmp@<Addr@> Ord = (Addr@ a, Addr@ b) {
     Compared@ r = /Std/Int/Cmp%.Cmp(a.x, b.x);

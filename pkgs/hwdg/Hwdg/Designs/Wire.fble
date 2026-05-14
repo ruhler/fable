@@ -1,12 +1,7 @@
 
-Addr@ = /Hwdg/Addr%.Addr@;
-
-Design@ = /Hwdg/Design%.Design@;
-Designs = /Hwdg/Design%.Designs;
-Rule = /Hwdg/Design%.Rule;
-
-Build@ = /Hwdg/Build%.Build@;
-Return = /Hwdg/Build%.Return;
+Addr@ .= /Hwdg/Addr%;
+Design@, Designs, Rule .= /Hwdg/Design%;
+Build@, Return .= /Hwdg/Build%;
 
 (Addr@, Addr@, Addr@, Addr@) { Build@<Design@>; }
 Wire = (Addr@ in, Addr@ in_ready, Addr@ out, Addr@ out_ready) {

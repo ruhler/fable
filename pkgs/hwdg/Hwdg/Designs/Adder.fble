@@ -1,22 +1,10 @@
 
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Empty = /Std/List%.Empty;
-Items = /Std/List%.Items;
-Append = /Std/List%.Append;
+List@, List, Empty, Items, Append .= /Std/List%;
 
-Addr@ = /Hwdg/Addr%.Addr@;
-
+Addr@ .= /Hwdg/Addr%;
+Build@, Return, Do, Addr .= /Hwdg/Build%;
 Data = /Hwdg/Data%;
-
-Design@ = /Hwdg/Design%.Design@;
-Rule = /Hwdg/Design%.Rule;
-Designs = /Hwdg/Design%.Designs;
-
-Build@ = /Hwdg/Build%.Build@;
-Return = /Hwdg/Build%.Return;
-Do = /Hwdg/Build%.Do;
-Addr = /Hwdg/Build%.Addr;
+Design@, Rule, Designs .= /Hwdg/Design%;
 
 MAddr@ = *(Addr@ data, Addr@ valid);
 
