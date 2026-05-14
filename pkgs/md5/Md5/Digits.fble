@@ -1,6 +1,5 @@
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Unit@, Unit .= /Std/Unit%;
 
 # Bit@ --
 #   A binary digit.

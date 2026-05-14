@@ -1,15 +1,11 @@
 
-Bit@ = /Md5/Digits%.Bit@;
-Bit = /Md5/Digits%.Bit;
+Int@ .= /Std/Int%;
+QR@, Div .= /Std/Int/Div%;
+Int .= /Std/Int/Lit%;
+IsNegative, IsZero .= /Std/Int/Sign%;
 
-Int@ = /Std/Int%.Int@;
-IsNegative = /Std/Int/Sign%.IsNegative;
-IsZero = /Std/Int/Sign%.IsZero;
-QR@ = /Std/Int/Div%.QR@;
-Div = /Std/Int/Div%.Div;
-Int = /Std/Int/Lit%.Int;
-
-Bits@ = /Md5/Bits/Bits%.Bits@;
+Bits@ .= /Md5/Bits/Bits%;
+Bit@, Bit .= /Md5/Digits%;
 
 Int@ 1 = Int|1;
 Int@ 2 = Int|2;

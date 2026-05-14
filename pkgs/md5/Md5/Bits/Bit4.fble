@@ -1,8 +1,5 @@
-BitXY = /Md5/Bits/BitXY%(/Md5/Bits/Bit2%.Bits, /Md5/Bits/Bit2%.Bits);
-Bit4@ = BitXY.BitXY@;
 
-Lit = /Md5/Bits/Lit%(BitXY.Bits);
-B4 = Lit.B;
-H4 = Lit.H;
+Bit4@(.BitXY@), Bits .= /Md5/Bits/BitXY%(/Md5/Bits/Bit2%.Bits, /Md5/Bits/Bit2%.Bits);
+B4(.B), H4(.H) .= /Md5/Bits/Lit%(Bits);
 
-@(Bit4@, Bits: BitXY.Bits, B4, H4);
+@(Bit4@, Bits, B4, H4);

@@ -1,42 +1,23 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-And = /Std/Bool%.And;
-
+Bool@, True, False, And .= /Std/Bool%;
 Char@ .= /Std/Char%;
-
-String = /Std/Stream/String%.String;
-FormatE = /Std/Char/Ascii/Stream%.FormatE;
-
-Int@ = /Std/Int%.Int@;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Any = /Std/List/Search%.Any;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
-Main@ = /Std/Io/Cli%.Main@;
-Success = /Std/Io/Cli%.Success;
-Failure = /Std/Io/Cli%.Failure;
-
+Str .= /Std/Char/Ascii%;
+Format, FormatE .= /Std/Char/Ascii/Stream%;
+Int@ .= /Std/Int%;
+Io@ .= /Std/Io%;
+Main@, Success, Failure .= /Std/Io/Cli%;
+List@, List .= /Std/List%;
+Any .= /Std/List/Search%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
+String .= /Std/Stream/String%;
 Stream@ .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
 
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-Format = /Std/Char/Ascii/Stream%.Format;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Bit8@ = /Md5/Bits/Bit8%.Bit8@;
-Hash@ = /Md5/Hash%.Hash@;
+Bit8@ .= /Md5/Bits/Bit8%;
+Hash@ .= /Md5/Hash%;
 
 (Int@) { Bit8@; } ToBits = /Md5/Bits/Int%.ToBits(/Md5/Bits/Bit8%.Bits);
 

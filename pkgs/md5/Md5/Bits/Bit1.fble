@@ -1,14 +1,10 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+Bool@, True, False .= /Std/Bool%;
 
-Bit@ = /Md5/Digits%.Bit@;
-Bits@ = /Md5/Bits/Bits%.Bits@;
-Overflow@ = /Md5/Bits/Bits%.Overflow@;
+Bits@, Overflow@ .= /Md5/Bits/Bits%;
+Bit@ .= /Md5/Digits%;
+Bit@ 0, Bit@ 1 .= /Md5/Digits%.Bit;
 
-Bit@ 0 = /Md5/Digits%.Bit.0;
-Bit@ 1 = /Md5/Digits%.Bit.1;
 
 Bit1@ = Bit@;
 

@@ -1,6 +1,6 @@
 
-Bool@ = /Std/Bool%.Bool@;
-Bit@ = /Md5/Digits%.Bit@;
+Bool@ .= /Std/Bool%;
+Bit@ .= /Md5/Digits%;
 
 # Overflow@ --
 #   A result with overflow bit.

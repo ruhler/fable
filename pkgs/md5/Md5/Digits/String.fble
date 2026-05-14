@@ -1,11 +1,6 @@
 
-Bit@ = /Md5/Digits%.Bit@;
-Hex@ = /Md5/Digits%.Hex@;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List ;
-Concat = /Std/List%.Concat;
-Map = /Std/List%.Map;
+Bit@, Hex@ .= /Md5/Digits%;
+List@, List, Concat, Map .= /Std/List%;
 
 # A literal spec for a list of binary digits.
 (List@<Bit@>) { List@<Bit@>; } BitStr = List<Bit@>;

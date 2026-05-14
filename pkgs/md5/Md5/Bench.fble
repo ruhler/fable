@@ -1,27 +1,18 @@
 
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
+OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@, Sub .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+IsZero .= /Std/Int/Sign%;
+Lazy .= /Std/Lazy%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+Unit@ .= /Std/Unit%;
 
-Int@ = /Std/Int%.Int@;
-Sub = /Std/Int%.Sub;
-Int = /Std/Int/Lit%.Int;
-IsZero = /Std/Int/Sign%.IsZero;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Bit8@ = /Md5/Bits/Bit8%.Bit8@;
-H8 = /Md5/Bits/Bit8%.H8;
-
-Md5 = /Md5/Md5%.Md5;
-Hash@ = /Md5/Hash%.Hash@;
+Bit8@, H8 .= /Md5/Bits/Bit8%;
+Hash@ .= /Md5/Hash%;
+Md5 .= /Md5/Md5%;
 
 Int@ 1 = Int|1;
 
@@ -37,7 +28,8 @@ M@<Maybe@<Bit8@>> Get = {
 };
     
 # Benchmark for md5 sum that takes about 1 minute to run.
-Test@ Bench = Test(Str|Md5, (Unit@ _) {
+Test@ Bench = Test|Md5({
+  Unit@ _ := Lazy;
   Hash@ md5 = Eval(Md5<M@>(M, Get), Int|60000);
   AssertEquals(/Md5/Hash%.Eq, /Md5/Hash%.Show, md5, md5);
 });

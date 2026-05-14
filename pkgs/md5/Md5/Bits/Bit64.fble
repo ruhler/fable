@@ -1,13 +1,7 @@
 
-Bit = /Md5/Digits%.Bit;
-
-BitXY = /Md5/Bits/BitXY%(/Md5/Bits/Bit32%.Bits, /Md5/Bits/Bit32%.Bits);
-Bit64@ = BitXY.BitXY@;
-Bits = BitXY.Bits;
-
-Lit = /Md5/Bits/Lit%(BitXY.Bits);
-B64 = Lit.B;
-H64 = Lit.H;
+Bit64@(.BitXY@), Bits .= /Md5/Bits/BitXY%(/Md5/Bits/Bit32%.Bits, /Md5/Bits/Bit32%.Bits);
+B64(.B), H64(.H) .= /Md5/Bits/Lit%(Bits);
+Bit .= /Md5/Digits%;
 
 # a << 1
 (Bit64@) { Bit64@; } Shl1 = (Bit64@ a) {

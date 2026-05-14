@@ -1,9 +1,8 @@
 
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-Eq@ = /Std/Eq%.Eq@;
+True, False .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
 
-Bit@ = /Md5/Digits%.Bit@;
+Bit@ .= /Md5/Digits%;
 
 Eq@<Bit@> EqBit = (Bit@ a, Bit@ b) {
   a.?(

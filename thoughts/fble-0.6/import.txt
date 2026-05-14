@@ -404,8 +404,8 @@ graphics [DONE]
 hwdg [DONE]
 sat [DONE]
 invaders [DONE]
+md5 [DONE]
 
-md5
 network
 pinball
 pprof

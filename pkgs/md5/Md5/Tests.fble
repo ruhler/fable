@@ -1,35 +1,19 @@
 
-Bit8@ = /Md5/Bits/Bit8%.Bit8@;
-H8 = /Md5/Bits/Bit8%.H8;
+OnAscii, Str .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+List@, Items, Empty .= /Std/List%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+String@ .= /Std/String%;
+Test@, Test .= /Std/Test%;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
-Hex@ = /Md5/Digits%.Hex@;
-HexStr = /Md5/Digits/String%.HexStr;
+Bit8@, H8 .= /Md5/Bits/Bit8%;
+Hex@ .= /Md5/Digits%;
+HexStr .= /Md5/Digits/String%;
+Hash@, Eq, Show .= /Md5/Hash%;
+Md5 .= /Md5/Md5%;
 
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-List = /Std/List%.List;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Hash@ = /Md5/Hash%.Hash@;
-Eq = /Md5/Hash%.Eq;
-Show = /Md5/Hash%.Show;
-
-Md5 = /Md5/Md5%.Md5;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-
-Unit@ = /Std/Unit%.Unit@;
 
 # A Hash literal. It should consist of 32 hex digits.
 (List@<Hex@>) { Hash@; } Hash = (List@<Hex@> s00) {
@@ -101,7 +85,7 @@ M@<Maybe@<Bit8@>> Get = {
   });
 };
 
-Test@ Tests = TestSuite(Str|Md5, List[
+Test@ Tests = TestSuite|Md5[
   /Md5/Digits/Tests%.Tests,
 
   # ""
@@ -145,6 +129,6 @@ Test@ Tests = TestSuite(Str|Md5, List[
     Str|1_to_0,
     Hash|57EDF4A22BE3C955AC49DA2E2107B67A,
     HexStr|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
-]);
+];
 
 /Std/Test/Cli%.Run(Tests);

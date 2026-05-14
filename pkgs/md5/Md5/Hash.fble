@@ -1,23 +1,14 @@
 
-Bool@ = /Std/Bool%.Bool@;
-And = /Std/Bool%.And;
-True = /Std/Bool%.True;
-
+Bool@, True, And .= /Std/Bool%;
 Char@ .= /Std/Char%;
-String = /Std/Char/Ascii/Stream%.String;
-
-Hex@ = /Md5/Digits%.Hex@;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-ForEach = /Std/List%.ForEach;
-
-Show@ = /Std/Show%.Show@;
+String .= /Std/Char/Ascii/Stream%;
+Hex@ .= /Md5/Digits%;
+List@, List, ForEach .= /Std/List%;
+Show@ .= /Std/Show%;
 Stream@, Do, Return .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
 
-Unit@ = /Std/Unit%.Unit@;
-
-H8 = /Md5/Bits/Bit8%.H8;
+H8 .= /Md5/Bits/Bit8%;
 
 Hash@ = *(
   Hex@  0, Hex@  1, Hex@  2, Hex@  3, Hex@  4, Hex@  5, Hex@  6, Hex@  7,

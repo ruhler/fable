@@ -1,36 +1,17 @@
 
-Bit@ = /Md5/Digits%.Bit@;
-Hex@ = /Md5/Digits%.Hex@;
-Hex = /Md5/Digits%.Hex;
-0 = Hex.0; 1 = Hex.1; 2 = Hex.2; 3 = Hex.3;
-4 = Hex.4; 5 = Hex.5; 6 = Hex.6; 7 = Hex.7;
-8 = Hex.8; 9 = Hex.9; A = Hex.A; B = Hex.B;
-C = Hex.C; D = Hex.D; E = Hex.E;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
+Unit@, Unit .= /Std/Unit%;
 
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Monad@ = /Std/Monad%.Monad@;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Hash@ = /Md5/Hash%.Hash@;
-
-Bit4@ = /Md5/Bits/Bit4%.Bit4@;
-Bit8@ = /Md5/Bits/Bit8%.Bit8@;
-Bit16@ = /Md5/Bits/Bit16%.Bit16@;
-Bit32@ = /Md5/Bits/Bit32%.Bit32@;
-
-H32 = /Md5/Bits/Bit32%.H32;
-
-And = /Md5/Bits/Bit32%.Bits.And;
-Or = /Md5/Bits/Bit32%.Bits.Or;
-Not = /Md5/Bits/Bit32%.Bits.Not;
-Xor = /Md5/Bits/Bit32%.Bits.Xor;
-Add = /Md5/Bits/Bit32%.Bits.Add;
-Shlx = /Md5/Bits/Bit32%.Bits.Shlx;
+Bit4@ .= /Md5/Bits/Bit4%;
+Bit8@ .= /Md5/Bits/Bit8%;
+Bit16@ .= /Md5/Bits/Bit16%;
+Bit32@ .= /Md5/Bits/Bit32%;
+H32, Bits .= /Md5/Bits/Bit32%;
+And, Or, Not, Xor, Add, Shlx .= Bits;
+Bit@, Hex@, Hex .= /Md5/Digits%;
+0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E .= Hex;
+Hash@ .= /Md5/Hash%;
 
 Block@ = *(
   Bit32@ 0, Bit32@ 1, Bit32@ 2, Bit32@ 3,

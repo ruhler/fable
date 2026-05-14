@@ -1,16 +1,12 @@
 
-Bit@ = /Md5/Digits%.Bit@;
-Hex@ = /Md5/Digits%.Hex@;
-
 Char@ .= /Std/Char%;
-List@ = /Std/List%.List@;
-
-Show@ = /Std/Show%.Show@;
+String .= /Std/Char/Ascii/Stream%;
+List@ .= /Std/List%;
+Show@ .= /Std/Show%;
 Stream@, Do, Return .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
 
-String = /Std/Char/Ascii/Stream%.String;
-
-Unit@ = /Std/Unit%.Unit@;
+Bit@, Hex@ .= /Md5/Digits%;
 
 Show@<Bit@> ShowBit = (Bit@ b) {
   b.?(0: String|0, 1: String|1);

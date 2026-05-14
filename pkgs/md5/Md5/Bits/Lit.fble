@@ -1,12 +1,10 @@
 
-Bit@ = /Md5/Digits%.Bit@;
-Hex@ = /Md5/Digits%.Hex@;
+List@ .= /Std/List%;
 
-HexToBits = /Md5/Digits/String%.HexToBits;
+Bits@ .= /Md5/Bits/Bits%;
+Bit@, Hex@ .= /Md5/Digits%;
+HexToBits .= /Md5/Digits/String%;
 
-List@ = /Std/List%.List@;
-
-Bits@ = /Md5/Bits/Bits%.Bits@;
 
 <@ T@>(Bits@<T@> T) {
   # B_helper --

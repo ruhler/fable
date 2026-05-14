@@ -1,11 +1,9 @@
 
-Maybe@ = /Std/Maybe%.Maybe@;
+Maybe@ .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
 
-Monad@ = /Std/Monad%.Monad@;
-
-Bit8@ = /Md5/Bits/Bit8%.Bit8@;
-
-Hash@ = /Md5/Hash%.Hash@;
+Bit8@ .= /Md5/Bits/Bit8%;
+Hash@ .= /Md5/Hash%;
 
 <<@>@ M@>(Monad@<M@>, M@<Maybe@<Bit8@>>) { M@<Hash@>; }
 Md5 = <<@>@ M@>(Monad@<M@> m, M@<Maybe@<Bit8@>> get) {

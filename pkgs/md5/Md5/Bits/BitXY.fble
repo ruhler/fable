@@ -1,8 +1,6 @@
 
-Bool@ = /Std/Bool%.Bool@;
-
-Bits@ = /Md5/Bits/Bits%.Bits@;
-Overflow@ = /Md5/Bits/Bits%.Overflow@;
+Bool@ .= /Std/Bool%;
+Bits@, Overflow@ .= /Md5/Bits/Bits%;
 
 
 <@ X@>(Bits@<X@> X)<@ Y@>(Bits@<Y@> Y) {
