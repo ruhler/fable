@@ -1,32 +1,18 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+Bool@, True, False .= /Std/Bool%;
+Int@, Add, Sub .= /Std/Int%;
+Lt, Gt .= /Std/Int/Cmp%;
+Int .= /Std/Int/Lit%;
+List@, Items, Empty, ForEach .= /Std/List%;
+Length .= /Std/List/Index%;
+Unit@ .= /Std/Unit%;
 
-Drawing@ = /App/Drawing%.Drawing@;
-Blank = /App/Drawing%.Blank;
-Over = /App/Drawing%.Over;
-Translate = /App/Drawing%.Translate;
-
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Lt = /Std/Int/Cmp%.Lt;
-Gt = /Std/Int/Cmp%.Gt;
-Int = /Std/Int/Lit%.Int;
-
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-ForEach = /Std/List%.ForEach;
-Length = /Std/List/Index%.Length;
+Drawing@, Blank, Over, Translate .= /App/Drawing%;
 
 Bases = /Invaders/Bases%;
-Bases@ = Bases.Bases@;
-
+Bases@ .= Bases;
 Graphics = /Invaders/Graphics%;
 
-Unit@ = /Std/Unit%.Unit@;
 
 Kind@ = +(Unit@ bomb, Unit@ squiggle);
 

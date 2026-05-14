@@ -1,6 +1,5 @@
 
 Str .= /Std/Char/Ascii%;
-ToString .= /Std/Stream/String%;
 Int@, Add, Sub .= /Std/Int%;
 Mod .= /Std/Int/Div%;
 Eq .= /Std/Int/Eq%;
@@ -8,6 +7,7 @@ Gt .= /Std/Int/Cmp%;
 Int .= /Std/Int/Lit%;
 List, Concat .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
+ToString .= /Std/Stream/String%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 

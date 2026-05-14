@@ -403,8 +403,8 @@ games [DONE]
 graphics [DONE]
 hwdg [DONE]
 sat [DONE]
+invaders [DONE]
 
-invaders
 md5
 network
 pinball

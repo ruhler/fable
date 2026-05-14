@@ -1,30 +1,16 @@
 
-Int@ = /Std/Int%.Int@;
-0 = /Std/Int%.0;
-Neg = /Std/Int%.Neg;
-Max = /Std/Int/Cmp%.Max;
+Int@, 0, Neg .= /Std/Int%;
+Max .= /Std/Int/Cmp%;
+Int .= /Std/Int/Lit%;
+Monad@ .= /Std/Monad%;
+Unit@, Unit .= /Std/Unit%;
 
-Int = /Std/Int/Lit%.Int;
-
-Monad@ = /Std/Monad%.Monad@;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-App@ = /App/App%.App@;
-Event@ = /App/App%.Event@;
-Effect@ = /App/App%.Effect@;
-
-Point@ = /App/Drawing%.Point@;
-Color = /App/Drawing%.Color;
-Over = /App/Drawing%.Over;
-Rect = /App/Drawing%.Rect;
-Affine = /App/Drawing%.Affine;
+App@, Event@, Effect@ .= /App/App%;
+Point@, Color, Over, Rect, Affine .= /App/Drawing%;
 
 Game = /Invaders/Game%;
-Game@ = Game.Game@;
-
-Dir@ = /Invaders/Ship%.Dir@;
+Game@ .= Game;
+Dir@ .= /Invaders/Ship%;
 
 Input@ = +(
   Unit@ tick,

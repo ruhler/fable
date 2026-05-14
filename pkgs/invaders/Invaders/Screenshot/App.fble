@@ -1,31 +1,18 @@
 
-Neg = /Std/Int%.Neg;
+Int@, Neg .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Io@ .= /Std/Io%;
+Success .= /Std/Io/Cli%;
+List@ .= /Std/List%;
+Monad@ .= /Std/Monad%;
+String@ .= /Std/String%;
+Unit@, Unit .= /Std/Unit%;
 
-Int@ = /Std/Int%.Int@;
-Int = /Std/Int/Lit%.Int;
+App@, Event@, Effect@ .= /App/App%;
+Drawing@, Point@, Affine .= /App/Drawing%;
+Main@ .= /App/Native%;
 
-List@ = /Std/List%.List@;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
-Success = /Std/Io/Cli%.Success;
-
-String@ = /Std/String%.String@;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-App@ = /App/App%.App@;
-Main@ = /App/Native%.Main@;
-Event@ = /App/App%.Event@;
-Effect@ = /App/App%.Effect@;
-
-Drawing@ = /App/Drawing%.Drawing@;
-Point@ = /App/Drawing%.Point@;
-Affine = /App/Drawing%.Affine;
-
-Screenshot = /Invaders/Graphics%.Screenshot;
+Screenshot .= /Invaders/Graphics%;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> _, App@<M@> app, Int@ _width, Int@ _height, List@<String@> _args) {
   # Map game coordinates into screen coordinate.

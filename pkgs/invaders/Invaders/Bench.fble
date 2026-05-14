@@ -1,35 +1,23 @@
 
-Int@ = /Std/Int%.Int@;
-Decr = /Std/Int%.Decr;
-Int = /Std/Int/Lit%.Int;
-IsNegative = /Std/Int/Sign%.IsNegative;
+OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@, Decr .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+IsNegative .= /Std/Int/Sign%;
+Lazy .= /Std/Lazy%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+Unit@, Unit .= /Std/Unit%;
 
-Str = /Std/Char/Ascii%.Str;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-App@ = /App/App%.App@;
-Key@ = /App/App%.Key@;
-Event@ = /App/App%.Event@;
-Effect@ = /App/App%.Effect@;
-
-Put@ = /Invaders/App%.Put@;
-Get@ = /Invaders/App%.Get@;
-State@ = /Invaders/App%.State@;
-Invaders = /Invaders/App%.Invaders;
-
+App@, Key@, Event@, Effect@ .= /App/App%;
+Put@, Get@, State@, Invaders .= /Invaders/App%;
 M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<Int@>;
 
 # The number of iterations is chosen so that the benchmark takes on the
 # order of 1 minute to run. The target goal for invaders is 60 frames a
 # second. If we can beat 1 minute for this, great.
-Test@ Bench = Test(Str|Invaders, (Unit@ _) {
+Test@ Bench = Test|Invaders({
+  Unit@ _ := Lazy;
   Int@ n = Int|3600;
   Int@ w = Int|640;
   Int@ h = Int|480;

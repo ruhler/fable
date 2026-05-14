@@ -1,15 +1,8 @@
 
-List = /Std/List%.List;
+OnAscii .= /Std/Char/Ascii%;
+Test@ .= /Std/Test%;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-TestSuite = /Std/Test%.TestSuite;
-
-# Import to test compilation.
-_ = /Invaders/AppIO%;
-_ = /Invaders/Bench%;
-
-Test@ Tests = TestSuite(Str|Invaders, List<Test@>[]);
+Test@ Tests = TestSuite|Invaders[];
 
 /Std/Test/Cli%.Run(Tests);

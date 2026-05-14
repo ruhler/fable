@@ -1,19 +1,14 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+Bool@, True, False .= /Std/Bool%;
 
-Drawing@ = /App/Drawing%.Drawing@;
-Blank = /App/Drawing%.Blank;
-Translate = /App/Drawing%.Translate;
+Int@, Add .= /Std/Int%;
+Lt .= /Std/Int/Cmp%;
+Int .= /Std/Int/Lit%;
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Lt = /Std/Int/Cmp%.Lt;
-Int = /Std/Int/Lit%.Int;
+Drawing@, Blank, Translate .= /App/Drawing%;
 
 Graphics = /Invaders/Graphics%;
-Ship@ = /Invaders/Ship%.Ship@;
+Ship@ .= /Invaders/Ship%;
 
 Bullet@ = *(
   Int@ x,

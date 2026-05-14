@@ -1,60 +1,31 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-Or = /Std/Bool%.Or;
-
+Bool@, True, False, Or .= /Std/Bool%;
 Data@, Struct .= /Std/Data%;
 
-Drawing@ = /App/Drawing%.Drawing@;
-Blank = /App/Drawing%.Blank;
-Over = /App/Drawing%.Over;
-Translate = /App/Drawing%.Translate;
-
-Bombs@ = /Invaders/Bombs%.Bombs@;
-Kind@ = /Invaders/Bombs%.Kind@;
-
-Alien1A = /Invaders/Graphics%.Aliens.Alien1A;
-Alien1B = /Invaders/Graphics%.Aliens.Alien1B;
-Alien2A = /Invaders/Graphics%.Aliens.Alien2A;
-Alien2B = /Invaders/Graphics%.Aliens.Alien2B;
-Alien3A = /Invaders/Graphics%.Aliens.Alien3A;
-Alien3B = /Invaders/Graphics%.Aliens.Alien3B;
-DeadAlien = /Invaders/Graphics%.DeadAlien;
-
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Incr = /Std/Int%.Incr;
-Mul = /Std/Int%.Mul;
-QR@ = /Std/Int/Div%.QR@;
-Div = /Std/Int/Div%.Div;
-Eq = /Std/Int/Eq%.Eq;
-Le = /Std/Int/Cmp%.Le;
-Lt = /Std/Int/Cmp%.Lt;
-Ge = /Std/Int/Cmp%.Ge;
-Gt = /Std/Int/Cmp%.Gt;
-Int = /Std/Int/Lit%.Int;
-UpTo = /Std/Int/Random%.UpTo;
+Int@, Add, Sub, Incr, Mul .= /Std/Int%;
+Le, Lt, Ge, Gt .= /Std/Int/Cmp%;
+QR@, Div .= /Std/Int/Div%;
+Eq .= /Std/Int/Eq%;
+Int .= /Std/Int/Lit%;
+UpTo .= /Std/Int/Random%;
 Range .= /Std/Int/Stream%;
+List@, Items, Empty .= /Std/List%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Unit@, Unit .= /Std/Unit%;
 
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
+Drawing@, Blank, Over, Translate .= /App/Drawing%;
 
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
+Bombs@, Kind@ .= /Invaders/Bombs%;
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Alien1A, Alien1B, Alien2A, Alien2B,
+Alien3A, Alien3B .= /Invaders/Graphics%.Aliens;
+DeadAlien .= /Invaders/Graphics%;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;
 Int@ 2 = Int|2;
 
-Prng = /Std/Random/Lfsr%.Lfsr8;
-
+Prng(.Lfsr8) .= /Std/Random/Lfsr%;
 Eval .= /Std/State/Pure%;
 M@, M(.Monad), Rng .= /Std/Random/Prng/Pure%.Pure(Prng);
 

@@ -1,37 +1,23 @@
 
 Char@ .= /Std/Char%;
+Str .= /Std/Char/Ascii%;
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Io@ .= /Std/Io%;
+Success .= /Std/Io/Cli%;
+List@, Append .= /Std/List%;
+Any .= /Std/List/Search%;
+Maybe@, Default .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
 In@, Out@ .= /Std/Stream/Io%;
 String, GetText .= /Std/Stream/String%;
+String@ .= /Std/String%;
+Unit@, Unit .= /Std/Unit%;
 
-Int@ = /Std/Int%.Int@;
+App@ .= /App/App%;
+Main@ .= /App/Native%;
 
-Int = /Std/Int/Lit%.Int;
-
-List@ = /Std/List%.List@;
-Append = /Std/List%.Append;
-Any = /Std/List/Search%.Any;
-
-Maybe@, Default .= /Std/Maybe%;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
-Success = /Std/Io/Cli%.Success;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-App@ = /App/App%.App@;
-
-Main@ = /App/Native%.Main@;
-
-Put@ = /Invaders/App%.Put@;
-Get@ = /Invaders/App%.Get@;
-State@ = /Invaders/App%.State@;
-Invaders = /Invaders/App%.Invaders;
+Put@, Get@, State@, Invaders .= /Invaders/App%;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
 	Maybe@<String@> home := m.do(/Std/Io/Env%.GetVar(m, io, Str|'HOME'));

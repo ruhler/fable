@@ -1,20 +1,13 @@
 
-Drawing@ = /App/Drawing%.Drawing@;
-Translate = /App/Drawing%.Translate;
+Int@, Add, Sub .= /Std/Int%;
+Lt, Gt .= /Std/Int/Cmp%;
+Int .= /Std/Int/Lit%;
+Unit@, Unit .= /Std/Unit%;
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-
-Lt = /Std/Int/Cmp%.Lt;
-Gt = /Std/Int/Cmp%.Gt;
-
-Int = /Std/Int/Lit%.Int;
+Drawing@, Translate .= /App/Drawing%;
 
 Graphics = /Invaders/Graphics%;
 
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
 
 # The ships moves side to side, but not forward or backwards.
 # This is the Y coordinate of the bottom edge of the ship.

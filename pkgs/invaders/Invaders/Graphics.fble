@@ -1,20 +1,12 @@
 
-Char@ = /Std/Char%.Char@;
-Char = /Std/Char/Ascii%.Char;
+Char@ .= /Std/Char%;
+Char, Str .= /Std/Char/Ascii%;
+Int .= /Std/Int/Lit%;
+String@ .= /Std/String%;
 
-Color@ = /App/Drawing%.Color@;
-Drawing@ = /App/Drawing%.Drawing@;
-Blank = /App/Drawing%.Blank;
-Color = /App/Drawing%.Color;
-Drawings = /App/Drawing%.Drawings;
-Over = /App/Drawing%.Over;
-Rect = /App/Drawing%.Rect;
-Translate = /App/Drawing%.Translate;
+Color@, Drawing@, Blank, Color, Drawings,
+Over, Rect, Translate .= /App/Drawing%;
 
-Int = /Std/Int/Lit%.Int;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
 
 Color@ white = Color.White;
 Color@ green = Color.Green;
