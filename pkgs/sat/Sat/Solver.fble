@@ -1,32 +1,14 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-Not = /Std/Bool%.Not;
+Bool@, True, False, Not .= /Std/Bool%;
+Format, String .= /Std/Char/Ascii/Stream%;
+Incr .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+List@, List, Empty, Items, Append .= /Std/List%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Show@ .= /Std/Show%;
+Unit@, Unit .= /Std/Unit%;
 
-Incr = /Std/Int%.Incr;
-Int = /Std/Int/Lit%.Int;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Empty = /Std/List%.Empty;
-Items = /Std/List%.Items;
-Append = /Std/List%.Append;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Show@ = /Std/Show%.Show@;
-
-Format = /Std/Char/Ascii/Stream%.Format;
-String = /Std/Char/Ascii/Stream%.String;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Id@ = /Sat/Id%.Id@;
-EqId = /Sat/Id%.EqId;
+Id@, EqId .= /Sat/Id%;
 
 VarId@ = Id@;
 ClauseId@ = Id@;

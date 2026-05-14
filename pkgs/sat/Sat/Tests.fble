@@ -1,42 +1,21 @@
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-And = /Std/Bool%.And;
 
-Eq@ = /Std/Eq%.Eq@;
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
+True, False, And .= /Std/Bool%;
+OnAscii, Str .= /Std/Char/Ascii%;
+Eq@ .= /Std/Eq%;
+AssertEquals .= /Std/Eq/Assert%;
+Int .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+List .= /Std/List%;
+String@ .= /Std/String%;
+Test@, TestResult@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@, Unit .= /Std/Unit%;
 
-Int = /Std/Int/Lit%.Int;
-
-List = /Std/List%.List;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-TestResult@ = /Std/Test%.TestResult@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Clause@ = /Sat/Solver%.Clause@;
-VarId@ = /Sat/Solver%.VarId@;
-Var@ = /Sat/Solver%.Var@;
-Assignment@ = /Sat/Solver%.Assignment@;
-Result@ = /Sat/Solver%.Result@;
-AddClauses = /Sat/Solver%.AddClauses;
-NewSolver = /Sat/Solver%.NewSolver;
-EqId = /Sat/Solver%.EqId;
-
-Formula@ = /Sat/Dimacs%.Formula@;
-
-ShowResult = /Sat/Show%.ShowResult;
-ShowParsedFormula = /Sat/Show%.ShowParsedFormula;
-
-Parse@ = /Sat/Dimacs%.Parse@;
-Parse = /Sat/Dimacs%.Parse;
-
+Formula@, Parse@, Parse .= /Sat/Dimacs%;
+Clause@, VarId@, Var@, Assignment@, Result@,
+AddClauses, NewSolver, EqId .= /Sat/Solver%;
+ShowResult, ShowParsedFormula .= /Sat/Show%;
 
 
 Eq@<Var@> EqVar = (Var@ a, Var@ b) {
@@ -76,8 +55,9 @@ Solve = (Formula@ formula) {
   /Sat/Solver%.Solve(AddClauses(NewSolver, formula));
 };
 
-Test@ Tests = TestSuite(Str|Sat, List[
-  Test(Str|Sat, (Unit@ _) {
+Test@ Tests = TestSuite|Sat[
+  Test|Sat({
+    Unit@ _ := Lazy;
     Formula@ f = List[
       List[Var@(X, True)]
     ];
@@ -86,7 +66,8 @@ Test@ Tests = TestSuite(Str|Sat, List[
     AssertEq(want, got);
   }),
 
-  Test(Str|Unsat, (Unit@ _) {
+  Test|Unsat({
+    Unit@ _ := Lazy;
     Formula@ f = List[
       List[Var@(X, True)],
       List[Var@(X, False)]
@@ -96,9 +77,10 @@ Test@ Tests = TestSuite(Str|Sat, List[
     AssertEq(want, got);
   }),
 
-  Test(Str|EmptyClause, (Unit@ _) {
+  Test|EmptyClause({
     # Test that we properly detect an empty clause as one of the initial
     # clauses.
+    Unit@ _ := Lazy;
     Formula@ f = List[
       List[Var@(X, True)],
       List<Var@>[],
@@ -109,10 +91,11 @@ Test@ Tests = TestSuite(Str|Sat, List[
     AssertEq(want, got);
   }),
 
-  Test(Str|AttemptedConflict, (Unit@ _) {
+  Test|AttemptedConflict({
     # Test that attempts to cover the case where an attempted variable
     # assignment leads to a conflict.
     # (x' + y)(x' + y')(x + y)(x + y')
+    Unit@ _ := Lazy;
     Formula@ f = List[
       List[Var@(X, False), Var@(Y, True)],
       List[Var@(X, False), Var@(Y, False)],
@@ -124,10 +107,11 @@ Test@ Tests = TestSuite(Str|Sat, List[
     AssertEq(want, got);
   }),
 
-  Test(Str|AttemptedConflict2, (Unit@ _) {
+  Test|AttemptedConflict2({
     # Another test that attempts to cover the case where an attempted variable
     # assignment leads to a conflict.
     # (x' + x')(x + x)
+    Unit@ _ := Lazy;
     Formula@ f = List[
       List[Var@(X, False), Var@(X, False)],
       List[Var@(X, True), Var@(X, True)]
@@ -137,9 +121,10 @@ Test@ Tests = TestSuite(Str|Sat, List[
     AssertEq(want, got);
   }),
 
-  Test(Str|Unsat3, (Unit@ _) {
+  Test|Unsat3({
     # Regression test for a bug where we weren't properly applying learned
     # clauses, which led to an infinite loop.
+    Unit@ _ := Lazy;
     Formula@ f = List[
       List[Var@(X, True), Var@(Y, True), Var@(Z, True)],
       List[Var@(X, True), Var@(Y, True), Var@(Z, False)],
@@ -155,9 +140,10 @@ Test@ Tests = TestSuite(Str|Sat, List[
     AssertEq(want, got);
   }),
 
-  Test(Str|PureConflict, (Unit@ _) {
+  Test|PureConflict({
     # Regression test for a bug where we learned both +x and -x were pure
     # because the variable value didn't matter at all.
+    Unit@ _ := Lazy;
     Formula@ f = List[
       List[Var@(X, True)],
       List[Var@(X, True), Var@(Y, True)],
@@ -173,8 +159,9 @@ Test@ Tests = TestSuite(Str|Sat, List[
     AssertEquals(eq, ShowResult, got, got);
   }),
 
-  Test(Str|EmptyConflict, (Unit@ _) {
+  Test|EmptyConflict({
     # Regression test for a bug where we saw an empty conflict clause.
+    Unit@ _ := Lazy;
     VarId@ a = Int|1;
     VarId@ b = Int|2;
     VarId@ c = Int|3;
@@ -194,7 +181,8 @@ Test@ Tests = TestSuite(Str|Sat, List[
     AssertEq(want, got);
   }),
 
-  Test(Str|Dimacs, (Unit@ _) {
+  Test|Dimacs({
+    Unit@ _ := Lazy;
     String@ dimacs = Str|'c
 c start with comments
 c
@@ -213,7 +201,6 @@ p cnf 5 3
     Parse@<Formula@> got = Parse(dimacs);
     AssertEquals(EqParsedFormula, ShowParsedFormula, want, got);
   })
-
-]);
+];
 
 /Std/Test/Cli%.Run(Tests);

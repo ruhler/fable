@@ -1,17 +1,10 @@
 
-Show@ = /Std/Show%.Show@;
+Format, String .= /Std/Char/Ascii/Stream%;
+Show@ .= /Std/Show%;
 
-Format = /Std/Char/Ascii/Stream%.Format;
-String = /Std/Char/Ascii/Stream%.String;
+Formula@, Parse@ .= /Sat/Dimacs%;
+Clause@, VarId@, Var@, Assignment@, Result@ .= /Sat/Solver%;
 
-Clause@ = /Sat/Solver%.Clause@;
-VarId@ = /Sat/Solver%.VarId@;
-Var@ = /Sat/Solver%.Var@;
-Assignment@ = /Sat/Solver%.Assignment@;
-Result@ = /Sat/Solver%.Result@;
-
-Formula@ = /Sat/Dimacs%.Formula@;
-Parse@ = /Sat/Dimacs%.Parse@;
 
 Show@<VarId@> ShowId = /Std/Int/Show%.Show;
 

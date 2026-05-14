@@ -1,21 +1,15 @@
 
 Char@ .= /Std/Char%;
+Str .= /Std/Char/Ascii%;
+Io@ .= /Std/Io%;
+Main@, Success .= /Std/Io/Cli%;
+List@ .= /Std/List%;
+Any .= /Std/List/Search%;
+Monad@ .= /Std/Monad%;
 In@, Out@ .= /Std/Stream/Io%;
 String .= /Std/Stream/String%;
-
-List@ = /Std/List%.List@;
-Any = /Std/List/Search%.Any;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
-Main@ = /Std/Io/Cli%.Main@;
-Success = /Std/Io/Cli%.Success;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Unit@ = /Std/Unit%.Unit@;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));

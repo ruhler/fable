@@ -402,12 +402,12 @@ rosetta [DONE]
 games [DONE]
 graphics [DONE]
 hwdg [DONE]
+sat [DONE]
 
 invaders
 md5
 network
 pinball
 pprof
-sat
 satgame
 

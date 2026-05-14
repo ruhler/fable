@@ -1,15 +1,18 @@
 
 Char@ .= /Std/Char%;
+OnAscii .= /Std/Char/Ascii%;
 AssertEquals .= /Std/Eq/Assert%;
+Exit@, Success .= /Std/Io/Cli%;
+Lazy .= /Std/Lazy%;
 NullOut .= /Std/Stream/Null%;
 Out@ .= /Std/Stream/Io%;
-Exit@, Success .= /Std/Io/Cli%;
 String@ .= /Std/String%;
-Str .= /Std/Char/Ascii%;
-Test@, Test .= /Std/Test%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
 Unit@ .= /Std/Unit%;
 
-Test@ Bench = Test(Str|Sat, (Unit@ _) {
+Test@ Bench = Test|Sat({
+  Unit@ _ := Lazy;
   M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<String@>;
 
   Out@<Char@, M@> null = NullOut<Char@>(M);

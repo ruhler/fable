@@ -1,36 +1,17 @@
 
 Char@ .= /Std/Char%;
-
+FormatE .= /Std/Char/Ascii/Stream%;
+List@, Items, Empty, Reverse .= /Std/List%;
+Monad@ .= /Std/Monad%;
+Exit@, Success, Failure .= /Std/Io/Cli%;
 In@, Out@ .= /Std/Stream/Io%;
 String, GetLine .= /Std/Stream/String%;
-FormatE = /Std/Char/Ascii/Stream%.FormatE;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
 
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-Reverse = /Std/List%.Reverse;
-
-Monad@ = /Std/Monad%.Monad@;
-
-Exit@ = /Std/Io/Cli%.Exit@;
-Success = /Std/Io/Cli%.Success;
-Failure = /Std/Io/Cli%.Failure;
-
-String@ = /Std/String%.String@;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Solver@ = /Sat/Solver%.Solver@;
-Result@ = /Sat/Solver%.Result@;
-NewSolver = /Sat/Solver%.NewSolver;
-AddClauses = /Sat/Solver%.AddClauses;
-
-Solve = /Sat/Solver%.Solve;
-
-Formula@ = /Sat/Dimacs%.Formula@;
-Parse@ = /Sat/Dimacs%.Parse@;
-ParseLines = /Sat/Dimacs%.ParseLines;
-ShowResult = /Sat/Show%.ShowResult;
+Formula@, Parse@, ParseLines .= /Sat/Dimacs%;
+Solver@, Result@, NewSolver, AddClauses, Solve .= /Sat/Solver%;
+ShowResult .= /Sat/Show%;
 
 <<@>@ M@>(Monad@<M@>, In@<Char@, M@>, Out@<Char@, M@>, Out@<Char@, M@>) { M@<Exit@>; }
 Main = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> in, Out@<Char@, M@> out, Out@<Char@, M@> err) {

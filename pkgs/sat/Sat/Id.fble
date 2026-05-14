@@ -1,5 +1,5 @@
 
-Int@ = /Std/Int%.Int@;
+Int@ .= /Std/Int%;
 
 Id@ = Int@;
 EqId = /Std/Int/Eq%.Eq;
