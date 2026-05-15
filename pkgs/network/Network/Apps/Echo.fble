@@ -1,45 +1,24 @@
 
-
 # Implementation of RFC 862 TCP-based Echo Protocol
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
+Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
-
-String = /Std/Stream/String%.String;
-StringE = /Std/Char/Ascii/Stream%.StringE;
-
-Main@ = /Std/Io/Cli%.Main@;
-
-Int@ = /Std/Int%.Int@;
-Neg = /Std/Int%.Neg;
-Decr = /Std/Int%.Decr;
-Int = /Std/Int/Lit%.Int;
-IsZero = /Std/Int/Sign%.IsZero;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Concat = /Std/List%.Concat;
-Any = /Std/List/Search%.Any;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
+Str .= /Std/Char/Ascii%;
+StringE .= /Std/Char/Ascii/Stream%;
+Io@ .= /Std/Io%;
+Main@, Success, Failure .= /Std/Io/Cli%;
+Int@, Neg, Decr .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+IsZero .= /Std/Int/Sign%;
+List@, List, Concat .= /Std/List%;
+Any .= /Std/List/Search%;
+Maybe@ .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
 Put .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
-
-Success = /Std/Io/Cli%.Success;
-Failure = /Std/Io/Cli%.Failure;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+String .= /Std/Stream/String%;
+String@ .= /Std/String%;
+Unit@, Unit .= /Std/Unit%;
 
 InOut@, Server@, Sockets@ .= /Network/Sockets%;
 

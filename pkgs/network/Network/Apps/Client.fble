@@ -1,37 +1,22 @@
 
 Bool@, True, False .= /Std/Bool%;
 Char@, Pos .= /Std/Char%;
-
-String = /Std/Stream/String%.String;
-StringE = /Std/Char/Ascii/Stream%.StringE;
-
-Int@ = /Std/Int%.Int@;
-Neg = /Std/Int%.Neg;
-Decr = /Std/Int%.Decr;
-Int = /Std/Int/Lit%.Int;
-IsZero = /Std/Int/Sign%.IsZero;
-
-List@ = /Std/List%.List@;
-Concat = /Std/List%.Concat;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
+Str .= /Std/Char/Ascii%;
+StringE .= /Std/Char/Ascii/Stream%;
+Int@, Neg, Decr .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+IsZero .= /Std/Int/Sign%;
+Main@, Success, Failure .= /Std/Io/Cli%;
+Io@ .= /Std/Io%;
+List@, Concat .= /Std/List%;
+Maybe@ .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
 Put .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
+String .= /Std/Stream/String%;
+String@ .= /Std/String%;
+Unit@, Unit .= /Std/Unit%;
 
-Success = /Std/Io/Cli%.Success;
-Failure = /Std/Io/Cli%.Failure;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Main@ = /Std/Io/Cli%.Main@;
 InOut@, Sockets@ .= /Network/Sockets%;
 
 Args@ = *(
