@@ -1,19 +1,10 @@
 
-Num@ = /Pinball/Num%.Num@;
-Add = /Pinball/Num%.Add;
-Mul = /Pinball/Num%.Mul;
-Eq = /Pinball/Num%.Eq;
-Ge = /Pinball/Num%.Ge;
-Le = /Pinball/Num%.Le;
-Lt = /Pinball/Num%.Lt;
-Int = /Pinball/Num%.Int;
+Format .= /Std/Char/Ascii/Stream%;
+Show@ .= /Std/Show%;
 
-Vec@ = /Pinball/Vec%.Vec@;
-SubV = /Pinball/Vec%.SubV;
+Num@, Add, Mul, Eq, Ge, Le, Lt, Int .= /Pinball/Num%;
+Vec@, SubV .= /Pinball/Vec%;
 
-Show@ = /Std/Show%.Show@;
-
-Format = /Std/Char/Ascii/Stream%.Format;
 
 Num@ 0 = Int|0;
 

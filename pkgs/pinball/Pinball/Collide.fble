@@ -1,49 +1,16 @@
 
-List@ = /Std/List%.List@;
-Maybe@ = /Std/Maybe%.Maybe@;
+List@ .= /Std/List%;
+Maybe@ .= /Std/Maybe%;
 
-Event@ = /Pinball/Event%.Event@;
-Events = /Pinball/Event%.Events;
-BallEvent = /Pinball/Event%.BallEvent;
-TimeEvent = /Pinball/Event%.TimeEvent;
-
-Num@ = /Pinball/Num%.Num@;
-Add = /Pinball/Num%.Add;
-Sub = /Pinball/Num%.Sub;
-Neg = /Pinball/Num%.Neg;
-Mul = /Pinball/Num%.Mul;
-Div = /Pinball/Num%.Div;
-Eq = /Pinball/Num%.Eq;
-Gt = /Pinball/Num%.Gt;
-Ge = /Pinball/Num%.Ge;
-Lt = /Pinball/Num%.Lt;
-Le = /Pinball/Num%.Le;
-Int = /Pinball/Num%.Int;
-
-Ball@ = /Pinball/Ball%.Ball@;
-
-Edge@ = /Pinball/Edge%.Edge@;
-
-Paddle@ = /Pinball/Paddle%.Paddle@;
-
-Rotate = /Pinball/Rotate%.Rotate;
-
-Linear@ = /Pinball/Quadratic%.Linear@;
-Quadratic@ = /Pinball/Quadratic%.Quadratic@;
-Roots@ = /Pinball/Quadratic%.Roots@;
-SubQQ = /Pinball/Quadratic%.SubQQ;
-SubLL = /Pinball/Quadratic%.SubLL;
-MulLL = /Pinball/Quadratic%.MulLL;
-Roots = /Pinball/Quadratic%.Roots;
-
-Vec@ = /Pinball/Vec%.Vec@;
-AddV = /Pinball/Vec%.AddV;
-SubV = /Pinball/Vec%.SubV;
-MulVS = /Pinball/Vec%.MulVS;
-RotateTo = /Pinball/Vec%.RotateTo;
-RotateFrom = /Pinball/Vec%.RotateFrom;
-Magnitude = /Pinball/Vec%.Magnitude;
-Normalize = /Pinball/Vec%.Normalize;
+Ball@ .= /Pinball/Ball%;
+Edge@ .= /Pinball/Edge%;
+Event@, Events, BallEvent, TimeEvent .= /Pinball/Event%;
+Num@, Add, Sub, Neg, Mul, Div, Eq, Gt, Ge, Lt, Le, Int .= /Pinball/Num%;
+Paddle@ .= /Pinball/Paddle%;
+Rotate .= /Pinball/Rotate%;
+Linear@, Quadratic@, Roots@, SubQQ, SubLL, MulLL, Roots .= /Pinball/Quadratic%;
+Vec@, AddV, SubV, MulVS, RotateTo, RotateFrom,
+Magnitude, Normalize .= /Pinball/Vec%;
 
 Num@ 0 = Int|0;
 

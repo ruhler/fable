@@ -1,18 +1,8 @@
 
-Maybe@ = /Std/Maybe%.Maybe@;
-Nothing = /Std/Maybe%.Nothing;
-Just = /Std/Maybe%.Just;
+Maybe@, Nothing, Just .= /Std/Maybe%;
 
-Num@ = /Pinball/Num%.Num@;
-Add = /Pinball/Num%.Add;
-Sub = /Pinball/Num%.Sub;
-Mul = /Pinball/Num%.Mul;
-Neg = /Pinball/Num%.Neg;
-Div = /Pinball/Num%.Div;
-Sqrt = /Pinball/Num%.Sqrt;
-Int = /Pinball/Num%.Int;
-Eq = /Pinball/Num%.Eq;
-Lt = /Pinball/Num%.Lt;
+Num@, Add, Sub, Mul, Neg, Div, Sqrt, Int, Eq, Lt .= /Pinball/Num%;
+
 
 Num@ 0 = Int|0;
 Num@ 2 = Int|2;

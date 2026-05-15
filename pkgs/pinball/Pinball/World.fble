@@ -1,28 +1,14 @@
 
-List@ = /Std/List%.List@;
+List@ .= /Std/List%;
 
-Ball@ = /Pinball/Ball%.Ball@;
+Ball@ .= /Pinball/Ball%;
+BallEdgeS, BallPaddleS, PaddleRangeS .= /Pinball/Collide%;
+Edge@ .= /Pinball/Edge%;
+Event@, Events .= /Pinball/Event%;
+Num@, Sub, Div, Le, Int .= /Pinball/Num%;
+Paddle@ .= /Pinball/Paddle%;
+Vec@, AddV, MulVS .= /Pinball/Vec%;
 
-BallEdgeS = /Pinball/Collide%.BallEdgeS;
-BallPaddleS = /Pinball/Collide%.BallPaddleS;
-PaddleRangeS = /Pinball/Collide%.PaddleRangeS;
-
-Edge@ = /Pinball/Edge%.Edge@;
-
-Event@ = /Pinball/Event%.Event@;
-Events = /Pinball/Event%.Events;
-
-Paddle@ = /Pinball/Paddle%.Paddle@;
-
-Num@ = /Pinball/Num%.Num@;
-Sub = /Pinball/Num%.Sub;
-Div = /Pinball/Num%.Div;
-Le = /Pinball/Num%.Le;
-Int = /Pinball/Num%.Int;
-
-Vec@ = /Pinball/Vec%.Vec@;
-AddV = /Pinball/Vec%.AddV;
-MulVS = /Pinball/Vec%.MulVS;
 
 Num@ 0 = Int|0;
 Num@ 1 = Int|1;

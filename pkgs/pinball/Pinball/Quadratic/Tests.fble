@@ -1,35 +1,19 @@
 
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+True, False .= /Std/Bool%;
+OnAscii .= /Std/Char/Ascii%;
+Format .= /Std/Char/Ascii/Stream%;
+Eq@ .= /Std/Eq%;
+AssertEquals .= /Std/Eq/Assert%;
+Lazy .= /Std/Lazy%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Show@ .= /Std/Show%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
-Eq@ = /Std/Eq%.Eq@;
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-List = /Std/List%.List;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Neg = /Pinball/Num%.Neg;
-Int = /Pinball/Num%.Int;
-
-Quadratic@ = /Pinball/Quadratic%.Quadratic@;
-Roots@ = /Pinball/Quadratic%.Roots@;
-Roots = /Pinball/Quadratic%.Roots;
-
-Show@ = /Std/Show%.Show@;
-
-Str = /Std/Char/Ascii%.Str;
-Format = /Std/Char/Ascii/Stream%.Format;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-
-Unit@ = /Std/Unit%.Unit@;
-
-_ = /Pinball/Quadratic/Show%;
+Neg, Int .= /Pinball/Num%;
+Quadratic@, Roots@, Roots .= /Pinball/Quadratic%;
 
 Eq@<Roots@> EqRoots = (Roots@ a, Roots@ b) {
   /Pinball/Num%.Eq(a.first, b.first).?(false: False);
@@ -41,10 +25,11 @@ Show@<Roots@> ShowRoots = (Roots@ r) {
   Format|'(%s,%s)'[/Pinball/Num%.Show(r.first), /Pinball/Num%.Show(r.second)];
 };
 
-Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
-  Test(Str|'Roots Basic', (Unit@ _) {
+Test@ Tests = TestSuite|Quadratic[
+  Test|'Roots Basic'({
     # Roots of (x - 4) * (x - 2) should be 2 and 4.
     # x^2 - 6x + 8
+    Unit@ _ := Lazy;
     Quadratic@ q = Quadratic@(Int|1, Neg(Int|6), Int|8);
     Maybe@<Roots@> want = Just(Roots@(Int|2, Int|4));
     Maybe@<Roots@> got = Roots(q);
@@ -53,9 +38,10 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
       want, got);
   }),
 
-  Test(Str|'Roots Same', (Unit@ _) {
+  Test|'Roots Same'({
     # Roots of (x - 2) * (x - 2) should be 2 and 2.
     # x^2 - 4x + 4
+    Unit@ _ := Lazy;
     Quadratic@ q = Quadratic@(Int|1, Neg(Int|4), Int|4);
     Maybe@<Roots@> want = Just(Roots@(Int|2, Int|2));
     Maybe@<Roots@> got = Roots(q);
@@ -64,8 +50,9 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
       want, got);
   }),
 
-  Test(Str|'Roots None', (Unit@ _) {
+  Test|'Roots None'({
     # x^2 + 1 has no roots.
+    Unit@ _ := Lazy;
     Quadratic@ q = Quadratic@(Int|1, Int|0, Int|1);
     Maybe@<Roots@> want = Nothing<Roots@>;
     Maybe@<Roots@> got = Roots(q);
@@ -74,8 +61,9 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
       want, got);
   }),
 
-  Test(Str|'Roots Linear', (Unit@ _) {
+  Test|'Roots Linear'({
     # (x-1), we'll have two roots, 1 and 1?
+    Unit@ _ := Lazy;
     Quadratic@ q = Quadratic@(Int|0, Int|1, Neg(Int|1));
     Maybe@<Roots@> want = Just(Roots@(Int|1, Int|1));
     Maybe@<Roots@> got = Roots(q);
@@ -84,8 +72,9 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
       want, got);
   }),
 
-  Test(Str|'Roots Constant', (Unit@ _) {
+  Test|'Roots Constant'({
     # 1 has no roots.
+    Unit@ _ := Lazy;
     Quadratic@ q = Quadratic@(Int|0, Int|0, Int|1);
     Maybe@<Roots@> want = Nothing<Roots@>;
     Maybe@<Roots@> got = Roots(q);
@@ -93,6 +82,6 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
       /Std/Maybe/Eq%.Eq(EqRoots), /Std/Maybe/Show%.Show(ShowRoots),
       want, got);
   })
-]);
+];
 
 @(Tests);

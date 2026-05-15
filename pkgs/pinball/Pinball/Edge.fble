@@ -1,14 +1,10 @@
 
-Num@ = /Pinball/Num%.Num@;
+Format .= /Std/Char/Ascii/Stream%;
+Show@ .= /Std/Show%;
 
-Vec@ = /Pinball/Vec%.Vec@;
-SubV = /Pinball/Vec%.SubV;
-Magnitude = /Pinball/Vec%.Magnitude;
-Normalize = /Pinball/Vec%.Normalize;
+Num@ .= /Pinball/Num%;
+Vec@, SubV, Magnitude, Normalize .= /Pinball/Vec%;
 
-Show@ = /Std/Show%.Show@;
-
-Format = /Std/Char/Ascii/Stream%.Format;
 
 # Edge@ --
 #   Internal representation for a stationary edge.

@@ -1,50 +1,33 @@
 
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-Lazy@ .= /Std/Lazy%;
+Ascii@, OnAscii, Str .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Lazy@, Lazy .= /Std/Lazy%;
 List@, List, Empty .= /Std/List%;
-
-Num@ = /Pinball/Num%.Num@;
-Neg = /Pinball/Num%.Neg;
-Int = /Pinball/Num%.Int;
-Sub = /Pinball/Num%.Sub;
-Div = /Pinball/Num%.Div;
-
-Ball@ = /Pinball/Ball%.Ball@;
-
-Edge@ = /Pinball/Edge%.Edge@;
-Edge = /Pinball/Edge%.Edge;
-
-Paddle@ = /Pinball/Paddle%.Paddle@;
-Paddle = /Pinball/Paddle%.Paddle;
-
-World@ = /Pinball/World%.World@;
-Tick = /Pinball/World%.Tick;
-
-Vec@ = /Pinball/Vec%.Vec@;
-
-Ascii@, Str .= /Std/Char/Ascii%;
-
-Test@, TestResult@, Test, TestSuite .= /Std/Test%;
-
+Test@, TestResult@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 Unit@, Unit .= /Std/Unit%;
 
-# Import to test compilation.
-_ = /Pinball/AppIO%;
-_ = /Pinball/Bench%;
-_ = /Pinball/Circle%;
+Ball@ .= /Pinball/Ball%;
+Edge@, Edge .= /Pinball/Edge%;
+Num@, Neg, Int, Sub, Div .= /Pinball/Num%;
+Paddle@, Paddle .= /Pinball/Paddle%;
+Vec@ .= /Pinball/Vec%;
+World@, Tick .= /Pinball/World%;
+
 
 (List@<Ascii@>, Lazy@<TestResult@>) { TestResult@; }
 ExpectFails = (List@<Ascii@> msg, Lazy@<TestResult@> result) {
   /Std/Test%.ExpectFails(Str(msg), result(Unit));
 };
 
-Test@ Tests = TestSuite(Str|'Pinball', List[
+Test@ Tests = TestSuite|Pinball[
   /Pinball/Rotate/Tests%.Tests,
   /Pinball/Quadratic/Tests%.Tests,
 
-  Test(Str|'Move Ball No Collision', (Unit@ _) {
+  Test|'Move Ball No Collision'({
     # The ball moves freely to the right 10 units per tick.
+    Unit@ _ := Lazy;
     World@ start = @(
       gravity: Vec@(Int|0, Int|0),
       ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0), Int|1),
@@ -59,8 +42,9 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
   
-  Test(Str|'Move Ball Collision', (Unit@ _) {
+  Test|'Move Ball Collision'({
     # The ball moves to the right, hits a wall, then bounces back.
+    Unit@ _ := Lazy;
     World@ start = @(
       gravity: Vec@(Int|0, Int|0),
       ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0), Int|1),
@@ -78,10 +62,11 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
 
-  Test(Str|'Move Ball Avoid Collision', (Unit@ _) {
+  Test|'Move Ball Avoid Collision'({
     # The ball moves to the right, passing beneath a wall.
     # Regression test for when we failed to check collision happens within the
     # bounds of a wall.
+    Unit@ _ := Lazy;
     World@ start = @(
       gravity: Vec@(Int|0, Int|0),
       ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0), Int|1),
@@ -98,8 +83,9 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
 
-  Test(Str|'Stationary Paddle Collision', (Unit@ _) {
+  Test|'Stationary Paddle Collision'({
     # The ball moves down at constant velocity onto a stationary paddle.
+    Unit@ _ := Lazy;
     World@ start = @(
       gravity: Vec@(Int|0, Int|0),
       ball: @(
@@ -124,9 +110,10 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
 
-  Test(Str|'Stationary Paddle Collision Restitution', (Unit@ _) {
+  Test|'Stationary Paddle Collision Restitution'({
     # Test that restitution of the paddle is taken into account during
     # collision.
+    Unit@ _ := Lazy;
     World@ start = @(
       gravity: Vec@(Int|0, Int|0),
       ball: @(
@@ -150,9 +137,10 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
 
-  Test(Str|'Stationary Ball With Paddle', (Unit@ _) {
+  Test|'Stationary Ball With Paddle'({
     # Regression test for a divide by zero that happens if the ball is
     # stationary relative to the paddle.
+    Unit@ _ := Lazy;
     World@ start = @(
       gravity: Vec@(Int|0, Int|0),
       ball: @(
@@ -173,11 +161,12 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
 
-  Test(Str|'End-Stationary Paddle Collision', (Unit@ _) {
+  Test|'End-Stationary Paddle Collision'({
     # The ball moves down at constant velocity onto a paddle that becomes
     # stationary before the ball hits it.
     # This is a regression test for a case where velocity of the paddle was
     # being treated as non-zero in this case.
+    Unit@ _ := Lazy;
     World@ start = @(
       gravity: Vec@(Int|0, Int|0),
       ball: @(
@@ -202,11 +191,12 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
 
-  Test(Str|'Stationary Paddle Non-Collision', (Unit@ _) {
+  Test|'Stationary Paddle Non-Collision'({
     # The ball moves up at constant velocity away from a stationary paddle.
     # The ball starts just within range of the paddle, but that should not be
     # considered a collision because the ball is moving away from the
     # paddle.
+    Unit@ _ := Lazy;
     Num@ e = Div(Int|1, Int|64);
     World@ start = @(
       gravity: Vec@(Int|0, Int|0),
@@ -231,8 +221,9 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
 
-  Test(Str|'Moving Paddle Stationary Ball Collision', (Unit@ _) {
+  Test|'Moving Paddle Stationary Ball Collision'({
     # The paddle moves into a stationary ball.
+    Unit@ _ := Lazy;
     World@ start = @(
       gravity: Vec@(Int|0, Int|0),
       ball: @(
@@ -261,12 +252,13 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
 
-  Test(Str|'Non-centered Paddle Ball Collision', (Unit@ _) {
+  Test|'Non-centered Paddle Ball Collision'({
     # The paddle moves into a moving ball. The start of the paddle
     # position is different from the center.
     # In this case the center of the paddle is directly below the point of
     # collision, so it's as if the ball bounced against a stationary edge in
     # terms of effects on the ball.
+    Unit@ _ := Lazy;
     World@ start = @(
       gravity: Vec@(Int|0, Int|0),
       ball: @(
@@ -293,11 +285,12 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }),
 
-  Test(Str|'Non-centered Paddle Ball Collision Away From Origin', (Unit@ _) {
+  Test|'Non-centered Paddle Ball Collision Away From Origin'({
     # This is the same as the previous test case, except with everything moved
     # away from the origin. Regression test for a case where we were doing
     # things relative to the origin instead of relative to the edge of
     # collision.
+    Unit@ _ := Lazy;
     World@ start = @(
       gravity: Vec@(Int|0, Int|0),
       ball: @(
@@ -323,6 +316,6 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
 
     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   })
-]);
+];
 
 /Std/Test/Cli%.Run(Tests);

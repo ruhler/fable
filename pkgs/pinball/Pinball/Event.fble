@@ -1,14 +1,9 @@
 
-List@ = /Std/List%.List@;
+List@ .= /Std/List%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
 
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Ball@ = /Pinball/Ball%.Ball@;
-
-Num@ = /Pinball/Num%.Num@;
-Lt = /Pinball/Num%.Lt;
+Ball@ .= /Pinball/Ball%;
+Num@, Lt .= /Pinball/Num%;
 
 # Event@ --
 #   An event represents a point in time when something happens.

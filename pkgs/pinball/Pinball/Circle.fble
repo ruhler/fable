@@ -1,21 +1,11 @@
 
-Drawing@ = /App/Drawing%.Drawing@;
-Color@ = /App/Drawing%.Color@;
-Point@ = /App/Drawing%.Point@;
-Blank = /App/Drawing%.Blank;
-Drawings = /App/Drawing%.Drawings;
-Over = /App/Drawing%.Over;
-Rect = /App/Drawing%.Rect;
-Translate = /App/Drawing%.Translate;
+Int@, Add, Incr, Decr, Neg, Mul .= /Std/Int%;
+Lt .= /Std/Int/Cmp%;
+Int .= /Std/Int/Lit%;
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Incr = /Std/Int%.Incr;
-Decr = /Std/Int%.Decr;
-Neg = /Std/Int%.Neg;
-Mul = /Std/Int%.Mul;
-Int = /Std/Int/Lit%.Int;
-Lt = /Std/Int/Cmp%.Lt;
+Drawing@, Color@, Point@, Blank, Drawings, Over,
+Rect, Translate .= /App/Drawing%;
+
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;

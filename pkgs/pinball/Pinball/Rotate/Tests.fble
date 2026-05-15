@@ -1,53 +1,52 @@
 
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
+OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Lazy .= /Std/Lazy%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
-List = /Std/List%.List;
+Neg, Int .= /Pinball/Num%;
+Rotate .= /Pinball/Rotate%;
+Vec@ .= /Pinball/Vec%;
 
-Neg = /Pinball/Num%.Neg;
-Int = /Pinball/Num%.Int;
-Rotate = /Pinball/Rotate%.Rotate;
-Vec@ = /Pinball/Vec%.Vec@;
-
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Test@ Tests = TestSuite(Str|'Rotate', List<Test@>[
-  Test(Str|'Unrotated Q1', (Unit@ _) {
+Test@ Tests = TestSuite|Rotate[
+  Test|'Unrotated Q1'({
     # Rotation a vector by an angle of 0 should not change the vector.
+    Unit@ _ := Lazy;
     Vec@ v = Vec@(Int|2, Int|3);
     Vec@ want = v;
     Vec@ got = Rotate(v, Int|0);
     AssertEquals(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
   }),
 
-  Test(Str|'Unrotated Q2', (Unit@ _) {
+  Test|'Unrotated Q2'({
     # Rotation a vector by an angle of 0 should not change the vector.
+    Unit@ _ := Lazy;
     Vec@ v = Vec@(Neg(Int|2), Int|3);
     Vec@ want = v;
     Vec@ got = Rotate(v, Int|0);
     AssertEquals(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
   }),
 
-  Test(Str|'Unrotated Q3', (Unit@ _) {
+  Test|'Unrotated Q3'({
     # Rotation a vector by an angle of 0 should not change the vector.
+    Unit@ _ := Lazy;
     Vec@ v = Vec@(Neg(Int|2), Neg(Int|3));
     Vec@ want = v;
     Vec@ got = Rotate(v, Int|0);
     AssertEquals(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
   }),
 
-  Test(Str|'Unrotated Q4', (Unit@ _) {
+  Test|'Unrotated Q4'({
     # Rotation a vector by an angle of 0 should not change the vector.
+    Unit@ _ := Lazy;
     Vec@ v = Vec@(Int|2, Neg(Int|3));
     Vec@ want = v;
     Vec@ got = Rotate(v, Int|0);
     AssertEquals(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
   })
-]);
+];
 
 @(Tests);

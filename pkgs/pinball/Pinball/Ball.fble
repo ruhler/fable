@@ -1,18 +1,12 @@
 
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+True, False .= /Std/Bool%;
+Format .= /Std/Char/Ascii/Stream%;
+Eq@ .= /Std/Eq%;
+Show@ .= /Std/Show%;
 
-Eq@ = /Std/Eq%.Eq@;
+Num@ .= /Pinball/Num%;
+Vec@, AddV, MulVS .= /Pinball/Vec%;
 
-Num@ = /Pinball/Num%.Num@;
-
-Vec@ = /Pinball/Vec%.Vec@;
-AddV = /Pinball/Vec%.AddV;
-MulVS = /Pinball/Vec%.MulVS;
-
-Show@ = /Std/Show%.Show@;
-
-Format = /Std/Char/Ascii/Stream%.Format;
 
 # Ball@ --
 #   pos - the position of the center of the ball.

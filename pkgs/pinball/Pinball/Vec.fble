@@ -1,19 +1,10 @@
 
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+True, False .= /Std/Bool%;
+Format .= /Std/Char/Ascii/Stream%;
+Eq@ .= /Std/Eq%;
+Show@ .= /Std/Show%;
 
-Eq@ = /Std/Eq%.Eq@;
-
-Num@ = /Pinball/Num%.Num@;
-Add = /Pinball/Num%.Add;
-Sub = /Pinball/Num%.Sub;
-Mul = /Pinball/Num%.Mul;
-Div = /Pinball/Num%.Div;
-Sqrt = /Pinball/Num%.Sqrt;
-
-Show@ = /Std/Show%.Show@;
-
-Format = /Std/Char/Ascii/Stream%.Format;
+Num@, Add, Sub, Mul, Div, Sqrt .= /Pinball/Num%;
 
 # Vec@ -- 
 #   A 2D vector.

@@ -406,8 +406,8 @@ sat [DONE]
 invaders [DONE]
 md5 [DONE]
 network [DONE]
+pinball [DONE]
 
-pinball
 pprof
 satgame
 
