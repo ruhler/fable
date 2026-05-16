@@ -338,3 +338,143 @@ Or maybe the data types: char, list, maybe, int, string?
 Data types sound reasonable to me. Let me do that. Then I can add list and
 maybe helpers there.
 
+---
+
+* Change IntP Data traversal order to be natural order.
+
+I don't see how this is possible. If I put IntP@ in order, then the order for
+positive integers is 1, 2, 3, ... But the order for negative integers is -1,
+-2, -3, ... when I want -3, -2, -1, ...
+
+Unless we provide two different versions of Data for IntP@? One that goes in
+forward order, the other that goes in reverse order? I guess that's doable.
+
+Um, I need to figure out how to get the IntP@ in the right order first though.
+
+Raw sequence:
+ 1, 10, 11, 100, 101, 110, 111, ...
+
+They all start with '1', so we can remove that first bit and make it implicit:
+ '', 0, 1, 00, 01, 10, 11, ...
+
+But we need to encode explicitly if there are more bits coming or not:
+ 0, 10, 11, 1010, 1011, 1110, 1111, ...
+
+Are these in order? No. They aren't. Look:
+  1011 < 11
+
+Try again then. Raw sequence, but in a lexicographical order:
+
+ 1, 10, 11, 110, 111, 1110, 1111, 11110, 11111, ...
+
+This doesn't feel like a very efficient encoding. It's a unary encoding of the
+sub number followed by bit 0 or 1, right?
+
+ 11110 is 2*4 + 0
+ 11111 is 2*4 + 1
+
+I'm not sure it's worth putting things in the order you want.
+
+Could we do something crazy, like write a number, then tell you if that's the
+number of bits of the final number, or if that's the number of bits telling us
+the next number of bits? Climb up, getting the number of bits in binary, and
+then read those bits to get the final number?
+
+Say we initialize a state to 1. Then we have a little program. The program has
+the following instructions:
+* A: read S bits, that's your final number.
+* B: read S bits, that's your new state. Continue processing.
+
+Except, we don't have a way to increase bits if we start with 1. It needs to
+start with at least 2 so we can go from there to 3? Or the update function for
+B has to be different:
+
+If we are at S bits, we can encode any number that takes 2^S - 1 bits. For
+example, say my state is 4. Then I can read any number from 0 to 15. If that's
+not enough, then I get a number of bits from 0 to 15. I know I want more than
+4 bits, so instead make the range [5, 20].
+
+So my parser program becomes:
+
+Given state S, initialized to 1:
+* A: Return Read(S);
+* B: S += Read(S); Continue;
+
+And because we are talking positive numbers here, we can define Read(S) as
+reading the sequence of bits, interpreting it as a positive number, and adding
+1.
+
+So, I would encode numbers as follows:
+
+1: A0
+2: A1
+3: B...
+
+Why make this so complicated? How about just have 'B' double S?
+
+Given state S, initialized to 1:
+* A: Return Read(S);
+* B: S *= 2; Continue;
+
+1: A1
+2: BA10
+3: BA11
+4: BBA100
+5: BBA101
+6: BBA110
+7: BBA111
+...
+
+So, better than unary, because we are doubling S at each point.
+
+But also, notice the first bit after A is always 1, so we can get rid of that
+to save some space.
+
+1: A
+2: BA0
+3: BA1
+4: BBA00
+5: BBA01
+6: BBA10
+7: BBA11
+...
+
+Now encode B as A as 0 and B as 1:
+
+1: 0
+2: 100
+3: 101
+4: 11000
+5: 11001
+6: 11010
+7: 11011
+...
+
+Wait. If I'm doubling S instead of adding 1, then it should be:
+
+1: A1          S = 1
+2: BA10        S = 2
+3: BA11
+4: BBA0100
+5: BBA0101
+6: BBA0110
+7: BBA0111
+8: ...
+
+The point is, I should be subtracting out however many values we can capture
+with the previous S.
+
+I can worry about that minor optimization later though.
+
+So, we read a unary number N. We do 2^N. That tells us how many bits we need.
+We read that many bits to get our value.
+
+I can do a unary number as raw 0, 1. I can do binary that way too. Cool. This
+feels pretty efficient. Perhaps more efficient than I currently have, and with
+the benefit of being in order.
+
+Let me get positive numbers first. I'll worry about how to go the opposite
+order later.
+
+Um... It's easier to do S++ instead of S*=2 for the initial implementation.
+Let me try that.

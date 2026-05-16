@@ -5,10 +5,57 @@
 
 Data@, Bit@, 0, 1 .= /Std/Data%;
 IntP@ .= /Std/Int/IntP%;
+Stream@ .= /Std/Stream%;
 
 # @func[Data] Convert an IntP@ to a data bit stream.
+#  The lexicographical order of the generated bit streams matches the natural
+#  order for integers.
+#
 #  @arg[IntP@][x] The integer to convert.
 #  @returns[Stream@<Bit@>] The stream of bits describing the IntP@.
+Data@<IntP@> _Data = {
+  # Encode our integer as unary number N followed by N bits describing the
+  # actual integer value without the leading most significant bit. So:
+  #
+  # 1: 0  
+  # 2: 10 0
+  # 3: 10 1
+  # 4: 110 00
+  # 5: 110 01
+  # 6: 110 10
+  # 7: 110 11
+  #
+  # And so on.
+  #
+  # TODO: Consider a more compact representation where we do a unary number N
+  # followed by 2^N bits of data rather than N bits of data.
+
+  # Compute the number of bits N needed to encode x. Output that number N
+  # using a unary encoding: 0, 10, 110, 1110, ...
+  (IntP@) { Stream@<Bit@>; }
+  NumBits = (IntP@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
+    x.?(
+      1: put(0, return),
+      2p0: put(1, NumBits(x.2p0, return, put)),
+      2p1: put(1, NumBits(x.2p1, return, put)));
+  };
+
+  # Output the raw bits of the number in order, not including the most
+  # significant bit.
+  (IntP@) { Stream@<Bit@>; }
+  RawBits = (IntP@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
+    x.?(
+      1: return,
+      2p0: RawBits(x.2p0, put(0, return), put),
+      2p1: RawBits(x.2p1, put(1, return), put));
+  };
+
+  (IntP@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
+    RawBits(x, NumBits(x, return, put), put);
+  };
+};
+
+# TODO: Use the optimize version when we get it working.
 Data@<IntP@>
 Data = (IntP@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
   x.?(1: put(0, put(0, return)),

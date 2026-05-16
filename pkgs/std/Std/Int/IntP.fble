@@ -31,11 +31,23 @@ IntP@ 5 = IntP@(2p1: 2);
 #  @type[IntP@]
 IntP@ 10 = IntP@(2p0: 5);
 
-# @func[Add1] Adds 1 to a value. x + 1.
+# @func[Incr] Adds 1 to a value. x + 1.
 #  @arg[IntP@][x] The value to add 1 to.
 #  @returns[IntP@] One more than @a[x].
-(IntP@) { IntP@; } Add1 = (IntP@ x) {
-  x.?(1: 2, 2p0: IntP@(2p1: x.2p0), 2p1: IntP@(2p0: Add1(x.2p1)));
+(IntP@) { IntP@; } Incr = (IntP@ x) {
+  x.?(1: 2, 2p0: IntP@(2p1: x.2p0), 2p1: IntP@(2p0: Incr(x.2p1)));
+};
+
+# @func[Decr] Saturating decrement.
+#  @arg[IntP@][x] The number to decrement.
+#  @returns[IntP@] max(1, x - 1);
+(IntP@) { IntP@; } Decr = (IntP@ x) {
+  x.?(1: 1,
+      2p0: {
+        x.2p0.?(1: 1);
+        IntP@(2p1: Decr(x.2p0));
+      },
+      2p1: IntP@(2p0: x.2p1));
 };
 
 # @func[Add] Integer addition. a + b.
@@ -44,15 +56,15 @@ IntP@ 10 = IntP@(2p0: 5);
 #  @returns[IntP@] The sum of @a[a] and @a[b].
 (IntP@, IntP@) { IntP@; } Add = (IntP@ a, IntP@ b) {
   a.?(
-    1: Add1(b),
+    1: Incr(b),
     2p0: b.?(
       1: IntP@(2p1: a.2p0), 
       2p0: IntP@(2p0: Add(a.2p0, b.2p0)),
       2p1: IntP@(2p1: Add(a.2p0, b.2p1))),
     2p1: b.?(
-      1: IntP@(2p0: Add1(a.2p1)),
+      1: IntP@(2p0: Incr(a.2p1)),
       2p0: IntP@(2p1: Add(a.2p1, b.2p0)),
-      2p1: IntP@(2p0: Add1(Add(a.2p1, b.2p1)))));
+      2p1: IntP@(2p0: Incr(Add(a.2p1, b.2p1)))));
 };
 
 # @func[Mul] Integer multiplication. a * b.
@@ -82,4 +94,4 @@ IntP@ 10 = IntP@(2p0: 5);
     2p1: Mul(2, Exp2(IntP@(2p0: a.2p1))));
 };
 
-@(IntP@, 1, 10, Add, Add1, Mul, Exp2).%(@/Std/Int%);
+@(IntP@, 1, 10, Incr, Decr, Add, Mul, Exp2).%(@/Std/Int%);

@@ -1,5 +1,5 @@
 
-OnAscii, Str .= /Std/Char/Ascii%;
+OnAscii .= /Std/Char/Ascii%;
 Const .= /Std/Func%;
 Int@, Decr .= /Std/Int%;
 IsNegative .= /Std/Int/Sign%;

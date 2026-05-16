@@ -2,6 +2,11 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Make my useful ExpectFails part of the standard library somehow.
+
+* Change IntP Data traversal order to be natural order.
+  Fix failing test case.
+
 * Add section of module imports to tutorials/Features.fbld?
 * Add section of pattern matching to tutorials/Features.fbld?
 
@@ -22,7 +27,6 @@ Things to consider doing for the fble-0.6 release.
   Or keep it, as a convenient way to do a sequence of nested function
   application?
 
-* Change IntP Data traversal order to be natural order.
 
 * Figure out why we don't propagate an error
  - If /Core/Map/Data% Delete function is left undefined.
