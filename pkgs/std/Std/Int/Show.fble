@@ -2,34 +2,27 @@
 #  The Show@ instance for Int@.
 
 Char@ .= /Std/Char%;
+Str .= /Std/Char/Ascii%;
 Format, String .= /Std/Char/Ascii/Stream%;
 Int@, Neg .= /Std/Int%;
-Eq .= /Std/Int/Eq%;
 Int .= /Std/Int/Lit%;
 Sgn .= /Std/Int/Sign%;
 QR@, Div .= /Std/Int/Div%;
+Get .= /Std/List/Index%;
 Show@ .= /Std/Show%;
-Stream@, Do, Return .= /Std/Stream%;
+Do, Return, Put .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
+
+Int@ 10 = Int|10;
 
 # Show an int value in the range [0-9].
 Show@<Int@> Digit = (Int@ x) {
-  Eq(x, Int|0).?(true: String|0);
-  Eq(x, Int|1).?(true: String|1);
-  Eq(x, Int|2).?(true: String|2);
-  Eq(x, Int|3).?(true: String|3);
-  Eq(x, Int|4).?(true: String|4);
-  Eq(x, Int|5).?(true: String|5);
-  Eq(x, Int|6).?(true: String|6);
-  Eq(x, Int|7).?(true: String|7);
-  Eq(x, Int|8).?(true: String|8);
-  Eq(x, Int|9).?(true: String|9);
-  /Std/Undef%.Undef.undef<Stream@<Char@>>;
+  Put(Get(Str|0123456789, x));
 };
 
 # Show a positive integer.
 Show@<Int@> Positive = (Int@ x) {
-  QR@ qr = Div(x, Int|10);
+  QR@ qr = Div(x, 10);
   Unit@ _ := Do(qr.q.?(0: Return<Char@>, : Positive(qr.q)));
   Digit(qr.r);
 };
