@@ -1,9 +1,30 @@
 
-OnAscii .= /Std/Char/Ascii%;
+Char@ .= /Std/Char%;
+OnAscii, Str .= /Std/Char/Ascii%;
+String .= /Std/Char/Ascii/Stream%;
+AssertEquals .= /Std/Eq/Assert%;
+Lazy .= /Std/Lazy%;
+Items, Empty .= /Std/List%;
+Stream@, ForEach .= /Std/Stream%;
+String@ .= /Std/String%;
 Test@ .= /Std/Test%;
 TestSuite = OnAscii(/Std/Test%.TestSuite);
+Test = OnAscii(/Std/Test%.Test);
+Unit@ .= /Std/Unit%;
 
 Test@ Tests = TestSuite|Stream[
+  Test|ForEach({
+    Unit@ _ := Lazy;
+    Stream@<Char@> stream = String|hello;
+
+    # If we iterate in order, it should have the effect of reversing the
+    # string, because earlier items in the input string are closer to the end
+    # of the output string.
+    String@ got = ForEach(stream, Empty<Char@>, Items<Char@>);
+    String@ wnt = Str|olleh;
+    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+  }),
+
   /Std/Stream/Debug/Tests%.Tests,
   /Std/Stream/Null/Tests%.Tests
 ];
