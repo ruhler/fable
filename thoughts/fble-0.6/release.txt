@@ -478,3 +478,36 @@ order later.
 
 Um... It's easier to do S++ instead of S*=2 for the initial implementation.
 Let me try that.
+
+It appears not to be working. Can I figure out what I did wrong? How do I
+debug this?
+
+Silly error. Fixed now. We're getting good order for positive integers. Now I
+just need to handle the reverse order somehow. Should be straight forward I
+think?
+
+Yeah, easy. I can literally just flip bits and reuse the same implementation.
+Awesome.
+
+Let's see how this impacts our benchmark time. I'm thinking it might be a more
+efficient encoding than we had before, so could have reduced the time
+noticeably from the 1:40 ish time we had before.
+
+Time: 1:43.90
+Memory: 82024
+
+Oh well. Small regression. But at least things are in order now. And I have
+that idea still for how to make it more compact.
+
+Actually, probably it doesn't help. If it makes the code more complex, not
+worth it?
+
+My encoding size today for an N bit integer:
+* 2*N - 1 bits.
+
+My encoding size if I switch it up as planned:
+* We get log the number of bits counting number of bits.
+* But we get double the number of bits with the actual bits.
+
+Yeah, not worth it.
+

@@ -4,9 +4,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Make my useful ExpectFails part of the standard library somehow.
 
-* Change IntP Data traversal order to be natural order.
-  Fix failing test case.
-
 * Add section of module imports to tutorials/Features.fbld?
 * Add section of pattern matching to tutorials/Features.fbld?
 

@@ -13,7 +13,7 @@ Stream@ .= /Std/Stream%;
 #
 #  @arg[IntP@][x] The integer to convert.
 #  @returns[Stream@<Bit@>] The stream of bits describing the IntP@.
-Data@<IntP@> _Data = {
+Data@<IntP@> Data = {
   # Encode our integer as unary number N followed by N bits describing the
   # actual integer value without the leading most significant bit. So:
   #
@@ -26,9 +26,6 @@ Data@<IntP@> _Data = {
   # 7: 110 11
   #
   # And so on.
-  #
-  # TODO: Consider a more compact representation where we do a unary number N
-  # followed by 2^N bits of data rather than N bits of data.
 
   # Compute the number of bits N needed to encode x. Output that number N
   # using a unary encoding: 0, 10, 110, 1110, ...
@@ -51,16 +48,21 @@ Data@<IntP@> _Data = {
   };
 
   (IntP@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
-    RawBits(x, NumBits(x, return, put), put);
+    NumBits(x, RawBits(x, return, put), put);
   };
 };
 
-# TODO: Use the optimize version when we get it working.
-Data@<IntP@>
-Data = (IntP@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
-  x.?(1: put(0, put(0, return)),
-    2p0: put(0, put(1, Data(x.2p0, return, put))),
-    2p1: put(1, Data(x.2p1, return, put)));
+# @func[DataR] Convert an IntP@ to a reverse ordered data bit stream.
+#  The lexicographical order of the generated bit streams is the reverse of
+#  the natural order for integers.
+#
+#  @arg[IntP@][x] The integer to convert.
+#  @returns[Stream@<Bit@>] The stream of bits describing the IntP@.
+Data@<IntP@> DataR = (IntP@ x)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
+  # Same encoding as forward, but flip the bits 0 to 1 and 1 to 0 so it comes
+  # out in the opposite order.
+  Bit@ b, S@ s := Data(x, return);
+  put(b.?(0: 1, 1: 0), s);
 };
 
-@(Data).%(@/Std/Int%);
+@(Data, DataR).%(@/Std/Int%);
