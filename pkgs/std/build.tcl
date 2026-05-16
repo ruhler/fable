@@ -4,7 +4,7 @@ namespace eval "pkgs/std" {
 
   # .c library files.
   set objs [list]
-  foreach {x} { char.fble cli.fble debug.fble env.fble int.fble io.fble stdio.fble string.fble } {
+  foreach {x} { cli.fble data.fble debug.fble env.fble io.fble stdio.fble } {
     lappend objs $::b/pkgs/std/$x.o
     obj $::b/pkgs/std/$x.o $::s/pkgs/std/$x.c \
       "-I $::s/include -I $::s/pkgs/std -I $::s/out/pkgs/std" \

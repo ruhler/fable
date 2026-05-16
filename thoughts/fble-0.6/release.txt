@@ -326,3 +326,15 @@ can decide to relax the spec later on if I find motivation to do so.
 ---
 
 Spec is cleaned up. I should now feel free to redo the tutorials.
+
+---
+
+* Clean up std native code
+
+Should I group stuff together? char, debug, list, maybe, env, int?
+
+Or maybe the data types: char, list, maybe, int, string?
+
+Data types sound reasonable to me. Let me do that. Then I can add list and
+maybe helpers there.
+

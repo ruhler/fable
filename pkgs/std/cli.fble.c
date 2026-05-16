@@ -15,13 +15,11 @@
 
 #include "fble-cli.usage.h"        // for fbldUsageHelpText
 
-#include "char.fble.h"          // for FbleCharValueAccess
+#include "data.fble.h"          // for FbleCharValueAccess, etc.
 #include "debug.fble.h"         // for /Std/Stream/Debug%
 #include "env.fble.h"           // for /Std/Io/Env%
-#include "int.fble.h"           // for FbleNewIntValue, FbleIntValueAccess
 #include "io.fble.h"            // for FbleIoM
 #include "stdio.fble.h"         // for /Std/Io/File/Internal%
-#include "string.fble.h"        // for FbleNewStringValue, FbleStringValueAccess
 
 #define LIST_TAGWIDTH 1
 

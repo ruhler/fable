@@ -12,9 +12,7 @@
 #include <fble/fble-alloc.h>  // for FbleFree
 #include <fble/fble-value.h>  // for FbleValue, etc.
 
-#include "char.fble.h"        // for FbleNewCharValue, FbleCharValueAccess
-#include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
-#include "string.fble.h"      // for FbleNewStringValue, FbleStringValueAccess
+#include "data.fble.h"        // for FbleNewCharValue, etc.
 
 #define MAYBE_TAGWIDTH 1
 

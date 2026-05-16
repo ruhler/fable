@@ -10,7 +10,7 @@
 #include <fble/fble-function.h>
 #include <fble/fble-value.h>         // for FbleValue, etc.
 
-#include "char.fble.h"               // for FbleCharValueAccess
+#include "data.fble.h"               // for FbleCharValueAccess
 
 /**
  * @func[PutChar] FbleRunFunction for PutChar foreign function.

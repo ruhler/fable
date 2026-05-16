@@ -18,12 +18,10 @@
 #include <fble/fble-vector.h>      // for FbleInitVector, etc.
 #include <fble/fble-version.h>     // for FblePrintVersion
 
-#include "char.fble.h"             // for FbleCharValueAccess
+#include "data.fble.h"             // for FbleCharValueAccess, etc.
 #include "debug.fble.h"            // for /Std/Stream/Debug% FFI
 #include "env.fble.h"              // for /Std/Io/Env%.GetEnv
-#include "int.fble.h"              // for FbleNewIntValue, FbleIntValueAccess
 #include "io.fble.h"               // for FbleIoM
-#include "string.fble.h"           // for FbleStringValueAccess
 #include "stdio.fble.h"            // for /Std/Io/File/Internal%
 #include "cli.fble.h"              // for FbleCliArgs, etc.
 

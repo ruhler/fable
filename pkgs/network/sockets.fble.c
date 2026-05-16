@@ -59,8 +59,7 @@ void Write(SOCKET sfd, char c)
 #include <fble/fble-alloc.h>      // for FbleFree
 #include <fble/fble-value.h>      // for FbleValue, etc.
 
-#include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
-#include "string.fble.h"      // for FbleStringValueAccess
+#include "data.fble.h"            // for FbleNewIntValue, etc.
 
 #define MAYBE_TAGWIDTH 1
 

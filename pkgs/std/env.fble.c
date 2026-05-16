@@ -12,7 +12,7 @@
 #include <fble/fble-function.h>
 #include <fble/fble-value.h>         // for FbleValue, etc.
 
-#include "string.fble.h"             // For FbleNewStringValue.
+#include "data.fble.h"               // For FbleNewStringValue.
 
 #define MAYBE_TAGWIDTH 1
 
