@@ -16,8 +16,10 @@ Test@ Tests = TestSuite|Ascii[
       Char|a, Ascii.nl,
       Char|b, Ascii.tab,
       Char|c, Char|'\',
-      Char|d, Char|e, Char|f];
-    String@ got = StrE|'a\nb\tc\\d\u65;f';
+      Char|d, Char|e, Char|f,
+      Char|'''', Char|g
+    ];
+    String@ got = StrE|'a\nb\tc\\d\u65;f\qg';
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   })
 ];
