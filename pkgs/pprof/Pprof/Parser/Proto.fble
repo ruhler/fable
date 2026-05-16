@@ -1,41 +1,20 @@
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Mul = /Std/Int%.Mul;
-Incr = /Std/Int%.Incr;
-Decr = /Std/Int%.Decr;
-
-Eq = /Std/Int/Eq%.Eq;
-Lt = /Std/Int/Cmp%.Lt;
-Gt = /Std/Int/Cmp%.Gt;
-
-Int = /Std/Int/Lit%.Int;
-IsZero = /Std/Int/Sign%.IsZero;
-
-QR@ = /Std/Int/Div%.QR@;
-Div = /Std/Int/Div%.Div;
-
-List@ = /Std/List%.List@;
-Empty = /Std/List%.Empty;
-Items = /Std/List%.Items;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-
-Monad@ = /Std/Monad%.Monad@;
-
+Str .= /Std/Char/Ascii%;
+Format .= /Std/Char/Ascii/Stream%;
+Int@, Add, Sub, Mul, Incr, Decr .= /Std/Int%;
+Lt, Gt .= /Std/Int/Cmp%;
+QR@, Div .= /Std/Int/Div%;
+Eq .= /Std/Int/Eq%;
+Int .= /Std/Int/Lit%;
+IsZero .= /Std/Int/Sign%;
+List@, Empty, Items .= /Std/List%;
+Maybe@ .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
 In@ .= /Std/Stream/Io%;
+String@ .= /Std/String%;
+Unit@, Unit .= /Std/Unit%;
 
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-Format = /Std/Char/Ascii/Stream%.Format;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Result@ = /Pprof/Result%.Result@;
-Okay = /Pprof/Result%.Okay;
-Error = /Pprof/Result%.Error;
+Result@, Okay, Error .= /Pprof/Result%;
 
 Int@ 0 = Int|0;
 Int@ 4 = Int|4;

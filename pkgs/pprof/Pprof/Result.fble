@@ -1,11 +1,11 @@
 
 False .= /Std/Bool%;
 Char@ .= /Std/Char%;
+Format .= /Std/Char/Ascii/Stream%;
 Eq@ .= /Std/Eq%;
 Show@ .= /Std/Show%;
 Stream@ .= /Std/Stream%;
 ToString .= /Std/Stream/String%;
-Format .= /Std/Char/Ascii/Stream%;
 
 Result@ = <@ A@> {
   +(A@ ok, Stream@<Char@> error);

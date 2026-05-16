@@ -1,14 +1,11 @@
 
-List = /Std/List%.List;
+OnAscii .= /Std/Char/Ascii%;
+Test@ .= /Std/Test%;
+TestSuite = OnAscii(/Std/Test%.TestSuite);
 
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-TestSuite = /Std/Test%.TestSuite;
-
-Test@ Tests = TestSuite(Str|Pprof, List[
+Test@ Tests = TestSuite|Pprof[
   /Pprof/Parser/Tests%.Tests,
   /Pprof/Query/Tests%.Tests
-]);
+];
 
 /Std/Test/Cli%.Run(Tests);

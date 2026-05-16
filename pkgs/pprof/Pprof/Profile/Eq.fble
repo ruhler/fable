@@ -1,16 +1,9 @@
 
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+True, False .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
 
-Eq@ = /Std/Eq%.Eq@;
-
-BlockId@ = /Pprof/Profile%.BlockId@;
-Block@ = /Pprof/Profile%.Block@;
-Blocks@ = /Pprof/Profile%.Blocks@;
-Sequence@ = /Pprof/Profile%.Sequence@;
-Metrics@ = /Pprof/Profile%.Metrics@;
-Sample@ = /Pprof/Profile%.Sample@;
-Profile@ = /Pprof/Profile%.Profile@;
+BlockId@, Block@, Blocks@, Sequence@, Metrics@,
+Sample@, Profile@ .= /Pprof/Profile%;
 
 Eq@<BlockId@> BlockId = /Std/Int/Eq%.Eq;
 

@@ -1,12 +1,9 @@
 
-Int@ = /Std/Int%.Int@;
+Int@ .= /Std/Int%;
+Last .= /Std/List%;
 
-Last = /Std/List%.Last;
-
-Metrics@ = /Pprof/Profile%.Metrics@;
-
-Entry@ = /Pprof/Query%.Entry@;
-Table@ = /Pprof/Query%.Table@;
+Metrics@ .= /Pprof/Profile%;
+Entry@, Table@ .= /Pprof/Query%;
 
 # Get's the default metric value.
 # Currently hard coded to the last.

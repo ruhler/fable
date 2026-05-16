@@ -1,31 +1,16 @@
 
-Int@ = /Std/Int%.Int@;
-Incr = /Std/Int%.Incr;
-Int = /Std/Int/Lit%.Int;
+Str .= /Std/Char/Ascii%;
+Int@, Incr .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+List@, Empty, Items, Append, Reverse, Concat .= /Std/List%;
+Monad@ .= /Std/Monad%;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
 
-List@ = /Std/List%.List@;
-Empty = /Std/List%.Empty;
-Items = /Std/List%.Items;
-Append = /Std/List%.Append;
-Reverse = /Std/List%.Reverse;
-Concat = /Std/List%.Concat;
-
-Monad@ = /Std/Monad%.Monad@;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Unit@ = /Std/Unit%.Unit@;
+Sample@, Sequence@  .= /Pprof/Profile%;
+Proto@, FieldId@, Payload@, Record@ .= /Pprof/Parser/Proto%;
 
 Map = /Std/Map%.Of(/Std/Int/Data%.Data);
-
-Sample@ = /Pprof/Profile%.Sample@;
-Sequence@ = /Pprof/Profile%.Sequence@;
-
-Proto@ = /Pprof/Parser/Proto%.Proto@;
-FieldId@ = /Pprof/Parser/Proto%.FieldId@;
-Payload@ = /Pprof/Parser/Proto%.Payload@;
-Record@ = /Pprof/Parser/Proto%.Record@;
 
 Int@ 0 = Int|0;
 

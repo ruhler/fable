@@ -1,19 +1,11 @@
 
-Bool@ = /Std/Bool%.Bool@;
-False = /Std/Bool%.False;
-True = /Std/Bool%.True;
+Bool@, True, False .= /Std/Bool%;
+Int@, Add .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+StartsWith .= /Std/List/Eq%;
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Int = /Std/Int/Lit%.Int;
-
-StartsWith = /Std/List/Eq%.StartsWith;
-
-Sample@ = /Pprof/Profile%.Sample@;
-Sequence@ = /Pprof/Profile%.Sequence@;
-Profile@ = /Pprof/Profile%.Profile@;
-
-MetricOf = /Pprof/Query/Util%.MetricOf;
+Sample@, Sequence@, Profile@ .= /Pprof/Profile%;
+MetricOf .= /Pprof/Query/Util%;
 
 # Returns the total number of samples in a profile.
 (Profile@) { Int@; }

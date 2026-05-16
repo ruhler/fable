@@ -1,39 +1,21 @@
 
-Char@ = /Std/Char%.Char@;
-Char = /Std/Char/Ascii%.Char;
+Char@ .= /Std/Char%;
+OnAscii, Str, Char .= /Std/Char/Ascii%;
 Eq .= /Std/Char/Eq%;
-
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Mul = /Std/Int%.Mul;
-Int = /Std/Int/Lit%.Int;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-
+AssertEquals .= /Std/Eq/Assert%;
+Int@, Add, Mul .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+List@, List, Items, Empty .= /Std/List%;
 In@ .= /Std/Stream/Io%;
+String@ .= /Std/String%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-
-Unit@ = /Std/Unit%.Unit@;
-
-BlockId@ = /Pprof/Profile%.BlockId@;
-Block@ = /Pprof/Profile%.Block@;
-Blocks@ = /Pprof/Profile%.Blocks@;
-Profile@ = /Pprof/Profile%.Profile@;
-Blocks = /Pprof/Profile%.Blocks;
-
-Result@ = /Pprof/Result%.Result@;
-Okay = /Pprof/Result%.Okay;
+BlockId@, Block@, Blocks@, Profile@, Blocks .= /Pprof/Profile%;
+Result@, Okay .= /Pprof/Result%;
 
 # Hex byte encoding of the fble-pprof-test output profile.
 String@ HexEncoded = Str|'
@@ -122,8 +104,9 @@ Profile@ Parsed = @(
     @(sequence: List[Int|1, Int|2, Int|3, Int|4], values: List[Int|1, Int|10]),
     @(sequence: List[Int|1, Int|2, Int|4], values: List[Int|1, Int|20])]);
 
-Test@ Tests = TestSuite(Str|Parser, List[
-  Test(Str|Basic, (Unit@ _) {
+Test@ Tests = TestSuite|Parser[
+  Test|Basic({
+    Unit@ _ := Lazy;
     M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<List@<Int@>>;
     In@<Int@, M@> in = /Std/Stream/State%.In(M, S);
 
@@ -134,6 +117,6 @@ Test@ Tests = TestSuite(Str|Parser, List[
       /Pprof/Result%.Show(/Pprof/Profile/Show%.Profile),
       wnt, got);
   })
-]);
+];
 
 @(Tests);

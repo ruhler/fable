@@ -1,72 +1,32 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-
+Bool@, True, False .= /Std/Bool%;
 Char@, Pos .= /Std/Char%;
-Char = /Std/Char/Ascii%.Char;
-Out@ .= /Std/Stream/Io%;
-GetLine .= /Std/Stream/String%;
-
-Main@ = /Std/Io/Cli%.Main@;
-Success = /Std/Io/Cli%.Success;
-Failure = /Std/Io/Cli%.Failure;
-
-Int@ = /Std/Int%.Int@;
-Mul = /Std/Int%.Mul;
-
-Ge = /Std/Int/Cmp%.Ge;
-
-QR@ = /Std/Int/Div%.QR@;
-Div = /Std/Int/Div%.Div;
-
-Int = /Std/Int/Lit%.Int;
-
-List@ = /Std/List%.List@;
-List = /Std/List%.List;
-Last = /Std/List%.Last;
-Append = /Std/List%.Append;
-Get = /Std/List/Index%.Get;
-Drop = /Std/List/Index%.Drop;
-Length = /Std/List/Index%.Length;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Monad@ = /Std/Monad%.Monad@;
-Io@ = /Std/Io%.Io@;
-
-Stream@, Do, Put, Return .= /Std/Stream%;
-String .= /Std/Stream/String%;
-Split .= /Std/String/Eq%;
-In@ .= /Std/Stream/Io%;
-Lines .= /Std/Stream/String%;
-ToDebug .= /Std/Stream/Debug%;
-
-String@ = /Std/String%.String@;
-Str = /Std/Char/Ascii%.Str;
-StrE = /Std/Char/Ascii%.StrE;
+Char, Str, StrE .= /Std/Char/Ascii%;
 Format, FormatE, StringE .= /Std/Char/Ascii/Stream%;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
+Int@, Mul .= /Std/Int%;
+Ge .= /Std/Int/Cmp%;
+QR@, Div .= /Std/Int/Div%;
+Int .= /Std/Int/Lit%;
+Io@ = /Std/Io%.Io@;
+Main@, Success, Failure .= /Std/Io/Cli%;
+List@, List, Last, Append .= /Std/List%;
+Get, Drop, Length .= /Std/List/Index%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
+Stream@, Do, Put, Return .= /Std/Stream%;
+ToDebug .= /Std/Stream/Debug%;
+Out@, In@ .= /Std/Stream/Io%;
+String, GetLine, Lines .= /Std/Stream/String%;
+Split .= /Std/String/Eq%;
+String@ .= /Std/String%;
+Unit@, Unit .= /Std/Unit%;
 
 InOut@, Server@, Sockets@ .= /Network/Sockets%;
 
-Parse = /Pprof/Parser%.Parse;
-
-BlockId@ = /Pprof/Profile%.BlockId@;
-Block@ = /Pprof/Profile%.Block@;
-Sequence@ = /Pprof/Profile%.Sequence@;
-Profile@ = /Pprof/Profile%.Profile@;
-Blocks = /Pprof/Profile%.Blocks;
-
-Result@ = /Pprof/Result%.Result@;
-
-Entry@ = /Pprof/Query%.Entry@;
-Table@ = /Pprof/Query%.Table@;
-
+Parse .= /Pprof/Parser%;
+BlockId@, Block@, Sequence@, Profile@, Blocks .= /Pprof/Profile%;
+Result@ .= /Pprof/Result%;
+Entry@, Table@ .= /Pprof/Query%;
 Overall = /Pprof/Query/Overall%;
 Self = /Pprof/Query/Self%;
 Sequences = /Pprof/Query/Sequences%;

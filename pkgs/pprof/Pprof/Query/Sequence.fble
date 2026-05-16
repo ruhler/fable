@@ -1,30 +1,14 @@
 
 
-Int@ = /Std/Int%.Int@;
+Int@ .= /Std/Int%;
+List@, Items, Empty, List, Last, Init .= /Std/List%;
+StartsWith .= /Std/List/Eq%;
+Drop, Length .= /Std/List/Index%;
 
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-List = /Std/List%.List;
-Last = /Std/List%.Last;
-Init = /Std/List%.Init;
-
-StartsWith = /Std/List/Eq%.StartsWith;
-
-Drop = /Std/List/Index%.Drop;
-Length = /Std/List/Index%.Length;
-
-BlockId@ = /Pprof/Profile%.BlockId@;
-Sequence@ = /Pprof/Profile%.Sequence@;
-Profile@ = /Pprof/Profile%.Profile@;
-
-Entry@ = /Pprof/Query%.Entry@;
-Table@ = /Pprof/Query%.Table@;
-Query@ = /Pprof/Query%.Query@;
-
+BlockId@, Sequence@, Profile@ .= /Pprof/Profile%;
+Eq(.BlockId) .= /Pprof/Profile/Eq%;
+Entry@, Table@, Query@ .= /Pprof/Query%;
 Total = /Pprof/Query/Total%;
-
-Eq = /Pprof/Profile/Eq%.BlockId;
 
 
 (Sequence@) { Query@; }

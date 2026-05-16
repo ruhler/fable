@@ -1,9 +1,7 @@
 
-Int@ = /Std/Int%.Int@;
-
-List@ = /Std/List%.List@;
-
-String@ = /Std/String%.String@;
+Int@ .= /Std/Int%;
+List@ .= /Std/List%;
+String@ .= /Std/String%;
 
 
 BlockId@ = Int@;

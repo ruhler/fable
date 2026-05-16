@@ -1,12 +1,7 @@
 
-Profile@ = /Pprof/Profile%.Profile@;
-Sample@ = /Pprof/Profile%.Sample@;
-
-Entry@ = /Pprof/Query%.Entry@;
-Query@ = /Pprof/Query%.Query@;
-
-MetricOf = /Pprof/Query/Util%.MetricOf;
-Sort = /Pprof/Query/Util%.Sort;
+Profile@, Sample@ .= /Pprof/Profile%;
+Entry@, Query@ .= /Pprof/Query%;
+MetricOf, Sort .= /Pprof/Query/Util%;
 
 # @func[Query] Get sequences by time.
 #  @arg[Profile@][profile] The profile to query.

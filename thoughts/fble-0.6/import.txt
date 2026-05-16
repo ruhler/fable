@@ -407,7 +407,7 @@ invaders [DONE]
 md5 [DONE]
 network [DONE]
 pinball [DONE]
+pprof [DONE]
 
-pprof
 satgame
 

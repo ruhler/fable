@@ -1,10 +1,8 @@
 
-Show@ = /Std/Show%.Show@;
+Format .= /Std/Char/Ascii/Stream%;
+Show@ .= /Std/Show%;
 
-Format = /Std/Char/Ascii/Stream%.Format;
-
-Entry@ = /Pprof/Query%.Entry@;
-Table@ = /Pprof/Query%.Table@;
+Entry@, Table@ .= /Pprof/Query%;
 
 Show@<Entry@> Entry = (Entry@ x) {
   Format|'%s: %s'[

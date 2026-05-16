@@ -1,25 +1,12 @@
 
-Bool@ = /Std/Bool%.Bool@;
+Bool@ .= /Std/Bool%;
+Int@, Add .= /Std/Int%;
+List@, Items, List .= /Std/List%;
+Maybe@ .= /Std/Maybe%;
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-List = /Std/List%.List;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-
-BlockId@ = /Pprof/Profile%.BlockId@;
-Profile@ = /Pprof/Profile%.Profile@;
-Sequence@ = /Pprof/Profile%.Sequence@;
-Sample@ = /Pprof/Profile%.Sample@;
-
-Entry@ = /Pprof/Query%.Entry@;
-Query@ = /Pprof/Query%.Query@;
-
-MetricOf = /Pprof/Query/Util%.MetricOf;
-Sort = /Pprof/Query/Util%.Sort;
+BlockId@, Profile@, Sequence@, Sample@ .= /Pprof/Profile%;
+Entry@, Query@ .= /Pprof/Query%;
+MetricOf, Sort .= /Pprof/Query/Util%;
 
 Map@, Empty, Update, ForEach .= /Std/Map%.Of(/Std/Int/Data%.Data)<Int@>;
 

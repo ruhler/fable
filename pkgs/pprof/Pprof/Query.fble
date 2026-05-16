@@ -1,10 +1,8 @@
 
-Int@ = /Std/Int%.Int@;
+Int@ .= /Std/Int%;
+List@ .= /Std/List%;
 
-List@ = /Std/List%.List@;
-
-Profile@ = /Pprof/Profile%.Profile@;
-Sequence@ = /Pprof/Profile%.Sequence@;
+Profile@, Sequence@ .= /Pprof/Profile%;
 
 Entry@ = *(Sequence@ seq, Int@ value);
 Table@ = List@<Entry@>;
