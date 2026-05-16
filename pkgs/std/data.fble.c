@@ -15,6 +15,7 @@
 #define INT_TAGWIDTH 2
 #define LIST_TAGWIDTH 1
 #define CONS_FIELDC 2
+#define MAYBE_TAGWIDTH 1
 
 static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x);
 static int64_t ReadIntP(FbleValue* num);
@@ -62,13 +63,13 @@ static int64_t ReadIntP(FbleValue* x)
   }
 }
 
-// FbleNewCharValue -- see documentation in char.fble.h
+// FbleNewCharValue -- see documentation in data.fble.h
 FbleValue* FbleNewCharValue(FbleValueHeap* heap, wchar_t c)
 {
   return FbleNewStructValue_(heap, 1, FbleNewIntValue(heap, (uint64_t)c));
 }
 
-// FbleCharValueAccess -- see documentation in char.fble.h
+// FbleCharValueAccess -- see documentation in data.fble.h
 wchar_t FbleCharValueAccess(FbleValue* c)
 {
   return (wchar_t)FbleIntValueAccess(FbleStructValueField(c, 1, 0));
@@ -91,7 +92,7 @@ FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x)
   return FbleNewUnionValue(heap, INT_TAGWIDTH, 2, p);
 }
 
-// FbleIntValueAccess -- see documentation in int.fble.h
+// FbleIntValueAccess -- see documentation in data.fble.h
 int64_t FbleIntValueAccess(FbleValue* x)
 {
   switch (FbleUnionValueTag(x, INT_TAGWIDTH)) {
@@ -102,7 +103,16 @@ int64_t FbleIntValueAccess(FbleValue* x)
   }
 }
 
-// FbleStringValueAccess -- see documentation in string.fble.h
+// See documentation in data.fble.h
+FbleValue* FbleNewMaybeValue(FbleValueHeap* heap, FbleValue* arg)
+{
+  if (arg == NULL) {
+    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1);
+  }
+  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, arg);
+}
+
+// FbleStringValueAccess -- see documentation in data.fble.h
 char* FbleStringValueAccess(FbleValue* str)
 {
   struct { size_t size; char* xs; } chars;
@@ -119,7 +129,7 @@ char* FbleStringValueAccess(FbleValue* str)
   return chars.xs;
 }
 
-// FbleNewStringValue -- see documentation in string.fble.h
+// FbleNewStringValue -- see documentation in data.fble.h
 FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str)
 {
   size_t length = strlen(str);
@@ -132,7 +142,7 @@ FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str)
   return charS;
 }
 
-// FbleNewSubStringValue -- see documentation in string.fble.h
+// FbleNewSubStringValue -- see documentation in data.fble.h
 FbleValue* FbleNewSubStringValue(FbleValueHeap* heap, const char* str, size_t length)
 {
   size_t max_length = strlen(str);
@@ -146,7 +156,7 @@ FbleValue* FbleNewSubStringValue(FbleValueHeap* heap, const char* str, size_t le
   return charS;
 }
 
-// FbleDebugTrace -- see documentation in string.fble.h
+// FbleDebugTrace -- see documentation in data.fble.h
 void FbleDebugTrace(FbleValue* str)
 {
   char* cstr = FbleStringValueAccess(str);

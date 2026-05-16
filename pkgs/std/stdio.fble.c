@@ -14,8 +14,6 @@
 
 #include "data.fble.h"        // for FbleNewCharValue, etc.
 
-#define MAYBE_TAGWIDTH 1
-
 /**
  * @func[CloseFileOnFree] on_free function for closing a file.
  *  @arg[void*][file] The FILE* to close.
@@ -133,11 +131,11 @@ static FbleValue* Open(
   FbleFree(mode);
 
   if (fout == NULL) {
-    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1);
+    return FbleNewMaybeValue(heap, NULL);
   }
 
   FbleValue* v = FbleNewNativeValue(heap, fout, &CloseFileOnFree);
-  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
+  return FbleNewMaybeValue(heap, v);
 }
 // /Std/Io/File/Internal%.Open foreign function.
 FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Open = {
@@ -200,11 +198,11 @@ static FbleValue* GetChar(
 
   wint_t c = fgetwc(file);
   if (c == WEOF) {
-    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1);
+    return FbleNewMaybeValue(heap, NULL);
   }
 
   FbleValue* v = FbleNewCharValue(heap, c);
-  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
+  return FbleNewMaybeValue(heap, v);
 }
 
 // /Std/Io/File/Internal%.GetChar foreign function.
@@ -239,11 +237,11 @@ static FbleValue* GetByte(
 
   int c = fgetc(file);
   if (c == EOF) {
-    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1);
+    return FbleNewMaybeValue(heap, NULL);
   }
 
   FbleValue* v = FbleNewIntValue(heap, c);
-  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
+  return FbleNewMaybeValue(heap, v);
 }
 
 // /Std/Io/File/Internal%.GetByte foreign function.

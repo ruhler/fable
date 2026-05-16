@@ -59,6 +59,17 @@ FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x);
 int64_t FbleIntValueAccess(FbleValue* x);
 
 /**
+ * @func[FbleNewMaybeValue] Construct a @l{/Std/Maybe%.@} value.
+ *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleValue*][arg]
+ *   The Just value of the maybe, or NULL to return a Nothing value.
+ *  @returns[FbleValue*] The constructed Maybe@ value.
+ *  @sideeffects
+ *   Allocates an FbleValue on the heap.
+ */
+FbleValue* FbleNewMaybeValue(FbleValueHeap* heap, FbleValue* arg);
+
+/**
  * @func[FbleNewStringValue] Converts a C string to @l{/Std/String%.String@}.
  *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
  *  @arg[const char*][str] The string to convert.

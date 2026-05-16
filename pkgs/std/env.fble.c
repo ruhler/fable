@@ -14,7 +14,6 @@
 
 #include "data.fble.h"               // For FbleNewStringValue.
 
-#define MAYBE_TAGWIDTH 1
 
 /**
  * @func[GetVarImpl] FbleRunFunction to read environment variables.
@@ -32,11 +31,11 @@ static FbleValue* GetVarImpl(FbleValueHeap* heap, FbleProfileThread* profile, Fb
   FbleFree(var);
 
   if (value == NULL) {
-    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
+    return FbleNewMaybeValue(heap, NULL);
   }
 
   FbleValue* str = FbleNewStringValue(heap, value);
-  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, str); // Just(str)
+  return FbleNewMaybeValue(heap, str);
 }
 
 // See documentation in env.fble.h

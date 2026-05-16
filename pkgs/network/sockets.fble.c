@@ -61,8 +61,6 @@ void Write(SOCKET sfd, char c)
 
 #include "data.fble.h"            // for FbleNewIntValue, etc.
 
-#define MAYBE_TAGWIDTH 1
-
 
 /**
  * @func[GetByte] FbleRunFunction to read a byte from a socket.
@@ -88,11 +86,11 @@ static FbleValue* GetByte(
   int c = Read(sfd);
 
   if (c == EOF) {
-    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1);
+    return FbleNewMaybeValue(heap, NULL);
   }
 
   FbleValue* v = FbleNewIntValue(heap, c);
-  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
+  return FbleNewMaybeValue(heap, v);
 }
 
 // /Network/Sockets/Native%.GetByte foreign function.
@@ -190,11 +188,11 @@ static FbleValue* Client(
   freeaddrinfo(result);
 
   if (sfd == INVALID_SOCKET) {
-    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
+    return FbleNewMaybeValue(heap, NULL);
   }
 
   FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, NULL);
-  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, sfd_value);
+  return FbleNewMaybeValue(heap, sfd_value);
 }
 
 // /Network/Sockets/Native%.Client foreign function.
@@ -338,11 +336,11 @@ static FbleValue* Server(
   }
 
   if (sfd == INVALID_SOCKET) {
-    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
+    return FbleNewMaybeValue(heap, NULL); // Nothing
   }
 
   FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, NULL);
-  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, sfd_value);
+  return FbleNewMaybeValue(heap, sfd_value);
 }
 
 // /Network/Sockets/Native%.Server foreign function.
