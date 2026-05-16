@@ -1,0 +1,19 @@
+# @@fble-test@@ no-error
+
+# It's perfectly fine to import the same field under multiple different names.
+Bool@, True, False, F(.False) .= {
+  Unit@ = *();
+  Unit = Unit@();
+
+  Bool@ = +(Unit@ true, Unit@ false);
+  True = Bool@(true: Unit);
+  False = Bool@(false: Unit);
+
+  @(Bool@, True, False);
+};
+
+(Bool@) { Bool@; } Not = (Bool@ x) {
+  x.?(true: False, false: True);
+};
+
+Not(F).true;

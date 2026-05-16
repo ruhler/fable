@@ -1509,6 +1509,13 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       for (size_t i = 0; i < import_expr->imports.size; ++i) {
         FbleImport* import = import_expr->imports.xs + i;
 
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(import->name, import_expr->imports.xs[j].name)) {
+            ReportError(import->name.loc, "duplicate variable name '%n'\n", import->name);
+            error = true;
+          }
+        }
+
         // Type check the type specification if any.
         types[i] = NULL;
         if (import->type != NULL) {

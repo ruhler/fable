@@ -1,0 +1,16 @@
+# @@fble-test@@ compile-warning 4:7
+
+# The variable False is unused.
+True, False .= {
+  Unit@ = *();
+  Unit = Unit@();
+
+  Bool@ = +(Unit@ true, Unit@ false);
+  True = Bool@(true: Unit);
+  False = Bool@(false: Unit);
+
+  @(Bool@, True, False);
+};
+
+True.true;
+

@@ -1,0 +1,20 @@
+# @@fble-test@@ compile-error 5:28
+
+# The variable 'False' is defined multiple times in the same struct import.
+# That is not allowed.
+Bool@, True, False(.True), False .= {
+  Unit@ = *();
+  Unit = Unit@();
+
+  Bool@ = +(Unit@ true, Unit@ false);
+  True = Bool@(true: Unit);
+  False = Bool@(false: Unit);
+
+  @(Bool@, True, False);
+};
+
+(Bool@) { Bool@; } Not = (Bool@ x) {
+  x.?(true: False, false: True);
+};
+
+Not(False).true;

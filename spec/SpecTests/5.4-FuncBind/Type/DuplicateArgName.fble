@@ -1,0 +1,21 @@
+# @@fble-test@@ compile-warning 18:9
+Unit@ = *();
+Unit = Unit@();
+
+Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+
+(Bool@, (Unit@, Bool@) { Bool@; }) { Bool@; }
+F = (Bool@ x, (Unit@, Bool@) { Bool@; } f) {
+  f(Unit, x);
+};
+
+Bool@ x = {
+  # The variable name a is duplicated. This is allowed so that you can
+  # ignore multiple arguments using '_' if you want, but it should give a
+  # warning about the first one being unused.
+  Unit@ a, Bool@ a := F(True);
+  a.?(true: a, false: False);
+};
+x.true;

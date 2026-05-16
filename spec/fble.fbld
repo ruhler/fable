@@ -452,6 +452,11 @@
    value, or if the types of those fields do not match the types of the
    variables being defined.
 
+   Struct import is allowed to define variables with the same name as
+   variables already in scope, thus shadowing the variable already in scope.
+   Except that the variables defined in a single struct import expression must
+   have distinct names.
+
    Conceptually the struct import expression desugars into a let expression.
    For example, the struct import:
 
@@ -464,8 +469,7 @@
    @code[fble] @
     _ = /Std/Bool%;
     Bool@ = _.Bool@;
-    T = _.True;
-    F = _.False;
+    T = _.True, F = _.False;
     ...
 
    Except it doesn't introduce the variable @l{_} for the temporary struct
@@ -758,7 +762,7 @@
     Map(l, (Int@ x) { f(x, y); });
 
    Multiple arguments can be provided in the bind syntax to form a multi
-   argument function. For exmaple:
+   argument function. For example:
 
    @code[fble] @
     Int@ x, Bool@ y := Map(l);

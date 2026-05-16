@@ -415,3 +415,53 @@ In summary from all these changes, roughly speaking:
   271 files changed, 2150 insertions(+), 4736 deletions(-)
 
 That's a lot of imports which we, maybe, cut in half.
+
+---
+
+Question: Is it legal to try and import into two variables of the same name?
+
+I don't think we put restrictions anywhere else. For example, for functions or
+bind syntax. Should we put restrictions here? Should we put restrictions
+there?
+
+The only thing I'm sure of is we want to allow shadowing of previously defined
+variables. If the variable is never used... that should give us a warning. So
+at the very least we should get a warning about an unused variable. But
+honestly, I think it should be an error in this case.
+
+But if it should be an error in this case, it should be an error in the case
+of bind and function too, surely?
+
+Or, again, not an error, but an unused warning?
+
+Do I already have tests for bind and function value? Can I add tests for
+those, see what happens?
+
+We had no tests for function bind. But we have a test for duplicate function
+arguments. There we expect it to be the same, but I'm using _x as the argument
+name, presumably to avoid the warning we would get otherwise.
+
+So, currently behavior is:
+* Function gives unused warning in case of duplicate arg names.
+* Bind gives no warning or error in case of duplicate arg names.
+* Import gives no warning or error in case of duplicate arg names.
+
+There's actually a very good reason to allow duplicate arg names for function
+and bind: so we can ignore two arguments named '_' without error or warning.
+
+That same doesn't really make sense for struct import. For struct import, you
+could always remove the field.
+
+Unless you want to rename instead of remove the field? To give you a type
+error for something you depend on? I could reasonably believe that. It's like
+a way of testing the type before accessing it.
+
+So my vote is: produce an unused warning in all cases, not an error.
+
+Either way, I should document this in the spec, and put a note somewhere (spec
+or test cases) explaining the rationale.
+
+On the other hand, there is precedent for making it an error if multiple
+variables in the same let bindings have the same name. Because in that case
+it's ambiguous. Surely that's better to do for struct import too, right?
+
