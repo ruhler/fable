@@ -1,0 +1,14 @@
+# @@fble-test@@ compile-error 14:1
+Unit@ = *();
+Unit = Unit@();
+
+Bool@, True, False .= {
+  Bool@ = +(Unit@ true, Unit@ false);
+  True = Bool@(true: Unit);
+  False = Bool@(false: Unit);
+
+  @(Bool@, True, False);
+};
+
+# The body of the struct import is not well typed.
+xxx;

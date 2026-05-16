@@ -1,0 +1,15 @@
+# @@fble-test@@ compile-error 9:23
+
+Unit@ = *();
+Unit@ Unit = Unit@();
+
+(Unit@) { Unit@; } F = (Unit@ u) { u; };
+
+# The struct value is not a struct value.
+Bool@, True, False .= F;
+
+(Bool@) { Bool@; } Not = (Bool@ x) {
+  x.?(true: False, false: True);
+};
+
+Not(False).true;

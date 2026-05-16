@@ -1,0 +1,10 @@
+# @@fble-test@@ compile-error 4:23
+
+# The struct value xxx is maltyped.
+Bool@, True, False .= xxx;
+
+(Bool@) { Bool@; } Not = (Bool@ x) {
+  x.?(true: False, false: True);
+};
+
+Not(False).true;

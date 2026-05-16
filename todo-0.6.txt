@@ -10,6 +10,12 @@ Things to consider doing for the fble-0.6 release.
  - Test what happens if you can't find the foreign function?
 
 * Add spec tests for full test coverage.
+ - RewriteVars involving FFI function in compile.c.
+ - Foreign value not found in interpreted case.
+ - Mangled characters in module path names in module-path.c
+ - Free kind destructors in parse.y
+ - Import destructor in parse.y
+ - Bad char sequences in input: .%X, .@X in parse.y
 
 * Cover all escape chars in StrE tests.
 * Better implementation of ReadHex in /Std/String/Escape.

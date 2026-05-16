@@ -1535,7 +1535,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
               types[i] = FbleRetainType(th, field_type);
               CleanType(cleaner, types[i]);
             } else if (!FbleTypesEqual(th, types[i], field_type)) {
-              ReportError(types[i]->loc, "expected type %t, but found %t\n", types[i], field_type);
+              ReportError(import->field.loc, "expected type %t, but the field has type %t\n", types[i], field_type);
               error = true;
             }
             break;

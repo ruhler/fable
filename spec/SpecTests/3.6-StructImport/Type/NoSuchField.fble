@@ -1,0 +1,18 @@
+# @@fble-test@@ compile-error 6:14
+Unit@ = *();
+Unit = Unit@();
+
+# Sludge is not a field of the struct.
+Bool@, True, Sludge, False .= {
+  Bool@ = +(Unit@ true, Unit@ false);
+  True = Bool@(true: Unit);
+  False = Bool@(false: Unit);
+
+  @(Bool@, True, False);
+};
+
+(Bool@) { Bool@; } Not = (Bool@ x) {
+  x.?(true: False, false: True);
+};
+
+Not(False).true;
