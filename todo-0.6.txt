@@ -2,10 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Add spec tests for import expressions.
- - Add test for missing type in bind expression.
- - Add test for extra (.field) in bind expression.
-
 * Add test that LSFR won't seed itself to 0.
 
 * Test coverage for FFI

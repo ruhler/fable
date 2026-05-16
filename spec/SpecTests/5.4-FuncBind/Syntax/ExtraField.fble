@@ -1,0 +1,18 @@
+# @@fble-test@@ compile-error 15:12
+Unit@ = *();
+Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+Bool@ False = Bool@(false: Unit@());
+
+(Bool@, (Bool@, Bool@) { Bool@; }) { Bool@; }
+Self = (Bool@ x, (Bool@, Bool@) { Bool@; } f) {
+  f(x, x);
+};
+
+Bool@ x = {
+  # Function bind does not use the same syntax as struct import. You cannot
+  # provide a field name for variables being defined.
+  Bool@ a(.c), Bool@ b := Self(True);
+  a.?(true: b, false: False);
+};
+x.true;

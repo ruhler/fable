@@ -77,6 +77,7 @@ while (0)
   static void ReadNextChar(Lex* lex);
   static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex);
   static void yyerror(YYLTYPE* llocp, Lex* lex, FbleExpr** result, FbleModulePathV* deps, const char* msg);
+  static void FreeImportV(FbleImportV imports);
 %}
 
 %locations
@@ -207,14 +208,7 @@ while (0)
 } <import>
 
 %destructor {
-  for (size_t i = 0; i < $$.size; ++i) {
-    FbleFreeExpr($$.xs[i].type);
-    FbleFreeName($$.xs[i].name);
-    if ($$.xs[i].field.name != NULL) {
-      FbleFreeName($$.xs[i].field);
-    }
-  }
-  FbleFreeVector($$);
+  FreeImportV($$);
 } <imports>
 
 %%
@@ -538,17 +532,31 @@ stmt:
       $$ = &undef_expr->_base;
     }
   | import_p ":=" expr ';' stmt {
-      FbleExpr* expr = $5;
+      // Validate the import spec is suitable for use in bind.
       for (size_t i = 0; i < $1.size; ++i) {
         FbleImport* import = $1.xs + $1.size - 1 - i;
         if (import->type == NULL) {
-          FbleReportError("missing type\n", import->name.loc);
+          FbleReportError("missing type for variable '", import->name.loc);
+          FblePrintName(stderr, import->name);
+          fprintf(stderr, "'\n");
+          FreeImportV($1);
+          FbleFreeExpr($3);
+          FbleFreeExpr($5);
           YYERROR;
         }
         if (import->field.name != NULL) {
           FbleReportError("field name not allowed in bind declaration\n", import->field.loc);
+          FreeImportV($1);
+          FbleFreeExpr($3);
+          FbleFreeExpr($5);
           YYERROR;
         }
+      }
+
+      // Process the validated import spec.
+      FbleExpr* expr = $5;
+      for (size_t i = 0; i < $1.size; ++i) {
+        FbleImport* import = $1.xs + $1.size - 1 - i;
 
         FbleFuncValueExpr* func_value_expr = FbleAlloc(FbleFuncValueExpr);
         func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
@@ -1015,6 +1023,23 @@ static void yyerror(YYLTYPE* llocp, Lex* lex, FbleExpr** result, FbleModulePathV
   (void)deps;
 
   FbleReportError("%s\n", *llocp, msg);
+}
+
+/**
+ * @func[FreeImportV] Frees a vector of imports.
+ *  @arg[FbleImportV][imports] The imports to free.
+ *  @sideeffects Frees resources associated with imports.
+ */
+static void FreeImportV(FbleImportV imports)
+{
+  for (size_t i = 0; i < imports.size; ++i) {
+    FbleFreeExpr(imports.xs[i].type);
+    FbleFreeName(imports.xs[i].name);
+    if (imports.xs[i].field.name != NULL) {
+      FbleFreeName(imports.xs[i].field);
+    }
+  }
+  FbleFreeVector(imports);
 }
 
 // See documentation in parse.h
