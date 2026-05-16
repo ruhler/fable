@@ -25,6 +25,32 @@ static void CloseFileOnFree(void* file)
 }
 
 /**
+ * @func[Init] FbleRunFunction to initialie stdio.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (Unit@) { Unit@; }
+ */  
+static FbleValue* Init(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  setlocale(LC_CTYPE, "");
+  return FbleNewStructValue_(heap, 0);
+}
+
+// /Std/Io/File/Internal%.GetStdin foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Init = {
+  .path = "/Std/Io/File/Internal%",
+  .name = "Init",
+  .num_args = 1,
+  .max_call_args = 0,
+  .run = &Init,
+};
+
+/**
  * @func[GetStdin] FbleRunFunction to for GetStdin foreign function.
  *  See documentation of FbleRunFunction in fble-function.h
  *
@@ -357,8 +383,7 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Flush = {
 // See documentation in stdio.fble.h
 void FbleRegisterStdioForeignValues(FbleValueHeap* heap)
 {
-  setlocale(LC_CTYPE, "");
-
+  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Init);
   FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdin);
   FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdout);
   FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStderr);

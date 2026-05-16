@@ -2,6 +2,29 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Add spec tests for import expressions.
+ - Add tests for unused warnings.
+ - Add test for missing type in bind expression.
+ - Add test for extra (.field) in bind expression.
+ - Add test for duplicate variable names.
+ - Add test for duplicate field names.
+
+* Add test that LSFR won't seed itself to 0.
+
+* Test coverage for FFI
+ - Verify names matter.
+ - Verify module paths matter.
+ - Test what happens if you can't find the foreign function?
+
+* Add spec tests for full test coverage.
+
+* Cover all escape chars in StrE tests.
+* Better implementation of ReadHex in /Std/String/Escape.
+* Replace uses of 'Concat' with 'Format' where appropriate.
+
+
+
+
 * Revisit api for skipping tests?
  - It seems like it would be pretty awkward to use in practice.
 
@@ -34,19 +57,12 @@ Things to consider doing for the fble-0.6 release.
 
 * Should we provide Monad instances for Maybe@ and Lazy@ somewhere? List@?
 
-* Document somewhere that files are closed automatically.
 
 * Double check all the old documentation referring to Output@, which is now
   called Stream@?
 
 * Add back character type functions isspace, isalnum, etc?
 * Add Lt, Le, Gt, Ge, etc for Char@?
-
-* Add maybe.c helper functions for working with maybe types at native level.
-
-* Make sure setlocal gets called for compiled stdio code
- - If we aren't explicitly registering the stdio functions.
- - For example: add an FFI function and call it at the module level?
 
 * A lot of the /Std/* documentation isn't very helpful.
   Consider rewriting it to be an explanation for how to use the functions
@@ -55,17 +71,9 @@ Things to consider doing for the fble-0.6 release.
 * Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
 * Reconsider if Read, Write, Append should report error messages?
 
-* Add spec tests for import expressions.
- - Add tests for unused warnings.
- - Add test for missing type in bind expression.
- - Add test for extra (.field) in bind expression.
- - Add test for duplicate variable names.
- - Add test for duplicate field names.
-
 * See if there is more opportunity to typecheck more stuff before erroring
   out?
 
-* Add test that LSFR won't seed itself to 0.
 
 * Why is the invaders ship dying animation so messed up on linux console?
 
@@ -119,12 +127,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Verify all api is listed in include/build.tcl.
 
-* Add spec tests for full test coverage.
-
-* Test coverage for FFI
- - Verify names matter.
- - Verify module paths matter.
- - Test what happens if you can't find the foreign function?
 
 * Test unicode for character based native input and output streams.
 * Add tests for /Core/Char/Stream/IStream%.GetLine.
@@ -161,9 +163,6 @@ Things to consider doing for the fble-0.6 release.
 * Figure out why we see the same errors reported many times when we build.
  - And fix it.
 
-* Cover all escape chars in StrE tests.
-* Better implementation of ReadHex in /Std/String/Escape.
-* Replace uses of 'Concat' with 'Format' where appropriate.
 * Add vim syntax highlighting for \ and % escape sequences?
 * Double check @module[...] values are correct in /Std/...*.fble files.
 

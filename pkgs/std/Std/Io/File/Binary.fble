@@ -63,6 +63,9 @@ Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
 };
 
 # @func[Read] Opens a file for reading.
+#  Note: the opened file will be closed automatically when you are done
+#  reading from it.
+#
 #  @arg[<@>@][M@] The monadic type for side effects.
 #  @arg[Monad@<M@>][m] The monad instance.
 #  @arg[Io@<M@>][io] Interface for performing io.
@@ -78,6 +81,9 @@ Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
 };
 
 # @func[Write] Opens a file for writing.
+#  Note: the opened file will be closed automatically when you are done
+#  writing to it.
+#
 #  @arg[<@>@][M@] The monadic type for side effects.
 #  @arg[Monad@<M@>][m] The monad instance.
 #  @arg[Io@<M@>][io] Interface for performing io.
@@ -93,6 +99,9 @@ Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
 };
 
 # @func[Append] Opens a file for appending.
+#  Note: the opened file will be closed automatically when you are done
+#  appending to it.
+#
 #  @arg[<@>@][M@] The monadic type for side effects.
 #  @arg[Monad@<M@>][m] The monad instance.
 #  @arg[Io@<M@>][io] Interface for performing io.

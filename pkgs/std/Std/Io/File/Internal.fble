@@ -6,10 +6,12 @@ Int@ .= /Std/Int%;
 External@ .= /Std/Io%;
 Maybe@ .= /Std/Maybe%;
 String@ .= /Std/String%;
-Unit@ .= /Std/Unit%;
+Unit@, Unit .= /Std/Unit%;
 
 # Pretend type for FILE*. Only to be accessed from FFI functions.
 File@ = *(Unit@ file).%(@/Std/Io/File/Internal%);
+
+(Unit@) { Unit@; } Init = @<Init>|Init;
 
 External@<File@> GetStdin = @<GetStdin>|GetStdin;
 External@<File@> GetStdout = @<GetStdout>|GetStdout;
@@ -23,6 +25,8 @@ External@<File@> GetStderr = @<GetStderr>|GetStderr;
 
 (File@) { External@<Maybe@<Char@>>; } GetChar = @<GetChar>|GetChar;
 (File@, Char@) { External@<Unit@>; } PutChar = @<PutChar>|PutChar;
+
+Unit@ _ = Init(Unit);
 
 @(File@, GetStdin, GetStdout, GetStderr, Open, Close, Flush,
   GetByte, PutByte, GetChar, PutChar).%(@/Std/Io/File%);
