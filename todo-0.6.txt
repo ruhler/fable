@@ -150,8 +150,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Add test for StrE with \q escape.
 
-* Update tutorials for new bind syntax.
-
 * Print function names along with error location on stack trace?
 
 * Add function to show an integer base 16? Base 2? Base anything?

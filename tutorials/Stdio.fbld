@@ -27,7 +27,7 @@
   Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {
     % O = /Core/Stream/OStream%(m);
     
-    Unit@ _ <- m.do(O.PutLine(stdio.out, Str|'hello, world'));
+    Unit@ _ := m.do(O.PutLine(stdio.out, Str|'hello, world'));
     m.return(True);
   };
 

@@ -20,7 +20,7 @@
    % Trace = /Core/Debug%.Enable(True);  # Change to False to disable tracing.
 
    Unit@ _ = {
-     Unit@ _ <- Trace.TraceLn;
+     Unit@ _ := Trace.TraceLn;
      String@ debugDump = ExpensiveDebugFunction(x);
      Strs[Str|'x is: ', debugDump];
    };

@@ -17,7 +17,7 @@
    Bind syntax takes something of the form:
  
    @code[fble] @
-    T1@ a1, T2@ a2, ... <- FUNC;
+    T1@ a1, T2@ a2, ... := FUNC;
     BODY;
  
    And desugars it to:
@@ -77,7 +77,7 @@
  
    @code[fble] @
     (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ x, Bit4@ y) {
-      Bit@ a, Bit@ b <- BinaryBitwise(x, y);
+      Bit@ a, Bit@ b := BinaryBitwise(x, y);
       a.?(0: 0, 1: b);
     };
  
@@ -172,15 +172,15 @@
   @code[fble] @
    (MaybeInt@, MaybeInt@) { MaybeInt@; }
    MaybeAdd = (MaybeInt@ ma, MaybeInt@ mb) {
-     Int@ a <- Maybe(ma);
-     Int@ b <- Maybe(mb);
+     Int@ a := Maybe(ma);
+     Int@ b := Maybe(mb);
      Just(Add(a, b));
    };
      
    (MaybeInt@, MaybeInt@) { MaybeInt@; }
    MaybeDiv = (MaybeInt@ ma, MaybeInt@ mb) {
-     Int@ a <- Maybe(ma);
-     Int@ b <- Maybe(mb);
+     Int@ a := Maybe(ma);
+     Int@ b := Maybe(mb);
      Div(a, b);
    };
  
@@ -240,8 +240,8 @@
   @code[fble] @
    (Maybe@<Int@>, Maybe@<Int@>) { Maybe@<Bool@>; }
    MaybeEquals = (Maybe@<Int@> a, Maybe@<Int@> b) {
-     Int@ a <- Maybe<Int@>(ma)<Bool@>;
-     Int@ b <- Maybe<Int@>(mb)<Bool@>;
+     Int@ a := Maybe<Int@>(ma)<Bool@>;
+     Int@ b := Maybe<Int@>(mb)<Bool@>;
      Just<Bool@>(Equals(a, b));
    };
  
@@ -257,8 +257,8 @@
   @code[fble] @
    (Maybe@<Int@>, Maybe@<Int@>) { Maybe@<Bool@>; }
    MaybeEquals = (Maybe@<Int@> a, Maybe@<Int@> b) {
-     Int@ a <- Maybe(ma);
-     Int@ b <- Maybe(mb);
+     Int@ a := Maybe(ma);
+     Int@ b := Maybe(mb);
      Just(Equals(a, b));
    };
  
@@ -307,21 +307,21 @@
   @code[fble] @
    <<@>@ M@>(Monad@<M@> m, <@ A@> { M@<A@>; } divide_by_zero) {
      (M@<Int@>, M@<Int@>) { M@<Int@>; } AddM = (M@<Int@> ma, M@<Int@> mb) {
-       Int@ a <- m.do(ma);
-       Int@ b <- m.do(mb);
+       Int@ a := m.do(ma);
+       Int@ b := m.do(mb);
        m.return(Add(a, b));
      };
    
      (M@<Int@>, M@<Int@>) { M@<Int@>; } DivM = (M@<Int@> a, M@<Int@> b) {
-       Int@ a <- m.do(ma);
-       Int@ b <- m.do(mb);
+       Int@ a := m.do(ma);
+       Int@ b := m.do(mb);
        b.?(0: divide_by_zero<Int@>);
        m.return(SaveDiv(a, b));
      };
    
      (M@<Int@>, M@<Int@>) { M@<Bool@>; } EqualsM = (M@<Int@> a, M@<Int@> b) {
-       Int@ a <- m.do(ma);
-       Int@ b <- m.do(mb);
+       Int@ a := m.do(ma);
+       Int@ b := m.do(mb);
        m.return(Equals(a, b));
      };
    
