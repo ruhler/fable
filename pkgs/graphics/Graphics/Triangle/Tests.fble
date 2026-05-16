@@ -1,14 +1,14 @@
 
 Neg .= /Std/Int%;
 Int .= /Std/Int/Lit%;
-Ascii@, OnAscii, Str .= /Std/Char/Ascii%;
-Lazy@, Lazy .= /Std/Lazy%;
-List@ .= /Std/List%;
+OnAscii .= /Std/Char/Ascii%;
+Lazy .= /Std/Lazy%;
 Maybe@, Just .= /Std/Maybe%;
-Test@, TestResult@ .= /Std/Test%;
+Test@ .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
-Unit@, Unit .= /Std/Unit%;
+ExpectFails = OnAscii(/Std/Test%.ExpectFails);
+Unit@ .= /Std/Unit%;
 
 Drawing@, Color@, Point@, Color .= /App/Drawing%;
 Drawn@, Pixel@, Drawn, Draw,
@@ -18,11 +18,6 @@ Vec@ .= /Graphics/3D%;
 Camera@, Rect@, Camera, RotateY, Translate, Vertex .= /Graphics/Camera%;
 Triangle .= /Graphics/Triangle%;
 
-
-(List@<Ascii@>, Lazy@<TestResult@>) { TestResult@; }
-ExpectFails = (List@<Ascii@> msg, Lazy@<TestResult@> result) {
-  /Std/Test%.ExpectFails(Str(msg), result(Unit));
-};
 
 Test@ Tests = TestSuite|'Graphics.Triangle'[
   Test|'Focus Triangle'({

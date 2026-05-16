@@ -1,12 +1,13 @@
 
-Ascii@, OnAscii, Str .= /Std/Char/Ascii%;
+OnAscii .= /Std/Char/Ascii%;
 AssertEquals .= /Std/Eq/Assert%;
-Lazy@, Lazy .= /Std/Lazy%;
-List@, List, Empty .= /Std/List%;
-Test@, TestResult@ .= /Std/Test%;
+Lazy .= /Std/Lazy%;
+List, Empty .= /Std/List%;
+Test@ .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
-Unit@, Unit .= /Std/Unit%;
+ExpectFails = OnAscii(/Std/Test%.ExpectFails);
+Unit@ .= /Std/Unit%;
 
 Ball@ .= /Pinball/Ball%;
 Edge@, Edge .= /Pinball/Edge%;
@@ -15,11 +16,6 @@ Paddle@, Paddle .= /Pinball/Paddle%;
 Vec@ .= /Pinball/Vec%;
 World@, Tick .= /Pinball/World%;
 
-
-(List@<Ascii@>, Lazy@<TestResult@>) { TestResult@; }
-ExpectFails = (List@<Ascii@> msg, Lazy@<TestResult@> result) {
-  /Std/Test%.ExpectFails(Str(msg), result(Unit));
-};
 
 Test@ Tests = TestSuite|Pinball[
   /Pinball/Rotate/Tests%.Tests,

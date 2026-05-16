@@ -35,7 +35,8 @@ Test@ fail = Test|fail({
 
 Test@ xfail = Test|xfail({
   Unit@ _ := Lazy;
-  ExpectFails(Str|Failed, Fail(String|Failed));
+  Unit@ _ := ExpectFails(Str|Failed);
+  Fail(String|Failed);
 });
 
 Test@ skip = Test|skip({

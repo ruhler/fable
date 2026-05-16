@@ -48,16 +48,26 @@ TestResult@ Pass = TestResult@(pass: Unit);
 #  Changes the test result to expected failure if the given test result is
 #  failing and msg is contained somewhere in the failure message.
 #
+#  The test result is passed lazily for convenience assuming the test result
+#  is being computed in a statement context. That way function bind syntax can
+#  be used to apply the expected failure to an existing test result
+#  computation without modifying the computation itself. For example:
+#
+#  @code[fble] @
+#   Unit@ _ := ExpectFails|', but got Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)';
+#   AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
+#
 #  @arg[String@][msg] Substring expected to be found in the error message.
-#  @arg[TestResult@][result] The result that is expected to be failing.
+#  @arg[Lazy@<TestResult@>][result] The result that is expected to be failing.
 #  @returns[TestResult@] The result of checking for the expected failure.
-(String@, TestResult@) { TestResult@; }
-ExpectFails = (String@ msg, TestResult@ result) {
-  result.?(pass: Fail(String|'Expected failure, but test passed'));
-  result.?(expected_fail: Fail(String|'Expected failure, but was expected_fail'));
-  result.?(skip: Fail(String|'Expected failure, but was skip'));
+(String@, Lazy@<TestResult@>) { TestResult@; }
+ExpectFails = (String@ msg, Lazy@<TestResult@> result) {
+  TestResult@ r = /Std/Lazy%.Run(result);
+  r.?(pass: Fail(String|'Expected failure, but test passed'));
+  r.?(expected_fail: Fail(String|'Expected failure, but was expected_fail'));
+  r.?(skip: Fail(String|'Expected failure, but was skip'));
 
-  String@ failure = ToString(result.fail);
+  String@ failure = ToString(r.fail);
   /Std/String/Eq%.Contains(failure, msg).?(true: TestResult@(expected_fail: Unit));
 
   Fail(Format|'Expected failure containing "%s", but failed with "%s"'
@@ -122,7 +132,8 @@ SkipTestUnless = (Bool@ unless, Stream@<Char@> msg) {
 };
 
 @(TestResult@, Test@, TestSuite@, TestCase@,
-  Pass, Fail, ExpectFails, Skip,
+  Pass, Fail, Skip,
   Test, TestSuite,
+  ExpectFails,
   SkipTest, SkipTestIf, SkipTestUnless
 );

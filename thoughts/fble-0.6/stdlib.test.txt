@@ -1369,3 +1369,147 @@ It's very much a hack, because we lose control of when things get printed, and
 we'll get stack traces for ExpectFails which is wrong. Oh well. It was an
 idea.
 
+---
+
+Revisiting ExpectFails given removal of $ application syntax.
+
+I want to write:
+
+    Unit@ _ := ExpectFails|', but got Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)';
+    AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
+
+The function we export is:
+  (String@, TestResult@) { TestResult@; } ExpectFails;
+
+The function I think I want to export is:
+  (String@, Lazy@<TestResult@>) { TestResult@; } ExpectFails;
+
+What are my options?
+1. Replace the existing ExpectFails with one that takes a lazy test result.
+2. Add a new function, ExpectTestFails? That provides the nicer user behavior.
+3. Add a generic function somewhere (/Std/Func%? /Std/Lazy%?) to make it easy
+   to compose inline.
+
+Let's consider each approach in turn, and see which makes most sense.
+
+Note: Skip probably has the same desire, right?
+
+    Unit@ _ := Skip|'Better not do this test for now';
+    ...
+
+Keep that in mind.
+
+I see no uses of the raw ExpectFails, Skip functions, aside from for direct
+testing of those functions.
+
+What's the logic here?
+* Pass - to decide to pass, we need to have run code that we want lazy.
+* Fail - to decide to fail, we need to have run code that we want lazy.
+* ExpectFails or Skip:
+  - Maybe we wanted to run code that we wanted to be lazy.
+  - But also, we expect to have a test result that we are expecting to fail or
+    wanting to skip.
+
+This tells us we want to return TestResult@ rather than Test@ or
+Lazy@<TestResult@> from ExpectFails and Skip.
+
+Pass and Fail never modify. They are the end. They are done. ExpectFails and
+Skip both modify.
+
+Honestly, approach (1) sounds good to me. Proposal would be:
+
+  (String@, Lazy@<TestResult@>) { TestResult@; } ExpectFails;
+  (Stream@<Char@>, Lazy@<TestResult@>) { TestResult@; } Skip;
+
+Question: why does Skip take a stream instead of a string explanation? Why
+does ExpectFails take a string instead of a stream? We should be consistent?
+
+Well, Skip makes sense if we want a formatted skip explanation. ExplainFails
+makes sense if we want to discourage people from formatting their expected
+failure messages and hard code instead. That works for me.
+
+Approach 2:
+  SkipTest, ExpectTestFails?
+
+But they aren't operating on tests, they are operating on lazy tests results.
+
+Approach 3:
+
+We want a helper function:
+  (A@ -> B@, Lazy@<A@>) { B@; }
+
+It's a combination of lazy Run plus Map. Feels more like we want a bind
+application kind of thing.
+
+  (A@ -> B@, (Unit@) { A@; }) { B@; }
+
+Let's just go with approach (1). Simplest. Easiest to use. Makes most sense.
+
+Oh. Interesting point: we want to be able to skip tests suites too. That makes
+sense for skip, but not expect fails, right? We don't want someone to check
+that an entire test suite has a single expected failure.
+
+But I also have SkipTestIf, SkipTestUnless. Do I need to update those too?
+Like, I feel like I need real use cases to be able to tell if I'm providing a
+useful API.
+
+How about we assume standard way of writing tests is one of:
+
+  Test@ tests = Test|Foo({
+    Unit@ _ := Lazy;
+    ...
+  });
+
+  Test@ tests = TestSuite|Foo[
+    Test|Bar({
+      Unit@ _ := Lazy;
+      ...
+    }),
+    
+    /Foo/X/Test%,
+    /Foo/Y/Test%,
+  ];
+
+ExpectFails is easy. Just switch it over.
+
+Skip is harder. SkipTest. SkipIf. Etc. SkipTestIf, SkipTestUnless behave just
+like skip test, except they take a boolean condition. Is that boolean
+condition part of the test? Like it should be lazily computed or no?
+
+It doesn't make sense to lazily decide to skip a test. You have to know if you
+want to skip it before you start running it. Don't start running the test and
+then decide to skip it. That wouldn't really be skipping the test, would it?
+
+It's not obvious to me. I can see two different cases. Maybe we start the
+test, we try it out, but then some way through we realize we can't get good
+information out of the test. Like maybe it depends on getting a little lucky
+timing wise to make the test work, but we didn't get lucky, so there's nothing
+we can do? It's not that things failed. It's that we weren't able to get
+useful information from the test, so we should ignore the result? Sounds
+risky. Wouldn't you rather know and fix the test than ignore the fact that it
+didn't produce anything useful?
+
+If you are skipping a test suite, that clearly isn't decided while running a
+particular test.
+
+  Test@ tests = Skip(String|'Better not run this.', Test|Foo({
+    Unit@ _ := Lazy;
+    ...
+  }));
+
+  Test@ tests = Skip(String|'Better not run this.', TestSuite|Foo[
+    Skip(String|'Better not run this.', Test|Bar({
+      Unit@ _ := Lazy;
+      ...
+    })),
+    
+    Skip(String|'Better not run this.', /Foo/X/Test%),
+    /Foo/Y/Test%,
+  ]);
+
+It's not too bad in the case where we are passing a module path. If we are
+passing an inline test suite or test case, it's not pleasant.
+
+What if we provided a drop in constructor for Test and TestSuite instead?
+Well, then you don't have an easy place to explain why you are skipping.
+

@@ -2,7 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Make my useful ExpectFails part of the standard library somehow.
+* Revisit api for skipping tests?
+ - It seems like it would be pretty awkward to use in practice.
 
 * Add section of module imports to tutorials/Features.fbld?
 * Add section of pattern matching to tutorials/Features.fbld?
