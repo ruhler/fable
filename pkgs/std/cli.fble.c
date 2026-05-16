@@ -21,8 +21,6 @@
 #include "io.fble.h"            // for FbleIoM
 #include "stdio.fble.h"         // for /Std/Io/File/Internal%
 
-#define LIST_TAGWIDTH 1
-
 static FbleValue* Cli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv);
 
 
@@ -67,12 +65,11 @@ static FbleValue* Cli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main
 // See documentation in cli.fble.h
 FbleValue* FbleCliArgs(FbleValueHeap* heap, int argc, const char** argv)
 {
-  FbleValue* argS = FbleNewEnumValue(heap, LIST_TAGWIDTH, 1);
+  FbleValue* items[argc];
   for (size_t i = 0; i < argc; ++i) {
-    FbleValue* argP = FbleNewStructValue_(heap, 2, FbleNewStringValue(heap, argv[argc - i -1]), argS);
-    argS = FbleNewUnionValue(heap, LIST_TAGWIDTH, 0, argP);
+    items[i] = FbleNewStringValue(heap, argv[i]);
   }
-  return argS;
+  return FbleNewListValue(heap, argc, items);
 }
 
 // FbleCliMainStatus -- See documentation in cli.fble.h
