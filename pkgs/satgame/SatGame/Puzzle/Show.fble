@@ -1,19 +1,11 @@
 
 Char@ .= /Std/Char%;
-
-Show@ = /Std/Show%.Show@;
+String, Format, FormatE .= /Std/Char/Ascii/Stream%;
+Show@ .= /Std/Show%;
 Do, Return .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
 
-String = /Std/Char/Ascii/Stream%.String;
-Format = /Std/Char/Ascii/Stream%.Format;
-FormatE = /Std/Char/Ascii/Stream%.FormatE;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Literal@ = /SatGame/Puzzle%.Literal@;
-Clause@ = /SatGame/Puzzle%.Clause@;
-Puzzle@ = /SatGame/Puzzle%.Puzzle@;
-Params@ = /SatGame/Puzzle%.Params@;
+Literal@, Clause@, Puzzle@, Params@ .= /SatGame/Puzzle%;
 
 Show@<Literal@> Literal = (Literal@ literal) {
   Format|'%s%s'[

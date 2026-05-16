@@ -1,24 +1,13 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-Not = /Std/Bool%.Not;
-Or = /Std/Bool%.Or;
-And = /Std/Bool%.And;
+Bool@, True, False, Not, Or, And .= /Std/Bool%;
+Int@, Decr .= /Std/Int%;
+IsZero .= /Std/Int/Sign%;
+List@, Items, Empty .= /Std/List%;
+Any .= /Std/List/Search%;
+Monad@ .= /Std/Monad%;
+Rng@ .= /Std/Random/Rng%;
 
-Int@ = /Std/Int%.Int@;
-Decr = /Std/Int%.Decr;
-IsZero = /Std/Int/Sign%.IsZero;
-
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-Any = /Std/List/Search%.Any;
-
-Monad@ = /Std/Monad%.Monad@;
-Rng@ = /Std/Random/Rng%.Rng@;
-
-Var@ = /SatGame/Var%.Var@;
+Var@ .= /SatGame/Var%;
 
 # In some cases two variables may look similar. Prefer to use the canonical
 # variable in that case.

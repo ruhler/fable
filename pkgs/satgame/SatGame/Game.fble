@@ -1,30 +1,14 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
-Not = /Std/Bool%.Not;
+Bool@, True, False, Not .= /Std/Bool%;
+Int@, Decr .= /Std/Int%;
+IsZero .= /Std/Int/Sign%;
+List@, Items, Empty .= /Std/List%;
+Any .= /Std/List/Search%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Unit@, Unit .= /Std/Unit%;
 
-Int@ = /Std/Int%.Int@;
-Decr = /Std/Int%.Decr;
-IsZero = /Std/Int/Sign%.IsZero;
-
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-Empty = /Std/List%.Empty;
-Any = /Std/List/Search%.Any;
-
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-Literal@ = /SatGame/Puzzle%.Literal@;
-Clause@ = /SatGame/Puzzle%.Clause@;
-Puzzle@ = /SatGame/Puzzle%.Puzzle@;
-
-Var@ = /SatGame/Var%.Var@;
+Literal@, Clause@, Puzzle@ .= /SatGame/Puzzle%;
+Var@ .= /SatGame/Var%;
 
 TileState@ = +(
   Unit@ normal,     # The tile has been neither selected nor dismissed.

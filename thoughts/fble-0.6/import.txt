@@ -408,6 +408,10 @@ md5 [DONE]
 network [DONE]
 pinball [DONE]
 pprof [DONE]
+satgame [DONE]
 
-satgame
+In summary from all these changes, roughly speaking:
 
+  271 files changed, 2150 insertions(+), 4736 deletions(-)
+
+That's a lot of imports which we, maybe, cut in half.

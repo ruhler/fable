@@ -1,38 +1,16 @@
 
-Int@ = /Std/Int%.Int@;
-Incr = /Std/Int%.Incr;
-Decr = /Std/Int%.Decr;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Mul = /Std/Int%.Mul;
-Gt = /Std/Int/Cmp%.Gt;
-Lt = /Std/Int/Cmp%.Lt;
-QR@ = /Std/Int/Div%.QR@;
-Div = /Std/Int/Div%.Div;
-Int = /Std/Int/Lit%.Int;
+Int@, Incr, Decr, Add, Sub, Mul .= /Std/Int%;
+Gt, Lt .= /Std/Int/Cmp%;
+QR@, Div .= /Std/Int/Div%;
+Int .= /Std/Int/Lit%;
+List@ .= /Std/List%;
+Take, Drop .= /Std/List/Index%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
 
-List@ = /Std/List%.List@;
-Take = /Std/List/Index%.Take;
-Drop = /Std/List/Index%.Drop;
+Drawing@, Color@, Color, Drawings, Rect, Blank, Translate .= /App/Drawing%;
 
-Maybe@ = /Std/Maybe%.Maybe@;
-Just = /Std/Maybe%.Just;
-Nothing = /Std/Maybe%.Nothing;
-
-Drawing@ = /App/Drawing%.Drawing@;
-Color@ = /App/Drawing%.Color@;
-Color = /App/Drawing%.Color;
-Drawings = /App/Drawing%.Drawings;
-Rect = /App/Drawing%.Rect;
-Blank = /App/Drawing%.Blank;
-Translate = /App/Drawing%.Translate;
-
-Game@ = /SatGame/Game%.Game@;
-Group@ = /SatGame/Game%.Group@;
-Tile@ = /SatGame/Game%.Tile@;
-Solved = /SatGame/Game%.Solved;
-
-Params@ = /SatGame/Puzzle%.Params@;
+Game@, Group@, Tile@, Solved .= /SatGame/Game%;
+Params@ .= /SatGame/Puzzle%;
 
 Int@ VarWidth = Int|32;
 Int@ TileWidth = Int|48;

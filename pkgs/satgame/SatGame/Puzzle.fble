@@ -1,11 +1,9 @@
 
-Bool@ = /Std/Bool%.Bool@;
+Bool@ .= /Std/Bool%;
+Int@ .= /Std/Int%;
+List@ .= /Std/List%;
 
-Int@ = /Std/Int%.Int@;
-
-List@ = /Std/List%.List@;
-
-Var@ = /SatGame/Var%.Var@;
+Var@ .= /SatGame/Var%;
 
 Literal@ = *(Var@ var, Bool@ pos);
 Clause@ = List@<Literal@>;

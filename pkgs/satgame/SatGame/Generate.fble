@@ -1,32 +1,18 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+Bool@, True, False .= /Std/Bool%;
+Int@, Add, Sub, Incr, Decr .= /Std/Int%;
+Le .= /Std/Int/Cmp%;
+Div .= /Std/Int/Div%;
+Int .= /Std/Int/Lit%;
+UpTo .= /Std/Int/Random%;
+IsZero .= /Std/Int/Sign%;
+Range .= /Std/Int/Stream%;
+List@, Items, List .= /Std/List%;
+Take .= /Std/List/Index%;
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Sub = /Std/Int%.Sub;
-Incr = /Std/Int%.Incr;
-Decr = /Std/Int%.Decr;
-IsZero = /Std/Int/Sign%.IsZero;
-Le = /Std/Int/Cmp%.Le;
-Div = /Std/Int/Div%.Div;
-Range = /Std/Int/Stream%.Range;
-Int = /Std/Int/Lit%.Int;
-UpTo = /Std/Int/Random%.UpTo;
-
-List@ = /Std/List%.List@;
-Items = /Std/List%.Items;
-List = /Std/List%.List;
-Take = /Std/List/Index%.Take;
-
-Literal@ = /SatGame/Puzzle%.Literal@;
-Clause@ = /SatGame/Puzzle%.Clause@;
-Params@ = /SatGame/Puzzle%.Params@;
-Puzzle@ = /SatGame/Puzzle%.Puzzle@;
-Var@ = /SatGame/Var%.Var@;
-
-Shuffle = /Std/List/Random%.Shuffle;
+Literal@, Clause@, Params@, Puzzle@ .= /SatGame/Puzzle%;
+Shuffle .= /Std/List/Random%;
+Var@ .= /SatGame/Var%;
 
 Map@, Empty, Get, Put .= /Std/Map%.Of(/Std/Int/Data%.Data)<Var@>;
 

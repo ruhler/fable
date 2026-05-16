@@ -1,36 +1,21 @@
 
-Bool@ = /Std/Bool%.Bool@;
-True = /Std/Bool%.True;
-False = /Std/Bool%.False;
+Bool@, True, False .= /Std/Bool%;
+OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+List .= /Std/List%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
 
-AssertEquals = /Std/Eq/Assert%.AssertEquals;
-
-Int@ = /Std/Int%.Int@;
-Int = /Std/Int/Lit%.Int;
-
-List = /Std/List%.List;
-
-Str = /Std/Char/Ascii%.Str;
-
-Test@ = /Std/Test%.Test@;
-Test = /Std/Test%.Test;
-TestSuite = /Std/Test%.TestSuite;
-
-Unit@ = /Std/Unit%.Unit@;
-
-Game@ = /SatGame/Game%.Game@;
-Game = /SatGame/Game%.Game;
-Solved = /SatGame/Game%.Solved;
-Toggle = /SatGame/Game%.Toggle;
-ToggleSelected = /SatGame/Game%.ToggleSelected;
-ToggleDismissed = /SatGame/Game%.ToggleDismissed;
-
-Params@ = /SatGame/Puzzle%.Params@;
-Puzzle@ = /SatGame/Puzzle%.Puzzle@;
-
-Var = /SatGame/Var/Lit%.Var;
-
+Game@, Game, Solved, Toggle, ToggleSelected, ToggleDismissed .= /SatGame/Game%;
 Generate = /SatGame/Generate%;
+Params@, Puzzle@ .= /SatGame/Puzzle%;
+Var .= /SatGame/Var/Lit%;
+
 
 Puzzle@ puzzle = List[
   List[
@@ -42,8 +27,9 @@ Puzzle@ puzzle = List[
     @(var: Var|0, pos: False),
     @(var: Var|1, pos: True)]];
 
-Test@ Tests = TestSuite(Str|SatGame, List[
-  Test(Str|'Generate.Length', (Unit@ _) {
+Test@ Tests = TestSuite|SatGame[
+  Test|'Generate.Length'({
+    Unit@ _ := Lazy;
     Params@ params = @(
       num_vars: Int|6,
       num_clauses: Int|6,
@@ -55,13 +41,15 @@ Test@ Tests = TestSuite(Str|SatGame, List[
       Int|6, /Std/List/Index%.Length(puzzle));
   }),
 
-  Test(Str|'Game.Unsolved', (Unit@ _) {
+  Test|'Game.Unsolved'({
+    Unit@ _ := Lazy;
     Game@ game = Game(puzzle);
     Bool@ solved = Solved(game);
     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, False, solved);
   }),
 
-  Test(Str|'Game.Solved', (Unit@ _) {
+  Test|'Game.Solved'({
+    Unit@ _ := Lazy;
     Game@ start = Game(puzzle);
     Game@ finish = Toggle(
       ToggleDismissed, Int|0, Int|0, Toggle(
@@ -75,7 +63,8 @@ Test@ Tests = TestSuite(Str|SatGame, List[
     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, True, solved);
   }),
 
-  Test(Str|'Game.Incomplete', (Unit@ _) {
+  Test|'Game.Incomplete'({
+    Unit@ _ := Lazy;
     Game@ start = Game(puzzle);
     Game@ finish = Toggle(
       ToggleDismissed, Int|0, Int|0, Toggle(
@@ -88,7 +77,8 @@ Test@ Tests = TestSuite(Str|SatGame, List[
     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, False, solved);
   }),
 
-  Test(Str|'Game.Incorrect', (Unit@ _) {
+  Test|'Game.Incorrect'({
+    Unit@ _ := Lazy;
     Game@ start = Game(puzzle);
     Game@ finish = Toggle(
       ToggleDismissed, Int|0, Int|0, Toggle(
@@ -101,6 +91,6 @@ Test@ Tests = TestSuite(Str|SatGame, List[
     Bool@ solved = Solved(finish);
     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, False, solved);
   })
-]);
+];
 
 /Std/Test/Cli%.Run(Tests);

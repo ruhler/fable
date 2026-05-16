@@ -1,51 +1,23 @@
 
 Char@ .= /Std/Char%;
+Format .= /Std/Char/Ascii/Stream%;
+Int@, Sub, Mul .= /Std/Int%;
+Max, Min .= /Std/Int/Cmp%;
+Div .= /Std/Int/Div%;
+Int .= /Std/Int/Lit%;
+Maybe@ .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
 Out@ .= /Std/Stream/Io%;
+Unit@, Unit .= /Std/Unit%;
 
-Int@ = /Std/Int%.Int@;
-Sub = /Std/Int%.Sub;
-Mul = /Std/Int%.Mul;
-Div = /Std/Int/Div%.Div;
-Max = /Std/Int/Cmp%.Max;
-Min = /Std/Int/Cmp%.Min;
-Int = /Std/Int/Lit%.Int;
+App@, Event@, Effect@ .= /App/App%;
+Color@, Drawing@, Point@, Color, Rect, Affine, Drawings .= /App/Drawing%;
 
-Maybe@ = /Std/Maybe%.Maybe@;
-
-Monad@ = /Std/Monad%.Monad@;
-
-Format = /Std/Char/Ascii/Stream%.Format;
-
-Unit@ = /Std/Unit%.Unit@;
-Unit = /Std/Unit%.Unit;
-
-App@ = /App/App%.App@;
-Event@ = /App/App%.Event@;
-Effect@ = /App/App%.Effect@;
-
-Color@ = /App/Drawing%.Color@;
-Drawing@ = /App/Drawing%.Drawing@;
-Point@ = /App/Drawing%.Point@;
-Color = /App/Drawing%.Color;
-Rect = /App/Drawing%.Rect;
-Affine = /App/Drawing%.Affine;
-Drawings = /App/Drawing%.Drawings;
-
-Params@ = /SatGame/Puzzle%.Params@;
-Puzzle@ = /SatGame/Puzzle%.Puzzle@;
-
-Game@ = /SatGame/Game%.Game@;
-Toggle@ = /SatGame/Game%.Toggle@;
-Cycle = /SatGame/Game%.Cycle;
-ToggleDismissed = /SatGame/Game%.ToggleDismissed;
-Toggle = /SatGame/Game%.Toggle;
-
-Layout@ = /SatGame/Game/Draw%.Layout@;
-TileIndex@ = /SatGame/Game/Draw%.TileIndex@;
-Layout = /SatGame/Game/Draw%.Layout;
-TileOf = /SatGame/Game/Draw%.TileOf;
-
+Layout@, TileIndex@, Layout, TileOf .= /SatGame/Game/Draw%;
+Game@, Toggle@, Cycle, ToggleDismissed, Toggle .= /SatGame/Game%;
 Generate = /SatGame/Generate%;
+Params@, Puzzle@ .= /SatGame/Puzzle%;
+
 
 Args@ = *(
   Int@ num_vars,

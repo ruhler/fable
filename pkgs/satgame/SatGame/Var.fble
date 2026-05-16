@@ -1,5 +1,5 @@
 
-Bool@ = /Std/Bool%.Bool@;
+Bool@ .= /Std/Bool%;
 
 # The image we generate for a variable is a 3x3 grid of squares where
 # the squares are either present or absent. I'll probably regret this later,

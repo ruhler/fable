@@ -26,8 +26,6 @@ Things to consider doing for the fble-0.6 release.
 * Should Map Put, Update, Replace functions update the key value or leave it
   as is? Add tests for this case.
 
-* Clean up all imports to use import expression in all the apps.
-
 * fble-pprof 'unable to serve' after ctrl-c to quit just before.
 
 * Add test that /Std/Stream%.ForEach iterates in the right order.

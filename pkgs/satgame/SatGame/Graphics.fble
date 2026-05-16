@@ -1,22 +1,10 @@
 
-Drawing@ = /App/Drawing%.Drawing@;
-Color@ = /App/Drawing%.Color@;
-Color = /App/Drawing%.Color;
-Drawings = /App/Drawing%.Drawings;
-Rect = /App/Drawing%.Rect;
-Over = /App/Drawing%.Over;
-Translate = /App/Drawing%.Translate;
+Int@, Add, Mul .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Range .= /Std/Int/Stream%;
+List@, Empty, Items, List .= /Std/List%;
 
-Int@ = /Std/Int%.Int@;
-Add = /Std/Int%.Add;
-Mul = /Std/Int%.Mul;
-Int = /Std/Int/Lit%.Int;
-Range = /Std/Int/Stream%.Range;
-
-List@ = /Std/List%.List@;
-Empty = /Std/List%.Empty;
-Items = /Std/List%.Items;
-List = /Std/List%.List;
+Drawing@, Color@, Color, Drawings, Rect, Over, Translate .= /App/Drawing%;
 
 ImagePair@ = *(Drawing@ a, Drawing@ b);
 

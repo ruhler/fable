@@ -1,8 +1,8 @@
 
-Cmp@, Less, Greater, Equal .= /Std/Cmp%;
 BoolCmp(.Cmp) .= /Std/Bool/Cmp%;
+Cmp@, Less, Greater, Equal .= /Std/Cmp%;
 
-Var@ = /SatGame/Var%.Var@;
+Var@ .= /SatGame/Var%;
 
 Cmp@<Var@> Ord = (Var@ a, Var@ b) {
   BoolCmp(a.ul, b.ul).?(less: Less, greater: Greater);
