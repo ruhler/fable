@@ -124,8 +124,7 @@ Things to consider doing for the fble-0.6 release.
 
 * Figure out what FbleStringValueAccess should do in terms of unicode.
 
-* Verify all api is listed in include/build.tcl.
-
+* Any way to avoid exporting internally shared symbols in libfble.a?
 
 * Test unicode for character based native input and output streams.
 * Add tests for /Core/Char/Stream/IStream%.GetLine.

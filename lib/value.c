@@ -156,9 +156,9 @@ typedef enum {
 // traversing bit is used to limit recursion in RefAssigns. The is_gc_alloc
 // bit is used to indicate the value is gc allocated rather than stack
 // allocated. The value_tag bits hold the ValueTag of the value.
-const uint32_t FbleValueFlagTagBits = 0x3;
-const uint32_t FbleValueFlagIsGcAllocBit = 0x4;
-const uint32_t FbleValueFlagTraversingBit = 0x8;
+static const uint32_t FbleValueFlagTagBits = 0x3;
+static const uint32_t FbleValueFlagIsGcAllocBit = 0x4;
+static const uint32_t FbleValueFlagTraversingBit = 0x8;
 
 /**
  * @struct[NativeValue] NATIVE_VALUE

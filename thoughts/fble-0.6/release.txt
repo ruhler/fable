@@ -511,3 +511,67 @@ My encoding size if I switch it up as planned:
 
 Yeah, not worth it.
 
+---
+
+* Verify all api is listed in include/build.tcl.
+
+Maybe I can generate the actual list using nm somehow and compare with
+include/build.tcl? Maybe I should write a script to do that as part of build?
+
+One step at a time.
+
+This looks like the list I want:
+
+  nm -U -g out/lib/libfble.a
+
+Let's review.
+
+parse.tab.o:
+0000000000003968 T FbleIsPlainWord
+  Internal sharing between parse.y and name.c
+00000000000009c0 T yyparse
+  Not under my control.
+
+type-heap.o, tc.o:
+  Everything is meant to be internal. Shared with type checker presumably.
+
+alloc.o:
+0000000000000000 B gInitialized
+0000000000000008 B gMaxTotalBytesAllocated
+0000000000000010 B gTotalBytesAllocated
+  Fixed all these to be static.
+
+value.o:
+000000000000256c T FbleLookupForeignValue
+0000000000002c8c T FbleNativeValueData
+0000000000002648 T FbleNewForeignValue
+0000000000002c20 T FbleNewNativeValue
+0000000000002cd0 T FbleValueFullGc
+  Added to api.
+
+0000000000000138 R FbleValueFlagIsGcAllocBit
+000000000000013c R FbleValueFlagTagBits
+0000000000000134 R FbleValueFlagTraversingBit
+ - Made static.
+
+expr.o, typecheck.o: internally shared.
+0000000000000000 T FbleFreeExpr
+
+load.o:
+0000000000000000 D FbleDefaultPackagePath
+ - Made static.
+
+program.o, kind.o, interpret.o, unused.o: internally shared.
+
+profile.o:
+0000000000000018 R RootBlockId
+ - Made static.
+
+code.o, type.o: internally shared.
+
+buildstamp.o: internally shared.
+0000000000000000 D FbleBuildStamp
+
+Looks okay in general then. I added the missing ones, made things static where
+reasonable. It's too bad we have to export the internally shared ones. I
+wonder if there is some way to do away with that.

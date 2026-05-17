@@ -20,7 +20,7 @@
 /**
  * The default package path.
  */
-const char* FbleDefaultPackagePath = FBLE_CONFIG_DATADIR "/fble";
+static const char* FbleDefaultPackagePath = FBLE_CONFIG_DATADIR "/fble";
 
 /**
  * @struct[FbleSearchPath] An fble search path.

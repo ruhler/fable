@@ -63,7 +63,7 @@ typedef struct {
   ProfileNode* root;
 } Profile;
 
-const FbleBlockId RootBlockId = 0;
+static const FbleBlockId RootBlockId = 0;
 
 /**
  * @struct[Stack] The call stack.

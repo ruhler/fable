@@ -91,7 +91,7 @@ namespace eval "include" {
       FbleStructValue FbleUnionValue FbleFuncValue
       FbleNewValueHeap FbleFreeValueHeap
       FblePushFrame FblePopFrame
-      FbleRegisterForeignValue
+      FbleRegisterForeignValue FbleLookupForeignValue
       FbleValueV
       FbleGenericTypeValue
       FbleNewStructValue FbleNewStructValue_
@@ -99,9 +99,11 @@ namespace eval "include" {
       FbleNewUnionValue FbleNewEnumValue
       FbleUnionValueTag FbleUnionValueArg FbleUnionValueField
       FbleNewListValue FbleNewListValue_ FbleNewLiteralValue
-      FbleNewFuncValue
+      FbleNewFuncValue FbleNewForeignValue
       FbleEval FbleApply
       FbleDeclareRecursiveValues FbleDefineRecursiveValues
+      FbleNewNativeValue FbleNativeValueData
+      FbleValueFullGc
     }
     fble-vector.h {
       FbleInitVector FbleFreeVector

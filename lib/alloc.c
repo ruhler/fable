@@ -14,20 +14,20 @@
  * @ Total number of bytes currently allocated via FbleAlloc routines.
  *  @type[size_t]
  */
-size_t gTotalBytesAllocated = 0;
+static size_t gTotalBytesAllocated = 0;
 
 /**
  * @value[gMaxTotalBytesAllocated]
  * @ Max value of gTotalBytesAllocated since last cleared.
  *  @type[size_t]
  */
-size_t gMaxTotalBytesAllocated = 0;
+static size_t gMaxTotalBytesAllocated = 0;
 
 /**
  * @value[gInitialized] True if the exit routine has been registered.
  *  @type[bool]
  */
-bool gInitialized = false;
+static bool gInitialized = false;
 
 /**
  * @struct[Alloc] An allocation.
