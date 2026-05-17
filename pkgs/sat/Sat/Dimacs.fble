@@ -2,13 +2,16 @@
 Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
 Str, Char, Ascii .= /Std/Char/Ascii%;
+Format, String .= /Std/Char/Ascii/Stream%;
 Int@ .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 Abs .= /Std/Int/Sign%;
-List@, List, Items, Reverse, Concat .= /Std/List%;
+List@, List, Items, Reverse .= /Std/List%;
 Length .= /Std/List/Index%;
 Split .= /Std/List/Search%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
+Stream@ .= /Std/Stream%;
+S(.String) .= /Std/Stream/String%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -31,7 +34,7 @@ Formula@ = List@<Clause@>;
 # Parse@ monad definition.
 ParseState@ = *(List@<String@> lines, Formula@ formula);
 ParseResult@ = <@ T@> { *(ParseState@ state, T@ result); };
-ParseStatus@ = <@ T@> { +(String@ error, ParseResult@<T@> parsed); };
+ParseStatus@ = <@ T@> { +(Stream@<Char@> error, ParseResult@<T@> parsed); };
 ParseM@ = <@ T@> { (ParseState@) { ParseStatus@<T@>; }; };
 
 <@ T@>(T@) { ParseM@<T@>; } Return = <@ T@>(T@ x, ParseState@ s) {
@@ -45,7 +48,8 @@ Do = <@ A@>(ParseM@<A@> m)<@ B@>((A@) { ParseM@<B@>; } f, ParseState@ s) {
   f(r.parsed.result, r.parsed.state);
 };
 
-<@ T@>(String@) { ParseM@<T@>; } Error = <@ T@>(String@ msg, ParseState@ _) {
+<@ T@>(Stream@<Char@>) { ParseM@<T@>; }
+Error = <@ T@>(Stream@<Char@> msg, ParseState@ _) {
   ParseStatus@<T@>(error: msg);
 };
 
@@ -62,10 +66,10 @@ ParseM@<Maybe@<String@>> GetLine = (ParseState@ state) {
 };
 
 (List@<String@>) { ParseM@<Clause@>; } ParseVars = (List@<String@> words) {
-  words.?(empty: Error<Clause@>(Str|'missing clause terminator'));
+  words.?(empty: Error<Clause@>(String|'missing clause terminator'));
 
   Maybe@<Int@> mx = /Std/Int/Parse%.Int(words.items.head);
-  mx.?(nothing: Error<Clause@>(Str|'unable to parse var'));
+  mx.?(nothing: Error<Clause@>(String|'unable to parse var'));
 
   Int@ x = mx.just;
   /Std/Int/Eq%.Eq(x, Int|0).?(true: Return(List<Var@>[]));
@@ -104,18 +108,18 @@ ParseM@<Unit@> ParseClauses = {
   List@<String@> words = Split(header, IsSpace);
   Int@ num_words = Length(words);
   /Std/Int/Eq%.Eq(num_words, Int|4).?(false: {
-    Error<Unit@>(Concat[Str|'invalid header line: ', header]);
+    Error<Unit@>(Format|'invalid header line: %s'[S(header)]);
   });
 
   String@ p = words.items.head;
   String@ cnf = words.items.tail.items.head;
 
   /Std/String/Eq%.Eq(p, Str|'p').?(false: {
-    Error<Unit@>(Concat[Str|'expected ''p'', but got: ', p]);
+    Error<Unit@>(Format|'expected ''p'', but got: %s'[S(p)]);
   });
 
   /Std/String/Eq%.Eq(cnf, Str|'cnf').?(false: {
-    Error<Unit@>(Concat[Str|'expected ''cnf'', but got: ', cnf]);
+    Error<Unit@>(Format|'expected ''cnf'', but got: %s'[S(cnf)]);
   });
 
   # TODO: check syntax and values of nbvars and nbclauses?
@@ -126,17 +130,17 @@ ParseM@<Unit@> ParseClauses = {
 # lines.
 ParseM@<Unit@> ParseFromStart = {
   Maybe@<String@> line := Do(GetLine);
-  line.?(nothing: Error<Unit@>(Str|'no clauses found'));
+  line.?(nothing: Error<Unit@>(String|'no clauses found'));
 
-  line.just.?(empty: Error<Unit@>(Str|'empty line'));
+  line.just.?(empty: Error<Unit@>(String|'empty line'));
 
   Char@ c = line.just.items.head;
   /Std/Char/Eq%.Eq(Char|c, c).?(true: ParseFromStart);
   /Std/Char/Eq%.Eq(Char|p, c).?(true: ParseFromHeader(line.just));
-  Error<Unit@>(Concat[Str|'invalid line: ', line.just]);
+  Error<Unit@>(Format|'invalid line: '[S(line.just)]);
 };
 
-Parse@ = <@ T@> { +(String@ error, T@ parsed); };
+Parse@ = <@ T@> { +(Stream@<Char@> error, T@ parsed); };
 
 (List@<String@>) { Parse@<Formula@>; } ParseLines = (List@<String@> lines) {
   ParseStatus@<Unit@> ps = ParseFromStart(ParseState@(lines, List<Clause@>[]));

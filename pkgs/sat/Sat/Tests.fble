@@ -6,6 +6,7 @@ AssertEquals .= /Std/Eq/Assert%;
 Int .= /Std/Int/Lit%;
 Lazy .= /Std/Lazy%;
 List .= /Std/List%;
+ToString .= /Std/Stream/String%;
 String@ .= /Std/String%;
 Test@, TestResult@ .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
@@ -29,7 +30,7 @@ Eq@<Formula@> EqFormula = /Std/List/Eq%.Eq<Clause@>(EqClause);
 
 Eq@<Parse@<Formula@>>
 EqParsedFormula = (Parse@<Formula@> a, Parse@<Formula@> b) {
-  a.?(error: b.?(error: /Std/String/Eq%.Eq(a.error, b.error), : False),
+  a.?(error: b.?(error: /Std/String/Eq%.Eq(ToString(a.error), ToString(b.error)), : False),
       parsed: b.?(parsed: EqFormula(a.parsed, b.parsed), : False));
 };
 

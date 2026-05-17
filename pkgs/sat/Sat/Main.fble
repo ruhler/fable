@@ -5,7 +5,7 @@ List@, Items, Empty, Reverse .= /Std/List%;
 Monad@ .= /Std/Monad%;
 Exit@, Success, Failure .= /Std/Io/Cli%;
 In@, Out@ .= /Std/Stream/Io%;
-String, GetLine .= /Std/Stream/String%;
+GetLine .= /Std/Stream/String%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 
@@ -30,7 +30,7 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> in, Out@<Char@, M@> out, Out@<Char
   List@<String@> lines := m.do(GetLines);
   Parse@<Formula@> parsed = ParseLines(lines);
   parsed.?(error: {
-    Unit@ _ := m.do(err(String(parsed.error)));
+    Unit@ _ := m.do(err(parsed.error));
     m.return(Failure);
   });
 
