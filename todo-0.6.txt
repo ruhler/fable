@@ -18,11 +18,7 @@ Things to consider doing for the fble-0.6 release.
  - Bad char sequences in input: .%X, .@X in parse.y
 
 * Cover all escape chars in StrE tests.
-* Better implementation of ReadHex in /Std/String/Escape.
 * Replace uses of 'Concat' with 'Format' where appropriate.
-
-
-
 
 * Revisit api for skipping tests?
  - It seems like it would be pretty awkward to use in practice.
