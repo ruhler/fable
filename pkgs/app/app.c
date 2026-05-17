@@ -508,6 +508,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 
   SDL_SetWindowResizable(window, true);
   SDL_GLContext glctx = SDL_GL_CreateContext(window);
+  SDL_GL_SetSwapInterval(1);
   SDL_ShowCursor(SDL_DISABLE);
 
   int width = 0;
@@ -516,7 +517,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 
   glShadeModel(GL_FLAT);
   glViewport(0, 0, width, height);
-  glMatrixMode( GL_PROJECTION );
+  glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho(0, width, height, 0, -1, 1);
 

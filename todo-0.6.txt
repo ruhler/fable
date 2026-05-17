@@ -50,8 +50,6 @@ Other:
 * See if there is more opportunity to typecheck more stuff before erroring
   out?
 
-* Why is the invaders ship dying animation so messed up on linux console?
-
 * Why don't interpreted cli tests output when running them during build?
  - I have to go to the generated file to see the outputs?
  - Because we generate the output first, then interpret as a test output.

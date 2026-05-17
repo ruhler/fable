@@ -1,7 +1,9 @@
 
-Int@, Add, Sub .= /Std/Int%;
+Int@, Add, Sub, Incr .= /Std/Int%;
 Lt, Gt .= /Std/Int/Cmp%;
+Mod .= /Std/Int/Div%;
 Int .= /Std/Int/Lit%;
+IsZero .= /Std/Int/Sign%;
 Unit@, Unit .= /Std/Unit%;
 
 Drawing@, Translate .= /App/Drawing%;
@@ -28,8 +30,7 @@ Dir@ = +(
 
 Status@ = +(
   Dir@ alive,        # Which direction it is going.
-  Unit@ dying_a,     # Dying with 'a' animation.
-  Unit@ dying_b      # Dying with 'b' animation.
+  Int@ dying         # Count of how many ticks it has been dying for.
 );
 
 Ship@ = *(
@@ -53,7 +54,7 @@ Ship@ Initial = @(
 # Kill --
 #   Set the ship to dying.
 (Ship@) { Ship@; } Kill = (Ship@ s) {
-  Ship@(s.x, Status@(dying_a: Unit));
+  Ship@(s.x, Status@(dying: Int|0));
 };
 
 # Revive --
@@ -64,8 +65,7 @@ Ship@ Initial = @(
 
 # Advance the ship one unit of game time.
 (Ship@) { Ship@; } Tick = (Ship@ s) {
-  s.status.?(dying_a: Ship@(s.x, Status@(dying_b: Unit)));
-  s.status.?(dying_b: Ship@(s.x, Status@(dying_a: Unit)));
+  s.status.?(dying: Ship@(s.x, Status@(dying: Incr(s.status.dying))));
 
   s.status.alive.?(
       left: {
@@ -85,10 +85,11 @@ Ship@ Initial = @(
 
 # Make a drawing of the ship in its current location.
 (Ship@) { Drawing@; } Draw = (Ship@ s) {
-  Drawing@ d = s.status.?(
-    alive: Graphics.Ship,
-    dying_a: Graphics.DeadShipA,
-    dying_b: Graphics.DeadShipB);
+  Drawing@ d = {
+    s.status.?(alive: Graphics.Ship);
+    IsZero(Mod(s.status.dying, Int|4)).?(true: Graphics.DeadShipA);
+    Graphics.DeadShipB;
+  };
 
   Translate(s.x, ShipY, d);
 };

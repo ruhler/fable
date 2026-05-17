@@ -588,3 +588,44 @@ type. Should I name them? Like, Ascii. nul, bel, bs, ff, cr, vt?
 It's part of ascii. Why not? That doesn't mean I need them to be printable.
 But, on the other hand... why not?
 
+---
+
+* Why is the invaders ship dying animation so messed up on linux console?
+
+What I observe: it flickers, then holds, then flickers, then holds.
+
+What behavior do I want? It should be even back and forth and back and forth.
+
+What does the code have?
+* It should flip status every tick.
+* Is it possible we are killing it repeatedly though?
+ - What does Bombs.HitShip return when the ship is hit? It should be removing
+   the bomb that hit the ship.
+
+If we hit the ship, why return any bombs? I guess we still want to show them
+on the screen.
+
+Anyway, in theory kill is only called once. I can verify with a debug
+statement call.
+
+My hypothesis: we aren't clearly aligned with vsync or some such, and we are
+updating just at the edge, and one of the images takes longer to draw than the
+other, so we end up biasing towards one of the images.
+
+I don't know how to confirm that, or how to fix the underlying issue. I can
+work around it by not flipping at such a high rate.
+
+Can I fix it in the app level by using SDL_RENDERER_PRESENTVSYNC when I create
+my renderer? But I'm not using a renderer... Maybe if I switch to SDL
+renderer.
+
+Which, while I'm at it, how about switch to sdl3?
+
+Actually, looks like I can just call SDL_GL_SetSwapInterval(1) when I
+initialize things? Let's try it and see.
+
+Yeah, I think that fixes it. But now it looks like a solid blur between the
+two states. So I really do want to slow it down in the invaders game itself.
+
+I feel like this looks much better graphics wise with set swap interval 1.
+Cool.
