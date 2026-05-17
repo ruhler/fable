@@ -2,11 +2,13 @@
 Bool@, True, False, Or .= /Std/Bool%;
 Char@, Pos .= /Std/Char%;
 Str, Char, Ascii .= /Std/Char/Ascii%;
+Format .= /Std/Char/Ascii/Stream%;
 Int@, Incr, Decr .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 IsZero .= /Std/Int/Sign%;
-List@, List, Items, Concat .= /Std/List%;
+List@, Items .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
+C(.Put) .= /Std/Stream%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -79,7 +81,7 @@ M@<List@<Markup@>> Args = {
     M@<Unit@> end = {
       CharL@ cl := Do(GetL);
       /Std/Char/Eq%.Eq(Char|']', cl.c).?(true: Return(Unit));
-      Error<Unit@>(cl.l, Str|'Expected '']''');
+      Error<Unit@>(cl.l, Format|'Expected '']'''[]);
     };
     Markup@ head := Do(Inline(end));
     List@<Markup@> tail := Do(Args);
@@ -104,7 +106,7 @@ M@<Markup@> Command = {
   Loc@ l := Do(Loc);
   String@ name := Do(Name);
   name.?(empty: {
-    Error<Markup@>(l, Str|'missing command name');
+    Error<Markup@>(l, Format|'missing command name'[]);
   });
 
   List@<Markup@> args := Do(Args);
@@ -132,7 +134,7 @@ M@<Markup@> Command = {
       /Std/Char/Eq%.Eq(e.c, Char|'\').?(true: Return(Char|'\'));
       /Std/Char/Eq%.Eq(e.c, Char|']').?(true: Return(Char|']'));
       /Std/Char/Eq%.Eq(e.c, Char|'n').?(true: Return(Ascii.nl));
-      Error<Char@>(e.l, Concat[Str|'Unsupported escape sequence: ''\', List[e.c, Char|'''']]);
+      Error<Char@>(e.l, Format|'Unsupported escape sequence: ''\%s'''[C(e.c)]);
     });
     Return(c);
   });

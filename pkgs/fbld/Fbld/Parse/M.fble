@@ -1,12 +1,13 @@
 
 Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
-Char, Str .= /Std/Char/Ascii%;
-String .= /Std/Char/Ascii/Stream%;
+Char .= /Std/Char/Ascii%;
+Format, String .= /Std/Char/Ascii/Stream%;
 Int@, Incr .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
-List@, List, Items, Empty, Last, Concat .= /Std/List%;
+List@, Items, Empty, Last .= /Std/List%;
+Stream@, C(.Put) .= /Std/Stream%;
 String@ .= /Std/String%;
 IsNewline .= /Std/String/Lines%;
 Unit@, Unit .= /Std/Unit%;
@@ -36,10 +37,10 @@ Return = <@ T@>(T@ x, R@ r) {
 };
 
 # Report a parse error.
-<@ T@>(Loc@, String@) { M@<T@>; }
-Error = <@ T@>(Loc@ l, String@ msg, R@ r) {
+<@ T@>(Loc@, Stream@<Char@>) { M@<T@>; }
+Error = <@ T@>(Loc@ l, Stream@<Char@> msg, R@ r) {
   r.report_errors.?(
-    true: /Fbld/Result%.Error<SM@<T@>>(l, /Std/Stream/String%.String(msg)),
+    true: /Fbld/Result%.Error<SM@<T@>>(l, msg),
     false: Fail<SM@<T@>>);
 };
 
@@ -127,7 +128,7 @@ M@<CharL@> GetL = {
   /Std/Int/Cmp%.Le(cl.l.col, indent).?(true: {
     IsNewline(cl.c).?(true: Return(cl));
     /Std/Char/Eq%.Eq(Char|' ', cl.c).?(true: GetL);
-    Error<CharL@>(cl.l, Str|'end of indented block');
+    Error<CharL@>(cl.l, String|'end of indented block');
   });
 
   Return(cl);
@@ -175,7 +176,7 @@ M@<Unit@> EndOfInput = {
   Loc@ l := Do(Loc);
   Maybe@<Char@> mc := Do(Test(Get));
   mc.?(nothing: Return(Unit));
-  Error<Unit@>(l, Str|'expected end of input');
+  Error<Unit@>(l, String|'expected end of input');
 };
 
 # Parse a specific string from the input stream. Fails if the input string
@@ -187,7 +188,7 @@ String = (String@ s) {
   /Std/Char/Eq%.Eq(s.items.head, c.c).?(
     true: String(s.items.tail),
     false: {
-      Error<Unit@>(c.l, Concat[ Str|'Expected ''', List[s.items.head], Str|'''']);
+      Error<Unit@>(c.l, Format|'Expected ''%s'''[C(s.items.head)]);
     });
 };
 

@@ -2,6 +2,7 @@
 Bool@ .= /Std/Bool%;
 Char@ .= /Std/Char%;
 Str, StrE .= /Std/Char/Ascii%;
+Format .= /Std/Char/Ascii/Stream%;
 Int@, Incr .= /Std/Int%;
 List@, Items, List, Concat .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
@@ -19,7 +20,7 @@ M@<Unit@> BlankLine = {
   Loc@ l := Do(Loc);
   Int@ indent := Do(GetIndent);
   /Std/Int/Cmp%.Lt(Incr(indent), l.col).?(true: {
-    Error<Unit@>(l, Str|'not a blank line');
+    Error<Unit@>(l, Format|'not a blank line'[]);
   });
   String(StrE|'\n');
 };
@@ -64,7 +65,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
       Bool@ end := Do(Test_(EndOfSameLine));
       end.?(true: Return(Unit));
       Loc@ l := Do(Loc);
-      Error<Unit@>(l, Str|'not end of same line');
+      Error<Unit@>(l, Format|'not end of same line'[]);
     }));
     Return(List[m]);
   });
@@ -122,7 +123,7 @@ M@<Markup@> Command = {
   Loc@ l := Do(Loc);
   String@ name := Do(Name);
   name.?(empty: {
-    Error<Markup@>(l, Str|'missing command name');
+    Error<Markup@>(l, Format|'missing command name'[]);
   });
 
   Args(l, name, /Std/List%.Empty<Markup@>);
