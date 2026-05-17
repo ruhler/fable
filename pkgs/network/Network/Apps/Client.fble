@@ -2,18 +2,18 @@
 Bool@, True, False .= /Std/Bool%;
 Char@, Pos .= /Std/Char%;
 Str .= /Std/Char/Ascii%;
-StringE .= /Std/Char/Ascii/Stream%;
+Format, StringE .= /Std/Char/Ascii/Stream%;
 Int@, Neg, Decr .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 IsZero .= /Std/Int/Sign%;
 Main@, Success, Failure .= /Std/Io/Cli%;
 Io@ .= /Std/Io%;
-List@, Concat .= /Std/List%;
-Maybe@ .= /Std/Maybe%;
+List@ .= /Std/List%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Put .= /Std/Stream%;
+Stream@, Put .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
-String .= /Std/Stream/String%;
+S(.String) .= /Std/Stream/String%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -21,7 +21,7 @@ InOut@, Sockets@ .= /Network/Sockets%;
 
 Args@ = *(
   Bool@ help,
-  String@ error,
+  Maybe@<Stream@<Char@>> error,
   String@ hostname,
   Int@ port,
   String@ message,
@@ -30,7 +30,7 @@ Args@ = *(
 
 Args@ DefaultArgs = @(
   help: False,
-  error: Str|'',
+  error: Nothing<Stream@<Char@>>,
   hostname: Str|'localhost',
   port: Int|7,
   message: Str|'hello',
@@ -52,7 +52,7 @@ GetArgs = (List@<String@> args, Args@ default) {
   });
 
   args.items.tail.?(empty: {
-    default.@(error: Concat[Str|'missing arg to option ', arg]);
+    default.@(error: Just(Format|'missing arg to option %s'[S(arg)]));
   });
 
   String@ value = args.items.tail.items.head;
@@ -66,7 +66,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     ArgAnyOf[Str|'-p', Str|'--port'].?(true: {
       Maybe@<Int@> port = /Std/Int/Parse%.Int(value);
       port.?(nothing: {
-        default.@(error: Concat[Str|'invalid port ', value]);
+        default.@(error: Just(Format|'invalid port %s'[S(value)]));
       });
       default.@(port: port.just);
     });
@@ -78,15 +78,15 @@ GetArgs = (List@<String@> args, Args@ default) {
     ArgAnyOf[Str|'-n', Str|'--num-bytes'].?(true: {
       Maybe@<Int@> num_bytes = /Std/Int/Parse%.Int(value);
       num_bytes.?(nothing: {
-        default.@(error: Concat[Str|'invalid num bytes ', value]);
+        default.@(error: Just(Format|'invalid num bytes %s'[S(value)]));
       });
       default.@(num_bytes: num_bytes.just);
     });
 
-    default.@(error: Concat[Str|'unrecognized option ', arg]);
+    default.@(error: Just(Format|'unrecognized option '[S(arg)]));
   };
 
-  nargs.error.?(items: nargs);
+  nargs.error.?(just: nargs);
   GetArgs(nargv, nargs);
 };
 
@@ -109,12 +109,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
     Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-    Unit@ _ := m.do(out(String(/Network/Apps/Echo/Usage%)));
+    Unit@ _ := m.do(out(S(/Network/Apps/Echo/Usage%)));
     m.return(Success);
   });
 
-  args.error.?(items: {
-    Unit@ _ := m.do(err(String(args.error)));
+  args.error.?(just: {
+    Unit@ _ := m.do(err(args.error.just));
     Unit@ _ := m.do(err(StringE|'\ntry --help for help\n'));
     m.return(Failure);
   });
@@ -129,7 +129,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   Out@<Char@, M@> os = /Std/Stream/Map%.Out(Pos, ios.out);
   Out@<Int@, M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
 
-  Unit@ _ := m.do(os(String(args.message)));
+  Unit@ _ := m.do(os(S(args.message)));
   Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, out));
   m.return(Success);
 };
