@@ -101,9 +101,9 @@ TestSuite = (String@ name, List@<Test@> tests) {
   Test@(suite: TestSuite@(name, tests));
 };
 
-# @func[SkipTest] Skips a test
+# @func[SkipTest] Skips a test or suite of tests.
 #  @arg[Stream@<Char@>][msg] Explanation for why the test is skipped.
-#  @arg[Test@][test] The test to skip.
+#  @arg[Test@][test] The test or test suite to skip.
 #  @returns[Test@] A skipped test.
 (Stream@<Char@>, Test@) { Test@; }
 SkipTest = (Stream@<Char@> msg, Test@ test) {
@@ -111,8 +111,8 @@ SkipTest = (Stream@<Char@> msg, Test@ test) {
   TestSuite(test.suite.name, /Std/List%.Map(test.suite.tests, SkipTest(msg)));
 };
 
-# @func[SkipTestIf] Conditionally skips a test.
-#  @arg[Bool@][if] Skip the test if this condition holds.
+# @func[SkipTestIf] Conditionally skips a test or test suite.
+#  @arg[Bool@][if] Skip the test or test suite if this condition holds.
 #  @arg[Stream@<Char@>][msg] Explanation for why the test is skipped.
 #  @arg[Test@][test] The test to skip.
 #  @returns[Test@] A skipped test.
@@ -121,8 +121,8 @@ SkipTestIf = (Bool@ if, Stream@<Char@> msg) {
   if.?(true: SkipTest(msg), false: /Std/Func%.Id<Test@>);
 };
 
-# @func[SkipTestUnless] Conditionally skips a test.
-#  @arg[Bool@][unless] Skip the test unless this condition holds.
+# @func[SkipTestUnless] Conditionally skips a test or test suite.
+#  @arg[Bool@][unless] Skip the test or test suite unless this condition holds.
 #  @arg[Stream@<Char@>][msg] Explanation for why the test is skipped.
 #  @arg[Test@][test] The test to skip.
 #  @returns[Test@] A skipped test.

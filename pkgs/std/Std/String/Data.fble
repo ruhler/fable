@@ -1,0 +1,11 @@
+# @module[/Std/String/Data%]
+#  The Data@ instance for String.
+
+Data@ .= /Std/Data%;
+String@ .= /Std/String%;
+
+# @value[Data] The Data@ instance for String@.
+#  @type[Data@<String@>]
+Data@<String@> Data = /Std/List/Data%.Data(/Std/Char/Data%.Data);
+
+@(Data);

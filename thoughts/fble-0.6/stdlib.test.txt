@@ -1513,3 +1513,37 @@ passing an inline test suite or test case, it's not pleasant.
 What if we provided a drop in constructor for Test and TestSuite instead?
 Well, then you don't have an easy place to explain why you are skipping.
 
+---
+
+* Revisit api for skipping tests?
+ - It seems like it would be pretty awkward to use in practice.
+
+Skip as a TestResult@ should work great. It's only skipping test suites as a
+whole that we run into issues.
+
+We have the following options:
+1. Leave things as is.
+* SkipTest, SkipTestIf, SkipTestUnless
+* You have to wrap the existing test in () to call them.
+
+2. Remove the SkipTest apis for now.
+* No easy easy way to skip a set of tests.
+* But also I don't have a use case for skipping a test suite right now.
+
+3. Alter SkipTest APIs to make syntax for applying them more convenient.
+* But that only works if we were already in a statement context for defining
+  tests. In practice we are always in an expression context. If we're willing
+  to switch to a statement context for this case, we may as well be willing to
+  use the existing APIs as is.
+
+4. Add language support to make this case easier.
+* But I already tried that. I didn't like it. And we have no use case for
+  skipping a test suite right now. It doesn't make sense to complicate the
+  language for a non-existent use case.
+  
+So let's just leave things as is for now. If I get a use case and it turns out
+the existing apis for skipping test suites are too painful, then I can
+revisit.
+
+
+

@@ -1,0 +1,13 @@
+# @module[/Std/Char/Data%]
+#  The Data@ instance for Char@.
+
+Char@, Pos .= /Std/Char%;
+Data@ .= /Std/Data%;
+
+# @value[Data] The Data@ instance for Char@.
+#  @type[Data@<Char@>]
+Data@<Char@> Data = (Char@ x) {
+  /Std/Int/Data%.Data(Pos(x));
+};
+
+@(Data);

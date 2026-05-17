@@ -1,0 +1,14 @@
+# @module[/Std/Bool/Data%]
+#  The Data@ instance for Bool.
+
+Bool@ .= /Std/Bool%;
+Data@, Enum .= /Std/Data%;
+
+# @value[Data] The Data@ instance for Bool@.
+#  @type[Data@<Bool@>]
+Data@<Bool@> Data = (Bool@ x) {
+  # Pick order to match Cmp, which puts false < true.
+  x.?(true: Enum|1, false: Enum|0);
+};
+
+@(Data);

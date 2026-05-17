@@ -1,0 +1,17 @@
+# @module[/Std/List/Data%]
+#  The Data@ instance for List.
+
+List@ .= /Std/List%;
+Data@, Enum, Struct, Union .= /Std/Data%;
+
+# @func[Data] The Data@ instance for List@.
+#  @arg[@][A@] The type of element on the list.
+#  @arg[Data@<A@>][data] Data for list elements.
+#  @returns[Data@<List@<A@>>] Data for lists.
+<@ A@>(Data@<A@>) { Data@<List@<A@>>; }
+Data = <@ A@>(Data@<A@> data, List@<A@> x) {
+  x.?(empty: Enum|0);
+  Union|1(Struct[data(x.items.head), Data(data, x.items.tail)]);
+};
+
+@(Data);

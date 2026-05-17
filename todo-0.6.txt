@@ -2,29 +2,35 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Revisit api for skipping tests?
- - It seems like it would be pretty awkward to use in practice.
-
+Tutorials:
 * Add section of module imports to tutorials/Features.fbld?
 * Add section of pattern matching to tutorials/Features.fbld?
+* Remove kinds from let expressions in all the examples in the spec and
+  tutorials and everywhere for the new syntax.
 
+Standard Library:
 * Break dependency of /Std/Map% on /Std/List%?
   By moving the Entries function somewhere else?
   Same for /Std/Set%.
-
-* Add instances of Data@ for more standard data types.
-  Unit@, Bool@, Maybe@, Char@, List@, String@, etc.
-
 * Should Map Put, Update, Replace functions update the key value or leave it
   as is? Add tests for this case.
-
-* fble-pprof 'unable to serve' after ctrl-c to quit just before.
-
 * Remove /Std/Stream%.Do?
   Because we don't make use of the laziness of it anymore?
   Or keep it, as a convenient way to do a sequence of nested function
   application?
+* Should we provide Monad instances for Maybe@ and Lazy@ somewhere? List@?
+* Add back character type functions isspace, isalnum, etc?
+* Add Lt, Le, Gt, Ge, etc for Char@?
+* Reconsider if Read, Write, Append should report error messages?
 
+* Figure out how to organize std packages
+ - Add network to std package?
+ - Separate io and FFI related stuff into separate std-io package?
+ - Add app to std package?
+
+
+Other:
+* fble-pprof 'unable to serve' after ctrl-c to quit just before.
 
 * Figure out why we don't propagate an error
  - If /Core/Map/Data% Delete function is left undefined.
@@ -32,25 +38,17 @@ Things to consider doing for the fble-0.6 release.
 
 * Update all the sample apps for latest features, styles, idioms.
 
-* Should we provide Monad instances for Maybe@ and Lazy@ somewhere? List@?
-
-
 * Double check all the old documentation referring to Output@, which is now
   called Stream@?
-
-* Add back character type functions isspace, isalnum, etc?
-* Add Lt, Le, Gt, Ge, etc for Char@?
 
 * A lot of the /Std/* documentation isn't very helpful.
   Consider rewriting it to be an explanation for how to use the functions
   instead of a description of what they are.
 
 * Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
-* Reconsider if Read, Write, Append should report error messages?
 
 * See if there is more opportunity to typecheck more stuff before erroring
   out?
-
 
 * Why is the invaders ship dying animation so messed up on linux console?
 
@@ -60,16 +58,8 @@ Things to consider doing for the fble-0.6 release.
    It's slightly awkward to get the dependencies passed directly to the 
    testsuite helper?
 
-* Remove kinds from let expressions in all the examples in the spec and
-  tutorials and everywhere for the new syntax.
-
 * Remove Builtin from spec and spec tests now that we have FFI?
  - Like, do we need builtin support anymore? Is there any value for it?
-
-* Figure out how to organize std packages
- - Add network to std package?
- - Separate io and FFI related stuff into separate std-io package?
- - Add app to std package?
 
 * Somethings wrong with the Snake window sizing.
 
@@ -152,7 +142,6 @@ Things to consider doing for the fble-0.6 release.
 * Update tutorials for character library.
 * Update tutorials for use of Concat instead of Strs.
 
-* Implement Cmp@ for Unit, Bool, Int, Char, List.
 
 * Figure out how to properly document List@ type
  - Mix of poly, struct, and union all in one.

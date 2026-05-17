@@ -1,0 +1,17 @@
+# @module[/Std/Maybe/Data%]
+#  The Data@ instance for Maybe.
+
+Maybe@ .= /Std/Maybe%;
+Data@, Enum, Union .= /Std/Data%;
+
+# @func[Data] The Data@ instance for Maybe@.
+#  @arg[@][A@] The type of element on the maybe.
+#  @arg[Data@<A@>][data] Data for maybe elements.
+#  @returns[Data@<Maybe@<A@>>] Data for maybes.
+<@ A@>(Data@<A@>) { Data@<Maybe@<A@>>; }
+Data = <@ A@>(Data@<A@> data, Maybe@<A@> x) {
+  x.?(nothing: Enum|0);
+  Union|1(data(x.just));
+};
+
+@(Data);

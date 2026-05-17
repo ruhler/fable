@@ -1,0 +1,14 @@
+# @module[/Std/Unit/Cmp%]
+#  The Cmp@ instance for Unit@.
+
+Unit@ .= /Std/Unit%;
+Cmp@, Equal .= /Std/Cmp%;
+
+# @value[Cmp] The Cmp@ instance for Unit@.
+#  @type[Cmp@<Unit@>]
+Cmp@<Unit@>
+Cmp = (Unit@ _, Unit@ _) {
+  Equal;
+};
+
+@(Cmp);

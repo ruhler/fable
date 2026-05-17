@@ -1,0 +1,13 @@
+# @module[/Std/Unit/Data%]
+#  The Data@ instance for Unit.
+
+Data@, Struct .= /Std/Data%;
+Unit@ .= /Std/Unit%;
+
+# @value[Data] The Data@ instance for Unit@.
+#  @type[Data@<Unit@>]
+Data@<Unit@> Data = (Unit@ _) {
+  Struct[];
+};
+
+@(Data);

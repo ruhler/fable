@@ -1,0 +1,18 @@
+# @module[/Std/Cmp/Cmp%]
+#  The Cmp@ instance for Compared@.
+
+Cmp@, Compared@, Less, Greater, Equal .= /Std/Cmp%;
+
+# @value[Cmp] The Cmp@ instance for Compared@.
+#  @type[Cmp@<Compared@>]
+#
+#  less < equal < greater
+Cmp@<Compared@>
+Cmp = (Compared@ a, Compared@ b) {
+  a.?(
+    less: b.?(less: Equal, : Less),
+    equal: b.?(less: Greater, equal: Equal, greater: Greater),
+    greater: b.?(greater: Equal, : Greater));
+};
+
+@(Cmp);

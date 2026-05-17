@@ -1,0 +1,18 @@
+# @module[/Std/Maybe/Cmp%]
+#  The Cmp@ instance for Maybe@.
+
+Cmp@, Less, Equal, Greater .= /Std/Cmp%;
+Maybe@ .= /Std/Maybe%;
+
+# @func[Cmp] Provides a Cmp@ instance for maybe.
+#  @arg[@][A@] The type of element on the maybe.
+#  @arg[Cmp@<A@>][cmp] How to compare maybe elements.
+#  @returns[Cmp@<Maybe@<A@>>] How to compare maybes.
+<@ A@>(Cmp@<A@>) { Cmp@<Maybe@<A@>>; }
+Cmp = <@ A@>(Cmp@<A@> cmp, Maybe@<A@> a, Maybe@<A@> b) {
+  a.?(nothing: b.?(just: Less, nothing: Equal));
+  b.?(nothing: Greater);
+  cmp(a.just, b.just);
+};
+
+@(Cmp);

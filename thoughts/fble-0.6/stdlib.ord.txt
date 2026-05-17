@@ -610,3 +610,63 @@ rest of /Std/Cmp% and its uses feels nice to me now. I've ported definitions
 over from Ord% to Cmp%. There are a bunch of lingering references to Ord where
 it's used outside of the standard library still. Oh well.
 
+---
+
+What all standard data types should I provide Cmp@ instances for? Probably
+everything we have an instance of Eq and Show for. Potentially:
+
+  pkgs/std/Std/Bool/Cmp.fble
+  pkgs/std/Std/Bool/Eq.fble
+  pkgs/std/Std/Bool/Data.fble
+  pkgs/std/Std/Bool.fble
+
+  pkgs/std/Std/Char/Cmp.fble
+  pkgs/std/Std/Char/Data.fble
+  pkgs/std/Std/Char/Eq.fble
+  pkgs/std/Std/Char.fble
+
+  pkgs/std/Std/Cmp/Cmp.fble
+  pkgs/std/Std/Cmp/Data.fble
+  pkgs/std/Std/Cmp/Eq.fble
+  pkgs/std/Std/Cmp.fble
+  pkgs/std/Std/Cmp/Show.fble
+
+  pkgs/std/Std/Int/Cmp.fble
+  pkgs/std/Std/Int/Data.fble
+  pkgs/std/Std/Int/Eq.fble
+  pkgs/std/Std/Int.fble
+
+  pkgs/std/Std/List/Cmp.fble
+  pkgs/std/Std/List/Data.fble
+  pkgs/std/Std/List/Eq.fble
+  pkgs/std/Std/List.fble
+
+  pkgs/std/Std/Map/Eq.fble
+  pkgs/std/Std/Map/Show.fble
+
+  pkgs/std/Std/Maybe/Cmp.fble
+  pkgs/std/Std/Maybe/Data.fble
+  pkgs/std/Std/Maybe/Eq.fble
+  pkgs/std/Std/Maybe.fble
+  pkgs/std/Std/Maybe/Show.fble
+
+  pkgs/std/Std/Set/Eq.fble
+  pkgs/std/Std/Set.fble
+  pkgs/std/Std/Set/Show.fble
+
+  pkgs/std/Std/String/Cmp.fble
+  pkgs/std/Std/String/Data.fble
+  pkgs/std/Std/String/Eq.fble
+  pkgs/std/Std/String.fble
+  pkgs/std/Std/String/Show.fble
+
+  pkgs/std/Std/Unit/Cmp.fble
+  pkgs/std/Std/Unit/Data.fble
+  pkgs/std/Std/Unit/Eq.fble
+  pkgs/std/Std/Unit.fble
+  pkgs/std/Std/Unit/Show.fble
+
+Sounds straight forward.
+
+I think it's okay to skip Map@ and Set@. I don't normally thing of those as
+things we would want to compare or use as keys in maps.
