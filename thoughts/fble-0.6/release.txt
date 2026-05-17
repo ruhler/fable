@@ -575,3 +575,16 @@ buildstamp.o: internally shared.
 Looks okay in general then. I added the missing ones, made things static where
 reasonable. It's too bad we have to export the internally shared ones. I
 wonder if there is some way to do away with that.
+
+---
+
+* Cover all escape chars in StrE tests.
+
+What I'm missing now: \0, \a, \b \f \r \v
+
+But that's because none of \0, \a, \b, \f, \r, or \v are present in the Ascii
+type. Should I name them? Like, Ascii. nul, bel, bs, ff, cr, vt?
+
+It's part of ascii. Why not? That doesn't mean I need them to be printable.
+But, on the other hand... why not?
+

@@ -39,9 +39,13 @@ Ascii@ = +(
 
 # @value[Ascii] Ascii character values.
 Ascii = @(
-  nl: U|0A, tab: U|09, cr: U|0D,
-
-  '	': U|09,  '': U|0D, ' ': U|20,
+  nul: U|00, bel: U|07, bs: U|08,
+  ht: U|09, tab: U|09, '	': U|09,
+  lf: U|0A, nl: U|0A,
+  vt: U|0B, ff: U|0C,
+  cr: U|0D, '': U|0D,
+  
+  ' ': U|20,
 
   '!': U|21, '"': U|22, '#': U|23, '$': U|24,
   '%': U|25, '&': U|26, '''': U|27, '(': U|28,
