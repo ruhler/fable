@@ -7,12 +7,17 @@ Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit@());
 Bool@ False = Bool@(false: Unit@());
 
-# Basic use of a foreign function.
-# The foreign function 'Not' for this module must be supplied by the test
-# driver somewhere. It should behave as a boolean 'Not' function.
-(Bool@) { Bool@; } F = (Bool@) { Bool@; }|Not;
+# Wrap the test in a Test function just so we get code coverage for
+# rewriting vars.
+(Unit@) { Unit@; } Test = (Unit@ _) {
+  # Basic use of a foreign function.
+  # The foreign function 'Not' for this module must be supplied by the test
+  # driver somewhere. It should behave as a boolean 'Not' function.
+  (Bool@) { Bool@; } F = (Bool@) { Bool@; }|Not;
 
-Unit@ _ = F(True).false;
-Unit@ _ = F(False).true;
-Unit;
+  Unit@ _ = F(True).false;
+  Unit@ _ = F(False).true;
+  Unit;
+};
 
+Test(Unit);

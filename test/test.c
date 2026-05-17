@@ -14,11 +14,9 @@
 #include "fble-test.usage.h"       // for fbldUsageHelpText
 
 extern FblePreloadedModule _Fble_2f_SpecTests_2f_Builtin_25_;
-extern FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Basic_25__2e_Not;
-extern FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Poly_25__2e_Nothing;
-extern FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_True;
-extern FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_False;
-extern FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_ModuleMatters_25__2e_False;
+
+// Defined in foreign.c
+void FbleTestRegisterForeignValues(FbleValueHeap* heap);
 
 
 // FbleTestMain -- see documentation in test.h
@@ -30,11 +28,7 @@ int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   uint64_t profile_sample_period = 0;
   FbleValue* result = NULL;
 
-  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Basic_25__2e_Not);
-  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Poly_25__2e_Nothing);
-  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_True);
-  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_False);
-  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_ModuleMatters_25__2e_False);
+  FbleTestRegisterForeignValues(heap);
 
   FblePreloadedModuleV builtins;
   FbleInitVector(builtins);

@@ -1,0 +1,6 @@
+# @@fble-test@@ compile-error 6:13
+
+# Test coverage for bison FbleKind destructors.
+# The idea is to get a bunch of kinds and lists of kinds on the stack, then
+# have an error.
+<<@, <@>@, @: A@> { A@; };

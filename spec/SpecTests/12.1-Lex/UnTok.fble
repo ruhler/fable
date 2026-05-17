@@ -1,0 +1,7 @@
+# @@fble-test@@ compile-error 7:7
+Unit@ = *();
+Unit = Unit@();
+
+# Test for code coverage. .%X is an invalid sequence because .% should always
+# be followed by open paren.
+Unit.%X;

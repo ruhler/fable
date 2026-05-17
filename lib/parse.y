@@ -127,6 +127,10 @@ while (0)
 } <module_path>
 
 %destructor {
+  // Note: I believe this code is unreachable because kind is only ever
+  // followed by name in the definition of a non-terminal, and there's no way
+  // for name to initiate an error that would need destructing of the kind
+  // value on the stack.
   FbleFreeKind($$);
 } <kind>
 
@@ -159,7 +163,7 @@ while (0)
 %destructor { 
   // Note: I believe this code is unreachable because tagged_type only ever
   // occurs as the last item in the definition of a non-terminal. Any errors
-  // following parsing of this will result in calling the desctructor for the
+  // following parsing of this will result in calling the destructor for the
   // parent non-terminal, not the tagged_type.
   FbleFreeExpr($$.type);
   FbleFreeName($$.name);
@@ -200,6 +204,10 @@ while (0)
 } <bindings>
 
 %destructor {
+  // Note: I believe this code is unreachable because import only ever
+  // occurs as the last item in the definition of a non-terminal. Any errors
+  // following parsing of this will result in calling the desctructor for the
+  // parent non-terminal, not the import.
   FbleFreeExpr($$.type);
   FbleFreeName($$.name);
   if ($$.field.name != NULL) {

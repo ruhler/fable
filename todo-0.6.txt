@@ -2,14 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Add spec tests for full test coverage.
- - RewriteVars involving FFI function in compile.c.
- - Foreign value not found in interpreted case.
- - Mangled characters in module path names in module-path.c
- - Free kind destructors in parse.y
- - Import destructor in parse.y
- - Bad char sequences in input: .%X, .@X in parse.y
-
 * Cover all escape chars in StrE tests.
 * Replace uses of 'Concat' with 'Format' where appropriate.
 
@@ -220,3 +212,4 @@ Things to consider doing for the fble-0.6 release.
  - Interpreted gives runtime error.
  - Compiled gives link time error not an any particular line number.
  - We would need some extra spec infra support to describe this.
+ - Add spec test for Foreign value not found in interpreted case.
