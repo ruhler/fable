@@ -4,19 +4,19 @@
 Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
 Str .= /Std/Char/Ascii%;
-StringE .= /Std/Char/Ascii/Stream%;
+Format, StringE .= /Std/Char/Ascii/Stream%;
 Io@ .= /Std/Io%;
 Main@, Success, Failure .= /Std/Io/Cli%;
 Int@, Neg, Decr .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 IsZero .= /Std/Int/Sign%;
-List@, List, Concat .= /Std/List%;
+List@, List .= /Std/List%;
 Any .= /Std/List/Search%;
-Maybe@ .= /Std/Maybe%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Put .= /Std/Stream%;
+Stream@, Put .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
-String .= /Std/Stream/String%;
+S(.String) .= /Std/Stream/String%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -24,7 +24,7 @@ InOut@, Server@, Sockets@ .= /Network/Sockets%;
 
 Args@ = *(
   Bool@ help,
-  String@ error,
+  Maybe@<Stream@<Char@>> error,
   String@ hostname,
   Int@ port,
   Int@ num_clients
@@ -32,7 +32,7 @@ Args@ = *(
 
 Args@ DefaultArgs = @(
   help: False,
-  error: Str|'',
+  error: Nothing<Stream@<Char@>>,
   hostname: Str|'localhost',
   port: Int|7,
   num_clients: Neg(Int|1)
@@ -53,7 +53,7 @@ GetArgs = (List@<String@> args, Args@ default) {
   });
 
   args.items.tail.?(empty: {
-    default.@(error: Concat[Str|'missing arg to option ', arg]);
+    default.@(error: Just(Format|'missing arg to option '[S(arg)]));
   });
 
   String@ value = args.items.tail.items.head;
@@ -67,7 +67,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     ArgAnyOf[Str|'-p', Str|'--port'].?(true: {
       Maybe@<Int@> port = /Std/Int/Parse%.Int(value);
       port.?(nothing: {
-        default.@(error: Concat[Str|'invalid port ', value]);
+        default.@(error: Just(Format|'invalid port %s'[S(value)]));
       });
       default.@(port: port.just);
     });
@@ -75,15 +75,15 @@ GetArgs = (List@<String@> args, Args@ default) {
     ArgAnyOf[Str|'-n', Str|'--num-clients'].?(true: {
       Maybe@<Int@> num_clients = /Std/Int/Parse%.Int(value);
       num_clients.?(nothing: {
-        default.@(error: Concat[Str|'invalid num clients ', value]);
+        default.@(error: Just(Format|'invalid num clients %s'[S(value)]));
       });
       default.@(num_clients: num_clients.just);
     });
 
-    default.@(error: Concat[Str|'unrecognized option ', arg]);
+    default.@(error: Just(Format|'unrecognized option %s'[S(arg)]));
   };
 
-  nargs.error.?(items: nargs);
+  nargs.error.?(just: nargs);
   GetArgs(nargv, nargs);
 };
 
@@ -103,12 +103,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Unit@ _ := m.do(out(String(/Network/Apps/Echo/Usage%)));
+    Unit@ _ := m.do(out(S(/Network/Apps/Echo/Usage%)));
     m.return(Success);
   });
 
-  args.error.?(items: {
-    Unit@ _ := m.do(err(String(args.error)));
+  args.error.?(just: {
+    Unit@ _ := m.do(err(args.error.just));
     Unit@ _ := m.do(err(StringE|'\ntry --help for help\n'));
     m.return(Failure);
   });
