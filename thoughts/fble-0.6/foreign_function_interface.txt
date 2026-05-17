@@ -827,3 +827,14 @@ windows needs sockets to be initialized. Stdio wants setlocale to be called.
 I could define FFI functions and call them when the module is loaded. Is that
 a reasonable thing to do? Have module level side effects?
 
+---
+
+How to test foreign value not found case?
+
+In the interpreter, it's a runtime error. In the compiler, it's a link time
+error. The spec test infra doesn't have a way to handle that. The spec says it
+could happen either time.
+
+So... what do I do? Just not test it for now? Add one off infra support for
+this case? I could do that, right?
+

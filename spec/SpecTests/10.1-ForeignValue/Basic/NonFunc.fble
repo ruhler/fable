@@ -1,6 +1,7 @@
 # @@fble-test@@ no-error
 
 Unit@ = *();
+Unit = Unit@();
 
 Bool@ = +(Unit@ true, Unit@ false);
 
@@ -8,4 +9,12 @@ Bool@ = +(Unit@ true, Unit@ false);
 # The foreign value 'False' for this module must be supplied by the test
 # driver somewhere. It should behave as a boolean False value.
 Bool@ F = Bool@|False;
-F.false;
+Unit@ _ = F.false;
+
+# Also check we can distinguish between two different foreign values.
+# The foreign value 'True' for this module must be supplied by the test
+# driver somewhere. It should behave as a boolean True value.
+Bool@ T = Bool@|True;
+Unit@ _ = T.true;
+
+Unit;

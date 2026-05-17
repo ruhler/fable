@@ -2,11 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Test coverage for FFI
- - Verify names matter.
- - Verify module paths matter.
- - Test what happens if you can't find the foreign function?
-
 * Add spec tests for full test coverage.
  - RewriteVars involving FFI function in compile.c.
  - Foreign value not found in interpreted case.
@@ -221,3 +216,7 @@ Things to consider doing for the fble-0.6 release.
 * Remove now unused FBLE_PROFILE_ENTER_OP, EXIT_OP, and REPLACE_OPs?
  - Or wait to see if we want them for code coverage?
 
+* Figure out a way to test foreign function not found?
+ - Interpreted gives runtime error.
+ - Compiled gives link time error not an any particular line number.
+ - We would need some extra spec infra support to describe this.

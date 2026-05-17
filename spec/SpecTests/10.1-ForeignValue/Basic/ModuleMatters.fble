@@ -1,0 +1,13 @@
+# @@fble-test@@ no-error
+
+Unit@ = *();
+
+Bool@ = +(Unit@ true, Unit@ false);
+
+# Test that the module name matters for a foreign function.
+# This use of 'False' is similar to the NonFunc test, but in this case
+# the foreign value 'False' for this module should be supplied and behave as a
+# boolean True value.
+Bool@ F = Bool@|False;
+F.true;
+

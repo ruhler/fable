@@ -53,6 +53,29 @@ FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Poly_25__2
 };
 
 /**
+ * @func[True] FbleRunFunction for True foreign value.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is @l{Bool@}.
+ *
+ *  @sideeffects None
+ */
+static FbleValue* True(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleFunction* function, FbleValue** args)
+{
+  return FbleNewEnumValue(heap, 1, 0);
+}
+
+FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_True = {
+  .path = "/SpecTests/'10.1-ForeignValue'/Basic/NonFunc%",
+  .name = "True",
+  .num_args = 0,
+  .max_call_args = 0,
+  .run = &True
+};
+
+/**
  * @func[False] FbleRunFunction for 'False' foreign value.
  *  See documentation of FbleRunFunction in fble-function.h
  *
@@ -73,4 +96,14 @@ FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25
   .num_args = 0,
   .max_call_args = 0,
   .run = &False
+};
+
+// Foreign value with same name but different module as another foreign
+// value, to test we link with the right one.
+FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_ModuleMatters_25__2e_False = {
+  .path = "/SpecTests/'10.1-ForeignValue'/Basic/ModuleMatters%",
+  .name = "False",
+  .num_args = 0,
+  .max_call_args = 0,
+  .run = &True
 };
