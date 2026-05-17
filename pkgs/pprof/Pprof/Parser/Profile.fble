@@ -1,9 +1,11 @@
 
 Str .= /Std/Char/Ascii%;
+Format .= /Std/Char/Ascii/Stream%;
 Int@, Incr .= /Std/Int%;
 Int .= /Std/Int/Lit%;
-List@, Empty, Items, Append, Reverse, Concat .= /Std/List%;
+List@, Empty, Items, Append, Reverse .= /Std/List%;
 Monad@ .= /Std/Monad%;
+String .= /Std/Stream/String%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 
@@ -46,13 +48,13 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   (Payload@, String@) { M@<Int@>; }
   LengthFor = (Payload@ payload, String@ field_name) {
     payload.?(length: m.return(payload.length));
-    p.Fail<Int@>(Concat[field_name, Str|' field is not of wire_type LEN']);
+    p.Fail<Int@>(Format|'%s field is not of wire_type LEN'[String(field_name)]);
   };
 
   (Payload@, String@) { M@<Int@>; }
   IntFor = (Payload@ payload, String@ field_name) {
     payload.?(int: m.return(payload.int));
-    p.Fail<Int@>(Concat[field_name, Str|' field is not of wire_type VARINT']);
+    p.Fail<Int@>(Format|' field is not of wire_type VARINT'[String(field_name)]);
   };
 
   (Record@, StringId@) { M@<StringId@>; }

@@ -1,4 +1,5 @@
 
+Char@ .= /Std/Char%;
 Str .= /Std/Char/Ascii%;
 Format .= /Std/Char/Ascii/Stream%;
 Int@, Add, Sub, Mul, Incr, Decr .= /Std/Int%;
@@ -10,6 +11,7 @@ IsZero .= /Std/Int/Sign%;
 List@, Empty, Items .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
+Stream@ .= /Std/Stream%;
 In@ .= /Std/Stream/Io%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
@@ -38,7 +40,7 @@ Proto@ = <<@>@ M@> {
   #  @arg[@][A@] Type of the parser.
   #  @arg[String@][msg] The error message.
   #  @returns[M@<A@>] A parser that fails with the given error message.
-  <@ A@>(String@) { M@<A@>; } Fail;
+  <@ A@>(Stream@<Char@>) { M@<A@>; } Fail;
 
   # @func[Skip] Skip over the given payload.
   #  @arg[Payload@][payload] The payload to skip over.
@@ -109,10 +111,9 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(In@<Int@, M@> in, Monad@<M@> m) {
   Monad@<PM@> Monad = Monad@(PM@, Return, Do);
 
   Proto@<PM@> proto = {
-    <@ A@>(String@) { PM@<A@>; }
-    Fail = <@ A@>(String@ msg, S@ s) {
-      m.return(Error<R@<A@>>(Format|'error:%s: %s'[
-          /Std/Int/Show%.Show(s), /Std/Stream/String%.String(msg)]));
+    <@ A@>(Stream@<Char@>) { PM@<A@>; }
+    Fail = <@ A@>(Stream@<Char@> msg, S@ s) {
+      m.return(Error<R@<A@>>(Format|'error:%s: %s'[/Std/Int/Show%.Show(s), msg]));
     };
 
     # Returns number of bytes read so far.
@@ -131,7 +132,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(In@<Int@, M@> in, Monad@<M@> m) {
     # Fails if we reach end of input.
     PM@<Int@> Get = {
       Maybe@<Int@> mbyte := Do(MaybeGet);
-      mbyte.?(nothing: Fail<Int@>(Str|'unexpected end of input'));
+      mbyte.?(nothing: Fail<Int@>(Format|'unexpected end of input'[]));
       Return(mbyte.just);
     };
 
@@ -188,7 +189,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(In@<Int@, M@> in, Monad@<M@> m) {
       Int@ int_end := Do(BytesRead);
       Int@ int_length = Sub(int_end, int_start);
       Gt(int_length, length).?(true: {
-        Fail<List@<Int@>>(Str|'length exceeded on packed int read');
+        Fail<List@<Int@>>(Format|'length exceeded on packed int read'[]);
       });
 
       List@<Int@> tail := Do(Ints(Sub(length, int_length)));
@@ -231,7 +232,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(In@<Int@, M@> in, Monad@<M@> m) {
           Return(Payload@(bytes: bytes));
         });
 
-        Fail<Payload@>(Str|'invalid wire_type in record');
+        Fail<Payload@>(Format|'invalid wire_type in record'[]);
       });
 
       Return(Record@(field, payload));
@@ -256,7 +257,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(In@<Int@, M@> in, Monad@<M@> m) {
       Int@ record_length = Sub(record_end, record_start);
 
       Gt(record_length, length).?(true: {
-        Fail<A@>(Str|'message length exceeded on record read');
+        Fail<A@>(Format|'message length exceeded on record read'[]);
       });
 
       Message(updated, field, Sub(length, record_length));
