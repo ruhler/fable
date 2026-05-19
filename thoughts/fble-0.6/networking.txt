@@ -1,0 +1,86 @@
+
+* fble-pprof 'unable to serve' after ctrl-c to quit just before.
+
+Internet says it could be one of two things:
+1. Improper shutdown of the socket. Because I did ctrl-c to quit.
+2. Socket is in TIMED_WAIT state.
+  Run ss -ti "sport = :8123" to check.
+
+Possible Fixes:
+* Bind with SO_REUSEADDR
+* Catch ctrl-c and clean things up properly in that case.
+
+Questions: if I closed the socket properly, would I still run into the timed
+wait issue?
+
+ss isn't showing me anything.
+
+Use this instead:
+
+  ss -ati "sport = :8123"
+
+While running, I see:
+
+State     Recv-Q Send-Q Local Address:Port  Peer Address:Port
+LISTEN    0      10         127.0.0.1:8123       0.0.0.0:*
+         cubic cwnd:10
+TIME-WAIT 0      0          127.0.0.1:8123     127.0.0.1:55718
+
+After killing:
+
+State       Recv-Q   Send-Q       Local Address:Port       Peer Address:Port
+TIME-WAIT   0        0                127.0.0.1:8123          127.0.0.1:55718
+
+How long it takes to recover seems to change a bunch. Maybe depending on the
+application that it is bound to?
+
+With multiple requests, looks like these things queue up, and they take a
+while to drain.
+
+To see the timed wait timeout:
+
+  cat /proc/sys/net/ipv4/tcp_fin_timeout
+
+In my case it's 60. Presumably 60 seconds.
+
+It would still be nice to confirm that I have the same problem when properly
+closing the socket. Then I have to decide what I want to do here.
+
+Tcl provides a reuseaddr option. Windows adds like an exclusive addr option on
+top of it. I guess the flag is a potential security issue because you can try
+to steal traffic or otherwise mess up a server without any recourse on the
+server's part.
+
+For the pprof application specifically, it's probably fine. But also, it's
+probably fine for the pprof server to pick a random free port instead of hard
+coding a port. The only reason to hard code is to make it easier to use
+history completion to connect to it.
+
+Playing around with things, it looks like we shouldn't have an issue if all
+the clients have disconnected before trying to restart. Let me confirm.
+
+I'm not sure. Even if I end elinks, I'm seeing the TIMED_WAIT state last. But
+I don't with network client and echo apps. Maybe elinks isn't closing the
+connection cleanly?
+
+I don't know. It feels pretty random.
+
+What if I use a random port by default, instead of 8123? Does my api even
+support that? If I use port 0 maybe?
+
+I can use port 0, which is fine, except the application doesn't know which
+port it actually gets. That's another api issue.
+
+I'm thinking the following:
+* Decide if you should be allowed to pass 0 as a port to the fble network
+  library.
+ - If yes: provide a way to get the actual port value used. If no, fail in
+   case the user passes 0.
+* Don't add a reuse addr option to fble. It just feels risky. Let the user
+  work around it as they want.
+* Optionally change the default port for fble pprof to port 0 to make it more
+  obvious it's the responsibility of the user to deal with conflicting ports
+  if they want to use a specific one.
+* Decide if this is something I want to deal with this release, or wait until
+  I standardize networking.
+

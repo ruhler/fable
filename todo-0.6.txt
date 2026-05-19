@@ -2,12 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-Tutorials:
-* Add section of module imports to tutorials/Features.fbld?
-* Add section of pattern matching to tutorials/Features.fbld?
-* Remove kinds from let expressions in all the examples in the spec and
-  tutorials and everywhere for the new syntax.
-
 Standard Library:
 * Break dependency of /Std/Map% on /Std/List%?
   By moving the Entries function somewhere else?
@@ -28,9 +22,15 @@ Standard Library:
  - Separate io and FFI related stuff into separate std-io package?
  - Add app to std package?
 
+Tutorials:
+* Add section of module imports to tutorials/Features.fbld?
+* Add section of pattern matching to tutorials/Features.fbld?
+* Remove kinds from let expressions in all the examples in the spec and
+  tutorials and everywhere for the new syntax.
 
 Other:
 * fble-pprof 'unable to serve' after ctrl-c to quit just before.
+* network server get actual port used if binding to port 0.
 
 * Figure out why we don't propagate an error
  - If /Core/Map/Data% Delete function is left undefined.
@@ -68,6 +68,7 @@ Other:
   the game is done?
   - Quick search on the internet didn't bring anything obvious up.
   - This would be bad for a password protected field, for example...
+  - Maybe use termios to turn off echoing?
 
 * Switch back to LFSR for snake?
   - Because it's faster and good enough?

@@ -109,7 +109,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
     Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-    Unit@ _ := m.do(out(S(/Network/Apps/Echo/Usage%)));
+    Unit@ _ := m.do(out(S(/Network/Apps/Client/Usage%)));
     m.return(Success);
   });
 
