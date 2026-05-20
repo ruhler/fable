@@ -78,9 +78,10 @@ Get = <@ K@>(Data@<K@> data)<@ V@> {
 #  @arg[K@][key] The key to insert a value for.
 #  @arg[(Maybe@<V@>) { V@; }][with]
 #   A combining function to determine the value to insert. If there is already
-#   a value associated with the key in the map, that will be passed to this
-#   function to determine the ultimate value to insert. Otherwise Nothing will be
-#   passed to this function to determine the value to insert.
+#   a key and value associated with the key in the map, the existing key will
+#   be ignored and the existing value will be passed to this function to
+#   determine the ultimate value to insert. Otherwise Nothing will be passed
+#   to this function to determine the value to insert.
 #  @return[Map@<K@, V@>] The map with the updated value.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>) { V@; }) { Map@<K@, V@>; }
 Update = <@ K@>(Data@<K@> data)<@ V@> {
@@ -127,8 +128,8 @@ Update = <@ K@>(Data@<K@> data)<@ V@> {
 #  @arg[K@][key] The key to insert a value for.
 #  @arg[V@][value] The value to insert.
 #  @return[Map@<K@, V@>]
-#   The map with the inserted value. The inserted value overwrites any
-#   previous value associated with that key in the map.
+#   The map with the inserted value. The inserted key and value overwrites any
+#   previous key and value associated with that key in the map.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
 Put = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
   Update(data, map, key, (Maybe@<V@> _) { value; });
@@ -160,7 +161,8 @@ Entries = <@ K@>(Data@<K@> data)<@ V@>(List@<Entry@<K@, V@>> entries) {
 #   A combining function to specify how to replace the existing value in the
 #   map. The function is passed the existing value in the map. It should
 #   return Nothing to remove the value from the map, or Just(v) to update the
-#   value to v.
+#   value to v. If updating the existing value, the existing key in the map is
+#   kept rather than overwrite it with the new key.
 #  @return[Map@<K@, V@>]
 #   The map with the replaced value. If no value was associated with the key
 #   in the original map, the original map is returned unmodified.

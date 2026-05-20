@@ -2508,4 +2508,22 @@ Or just have it as /Std/Map%.Entries?
 
 Sigh. Let's put it with /Std/Map% for now.
 
+---
 
+* Should Map Put, Update, Replace functions update the key value or leave it
+  as is? Add tests for this case.
+
+Put: Replace the key.
+Update: Replace the key.
+Replace: ???
+
+Seems like 'Update' should replace the key. That's the only way we can
+implement Put in terms of update.
+
+Let's just always replace the key, okay? Consistent. Easy. If you don't like
+it, you can look up the old key before hand.
+
+Wait just a second. Put and Update are clear. How about replace? Replace is
+supposed to be removing things. So how about I keep the old key?
+
+Arbitrary, but at least clearly specified and tested now.

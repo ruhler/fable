@@ -58,3 +58,28 @@ file. Simple, yet functional.
 I do want to show how to do multiple puts with Do, and maybe Return within the
 Stream@<Char@> definition. That can be the second step. Then we can do format
 strings. Then we can show different types.
+
+---
+
+Cool. I'm happy with the updates to the HelloWorld program. Next is basics.
+What all needs to change?
+
+* Do I really want to use bit vectors as the example?
+* Remove kind from type variable declarations.
+* Instead of string conversion, implement Show@
+
+The important things to keep:
+* An enum type declaration. A struct type declaration.
+* A function of multiple arguments.
+* Not needing to use any of the standard library types?
+
+I feel like a better example would be better. Something not funny like bit
+vector. Like, how about a date? We could define days of the week as the enum,
+or months of the year. Then have the date be a struct: day, month, year? The
+function could be... Tomorrow? And we can implement show.
+
+Or maybe Day of the week and hour of the day, am / pm? Function could be: add
+one day. Or add 1 hour, and see how things roll over? I kind of like that.
+Maybe draft a new version of the tutorial like that and see how it feels.
+
+Or something related to a deck of cards? Coins? Music notes?

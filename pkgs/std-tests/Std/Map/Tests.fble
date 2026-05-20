@@ -3,10 +3,11 @@ Bool@, True, False, Not, And, Xor .= /Std/Bool%;
 Char@ .= /Std/Char%;
 OnAscii .= /Std/Char/Ascii%;
 Format .= /Std/Char/Ascii/Stream%;
+Data@ .= /Std/Data%;
 AssertEquals .= /Std/Eq/Assert%;
-Int@ .= /Std/Int%;
+Int@, Neg .= /Std/Int%;
 Int .= /Std/Int/Lit%;
-IsZero, IsPositive .= /Std/Int/Sign%;
+Abs, IsZero, IsPositive .= /Std/Int/Sign%;
 Lazy .= /Std/Lazy%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Stream@, Return .= /Std/Stream%;
@@ -16,9 +17,17 @@ TestSuite = OnAscii(/Std/Test%.TestSuite);
 Test = OnAscii(/Std/Test%.Test);
 Unit@ .= /Std/Unit%;
 
+# To facilitate testing how different but equivalent keys are treated, we
+# define a special version of the hash function that treats negative integers
+# as equal to positive integers.
+Data@<Int@> Data = (Int@ x) {
+  /Std/Int/Data%.Data(Abs(x));
+};
+
 Map@, Entry@, Entries, IsEmpty, Get, Put, Update, Remove, Replace,
-  ForEach, ReplaceAll, Map, Keep, Omit, Meet, Join, Diff
-  .= /Std/Map%.Of(/Std/Int/Data%.Data)<Bool@>;
+ForEach, ReplaceAll, Map, Keep, Omit,
+Meet, Join, Diff .= /Std/Map%.Of(Data)<Bool@>;
+
 Eq = /Std/Map/Eq%.Eq(/Std/Int/Eq%.Eq, /Std/Bool/Eq%.Eq);
 Show = /Std/Map/Show%.Show(/Std/Int/Show%.Show, /Std/Bool/Show%.Show);
 
@@ -92,6 +101,14 @@ Test@ Tests = TestSuite|Map[
       Map@ got = Put(map, B, False);
       Map@ wnt = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, True)];
       AssertEquals(Eq, Show, wnt, got);
+    }),
+
+    Test|ReplaceKey({
+      # Put with an equivalent key should take whatever the latest key was
+      # that was put.
+      Unit@ _ := Lazy;
+      Map@ map = Put(Entries[Entry@(Int|2, True)], Neg(Int|2), True);
+      AssertStream|'{ -2 => True; }'(Show(map));
     })
   ],
 
@@ -116,6 +133,17 @@ Test@ Tests = TestSuite|Map[
       };
       Map@ wnt = Entries[Entry@(A, True), Entry@(B, False), Entry@(C, True)];
       AssertEquals(Eq, Show, wnt, got);
+    }),
+
+    Test|ReplaceKey({
+      # Replace with an equivalent key should take whatever the latest key was
+      # that was put.
+      Unit@ _ := Lazy;
+      Map@ map = {
+        Maybe@<Bool@> value := Update(Entries[Entry@(Int|2, True)], Neg(Int|2));
+        value.?(just: Not(value.just), nothing: True);
+      };
+      AssertStream|'{ -2 => False; }'(Show(map));
     })
   ],
 
@@ -161,6 +189,17 @@ Test@ Tests = TestSuite|Map[
 
         Map@ wnt = Entries[Entry@(A, True), Entry@(C, True)];
         AssertEquals(Eq, Show, wnt, got);
+      }),
+
+      Test|ReplaceKey({
+        # Replace with an equivalent key should leave whatever key was already
+        # in the map.
+        Unit@ _ := Lazy;
+        Map@ map = {
+          Bool@ value := Replace(Entries[Entry@(Int|2, True)], Neg(Int|2));
+          Just(Not(value));
+        };
+        AssertStream|'{ 2 => False; }'(Show(map));
       })
     ],
 

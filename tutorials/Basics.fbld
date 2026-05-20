@@ -74,8 +74,8 @@
   to create a union value is the union type followed by the tag, a colon, and
   the value to use for that tagged field all in parenthesis.
  
-  Union and struct values are immutable, lightweight, and passed by value. A
-  decent implementation of fble will implement a value of @L{Bit4@} like @L{X}
+  Union and struct values are immutable, lightweight, and passed by value. The
+  reference implementation of fble implements a value of @L{Bit4@} like @L{X}
   or @L{Y} easily in a single machine word.
  
  @section Functions

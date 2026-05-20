@@ -6,8 +6,6 @@ Standard Library:
 * Break dependency of /Std/Map% on /Std/List%?
   By moving the Entries function somewhere else?
   Same for /Std/Set%.
-* Should Map Put, Update, Replace functions update the key value or leave it
-  as is? Add tests for this case.
 * Remove /Std/Stream%.Do?
   Because we don't make use of the laziness of it anymore?
   Or keep it, as a convenient way to do a sequence of nested function
