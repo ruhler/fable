@@ -44,3 +44,17 @@ complicated now that we have streams instead of just strings.
 The language points covered by the existing tutorial:
 * Comments, type and function imports, variables
 * Printing different kinds of things.
+
+---
+
+Here's my vote:
+
+The goal for the hello world tutorial is to make it easy for the reader to
+play around with different fble code and see the effect. A single
+Stream@<Char@> output is fine for that. No need for command line arguments or
+stdin, because they can put whatever inputs they want directly in the .fble
+file. Simple, yet functional.
+
+I do want to show how to do multiple puts with Do, and maybe Return within the
+Stream@<Char@> definition. That can be the second step. Then we can do format
+strings. Then we can show different types.

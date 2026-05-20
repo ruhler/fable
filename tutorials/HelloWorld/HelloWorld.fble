@@ -1,21 +1,18 @@
 
-# Import required types and values.
+# Import required types and functions.
 Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
-Char, Str .= /Std/Char/Ascii%;
+Char .= /Std/Char/Ascii%;
 Int@ .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 List@, List .= /Std/List%;
-Do, Return .= /Std/Stream%;
-String .= /Std/Stream/String%;
-String@ .= /Std/String%;
-FormatE .= /Std/Char/Ascii/Stream%;
+Stream@, Do .= /Std/Stream%;
+FormatE, StringE .= /Std/Char/Ascii/Stream%;
 Unit@ .= /Std/Unit%;
 
-# Call the helper function for a main function that prints to standard output.
-/Std/Io/Cli/Print%.Print({
-  String@ msg = Str|'hello, world';
-  Unit@ _ := Do(FormatE|'%s\n'[String(msg)]);
+# Define a variable with the output we want to print.
+Stream@<Char@> output = {
+  Unit@ _ := Do(StringE|'hello, world\n');
 
   Unit@ _ := Do(FormatE|'A boolean: %s\n'[/Std/Bool/Show%.Show(True)]);
 
@@ -28,5 +25,8 @@ Unit@ .= /Std/Unit%;
   List@<Bool@> l = List[True, False, False];
   Unit@ _ := Do(FormatE|'A list: %s\n'[/Std/List/Show%.Show(/Std/Bool/Show%.Show, l)]);
 
-  Return<Char@>;
-});
+  StringE|'goodbye!\n';
+};
+
+# Call the helper function for a main function that prints to standard output.
+/Std/Io/Cli/Print%.Print(output);
