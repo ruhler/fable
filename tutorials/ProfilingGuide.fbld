@@ -43,7 +43,7 @@
 
   @code[txt] @
    parsing foo.prof...
-   serving at http://localhost:8123
+   serving at http://localhost:37047
 
   Visit the URL using your favorite web browser. The following different views
   of the profile are available from there:

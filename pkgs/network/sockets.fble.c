@@ -277,7 +277,7 @@ FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_Close = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (String@, Int@, Unit@) { Maybe@<Socket@>; }
+ *   (String@, Int@, Unit@) { Maybe@<*(Int@ port, Socket@ socket)>; }
  */
 static FbleValue* Server(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -293,7 +293,7 @@ static FbleValue* Server(
 
   struct addrinfo hints;
   memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
+  hints.ai_family = AF_UNSPEC;    // TODO: AF_INET?
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE | AI_NUMERICSERV;
   hints.ai_protocol = 0;
@@ -310,6 +310,7 @@ static FbleValue* Server(
 
   SOCKET sfd = INVALID_SOCKET;
   for (struct addrinfo* rp = result; sfd == INVALID_SOCKET && rp != NULL; rp = rp->ai_next) {
+    // TODO: rp->ai_family rather than AF_INET?
     sfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sfd == INVALID_SOCKET) {
       // For debug. TODO: return the error message instead?
@@ -339,8 +340,19 @@ static FbleValue* Server(
     return FbleNewMaybeValue(heap, NULL); // Nothing
   }
 
+  // TODO: Don't assume AF_INET here?
+  struct sockaddr_in addr;
+  socklen_t addr_size = sizeof(addr);
+  if (getsockname(sfd, (struct sockaddr*)&addr, &addr_size) < 0) {
+    perror("getsockname");
+  } else {
+    port = ntohs(addr.sin_port);
+  }
+
+  FbleValue* port_value = FbleNewIntValue(heap, port);
   FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, NULL);
-  return FbleNewMaybeValue(heap, sfd_value);
+  FbleValue* server_value = FbleNewStructValue_(heap, 2, port_value, sfd_value);
+  return FbleNewMaybeValue(heap, server_value);
 }
 
 // /Network/Sockets/Native%.Server foreign function.

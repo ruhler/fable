@@ -84,3 +84,32 @@ I'm thinking the following:
 * Decide if this is something I want to deal with this release, or wait until
   I standardize networking.
 
+---
+
+How would we get port number info from the C code if we wanted to expose that?
+Can host also be a wildcard? Is there a way to get that?
+
+The getsockname function ought to be able to do it. I can call that and get
+the port and address from there. We could return those both when you allocate
+a server.
+
+What do you think? Should I try it?
+
+One thing I'm unsure of is how to know if we get IP or IP6 to use with
+getsockname. Is that available somewhere? It must be in rp->ai_family field,
+right?
+
+Oh. Wait. I'm passing AF_INET to socket? So I should only request AF_INET in
+the ai_family field for getaddrinfo, or I should use whatever family it
+returns.
+
+Well, I got some number, but not the right number. That's weird. Oh. It's in
+network byte order rather than host byte order.
+
+Here's what I propose:
+* Return port number when creating the server.
+* Try defaulting pprof to port 0. If it's too painful, go back to 8123 and be
+  done with it. If it's not to painful, keep that the default.
+* Don't worry about not being able to reuse the same port right away.
+
+It's not bad to use an arbitrary port. Let's go with that.

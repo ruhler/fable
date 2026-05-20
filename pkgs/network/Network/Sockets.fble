@@ -12,7 +12,9 @@ InOut@ = <<@>@ M@> { *(In@<Int@, M@> in, Out@<Int@, M@> out, M@<Unit@> close); }
 #  A server can be used to repeatedly accept connections from clients.
 #  The accept operation blocks until a client connects, returning an
 #  input/output connection to the client.
-Server@ = <<@>@ M@> { M@<InOut@<M@>>; };
+Server@ = <<@>@ M@> {
+  *(Int@ port, M@<InOut@<M@>> accept);
+};
 
 # Sockets@ --
 #   Interface for TCP sockets.

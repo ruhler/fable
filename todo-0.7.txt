@@ -8,7 +8,10 @@ Things to consider doing for the fble-0.7 release.
  - Add a vsync event instead of timer tick event?
 * Standardize /Network%
  - If we support port 0, we need a way to ask what the port used was.
+   And add it to the doc comments for creating a server.
  - Consider if we should support reuse addr option, or if we can avoid that.
+ - Need a way to return error messages to end user.
+ - See thoughts/fble-0.6/networking.txt for more discussion.
 
 * Improve the performance of fble-pprof.
   Taking more than a minute for a 5MB profile feels way too slow.

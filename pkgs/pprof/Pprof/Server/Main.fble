@@ -46,7 +46,7 @@ Args@ DefaultArgs = @(
   help: False,
   error: Nothing<Stream@<Char@>>,
   hostname: Str|'localhost',
-  port: Int|8123,
+  port: Int|0,
   file: Str|'',
   benchmark: False
 );
@@ -202,9 +202,15 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   });
 
   Server@<M@> s = ms.just;
+  
+  Unit@ _ := m.do(out(
+    FormatE|'serving at http://%s:%s\n'[
+      /Std/Stream/String%.String(args.hostname),
+      /Std/Int/Show%.Show(s.port)
+  ]));
 
   Unit@ _ := m.do(out(
-      FormatE|'parsing %s...\n'[/Std/Stream/String%.String(args.file)]));
+      FormatE|'parsing %s...'[/Std/Stream/String%.String(args.file)]));
 
   Maybe@<In@<Int@, M@>> fin := m.do(read(args.file));
   fin.?(nothing: {
@@ -213,17 +219,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
     m.return(Failure);
   });
 
+  Unit@ _ := m.do(out(StringE|'done\n'));
+
   Result@<Profile@> parsed := m.do(Parse(m, fin.just));
   parsed.?(error: {
     Unit@ _ := m.do(err(FormatE|'error: %s\n'[parsed.error]));
     m.return(Failure);
   });
-  
-  Unit@ _ := m.do(out(
-    FormatE|'serving at http://%s:%s\n'[
-      /Std/Stream/String%.String(args.hostname),
-      /Std/Int/Show%.Show(args.port)
-  ]));
 
   Profile@ profile = parsed.ok;
 
@@ -344,7 +346,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   M@<Unit@> Serve = {
     # TODO: Don't assume ascii encoding of characters like this.
-    InOut@<M@> ios := m.do(s);
+    InOut@<M@> ios := m.do(s.accept);
     Out@<Char@, M@> os = /Std/Stream/Map%.Out(Pos, ios.out);
     In@<Char@, M@> is = /Std/Stream/Map%.In(/Std/Char%.Char, m, ios.in);
     Unit@ _ := m.do(HandleConnection(is, os));

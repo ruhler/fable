@@ -29,9 +29,6 @@ Tutorials:
   tutorials and everywhere for the new syntax.
 
 Other:
-* fble-pprof 'unable to serve' after ctrl-c to quit just before.
-* network server get actual port used if binding to port 0.
-
 * Figure out why we don't propagate an error
  - If /Core/Map/Data% Delete function is left undefined.
  - The tests print @[, then skip over to the next test?

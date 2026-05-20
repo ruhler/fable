@@ -48,7 +48,7 @@
    @ the hostname to use for the http server. Defaults to localhost.
 
    @opt[@l[--port] @a[port]]
-   @ the port to use for the http server. Defaults to 8123.
+   @ port to use for the http server. Defaults to an arbitrary available port.
 
   @subsection[Benchmarking Options]
    @opt[@l[--benchmark]]
