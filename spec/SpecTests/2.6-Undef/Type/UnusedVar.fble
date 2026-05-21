@@ -1,6 +1,0 @@
-# @@fble-test@@ compile-warning 5:7
-Unit@ = *();
-
-# The (undefined) variable 'x' is unused.
-Unit@ x;
-Unit@();

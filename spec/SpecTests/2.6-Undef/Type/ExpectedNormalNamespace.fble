@@ -1,8 +1,0 @@
-# @@fble-test@@ compile-error 7:7
-
-Unit@ = *();
-
-# Foo@ has kind %, so it should be in the normal namespace, not the type
-# namespace. e.g. it should be named Foo instead.
-Unit@ Foo@;
-Foo@;

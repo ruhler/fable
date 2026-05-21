@@ -4,9 +4,10 @@ Unit@ = *();
 Unit = Unit@();
 
 Bool@ = +(Unit@ true, Unit@ false);
+True = Bool@(true: Unit);
 
 S@ = @< <<@>@ M1@, @ K1@> {
-  <@ V1@>(M1@<V1@>) { Bool@; } IsEmpty;
+  <@ V1@>(M1@<V1@>) { Bool@; } IsEmpty = <@ V1@>(M1@<V1@> _) { True; };
   @(M@: M1@, K@: K1@, IsEmpty);
 }>;
 
@@ -20,7 +21,7 @@ S = {
     N@ = +(K3@ k, N@ n);
     N@;
   };
-  <@ V3@>(M3@<V3@>) { Bool@; } IsEmpty;
+  <@ V3@>(M3@<V3@>) { Bool@; } IsEmpty = <@ V3@>(M3@<V3@> _) { True; };
     
   S@<M3@, K3@> x = @(M@: M3@, K@: K3@, IsEmpty);
   x;

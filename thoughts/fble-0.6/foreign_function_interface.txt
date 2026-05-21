@@ -1078,3 +1078,35 @@ Am I willing to switch FFI syntax over to undef syntax?
 I suppose the biggest question is if we want a different variable name than
 ffi function. But we could always put them together into a single struct and
 import, or rename some other way?
+
+---
+
+Thoughts:
+* An easier way to replace undef expression is vacuous value, right?
+  (Int@, Int@) { Bool@; } Add = Add;
+* We should get rid of undef expression.
+* It's not obvious that we should change FFI syntax to that of undef
+  expression:
+ - Duplicates logic for lets.
+ - There's not any motivation to make FFI syntax nicer.
+ - It's weird to use FFI for header files.
+
+What does undef do in terms of checking for unused variables, and how far does
+it go into compilation? If it's not to bad to replace that with FFI and do the
+same thing, sure. We can migrate FFI syntax over. Otherwise, it's fine to
+leave FFI syntax as is now.
+
+Wow. Undef goes all the way to the instruction level. Yeah, we can clean that
+up a bit.
+
+Let me see what happens if I try to use FFI in place of undef in a header
+file. Just for the sake of it.
+
+Yes, either FFI or vacuous value can both be used in place of undef
+expression.
+
+Trouble with getting rid of undef expression: I have some regression tests for
+type checking that use undef expressions pretty heavily. Hmm...
+
+Go one by one I guess?
+

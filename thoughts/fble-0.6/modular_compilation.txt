@@ -91,3 +91,8 @@ type checker at load/link time to validate the type of the expected .fble.@
 file matches the type of the actual .fble.@ file.
 
 Anyway, seems like we want .fble.@ files to exist regardless.
+
+Also: we don't want to rely on the precompiled code for type checking, because
+I want to be able to compile a module without having access to the precompiled
+code it depends on to run. That's only doable through separate type
+specification, aka separate .fble.@ file.

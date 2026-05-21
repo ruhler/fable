@@ -309,27 +309,6 @@
  
   In this case, the value of @L{y} is @L{0}, and the value of @L{z} is @L{1}.
 
- @section Undefined Variables
-  As a special case, it's possible to declare undefined variables. This is
-  done by giving the type and name of a single variable without any value. For
-  example:
-
-  @code[fble] @
-   Bool@ p;
-   Bool@ q = p;
-   Bool@ w = Not(q);
-
-  The variable @l{p} is undefined, because it isn't assigned a value. You can
-  pass around an undefined value, but as soon as you try to access the
-  contents of that value, you will get a runtime error. In the above code,
-  assigning the value of @l{q} to be @l{p} is fine, but you'll get a runtime
-  error on the next line when the implementation of the @l{Not} function tries
-  to access the value.
-
-  Undefined variables are primarily useful for defining interfaces, where you
-  are interested in their type rather than their value. We'll see this use
-  case later on in the discussion of modules.
- 
  @section Unused Variables
   The fble compiler will give warnings about unused variables, to help
   identify and clean up unecessary code. It's not uncommon to have an unused

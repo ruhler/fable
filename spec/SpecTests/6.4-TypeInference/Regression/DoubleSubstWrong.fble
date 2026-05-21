@@ -1,4 +1,4 @@
-# @@fble-test@@ compile-error 26:37
+# @@fble-test@@ compile-error 26:39
 
 Unit@ = *();
 Unit = Unit@();
@@ -22,7 +22,7 @@ SA_Unit_wrong@ = <@ C@> {
 };
 
 # This is the incorrect type application.
-SA_Unit_wrong@ SA_Unit_wrong;
-S@<Unit@, Bool@> S = S@(Unit, True, SA_Unit_wrong);
-
-S;
+(SA_Unit_wrong@ SA_Unit_wrong) {
+  S@<Unit@, Bool@> S = S@(Unit, True, SA_Unit_wrong);
+  S;
+};

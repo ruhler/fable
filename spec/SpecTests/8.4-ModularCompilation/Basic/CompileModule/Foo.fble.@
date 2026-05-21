@@ -5,7 +5,7 @@ Unit@ = *();
 Unit@ Unit = Unit@();
 
 Bool@ = +(Unit@ true, Unit@ false);
-Bool@ True;
-Bool@ False;
+Bool@ True = True;
+Bool@ False = False;
 
 @(Unit@, Unit, Bool@, True, False);

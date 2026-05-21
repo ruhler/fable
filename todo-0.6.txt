@@ -2,6 +2,12 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Remove undef expr.
+ - Update code to stop using it.
+ - Remove from spec.
+ - Remove implementation.
+ - Remove from tutorials.
+
 Standard Library:
 * Break dependency of /Std/Map% on /Std/List%?
   By moving the Entries function somewhere else?
@@ -26,6 +32,8 @@ Tutorials:
 * Move function bind syntax to Functions tutorial.
 * Remove kinds from let expressions in all the examples in the spec and
   tutorials and everywhere for the new syntax.
+* Remove undef expression from tutorials
+  - Variables tutorial, and module tutorial use it.
 
 Other:
 * Why is fbld outputting errors in reverse order?

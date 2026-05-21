@@ -40,8 +40,8 @@ Nat@ N = Nat|1000000;
   s.?(Z: r, S: MakeRecursives(s.S, False, r));
 };
 
-List@ undef;
-List@ smashed = MakeRecursives(Nat|100000, True, undef);
+List@ end = List@(Value@(b: Unit), end);
+List@ smashed = MakeRecursives(Nat|100000, True, end);
 
 # When we had the bug, the second occurence of that special 'f' value on the
 # list will have been clobbered and overwritten. Otherwise it should still be

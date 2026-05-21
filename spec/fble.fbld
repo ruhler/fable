@@ -235,36 +235,6 @@
    evaluation or, as a special case, until the body of the let expression
    makes a tail recursive call.
 
-  @subsection 2.6 Undef
-   @AbstractSyntax @
-    Expr: undef (name: Name) (type: Type) (body: Expr)
-  
-   @ConcreteSyntax @
-    stmt = type, name, ';', stmt
-  
-   @Example @
-    Bool@ True; @(Bool@, True);
-
-   The undef expression evaluates an expression in a context with an undefined
-   value. It allows you to assign a type to a value that will never be used.
-
-   The primary intent of the undef expression is to facilitate writing header
-   files for modular compilation of fble programs. In that case, the undef
-   expression allows you to declare a variable or function without a
-   corresponding implementation. See the section on modular compilation for
-   more details.
-
-   The type of the expression is the type of the body of the expression. The
-   defined variable is visible in the body of the undef expression. It may be
-   referenced in the body of the expression, but the value of the variable is
-   undefined.
-
-   As with let expressions, implementations are encouraged to emit warnings
-   for unused variables, with the convention that no warnings should be
-   produced for variables starting with @L{_} in their name.
-
-   Runtime is the runtime of evaluating the body of the expression.
- 
  @section @label[structs][3. Structs]
   A struct value is a grouping of other values. The items of a struct are
   organized into a finite number of fields. Each field has a name, used to
@@ -1288,17 +1258,17 @@
    The @l{Foo.fble.@} file is optional. If it is not provided, the type of a
    module should be determined from the @l{Foo.fble} file for the module.
 
-   The undef expression is particularly useful for writing header files. For
+   Vacuous variable declarations can be useful for writing header files. For
    example, a header file for a module defining a boolean type might look
    like:
 
    @code[fble] @
     Bool@ = +(Unit@ true, Unit@ false);
-    Bool@ True;
-    Bool@ False;
-    (Bool@) { Bool@; } Not;
-    (Bool@, Bool@) { Bool@; } And;
-    (Bool@, Bool@) { Bool@; } Or;
+    Bool@ True = True;
+    Bool@ False = False;
+    (Bool@) { Bool@; } Not = Not;
+    (Bool@, Bool@) { Bool@; } And = And;
+    (Bool@, Bool@) { Bool@; } Or = Or;
 
     @(Bool@, True, False, Not, And, Or)
  
@@ -1519,7 +1489,6 @@
       typeof (expr : Expr)
     | var (name : Name)
     | let (bindings : [(Type, Name, Expr)]) (body : Expr)
-    | undef (name: Name) (type: Type) (body: Expr)
     | module_path (path : Path)
    
     | struct_type (fields : [(Type, Name)])
@@ -1663,7 +1632,6 @@
        expr, ';'
      | [type], name, '=', expr,                        (* let *)
        {',', [type], name, '=', expr}, ';', stmt       
-     | stmt = type, name, ';', stmt                    (* undef *)
      | [type], name, ['(.' name ')']                   (* struct_import *)
        {',' [type], name, ['(.' name ')']}, '.=', expr, ';', stmt 
      | expr, '.?(', name, ':', expr,                   (* union_select *)

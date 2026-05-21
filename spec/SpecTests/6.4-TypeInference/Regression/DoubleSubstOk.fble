@@ -22,7 +22,7 @@ SA_Unit@ = <@ C@> {
 };
 
 # This is the correct type application.
-SA_Unit@ SA_Unit;
-S@<Unit@, Bool@> S = S@(Unit, True, SA_Unit);
-
-S;
+(SA_Unit@ SA_Unit) {
+  S@<Unit@, Bool@> S = S@(Unit, True, SA_Unit);
+  S;
+};
