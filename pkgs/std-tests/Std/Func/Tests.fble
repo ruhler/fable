@@ -25,7 +25,7 @@ Test@ Tests = TestSuite|Func[
 
   Test|Const({
     Unit@ _ := Lazy;
-    Bool@ got = Const<Int@>(False, Int|5);
+    Bool@ got = Const(False, Int|5);
     Bool@ wnt = False;
     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
   }),

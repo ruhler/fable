@@ -94,3 +94,17 @@ ApplyIf, ApplyUnless. Arguably useful, but depend on Bool@. Should they live
 in /Std/Func%? /Std/Func/Bool%? /Std/Bool/Func%? /Std/Func/If%?
 
 Or not at all yet?
+
+---
+
+Should Const have one type parameter or two?
+
+It feels weird having two separate ones for some reason. Well, but that makes
+sense right? For example, say I have a unary predicate: Int@ to Bool@. I want
+to be able to say: Const@<Int@>(True). Or is it Const(True)<Int@>?
+
+Either way, we need to put the type explicitly to make this useful in
+practice. But at least the second way you could write Const(True, Int|5);
+
+I don't know. Feels arbitrary. Also feels like a not terribly useful function
+in practice because it's easy to inline it.

@@ -78,9 +78,6 @@ Other:
   It shouldn't say "can't apply arguments to something of type (Foo@) { ...}"
   Because that's not true, right? Better would be "too many arguments?"
 
-* Should /Std/Func%.Const use a single type parameter instead of two separate
-  ones?
-
 * Figure out what FbleStringValueAccess should do in terms of unicode.
 
 * Any way to avoid exporting internally shared symbols in libfble.a?

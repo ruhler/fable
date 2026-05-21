@@ -11,13 +11,13 @@ Id = <@ A@>(A@ x) {
 };
 
 # @func[Const] The constant function.
-#  @arg[@][A@] The argument type.
 #  @arg[@][B@] The return type.
 #  @arg[B@][value] The value to return.
+#  @arg[@][A@] The argument type.
 #  @returns[(A@) { B@; }]
 #   A function that ignores its argument and returns the constant @a{value};
-<@ A@, @ B@>(B@, A@) { B@; }
-Const = <@ A@, @ B@>(B@ value, A@ _) {
+<@ B@>(B@)<@ A@>(A@) { B@; }
+Const = <@ B@>(B@ value)<@ A@>(A@ _) {
   value;
 };
 
