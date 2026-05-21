@@ -1,0 +1,93 @@
+Module Compilation
+==================
+A few things have come up to suggest revisiting how modular compilation works:
+1. We added support for foreign function interfaces. That has replaced all
+   builtin modules in practice.
+2. I'm considering removing undef expression, because it seems to have much
+   lower value now that we have foreign function interface.
+3. I'm wondering if we should remove .fble.@ files, because maybe we don't
+   need them anymore?
+4. TODO item: Figure out why we see the same errors reported many times when
+   we build and fix it.
+
+Let's take a step back. Not worry about implementation. But think about an
+ideal world where things just work right. What would that world look like?
+
+* I could easy and clearly document the interface to a module without the
+  implementation.
+ - Like we can do with .fble.@ files and undef expressions today.
+* The type for a prebuilt module is read from the prebuilt module code, so we
+  don't have to keep it in sync with separate header or documentation files
+  for correctness.
+* The compiler will tell us if our header/documentation files are out of sync
+  with our prebuilt module code.
+* We have a way to efficiently read the type of compiled code without having
+  to type check it again. To avoid duplicate error messages.
+
+That last point sounds hard. Especially when interpreted code is involved. It
+suggests I read a .fble file and all its dependencies, compute its type, then
+store the type somewhere (generated .fble.@ file?). But if you change the
+.fble file, I have to know the .fble.@ file is out of date and recompile it.
+
+Thus the build system has to get involved, and we have to trust it or
+duplicate the logic for it in the compiler itself.
+
+Maybe we say that every .fble file has to have a corresponding .fble.@ file.
+When you reference another .fble file, you read its type from the .fble.@
+file. If you don't have a .fble.@ file, that's an error. But the compiler can
+type check and generate a .fble.@ file for you if you want.
+
+When you compile Foo.fble, you must either supply an existing Foo.fble.@ file
+to type check against, or tell the compiler to produce the Foo.fble.@ file,
+... or don't use the Foo.fble.@ file at all, for example for a top level main
+module that isn't referenced anywhere else?
+
+If you are using the interpreter, you are loading all the Foo.fble files
+anyway. The only concern is if you depend on another precompiled module, it's
+Foo.fble.@ file may not match the actual implementation. I suppose we have to
+add a check somewhere. Maybe checksum the type when we load the precompiled
+code to validate it.
+
+Or, since Foo.fble.@ files are only needed with precompiled code apparently,
+store them with the precompiled code itself. Though that makes it harder to
+use as a standard form of documentation.
+
+It seems the crux of my problem is:
+1. I want documentation and type to be specified together.
+2. I want compiled code and type to specified together.
+3. I want documentation and compiled code to be separate.
+
+That suggests we duplicate the type information.
+
+Anyway, the key thing for modular compilation is that when I compiling some
+module Foo.fble that depends on /Bar%, I don't read Bar.fble. I read the
+already compiled type of Bar.fble, or the header file Bar.fble.@ which is
+going to be checked against when compiling Bar.fble separately.
+
+Straw proposal:
+* Put module type and documentation spec in a .fble.@ file.
+* When referencing another file, only ever use its .fble.@ file for type.
+* Add a way to generate .fble.@ automatically from a .fble file.
+* Always check the type of a .fble file against its .fble.@ file when
+  compiling.
+* Store a checksum of the type of a module with the compiled code for the
+  module.
+* Store a checksum of the types of anything a module depends on in the
+  compiled code for the module.
+* When loading/linking a module, verify the checksums of everything it depends
+  on match what it was compiled against.
+
+Tedious, but safe. Gives us a way to do documentation. A way to avoid
+recompiling module dependencies. Freedom from concern that the precompiled
+code got out of sync with its header file.
+
+On the other hand, there's a fair amount of technical work needed to make this
+happen:
+* Auto generation of .fble.@ files.
+* Checksumming of types.
+
+Unless you want to use a copy o the .fble.@ file as a checksum and run the
+type checker at load/link time to validate the type of the expected .fble.@
+file matches the type of the actual .fble.@ file.
+
+Anyway, seems like we want .fble.@ files to exist regardless.

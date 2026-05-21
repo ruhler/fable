@@ -918,3 +918,163 @@ Let's go one step at a time:
 
 But at some point I should make sure the precompiled case works this way.
 Like, I can have a separate header file for a precompiled module.
+
+---
+
+I could get rid of undef expression from the language right now. Because I
+don't have any examples of its primary use case now that we've gotten rid of
+builtin modules.
+
+Reminder of the primary use case:
+* I want to ship precompiled code for a package in some library libfble-foo.@
+* I want to provide header .fble.@ files with the types but not the
+  implementations of what's defined in libfble-foo.@
+
+If we're sticking with separate .fble.@ header files, you don't need undef
+expressions. We could write things hackily using /Std/Undef%:
+
+ (Int@, Int@) { Int@; }
+ Sub = /Std/Undef%.Undef.undef<(Int@, Int@) { Int@; }>;
+
+Now, that's not nice to write or read.
+
+I could also use FFI:
+
+ (Int@, Int@) { Int@; } Sub = (Int@, Int@) { Int@; }|Sub;
+
+Still not nice to write or read.
+
+But if we repurpose the undef syntax for FFI, we get it nice to write and
+read:
+
+ (Int@, Int@) { Int@; } Sub;
+
+Remember, in this case, we only use the module for its type. We throw away any
+code. We never attempt to link with the FFI function. So this works just as
+well as undef expression.
+
+The more interesting question in my mind is if we could get rid of the .fble.@
+header files entirely.
+
+Note: this is a step beyond. I claim we don't lose anything by getting rid of
+undef expression today. But it seems worth at least thinking about.
+
+Let's say I have my libfble-foo.a that I compiled using normal .fble files.
+Now I want to ship .fble files, but in this case, not just for the type. For
+real. Except I want to rely on my libfble-foo.a entirely for the
+implementation.
+
+What would it mean to write:
+
+ (Int@, Int@) { Int@; } Sub;
+
+It means you need to define a foreign function. We need to link with that.
+
+Well, what's weird is not knowing how things are structured. For example, do
+we have:
+
+ (Int@, Int@) { Int@; } Add;
+ (Int@, Int@) { Int@; } Sub;
+ @(Add, Sub);
+
+Or we have:
+
+ *((Int@, Int@) { Int@; } Add, (Int@, Int@) { Int@; } Sub) Module;
+ Module;
+
+In one case, we would have 2 FFI functions. In the other 1. But from a type
+point of view they are equivalent. But certainly not in the code they generate
+or that would need to be generated.
+
+So I don't think FFI gets us in a natural way to headerless .fble code.
+
+Also, it's nice to have a way for the compiler to check the .fble.@ file types
+against the .fble files.
+
+I have a choice here that I can make.
+1. Leave header files as is. Assume they work well enough for the use case
+when I one day actually have that use case.
+2. Remove support for header files entirely. Revisit from scratch when I one
+day actually have that use case.
+3. Work out the use case properly right now.
+
+(3) is out of scope for this release.
+
+But is there really any point in having (1) implemented if it's not fleshed
+out, and seems likely I would want to change it as soon as I start using it?
+Surely it's better to restrict the language to start?
+
+And also, couldn't you use regular .fble files for that case still anyway?
+Though you lose type checking from the compiler...
+
+Different ways I could envision dealing with this in the future:
+* Don't ship any .fble or .fble.@ files, embed the type in the compiled code
+  and let the compiler look it up in there.
+ - But then we lose the nice documentation.
+* Have the compiler generate an FFI based .fble file that works with the
+  implementation it generates. Read it as a real fble file.
+ - But structure ambiguity is still an issue. The fble file is mostly for
+   documentation.
+
+
+This is a bit of a thorny problem. Some misc thoughts:
+* If I get rid of undef expression, we rule out the use case of using undef
+  for todo. FFI doesn't replace that, because it will give a compile error if
+  using compilation. You could use /Std/Undef%.Undef for that, but it's a bit
+  tedious.
+* I don't want people writing FFI functions in .fble files that they have no
+  intention of providing. It's just confusing. Seems like .fble.@ is worth
+  keeping around for no reason other than to clearly distinguish between
+  something describing a type of a module and something describing the actual
+  implementation.
+* Builtin modules let you define profiling blocks. When you rely on FFI, you
+  only get profiling blocks for each FFI function you define. That puts a
+  limit on the structure of how you write your FFI.
+* Probably the compiler should generate a type description with compiled code
+  and we should type check against that, not on whatever documentation is
+  provided along side the precompiled code. The type should be stored in .fble
+  syntax, which is already standardized and supports sharing, rather than hard
+  code some internal compile representation of the type.
+
+Maybe I should open a separate discussion on module compilation to discuss
+this.
+
+thoughts/fble-0.6/modular_compilation.txt suggests we want .fble.@ files
+moving forward. So don't get rid of them now.
+
+It also suggests we would be okay to use FFI in those .fble.@ files for FFI
+functions we don't expect to ever link.
+
+Let me review why I didn't want to use undef syntax for FFI before and see if
+I still agree with that assessment, or something has come up to change my
+mind.
+
+Before I do so, here are my biggest concerns with using undef syntax for FFI:
+* Seems easy to accidentally forget to define something, and now you get a
+  weird link error about FFI?
+* It forces you into a statement context for FFI, and it's awkward to do:
+  { Foo@ Foo; Foo; }
+
+Though on the flip side, it's awkward to do:
+
+  Foo@ Foo = Foo@|Foo;
+
+And I would argue that the later is much more the common case than the former.
+
+Here's what I had thought previously:
+* Looks like I never considered using the undef syntax.
+
+For some reason I thought I had. Maybe that was as part of introducing undef?
+
+See thoughts/fble-0.4/modular_compilation.txt:
+* My initial conclusion there was that I don't need undef expressions.
+* I changed my mind because it was so much nicer to have.
+* I picked let syntax as the nicest syntax for the use case.
+* I relied on 'error at use' to justify statement syntax rather than
+  expression syntax.
+
+Am I willing to switch FFI syntax over to undef syntax?
+
+I suppose the biggest question is if we want a different variable name than
+ffi function. But we could always put them together into a single struct and
+import, or rename some other way?

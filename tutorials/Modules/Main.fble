@@ -1,20 +1,17 @@
 
 Char@ .= /Std/Char%;
-Format .= /Std/Char/Ascii/Stream%;
+FormatE .= /Std/Char/Ascii/Stream%;
 Stream@ .= /Std/Stream%;
 
-0 = /Bit%.0;
-1 = /Bit%.1;
-
-Bit4@ = /Bit4%.Bit4@;
-And = /Bit4%.And;
-Show = /Bit4/Show%.Show;
+0, 1 .= /Bit%;
+Bit4@, And .= /Bit4%;
+Show .= /Bit4/Show%;
 
 Bit4@ X = Bit4@(0, 0, 1, 1);
 Bit4@ Y = Bit4@(1, 0, 1, 0);
 Bit4@ Z = And(X, Y);
 
-Stream@<Char@> output = Format|'%s AND %s = %s'[
+Stream@<Char@> output = FormatE|'%s AND %s = %s'[
   Show(X), Show(Y), Show(Z)
 ];
 
