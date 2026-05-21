@@ -838,3 +838,83 @@ could happen either time.
 So... what do I do? Just not test it for now? Add one off infra support for
 this case? I could do that, right?
 
+---
+
+* Do I use undefined values anymore?
+  Like, since FFI, do we really need to support these?
+
+The concept of a header file still makes sense. If somebody wants to ship
+pre-compiled code. We do that with undefined values. I think it still makes
+sense.
+
+Maybe we can revisit or clean up undefined values in the future when I have
+actual use cases of shipping only pre-compiled code.
+
+Although, come to think of it... could we change the syntax for undefined
+variables to be FFI? Like, if you leave a variable undefined, it's not that
+it's undefined, it's that it's defined natively? And somehow magically get
+that to work out with precompiled code?
+
+This is an interesting idea.
+
+So, instead of writing something like:
+
+  External@<File@> GetStdin = @<GetStdin>|GetStdin;
+  External@<File@> GetStdout = @<GetStdout>|GetStdout;
+  External@<File@> GetStderr = @<GetStderr>|GetStderr;
+  (String@, String@) { External@<Maybe@<File@>>; } Open = @<Open>|Open;
+  (File@) { External@<Unit@>; } Close = @<Close>|Close;
+  (File@) { External@<Unit@>; } Flush = @<Flush>|Flush;
+
+I write something like:
+
+  External@<File@> GetStdin;
+  External@<File@> GetStdout;
+  External@<File@> GetStderr;
+  (String@, String@) { External@<Maybe@<File@>>; } Open;
+  (File@) { External@<Unit@>; } Close;
+  (File@) { External@<Unit@>; } Flush;
+
+So, that's much simpler for defining foreign values. Right?
+
+For pre-compiled code... as long as the compiler generates the right name for
+functions... does that handle all the linkage and stuff?
+
+I guess I don't want to have to use a foreign function for these things. But
+is it really such a problem?
+
+Or maybe the problem is it's weird to have a compiled version of the code and
+a compiled version of the header file, and have them be two separate things?
+Or maybe the compiled version of the code is literally just to provide the
+FbleForeign values?
+
+Am I using undefined values anywhere today? Would that use case work if it was
+treated as a foreign function interface? That shouldn't be difficult to check.
+
+Current uses:
+* /Std/Undef% is kind of built on this. And there are lots of places that is
+  used.
+* /Pprof/Parser/Proto% Proto@ type definition.
+ - But this could be easily done with a normal struct type.
+
+Those are my only current uses of undef expressions.
+
+Couldn't I implement /Std/Undef% as a function from Unit@ to any type A@ that
+errors out? It could even take a String argument instead of Unit to explain
+what's wrong. What do you think of that?
+
+Honestly, I think I like that better as an approach. Though it's slightly
+annoying to have /Std/Undef% depend on Ascii@ or String@?
+
+I don't know. This is pretty tempting to be honest. Get rid of a rarely used,
+weird feature. Get rid of builtin modules. Treat precompiled modules as just
+repositories of foreign values. That makes a lot of sense, right?
+
+Let's go one step at a time:
+1. Remove use of undef for Proto@.
+2. Rewrite /Std/Undef% API.
+3. Remove undef expression from the language.
+4. Use old undef syntax for FFI.
+
+But at some point I should make sure the precompiled case works this way.
+Like, I can have a separate header file for a precompiled module.

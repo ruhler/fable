@@ -35,12 +35,12 @@ Payload@ = +(Int@ int, Int@ length, List@<Int@> bytes, Unit@ empty);
 
 Record@ = *(FieldId@ field, Payload@ payload);
 
-Proto@ = <<@>@ M@> {
+Proto@ = <<@>@ M@> { *(
   # @func[Fail] Reports an error to parse.
   #  @arg[@][A@] Type of the parser.
   #  @arg[String@][msg] The error message.
   #  @returns[M@<A@>] A parser that fails with the given error message.
-  <@ A@>(Stream@<Char@>) { M@<A@>; } Fail;
+  <@ A@>(Stream@<Char@>) { M@<A@>; } Fail,
 
   # @func[Skip] Skip over the given payload.
   #  @arg[Payload@][payload] The payload to skip over.
@@ -49,17 +49,17 @@ Proto@ = <<@>@ M@> {
   #   length bytes in the case of a LEN payload, otherwise it does nothing
   #   because the full contents of the payload have already been read from the
   #   input stream.
-  (Payload@) { M@<Unit@>; } Skip;
+  (Payload@) { M@<Unit@>; } Skip,
 
   # @func[String] Parses a string.
   #  @arg[Int@][n] The number of characters in the string.
   #  @returns[M@<String@>] The string parser.
-  (Int@) { M@<String@>; } String;
+  (Int@) { M@<String@>; } String,
 
   # @func[Ints] Parses packed ints.
   #  @arg[Int@][length] The length in bytes of packed ints to parse.
   #  @returns[M@<List@<Int@>>] The parsed ints.
-  (Int@) { M@<List@<Int@>>; } Ints;
+  (Int@) { M@<List@<Int@>>; } Ints,
 
   # @func[Message] Parse an embedded message.
   #  @arg[@][A@] Type to represent the parsed message.
@@ -71,7 +71,7 @@ Proto@ = <<@>@ M@> {
   #  @arg[Int@][length]
   #   The length of the embedded message in bytes.
   #  @returns[M@<A@>] A parser for the embedded message.
-  <@ A@>(A@, (Record@, A@) { M@<A@>; }, Int@) { M@<A@>; } Message;
+  <@ A@>(A@, (Record@, A@) { M@<A@>; }, Int@) { M@<A@>; } Message,
 
   # @func[Proto] Parse a top level message.
   #  @arg[@][A@] Type to represent the parsed message.
@@ -81,10 +81,8 @@ Proto@ = <<@>@ M@> {
   #   finish parsing the record payload and update the state of the parsed
   #   message based on the record parsed.
   #  @returns[M@<A@>] A parser for the embedded message.
-  <@ A@>(A@, (Record@, A@) { M@<A@>; }) { M@<A@>; } Proto;
-
-  @<@(Fail, Skip, String, Ints, Message, Proto)>;
-};
+  <@ A@>(A@, (Record@, A@) { M@<A@>; }) { M@<A@>; } Proto
+); };
 
 Parser@ = <@ A@> {
   <<@>@ M@>(Proto@<M@>, Monad@<M@>) { M@<A@>; };

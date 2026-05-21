@@ -235,3 +235,13 @@ one case where it might be nice to factor out the type is when I have a bunch
 of calls to undef in the same function with the same return type: conversion
 from Int@ to Decimal@. It's not too big a deal though.
 
+---
+
+Revisiting this after a while: can you explain to me why I don't just use an
+error function?
+
+  Error<Foo@>|'divide by zero';
+
+We get the type. We get the error. We get the string message.
+
+
