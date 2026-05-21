@@ -11,12 +11,13 @@
   Here is an example of how we've used unions so far:
  
   @code[fble] @
-   @ Bit@ = +(Unit@ 0, Unit@ 1);
+   Bit@ = +(Unit@ 0, Unit@ 1);
    
    Bit@ 0 = Bit@(0: Unit);
    Bit@ 1 = Bit@(1: Unit);
    
-   (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
+   (Bit@, Bit@) { Bit@; }
+   And = (Bit@ a, Bit@ b) {
      a.?(0: 0, 1: b);
    };
  
@@ -32,11 +33,11 @@
   constant:
  
   @code[fble] @
-   @ Expr@ = +(
-      *(Expr@ a, Expr@ b) add,
-      *(Expr@ a, Expr@ b) sub,
-      *(Expr@ a) neg,
-      Int@ constant
+   Expr@ = +(
+     *(Expr@ a, Expr@ b) add,
+     *(Expr@ a, Expr@ b) sub,
+     *(Expr@ a) neg,
+     Int@ constant
    );
  
   The argument value to the union changes depending on what kind of expression
@@ -62,7 +63,7 @@
   @L{Int@} like we had when creating constants.
  
   To construct an addition operation, taking advantage of the syntax for
-  implicit struct type value:
+  struct export:
  
   @code[fble] @
    Expr@ two = Expr@(add: @(a: one, b: one));
@@ -73,12 +74,13 @@
   here's how we could print what kind of operation an expression represents:
  
   @code[fble] @
-   (Expr@) { String@; } OperationName = (Expr@ e) {
+   (Expr@) { Stream@<Char@>; }
+   OperationName = (Expr@ e) {
      e.?(
-       add: Str|'Add',
-       sub: Str|'Subtract',
-       neg: Str|'Negate',
-       constant: Str|'Constant');
+       add: StringE|'Add',
+       sub: StringE|'Subtract',
+       neg: StringE|'Negate',
+       constant: StringE|'Constant');
    };
  
   If the expression was created with the field @L{add}, the value of the
@@ -97,7 +99,8 @@
   could evaluate an expression:
  
   @code[fble] @
-   (Expr@) { Int@; } Eval = (Expr@ e) {
+   (Expr@) { Int@; }
+   Eval = (Expr@ e) {
      e.?(
        add: Add(Eval(e.add.a), Eval(e.add.b)),
        sub: Sub(Eval(e.sub.a), Eval(e.sub.b)),
@@ -141,25 +144,25 @@
       False;
     };
  
-   Using the statement version of union select can produce easier to read
-   code, particuarly with nested union select statements. For example, lists
-   can be represented as union values. Instead of having to explicitly handle
-   the case of empty and non-empty lists in a single expression, you can
-   handle one case at a time.
+   Using the statement version of union select produces easier to read code,
+   particuarly with nested union select statements. For example, lists can be
+   represented as union values. Instead of having to explicitly handle the
+   case of empty and non-empty lists in a single expression, you can handle
+   one case at a time.
  
    Here's an example of a function to take the first @l{n} elements of a list,
    written using the expression version of the union select expression:
  
    @code[fble] @
-    @ List@ = { +(*(T@ head, List@ tail) cons, Unit@ nil); };
-    List@ Nil = List@(nil: Unit);
+    List@ = { +(*(T@ head, List@ tail) items, Unit@ empty); };
+    List@ Empty = List@(empty: Unit);
     
     (Int@, List@) { List@; } Take = (Int@ n, List@ l) {
       Le(n, 0).?(
-        true: Nil,
+        true: Empty,
         false: l.?(
-          cons: List@(cons: @(head: l.cons.head, tail: Take(Sub(n, 1), l.cons.tail))),
-          nil: Nil));
+          items: List@(items: @(head: l.cons.head, tail: Take(Sub(n, 1), l.items.tail))),
+          empty: Nil));
     };
  
    The function can be rewritten using the statement expression to be much
@@ -168,13 +171,13 @@
    @code[fble] @
     (Int@, List@) { List@; } Take = (Int@ n, List@ l) {
       # See if we've already taken n elements.
-      Le(n, 0).?(true: Nil);
+      Le(n, 0).?(true: Empty);
    
       # Make sure the list isn't empty.
-      l.?(nil: Nil);
+      l.?(empty: Empty);
    
       # Add the first element to the next (n-1) elements.
-      List@(cons: @(head: l.cons.head, tail: Take(Sub(n, 1), l.cons.tail)));
+      List@(items: @(head: l.items.head, tail: Take(Sub(n, 1), l.items.tail)));
     };
  
  @section Unions in the Language Specification

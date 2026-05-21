@@ -23,6 +23,7 @@ Standard Library:
 Tutorials:
 * Add section of module imports to tutorials/Features.fbld?
 * Add section of pattern matching to tutorials/Features.fbld?
+* Move function bind syntax to Functions tutorial.
 * Remove kinds from let expressions in all the examples in the spec and
   tutorials and everywhere for the new syntax.
 
