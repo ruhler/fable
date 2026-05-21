@@ -244,4 +244,13 @@ error function?
 
 We get the type. We get the error. We get the string message.
 
+I assume my original motivation was how to deal with the case where we don't
+have stack traces. Where the error location is only wherever the undefined
+access itself happens. But why does that matter? Really? We do get stack
+traces.
+
+Do we have to worry about tail calls? Probably. This use is a tail call.
+
+Here's an easy check: change map to call an Error function, then break prefix
+encoding of Data@<Int@>. See if I can find the error location from that.
 

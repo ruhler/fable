@@ -37,23 +37,148 @@
   @item
    Struct types are equal if they have the same order, types, and names of all
    of their fields.
+
+ @section Structs as Namespaces
+  Aside from their normal use in programming, structs play an important role
+  in namespace management.
  
- @section Struct Export
-  So far we've always constructed struct values by providing the struct type
-  explicitly. For example: @L{Bit4@(0, 0, 1, 1)}. It's also possible to
-  specify a struct value where the type of the struct is implicit. In this
-  case we specify the names of the fields explicitly, and rely on the compiler
-  to infer the types of the fields.
+  For example, the variable names @L{0} and @L{1} are nice to have for the
+  @L{Bit@} type, but they are also useful names for @L{Bit4@} and @L{Int@}
+  types. We can create a struct value to hold @L{0} and @L{1} for the @L{Bit@}
+  type rather than pollute the global namespace of variables.
  
-  For example, the follow two lines are equivalent:
+  For example, let's define a struct value called @L{Bits} that has two
+  fields, @L{0} and @L{1}, which have the @L{Bit@} values for @L{0} and @L{1}
+  respectively:
  
   @code[fble] @
-   Bit4@ X = Bit4@(0, 0, 1, 1);
-   Bit4@ X = @(3: 0, 2: 0, 1: 1, 0: 1);
+   Bits@ = *(Bit@ 0, Bit@ 1);
+   Bits@ Bits = Bits@(Bit@(0: Unit), Bit@(1: Unit));
  
-  Because the compiler knows the type of @L{0} is @L{Bit@}, and the type of
-  @L{1} is @L{Bit@}, it can infer from @L{@(3: 0, 2: 0, 1: 1, 0: 1)} the
-  struct type: @L{*(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0)}.
+  Now we can refer to bits @L{0} and @L{1} via the @L{Bits} struct value. For
+  example:
+ 
+  @code[fble] @
+   Bit4@ X = Bit4@(Bits.0, Bits.0, Bits.1, Bits.1);
+ 
+  @subsection Struct Export
+   When defining modules, it's common to define variables in scope, and export
+   them by bundling them together in a struct value. For example:
+  
+   @code[fble] @
+    Bits@ Bits = {
+      Bit@ 0 = Bit@(0: Unit);
+      Bit@ 1 = Bit@(1: Unit);
+      Bits@(0, 1);
+    };
+
+   Fble provides a special kind of expression to make it easier to construct
+   these kinds of struct values, called a struct export expression.
+
+   First off, you can construct a struct value without providing the explicit
+   struct type. In this case we specify the names of the fields explicitly, and
+   rely on the compiler to infer the types of the fields. Here's what that
+   looks like compared to the normal way of constructing a struct value for our
+   declaration of the variable @L{X}:
+
+   @code[fble] @
+    Bit4@ X = Bit4@(Bits.0, Bits.0, Bits.1, Bits.1);         # Explicit type
+    Bit4@ X = @(3: Bits.0, 2: Bits.0, 1: Bits.1, 0: Bits.1); # Implicit type
+
+   Because @L{Bits.0} and @L{Bits.1} both have type @L{Bit@}, it's not hard for
+   the compiler to see the struct type in the second declaration must be
+   @L{*(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0)}, which is the same type as @L{Bit4@}.
+
+   If we use a struct export for declaring our @L{Bits} value, it looks like
+   this:
+
+   @code[fble] @
+    Bits@ Bits = {
+      Bit@ 0 = Bit@(0: Unit);
+      Bit@ 1 = Bit@(1: Unit);
+      @(0: 0, 1: 1);
+    };
+
+   This brings us to the second feature of struct export: if the value of one
+   of the fields is specified using a variable name, and that variable name
+   matches the name of the field, you can list just name as a shorthand. This
+   is the case in our example above. We can shorten @L{@(0: 0, 1: 1)} to
+   @L{@(0, 1)}.
+
+   Putting it all together, here's how we could define the @L{Bits} value using
+   an struct export expression with implicit field names:
+  
+   @code[fble] @
+    Bits@ Bits = {
+      Bit@ 0 = Bit@(0: Unit);
+      Bit@ 1 = Bit@(1: Unit);
+      @(0, 1);
+    };
+
+   This is called struct export, because it's like we are exporting local
+   variables into a struct value.
+  
+   You can mix implicit fields with explicit fields in struct export, which is
+   occasionally useful for renaming things when you create the struct value.
+   For example, maybe we want to add @L{zero} and @L{one} as alternate ways to
+   refer to those bits:
+  
+   @code[fble] @
+    Bits = {
+      Bit@ 0 = Bit@(0: Unit);
+      Bit@ 1 = Bit@(1: Unit);
+      @(0, 1, zero: 0, one: 1);
+    };
+
+  @subsection Struct Import
+   Struct import is like the opposite of struct export. Instead of exporting a
+   bunch of variables into the fields of a struct value, you are importing a
+   bunch of variables from the fields of a struct value.
+
+   For example, we've got our @L{Bits} value with fields @L{0} and @L{1}. We
+   can import those values into local variables @L{0} and @L{1} using a struct
+   import expression:
+
+   @code[fble] @
+    0, 1 .= Bits;
+
+   You provide a list of field names, followed by @L{.=}, followed by a struct
+   value. This declares local variables @L{0} and @L{1} using the
+   corresponding field values from the struct value. It's as if we wrote a let
+   expression, but much more concisely:
+
+   @code[fble] @
+    Bit@ 0 = Bits.0, Bit@ 1 = Bits.1;
+
+   Here are some more examples of variations of struct import.
+
+   @item
+    You can list the fields to import in any order:
+
+    @code[fble] @
+     1, 0 .= Bits;
+
+   @item
+    You don't have to import all the fields:
+
+    @code[fble] @
+     0 .= Bits;
+
+   @item
+    You can supply explicit types for some of the fields if you want:
+
+    @code[fble] @
+     Bit@ 0, Bit@ 1 .= Bits;
+
+   @item
+    You can pick an alternate name for the variables to declare, but putting
+    the field name in parenthesis following the variable name:
+
+    @code[fble] @
+     Zero(.0), One(.1) .= Bits;
+
+  We'll see in the next section on modules how struct export and struct import
+  work together to make defining and reusing code from modules easy.
 
  @section Copied Struct Values
   Sometimes you want to modify the fields of a struct value. Values in fble
@@ -71,8 +196,8 @@
   fields. Fble provides a short hand syntax that allows you to copy a struct
   value without listing all of its fields. For the struct copy syntax, you
   provide a struct value to copy, such as @L{X}, followed by syntax @L{.@},
-  followed by the list of new field values using the syntax from implicit
-  type struct values. 
+  followed by the list of new field values using the syntax from struct export
+  expressions.
 
   The above example can be rewritten using struct copy syntax as:
 
@@ -86,79 +211,13 @@
 
   @code[fble] @
    Bit4@ Z = X.@(2: 1, 0: And(X.3, X.0));
- 
- @section Structs as Namespaces
-  Aside from their normal use in programming, structs play an important role
-  in namespace management.
- 
-  For example, the variable names @L{0} and @L{1} are nice to have for the
-  @L{Bit@} type, but they are also useful names for @L{Bit4@} and @L{Int@}
-  types. We can create a struct value to hold @L{0} and @L{1} for the @L{Bit@}
-  type rather than pollute the global namespace of variables.
- 
-  For example, let's define a struct value called @L{Bits} that has two
-  fields, @L{0} and @L{1}, which have the @L{Bit@} values for @L{0} and @L{1}
-  respectively:
- 
+
+  The shorthand provided for struct export expressions also works. It's not
+  uncommon to write something like:
+
   @code[fble] @
-   @ Bits@ = *(Bit@ 0, Bit@ 1);
-   Bits@ Bits = Bits@(Bit@(0: Unit), Bit@(1: Unit));
- 
-  Now we can refer to bits @L{0} and @L{1} via the @L{Bits} struct value. For
-  example:
- 
-  @code[fble] @
-   Bit4@ X = Bit4@(Bits.0, Bits.0, Bits.1, Bits.1);
- 
-  When defining modules, it's common to define variables in scope, and export
-  them by bundling them together in a struct value. For example:
- 
-  @code[fble] @
-   Bits@ Bits = {
-     Bit@ 0 = Bit@(0: Unit);
-     Bit@ 1 = Bit@(1: Unit);
-     Bits@(0, 1);
-   };
- 
-  In these cases, we can use a special short hand supported for implicit
-  struct type values: if the argument of a field is a variable, you can leave
-  out the field name; the variable name will be used for the name of the
-  field.
- 
-  For example, here's how we could define the @L{Bits} value using an implicit
-  type struct value with explicit fields:
- 
-  @code[fble] @
-   Bits@ Bits = {
-     Bit@ 0 = Bit@(0: Unit);
-     Bit@ 1 = Bit@(1: Unit);
-     @(0: 0, 1: 1);
-   };
- 
-  And here's how we could define the @L{Bits} value using an implicit type
-  struct value with implicit fields:
- 
-  @code[fble] @
-   Bits@ Bits = {
-     Bit@ 0 = Bit@(0: Unit);
-     Bit@ 1 = Bit@(1: Unit);
-     @(0, 1);
-   };
- 
-  You can mix implicit fields with explicit fields in implicit type struct
-  values, which is occasionally useful for renaming things when you create the
-  struct value. For example, maybe we want to add @L{zero} and @L{one} as
-  alternate ways to refer to those bits:
- 
-  @code[fble] @
-   % Bits = {
-     Bit@ 0 = Bit@(0: Unit);
-     Bit@ 1 = Bit@(1: Unit);
-     @(0, 1, zero: 0, one: 1);
-   }
- 
-  Notice we switch to using the kind @L{%} in the definitions of @L{Bits},
-  which means we don't have to define the @L{Bits@} type explicitly anywhere.
+   Bit@ 2 = 1;
+   Bit4@ Y = X.@(2);
  
  @section Function Fields
   Functions are values, which means functions are allowed in fields of
@@ -166,19 +225,23 @@
   our @L{And} function to the @L{Bits} struct value we've been working with:
  
   @code[fble] @
-   % Bits = {
+   Bits = {
      Bit@ 0 = Bit@(0: Unit);
      Bit@ 1 = Bit@(1: Unit);
-     (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
+
+     (Bit@, Bit@) { Bit@; }
+     And = (Bit@ a, Bit@ b) {
        a.?(0: 0, 1: b);
      };
+
      @(0, 1, And);
    }
  
   Here's how we might call that function:
  
   @code[fble] @
-   (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
+   (Bit4@, Bit4@) { Bit4@; }
+   And4 = (Bit4@ a, Bit4@ b) {
      Bit4@(Bits.And(a.3, b.3), Bits.And(a.2, b.2), Bits.And(a.1, b.1), Bits.And(a.0, b.0));
    };
  
@@ -193,8 +256,8 @@
   For example, we could add the @L{Bit@} type to our @L{Bits} bundle:
  
   @code[fble] @
-   % Bits = {
-     @ Bit@ = +(Unit@ 0, Unit@ 1);
+   Bits = {
+     Bit@ = +(Unit@ 0, Unit@ 1);
      Bit@ 0 = Bit@(0: Unit);
      Bit@ 1 = Bit@(1: Unit);
      @(Bit@, 0, 1);
@@ -203,7 +266,7 @@
   And here is how we could use that type field:
  
   @code[fble] @
-   @ Bit4@ = *(Bits.Bit@ 3, Bits.Bit@ 2, Bits.Bit@ 1, Bits.Bit@ 0);
+   Bit4@ = *(Bits.Bit@ 3, Bits.Bit@ 2, Bits.Bit@ 1, Bits.Bit@ 0);
    Bit4@ X = Bit4@(Bits.0, Bits.0, Bits.1, Bits.1);
  
   Note that the type of the fields for @L{Bit4@} is @L{Bits.Bit@}. This is a
@@ -221,11 +284,11 @@
   using explicit types:
  
   @code[fble] @
-   % Bits = {
-     @ Bit@ = +(Unit@ 0, Unit@ 1);
+   Bits = {
+     Bit@ = +(Unit@ 0, Unit@ 1);
      Bit@ 0 = Bit@(0: Unit);
      Bit@ 1 = Bit@(1: Unit);
-     @ Bits@ = *(@<Bit@> Bit@, Bit@ 0, Bit@ 1);
+     Bits@ = *(@<Bit@> Bit@, Bit@ 0, Bit@ 1);
      Bits@(Bit@, 0, 1);
    };
  
@@ -241,8 +304,8 @@
   @exercise
    Go back to the Basics tutorial code and group together the definitions of
    @L{Bit@}, @L{0}, @L{1}, @L{And}, and @L{ShowBit} into a single struct value
-   called @L{Bits}. Experiment with both explicit and implicit type struct
-   values, and implicit and explicit field names.
+   called @L{Bits}. Experiment with explicit type struct values and struct
+   export expressions, and implicit and explicit field names.
  
   @exercise
    In the Basics tutorial, group together code related to the @L{Bit4@} type
