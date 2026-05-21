@@ -83,3 +83,16 @@ one day. Or add 1 hour, and see how things roll over? I kind of like that.
 Maybe draft a new version of the tutorial like that and see how it feels.
 
 Or something related to a deck of cards? Coins? Music notes?
+
+---
+
+For sake of progress, I suggest not rewriting the examples to start. Update it
+for the latest language with the existing example. Then consider rewriting the
+examples after I've gone through the tutorials and reminded myself what I
+concepts I want them to cover.
+
+---
+
+In progress: updating the structs tutorial. I should move namespaces before
+implicit struct type and copy expression. Talk about export and import in the
+context of namespaces. Then discuss copy expression after that.

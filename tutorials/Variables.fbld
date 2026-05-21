@@ -1,7 +1,7 @@
 @tutorial Variables
- This tutorial does a deep dive into variables, types, kinds, and let
- expressions. By the end of this tutorial, you'll be fully versed in section 2
- of the fble language spec on types, kinds, and variables.
+ This tutorial does a deep dive into variables, types, and let expressions. By
+ the end of this tutorial, you'll be fully versed in section 2 of the fble
+ language spec on types and variables.
  
  @section Basics
   A variable is a name for a value. Values are typed and immutable. You use a
@@ -51,30 +51,18 @@
  
  @section Implicit Variable Types
   There's another way to define a variable that doesn't require giving the
-  type of a variable. We've seen examples of this before when importing values
-  from other modules. For example:
+  type of a variable. For example:
  
   @code[fble] @
-   % True = /Std/Bool%.True;
+   zero = Bit@(0: Unit);
  
-  In this case, instead of writing the type of @L{True}, we write the kind of
-  the variable, @L{%} (more on kinds in just a second). The compiler
-  automatically infers the type of the variable from its definition.
- 
-  We don't need to be importing values from other modules to declare variables
-  this way. For example, the following two variable declarations are
-  equivalent:
+  When we leave out the type @L{Bit@} of the variable @L{zero} like this,
+  compile compiler will automatically infer the type of the variable from its
+  definition. The following two variable declarations are equivalent:
  
   @code[fble] @
    Bit@ zero = Bit@(0: Unit);   # Defining a variable with explicit type.
-   % zero = Bit@(0: Unit);      # Defining a variable with implicit type.
- 
-  We can also import values from other modules with explicit types. For
-  example, the following two variable declarations are equivalent:
- 
-  @code[fble] @
-   % True = /Std/Bool%.True;
-   /Std/Bool%.Bool@ True = /Std/Bool%.True;
+   zero = Bit@(0: Unit);        # Defining a variable with implicit type.
  
  @section Type Values
   Variables can be used for types as well as normal values, because a type is
@@ -83,14 +71,12 @@
   A type is a special kind of value to be sure. The compiler knows the value
   of a type during compilation and can check whether two type values refer to
   the same type or not, which is not the case for normal values.
- 
-  The concept of a value's kind is used to distinguish between normal
-  values and type values, and for describing the type parameters of
-  polymorphic values.  We'll discuss polymorphism in a future tutorial. For
-  now you can think of there being two kinds: @L{%} is the kind of
-  (non-polymorphic) normal values, and @L{@} is the kind of (non-polymorphic)
-  types.
- 
+
+  To distinguish between normal values and type values, fble has a concept
+  called a type level. A normal value has type level 0. A type value has type
+  level 1. We'll see shortly that there are values with higher type levels,
+  but you almost never encounter them in practice.
+
   To make it easier to keep track of whether a variable refers to a normal
   value or a type when reading fble programs, we require type variable names
   to be followed by the @L{@} character. In this case, @L{@} is not considered
@@ -101,14 +87,15 @@
   We've already seen examples of declaring type variables:
  
   @code[fble] @
-   @ Unit@ = *();
-   @ Bit@ = +(Unit@ 0, Unit@ 1);
-   @ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
+   Unit@ = *();
+   Bit@ = +(Unit@ 0, Unit@ 1);
+   Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
  
-  Note that we use the implicit type of variable declaration, using @L{@} for
-  the kind instead of @L{%} like we used for normal variables. We could
-  explicitly write the type of these type variables, but I haven't told you
-  what the type of a type value is yet or how to write it down.
+  Note that we use the implicit type of variable declaration: @L{Unit@},
+  @L{Bit@} and @L{Bit4@} are the names of the (type) variables being defined;
+  we haven't given their types. We could explicitly write the type of these
+  type variables, but I haven't told you what the type of a type value is yet
+  or how to write it down.
  
   Just like normal variables are names for normal values, type variables are
   names for type values. Unlike many statically typed languages, the name of
@@ -116,14 +103,14 @@
   @L{Bit@} type without introducing a @L{Unit@} type variable:
  
   @code[fble] @
-   @ Bit@ = +(*() 0, *() 1);
+   Bit@ = +(*() 0, *() 1);
  
   We can also define multiple different type variables for the same type:
  
   @code[fble] @
-   @ Unit0@ = *();
-   @ Unit1@ = Unit0@;
-   @ Bit@ = +(Unit0@ 0, Unit1@ 1);
+   Unit0@ = *();
+   Unit1@ = Unit0@;
+   Bit@ = +(Unit0@ 0, Unit1@ 1);
  
   In this case, @L{*()}, @L{Unit0@}, and @L{Unit1@} are all equivalent and all
   refer to the same type.
@@ -165,6 +152,12 @@
   has a type. For example: @L{@<@<Bit@>>} is the type of the type of the
   @L{Bit@} type. And on and on. But note, you cannot define a variable of a
   type of a type. Because you never need to and that would just be confusing.
+
+  Remember we mentioned type levels before? Since @L{0} is a normal value, it
+  has type level 0. The type of @L{0} is @L{@<0>} or @L{Bit@}, which is type
+  level 1. The type of the type is @L{@<@<0>>} or @L{@<Bit@>} which has type
+  level 2, the type of the type of the type, @L{@<@<Bit@>>} has type level 3,
+  and so on.
  
  @section Variable Scopes
   Variables in fble have lexical scoping, which means they can be referenced
@@ -195,7 +188,8 @@
   @code[fble] @
    Bit@ 0 = Bit@(0: Unit);
    
-   (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
+   (Bit@, Bit@) { Bit@; }
+   And = (Bit@ a, Bit@ b) {
      a.?(0: 0, 1: b);
    };
  
@@ -207,17 +201,19 @@
   this is that a function must be defined after all other functions it makes
   use of.
  
-  For example, the follow will result in an error, because the @L{And}
+  For example, the following will result in an error, because the @L{And}
   function hasn't been declared at the time it is referenced from the @L{And4}
   function:
  
   @code[fble] @
-   (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
+   (Bit4@, Bit4@) { Bit4@; }
+   And4 = (Bit4@ a, Bit4@ b) {
      # Error: `And' has not been declared.
      Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
    };
    
-   (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
+   (Bit@, Bit@) { Bit@; }
+   And = (Bit@ a, Bit@ b) {
      a.?(0: 0, 1: b);
    };
  
@@ -228,7 +224,8 @@
   For example, here's how you can define a recursive function:
  
   @code[fble] @
-   (Int@) { Int@; } Factorial = (Int@ n) {
+   (Int@) { Int@; }
+   Factorial = (Int@ n) {
      Eq(n, 0).?(true: 1, false: Mul(n, Factorial(Sub(n, 1))));
    };
  
@@ -254,7 +251,7 @@
   You could define a cyclical infinite list if you wanted:
  
   @code[fble] @
-   List@<Bit@> ones = Cons(1, ones);
+   List@<Bit@> ones = Items(1, ones);
  
   This is fine because you never try to access the value of the variable in
   its definition.
@@ -263,13 +260,13 @@
   For example, here's how you could define a (non-polymorphic) list data type:
  
   @code[fble] @
-   @ List@ = +(*(Bit@ head, List@ tail) cons, Unit@ nil);
+   List@ = +(*(Bit@ head, List@ tail) items, Unit@ empty);
  
   Don't try anything too crazy though. The following will give an error about
   a vacuous type:
  
   @code[fble] @
-   @ T@ = T@;
+   T@ = T@;
  
  @section Mutually Recursive Declarations
   There are times you may want to define mutually recursive variables. To do
@@ -298,8 +295,8 @@
   recursive data types:
  
   @code[fble] @
-   @ ListP@ = *(Bit@ head, List@ tail),
-   @ List@ = +(ListP@ cons, Unit@ nil);
+   ListP@ = *(Bit@ head, List@ tail),
+   List@ = +(ListP@ items, Unit@ empty);
  
  @section Variable Shadowing
   In fble you are allowed to shadow previous variable declarations. For example:
@@ -344,11 +341,11 @@
   contrived example of an unused variable:
  
   @code[fble] @
-     String@ _ = Str|'this string is not used';
+   Stream@<Char@> _ = StringE|'this stream is not used';
 
-     /Core/Stdio/StringO%.Run(Str|'hello, world');
+   /Std/Io/Cli/Print%.Print(StringE|'hello, world\n');
  
-  Here we use the variable name @L{_} for the unused string variable.
+  Here we use the variable name @L{_} for the unused stream variable.
  
  @section Variables in the Language Specification
   You now know everything there is to know about variables in fble. To
@@ -368,8 +365,7 @@
    to @L{'A variable named X'}.
  
   @exercise
-   Try defining a variable with the wrong type or the wrong kind. What error
-   message do you get?
+   Try defining a variable with the wrong type. What error message do you get?
  
   @exercise
    Try defining a type variable without the @L{@} at the end. Try defining a
@@ -377,8 +373,8 @@
    these cases?
  
   @exercise
-   Try defining a variable for the type of the @L{Bit@} type. What error message
-   do you get?
+   Try defining a variable for the type of the @L{Bit@} type. What error
+   message do you get?
  
  @section Next Steps
   Head over to the @fbld[Structs.fbld][Structs] tutorial to learn all about

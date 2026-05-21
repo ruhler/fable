@@ -80,6 +80,9 @@ Other:
 
 * Figure out what FbleStringValueAccess should do in terms of unicode.
 
+* Do I use undefined values anymore?
+  Like, since FFI, do we really need to support these?
+
 * Any way to avoid exporting internally shared symbols in libfble.a?
 
 * Test unicode for character based native input and output streams.
