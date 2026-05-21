@@ -630,3 +630,11 @@ two states. So I really do want to slow it down in the invaders game itself.
 I feel like this looks much better graphics wise with set swap interval 1.
 Cool.
 
+---
+
+* Figure out why we don't propagate an error
+ - If /Core/Map/Data% Delete function is left undefined.
+ - The tests print @[, then skip over to the next test?
+
+I can't reproduce it. Oh well. Worry about it if we run into it again.
+Probably there's a bug somewhere hidden dealing with propagation of errors.

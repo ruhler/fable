@@ -15,11 +15,13 @@
 #  effecting computations. For example:
 #
 #  @code[fble] @ 
-#   Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
-#    Char@ c := m.do(stdio.GetChar);
-#    Int@ ascii = ToAscii(c);
-#    Unit@ _ := m.do(stdio.PutString(Show(ascii));
-#    m.return(True)
+#   <<@>@ M@>(Monad@<M@>, In@<M@>) { M@<Unit@>; }
+#   Cat = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Out@<M@> out) {
+#     String@ line := m.do(GetLine(m, in));
+#     line.?(empty: m.return(Unit));
+#     Unit@ _ := m.do(out(String(line)));
+#     Cat(in);
+#   };
 Monad@ = <<@>@ M@> {
   *(
     @<M@> M@,

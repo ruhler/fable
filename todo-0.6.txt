@@ -28,10 +28,7 @@ Tutorials:
 
 Other:
 * Why is fbld outputting errors in reverse order?
-
-* Figure out why we don't propagate an error
- - If /Core/Map/Data% Delete function is left undefined.
- - The tests print @[, then skip over to the next test?
+ - I'm not sure how to reproduce multiple errors at once though.
 
 * Update all the sample apps for latest features, styles, idioms.
 
@@ -76,9 +73,6 @@ Other:
 
 * Write a script to help find unused modules?
  - Because I suspect I have some unused modules in my packages...
-
-* Pick better example for docs in /Std/Monad%
- - Now that we no longer have Stdio@.
 
 * Double check error message for over application of a function.
   It shouldn't say "can't apply arguments to something of type (Foo@) { ...}"
