@@ -254,3 +254,62 @@ Do we have to worry about tail calls? Probably. This use is a tail call.
 Here's an easy check: change map to call an Error function, then break prefix
 encoding of Data@<Int@>. See if I can find the error location from that.
 
+---
+
+Yeah, even with full stack traces, when I use Error function, I don't see line
+where the error function is called in the call stack, because it is a tail
+call.
+
+I could use a maybe type, maybe? Or, something like:
+
+ Error@ = <@ A@> { *(Unit@ _, A@ error); };
+
+ <@ A@>(String@) { Error@<A@>; }
+ Error = <@ A@>(String@ _) {
+   Error@<A@>(_: Unit);
+ };
+
+Which means now instead of:
+
+  leaf.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@<K@, V@>>>);
+
+We would write something like:
+
+  leaf.?(children: Error<Maybe@<Map@<K@, V@>>>|'prefix property violation'.error);
+
+Well... it's also the same thing as if we add a '_' field to Undef and say
+Undef is that. No need for undef expression then. Everything works just the
+same way, right? If you're willing to use the form above for it.
+
+A message would be nice to have. We could do that. But we aren't doing
+anything with that message? Well, we could. Using a debug stream.
+
+  Error|'prefix property violation'.return<Maybe@<Map@<K@, V@>>>
+  Error|'prefix property violation'.r<Maybe@<Map@<K@, V@>>>
+  Error|'prefix property violation'.t<Maybe@<Map@<K@, V@>>>
+  Error|'prefix property violation'.t<Maybe@<Map@<K@, V@>>>
+  Error|'divide by zero'.r<Int@>;
+
+This seems nice. I bet I could do this: 
+
+  Error|'divide by zero'.r<Int@>;
+
+How about I replace /Std/Undef% with /Std/Error% with an error function
+defined like that. We can import Error OnAscii. We can print the error using a
+debug stream.
+
+Except... it's pretty sad if we have to bring in so many dependencies,
+possibly circular. I really ought to reduce the dependencies as much as I can.
+Hmm...
+
+  Error.r<Int@>;  # divide by zero
+
+  Error(*(*() DivideByZero)).r<Int@>;
+
+  Error@ DivideByZero = /Std/Error%.Error;
+  DivideByZero.r<Int@>;
+
+  /Std/Error%.Error.r<Int@>;
+
+Sure. That works fine. No worse than what we have now, but without using undef
+expression.

@@ -13,7 +13,7 @@ Int@ 4 = Incr(3);
 #  @field[Int@][r] The remainder of division.
 QR@ = *(Int@ q, Int@ r);
 
-/Std/Undef%.Undef@ Imaginary;
+/Std/Undef%.Undef@ Imaginary = /Std/Undef%.Undef;
 
 # @func[Sqrt] Integer square root.
 #  @code[txt] @

@@ -58,8 +58,8 @@ HexToInt = (Char@ c) {
   Eq(c, Char|e).?(true: Int|14);
   Eq(c, Char|f).?(true: Int|15);
 
-  Int@ undefined;
-  undefined;
+  InvalidHexDigit = /Std/Undef%.Undef;
+  InvalidHexDigit.undef<Int@>;
 };
 
 (String@) { List@<Int@>; }

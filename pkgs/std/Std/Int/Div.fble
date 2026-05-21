@@ -10,7 +10,7 @@ P = /Std/Int/IntP/Div%;
 #  @field[Int@][r] The remainder of division.
 QR@ = *(Int@ q, Int@ r);
 
-/Std/Undef%.Undef@ DivideByZero;
+/Std/Undef%.Undef@ DivideByZero = /Std/Undef%.Undef;
 
 # @func[Div] Integer (floored) division.
 #  @code[txt] @

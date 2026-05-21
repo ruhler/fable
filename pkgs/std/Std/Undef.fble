@@ -14,7 +14,7 @@
 #  @l{undef} field of @l{Undef}, the program will crash with an undefined
 #  struct access error.
 #
-#  Here are three ways you can use /Std/Undef% to explicitly express undefined
+#  Here are two ways you can use /Std/Undef% to explicitly express undefined
 #  behavior in your code, using the divide by zero case as an example.
 #
 #  You can directly access the @l{undef} field. The type argument for the
@@ -28,27 +28,23 @@
 #  example:
 #
 #  @code[fble@]
-#   % DivideByZero = /Std/Undef%.Undef;
-#   ...
-#   divisor.?(0: DivideByZero.undef<Int@>)
-#
-#  Or you can define your own undefined value of @l{Undef@} type. For example:
-#
-#  @code[fble@]
-#   /Std/Undef%.Undef@ DivideByZero;
+#   DivideByZero = /Std/Undef%.Undef;
 #   ...
 #   divisor.?(0: DivideByZero.undef<Int@>)
 
-# @struct[Undef@] Type used for indicating undefined behavior.
+Unit@, Unit .= /Std/Unit%;
+
+# @union[Undef@] Type used for indicating undefined behavior.
+#  @field[Unit@][_] Field used for the actual value of the Undef@. Do not use.
 #  @field[<@ T@> { T@; }][undef]
 #   Field access which results in undefined behavior. 
-Undef@ = *(<@ T@> { T@; } undef);
+Undef@ = +(Unit@ _, <@ T@> { T@; } undef);
 
 # @value[Undef] An undefined value.
 #  @type[Undef@]
 #
 #  Any attempt to access the @l{undef} field of this value will result in an
 #  undefined struct access error.
-Undef@ Undef;
+Undef@ Undef = Undef@(_: Unit);
 
 @(Undef@, Undef);
