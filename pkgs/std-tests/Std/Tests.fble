@@ -8,6 +8,7 @@ TestSuite = OnAscii(/Std/Test%.TestSuite);
 Test@ Tests = TestSuite|Std[
   /Std/Bool/Tests%.Tests,
   /Std/Char/Tests%.Tests,
+  /Std/Func/Tests%.Tests,
   /Std/Int/Tests%.Tests,
   /Std/List/Tests%.Tests,
   /Std/Map/Tests%.Tests,

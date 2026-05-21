@@ -78,7 +78,8 @@ Other:
   It shouldn't say "can't apply arguments to something of type (Foo@) { ...}"
   Because that's not true, right? Better would be "too many arguments?"
 
-* Add tests for /Std/Func%.
+* Should /Std/Func%.Const use a single type parameter instead of two separate
+  ones?
 
 * Figure out what FbleStringValueAccess should do in terms of unicode.
 

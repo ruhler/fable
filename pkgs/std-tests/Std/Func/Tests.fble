@@ -1,0 +1,83 @@
+
+Bool@, False .= /Std/Bool%;
+Char@ .= /Std/Char%;
+Char, OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Int@, Sub, Incr, Neg, Mul .= /Std/Int%;
+Mod .= /Std/Int/Div%;
+Int .= /Std/Int/Lit%;
+IsZero .= /Std/Int/Sign%;
+Id, Const, Compose, Flip, Apply, ApplyTo, Fix, On .= /Std/Func%;
+Lazy .= /Std/Lazy%;
+List@, Items .= /Std/List%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Test@ Tests = TestSuite|Func[
+  Test|Id({
+    Unit@ _ := Lazy;
+    Bool@ got = Id(False);
+    Bool@ wnt = False;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test|Const({
+    Unit@ _ := Lazy;
+    Bool@ got = Const<Int@>(False, Int|5);
+    Bool@ wnt = False;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test|Compose({
+    Unit@ _ := Lazy;
+    (Bool@) { Char@; } f = (Bool@ x) { x.?(true: Char|A, false: Char|B); };
+    (Int@) { Bool@; } g = (Int@ x) { IsZero(Mod(x, Int|2)); };
+    (Int@) { Char@; } h = Compose(f, g);
+    Char@ wnt = Char|B;
+    Char@ got = h(Int|27);
+    AssertEquals(/Std/Char/Eq%.Eq, /Std/Char/Show%.Show, wnt, got);
+  }),
+
+  Test|Flip({
+    Unit@ _ := Lazy;
+    Int@ got = Flip(Sub, Int|5, Int|3);
+    Int@ wnt = Neg(Int|2);
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+  }),
+
+  Test|Apply({
+    Unit@ _ := Lazy;
+    Int@ got = Apply(Incr, Int|5);
+    Int@ wnt = Int|6;
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+  }),
+
+  Test|ApplyTo({
+    Unit@ _ := Lazy;
+    Int@ got = ApplyTo(Int|5, Incr);
+    Int@ wnt = Int|6;
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+  }),
+
+  Test|Fix({
+    Unit@ _ := Lazy;
+    (List@<Int@>) { List@<Int@>; } f = (List@<Int@> l) {
+      Items(Int|3, l);
+    };
+    List@<Int@> list = Fix(f);
+    Int@ got = list.items.tail.items.tail.items.head;
+    Int@ wnt = Int|3;
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+  }),
+
+  Test|On({
+    Unit@ _ := Lazy;
+    Int@ got = On(Mul, Incr, Int|4, Int|6);
+    Int@ wnt = Int|35;
+    AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+  })
+];
+
+@(Tests);
