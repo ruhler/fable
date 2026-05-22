@@ -7,6 +7,6 @@ Bool@ = +(Unit@ true, Unit@ false);
 Foo@ = *(Bool@ x, Bool@ y);
 
 # In the header, the value of Foo is undefined.
-Foo@ Foo = Foo;
+Foo@ Foo;
 
 Foo;

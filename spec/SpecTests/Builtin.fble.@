@@ -4,11 +4,11 @@
 Nat@ = /SpecTests/Nat%.Nat@;
 
 # Identity function: returns its input.
-<@ A@>(A@) { A@; } Id = Id;
+<@ A@>(A@) { A@; } Id;
 
 # Identity function on type Nat@
 # For the purposes of having a type dependency on a different module without a
 # corresponding implementation dependency on that module.
-(Nat@) { Nat@; } NatId = NatId;
+(Nat@) { Nat@; } NatId;
 
 @(Id, NatId);

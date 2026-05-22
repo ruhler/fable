@@ -319,11 +319,11 @@
   syntax for a header file is exactly the same as for a normal fble module,
   except that its value is never used.
 
-  If you remember back to the @fbld[Variables.fbld][Variables] tutorial, it's
-  possible to declare undefined variables. Those are primarily useful for fble
-  header files. The header file can contain the same code as the module's
-  implementation, except leave all the variables undefined. The type of the
-  header file will be used during compilation.
+  There's a sneaky thing you can do to easily declare variables and functions
+  in header files without giving an implementation. Leave off the definition
+  of the variable, and it turns into a foreign function specification. But
+  since a header file is never executed, you don't need to implement the
+  foreign function anywhere and everything works out.
 
   For example, recall the implementation of our @L{/Bit%} module in
   @l{Bit.fble}:

@@ -153,19 +153,13 @@ void FbleFreeInstr(FbleInstr* instr)
 
     case FBLE_FOREIGN_VALUE_INSTR: {
       FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
-      FbleFreeLoc(foreign_instr->loc);
       FbleFreeModulePath(foreign_instr->path);
-      FbleFreeString(foreign_instr->name);
+      FbleFreeName(foreign_instr->name);
       FbleFree(instr);
       return;
     }
 
     case FBLE_NOP_INSTR: {
-      FbleFree(instr);
-      return;
-    }
-
-    case FBLE_UNDEF_INSTR: {
       FbleFree(instr);
       return;
     }
@@ -539,20 +533,13 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
           fprintf(fout, "%4zi.  ", i);
           fprintf(fout, "l%zi = ffi ", foreign_instr->dest);
           FblePrintModulePath(fout, foreign_instr->path);
-          fprintf(fout, " %s;", foreign_instr->name->str);
-          PrintLoc(fout, foreign_instr->loc);
+          fprintf(fout, " %s;", foreign_instr->name.name->str);
+          PrintLoc(fout, foreign_instr->name.loc);
           break;
         }
 
         case FBLE_NOP_INSTR: {
           fprintf(fout, "%4zi.  nop;\n", i);
-          break;
-        }
-
-        case FBLE_UNDEF_INSTR: {
-          FbleUndefInstr* undef_instr = (FbleUndefInstr*)instr;
-          fprintf(fout, "%4zi.  ", i);
-          fprintf(fout, "l%zi = undef;\n", undef_instr->dest);
           break;
         }
       }

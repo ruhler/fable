@@ -8,13 +8,13 @@ Bool@ = +(Unit@ true, Unit@ false);
 # Basic use of a non-function foreign value.
 # The foreign value 'False' for this module must be supplied by the test
 # driver somewhere. It should behave as a boolean False value.
-Bool@ F = Bool@|False;
-Unit@ _ = F.false;
+Bool@ False;
+Unit@ _ = False.false;
 
 # Also check we can distinguish between two different foreign values.
 # The foreign value 'True' for this module must be supplied by the test
 # driver somewhere. It should behave as a boolean True value.
-Bool@ T = Bool@|True;
-Unit@ _ = T.true;
+Bool@ True;
+Unit@ _ = True.true;
 
 Unit;

@@ -110,7 +110,6 @@ typedef enum {
   FBLE_LITERAL_INSTR,
   FBLE_FOREIGN_VALUE_INSTR,
   FBLE_NOP_INSTR,
-  FBLE_UNDEF_INSTR,
 } FbleInstrTag;
 
 /**
@@ -519,11 +518,10 @@ typedef struct {
  */
 typedef struct {
   FbleInstr _base;
-  FbleLoc loc;
   FbleLocalIndex dest;
   FbleBlockId profile_block_offset;
   FbleModulePath* path;
-  FbleString* name;
+  FbleName name;
 } FbleForeignValueInstr;
 
 /**
@@ -536,19 +534,6 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
 } FbleNopInstr;
-
-/**
- * @struct[FbleUndefInstr] FBLE_UNDEF_INSTR: Creates an undefined value.
- *  @code[txt] @
- *   *dest = NULL
- *
- *  @field[FbleInstr][_base] FbleInstr base clsas.
- *  @field[FbleLocalIndex][dest] Where to store the undefined value.
- */
-typedef struct {
-  FbleInstr _base;
-  FbleLocalIndex dest;
-} FbleUndefInstr;
 
 /**
  * @func[FbleRawAllocInstr]

@@ -391,14 +391,6 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
       return &ntc->_base;
     }
 
-    case FBLE_UNDEF_TC: {
-      FbleUndefTc* undef_tc = (FbleUndefTc*)tc;
-      FbleUndefTc* ntc = FbleNewTc(FbleUndefTc, FBLE_UNDEF_TC, tc->loc);
-      ntc->name = FbleCopyName(undef_tc->name);
-      ntc->body = RewriteVars(statics, arg_offset, undef_tc->body);
-      return &ntc->_base;
-    }
-
     case FBLE_STRUCT_VALUE_TC: {
       FbleStructValueTc* sv = (FbleStructValueTc*)tc;
       FbleStructValueTc* ntc = FbleNewTc(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, tc->loc);
@@ -536,8 +528,13 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
       return FbleCopyTc(tc);
     }
 
-    case FBLE_FOREIGN_VALUE_TC: {
-      return FbleCopyTc(tc);
+    case FBLE_FOREIGN_TC: {
+      FbleForeignTc* foreign_tc = (FbleForeignTc*)tc;
+      FbleForeignTc* ntc = FbleNewTc(FbleForeignTc, FBLE_FOREIGN_TC, tc->loc);
+      ntc->path = FbleCopyModulePath(foreign_tc->path);
+      ntc->name = FbleCopyName(foreign_tc->name);
+      ntc->body = RewriteVars(statics, arg_offset, foreign_tc->body);
+      return &ntc->_base;
     }
   }
 
@@ -987,19 +984,6 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       return body;
     }
 
-    case FBLE_UNDEF_TC: {
-      FbleUndefTc* undef_tc = (FbleUndefTc*)v;
-
-      Local* var = NewLocal(scope);
-      FbleUndefInstr* undef_instr = FbleAllocInstr(FbleUndefInstr, FBLE_UNDEF_INSTR);
-      undef_instr->dest = var->var.index;
-      AppendInstr(scope, &undef_instr->_base);
-      PushVar(scope, undef_tc->name, var);
-      Local* body = CompileExpr(blocks, true, exit, scope, undef_tc->body);
-      PopVar(scope, exit);
-      return body;
-    }
-
     case FBLE_STRUCT_VALUE_TC: {
       FbleStructValueTc* struct_tc = (FbleStructValueTc*)v;
 
@@ -1411,20 +1395,23 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       return local;
     }
 
-    case FBLE_FOREIGN_VALUE_TC: {
-      FbleForeignValueTc* func_tc = (FbleForeignValueTc*)v;
+    case FBLE_FOREIGN_TC: {
+      FbleForeignTc* foreign_tc = (FbleForeignTc*)v;
 
-      Local* local = NewLocal(scope);
-      FbleBlockId block = GetBlock(blocks, func_tc->name_loc);
+      Local* var = NewLocal(scope);
+
+      FbleBlockId block = GetBlock(blocks, foreign_tc->name.loc);
       FbleForeignValueInstr* instr = FbleAllocInstr(FbleForeignValueInstr, FBLE_FOREIGN_VALUE_INSTR);
-      instr->loc = FbleCopyLoc(func_tc->name_loc);
-      instr->dest = local->var.index;
+      instr->dest = var->var.index;
       instr->profile_block_offset = block - scope->code->profile_block_id;
-      instr->path = FbleCopyModulePath(func_tc->path);
-      instr->name = FbleCopyString(func_tc->name);
+      instr->path = FbleCopyModulePath(foreign_tc->path);
+      instr->name = FbleCopyName(foreign_tc->name);
       AppendInstr(scope, &instr->_base);
-      CompileExit(exit, scope, local);
-      return local;
+
+      PushVar(scope, foreign_tc->name, var);
+      Local* body = CompileExpr(blocks, true, exit, scope, foreign_tc->body);
+      PopVar(scope, exit);
+      return body;
     }
   }
 

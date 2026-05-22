@@ -114,24 +114,6 @@ static void Expr(FbleExpr* expr, Vars* vars)
       return;
     }
 
-    case FBLE_UNDEF_EXPR: {
-      FbleUndefExpr* undef_expr = (FbleUndefExpr*)expr;
-      Expr(undef_expr->type, vars);
-
-      Vars nvars = {
-        .name = undef_expr->name,
-        .used = undef_expr->name.name->str[0] == '_',
-        .next = vars
-      };
-      Expr(undef_expr->body, &nvars);
-      if (!nvars.used) {
-        FbleReportWarning("variable '", nvars.name.loc);
-        FblePrintName(stderr, nvars.name);
-        fprintf(stderr, "' is unused\n");
-      }
-      return;
-    }
-
     case FBLE_STRUCT_EXPORT_EXPR: {
       FbleStructExportExpr* struct_expr = (FbleStructExportExpr*)expr;
       for (size_t i = 0; i < struct_expr->args.size; ++i) {
@@ -250,6 +232,24 @@ static void Expr(FbleExpr* expr, Vars* vars)
     case FBLE_DATA_ACCESS_EXPR: {
       FbleDataAccessExpr* access_expr = (FbleDataAccessExpr*)expr;
       Expr(access_expr->object, vars);
+      return;
+    }
+
+    case FBLE_FOREIGN_EXPR: {
+      FbleForeignExpr* foreign_expr = (FbleForeignExpr*)expr;
+      Expr(foreign_expr->type, vars);
+
+      Vars nvars = {
+        .name = foreign_expr->name,
+        .used = foreign_expr->name.name->str[0] == '_',
+        .next = vars
+      };
+      Expr(foreign_expr->body, &nvars);
+      if (!nvars.used) {
+        FbleReportWarning("variable '", nvars.name.loc);
+        FblePrintName(stderr, nvars.name);
+        fprintf(stderr, "' is unused\n");
+      }
       return;
     }
 

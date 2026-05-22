@@ -39,7 +39,6 @@ typedef enum {
   FBLE_TYPE_VALUE_TC,
   FBLE_VAR_TC,
   FBLE_LET_TC,
-  FBLE_UNDEF_TC,
   FBLE_STRUCT_VALUE_TC,
   FBLE_STRUCT_ACCESS_TC,
   FBLE_STRUCT_COPY_TC,
@@ -51,7 +50,7 @@ typedef enum {
   FBLE_FUNC_APPLY_TC,
   FBLE_LIST_TC,
   FBLE_LITERAL_TC,
-  FBLE_FOREIGN_VALUE_TC,
+  FBLE_FOREIGN_TC,
 } FbleTcTag;
 
 /**
@@ -159,20 +158,6 @@ typedef struct {
   FbleTcBindingV bindings;
   FbleTc* body;
 } FbleLetTc;
-
-/**
- * @struct[FbleUndefTc] FBLE_UNDEF_TC
- *  An undef expression.
- *
- *  @field[FbleTc][_base] FbleTc base class.
- *  @field[FbleName][name] Name of the undefined variable.
- *  @field[FbleTc*][body] The body of the let
- */
-typedef struct {
-  FbleTc _base;
-  FbleName name;
-  FbleTc* body;
-} FbleUndefTc;
 
 /**
  * @struct[FbleStructValueTc] FBLE_STRUCT_VALUE_TC
@@ -404,20 +389,20 @@ typedef struct {
 } FbleLiteralTc;
 
 /**
- * @struct[FbleForeignValueTc] FBLE_FOREIGN_VALUE_TC
- *  A foreign value.
+ * @struct[FbleForeignTc] FBLE_FOREIGN_TC
+ *  A foreign expression.
  *
  *  @field[FbleTc][_base] FbleTc base class.
  *  @field[FbleModulePath*][path] The module instantiated the value.
- *  @field[FbleLoc][name_loc] The location of the name of the value.
- *  @field[FbleString*][name] The name of the function.
+ *  @field[FbleName][name] The name of the variable and foreign value.
+ *  @field[FbleTc*][body] The body of the foreign expression.
  */
 typedef struct {
   FbleTc _base;
   FbleModulePath* path;
-  FbleLoc name_loc;
-  FbleString* name;
-} FbleForeignValueTc;
+  FbleName name;
+  FbleTc* body;
+} FbleForeignTc;
 
 /**
  * @func[FbleNewTc] Allocates a new tc.

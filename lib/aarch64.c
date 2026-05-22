@@ -222,12 +222,11 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
 
       case FBLE_FOREIGN_VALUE_INSTR: {
         FbleForeignValueInstr* instr = (FbleForeignValueInstr*)code->instrs.xs[i];
-        AddLoc(instr->loc.source->str, locs);
+        AddLoc(instr->name.loc.source->str, locs);
         break;
       }
 
       case FBLE_NOP_INSTR: break;
-      case FBLE_UNDEF_INSTR: break;
     }
   }
 }
@@ -1063,7 +1062,7 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
       FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
 
       // Get a pointer to the FbleForeign in x2.
-      FbleString* foreign = FbleMangleForeignName(foreign_instr->path, foreign_instr->name->str);
+      FbleString* foreign = FbleMangleForeignName(foreign_instr->path, foreign_instr->name.name->str);
       GAdr(fout, "x2", "%s", foreign->str);
       FbleFreeString(foreign);
 
@@ -1078,12 +1077,6 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
 
     case FBLE_NOP_INSTR: {
       // Nothing to do.
-      return;
-    }
-
-    case FBLE_UNDEF_INSTR: {
-      FbleUndefInstr* undef_instr = (FbleUndefInstr*)instr;
-      SetFrameVar(fout, "xzr", undef_instr->dest);
       return;
     }
   }
@@ -1213,7 +1206,6 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
     case FBLE_LITERAL_INSTR: return;
     case FBLE_FOREIGN_VALUE_INSTR: return;
     case FBLE_NOP_INSTR: return;
-    case FBLE_UNDEF_INSTR: return;
   }
 }
 

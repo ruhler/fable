@@ -305,9 +305,9 @@ static FbleValue* Interpret(
 
       case FBLE_FOREIGN_VALUE_INSTR: {
         FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
-        FbleForeign* foreign = FbleLookupForeignValue(heap, foreign_instr->path, foreign_instr->name->str);
+        FbleForeign* foreign = FbleLookupForeignValue(heap, foreign_instr->path, foreign_instr->name.name->str);
         if (foreign == NULL) {
-          FbleReportError("foreign value not found\n", foreign_instr->loc);
+          FbleReportError("foreign value not found\n", foreign_instr->name.loc);
           return NULL;
         }
 
@@ -318,13 +318,6 @@ static FbleValue* Interpret(
       }
 
       case FBLE_NOP_INSTR: {
-        pc++;
-        break;
-      }
-
-      case FBLE_UNDEF_INSTR: {
-        FbleUndefInstr* undef_instr = (FbleUndefInstr*)instr;
-        locals[undef_instr->dest] = NULL;
         pc++;
         break;
       }

@@ -20,7 +20,6 @@ typedef enum {
   FBLE_TYPEOF_EXPR,
   FBLE_VAR_EXPR,
   FBLE_LET_EXPR,
-  FBLE_UNDEF_EXPR,
 
   FBLE_DATA_TYPE_EXPR,    // struct and union types.
   FBLE_DATA_ACCESS_EXPR,  // struct and union field access.
@@ -47,6 +46,8 @@ typedef enum {
 
   FBLE_PACKAGE_TYPE_EXPR,
   FBLE_PRIVATE_EXPR,
+
+  FBLE_FOREIGN_EXPR,
 
   FBLE_MISC_APPLY_EXPR,
 } FbleExprTag;
@@ -315,22 +316,6 @@ typedef struct {
 } FbleLetExpr;
 
 /**
- * @struct[FbleUndefExpr] FBLE_UNDEF_EXPR
- *  An undef expression.
- *
- *  @field[FbleTypeExpr][_base] FbleExpr base class.
- *  @field[FbleTypeExpr*][type] The variable type.
- *  @field[FbleName][name] The variable name.
- *  @field[FbleExpr*][body] The body of the undef.
- */
-typedef struct {
-  FbleExpr _base;
-  FbleTypeExpr* type;
-  FbleName name;
-  FbleExpr* body;
-} FbleUndefExpr;
-
-/**
  * @struct[FbleModulePathExpr] FBLE_MODULE_PATH_EXPR
  *  A module path expression.
  *
@@ -495,6 +480,22 @@ typedef struct {
   FbleExpr* object;
   FbleName field;
 } FbleDataAccessExpr;
+
+/**
+ * @struct[FbleForeignExpr] FBLE_FOREIGN_EXPR
+ *  An foreign expression.
+ *
+ *  @field[FbleTypeExpr][_base] FbleExpr base class.
+ *  @field[FbleTypeExpr*][type] The variable type.
+ *  @field[FbleName][name] The variable name.
+ *  @field[FbleExpr*][body] The body of the foreign.
+ */
+typedef struct {
+  FbleExpr _base;
+  FbleTypeExpr* type;
+  FbleName name;
+  FbleExpr* body;
+} FbleForeignExpr;
 
 /**
  * @func[FbleFreeExpr] Frees resources associated with an expression.

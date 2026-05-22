@@ -13,10 +13,10 @@ Bool@ False = Bool@(false: Unit@());
   # Basic use of a foreign function.
   # The foreign function 'Not' for this module must be supplied by the test
   # driver somewhere. It should behave as a boolean 'Not' function.
-  (Bool@) { Bool@; } F = (Bool@) { Bool@; }|Not;
+  (Bool@) { Bool@; } Not;
 
-  Unit@ _ = F(True).false;
-  Unit@ _ = F(False).true;
+  Unit@ _ = Not(True).false;
+  Unit@ _ = Not(False).true;
   Unit;
 };
 

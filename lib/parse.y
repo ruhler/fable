@@ -591,6 +591,15 @@ stmt:
       import_expr->body = $5;
       $$ = &import_expr->_base;
     }
+  | expr name ';' stmt {
+      FbleForeignExpr* foreign_expr = FbleAlloc(FbleForeignExpr);
+      foreign_expr->_base.tag = FBLE_FOREIGN_EXPR;
+      foreign_expr->_base.loc = FbleCopyLoc(@$);
+      foreign_expr->type = $1;
+      foreign_expr->name = $2;
+      foreign_expr->body = $4;
+      $$ = &foreign_expr->_base;
+    }
   | expr ';' stmt {
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)$1;
       if (select_expr->_base.tag != FBLE_UNION_SELECT_EXPR

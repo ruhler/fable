@@ -162,7 +162,7 @@
     Expr: let (bindings : [(Type, Name, Expr)]) (body : Expr)
   
    @ConcreteSyntax @
-    stmt = [type], name, '=', expr, {',', [type], name, '=', expr}, ';', stmt       
+    stmt = [type], name, '=', expr, {',', [type], name, '=', expr}, ';', stmt
   
    @Example @
     Int@ x = mul(3, 3); mul(x, x)
@@ -1258,17 +1258,17 @@
    The @l{Foo.fble.@} file is optional. If it is not provided, the type of a
    module should be determined from the @l{Foo.fble} file for the module.
 
-   Vacuous variable declarations can be useful for writing header files. For
-   example, a header file for a module defining a boolean type might look
-   like:
+   Foreign variable declarations (described in the section on foreign function
+   interface) can be useful for writing header files. For example, a header
+   file for a module defining a boolean type might look like:
 
    @code[fble] @
     Bool@ = +(Unit@ true, Unit@ false);
-    Bool@ True = True;
-    Bool@ False = False;
-    (Bool@) { Bool@; } Not = Not;
-    (Bool@, Bool@) { Bool@; } And = And;
-    (Bool@, Bool@) { Bool@; } Or = Or;
+    Bool@ True;
+    Bool@ False;
+    (Bool@) { Bool@; } Not;
+    (Bool@, Bool@) { Bool@; } And;
+    (Bool@, Bool@) { Bool@; } Or;
 
     @(Bool@, True, False, Not, And, Or)
  
@@ -1430,25 +1430,25 @@
   associated with a module implementation and facilitates composition of pure
   fble and foreign code in the same fble module.
 
-  @subsection 10.1 Foreign Value
+  @subsection 10.1 Foreign
    @AbstractSyntax @
-    Expr: foreign_value (type : Type) (name : Name)
+    Expr: foreign (type : Type) (name : Name) (body : Expr)
   
    @ConcreteSyntax @
-    expr = type '|' name
+    stmt = type, name, ';', stmt
   
    @Example @
-    (Bool@) { Bool@; }|Not;
+    (Bool@) { Bool@; } Not; ...
 
-   The foreign value expression describes a value whose implementation is
-   provided in a platform dependent manner. The implementation is identified
-   using both the foreign value name provided and the name of the module where
+   The foreign value expression defines a variable whose value is provided in
+   a platform dependent manner. The implementation is identified using both
+   the name provided in the expression and the name of the module where
    the foreign value is defined so that use of a foreign value implementation
    is restricted to the single module it was intended for.
 
    The type of the foreign value is the type provided. Runtime is the platform
    dependent time required to identify and link in the matching platform
-   implementation of the foreign value.
+   implementation of the foreign value, plus the runtime of the body.
 
    It is an error if the platform is unable to find a suitable foreign
    implementation for the value. The error may occur at link time or at
@@ -1518,7 +1518,7 @@
     | private_type (type : Type) (package : Type)
     | private_value (value : Expr) (package : Type)
 
-    | foreign_value (type : Type) (name : Name)
+    | foreign (type : Type) (name : Name) (body : Expr)
     ;
    
    Module: (value : Expr) (modules : [Module])
@@ -1615,8 +1615,6 @@
      | '@', path                                       (* package_type *)
      | type, '.%', '(', path, ')'                      (* private_type *)
      | expr, '.%', '(', path, ')'                      (* private_value *)
-
-     | type '|' name                                   (* foreign_value *)
     
      | block
      ;
@@ -1638,6 +1636,8 @@
                 {',', name, ':', expr} ')', ';', stmt
      | type, name,                                     (* func_bind *)
        {',', type, name}, ':=', expr, ';', stmt                 
+
+     | type, name, ';', stmt                           (* foreign *)
      ;
     
     module = stmt                                      (* module_value *)
@@ -1656,10 +1656,6 @@
    @item
     The concrete syntax for private type and private value are identical. The
     type of the argument is used to distinguish between the two cases.
-
-   @item
-    The concrete syntax for literal and foreign func value are the same.
-    The type of the argument is used to distinguish between the two cases.
 
    @item
     The module value for module @L{/Foo/Bar%} is stored in @l{Foo/Bar.fble}.

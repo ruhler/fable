@@ -11,20 +11,20 @@ Unit@, Unit .= /Std/Unit%;
 # Pretend type for FILE*. Only to be accessed from FFI functions.
 File@ = *(Unit@ file).%(@/Std/Io/File/Internal%);
 
-(Unit@) { Unit@; } Init = @<Init>|Init;
+(Unit@) { Unit@; } Init;
 
-External@<File@> GetStdin = @<GetStdin>|GetStdin;
-External@<File@> GetStdout = @<GetStdout>|GetStdout;
-External@<File@> GetStderr = @<GetStderr>|GetStderr;
-(String@, String@) { External@<Maybe@<File@>>; } Open = @<Open>|Open;
-(File@) { External@<Unit@>; } Close = @<Close>|Close;
-(File@) { External@<Unit@>; } Flush = @<Flush>|Flush;
+External@<File@> GetStdin;
+External@<File@> GetStdout;
+External@<File@> GetStderr;
+(String@, String@) { External@<Maybe@<File@>>; } Open;
+(File@) { External@<Unit@>; } Close;
+(File@) { External@<Unit@>; } Flush;
 
-(File@) { External@<Maybe@<Int@>>; } GetByte = @<GetByte>|GetByte;
-(File@, Int@) { External@<Unit@>; } PutByte = @<PutByte>|PutByte;
+(File@) { External@<Maybe@<Int@>>; } GetByte;
+(File@, Int@) { External@<Unit@>; } PutByte;
 
-(File@) { External@<Maybe@<Char@>>; } GetChar = @<GetChar>|GetChar;
-(File@, Char@) { External@<Unit@>; } PutChar = @<PutChar>|PutChar;
+(File@) { External@<Maybe@<Char@>>; } GetChar;
+(File@, Char@) { External@<Unit@>; } PutChar;
 
 Unit@ _ = Init(Unit);
 

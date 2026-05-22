@@ -76,7 +76,6 @@ static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
       case FBLE_LITERAL_INSTR: break;
       case FBLE_FOREIGN_VALUE_INSTR: break;
       case FBLE_NOP_INSTR: break;
-      case FBLE_UNDEF_INSTR: break;
     }
   }
 }
@@ -578,7 +577,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
       case FBLE_FOREIGN_VALUE_INSTR: {
         FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
-        FbleString* foreign = FbleMangleForeignName(foreign_instr->path, foreign_instr->name->str);
+        FbleString* foreign = FbleMangleForeignName(foreign_instr->path, foreign_instr->name.name->str);
         fprintf(fout, "  extern FbleForeign %s;\n", foreign->str);
         fprintf(fout, "  l[%zi] = FbleNewForeignValue(heap, profile, &%s, profile_block_id + %zi);\n",
             foreign_instr->dest, foreign->str, foreign_instr->profile_block_offset);
@@ -587,12 +586,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       }
 
       case FBLE_NOP_INSTR: {
-        break;
-      }
-
-      case FBLE_UNDEF_INSTR: {
-        FbleUndefInstr* undef_instr = (FbleUndefInstr*)instr;
-        fprintf(fout, "  l[%zi] = NULL;\n", undef_instr->dest);
         break;
       }
     }

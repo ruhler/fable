@@ -1324,34 +1324,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       return MkTc(body.type, &let_tc->_base);
     }
 
-    case FBLE_UNDEF_EXPR: {
-      FbleUndefExpr* undef_expr = (FbleUndefExpr*)expr;
-
-      FbleType* type = TypeCheckType(th, scope, undef_expr->type);
-      bool error = (type == NULL);
-      if (type != NULL && !CheckNameSpace(undef_expr->name, type)) {
-        error = true;
-      }
-
-      VarName name = { .normal = undef_expr->name, .module = NULL };
-      PushLocalVar(scope, name, type);
-      Tc body = TC_FAILED;
-      if (!error) {
-        body = TypeCheckExpr(th, scope, undef_expr->body);
-        error = (body.type == NULL);
-      }
-      PopLocalVar(th, scope);
-
-      if (error) {
-        return TC_FAILED;
-      }
-
-      FbleUndefTc* undef_tc = FbleNewTc(FbleUndefTc, FBLE_UNDEF_TC, expr->loc);
-      undef_tc->name = FbleCopyName(undef_expr->name);
-      undef_tc->body = body.tc;
-      return MkTc(body.type, &undef_tc->_base);
-    }
-
     case FBLE_STRUCT_EXPORT_EXPR: {
       FbleStructExportExpr* struct_expr = (FbleStructExportExpr*)expr;
 
@@ -1951,18 +1923,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleType* normal = FbleNormalType(th, func.type);
       CleanType(cleaner, normal);
 
-      FbleType* valueof = FbleValueOfType(th, normal);
-      CleanType(cleaner, valueof);
-      if (valueof != NULL) {
-        // This object is a type, which means this is a foreign value
-        // expression.
-        FbleForeignValueTc* ffi_tc = FbleNewTc(FbleForeignValueTc, FBLE_FOREIGN_VALUE_TC, expr->loc);
-        ffi_tc->path = FbleCopyModulePath(FbleTypeHeapGetContext(th));
-        ffi_tc->name_loc = FbleCopyLoc(literal_expr->word_loc);
-        ffi_tc->name = FbleNewString(literal_expr->word);
-        return MkTc(FbleRetainType(th, valueof), &ffi_tc->_base);
-      }
-
       FbleFuncType* func_type = (FbleFuncType*)normal;
       if (func_type->_base.tag != FBLE_FUNC_TYPE) {
         ReportError(literal_expr->func->loc, "expected a function or function type, but found something of type %t\n", func.type);
@@ -2132,6 +2092,36 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           "'%n' is not a field of type %t\n",
           access_expr->field, obj.type);
       return TC_FAILED;
+    }
+
+    case FBLE_FOREIGN_EXPR: {
+      FbleForeignExpr* foreign_expr = (FbleForeignExpr*)expr;
+
+      FbleType* type = TypeCheckType(th, scope, foreign_expr->type);
+      CleanType(cleaner, type);
+      if (type == NULL) {
+        return TC_FAILED;
+      }
+
+      if (!CheckNameSpace(foreign_expr->name, type)) {
+        return TC_FAILED;
+      }
+
+      VarName name = { .normal = foreign_expr->name, .module = NULL };
+      PushLocalVar(scope, name, FbleRetainType(th, type));
+      Tc body = TypeCheckExpr(th, scope, foreign_expr->body);
+      CleanTc(cleaner, body);
+      PopLocalVar(th, scope);
+
+      if (body.type == NULL) {
+        return TC_FAILED;
+      }
+
+      FbleForeignTc* ffi_tc = FbleNewTc(FbleForeignTc, FBLE_FOREIGN_TC, expr->loc);
+      ffi_tc->path = FbleCopyModulePath(FbleTypeHeapGetContext(th));
+      ffi_tc->name = FbleCopyName(foreign_expr->name);
+      ffi_tc->body = FbleCopyTc(body.tc);
+      return MkTc(FbleRetainType(th, body.type), &ffi_tc->_base);
     }
 
     case FBLE_MISC_APPLY_EXPR: {
@@ -2414,7 +2404,6 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
 
     case FBLE_VAR_EXPR:
     case FBLE_LET_EXPR:
-    case FBLE_UNDEF_EXPR:
     case FBLE_DATA_ACCESS_EXPR:
     case FBLE_STRUCT_EXPORT_EXPR:
     case FBLE_STRUCT_COPY_EXPR:
@@ -2428,6 +2417,7 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_PATH_EXPR:
     case FBLE_PRIVATE_EXPR:
+    case FBLE_FOREIGN_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
       FbleExpr* expr = type;

@@ -2,11 +2,11 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Remove undef expr.
- - Update code to stop using it.
- - Remove from spec.
- - Remove implementation.
- - Remove from tutorials.
+* Test that Foreign function name is in normal namespace.
+ - Or clarify in the spec that that doesn't matter?
+ - And test that we check the namespace is correct.
+
+* Test for code coverage, given recent changes.
 
 Standard Library:
 * Break dependency of /Std/Map% on /Std/List%?
@@ -32,8 +32,6 @@ Tutorials:
 * Move function bind syntax to Functions tutorial.
 * Remove kinds from let expressions in all the examples in the spec and
   tutorials and everywhere for the new syntax.
-* Remove undef expression from tutorials
-  - Variables tutorial, and module tutorial use it.
 
 Other:
 * Why is fbld outputting errors in reverse order?
@@ -88,9 +86,6 @@ Other:
   Because that's not true, right? Better would be "too many arguments?"
 
 * Figure out what FbleStringValueAccess should do in terms of unicode.
-
-* Do I use undefined values anymore?
-  Like, since FFI, do we really need to support these?
 
 * Any way to avoid exporting internally shared symbols in libfble.a?
 

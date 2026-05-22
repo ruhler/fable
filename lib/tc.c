@@ -86,14 +86,6 @@ void FbleFreeTc(FbleTc* tc)
       return;
     }
 
-    case FBLE_UNDEF_TC: {
-      FbleUndefTc* undef_tc = (FbleUndefTc*)tc;
-      FbleFreeName(undef_tc->name);
-      FbleFreeTc(undef_tc->body);
-      FbleFree(tc);
-      return;
-    }
-
     case FBLE_STRUCT_VALUE_TC: {
       FbleStructValueTc* sv = (FbleStructValueTc*)tc;
       for (size_t i = 0; i < sv->fields.size; ++i) {
@@ -206,11 +198,11 @@ void FbleFreeTc(FbleTc* tc)
       return;
     }
 
-    case FBLE_FOREIGN_VALUE_TC: {
-      FbleForeignValueTc* foreign_tc = (FbleForeignValueTc*)tc;
+    case FBLE_FOREIGN_TC: {
+      FbleForeignTc* foreign_tc = (FbleForeignTc*)tc;
       FbleFreeModulePath(foreign_tc->path);
-      FbleFreeLoc(foreign_tc->name_loc);
-      FbleFreeString(foreign_tc->name);
+      FbleFreeName(foreign_tc->name);
+      FbleFreeTc(foreign_tc->body);
       FbleFree(tc);
       return;
     }

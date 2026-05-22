@@ -1110,3 +1110,17 @@ type checking that use undef expressions pretty heavily. Hmm...
 
 Go one by one I guess?
 
+---
+
+Experience with switching over FFI to new syntax:
+* It feels a bit plain. It's not as obvious I don't think that a function is
+  defined as a foreign function.
+* There was one case where I was using a different name for the foreign
+  function than the variable to refer to it. I reordered things so I could use
+  the same name easily enough. Oh, and a few places in the spec tests that
+  were also easy to fix.
+
+I'm not super sold on this change, but it's a net improvement to remove undef
+expression, we keep the nice .fble.@ syntax, we get a nicer FFI syntax. So
+let's go with it and see how much I regret doing it later.
+

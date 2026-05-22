@@ -8,7 +8,7 @@ Stream@, ForEach .= /Std/Stream%;
 Out@ .= /Std/Stream/Io%;
 Unit@, Unit .= /Std/Unit%;
 
-(Char@) { Unit@; } PutChar = @<PutChar>|PutChar;
+(Char@) { Unit@; } PutChar;
 
 # @func[ToDebug] Outputs to a debug a stream.
 #  The destination is a platform implementation dependent debug output stream.

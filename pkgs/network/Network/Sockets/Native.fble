@@ -13,13 +13,13 @@ InOut@, Sockets@, Server@ .= /Network/Sockets%;
 # Abstract type for a socket that should only be accessed via FFI.
 Socket@ = *(Unit@ socket).%(@/Network/Sockets/Native%);
 
-(Unit@) { Unit@; } Init = @<Init>|Init;
-(String@, Int@) { External@<Maybe@<Socket@>>; } Client = @<Client>|Client;
-(String@, Int@) { External@<Maybe@<*(Int@ port, Socket@ socket)>>; } Server = @<Server>|Server;
-(Socket@) { External@<Socket@>; } Accept = @<Accept>|Accept;
-(Socket@) { External@<Unit@>; } Close = @<Close>|Close;
-(Socket@) { External@<Maybe@<Int@>>; } GetByte = @<GetByte>|GetByte;
-(Socket@, Int@) { External@<Unit@>; } PutByte = @<PutByte>|PutByte;
+(Unit@) { Unit@; } Init;
+(String@, Int@) { External@<Maybe@<Socket@>>; } Client;
+(String@, Int@) { External@<Maybe@<*(Int@ port, Socket@ socket)>>; } Server;
+(Socket@) { External@<Socket@>; } Accept;
+(Socket@) { External@<Unit@>; } Close;
+(Socket@) { External@<Maybe@<Int@>>; } GetByte;
+(Socket@, Int@) { External@<Unit@>; } PutByte;
 
 <<@>@ M@>(Io@<M@>, Monad@<M@>) { M@<Sockets@<M@>>; }
 Sockets = <<@>@ M@>(Io@<M@> io, Monad@<M@> m) {
