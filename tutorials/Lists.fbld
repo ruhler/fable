@@ -8,31 +8,31 @@
   definition for a list of @L{Int@}:
  
   @code[fble] @
-   @ List@ = +(*(Int@ head, List@ tail) cons, Unit@ nil);
+   @ List@ = +(*(Int@ head, List@ tail) items, Unit@ empty);
  
   This defines the list type as a union with two choices: a list constructed
   with a head element and tail of the list, or an empty list. We can define
   helper functions for constructing lists:
  
   @code[fble] @
-   List@ Empty = List@(nil: Unit);
+   List@ Empty = List@(empty: Unit);
    
-   (Int@, List@) { List@; } Cons = (Int@ head, List@ tail) {
-     List@(cons: @(head, tail));
+   (Int@, List@) { List@; } Items = (Int@ head, List@ tail) {
+     List@(items: @(head, tail));
    };
  
   We can then construct a list of integers. For example, here's a list of the
   first 8 integers in the fibonacci sequence:
  
   @code[fble] @
-   List@ Fibonacci = Cons(
-     Int|0, Cons(
-     Int|1, Cons(
-     Int|1, Cons(
-     Int|2, Cons(
-     Int|3, Cons(
-     Int|5, Cons(
-     Int|8, Cons(
+   List@ Fibonacci = Items(
+     Int|0, Items(
+     Int|1, Items(
+     Int|1, Items(
+     Int|2, Items(
+     Int|3, Items(
+     Int|5, Items(
+     Int|8, Items(
      Int|13, Empty))))))));
  
   It's pretty tedious to write a list this way. In most languages you could
@@ -61,15 +61,15 @@
  
   @code[fble] @
    List@ Fibonacci = List(
-     List@(cons: @(head: Int|0, tail:
-     List@(cons: @(head: Int|1, tail:
-     List@(cons: @(head: Int|1, tail:
-     List@(cons: @(head: Int|2, tail:
-     List@(cons: @(head: Int|3, tail:
-     List@(cons: @(head: Int|5, tail:
-     List@(cons: @(head: Int|8, tail:
-     List@(cons: @(head: Int|13, tail:
-     List@(nil: Unit))))))))))))))))));
+     List@(items: @(head: Int|0, tail:
+     List@(items: @(head: Int|1, tail:
+     List@(items: @(head: Int|1, tail:
+     List@(items: @(head: Int|2, tail:
+     List@(items: @(head: Int|3, tail:
+     List@(items: @(head: Int|5, tail:
+     List@(items: @(head: Int|8, tail:
+     List@(items: @(head: Int|13, tail:
+     List@(empty: Unit))))))))))))))))));
  
  @section The List Type
   For the compiler to support the list expression, it has to know what the
@@ -123,8 +123,8 @@
  
   @code[fble] @
    (List@) { Int@; } Sum = (List@ xs) {
-     xs.?(nil: Int|0);
-     Add(xs.cons.head, Sum(xs.cons.tail));
+     xs.?(empty: Int|0);
+     Add(xs.items.head, Sum(xs.items.tail));
    };
 
   We can use @L{Sum} as the list function in a list expression:
@@ -136,10 +136,13 @@
   @fbld[HelloWorld.fbld][HelloWorld] tutorial. For instance:
  
   @code[fble] @
-   String@ output = Strs[Str|'A boolean: ', /Core/Bool/Show%.Show(True)];
+   FormatE|'(%s, %s)\n'[
+    /Std/Int/Show%.Show(Int|4),
+    /Std/Int/Show%.Show(Int|5)
+   ];
  
-  Here the @L{Strs} function takes a list of strings as its only argument, so
-  we can use the list expression to call it.
+  Here the @L{FormatE} function takes a list of character streams as its last
+  argument, so we can use the list expression to call it.
  
  @section Variable Arguments
   The list expression can be used to provide something similar to variable

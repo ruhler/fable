@@ -23,8 +23,8 @@
   @code[fble] @
    (List@) { Int@; } MakeInt = {
       (Int@, List@) { Int@; } Helper = (Int@ int, List@ digits) {
-         digits.?(nil: int);
-         Helper(Add(Mul(10, int), digits.cons.head), digits.cons.tail);
+         digits.?(empty: int);
+         Helper(Add(Mul(10, int), digits.items.head), digits.items.tail);
       };
    
       (List@ digits) {
@@ -53,7 +53,7 @@
  
   @code[fble] @
    Int@ 2023 = Int|2023;
-   String@ hello_world = String|'hello, world';
+   String@ hello_world = Str|'hello, world';
  
   A literal expression is a function followed by @l{|} and then a single word.
   In this case, @L{Int} is a function that converts a list of letters to an
@@ -70,7 +70,7 @@
   @L{Decimal@}:
  
   @code[fble] @
-   @ Decimal@ = +(
+   Decimal@ = +(
      Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3,
      Unit@ 4, Unit@ 5, Unit@ 6, Unit@ 7,
      Unit@ 8, Unit@ 9
@@ -97,14 +97,14 @@
   expressions:
  
   @code[fble] @
-   @ Bit@ = +(Unit@ 0, Unit@ 1);
+   Bit@ = +(Unit@ 0, Unit@ 1);
  
   That means all we need to do is define a function that takes a list of
   @L{Bit@} and produces a @L{Bit4@}. Because we haven't introduced
   polymorphism yet, let's redefine our own list type:
  
   @code[fble] @
-   @ BitList@ = +(*(Bit@ head, BitList@ tail) cons, Unit@ nil);
+   BitList@ = +(*(Bit@ head, BitList@ tail) items, Unit@ empty);
  
   Next we need to decide how we will handle literals with too few or too many
   bits. Let's say literals like @l{1} and @l{10} are treated like @l{0001} and
@@ -119,8 +119,8 @@
    
    (BitList@) { Bit4@ } Bit4 = {
      (Bit4@, BitList@) { Bit4@; } Helper = (Bit4@ x, BitList@ bits) {
-       bits.?(nil: x);
-       Helper(ShiftIn(x, bits.cons.head), bits.cons.tail);
+       bits.?(empty: x);
+       Helper(ShiftIn(x, bits.items.head), bits.items.tail);
      };
 
      (BitList@ bits) {
@@ -178,17 +178,17 @@
    function @L{Neg} that negates the literal and write @L{Neg|123}.
  
   @item
-   Have the literal return a type that can indicate whether there was an error or
-   not in parsing the literal. For example, define a type @L{Maybe@} which is
-   either an @L{Int@} or an error. Have the literal function return @L{Maybe@}
-   instead of @L{Int@}, and the caller is required to check whether parsing
-   succeeded.
+   Have the literal return a type that can indicate whether there was an error
+   or not in parsing the literal. For example, define a type @L{Maybe@} which
+   is either an @L{Int@} or an error. Have the literal function return
+   @L{Maybe@} instead of @L{Int@}, and the caller is required to check whether
+   parsing succeeded.
  
   @item
-   Be tolerant of improperly formatted literal words. For example, if @l{'-'} is
-   seen out of place, pretend it didn't occur in the literal word at all. This is
-   like what we did for the @L{Bit4} literal, where we silently truncated
-   literals with too many bits.
+   Be tolerant of improperly formatted literal words. For example, if @l{'-'}
+   is seen out of place, pretend it didn't occur in the literal word at all.
+   This is like what we did for the @L{Bit4} literal, where we silently
+   truncated literals with too many bits.
  
   @item
    Have a runtime error if the literal word doesn't parse correctly, by
@@ -206,16 +206,16 @@
   contain punctuation:
  
   @code[fble] @
-   String@ example = String|'one plus two';
+   String@ example = Str|'one plus two';
  
   You don't have to use single quotes if your literal doesn't contain
   punctuation:
  
   @code[fble] @
-   String@ example = String|one;
+   String@ example = Str|one;
  
  @section Re-using Literal Functions
-  Literal functions like @L{Int}, @L{Bit4}, and @L{String} that we have shown
+  Literal functions like @L{Int}, @L{Bit4}, and @L{Str} that we have shown
   here can be used as is for list expressions if you want. This can be
   convenient when defining values where one or more digits are derived
   programmatically instead of being constant. No need to define a separate
@@ -237,13 +237,13 @@
   Empty literals are allowed. For example, you might write the empty string as:
  
   @code[fble] @
-   String@ empty = String|'';
+   String@ empty = Str|'';
  
   You could also write this using list expressions or as a normal function call:
  
   @code[fble] @
-   String@ empty = String[];
-   String@ empty = String(EmptyList);
+   String@ empty = Str[];
+   String@ empty = Str(EmptyList);
 
  @section Longer Letters
   The main use of literals, and all of the examples we've shown so far, have
@@ -254,7 +254,7 @@
   For example, say our letter type was defined as:
 
   @code[fble] @
-   @ Letter@ = +(Unit@ a, Unit@ ab, Unit@ b);
+   Letter@ = +(Unit@ a, Unit@ ab, Unit@ b);
 
    (Letter@) { Letter@; } Letter = (Letter@ x) {
      x;

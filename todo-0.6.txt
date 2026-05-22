@@ -2,12 +2,10 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Change FbleLoadForExecution to take FblePreloadedModule* instead of
-  FblePreloadedModuleV, preloaded instead of builtins?
-
 * Test that Foreign function name is in normal namespace.
  - Or clarify in the spec that that doesn't matter?
  - And test that we check the namespace is correct.
+ - Add test for unused foreign function.
 
 * Test for code coverage, given recent changes.
 
@@ -30,6 +28,7 @@ Standard Library:
  - Add app to std package?
 
 Tutorials:
+* Update the kind section of Polymorphism tutorial.
 * Add section of module imports to tutorials/Features.fbld?
 * Add section of pattern matching to tutorials/Features.fbld?
 * Move function bind syntax to Functions tutorial.

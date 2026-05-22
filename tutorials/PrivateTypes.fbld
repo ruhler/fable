@@ -19,9 +19,9 @@
   expected invariants.
   
   Private types are a way to restrict access to types to a set of modules.
-  This way, for example, you can say only the @L{/Core/Map%} module is allowed
+  This way, for example, you can say only the @L{/Std/Map%} module is allowed
   to construct a map directly; everyone else has to use the functions provided
-  by @L{/Core/Map%} to construct maps.
+  by @L{/Std/Map%} to construct maps.
  
  @section Basics
   A private type is a guarded wrapper around a normal type that can only be
@@ -90,7 +90,7 @@
   only be accessed externally using the provided methods:
  
   @code[fble] @
-   @ Enum@ = +(Unit@ a, Unit@ b, Unit@ c).%(@/MyPackage%);
+   Enum@ = +(Unit@ a, Unit@ b, Unit@ c).%(@/MyPackage%);
    
    Enum@ A = Enum@(a: Unit));
    Enum@ B = Enum@(b: Unit));

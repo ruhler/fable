@@ -28,7 +28,7 @@
    invalid:
  
    @code[fble] @
-    @ MaybeInt@ = +(Int@ just, Unit@ nothing);
+    MaybeInt@ = +(Int@ just, Unit@ nothing);
    
     MaybeInt@ NothingInt = MaybeInt@(nothing: Unit);
    
@@ -45,7 +45,7 @@
    to distinguish between valid and invalid strings:
  
    @code[fble] @
-    @ MaybeString@ = +(String@ just, Unit@ nothing);
+    MaybeString@ = +(String@ just, Unit@ nothing);
    
     MaybeString@ NothingString = MaybeString@(nothing: Unit);
    
@@ -66,7 +66,7 @@
    Here's how we can define a polymorphic @L{Maybe@} type:
  
    @code[fble] @
-    <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+    Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
    
     Maybe@ Nothing = <@ T@> {
       Maybe@<T@>(nothing: Unit);
@@ -152,31 +152,6 @@
   @code[fble] @
    @<<@ T@> { ... }> = <@ T@> { @<...> };
  
- @section The Kind of a Poly
-  So far we have been introduced to two kinds of values. Normal values,
-  including struct values, union values, and function values, have the kind
-  @L{%}. Type values have the kind @L{@}.
- 
-  A polymorphic value has what is called a polymorphic kind, which includes
-  the kind of the type parameter and the kind of the value. For example, the
-  kind of @L{Nothing} is @L{<@>%}, which means it has a type parameter of kind
-  @L{@} and produces a value of kind @L{%}. The kind of @L{Maybe@} is
-  @L{<@>@}, because it has a type parameter of kind @L{@} and produces a type
-  value of kind @L{@}.
-
-  The following shows how you might import different kinds of values:
-
-  @code[fble] @
-   % True = /Std/Bool%.True;
-   @ Char@ = /Core/Char%.Char@;
-   <@>@ List@ = /Core/List%.List@;
-   <@>% Concat = /Core/List%.Concat;
- 
-  The kind of @L{True} is @L{%} because it is a normal value. The kind of
-  @L{Char@} is @L{@} because it is a type. The type of @L{List@} is @L{<@>@}
-  because it a polymoprhic type value, and the type of @L{Concat} is @L{<@>%},
-  because it is a polymorphic normal value.
- 
  @section Recursive Polymorphic Types
   You can define recursive polymorphic types in fble using recursive variable
   declarations, but with a special caveat. In order to keep the type system
@@ -186,7 +161,7 @@
  
   @code[fble] @
    # Not allowed!
-   <@>@ List@ = <@ T@> { +(*(T@ head, List@<T@> tail) cons, Unit@ nil); };
+   List@ = <@ T@> { +(*(T@ head, List@<T@> tail) items, Unit@ empty); };
  
   The compiler will give you an error saying @L{List@} isn't polymorphic. When
   specifying the kind of a variable instead of the type of the variable in the
@@ -195,8 +170,8 @@
   slightly different way:
  
   @code[fble] @
-   <@>@ List@ = <@ T@> {
-     @ L@ = +(*(T@ head, L@ tail) cons, Unit@ nil);
+   List@ = <@ T@> {
+     L@ = +(*(T@ head, L@ tail) items, Unit@ empty);
      L@;
    };
  
@@ -207,24 +182,24 @@
   @subsection Recursive polymorphic Functions
    You can implement recursive polymorphic functions just fine, but you have
    to provide an explicit type in the definition of the function. You can't
-   specify a kind and have the type inferred. So, for example, the following
+   leave the type out and have it be inferred. So, for example, the following
    works to define a function @L{Last} that returns the last element in a
    list:
  
    @code[fble] @
     <@ T@>(List@<T@>) { T@; } Last = <@ T@>(List@<T@> list) {
-      list.cons.tail.?(nil: list.cons.head);
-      Last<T@>(list.cons.tail);
+      list.items.tail.?(empty: list.items.head);
+      Last<T@>(list.items.tail);
     };
  
    If you tried to write that without an explicit function type, you would get
    an error:
  
    @code[fble] @
-    <@>% Last = <@ T@>(List@<T@> list) {
-      list.cons.tail.?(nil: list.cons.head);
+    Last = <@ T@>(List@<T@> list) {
+      list.items.tail.?(empty: list.items.head);
       # Error: Can't do Last<T@> in definition of Last.
-      Last<T@>(list.cons.tail);
+      Last<T@>(list.items.tail);
     };
  
   @subsection Mutually Recursive Polymorphic Types
@@ -236,29 +211,29 @@
    Here's how duplicated definitions would look:
  
    @code[fble] @
-    <@>@ List@ = <@ T@> {
-      @ L@ = +(P@ cons, Unit@ nil),
-      @ P@ = *(T@ head, L@ tail);
+    List@ = <@ T@> {
+      L@ = +(P@ items, Unit@ empty),
+      P@ = *(T@ head, L@ tail);
       L@;
     };
    
-    <@>@ ListP@ = <@ T@> {
-      @ L@ = +(P@ cons, Unit@ nil),
-      @ P@ = *(T@ head, L@ tail);
+    ListP@ = <@ T@> {
+      L@ = +(P@ items, Unit@ empty),
+      P@ = *(T@ head, L@ tail);
       P@;
     };
  
    Here's how you could reuse the definitions instead of duplicating them:
  
    @code[fble] @
-    <@>% Types = <@ T@> {
-      @ L@ = +(P@ cons, Unit@ nil),
-      @ P@ = *(T@ head, L@ tail);
+    Types = <@ T@> {
+      L@ = +(P@ items, Unit@ empty),
+      P@ = *(T@ head, L@ tail);
       @(L@, P@);
     };
    
-    <@>@ List@ = <@ T@> { Types<T@>.L@; };
-    <@>@ ListP@ = <@ T@> { Types<T@>.P@; };
+    List@ = <@ T@> { Types<T@>.L@; };
+    ListP@ = <@ T@> { Types<T@>.P@; };
  
  @section Interfaces
   Some languages have the concept of an interface. You can write a function
@@ -275,13 +250,13 @@
   to @L{Contains}. It would look something like this:
  
   @code[fble] @
-   <@>@ Eq@ = <@ T@>(T@, T@) { Bool@ };
+   Eq@ = <@ T@>(T@, T@) { Bool@ };
    
    <@ T@>(Eq@<T@>, List@<T@>, T@) { Bool@; }
    Contains = <@ T@>(Eq@<T@> eq, List@<T@> l, T@ x) {
-     l.?(nil: False);
-     eq(l.cons.head, x).?(true: True);
-     Contains<T@>(eq, l.cons.tail, x);
+     l.?(empty: False);
+     eq(l.items.head, x).?(true: True);
+     Contains<T@>(eq, l.items.tail, x);
    };
  
   In this case, @L{Eq@} is like an interface for the type @L{T@} that the
@@ -295,7 +270,7 @@
   different type for the first and second field:
  
   @code[fble] @
-   <@><@>@ Pair@ = <@ A@> { <@ B@> { *(A@ first, B@ second); }; };
+   Pair@ = <@ A@> { <@ B@> { *(A@ first, B@ second); }; };
    
    <@ A@> { <@ B@> { (Pair@<A@><B@>) { A@; }; }; }
    First = <@ A@> { <@ B@> { (Pair@<A@><B@> pair) { pair.first; }; }; }
@@ -311,7 +286,7 @@
   express the same thing:
  
   @code[fble] @
-   <@, @>@ Pair@ = <@ A@, @ B@> { *(A@ first, B@ second); };
+   Pair@ = <@ A@, @ B@> { *(A@ first, B@ second); };
    
    <@ A@, @ B@>(Pair@<A@, B@>) { A@; };
    First = <@ A@, @ B@>(Pair@<A@, B@> pair) { pair.first; };
@@ -319,26 +294,24 @@
    Pair@<Int@, Bool@> x = Pair@<Int@, Bool@>(42, True);
    Int@ value = First<Int@, Bool@>(x);
  
-  In this case the kind of @L{Pair@} can be written either as @L{<@><@>@} or
-  as @L{<@,@>@}. And the kind of @L{First} can be written either as
-  @L{<@><@>%} or as @L{<@, @>%}, indicating that it takes two type arguments.
+  In this case the kind of @L{First} can be written either as @L{<@><@>%} or
+  as @L{<@, @>%}, indicating that it takes two type arguments.
  
   This means you can do partial application of multi-argument poly values. For
   example, you could write @L{Pair@<Int@>} to refer to the polymorphic type
   @L{<@ A@> { Pair@<Int@, A@>; }}.
  
  @section Higher Order Polys
-  So far we've only shown type parameters of kind @L{@}. It's not legal in fble
-  to use a type parameter of kind @L{%}, because that @L{%} doesn't represent
-  a type. But you could specify a type parameter of kind @L{<@>@} if you want.
-  This would be a higher order polymorphic value.
+  So far we've only shown type parameters of kind @L{@}. You could also
+  specify a type parameter of kind @L{<@>@} if you want.  This would be a
+  higher order polymorphic value.
  
   The classic example of a higher order polynomial value is the @L{Monad@}
   type, which describes an interface that container types such as @L{List@}
   can support:
  
   @code[fble] @
-   <<@>@>@ Monad@ = <<@>@ M@> {
+   Monad@ = <<@>@ M@> {
      *(
        <@ A@>(A@) { M@<A@>; } return,
        <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } do
@@ -398,7 +371,7 @@
   comparison operator, and your value type. For example:
  
   @code[fble] @
-   <@>% LookupByName = Lookup<String@>(StringCompare);
+   LookupByName = Lookup<String@>(StringCompare);
    
    Map@<String@, Int@> ids = ...;
    Map@<String@, Grade@> grades = ...;

@@ -12,7 +12,7 @@ Entry@ = <@ Key@, @ Value@> { *(Key@ key, Value@ value); };
 # @type[Map@] A mapping from keys to values.
 #  Supporting any key type Key@ that implements Data@<Key@>.
 Map@ = <@ Key@, @ Value@> {
-  M@ = +(Unit@ empty, Entry@<Key@, Value@> entry, *(M@ 0, M@ 1) children);
+  M@ = +(Unit@ empty, Entry@<Key@, Value@> entry, *(M@ 0, M@ 1) children).%(@/Std/Map%);
   M@;
 };
 

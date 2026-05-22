@@ -99,7 +99,7 @@
   or nothing:
  
   @code[fble] @
-   @ MaybeInt@ = +(Int@ just, Unit@ nothing);
+   MaybeInt@ = +(Int@ just, Unit@ nothing);
    
    (Int@) { MaybeInt@; } Just = (Int@ x) {
      MaybeInt@(just: x);
@@ -199,7 +199,7 @@
   polymorphism:
  
   @code[fble] @
-   <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+   Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
    
    <@ T@>(T@) { Maybe@<T@>; } Just = (T@ x) {
      Maybe@<T@>(just: x);
@@ -283,7 +283,7 @@
   function to @L{do}:
  
   @code[fble] @
-   <<@>@>@ Monad@ = <<@>@ M@> {
+   Monad@ = <<@>@ M@> {
      *(
        <@ A@>(A@) { M@<A@>; } return,
        <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } do
