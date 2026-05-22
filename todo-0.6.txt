@@ -59,9 +59,6 @@ Other:
    It's slightly awkward to get the dependencies passed directly to the 
    testsuite helper?
 
-* Remove Builtin from spec and spec tests now that we have FFI?
- - Like, do we need builtin support anymore? Is there any value for it?
-
 * Somethings wrong with the Snake window sizing.
 
 * Debug jank issues in fble-invaders?

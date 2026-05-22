@@ -638,3 +638,4 @@ Cool.
 
 I can't reproduce it. Oh well. Worry about it if we run into it again.
 Probably there's a bug somewhere hidden dealing with propagation of errors.
+
