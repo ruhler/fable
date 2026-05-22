@@ -50,8 +50,6 @@ typedef enum {
  *  @arg[int*][argc] Number of command line arguments.
  *  @arg[const char***][argv] The command line arguments.
  *  @arg[FblePreloadedModule*][preloaded] Optional preloaded module to run.
- *  @arg[FblePreloadedModuleV] builtins
- *   List of builtin modules to search.
  *  @arg[FbleValueHeap*][heap] Heap to use for allocating values.
  *  @arg[FbleProfile*][profile] Profile for evaluating the main program.
  *  @arg[const char**][profile_output_file]
@@ -81,7 +79,6 @@ FbleMainStatus FbleMain(
     int* argc,
     const char*** argv,
     FblePreloadedModule* preloaded,
-    FblePreloadedModuleV builtins,
     FbleValueHeap* heap,
     FbleProfile* profile,
     const char** profile_output_file,

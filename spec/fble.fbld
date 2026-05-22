@@ -1259,7 +1259,7 @@
    module should be determined from the @l{Foo.fble} file for the module.
 
    Foreign variable declarations (described in the section on foreign function
-   interface) can be useful for writing header files. For example, a header
+   interface) are convenient for writing header files. For example, a header
    file for a module defining a boolean type might look like:
 
    @code[fble] @

@@ -106,7 +106,6 @@ FbleMainStatus FbleMain(
     int* argc,
     const char*** argv,
     FblePreloadedModule* preloaded,
-    FblePreloadedModuleV builtins,
     FbleValueHeap* heap,
     FbleProfile* profile,
     const char** profile_output_file,
@@ -214,9 +213,6 @@ FbleMainStatus FbleMain(
   FbleInitVector(preloaded_and_builtins);
   if (preloaded != NULL) {
     FbleAppendToVector(preloaded_and_builtins, preloaded);
-  }
-  for (size_t i = 0; i < builtins.size; ++i) {
-    FbleAppendToVector(preloaded_and_builtins, builtins.xs[i]);
   }
 
   FbleValue* linked = Link(heap, profile, preloaded_and_builtins, module_arg.search_path, module_arg.module_path, &deps);

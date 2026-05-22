@@ -464,12 +464,8 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_Env_25__2e_GetVar);
   FbleRegisterStdioForeignValues(heap);
 
-  FblePreloadedModuleV builtins = { .size = 0 };
-
   FbleMainStatus status = FbleMain(&ParseArg, &app_args, "fble-app", fbldUsageHelpText,
-      &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &func);
-
-  FbleFreeVector(builtins);
+      &argc, &argv, preloaded, heap, profile, &profile_output_file, &profile_sample_period, &func);
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);

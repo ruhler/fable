@@ -183,11 +183,10 @@ int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* prelo
   const char* profile_output_file = NULL;
   uint64_t profile_sample_period = 0;
   FbleValue* result = NULL;
-  FblePreloadedModuleV builtins = { .size = 0, .xs = NULL };
 
   argv[argc++] = "--";
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-profiles-test", fbldUsageHelpText,
-      &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &result);
+      &argc, &argv, preloaded, heap, profile, &profile_output_file, &profile_sample_period, &result);
 
   FbleFreeValueHeap(heap);
 

@@ -115,11 +115,8 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_Env_25__2e_GetVar);
   FbleRegisterStdioForeignValues(heap);
 
-  FblePreloadedModuleV builtins = { .size = 0 };
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-cli", fbldUsageHelpText,
-      &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &main);
-
-  FbleFreeVector(builtins);
+      &argc, &argv, preloaded, heap, profile, &profile_output_file, &profile_sample_period, &main);
 
   if (main == NULL) {
     FbleFreeValueHeap(heap);
