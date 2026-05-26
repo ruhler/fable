@@ -51,8 +51,11 @@ static FbleValue* DoImpl(
   FbleValue* f = args[1];
   FbleValue* u = args[2];
   FbleValue* a = FbleCall(heap, profile, ma, 1, &u);
-  FbleValue* fargs[2] = { a, u };
-  return FbleCall(heap, profile, f, 2, fargs);
+  heap->tail_call_argc = 2;
+  heap->tail_call_buffer[0] = f;
+  heap->tail_call_buffer[1] = a;
+  heap->tail_call_buffer[2] = u;
+  return heap->tail_call_sentinel;
 }
 
 /**

@@ -6,7 +6,7 @@ Int@, Sub .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 IsZero .= /Std/Int/Sign%;
 List@, Items, Append, Reverse, Map .= /Std/List%;
-Maybe@ .= /Std/Maybe%;
+Maybe@, Default .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@, Put, Do .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
@@ -20,36 +20,43 @@ Main@ .= /Games/BenchmarkGame/Game%;
 # Header includes the initial '>' character, for convenience.
 Seq@ = *(String@ header, String@ codes);
 
-(Char@) { Char@; } ComplementCode = (Char@ c) {
-  /Std/Char/Eq%.Eq(c, Char|A).?(true: Char|T);
-  /Std/Char/Eq%.Eq(c, Char|B).?(true: Char|V);
-  /Std/Char/Eq%.Eq(c, Char|C).?(true: Char|G);
-  /Std/Char/Eq%.Eq(c, Char|G).?(true: Char|C);
-  /Std/Char/Eq%.Eq(c, Char|H).?(true: Char|D);
-  /Std/Char/Eq%.Eq(c, Char|K).?(true: Char|M);
-  /Std/Char/Eq%.Eq(c, Char|M).?(true: Char|K);
-  /Std/Char/Eq%.Eq(c, Char|N).?(true: Char|N);
-  /Std/Char/Eq%.Eq(c, Char|R).?(true: Char|Y);
-  /Std/Char/Eq%.Eq(c, Char|S).?(true: Char|S);
-  /Std/Char/Eq%.Eq(c, Char|T).?(true: Char|A);
-  /Std/Char/Eq%.Eq(c, Char|U).?(true: Char|A);
-  /Std/Char/Eq%.Eq(c, Char|V).?(true: Char|B);
-  /Std/Char/Eq%.Eq(c, Char|Y).?(true: Char|R);
-  /Std/Char/Eq%.Eq(c, Char|a).?(true: Char|T);
-  /Std/Char/Eq%.Eq(c, Char|b).?(true: Char|V);
-  /Std/Char/Eq%.Eq(c, Char|c).?(true: Char|G);
-  /Std/Char/Eq%.Eq(c, Char|g).?(true: Char|C);
-  /Std/Char/Eq%.Eq(c, Char|h).?(true: Char|D);
-  /Std/Char/Eq%.Eq(c, Char|k).?(true: Char|M);
-  /Std/Char/Eq%.Eq(c, Char|m).?(true: Char|K);
-  /Std/Char/Eq%.Eq(c, Char|n).?(true: Char|N);
-  /Std/Char/Eq%.Eq(c, Char|r).?(true: Char|Y);
-  /Std/Char/Eq%.Eq(c, Char|s).?(true: Char|S);
-  /Std/Char/Eq%.Eq(c, Char|t).?(true: Char|A);
-  /Std/Char/Eq%.Eq(c, Char|u).?(true: Char|A);
-  /Std/Char/Eq%.Eq(c, Char|v).?(true: Char|B);
-  /Std/Char/Eq%.Eq(c, Char|y).?(true: Char|R);
-  c;
+(Char@) { Char@; } ComplementCode = {
+  Map@, Get, Entries .= /Std/Map%.Of(/Std/Char/Data%.Data)<Char@>;
+
+  Map@ Complements = Entries[
+    @(key: Char|A, value: Char|T),
+    @(key: Char|B, value: Char|V),
+    @(key: Char|C, value: Char|G),
+    @(key: Char|G, value: Char|C),
+    @(key: Char|H, value: Char|D),
+    @(key: Char|K, value: Char|M),
+    @(key: Char|M, value: Char|K),
+    @(key: Char|N, value: Char|N),
+    @(key: Char|R, value: Char|Y),
+    @(key: Char|S, value: Char|S),
+    @(key: Char|T, value: Char|A),
+    @(key: Char|U, value: Char|A),
+    @(key: Char|V, value: Char|B),
+    @(key: Char|Y, value: Char|R),
+    @(key: Char|a, value: Char|T),
+    @(key: Char|b, value: Char|V),
+    @(key: Char|c, value: Char|G),
+    @(key: Char|g, value: Char|C),
+    @(key: Char|h, value: Char|D),
+    @(key: Char|k, value: Char|M),
+    @(key: Char|m, value: Char|K),
+    @(key: Char|n, value: Char|N),
+    @(key: Char|r, value: Char|Y),
+    @(key: Char|s, value: Char|S),
+    @(key: Char|t, value: Char|A),
+    @(key: Char|u, value: Char|A),
+    @(key: Char|v, value: Char|B),
+    @(key: Char|y, value: Char|R)
+  ];
+
+  (Char@ c) {
+    Default(c, Get(Complements, c));
+  };
 };
 
 # Complement the given sequence.

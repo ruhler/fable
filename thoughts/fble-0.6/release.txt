@@ -639,3 +639,12 @@ Cool.
 I can't reproduce it. Oh well. Worry about it if we run into it again.
 Probably there's a bug somewhere hidden dealing with propagation of errors.
 
+---
+* Double check performance of ReverseComplement, specifically the
+  ComplementCode function. Maybe use a map instead?
+
+Benchmark results switching to map:
+
+Time: 0:41.29 ==> 0:29.88
+Memory: 11128 ==> 11052
+

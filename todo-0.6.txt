@@ -119,9 +119,7 @@ Other:
 * Add vim syntax highlighting for \ and % escape sequences?
 * Double check @module[...] values are correct in /Std/...*.fble files.
 
-* Double check performance of ReverseComplement, specifically the
-  ComplementCode function. Maybe use a map instead?
-  Similar for /Invaders/Graphics%.String.
+* Change /Invaders/Graphics%.String to use a map?
 
 * Does private type access restrict access to literals?
   Like, if Digit@ was private, could I still construct a list of Digit@ via a
