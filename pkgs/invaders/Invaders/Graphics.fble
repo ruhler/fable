@@ -2,6 +2,7 @@
 Char@ .= /Std/Char%;
 Char, Str .= /Std/Char/Ascii%;
 Int .= /Std/Int/Lit%;
+Default .= /Std/Maybe%;
 String@ .= /Std/String%;
 
 Color@, Drawing@, Blank, Color, Drawings,
@@ -342,37 +343,40 @@ Drawing@ LetterV = Drawings[
 
 # String --
 #   Draw a string of letters.
-(String@) { Drawing@; } String = (String@ str) {
-  str.?(empty: Blank);
-  Char@ c = str.items.head;
-  Drawing@ first = {
-    /Std/Char/Eq%.Eq(c, Char|0).?(true: Digit0);
-    /Std/Char/Eq%.Eq(c, Char|1).?(true: Digit1);
-    /Std/Char/Eq%.Eq(c, Char|2).?(true: Digit2);
-    /Std/Char/Eq%.Eq(c, Char|3).?(true: Digit3);
-    /Std/Char/Eq%.Eq(c, Char|4).?(true: Digit4);
-    /Std/Char/Eq%.Eq(c, Char|5).?(true: Digit5);
-    /Std/Char/Eq%.Eq(c, Char|6).?(true: Digit6);
-    /Std/Char/Eq%.Eq(c, Char|7).?(true: Digit7);
-    /Std/Char/Eq%.Eq(c, Char|8).?(true: Digit8);
-    /Std/Char/Eq%.Eq(c, Char|9).?(true: Digit9);
+(String@) { Drawing@; } String = {
+  Map@, Get, Entries .= /Std/Map%.Of(/Std/Char/Data%.Data)<Drawing@>;
+  Map@ letters = Entries[
+    @(key: Char|0, value: Digit0),
+    @(key: Char|1, value: Digit1),
+    @(key: Char|2, value: Digit2),
+    @(key: Char|3, value: Digit3),
+    @(key: Char|4, value: Digit4),
+    @(key: Char|5, value: Digit5),
+    @(key: Char|6, value: Digit6),
+    @(key: Char|7, value: Digit7),
+    @(key: Char|8, value: Digit8),
+    @(key: Char|9, value: Digit9),
 
-    /Std/Char/Eq%.Eq(c, Char|A).?(true: LetterA);
-    /Std/Char/Eq%.Eq(c, Char|C).?(true: LetterC);
-    /Std/Char/Eq%.Eq(c, Char|E).?(true: LetterE);
-    /Std/Char/Eq%.Eq(c, Char|G).?(true: LetterG);
-    /Std/Char/Eq%.Eq(c, Char|H).?(true: LetterH);
-    /Std/Char/Eq%.Eq(c, Char|I).?(true: LetterI);
-    /Std/Char/Eq%.Eq(c, Char|L).?(true: LetterL);
-    /Std/Char/Eq%.Eq(c, Char|M).?(true: LetterM);
-    /Std/Char/Eq%.Eq(c, Char|O).?(true: LetterO);
-    /Std/Char/Eq%.Eq(c, Char|R).?(true: LetterR);
-    /Std/Char/Eq%.Eq(c, Char|S).?(true: LetterS);
-    /Std/Char/Eq%.Eq(c, Char|V).?(true: LetterV);
-
-    Blank;
+    @(key: Char|A, value: LetterA),
+    @(key: Char|C, value: LetterC),
+    @(key: Char|E, value: LetterE),
+    @(key: Char|G, value: LetterG),
+    @(key: Char|H, value: LetterH),
+    @(key: Char|I, value: LetterI),
+    @(key: Char|L, value: LetterL),
+    @(key: Char|M, value: LetterM),
+    @(key: Char|O, value: LetterO),
+    @(key: Char|R, value: LetterR),
+    @(key: Char|S, value: LetterS),
+    @(key: Char|V, value: LetterV)
+  ];
+ 
+  (String@ str) {
+    str.?(empty: Blank);
+    Char@ c = str.items.head;
+    Drawing@ first = Default(Blank, Get(letters, c));
+    Over(first, Translate(Int|8, Int|0, String(str.items.tail)));
   };
-  Over(first, Translate(Int|8, Int|0, String(str.items.tail)));
 };
 
 Drawing@ Bullet = Rect(Int|0, Int|0, Int|1, Int|4, white);
