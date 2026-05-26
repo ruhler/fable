@@ -648,3 +648,35 @@ Benchmark results switching to map:
 Time: 0:41.29 ==> 0:29.88
 Memory: 11128 ==> 11052
 
+---
+
+* Add vim syntax highlighting for \ and % escape sequences?
+
+Is there any precedent for library specific highlighting in the existing vim
+syntax file? No.
+
+Do I want to make this precedent?
+
+I suppose I should at least try implementing it and seeing how it feels.
+
+There is precedent for this for other languages like C.
+
+Here's the example:
+
+   :syntax keyword Todo    TODO    contained
+   :syntax match   Comment "//.*"  contains=Todo
+
+Sounds like the highlight group to use is 'Special', or 'SpecialChar'.
+
+I can define these special characters via keyword, contained, and say a quoted
+word can contain them.
+
+Formatting is: \0, \a, \\, \b, \f, \n, \r, \t, \q, \v, \u[hex]+, %%, %s
+
+Note that these don't apply universally. Like, they would work in StrE, but
+not Str. That's more reason not to add them to the vim syntax. I don't feel
+like I need them in general.
+
+No. I don't think it's worth it. Not enough value add. Not part of the
+language itself. Not applicable in most places. Annoying to define because I
+can't use keywords and I have to escape things with regex.

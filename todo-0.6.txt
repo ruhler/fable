@@ -116,7 +116,6 @@ Other:
 * Figure out why we see the same errors reported many times when we build.
  - And fix it.
 
-* Add vim syntax highlighting for \ and % escape sequences?
 * Double check @module[...] values are correct in /Std/...*.fble files.
 
 * Does private type access restrict access to literals?
