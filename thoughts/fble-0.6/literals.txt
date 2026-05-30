@@ -1876,3 +1876,29 @@ this way. Sadness.
 
 Maybe let's test everything else, check it in, then switch to iterative
 approach.
+
+For fble-benchmark:
+* Largest literal is: 323520 ==> 26960 bytes
+* Total bytes for literal data is: 677240 ==> 62448 bytes
+
+So about 11x reduction in size taken by literals. That's decent.
+
+If I wanted, I maybe could get another 2x reduction, but honestly I don't
+think it's worth it. We're in good enough shape now.
+
+   0.072% 778 [5]FbleNewLiteralValue
+
+                                    Incoming
+
+   61.095% 482 [6]/Games/BenchmarkGame/FannkuchRedux%.Flip
+   12.021% 95  [7]/Games/BenchmarkGame/FannkuchRedux%.Flips
+   6.094%  54  [8]/Std/Int/Show%.Digit
+   2.018%  17  [9]/Games/TicTacToe/AI%.SquareData
+   1.092%  15  [10]/Fbld/Parse/M%.EndOfInput
+   1.079%  14  [11]/Fbld/Parse/Block%.BlankLine
+   1.079%  14  [12]/Fbld/Parse/M%.String
+   1.079%  14  [13]/Invaders/Graphics%.String
+   1.067%  13  [14]/Invaders/Game%.DrawScore
+   1.054%  12  [15]/Graphics/Triangle%.Clipped
+
+Maybe it's a little more expensive. Or maybe it's just noise.

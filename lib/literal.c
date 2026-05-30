@@ -43,9 +43,26 @@ typedef struct TypeList {
   struct TypeList* next;
 } TypeList;
 
+static void Reverse(uint8_t* data, size_t size);
 static void AppendTag(size_t tagwidth, size_t tag, bool last, ByteV* data);
 static const char* GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word, ByteV* data, TypeList* tl);
-static const char* ParseLiteral(FbleTypeHeap* th, FbleType* type, const char* word, ByteV* data);
+
+/**
+ * @func[Reverse] Reverse size bytes of data in place.
+ *  @arg[uint8_t*][data] The data to reverse.
+ *  @arg[size_t][size] The number of elements to reverse.
+ *  @sideeffects Reverses size elements of data in place.
+ */
+static void Reverse(uint8_t* data, size_t size)
+{
+  for (size_t i = 0; i < size / 2; ++i) {
+    size_t lo = i;
+    size_t hi = size - 1 - i;
+    uint8_t tmp = data[lo];
+    data[lo] = data[hi];
+    data[hi] = tmp;
+  }
+}
 
 /**
  * @func[AppendTag] Appends an encoded tag header and value to data stream.
@@ -141,59 +158,40 @@ static const char* GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* w
   return NULL;
 }
 
-/**
- * @func[ParseLiteral] Parse the rest of a literal.
- *  @arg[FbleTypeHeap*][th] The type heap
- *  @arg[FbleType*][type] The letter type.
- *  @arg[const char*][word] The literal word to parse.
- *  @arg[TagV*][data] Output for parsed literal data.
- *  @returns[const char*]
- *   NULL on success. Otherwise points to where in the literal an error was
- *   found.
- *  @sideeffects Appends literal data to data.
- */
-static const char* ParseLiteral(FbleTypeHeap* th, FbleType* type, const char* word, ByteV* data)
-{
-  if (*word == '\0') {
-    return NULL;  // Nothing to parse. Return success.
-  }
-
-  ByteV letter;
-  FbleInitVector(letter);
-
-  const char* next = GetNextLetter(th, type, word, &letter, NULL);
-  if (next == NULL) {
-    FbleFreeVector(letter);
-    return word;  // error at this location
-  }
-
-  const char* err = ParseLiteral(th, type, next, data);
-  if (err != NULL) {
-    FbleFreeVector(letter);
-    return err;   // propagate the error
-  }
-
-  for (size_t i = 0; i < letter.size; ++i) {
-    FbleAppendToVector(*data, letter.xs[i]);
-  }
-  FbleFreeVector(letter);
-  return NULL;    // success
-}
-
+// See documentation in literal.h
 FbleLiteral FbleParseLiteral(FbleTypeHeap* th, FbleType* type, const char* word)
 {
   ByteV data;
   FbleInitVector(data);
 
-  const char* err = ParseLiteral(th, type, word, &data);
-  if (err != NULL) {
-    FbleFreeVector(data);
-    FbleLiteral failed = { .size = err - word, .data = NULL };
-    return failed;
+  // Build up the literal program in reverse order in data:
+  // * Earlier letters go in front.
+  // * The bytes of an individual letter are reversed.
+  // We'll reverse the whole thing before returning at the end to get the
+  // program in the right order.
+  //
+  // That way we build up the literal on the heap instead of the stack,
+  // because silly languages like C don't like using stack memory for cases
+  // like this.
+  const char* start = word;
+  while (*word != '\0') {
+    size_t pos = data.size;
+    const char* next = GetNextLetter(th, type, word, &data, NULL);
+    if (next == NULL) {
+      FbleFreeVector(data);
+      FbleLiteral failed = { .size = word - start, .data = NULL };
+      return failed;
+    }
+
+    // Reverse the bytes that GetNextLetter just added to the program.
+    Reverse(data.xs + pos, data.size - pos);
+    word = next;
   }
 
+  // Put the reversed program back in the right order.
+  Reverse(data.xs, data.size);
+
   FbleLiteral literal = { .size = data.size, .data = data.xs };
-  // fprintf(stderr, "%zi\n", literal.size);
   return literal;
 }
 

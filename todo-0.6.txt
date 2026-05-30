@@ -2,8 +2,11 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* fble-pprof prints done parsing before it's actually done parsing.
+
 * Output raw literal values to string instead of .byte in aarch64 backend.
  - And see if we can do something similar for c backend.
+ - Maybe we can use \x and dump raw hex?
 
 * Test that Foreign function name is in normal namespace.
  - Or clarify in the spec that that doesn't matter?
@@ -125,8 +128,6 @@ Other:
   Like, if Digit@ was private, could I still construct a list of Digit@ via a
   literal? Hopefully the answer is no? It probably works fine, but maybe worth
   adding a spec test for.
-
-* Optimize encoding of FbleNewLiteralValue prgm?
 
 * Update tutorial on literals.
   - Particularly about 'longest' versus 'first' match.
