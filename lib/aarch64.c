@@ -1045,7 +1045,7 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
       fprintf(fout, "  .align 3\n");
       fprintf(fout, ".Lr.%04zx.%zi.prgm:\n", func_id, pc);
       for (size_t i = 0; i < literal_instr->literal.size; ++i) {
-        fprintf(fout, "  .xword %zi\n", literal_instr->literal.data[i]);
+        fprintf(fout, "  .byte %i\n", literal_instr->literal.data[i]);
       }
 
       fprintf(fout, "  .text\n");

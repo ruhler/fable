@@ -6,6 +6,8 @@
 #ifndef FBLE_LITERAL_H_
 #define FBLE_LITERAL_H_
 
+#include <stdint.h>        // for uint8_t
+
 #include "fble-value.h"    // for FbleValueHeap, FbleValue
 
 /**
@@ -16,13 +18,11 @@
  *  like.
  *
  *  @field[size_t][size] Number of data elements.
- *  @field[size_t*][data] The elements of the data.
- *
- *  TODO: Switch data to uint8_t*.
+ *  @field[uint8_t*][data] The elements of the data.
  */
 typedef struct {
   size_t size;
-  size_t* data;
+  uint8_t* data;
 } FbleLiteral;
 
 /**
@@ -35,7 +35,7 @@ typedef struct {
  *   @i Allocates a value on the heap.
  *   @i Behavior is undefined if @a[data] is malformed.
  */
-FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t size, size_t* data);
+FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t size, uint8_t* data);
 
 #endif // FBLE_LITERAL_H_
 

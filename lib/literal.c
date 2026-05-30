@@ -134,13 +134,16 @@ FbleLiteral FbleParseLiteral(FbleTypeHeap* th, FbleType* type, const char* word)
 
   FbleFreeVector(letter);
 
-  FbleLiteral literal = { .size = data.size, .data = data.xs };
+  FbleLiteral literal = { .size = sizeof(size_t) * data.size, .data = (uint8_t*)data.xs };
   return literal;
 }
 
 // See documentation in fble-literal.h.
-FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t size, size_t* data)
+FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t size, uint8_t* bytes)
 {
+  size_t* data = (size_t*)bytes;
+  size /= sizeof(size_t);
+
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* tail = FbleNewUnionValue(heap, 1, 1, unit);
   FbleValue* letter = unit;

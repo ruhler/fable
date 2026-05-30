@@ -519,10 +519,8 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
           FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
           fprintf(fout, "l%zi = literal(", literal_instr->dest);
-          const char* comma = "";
           for (size_t j = 0; j < literal_instr->literal.size; ++j) {
-            fprintf(fout, "%s%zi", comma, literal_instr->literal.data[j]);
-            comma = ", ";
+            fprintf(fout, "%02x", literal_instr->literal.data[j]);
           }
           fprintf(fout, ");\n");
           break;

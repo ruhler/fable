@@ -1385,8 +1385,8 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleLiteralInstr* literal_instr = FbleAllocInstr(FbleLiteralInstr, FBLE_LITERAL_INSTR);
       literal_instr->dest = local->var.index;
       literal_instr->literal.size = literal_tc->literal.size;
-      literal_instr->literal.data = FbleAllocArray(size_t, literal_tc->literal.size);
-      memcpy(literal_instr->literal.data, literal_tc->literal.data, literal_tc->literal.size * sizeof(size_t));
+      literal_instr->literal.data = FbleAllocArray(uint8_t, literal_tc->literal.size);
+      memcpy(literal_instr->literal.data, literal_tc->literal.data, literal_tc->literal.size);
 
       AppendInstr(scope, &literal_instr->_base);
       CompileExit(exit, scope, local);
