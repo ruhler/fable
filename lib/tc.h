@@ -7,10 +7,10 @@
 #define FBLE_INTERNAL_TC_H_
 
 #include <fble/fble-loc.h>
+#include <fble/fble-literal.h>    // for FbleLiteral
 #include <fble/fble-module-path.h>
 #include <fble/fble-name.h>
 
-#include "tag.h"        // for FbleTagV
 #include "var.h"        // for FbleVar
 
 /**
@@ -380,12 +380,11 @@ typedef struct {
  *  function as part of a literal expression.
  *
  *  @field[FbleTc][_base] FbleTc base class.
- *  @field[FbleTagV][prgm]
- *   The program to pass to FbleNewLiteralValue to construct the literal.
+ *  @field[FbleLiteral][literal] The literal value.
  */
 typedef struct {
   FbleTc _base;
-  FbleTagV prgm;
+  FbleLiteral literal;
 } FbleLiteralTc;
 
 /**

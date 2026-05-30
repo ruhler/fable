@@ -41,6 +41,9 @@ namespace eval "include" {
       FbleLoadForExecution FbleLoadForModuleCompilation
       FbleSaveBuildDeps
     }
+    fble-literal.h {
+      FbleNewLiteralValue
+    }
     fble-loc.h {
       FbleLoc FbleLocV
       FbleNewLoc FbleCopyLoc FbleFreeLoc
@@ -98,7 +101,7 @@ namespace eval "include" {
       FbleStructValueField
       FbleNewUnionValue FbleNewEnumValue
       FbleUnionValueTag FbleUnionValueArg FbleUnionValueField
-      FbleNewListValue FbleNewListValue_ FbleNewLiteralValue
+      FbleNewListValue FbleNewListValue_
       FbleNewFuncValue FbleNewForeignValue
       FbleEval FbleApply
       FbleDeclareRecursiveValues FbleDefineRecursiveValues

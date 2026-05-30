@@ -15,6 +15,7 @@
 
 #include "kind.h"
 #include "expr.h"
+#include "literal.h"
 #include "tc.h"
 #include "type.h"
 #include "unreachable.h"
@@ -187,23 +188,10 @@ static FbleTcBinding CopyTcBinding(FbleTcBinding binding);
 
 static Cleaner* NewCleaner();
 static void CleanType(Cleaner* cleaner, FbleType* type);
-static void CleanFbleTc(Cleaner* cleaner, FbleTc* tc);
 static void CleanTc(Cleaner* cleaner, Tc tc);
 static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars);
 static void CleanTcBinding(Cleaner* cleaner, FbleTcBinding vars);
 static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner);
-
-/**
- * @struct[TypeList] Linked list of types to detect recursion.
- *  @field[FbleType*][type] The current element.
- *  @field[TypeList*][next] The rest of the elements.
- */
-typedef struct TypeList {
-  FbleType* type;
-  struct TypeList* next;
-} TypeList;
-
-static size_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word, FbleTagV* letter, TypeList* tl);
 
 static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignmentV* vars);
 static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
@@ -695,19 +683,6 @@ static void CleanType(Cleaner* cleaner, FbleType* type)
 }
 
 /**
- * @func[CleanFbleTc] Adds an FbleTc* for automatic cleanup.
- *  @arg[Cleaner*][cleaner] The cleaner to add the type to.
- *  @arg[FbleTc*][tc] The tc to track.
- *
- *  @sideeffects
- *   The tc will be automatically released when the cleaner is cleaned up.
- */
-static void CleanFbleTc(Cleaner* cleaner, FbleTc* tc)
-{
-  FbleAppendToVector(cleaner->tcs, tc);
-}
-
-/**
  * @func[CleanTc] Adds a Tc for automatic cleanup.
  *  @arg[Cleaner*][cleaner] The cleaner to add the type to.
  *  @arg[Tc][tc] The tc to track.
@@ -788,67 +763,6 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
   }
   FbleFreeVector(cleaner->bindings);
   FbleFree(cleaner);
-}
-
-/**
- * @func[GetNextLetter] Finds the next letter value for a literal.
- *  @arg[FbleTypeHeap*][th] The type heap
- *  @arg[FbleType*][type] The letter type.
- *  @arg[const char*][word] The literal word to get the next letter in.
- *  @arg[FbleTagV*][letter]
- *   Output where the matched letter will be placed. This is interpreted as a
- *   sequence of (tagwidth, tag) pairs corresponding to a FbleNewLiteralValue
- *   prgm. For example, if the runtime value for the letter to construct
- *   is @code[txt]{6@(3: 2@(1: @()))}, the sequence @code[txt]{2, 1, 6, 3}.
- *  @arg[TypeList*][tl] List of type args on stack to detect recursion
- *  @returns[size_t]
- *   The number of chars in word that were matched. 0 if no match was found.
- *  @sideeffects Appends tags to letter if a match was found.
- */
-static size_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word, FbleTagV* letter, TypeList* tl)
-{
-  FbleDataType* dt = (FbleDataType*)FbleNormalType(th, type);
-  if (dt->_base.tag != FBLE_DATA_TYPE || dt->datatype != FBLE_UNION_DATATYPE) {
-    // Letters can only be found in union types.
-    FbleReleaseType(th, &dt->_base);
-    return 0;
-  }
-
-  for (TypeList* l = tl; l != NULL; l = l->next) {
-    if (&dt->_base == l->type) {
-      // We've circled back recursively to a type we've already started
-      // searching in. There's nothing new we'll find this time around.
-      FbleReleaseType(th, &dt->_base);
-      return 0;
-    }
-  }
-
-  for (size_t i = 0; i < dt->fields.size; ++i) {
-    if (FbleIsUnitType(th, dt->fields.xs[i].type)) {
-      // See if we found our letter.
-      const char* fieldname = dt->fields.xs[i].name.name->str;
-      size_t len = strlen(fieldname);
-      if (len > 0 && strncmp(word, fieldname, len) == 0) {
-        FbleAppendToVector(*letter, FbleTagWidth(dt->fields.size));
-        FbleAppendToVector(*letter, i);
-        FbleReleaseType(th, &dt->_base);
-        return len;
-      }
-    }
-
-    TypeList ntl = { .type = &dt->_base, .next = tl };
-    size_t sub = GetNextLetter(th, dt->fields.xs[i].type, word, letter, &ntl);
-
-    if (sub > 0) {
-      FbleAppendToVector(*letter, FbleTagWidth(dt->fields.size));
-      FbleAppendToVector(*letter, i);
-      FbleReleaseType(th, &dt->_base);
-      return sub;
-    }
-  }
-
-  FbleReleaseType(th, &dt->_base);
-  return 0;
 }
 
 /**
@@ -1936,53 +1850,28 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      FbleLiteralTc* literal_tc = FbleNewTc(FbleLiteralTc, FBLE_LITERAL_TC, expr->loc);
-      FbleInitVector(literal_tc->prgm);
-      CleanFbleTc(cleaner, &literal_tc->_base);
-
-      bool error = false;
-      FbleLoc loc = literal_expr->word_loc;
-      size_t wordlen = strlen(literal_expr->word);
-      const char* word = literal_expr->word;
-      FbleTagV letter;
-      FbleInitVector(letter);
-      while (wordlen > 0) {
-        letter.size = 0;
-        size_t len = GetNextLetter(th, elem_type, word, &letter, NULL);
-
-        if (len == 0) {
-          ReportError(loc, "next letter of literal '%s' not found in type %t\n", word, elem_type);
-          error = true;
-          break;
-        }
-        
-        FbleAppendToVector(literal_tc->prgm, -1);
-        for (size_t i = 0; i < letter.size; ++i) {
-          size_t tag = letter.xs[letter.size - i - 1];
-          FbleAppendToVector(literal_tc->prgm, tag);
-        }
-
-        for (size_t i = 0; i < len; ++i) {
-          if (word[i] == '\n') {
+      FbleLiteral literal = FbleParseLiteral(th, elem_type, literal_expr->word);
+      if (literal.data == NULL) {
+        FbleLoc loc = literal_expr->word_loc;
+        for (size_t i = 0; i < literal.size; ++i) {
+          if (literal_expr->word[i] == '\n') {
             loc.line++;
             loc.col = 0;
           }
           loc.col++;
         }
-        word += len;
-        wordlen -= len;
-      }
-      FbleFreeVector(letter);
-
-      if (error) {
+        ReportError(loc, "next letter of literal '%s' not found in type %t\n", literal_expr->word + literal.size, elem_type);
         return TC_FAILED;
       }
+
+      FbleLiteralTc* literal_tc = FbleNewTc(FbleLiteralTc, FBLE_LITERAL_TC, expr->loc);
+      literal_tc->literal = literal;
 
       FbleType* result_type = FbleRetainType(th, func_type->rtype);
 
       FbleFuncApplyTc* apply = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
       apply->func = FbleCopyTc(func.tc);
-      apply->arg = FbleCopyTc(&literal_tc->_base);
+      apply->arg = &literal_tc->_base;
       return MkTc(result_type, &apply->_base);
     }
 

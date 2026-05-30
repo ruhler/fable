@@ -1431,3 +1431,344 @@ needs some preliminary explanation. What I have currently:
 
 Let's proceed with this for now and see how it goes.
 
+---
+
+Thinking about how to optimize the literal program brings up thoughts that
+maybe there's a better way to do literals.
+
+The goals:
+* Make literals more compact in code to save space.
+ - By using a more efficient encoding.
+* Reduce the time it takes to create a literal value.
+ - By using a more efficient encoding and hope the caches give you better
+   performance, or by pre-allocated the literal value in code (but then you
+   lose space savings probably).
+
+The most compact way to encode literal values would be to define a tree
+describing the bit widths of the type, followed by a raw list of bits for the
+literal. That tree could be shared across multiple literals.
+
+But if it's shared, why don't we make the programmer share it? Why not have
+that tree be the literal object?
+
+I'm sure I've gone through all this before, but it can't hurt to think through
+it all again.
+
+Options are:
+1. Don't do any validation of a literal at compile time.
+You can write anything you want. Runtime has to check somehow that the literal
+is valid.
+2. Do validation at compile time, but that means the compiler has to know at
+the site of the literal word how to decode the string.
+
+The minimum the compiler needs to validate a literal string is a list of
+words. We know that we want this list of words to be composable: I can
+describe a list of words as the combination of two different lists of words.
+
+What we don't necessarily need to make things work is to let the compiler know
+the mapping from words to values.
+
+How nice would it be if I could get rid of Ascii@ and IntLit@ types, for
+example? I guess it would turn into Ascii@ and IntLit@ literal types instead
+though. Unless we are okay getting rid of validation of a literal at compile
+time.
+
+If we had proper support for error handling in the language, maybe it would
+make sense to skip validation of literals at compile time.
+
+If I were to re-envision literals, how would it look? Something like:
+* We provide a struct value which maps field names to element values.
+* The type of the struct value determines what valid field names are.
+* We leverage composition of struct values for composition of literals.
+* Given a struct value and a literal, and maybe a target type? We return a
+  list (or stream) of values of that target type.
+
+In practice I don't think it changes anything substantial for the user. You
+get rid of types Ascii@ and IntLit@, and replace them with types @<Ascii> and
+@<IntLit>. If the values are passed via struct value, that means ... really
+nothing beneficial in terms of implementation. We still have sequences of
+tags. It would just rule out the possibility of statically allocating the
+literal value in code.
+
+---
+
+Anyway, back to how to have a more compact representation of literal program.
+
+If we just want to make the program more compact:
+
+Separate the program into 'type' and 'data' bits.
+
+The type is a tree node with:
+* tag width
+* [(tag value, tree)] for each sub type
+
+The data is just a sequence of raw tag bits.
+
+To run the program, traverse the tree from the root:
+* Read raw bits of tag based on tag width.
+* If tag is in list of children, recursively read element value from subtree
+* Else wrap unit in the tag read and return the value.
+* From the top level: add the value to the list of elements.
+
+The data bits can be packed as densely as we want. The only question is how to
+represent the type trees compactly.
+
+Maybe as a sequence of byte encoded integer values?
+* tag width can be represented in a single byte, because bit width is limited
+  to 64 bits in practice.
+* tag value is likely very small, but potential up to 64 bytes. Have it be
+  byte encoded variable width integer.
+* we probably don't want to parse each subtree any time we are looking for a
+  tag match, so reference the subtree using an offset in bytes relative to the
+  parent tree.
+* If we want to avoid parsing the subtree each time, we can separate out its
+  list from the list of tag values that have subtrees. Assuming having a
+  subtree is pretty rare. Or don't worry about that.
+* Tag values could be represented as delta from previous tag value to
+  potentially reduce space. Though honestly I doubt that's needed at all,
+  because we are very unlikely to have a tag value greater than 127 in this
+  list.
+
+Okay? I have a concrete proposal for the new program format. In practice, what
+I expect for Int| is:
+* 0x1(Sep@) 0x0(.t) 0x4(Dec@) 0x2(end of list)
+* 0x2(Dec@) 0x0(.oct) 0x8(Oct@) 0x3(end of list)
+* 0x3(Oct@) 0x8(end of list)
+* <data>
+  
+It's a 10 byte header. I had forgotten how much structure we use in Dec@.
+Note:
+* I'm using tree relative to the start of the header instead of the current
+  node. Better in case we can share subtrees and don't want to have to put
+  negative values.
+
+For Str| is:
+* 0x7(Ascii@) 97(end of list)
+* <data>
+
+It's a 2 byte header.
+
+I guess we need to list where the data is relative to the header too. So add a
+couple extra bytes for that.
+
+Anyway, this is a bit complex and definitely pretty arbitrary. First step
+should be to get the encoder and decoder in the same abstraction boundary and
+then keep the abstraction internal. The natural encoder is in typecheck.c.
+Except that's pretty heavy, so maybe I can put it in a separate literal.c?
+Except, then we need to have a way to talk to literal.c.
+
+The other approach is to store the literal as an FbleValue* that can be
+returned directly without any extra processing. For that to work, I want the
+FbleValue* to be movable in memory without changing the contents of it. That
+would mean creating an FbleValue* without absolute pointers, but rather
+everything relative. We have three kinds of FbleValue* right now:
+1. packed - if the literal fits packed, that's fine. We can totally use that.
+2. Stack allocated - I could pretend it's allocated on the root stack, right?
+
+Hey, this is interesting. How come I GcRealloc values that are pass to and
+then returned from subframes? Is that working as expected?
+
+3. GC allocated - I could pretend its from a root generation. A bit more
+overhead this way than if we used a StackAllocated value.
+
+4. StaticAllocated - introduce a new type of static allocated values? I bet
+that would work fine honestly. No overhead.
+
+Either way, we need to update FbleValue to allow relative pointers:
+* struct fields list
+* union arg value
+* function statics list
+
+Would this let me do a more compact representation? Can we have compact
+pointers? Sounds risky. In general a GC value can refer to a stack value? A
+stack value can refer to a GC value. And we expect those to be potentially
+allocated far apart on the heap, so not much value of putting them close
+together. But we could leverage least significant bits in pointers if we
+wanted to allow relative and absolute? Or just make everything relative and do
+some math.
+
+---
+
+Here's my vote:
+1. Try to factor out code for writing and reading literal programs.
+ - So that it's easy to change the encoding later as we like.
+2. Compress the existing encoding by:
+ - Using a single byte for tag width + continuation bit.
+ - Using only as many bytes as needed for tag value.
+3. Measure performance impact of the change in encoding.
+ If none, that's fine. We still get like 12x encoding compression.
+4. Save everything else for a later release.
+
+How to factor things out into a literal.c file:
+* FbleNewLiteralValue can easily move to literal.c as is.
+* For producing the literal program...
+
+Ideally I give the element type, the word, and an output vector of bytes that
+generates the program vector. Ideally we return a boolean whether we passed or
+not. And we advance location as we go so it knows where the error occurred and
+can report the error.
+
+It's awkward getting the error message out of it. If it weren't for that, it
+would be much nicer. Maybe you pass a pointer to the word and the location. We
+update that pointer and location as we go. You can read it out when you are
+done. Fair? Fair.
+
+Or... return a proper error indicator instead of using out parameters?
+
+Or, just print the error message and return false?
+
+  bool FbleParseLiteral(FbleTypeHeap* th, FbleType* type,
+         const char* word, FbleLoc loc, FbleBytesV* program)
+
+---
+
+While I ponder that, crazy different ideas:
+
+Let's say we have a literal type specifically that we can pass around. Every
+literal shares the same set of letters. To give better validation, the type
+describes the set of letters or literal words that are legal. Maybe using
+regex or glob, or something else.
+
+That way we can validate the literal at use. We can pass the 'literal value'
+to something less restrictive.
+
+Well, if I don't want to worry about character encoding, I need some way to
+align between where we specify the literal word and where we consume it.
+
+Let's say we have a literal type which is a list of letters. We provide a way
+to compose two lists together: append. Now we can identify letters based on
+the position in the list.
+
+What does this give me? I could convert any struct type to a list, using the
+approach we know how. Using what we use today. I guess the difference is
+instead of constructing a value, I provide a case select to get an individual
+letter.
+
+Doesn't seem worth changing the language spec for literals at this point. This
+kind of thing is pretty cool in my opinion:
+
+  # Converts decimal to Int@.
+  (Dec@) { Int@; } FromDec = (Dec@ x) {
+    x.?(oct: FromOct(x.oct), '8': 8, '9': 9);
+  };
+
+---
+
+Back to how to move code for literal programs into literal.c.
+
+The high level interface I want for FbleParseLiteral is:
+* Inputs:
+ - The element type.
+ - The word to parse.
+ - The location of the word to parse (for error reporting)
+* Output on success:
+ - The size of the literal program.
+ - A dynamically allocated array of bytes of the literal program.
+* Output on failure:
+ - The location of the error.
+ - The position in word of the error.
+
+It's just awkward to do this in C.
+
+Another option though, could be to skip passing and tracking the location.
+Just pass the position in the word of the error. It can even be an int offset.
+Then the caller can deal with location tracking. Hmm... That might be easier.
+
+We can say we return a vector of bytes. But on failure, we set the size of the
+vector as the position in the word where the error was encountered and the
+byte contents to NULL. That's a simpler interface, right?
+
+FbleLiteralProgram is FbleByteV.
+
+Cool. Let's try that.
+
+Trouble: FbleNewLiteralValue is public API. It needs to be for generated code
+to make use of it.
+
+Which makes the choice of the representation that much more important.
+
+Conceptually the process is:
+* typecheck.c parses the literal into a program, stores it in tc.
+* The program gets passed through as is to code.
+* Backends express the program as appropriate:
+ - interpret passes directly to FbleNewLiteralValue.
+ - C creates a static size_t.
+ - aarch64 creates an array of size_t.
+* At runtime, the data for the program is passed to FbleNewLiteralValue.
+
+So this is very much an exposed to public API kind of thing.
+
+A minor question: why does FbleNewLiteralValue need to know the length? In
+practice it's because we read from the back, but we could write the program in
+the right order to start with to avoid that problem.
+
+Otherwise, I want to treat the literal program as a raw sequence of bytes. I
+want that to be what's known publicly about it. And then let it be cast to
+whatever the real type is internally, no? If we need to know the size, we can
+encode it in the raw bytes themselves maybe?
+
+What the backends need to be able to do is read it as a raw sequence of bytes
+and know the length (to know how many of the bytes to read).
+
+Once I have it as a raw sequence of bytes, we can change the internal
+representation easily. But not until then.
+
+For some reason this feels like a weird thing to do: have an abstract data
+type, but expose it as raw bytes so we can pass it around.
+
+Sounds a little like a proto? Would it make sense to use proto format to store
+this? Would that change anything?
+
+No. I think it's reasonable to say a literal program is size_t length plus
+uint8_t* data. Then the API proposal is:
+
+  FbleLiteralProgram: {
+    size_t length;
+    uint8_t* data;
+  }
+
+FbleNewLiteralValue can take length and data directly. Users should access
+length and data directly. Easy.
+
+Okay? Here's my proposal:
+1. Factor out the literal API the way I want:
+  fble-literal.h, FbleLiteralProgram, FbleNewLiteralValue are both public.
+  literal.h: FbleParseLiteral is internal.
+  Stay with size_t for now. No change to encoding.
+2. Switch to uint8_t for data.
+  We should be able to keep the size_t based encoding, just cast it to
+  uint8_t. That will test how generic the API is.
+3. Change to whatever internal crazy encoding I want.
+
+Good. Sounds like a plan. And worth doing to get a more generic public API for
+literals.
+
+I suppose for disassembly of code, we could just not print the literal value,
+print the raw contents, or add internal API to decode and print out the tag
+values we are working with.
+
+---
+
+Question about alignment. If we want to be able to cast to things that are
+bigger than byte width, we need the data to be aligned. That has to be part of
+the spec, because we are saying you can copy around the data.
+
+Alignment for interpreter and aarch64 is fine. I'm just not sure how to
+control alignment for the C backend. Any guarantees from the language?
+
+In practice when I try it, I'm getting 8 byte alignment. That's good.
+
+I can't tell from the C spec or the internet. But at least gcc is generating
+explicit 8 byte alignment for arrays, so maybe it's a thing. At least I can
+rely on it in practice for now. Worst case we can work around it by relying on
+the fact that structs are supposed to be aligned to their largest member.
+Probably, to be safe, I should say these are pointer aligned data structures.
+Or be vague, and say it should be suitably aligned like malloc would for any
+type that could fit in that size.
+
+Okay? Let's try it.
+
+---
+
+The abstraction boundaries feel pretty good. It's a pretty clean separation
+this way.

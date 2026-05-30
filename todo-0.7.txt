@@ -28,6 +28,8 @@ Things to consider doing for the fble-0.7 release.
 
 * Make programs run twice as fast.
  - Use native stack for stack allocations.
+ - Return stack allocated value directly instead of gc reallocating if it
+   lives on caller's stack frame?
  - Inline FbleCall into aarch64 backend.
  - Specialize call logic based on what we can figure out statically in terms
    of number of args expected and tail/non-tail possibilities.

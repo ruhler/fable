@@ -146,7 +146,7 @@ void FbleFreeInstr(FbleInstr* instr)
 
     case FBLE_LITERAL_INSTR: {
       FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-      FbleFreeVector(literal_instr->prgm);
+      FbleFree(literal_instr->literal.data);
       FbleFree(instr);
       return;
     }
@@ -520,8 +520,8 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
           fprintf(fout, "%4zi.  ", i);
           fprintf(fout, "l%zi = literal(", literal_instr->dest);
           const char* comma = "";
-          for (size_t j = 0; j < literal_instr->prgm.size; ++j) {
-            fprintf(fout, "%s%zi", comma, literal_instr->prgm.xs[j]);
+          for (size_t j = 0; j < literal_instr->literal.size; ++j) {
+            fprintf(fout, "%s%zi", comma, literal_instr->literal.data[j]);
             comma = ", ";
           }
           fprintf(fout, ");\n");

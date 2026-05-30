@@ -1044,14 +1044,14 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
       fprintf(fout, "  .section .data\n");
       fprintf(fout, "  .align 3\n");
       fprintf(fout, ".Lr.%04zx.%zi.prgm:\n", func_id, pc);
-      for (size_t i = 0; i < literal_instr->prgm.size; ++i) {
-        fprintf(fout, "  .xword %zi\n", literal_instr->prgm.xs[i]);
+      for (size_t i = 0; i < literal_instr->literal.size; ++i) {
+        fprintf(fout, "  .xword %zi\n", literal_instr->literal.data[i]);
       }
 
       fprintf(fout, "  .text\n");
       fprintf(fout, "  .align 2\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
-      Mov(fout, "x1", literal_instr->prgm.size);
+      Mov(fout, "x1", literal_instr->literal.size);
       Adr(fout, "x2", ".Lr.%04zx.%zi.prgm", func_id, pc);
       fprintf(fout, "  bl FbleNewLiteralValue\n");
       SetFrameVar(fout, "x0", literal_instr->dest);

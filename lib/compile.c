@@ -6,7 +6,7 @@
 #include <fble/fble-generate.h>
 
 #include <assert.h>   // for assert
-#include <string.h>   // for strlen, strcat
+#include <string.h>   // for memcpy, strlen, strcat
 #include <stdlib.h>   // for NULL
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, etc.
@@ -1384,13 +1384,12 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       Local* local = NewLocal(scope);
       FbleLiteralInstr* literal_instr = FbleAllocInstr(FbleLiteralInstr, FBLE_LITERAL_INSTR);
       literal_instr->dest = local->var.index;
-      FbleInitVector(literal_instr->prgm);
+      literal_instr->literal.size = literal_tc->literal.size;
+      literal_instr->literal.data = FbleAllocArray(size_t, literal_tc->literal.size);
+      memcpy(literal_instr->literal.data, literal_tc->literal.data, literal_tc->literal.size * sizeof(size_t));
+
       AppendInstr(scope, &literal_instr->_base);
       CompileExit(exit, scope, local);
-
-      for (size_t i = 0; i < literal_tc->prgm.size; ++i) {
-        FbleAppendToVector(literal_instr->prgm, literal_tc->prgm.xs[i]);
-      }
 
       return local;
     }

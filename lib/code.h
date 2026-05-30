@@ -8,9 +8,9 @@
 
 #include <fble/fble-compile.h>   // for FbleCode forward declaration.
 #include <fble/fble-function.h>  // for FbleExecutable.
+#include <fble/fble-literal.h>   // for FbleLiteral.
 #include <fble/fble-profile.h>   // for FbleBlockId.
 
-#include "tag.h"            // for FbleTagV
 #include "var.h"            // for FbleVar, FbleLocalIndex
 
 /**
@@ -488,13 +488,12 @@ typedef struct {
  *   *dest = "xxx"
  *
  *  @field[FbleInstr][_base] FbleInstr base class.
- *  @field[FbleTagV][prgm]
- *   The program to pass to FbleNewLiteralValue to create the literal from.
+ *  @field[FbleLiteral][literal] The literal value.
  *  @field[FbleLocalIndex][dest] Where to put the created value.
  */
 typedef struct {
   FbleInstr _base;
-  FbleTagV prgm;
+  FbleLiteral literal;
   FbleLocalIndex dest;
 } FbleLiteralInstr;
 

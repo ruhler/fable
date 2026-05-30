@@ -193,7 +193,7 @@ void FbleFreeTc(FbleTc* tc)
 
     case FBLE_LITERAL_TC: {
       FbleLiteralTc* v = (FbleLiteralTc*)tc;
-      FbleFreeVector(v->prgm);
+      FbleFree(v->literal.data);
       FbleFree(tc);
       return;
     }

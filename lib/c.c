@@ -563,10 +563,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
       case FBLE_LITERAL_INSTR: {
         FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-        size_t argc = literal_instr->prgm.size;
+        size_t argc = literal_instr->literal.size;
         fprintf(fout, "  static size_t lit_%zi[] = {", lit_id);
         for (size_t i = 0; i < argc; ++i) {
-          fprintf(fout, " %zi,", literal_instr->prgm.xs[i]);
+          fprintf(fout, " %zi,", literal_instr->literal.data[i]);
         }
         fprintf(fout, " };\n");
         fprintf(fout, "  l[%zi] = FbleNewLiteralValue(heap, %zi, lit_%zi);\n",
@@ -645,6 +645,7 @@ void FbleGenerateC(FILE* fout, FbleModule* module)
 
   fprintf(fout, "#include <fble/fble-program.h>\n");  // for FbleNativedModule
   fprintf(fout, "#include <fble/fble-function.h>\n"); // for FbleCall
+  fprintf(fout, "#include <fble/fble-literal.h>\n");  // for FbleNewLiteralValue
   fprintf(fout, "#include <fble/fble-value.h>\n");    // for FbleValue
 
   // Error messages.
