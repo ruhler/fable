@@ -1772,3 +1772,107 @@ Okay? Let's try it.
 
 The abstraction boundaries feel pretty good. It's a pretty clean separation
 this way.
+
+It's interesting, the switch from size_t to uint8_t for the type causes us to
+run out of memory when compiling the generated c code for the super long
+literal test case. Let me not worry about that now, because we'll make the
+literal more compact soon.
+
+Now that I have the new abstraction boundary, what do we want to do here?
+
+How about:
+1. Measure memory use and runtime associated with literals in fble benchmark.
+2. Update to my new compact scheme.
+3. Measure memory use and runtime associated with literals again.
+
+See how much memory and performance we save. Then call it a day. Worry about
+super optimizing things another time.
+
+FbleNewLiteralValue is:
+  0.070% 738 [5]FbleNewLiteralValue
+
+So we're not going to see a difference in benchmark time.
+
+Mostly from:
+
+   58.026% 430 [6]/Games/BenchmarkGame/FannkuchRedux%.Flip
+   11.051% 85  [7]/Games/BenchmarkGame/FannkuchRedux%.Flips
+   7.045%  55  [8]/Std/Int/Show%.Digit
+   3.011%  23  [9]/Games/TicTacToe/AI%.SquareData
+   2.098%  22  [10]/Invaders/Graphics%.String
+   2.016%  16  [11]/Fbld/Parse/M%.EndOfInput
+   2.016%  16  [12]/Fbld/Parse/M%.String
+   2.3%    15  [13]/Fbld/Parse/Block%.BlankLine
+   1.021%  9   [14]/Fbld/Parse/M%.GetL
+   1.8%    8   [15]/Graphics/Triangle%.Clipped
+
+And that would be easy to get rid of by factoring out the literals. Oh well.
+Can't harm to make them smaller anyway. This also means its fine to slow
+things down slightly.
+
+In terms of space... how do we get that? With some printf fun.
+
+For fble-benchmark:
+* Largest literal is 323520 bytes
+* Total bytes for literal data is: 677240 bytes
+
+Now we have all that info, let's optimize.
+
+Remember how my new approach is going to go:
+* Byte oriented.
+* Assume tag widths are 6 bits or less.
+* There is no empty literal element: we always have some tag.
+* Pack tag width and 'is last' bit into a single byte.
+* Pack tag value into a sequence of bytes with 7 bits data, 1 bit
+  continuation.
+* What order do I want the data to be listed in?
+
+The ideal data order for consumption would be:
+* Last element first.
+* Tag width before tag value.
+
+Can I easily compute it that way? It's probably not so hard. Sure. Worst case
+I build up the initial data in reverse order and reverse it at the end. I
+could use recursion to go all the way to the last element first and populate
+the output that way. Let's do that.
+
+Experience:
+* Consuming the data is clean and straight forward in this format.
+* Producing the data isn't too bad using recursion and not worrying about
+  stack size. If I have to switch to iteration, I should be able to populate
+  the data in reverse order and reverse the whole thing at the end easily
+  enough.
+* I probably need to add some crazy tests to get code coverage for larger size
+  tags. Maybe try a 9 bit tag and hope that's enough? 257 possible field
+  values?
+
+Time to debug. What program do I expect for simple 'BAC'?
+
+Read order should be:
+
+[C, A, B]
+
+Tag widths are all 2. Values are 2, 0, 1. We don't ever have a subfield, so
+expect last bit to be set in all cases. Thus I would expect raw bytes:
+
+  size 6:
+  0x4; {0x2 tag width, 0 last}
+  0x2; 0x2 tag value
+
+  0x4; {0x2 tag width, 0 last}
+  0x0; 0x0 tag value
+
+  0x4; {0x2 tag width, 0 last}
+  0x1; 0x1 tag value
+
+Okay. Bunch of minor bugs found. I've decided to flip the polarity of the
+continuation bit, because most of my bugs were about interpreting it the other
+way around.
+
+Let's see how things work now.
+
+Well, not sure what you expected, but super long literal smashes the stack
+this way. Sadness.
+
+Maybe let's test everything else, check it in, then switch to iterative
+approach.

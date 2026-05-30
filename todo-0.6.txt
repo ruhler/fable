@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Output raw literal values to string instead of .byte in aarch64 backend.
+ - And see if we can do something similar for c backend.
+
 * Test that Foreign function name is in normal namespace.
  - Or clarify in the spec that that doesn't matter?
  - And test that we check the namespace is correct.
