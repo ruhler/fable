@@ -204,7 +204,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   Server@<M@> s = ms.just;
   
   Unit@ _ := m.do(out(
-    FormatE|'serving at http://%s:%s\n'[
+    FormatE|'http://%s:%s\n'[
       /Std/Stream/String%.String(args.hostname),
       /Std/Int/Show%.Show(s.port)
   ]));
@@ -219,13 +219,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
     m.return(Failure);
   });
 
-  Unit@ _ := m.do(out(StringE|'done\n'));
-
   Result@<Profile@> parsed := m.do(Parse(m, fin.just));
   parsed.?(error: {
     Unit@ _ := m.do(err(FormatE|'error: %s\n'[parsed.error]));
     m.return(Failure);
   });
+
+  Unit@ _ := m.do(out(StringE|'done\n'));
 
   Profile@ profile = parsed.ok;
 

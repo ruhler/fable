@@ -42,8 +42,8 @@
   Which outputs something like:
 
   @code[txt] @
-   parsing foo.prof...
-   serving at http://localhost:37047
+   http://localhost:37047
+   parsing foo.prof...done
 
   Visit the URL using your favorite web browser. The following different views
   of the profile are available from there:

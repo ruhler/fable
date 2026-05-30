@@ -2,8 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* fble-pprof prints done parsing before it's actually done parsing.
-
 * Test that Foreign function name is in normal namespace.
  - Or clarify in the spec that that doesn't matter?
  - And test that we check the namespace is correct.
