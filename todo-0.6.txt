@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Why does LFSR seem to do some poorly with snake?
+ - Is something broken? Or we're just unlucky?
+
 * Test that Foreign function name is in normal namespace.
  - Or clarify in the spec that that doesn't matter?
  - And test that we check the namespace is correct.
@@ -69,9 +72,6 @@ Other:
   - Quick search on the internet didn't bring anything obvious up.
   - This would be bad for a password protected field, for example...
   - Maybe use termios to turn off echoing?
-
-* Switch back to LFSR for snake?
-  - Because it's faster and good enough?
 
 * Double check benchmark deadlock conditions
   - for example, for snake, now that we changed the random number generator
