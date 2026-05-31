@@ -1,9 +1,9 @@
 
 Bool@, True, False, And .= /Std/Bool%;
-Int@, Incr, Decr, Add, Neg, Mul, Sub .= /Std/Int%;
+Int@, Incr, Decr, Add, Neg, Mul, Sub, Shr .= /Std/Int%;
 Eq .= /Std/Int/Eq%;
 Lt, Gt .= /Std/Int/Cmp%;
-Div .= /Std/Int/Div%;
+Quot .= /Std/Int/Div%;
 Int .= /Std/Int/Lit%;
 Range .= /Std/Int/Random%;
 Abs .= /Std/Int/Sign%;
@@ -228,9 +228,18 @@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   };
 
   # Map game coordinates into screen coordinates.
-  Point@ a = @(x: Div(width, MaxCol).q,
-               y: Neg(Div(height, MaxRow).q));
-  Point@ b = @(x: Int|0, y: height);
+  # We put at least a 4 pixel border around the outside, then center the game
+  # in the screen.
+  Int@ pad = Int|4;
+  Int@ cols = Incr(Sub(MaxCol, MinCol));
+  Int@ rows = Incr(Sub(MaxRow, MinRow));
+  Int@ cell_width = Quot(Sub(width, pad), cols);
+  Int@ cell_height = Quot(Sub(height, pad), rows);
+
+  Point@ a = @(x: cell_width, y: Neg(cell_height));
+  Point@ b = @(
+    x: Shr(Sub(width, Mul(cell_width, cols)), Int|1),
+    y: Sub(height, Shr(Sub(height, Mul(cell_height, rows)), Int|1)));
 
   (Effect@) { M@<Unit@>; } Output = (Effect@ e) {
     Effect@ transformed = e.?(
