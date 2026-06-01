@@ -66,12 +66,14 @@ Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
 #   rand - Random bits for use in determining the next food position.
 #   snake - The positions of the snake, in order from head to tail.
 #   speed - The number of milliseconds to wait between each tick.
+#   ToScreen - Map Drawing@ to screen coordinates.
 State@ = *(
   Dir@ dir,
   Pos@ food,
   Prng.S@ rand,
   List@<Pos@> snake,
-  Int@ speed
+  Int@ speed,
+  (Drawing@) { Drawing@; } ToScreen
 );
 
 (List@<Pos@>) { Drawing@; } DrawSnake = (List@<Pos@> s) {
@@ -81,26 +83,12 @@ State@ = *(
 };
 
 (State@) { Drawing@; } Draw = (State@ s) {
-  Drawings[
-    Rect(0, 0, Incr(MaxCol), Incr(MaxRow), Color.Blue),
-    DrawSnake(s.snake),
-    DrawCell(s.food, Cell@(food: Unit))
-  ];
-};
-
-State@ InitialState = {
-  Int@ c0 = MinCol;
-  Int@ c1 = Incr(c0); Int@ c2 = Incr(c1);
-  Int@ c3 = Incr(c2); Int@ c4 = Incr(c3);
-  Int@ r0 = MinRow;
-  Int@ r1 = Incr(r0); Int@ r2 = Incr(r1);
-  Int@ r3 = Incr(r2); Int@ r4 = Incr(r3);
-  State@(
-    Dir@(right: Unit),
-    Pos@(r4, c1),
-    Prng.seed(Int|42),
-    List[Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)],
-    Int|40);
+  s.ToScreen(
+    Drawings[
+      Rect(0, 0, Incr(MaxCol), Incr(MaxRow), Color.Blue),
+      DrawSnake(s.snake),
+      DrawCell(s.food, Cell@(food: Unit))
+    ]);
 };
 
 MoveResultM@ = +(Unit@ dead, State@ state);
@@ -228,24 +216,21 @@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   };
 
   # Map game coordinates into screen coordinates.
-  # We put at least a 4 pixel border around the outside, then center the game
-  # in the screen.
-  Int@ pad = Int|4;
-  Int@ cols = Incr(Sub(MaxCol, MinCol));
-  Int@ rows = Incr(Sub(MaxRow, MinRow));
-  Int@ cell_width = Quot(Sub(width, pad), cols);
-  Int@ cell_height = Quot(Sub(height, pad), rows);
+  (Int@, Int@, Drawing@) { Drawing@; }
+  ToScreen = (Int@ width, Int@ height, Drawing@ d) {
+    # We put at least a 4 pixel border around the outside, then center the game
+    # in the screen.
+    Int@ pad = Int|4;
+    Int@ cols = Incr(Sub(MaxCol, MinCol));
+    Int@ rows = Incr(Sub(MaxRow, MinRow));
+    Int@ cell_width = Quot(Sub(width, pad), cols);
+    Int@ cell_height = Quot(Sub(height, pad), rows);
 
-  Point@ a = @(x: cell_width, y: Neg(cell_height));
-  Point@ b = @(
-    x: Shr(Sub(width, Mul(cell_width, cols)), Int|1),
-    y: Sub(height, Shr(Sub(height, Mul(cell_height, rows)), Int|1)));
-
-  (Effect@) { M@<Unit@>; } Output = (Effect@ e) {
-    Effect@ transformed = e.?(
-      tick: e,
-      draw: Effect@(draw: Affine(a, b, e.draw)));
-    app.effect(transformed);
+    Point@ a = @(x: cell_width, y: Neg(cell_height));
+    Point@ b = @(
+      x: Shr(Sub(width, Mul(cell_width, cols)), Int|1),
+      y: Sub(height, Shr(Sub(height, Mul(cell_height, rows)), Int|1)));
+    Affine(a, b, d);
   };
 
   (State@) { M@<Unit@>; } Snake = (State@ s) {
@@ -258,15 +243,29 @@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
     MoveResultM@ mr = Move(ns);
     mr.?(dead: m.return(Unit));
 
-    Unit@ _ := m.do(Output(Effect@(draw: Draw(ns))));
-    Unit@ _ := m.do(Output(Effect@(tick: ns.speed)));
+    Unit@ _ := m.do(app.effect(Effect@(draw: Draw(ns))));
+    Unit@ _ := m.do(app.effect(Effect@(tick: ns.speed)));
     Snake(mr.state);
   };
 
-  State@ s = InitialState;
-  
-  Unit@ _ := m.do(Output(Effect@(draw: Rect(0, 0, Incr(MaxCol), Incr(MaxRow), Color.Blue))));
-  Unit@ _ := m.do(Output(Effect@(draw: Draw(s))));
+  State@ s = {
+    Int@ c0 = MinCol;
+    Int@ c1 = Incr(c0); Int@ c2 = Incr(c1);
+    Int@ c3 = Incr(c2); Int@ c4 = Incr(c3);
+    Int@ r0 = MinRow;
+    Int@ r1 = Incr(r0); Int@ r2 = Incr(r1);
+    Int@ r3 = Incr(r2); Int@ r4 = Incr(r3);
+    State@(
+      Dir@(right: Unit),
+      Pos@(r4, c1),
+      Prng.seed(Int|42),
+      List[Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)],
+      Int|40,
+      ToScreen(width, height));
+  };
+
+  Unit@ _ := m.do(app.effect(Effect@(draw: s.ToScreen(Rect(0, 0, Incr(MaxCol), Incr(MaxRow), Color.Blue)))));
+  Unit@ _ := m.do(app.effect(Effect@(draw: Draw(s))));
   Unit@ _ := m.do(app.effect(Effect@(tick: Int|16)));
   Unit@ _ := m.do(Snake(s));
 
