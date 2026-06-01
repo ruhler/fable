@@ -12,7 +12,7 @@ Monad@ .= /Std/Monad%;
 Exec, Run .= /Std/State/Pure%;
 Unit@, Unit .= /Std/Unit%;
 
-App@, Event@, Effect@ .= /App/App%;
+App@, Event@, Effect@, Resize@ .= /App/App%;
 Color@, Drawing@, Point@, Blank, Color, Drawings,
 Rect, Over, Affine .= /App/Drawing%;
 
@@ -36,7 +36,7 @@ Pos@ = *(Int@ row, Int@ col);
 };
 
 Dir@ = +(Unit@ up, Unit@ down, Unit@ left, Unit@ right);
-Input@ = +(Dir@ dir, Unit@ quit, Unit@ tick);
+Input@ = +(Dir@ dir, Unit@ quit, Unit@ tick, Resize@ resize);
 
 (Dir@, Dir@) { Bool@; } EqDir = (Dir@ a, Dir@ b) {
   a.?(
@@ -212,6 +212,7 @@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
         l: m.return(Input@(dir: Dir@(right: Unit))),
         q: m.return(Input@(quit: Unit)),
         : GetInput),
+      resize: m.return(Input@(resize: e.resize)),
       : GetInput);
   };
 
@@ -237,6 +238,7 @@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
     Input@ x := m.do(GetInput);
     x.?(dir: Snake(s.@(dir: x.dir)));
     x.?(quit: m.return(Unit));
+    x.?(resize: Snake(s.@(ToScreen: ToScreen(x.resize.width, x.resize.height))));
 
     Dir@ dir = AI(s);
     State@ ns = s.@(dir);

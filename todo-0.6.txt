@@ -2,8 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Add support for window resize to Snake game.
-
 * Why does LFSR seem to do some poorly with snake?
  - Is something broken? Or we're just unlucky?
 
