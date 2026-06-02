@@ -231,7 +231,7 @@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
     Point@ b = @(
       x: Shr(Sub(width, Mul(cell_width, cols)), Int|1),
       y: Sub(height, Shr(Sub(height, Mul(cell_height, rows)), Int|1)));
-    Affine(a, b, d);
+    Drawings[Rect(0, 0, width, height, Color.Black), Affine(a, b, d)];
   };
 
   (State@) { M@<Unit@>; } Snake = (State@ s) {
@@ -266,7 +266,6 @@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
       ToScreen(width, height));
   };
 
-  Unit@ _ := m.do(app.effect(Effect@(draw: s.ToScreen(Rect(0, 0, Incr(MaxCol), Incr(MaxRow), Color.Blue)))));
   Unit@ _ := m.do(app.effect(Effect@(draw: Draw(s))));
   Unit@ _ := m.do(app.effect(Effect@(tick: Int|16)));
   Unit@ _ := m.do(Snake(s));
