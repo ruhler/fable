@@ -467,3 +467,68 @@ value at this stage of library development.
 
 I'm not going to try standardizing anything that was outside of core yet.
 Network stuff, app stuff, for example. I've done enough for this release.
+
+---
+
+* Figure out how to organize std packages
+
+For this release, we don't yet have app or network support in /Std%.
+Eventually I'll want to add that. But I feel like I'll want to add it in a
+separate package, like std-app, std-io. So, same module hierarchy, different
+package name.
+
+Why? So people don't have to link with that unless they need it.
+
+But should that apply to IO too? There is something about FFI in the
+implementation of the standard library that limits it to a particular
+platform.
+
+Or you can think about it like this. /Std is the api for clients of the
+standard library. The implementation of /Std is itself built on top of FFI
+function calls which is the api for the underlying platforms.
+
+I make use of the following FFI in std right now:
+* /Std/Stream/Debug%.*
+* /Std/Io/Env%.*
+* /Std/Io/File/Internal%.*
+
+What if I pulled those things out. And pull out cli. Into a separate std-io
+package?
+
+Other possible packages to consider:
+* std-rand
+* std-test
+
+And then the rest is kind of used for std-data like standard data types.
+
+The benefits of splitting up packages:
+* ???
+
+The costs of splitting up packages:
+* One more thing to list when running or building.
+
+Needs more thought. See also good considerations from previous thoughts
+earlier in this file.
+
+---
+
+Reasons to split:
+* Reduce false dependencies, for example on libsdl if you don't use app.
+* Allow packages to be updated independently.
+* Allow use of a pure, non-FFI based core package
+ - Except I really want Debug print stream in core package, so people don't
+   have to add a new package dependency just to enable debug.
+* Much strong dependency requirement
+ - Force module dependencies to go in one direction, instead of allowing mixed
+   (albeit acyclical) directions.
+
+Reasons to keep together:
+* Avoid version mismatches.
+* Avoid having to list a long bunch of packages as dependencies.
+
+At this point in time, I don't have a strong reason to change things. Maybe
+separating std-io was a strong reason, but that falls apart because of the
+debug use case. Without clear reason to go one way or another, let's just
+stick with how things are now. I expect to learn more in the future that could
+impact this decision. Things like standardizing network and app packages, and
+thoughts on package manager support.

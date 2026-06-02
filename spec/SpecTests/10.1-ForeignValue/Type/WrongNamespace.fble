@@ -1,0 +1,8 @@
+# @@fble-test@@ compile-error 6:7
+Unit@ = *();
+
+# The namesapce fore ForeignUnit@ is wrong, it should be normal namespace, not
+# type namespace.
+Unit@ ForeignUnit@;
+
+ForeignUnit@;

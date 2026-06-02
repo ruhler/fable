@@ -2,13 +2,10 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Why does LFSR seem to do some poorly with snake?
+* Why does LFSR seem to do so poorly with snake?
  - Is something broken? Or we're just unlucky?
 
-* Test that Foreign function name is in normal namespace.
- - Or clarify in the spec that that doesn't matter?
- - And test that we check the namespace is correct.
- - Add test for unused foreign function.
+* Add test for unused foreign function.
 
 * Test for code coverage, given recent changes.
 
@@ -24,11 +21,6 @@ Standard Library:
 * Add back character type functions isspace, isalnum, etc?
 * Add Lt, Le, Gt, Ge, etc for Char@?
 * Reconsider if Read, Write, Append should report error messages?
-
-* Figure out how to organize std packages
- - Add network to std package?
- - Separate io and FFI related stuff into separate std-io package?
- - Add app to std package?
 
 Tutorials:
 * Update the kind section of Polymorphism tutorial.

@@ -1,0 +1,7 @@
+# @@fble-test@@ compile-error 5:1
+Unit@ = *();
+
+# You are not allowed to declare a foreign function that is a type of a type.
+@<@<Unit@>> TypeOfUnit;
+
+TypeOfUnit;

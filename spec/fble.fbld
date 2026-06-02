@@ -1446,9 +1446,13 @@
    the foreign value is defined so that use of a foreign value implementation
    is restricted to the single module it was intended for.
 
-   The type of the foreign value is the type provided. Runtime is the platform
-   dependent time required to identify and link in the matching platform
-   implementation of the foreign value, plus the runtime of the body.
+   The type of the foreign value is the type provided. Foreign values must be
+   normal values. There is no benefit to supporting foreign types, because you
+   would have to specify the type of that type in fble code anyway.
+
+   Runtime is the platform dependent time required to identify and link in the
+   matching platform implementation of the foreign value, plus the runtime of
+   the body.
 
    It is an error if the platform is unable to find a suitable foreign
    implementation for the value. The error may occur at link time or at

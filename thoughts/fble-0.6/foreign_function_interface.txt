@@ -1124,3 +1124,43 @@ I'm not super sold on this change, but it's a net improvement to remove undef
 expression, we keep the nice .fble.@ syntax, we get a nicer FFI syntax. So
 let's go with it and see how much I regret doing it later.
 
+---
+
+* Test that Foreign function name is in normal namespace.
+
+Normal namespace is fine and makes sense.
+
+Can you define a type? Why or why not? How or how not?
+
+Certainly type of a type is bad and should not be allowed.
+
+For a type, how would I specify it? Namespace has to be Foo@. So name has to
+be Foo@. But I don't include the namespace in the name.
+
+Honestly, I think it's best to require foreign functions be type level 0, and
+throw a namespace error otherwise.
+
+Let's see how using a type could work with today's implementation.
+* It can't. We look up by name, without namespace.
+
+Is there any value for defining a foreign type? What does that even mean?
+
+You couldn't do anything with the type. It would be like treating it as an
+abstract type. But honestly, I can see a use case. I already have one: File@
+and Socket@.
+
+I can implement the lookup without too much difficulty. But what does it mean
+for type checking? What is the value of the type that it is trying to use?
+
+Oh. Nevermind. That's silly. Because I have to give the type of the type. And
+if I give the type of the type, I may as well just use that directly. You
+can't specify an abstract foreign type. Remember, we are doing something like:
+
+@<Foo@> ForeignFoo@;
+
+Not:
+
+Foo@;
+
+Let's just not allow this case. In the spec, and at the language level.
+

@@ -1992,6 +1992,12 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
+      size_t level = FbleGetTypeLevel(type);
+      if (level != 0) {
+        ReportError(foreign_expr->type->loc, "expected normal type for foreign value, but got %t with type level %i\n", type, level);
+        return TC_FAILED;
+      }
+
       if (!CheckNameSpace(foreign_expr->name, type)) {
         return TC_FAILED;
       }
