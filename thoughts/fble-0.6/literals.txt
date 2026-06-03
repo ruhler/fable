@@ -1902,3 +1902,21 @@ think it's worth it. We're in good enough shape now.
    1.054%  12  [15]/Graphics/Triangle%.Clipped
 
 Maybe it's a little more expensive. Or maybe it's just noise.
+
+---
+
+Coming back to question of whether we should allow any type for literal
+element if the list is empty, or if we want to restrict literals to union
+types.
+
+Here's what I said before:
+
+  For now, let's be a bit generous and allow anything? So you could, for
+  example, do f|'' for a function f that takes a list of any kind of thing to
+  get the empty list.
+
+Honestly, I think better to require elements come from union types. We could
+say we only search union type subfields of union types too. Simple.
+Consistent. Okay?
+
+Let's clarify in the spec and fix my spec test.

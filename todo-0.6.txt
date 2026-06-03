@@ -107,11 +107,6 @@ Other:
 
 * Double check @module[...] values are correct in /Std/...*.fble files.
 
-* Does private type access restrict access to literals?
-  Like, if Digit@ was private, could I still construct a list of Digit@ via a
-  literal? Hopefully the answer is no? It probably works fine, but maybe worth
-  adding a spec test for.
-
 * Update tutorial on literals.
   - Particularly about 'longest' versus 'first' match.
 * Update tutorials for string literals: Foo(Str|...) now instead of Foo|...;

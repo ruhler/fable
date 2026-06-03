@@ -1850,6 +1850,13 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
+      FbleDataType* dt = (FbleDataType*)FbleNormalType(th, elem_type);
+      CleanType(cleaner, &dt->_base);
+      if (dt->_base.tag != FBLE_DATA_TYPE || dt->datatype != FBLE_UNION_DATATYPE) {
+        ReportError(literal_expr->func->loc, "expected union type for literal elements, but the input to the function expects elements of type %t\n", elem_type);
+        return TC_FAILED;
+      }
+
       FbleLiteral literal = FbleParseLiteral(th, elem_type, literal_expr->word);
       if (literal.data == NULL) {
         FbleLoc loc = literal_expr->word_loc;

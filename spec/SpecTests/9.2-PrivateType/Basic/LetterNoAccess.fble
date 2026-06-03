@@ -1,0 +1,14 @@
+# @@fble-test@@ compile-error 13:11
+
+Unit@ = *();
+Enum@ = /SpecTests/'9.2-PrivateType'/Private%.Enum@;
+
+L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+
+(L@) { Enum@; } F = (L@ l) {
+  l.cons.head;
+};
+
+# The type of Enum@ is private, so we can't construct literals from it.
+Enum@ B = F|B;
+B;

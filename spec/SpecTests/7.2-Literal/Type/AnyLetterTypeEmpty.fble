@@ -1,7 +1,7 @@
-# @@fble-test@@ no-error
+# @@fble-test@@ compile-error 8:1
 Unit@ = *();
 
-# We can use any letter type we want if it's an empty literal.
+# The element type has to be a union type, even if the literal is empty.
 Letter@ = (Unit@) { Unit@; };
 L@ = +(*(Letter@ head, L@ tail) cons, Unit@ nil);
 (L@) { L@; } f = (L@ l) { l; };

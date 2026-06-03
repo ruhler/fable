@@ -1060,9 +1060,9 @@
    word, or a field of union type where a matching letter can be found. Fields
    are traversed in order with the first match returned.
 
-   It is a type error if the word cannot be decoded into a sequence of letters
-   by repeated matching of the next letter according to the element type
-   @L{E@}.
+   It is a type error if the element type is not a union type, or if the word
+   cannot be decoded into a sequence of letters by repeated matching of the
+   next letter according to the element type.
 
    Struct types cannot be used for the function in literal syntax, even though
    they share a similar concrete syntax to function application. Type
