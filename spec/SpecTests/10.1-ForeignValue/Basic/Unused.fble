@@ -1,0 +1,11 @@
+# @@fble-test@@ compile-warning 9:20
+
+Unit@ = *();
+Unit@ Unit = Unit@();
+
+Bool@ = +(Unit@ true, Unit@ false);
+
+# Check we get a warning about an unused foreign value.
+(Bool@) { Bool@; } Not;
+
+Unit;

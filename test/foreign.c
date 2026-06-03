@@ -36,6 +36,14 @@ FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_FunnyName_
   .max_call_args = 0,
   .run = &Not
 };
+
+FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Unused_25__2e_Not = {
+  .path = "/SpecTests/'10.1-ForeignValue'/Basic/Unused%",
+  .name = "Not",
+  .num_args = 1,
+  .max_call_args = 0,
+  .run = &Not
+};
 
 /**
  * @func[Poly] FbleRunFunction for 'Nothing' foreign function.
@@ -124,6 +132,7 @@ FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_ModuleMatt
 void FbleTestRegisterForeignValues(FbleValueHeap* heap) {
   FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Basic_25__2e_Not);
   FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_FunnyName_25__2e_N_21__2e__2f_t);
+  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Unused_25__2e_Not);
   FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Poly_25__2e_Nothing);
   FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_True);
   FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_False);
