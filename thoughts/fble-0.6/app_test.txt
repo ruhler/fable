@@ -1,0 +1,112 @@
+
+* Fix issue with opengl with dummy driver.
+
+Let's remind myself of what the original goal was and what the problem was.
+
+Original goal: be able to test that an app like fble-invaders doesn't crash
+when you launch it without having to open a window.
+
+I don't remember what specific code coverage I was trying to get with this. If
+you aren't interacting with the app, what's the point? How will the app end?
+
+Here's the code I had:
+
+    # TODO: This test fails, maybe because --driver dummy never supported GL?
+    # test $::b/pkgs/invaders/fble-invaders.tr \
+    #   "$::b/pkgs/invaders/fble-invaders" \
+    #   "$::b/pkgs/invaders/fble-invaders --driver dummy --profile $::b/pkgs/invaders/fble-invaders.prof -- --test"
+
+So there must have been an option to fble-invaders to do some test stuff and
+then exit. That's vaguely reasonable.
+
+How did it work though? Or how didn't it? What was the bug I ran into?
+
+I had added code:
+
+  if (window == NULL) {
+    fprintf(stderr, "Unable to create window: %s\n", SDL_GetError());
+    FbleFreeValueHeap(heap);
+    FbleFreeProfile(profile);
+    return FbleCliMainOtherStatus(FBLE_MAIN_OTHER_ERROR);
+  }
+
+So window must have been returned as NULL. Before that, maybe everything just
+silently failed? I can try recreating that scenario.
+
+Anyway, the code I'm trying to test here is not the .fble code. I can do that
+with fble tests. I'm trying to test the type of the main function passed and
+logic in app.c to interact with the app.
+
+I see two approaches to take here:
+1. Remove --driver, since it's not useful for anything. Give up on having a
+way to test the integration of an app with fble-app.
+
+2. Restructure fble-app to add a --test mode, or write a library to add a test
+mode that abstracts out the back end and let's you switch between SDL and its
+own TEST backend. Maybe the TEST backend lets you drive events manually. Write
+it so we share as much code as we can between the real app and the test
+driver. Maybe the test driver is a library you can instantiate to write C
+based unit tests for your app.
+
+But why does (2) really matter? We aren't testing the app. You can already do
+that in fble. We are testing the type of the app and the app.c code. I
+shouldn't need to give all apps a way to do that? Or: all apps should be able
+to test the type of their app somehow, but only app.c needs to test itself.
+
+---
+
+Let's consider what code I'm trying to get coverage for:
+1. The small bit of .fble code between what we can test in pure fble and the
+   interface to fble-app. e.g. /Invaders/AppIO%.Main function.
+ * In particular concern about forgetting to update every app if I change the
+   type of the Main@ function.
+ * This testing would need to be done per app.
+ * Having a way to type check as part of compiling to an fble-app binary would
+   cover the type part, but not any other wrapper logic.
+2. The part of app.c that interacts with the app.
+ * Only needs to be tested with a single app to make sure it works for all.
+3. The part of app.c that interacts with SDL.
+ * Needs SDL, but not necessarily graphics?
+4. The part that connects up to the user.
+ * Needs video, keyboard input, mouse input, etc.
+
+I can test (2), (3), (4) in a manual way to day by manually running the demo
+app. I can test (1) manually by manually running each specific app.
+
+I can't test each app in a generic way beyond checking for their type. If I
+really want to test each app, I need a way to simulate input and output and
+validate that. So maybe I have some way to feed input into fble-app and record
+a video output and compare that video output to what I expect.
+
+I could write a specific test app and try to cover (2) and (3) by having it
+draw some stuff and request some tick events. It's only limited coverage
+though: we don't test the different input events.
+
+So you see, it's all pretty scattered.
+
+Brainstorm of concrete things I could do:
+1. Add option at compile time to enforce main module type.
+  e.g. fblemain $target.o $::b/bin/fble-compile "--main FbleAppMain -t /App/Native/Type% -m $path"
+  Not sure how to do the same for raw use of fble-app in a generic way. Like a
+  way to hard code inside fble-app binary the expected path for -t.
+2. Remove --driver option to fble-app.
+  This should be done regardless I vote. It's just a question of what to
+  replace it with.
+3. Implement an --test option to fble-app
+  - That skips use of video
+  - That maybe allows sending inputs and getting outputs for followup
+    assertion.
+4. Write a test app for fble-app that draws some stuff and does some tick
+  events.
+
+I want to play around more with (3). That kind of wants a (4) to start.
+
+Let me write a simple app for (4). Have it draw something, run for, say 5
+seconds, draw something else, then exit.
+
+Then see if I can make it run via a --test option to fble-app that initializes
+and uses SDL, but skips initialization of the window. Surely we can do
+offscreen rendering somehow?
+
+Then decide if any of that's useful and what next steps are.
+

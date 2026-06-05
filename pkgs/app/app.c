@@ -44,7 +44,6 @@
 
 typedef struct {
   bool fps;
-  const char* driver;
 } Args;
 
 static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error);
@@ -84,7 +83,6 @@ static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
 {
   Args* args = (Args*)dest;
   if (FbleParseBoolArg("--fps", &args->fps, argc, argv, error)) return true;
-  if (FbleParseStringArg("--driver", &args->driver, argc, argv, error)) return true;
 
   return false;
 }
@@ -452,7 +450,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   (void)(FbleIntValueAccess);
   (void)(FbleStringValueAccess);
 
-  Args app_args = { .fps = false, .driver = NULL };
+  Args app_args = { .fps = false };
 
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
@@ -471,11 +469,6 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return FbleCliMainOtherStatus(status);
-  }
-
-  if (app_args.driver != NULL) {
-    SDL_setenv("SDL_VIDEODRIVER", app_args.driver, 1);
-    SDL_setenv("SDL_VIDEO_DRIVER", app_args.driver, 1);
   }
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {

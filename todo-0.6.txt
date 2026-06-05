@@ -5,8 +5,6 @@ Things to consider doing for the fble-0.6 release.
 * Why does LFSR seem to do so poorly with snake?
  - Is something broken? Or we're just unlucky?
 
-* Test for code coverage, given recent changes.
-
 Standard Library:
 * Break dependency of /Std/Map% on /Std/List%?
   By moving the Entries function somewhere else?
@@ -27,6 +25,8 @@ Tutorials:
 * Move function bind syntax to Functions tutorial.
 * Remove kinds from let expressions in all the examples in the spec and
   tutorials and everywhere for the new syntax.
+* Update references to /Core/Int in tutorials.
+* Update references to /Core/List in tutorials.
 
 Other:
 * Why is fbld outputting errors in reverse order?
@@ -127,9 +127,6 @@ Other:
 * Should I add @example as a doc comment field? Seems useful?
 * Reorder arguments in body function passed to ForEach?
 
-* Update references to /Core/Int in tutorials.
-* Update references to /Core/List in tutorials.
-
 * Clarify in spec whether poly apply to an undefined value results in an error
   or not.
   And add spec tests for that case.
@@ -170,3 +167,5 @@ Other:
  - Compiled gives link time error not an any particular line number.
  - We would need some extra spec infra support to describe this.
  - Add spec test for Foreign value not found in interpreted case.
+
+* Test for code coverage, given recent changes.

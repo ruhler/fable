@@ -1920,3 +1920,59 @@ say we only search union type subfields of union types too. Simple.
 Consistent. Okay?
 
 Let's clarify in the spec and fix my spec test.
+
+---
+
+An interesting thought about literals: can we generalize to any data type,
+rather than assume list?
+
+If you think about it, a list is a struct type. What if we could do any struct
+type as a literal? Is there a reasonable way to make sense of it?
+
+I think there is, but I don't know that it gets me where I want to be.
+
+Let's say we have a word we want to turn into some data type Foo@. We say Foo@
+can be any pure data type, that is, a mix of struct and union types. Our goal
+is to match the word using our type. If we had some rule for generating a word
+from a type, we could do that kind of search.
+
+For example, we would conceptually want to have a function that consumes the
+prefix of a word into a type. How would that work?
+
+Top level:
+  Match the value. If there is anything left over in the word, then we fail.
+
+Struct:
+  Match the first field, then the second, then the third, etc.
+  If any of the fields fail, then we fail.
+
+Union:
+  This is the fun one.
+
+Union is choice. Naively what I would do is find whichever field name comes
+next in the literal word and use that to chose. Then parse the remainder from
+there. If no matching field, then we fail.
+
+But, as I said, that doesn't get me where I really want to be. For example, to
+represent a string 'ABC' as a list of Enum@ with fields A, B, and C, I would
+need to write:
+
+  Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
+  List@ = +(*(Enum@ head, List@ tail) items, Unit@ empty);
+
+  'itemsAitemsBitemsCempty'
+
+But I don't want to have to say 'items' or 'empty'. I want that to be
+implicit.
+
+How can we tell that 'items' versus 'empty' should be implicit, but 'A' versus
+'B' versus 'C' should be explicit? Well, they have different types. If we try
+to match 'empty' prematurely, we would fail to match the literal. It's like we
+could maybe auto-infer 'items' and 'empty', but we can't auto infer 'A', 'B',
+'C'. But implicit matching is going to be a problem. What if I want to write
+out the actual string 'items are good'? It has to be clear if 'items' is a
+single tag or a sequence of 'i', 't', 'e', ...
+
+Anyway, something to maybe think about and consider. On the other hand, you
+could say a literal should just be a raw data type, like String@ to start
+from, and then we can write whatever parsing code we want in fble directly.
