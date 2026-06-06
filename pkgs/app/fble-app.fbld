@@ -12,8 +12,8 @@
   @StandardMainOptions
 
   @subsection Other Options
-   @opt[@l[--driver] @a[DRIVER]]
-   @ run using the given SDL video driver
+   @opt[@l[--no-video]]
+   @ disable video output, typically for testing purposes
    @opt[@l[--fps]] reports frames per second histogram when done
    @opt[@l[--]] indicates end of options
  

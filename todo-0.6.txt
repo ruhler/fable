@@ -84,11 +84,6 @@ Other:
  - See /SpecTests/6.4-TypeInference/Regression/Getline%
  - /Std/Stream% is probably the relevant module now.
 
-* Fix issue with opengl with dummy driver.
- - Remove broken --driver dummy option to FbleAppMain?
- - See since removed commented out code in pkgs/invaders/build.tcl
- - Or just remove --driver option entirely if it isn't going to work?
-
 * Think about api to break out of a ForEach loop mid way through.
  - Because this comes up a lot, and I tend to just write 'TODO' in my code
    where I should probably implement a proper interface.

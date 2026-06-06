@@ -154,3 +154,16 @@ changes and see what I can make of them?
 
 Wow. It's very simple. Replace create window with NULL, and it basically does
 exactly what I want. Cool. Let's go with that then.
+
+---
+
+Too bad I don't get keyboard events going in in no-video mode. Maybe leave
+that as future work if desired.
+
+Seems like you need the video driver set up to read events. Should I try
+setting up a dummy driver if the user passes --no-video? That way we could get
+key events at least? Or does that not make much sense?
+
+Oh. You know what will happen. I'll get an error about the gl context. Let's
+not worry about it for now. It doesn't make sense to want to send key input
+without video enabled anyway.

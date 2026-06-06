@@ -565,7 +565,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     fprintf(stderr, "FPS Histogram:\n");
     for (size_t i = 0; i < 61; ++i) {
       if (app.fpsHistogram[i] > 0) {
-        printf("  % 3zi: % 12i\n", i, app.fpsHistogram[i]);
+        fprintf(stderr, "  % 3zi: % 12i\n", i, app.fpsHistogram[i]);
       }
     }
   }
