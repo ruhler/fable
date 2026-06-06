@@ -167,3 +167,107 @@ key events at least? Or does that not make much sense?
 Oh. You know what will happen. I'll get an error about the gl context. Let's
 not worry about it for now. It doesn't make sense to want to send key input
 without video enabled anyway.
+
+---
+
+While on this topic, let's see what I can do about:
+
+* fble-app capture input so we don't see a bunch of it on the console after
+  the game is done?
+
+In theory it's supposed to work, looking at the sdl source code. Some
+conditions must be failing.
+
+Actually it does work fine, but not if I'm running screen. Interesting. Is
+screen capturing the input somehow first? Or screen causes the keyboard muting
+to be disabled? Or the muting method needs to be different in this case?
+
+Sigh. It's not surprising that screen does funny stuff. It's not surprising
+that sdl doesn't handle the case of running under screen in the linux console.
+I shouldn't have to do special stuff in app.c to address this case.
+
+Can I leave SDL out of it and experiment myself with changing muting?
+
+For example, manually call the equivalent of:
+
+  ioctl(state->console_fd, KDSKBMODE, K_OFF);
+
+See if I can reproduce the behavior that it stops echoing of keyboard only
+when not running under screen.
+
+Maybe via: linux/keyboard.h? No. linux/kd.h
+
+  console_fd = open("/dev/tty", O_RDONLY | O_CLOEXEC);
+
+Let me try it.
+
+Note to self: Don't turn off the keyboard when the only way you have to turn
+the keyboard back on requires using the keyboard.
+
+I can replicate the behavior. My guess is the ioctl to turn off the keyboard
+doesn't work under screen.
+
+Yup. We get: 'Inappropriate ioctl for device'.
+
+Because /dev/tty is not the keyboard device.
+
+Now it all becomes clear. SDL is using the linux console driver, but /dev/tty
+isn't pointing to the console under screen, so the ioctls to control it don't
+work.
+
+Something else works though. How does SDL know to use the console driver, and
+how is it getting input and stuff like that? Especially if the keyboard is
+off?
+
+Under screen, tty says '/dev/pts/<n>'
+
+Without screen, tty says: '/dev/tty1'
+
+I suppose the question is: could I use /dev/console or /dev/tty1 or something
+other than /dev/tty to make the key off stuff work while under screen? Mostly
+just out of curiosity, because it's not like I can change SDL.
+
+/dev/console doesn't work either way.
+/dev/tty1 works without screen, gives 'Operation not permitted' with screen.
+
+It's kind of feeling like the answer is to just deal with the fact that K_OFF
+isn't going to work when running apps under screen.
+
+Even if I could do something to detect if I'm running under screen and stop
+echoing characters, it doesn't make sense to do in general. Normally the
+terminal and the window are two different apps. If you are typing into the
+terminal, you want it to be echoing there (and not going to the app,
+presumably).
+
+If I really care for myself, I can redirect that echoed output to /dev/null?
+
+No. That doesn't help.
+
+Maybe: stty -echo ; ... ; stty echo
+
+That oddly gets rid of the garbage from the arrow keys, but not spaces or q
+characters.
+
+Oh well. I spent enough time looking into this. I don't see an easy solution.
+It's a rare case (linux console + screen + sdl), and it doesn't cause that
+much harm to me to see the output on my console.
+
+I suppose I could add an option to fble-app to no-echo specifically for my
+case?
+
+Sure, let's at least figure out how to implement that, even if we don't go
+with it. Try via termios.
+
+Apparently it's in posix. Not sure if it will work on windows. But then, it's
+not needed on windows, right?
+
+  #include <termios.h>
+  #include <unistd.h>
+
+  struct termios attr;
+  tcgetattr(STDIN_FILENO, &attr);
+
+  attr.c_lflag ^= ECHO;
+  tcsetattr(STDIN_FILENO, TCSANOW, &attr);
+
+I say, not worth the effort.

@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Add -t option to compiler to pass expected type of main
+ - Use it in fble-cli and fble-app for better type checking.
+
 * Why does LFSR seem to do so poorly with snake?
  - Is something broken? Or we're just unlucky?
 
@@ -55,12 +58,6 @@ Other:
 
 * Debug jank issues in fble-invaders?
   --fps shows a few slow frames.
-
-* fble-app capture input so we don't see a bunch of it on the console after
-  the game is done?
-  - Quick search on the internet didn't bring anything obvious up.
-  - This would be bad for a password protected field, for example...
-  - Maybe use termios to turn off echoing?
 
 * Double check benchmark deadlock conditions
   - for example, for snake, now that we changed the random number generator
