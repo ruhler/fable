@@ -54,5 +54,13 @@ namespace eval "pkgs/app" {
       fblemain $target.o $::b/bin/fble-compile "--main FbleAppMain -m $path"
       bin $target $objs $nlibs "$::config::sdl_libs $::config::gl_libs"
     }
+
+    # /App/Test% compiled test.
+    app $::b/pkgs/app/fble-app-test "/App/Test%" ""
+    test $::b/pkgs/app/fble-app-test.out \
+      $::b/pkgs/app/fble-app-test \
+      "$::b/pkgs/app/fble-app-test --no-video -- > $::b/pkgs/app/fble-app-test.out"
+    test $::b/pkgs/app/fble-app-test.tr $::b/pkgs/app/fble-app-test.out \
+      "grep done $::b/pkgs/app/fble-app-test.out"
   }
 }

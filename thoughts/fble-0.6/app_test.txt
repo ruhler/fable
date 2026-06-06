@@ -110,3 +110,47 @@ offscreen rendering somehow?
 
 Then decide if any of that's useful and what next steps are.
 
+(4) was easy enough. Let's play with (3).
+
+The idea / question is: can I skip video initialization, but keep timer and
+other code, and have it run through?
+
+* I removed SDL_INIT_VIDEO from SDL_Init, but it still initialized and used
+  video. I don't understand. Is video not needed? Is it initialized somewhere
+  else along the way? Ah, yes. The call to SDL_CreateWindow initializes video
+  automatically.
+
+Things to explore:
+* Can I create a window other than via video? Like SDL_CreateWindowFrom*?
+* Can I create a GL context some other way? I assume no...
+* What if I don't create a gl context. Do the gl functions still work?
+
+I'm skeptical. 
+
+---
+
+Here's what I think I should do:
+1. Add -t option to FbleMain. You pass a module path. It finds a .fble.@ (or
+.fble) file to use to check the type of the main function.
+ - Pass the expected path for fble-app and fble-cli at compile time.
+ - Pass a default path at runtime for the app if using interpreted mode, but
+   allow the user to override it to whatever they put for -m for the rare case
+   where they are doing interpreted code without depending on the library the
+   binary was compiled for.
+ This is a step forward for solving our typing issue. Should make it a lot
+ harder to run a module of the wrong type in fble-cli or fble-app.
+
+2. Add a no-video option to fble-app, run my newly created test app as a test
+case with no-video. Try to have no-video exercise as much of the code as
+reasonable without video.
+ This way I have some coverage of fble-app at least.
+
+Continuing on with options for (2), let's see what happens if I don't create
+any gl context at all or if I use SDL_CreateWindowFrom*.
+
+It actually works fine to use a NULL window. I just need to initialize EVENTS
+explicitly if I don't do it via video. Interesting. Shall I clean up my
+changes and see what I can make of them?
+
+Wow. It's very simple. Replace create window with NULL, and it basically does
+exactly what I want. Cool. Let's go with that then.

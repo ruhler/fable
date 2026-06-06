@@ -1,0 +1,65 @@
+
+Char@ .= /Std/Char%;
+StringE .= /Std/Char/Ascii/Stream%;
+Int@, Neg, Sub .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Io@ .= /Std/Io%;
+Success .= /Std/Io/Cli%;
+List@ .= /Std/List%;
+Monad@ .= /Std/Monad%;
+Out@ .= /Std/Stream/Io%;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
+
+App@, Event@, Effect@ .= /App/App%;
+Drawing@, Color, Drawings, Rect, Triangle, Affine .= /App/Drawing%;
+Main@ .= /App/Native%;
+
+# Test app to draw some things to the screen and wait for some tick callbacks.
+# To try and get at least a little code coverage for the fble-app
+# implementation.
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ _width, Int@ height, List@<String@> _args) {
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+
+  M@<Event@> FilterEvent = {
+    Event@ e := m.do(app.event);
+    e.?(tick: m.return(e));
+    FilterEvent;
+  };
+
+  Drawing@ a = Drawings[
+    Rect(Int|0, Int|0, Int|100, Int|100, Color.Black),
+    Rect(Int|10, Int|10, Int|90, Int|90, Color.Blue),
+    Triangle(
+      @(x: Int|50, y: Int|20),
+      @(x: Int|80, y: Int|40),
+      @(x: Int|40, y: Int|60), Color.Green)
+  ];
+
+  Drawing@ b = Affine(
+    @(x: Int|2, y: Neg(Int|3)),
+    @(x: Int|10, y: Sub(height, Int|10)), a);
+
+  Unit@ _ := m.do(out(StringE|'drawing a...\n'));
+  Unit@ _ := m.do(app.effect(Effect@(draw: a)));
+
+  Unit@ _ := m.do(out(StringE|'requesting tick...\n'));
+  Unit@ _ := m.do(app.effect(Effect@(tick: Int|2000)));
+
+  Unit@ _ := m.do(out(StringE|'waiting for tick...\n'));
+  Event@ _ := m.do(FilterEvent);
+
+  Unit@ _ := m.do(out(StringE|'drawing b...\n'));
+  Unit@ _ := m.do(app.effect(Effect@(draw: b)));
+
+  Unit@ _ := m.do(out(StringE|'requesting tick...\n'));
+  Unit@ _ := m.do(app.effect(Effect@(tick: Int|2000)));
+
+  Unit@ _ := m.do(out(StringE|'waiting for tick...\n'));
+  Event@ _ := m.do(FilterEvent);
+
+  Unit@ _ := m.do(out(StringE|'done\n'));
+  m.return(Success);
+};
+
+Main;

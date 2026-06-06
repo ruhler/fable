@@ -44,6 +44,7 @@
 
 typedef struct {
   bool fps;
+  bool no_video;
 } Args;
 
 static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error);
@@ -83,6 +84,7 @@ static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
 {
   Args* args = (Args*)dest;
   if (FbleParseBoolArg("--fps", &args->fps, argc, argv, error)) return true;
+  if (FbleParseBoolArg("--no-video", &args->no_video, argc, argv, error)) return true;
 
   return false;
 }
@@ -450,7 +452,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   (void)(FbleIntValueAccess);
   (void)(FbleStringValueAccess);
 
-  Args app_args = { .fps = false };
+  Args app_args = { .fps = false, .no_video = false };
 
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
@@ -465,34 +467,36 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleMainStatus status = FbleMain(&ParseArg, &app_args, "fble-app", fbldUsageHelpText,
       &argc, &argv, preloaded, heap, profile, &profile_output_file, &profile_sample_period, &func);
 
+  bool video = !app_args.no_video;
+
   if (func == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return FbleCliMainOtherStatus(status);
   }
 
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
+  // Note: video will be initialized later only if requested.
+  if (SDL_Init(SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0) {
     fprintf(stderr, "Unable to initialize SDL: %s\n", SDL_GetError());
-
-    fprintf(stderr, "Driver options:\n");
-    int num_drivers = SDL_GetNumVideoDrivers();
-    for (int i = 0; i < num_drivers; ++i) {
-      fprintf(stderr, "%i: %s\n", i, SDL_GetVideoDriver(i));
-    }
-
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return FbleCliMainOtherStatus(FBLE_MAIN_OTHER_ERROR);
   }
 
-  SDL_Window* window = SDL_CreateWindow(
-      "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480,
-      SDL_WINDOW_OPENGL);
-  if (window == NULL) {
-    fprintf(stderr, "Unable to create window: %s\n", SDL_GetError());
-    FbleFreeValueHeap(heap);
-    FbleFreeProfile(profile);
-    return FbleCliMainOtherStatus(FBLE_MAIN_OTHER_ERROR);
+  int width = 640;
+  int height = 480;
+
+  SDL_Window* window = NULL;
+  if (video) {
+    window = SDL_CreateWindow(
+        "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height,
+        SDL_WINDOW_OPENGL);
+    if (window == NULL) {
+      fprintf(stderr, "Unable to create window: %s\n", SDL_GetError());
+      FbleFreeValueHeap(heap);
+      FbleFreeProfile(profile);
+      return FbleCliMainOtherStatus(FBLE_MAIN_OTHER_ERROR);
+    }
   }
 
   SDL_SetWindowResizable(window, true);
@@ -500,8 +504,6 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   SDL_GL_SetSwapInterval(1);
   SDL_ShowCursor(SDL_DISABLE);
 
-  int width = 0;
-  int height = 0;
   SDL_GetWindowSize(window, &width, &height);
 
   glShadeModel(GL_FLAT);
