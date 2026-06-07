@@ -2,11 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Add -t option to compiler to pass expected type of main
- - Use it in fble-cli and fble-app for better type checking.
-
-* Why does LFSR seem to do so poorly with snake?
- - Is something broken? Or we're just unlucky?
+* Double check benchmark deadlock conditions
+  - for example, for snake, now that we changed the random number generator
+    used.
 
 Standard Library:
 * Break dependency of /Std/Map% on /Std/List%?
@@ -59,10 +57,6 @@ Other:
 * Debug jank issues in fble-invaders?
   --fps shows a few slow frames.
 
-* Double check benchmark deadlock conditions
-  - for example, for snake, now that we changed the random number generator
-    used.
-
 * Write a script to help find unused modules?
  - Because I suspect I have some unused modules in my packages...
 
@@ -96,6 +90,8 @@ Other:
 
 * Figure out why we see the same errors reported many times when we build.
  - And fix it.
+* Add -t option to compiler to pass expected type of main
+ - Use it in fble-cli and fble-app for better type checking.
 
 * Double check @module[...] values are correct in /Std/...*.fble files.
 
@@ -104,7 +100,6 @@ Other:
 * Update tutorials for string literals: Foo(Str|...) now instead of Foo|...;
 * Update tutorials for character library.
 * Update tutorials for use of Concat instead of Strs.
-
 
 * Figure out how to properly document List@ type
  - Mix of poly, struct, and union all in one.

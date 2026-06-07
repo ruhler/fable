@@ -15,7 +15,6 @@ QR@, Div .= /Std/Int/Div%;
 Int .= /Std/Int/Lit%;
 IsZero .= /Std/Int/Sign%;
 List@, List, Items, Empty, Append .= /Std/List%;
-Drop .= /Std/List/Index%;
 Prng@ .= /Std/Random/Prng%;
 Unit@ .= /Std/Unit%;
 
@@ -27,6 +26,16 @@ Prod = (List@<Bool@> a, List@<Bool@> b) {
 
   List@<Bool@> tail = Prod(a.items.tail, b.items.tail);
   Items(And(a.items.head, b.items.head), tail);
+};
+
+# Xors --
+#   Compute element wise XOR of bits in the given lists.
+(List@<Bool@>, List@<Bool@>) { List@<Bool@>; }
+Xors = (List@<Bool@> a, List@<Bool@> b) {
+  a.?(empty: a);
+
+  List@<Bool@> tail = Xors(a.items.tail, b.items.tail);
+  Items(Xor(a.items.head, b.items.head), tail);
 };
 
 # Sum --
@@ -65,6 +74,15 @@ IntToBits = (Int@ n, Int@ x) {
   Items(bit, IntToBits(Decr(n), qr.q));
 };
 
+# Make sure there is at least one bit set, otherwise the LFSR won't work.
+(List@<Bool@>) { List@<Bool@>; }
+Sanitize = (List@<Bool@> state) {
+  /Std/List/Search%.Any(state, (Bool@ bit) { bit; }).?(false: {
+    Items(True, state.items.tail);
+  });
+  state;
+};
+
 # func[Lfsr] Generic implementation of a linear feedback shift register.
 #  @arg[Coeffs@][coeffs] The coefficients to use.
 #  @returns[Prng@<S@>]
@@ -81,18 +99,12 @@ IntToBits = (Int@ n, Int@ x) {
   };
 
   (Int@) { S@; } seed = (Int@ x) {
-    S@ bits = IntToBits(len, x);
-
-    # Make sure there is at least one bit set, otherwise the LFSR won't work.
-    /Std/List/Search%.Any(bits, (Bool@ bit) { bit; }).?(false: {
-      Items(True, bits.items.tail);
-    });
-    bits;
+    Sanitize(IntToBits(len, x));
   };
 
-  (Int@, Int@, S@) { S@; } feed = (Int@ n, Int@ x, S@ s) {
-    List@<Bool@> bits = IntToBits(n, x);
-    Drop(Append(s, bits), n);
+  (Int@, Int@, S@) { S@; } feed = (Int@ _n, Int@ x, S@ s) {
+    List@<Bool@> bits = IntToBits(len, x);
+    next(Sanitize(Xors(bits, s)));
   };
 
   @(S@, next, n, bits, seed, feed);

@@ -96,3 +96,31 @@ Also: we don't want to rely on the precompiled code for type checking, because
 I want to be able to compile a module without having access to the precompiled
 code it depends on to run. That's only doable through separate type
 specification, aka separate .fble.@ file.
+
+---
+
+Another use case to keep in mind here:
+
+* Add -t option to compiler to pass expected type of main
+ - Use it in fble-cli and fble-app for better type checking.
+
+Seems relevant, especially because I was thinking about adding a separate
+--typecheck compilation mode to fble-compile to support it, with the biggest
+annoyance being having to redo typechecking of the module that we've probably
+already done elsewhere.
+
+Assuming we already have .fble.@ files for everything, I could say:
+* Add a --typecheck option to fble-compile, or an fble-typecheck command, that
+  takes two module paths and verifies they have the same type, according to
+  their .fble.@ files.
+ - Maybe take an arbitrary list of them? Type check and generate the .fble.@
+   file if needed?
+ - Or have a special types equal kind of command for this very special use
+   case?
+
+For the interpreted load use case, I guess this doesn't help?
+
+Or maybe I can save the type checksum for the expected type of the module,
+load the .fble.@ for the module I'm loading, and validate its checksum, just
+like we would validate checksums in general for dependencies on other modules
+at link time?

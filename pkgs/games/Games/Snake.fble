@@ -26,7 +26,7 @@ Int@ MinCol = Int|0;    # Inclusive. This is a legal col.
 Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 
 # The pseudo random number generator we are using.
-Prng = /Std/Random/Lcg%.Rand48;
+Prng = /Std/Random/Lfsr%.Lfsr8;
 M@, M(.Monad), Rng .= /Std/Random/Prng/Pure%.Pure(Prng);
 
 Pos@ = *(Int@ row, Int@ col);

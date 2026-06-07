@@ -13,9 +13,10 @@ Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
 Unit@ .= /Std/Unit%;
 
+S@ = List@<Bool@>;
 Bit@ = +(Unit@ 0, Unit@ 1);
 
-(List@<Bit@>) { List@<Bool@>; }
+(List@<Bit@>) { S@; }
 S = (List@<Bit@> xs) {
   Bit@ bit := /Std/List%.Map(xs);
   bit.?(0: False, 1: True);
@@ -36,8 +37,8 @@ Test@ Tests = TestSuite|Lfsr[
     Test|0({
       # Make sure the LFSR works with a seed of zero.
       Unit@ _ := Lazy;
-      List@<Bool@> seeded = Lfsr3.seed(Int|0);
-      List@<Bool@> next = Lfsr3.next(seeded);
+      S@ seeded = Lfsr3.seed(Int|0);
+      S@ next = Lfsr3.next(seeded);
       AssertNotEquals(
         /Std/List/Eq%.Eq(/Std/Bool/Eq%.Eq),
         /Std/List/Show%.Show(/Std/Bool/Show%.Show), seeded, next);
@@ -46,13 +47,28 @@ Test@ Tests = TestSuite|Lfsr[
     Test|'-1'({
       # Make sure the LFSR works with a seed of -1.
       Unit@ _ := Lazy;
-      List@<Bool@> seeded = Lfsr3.seed(Neg(Int|1));
-      List@<Bool@> next = Lfsr3.next(seeded);
+      S@ seeded = Lfsr3.seed(Neg(Int|1));
+      S@ next = Lfsr3.next(seeded);
       AssertNotEquals(
         /Std/List/Eq%.Eq(/Std/Bool/Eq%.Eq),
         /Std/List/Show%.Show(/Std/Bool/Show%.Show), seeded, next);
     })
-  ]
+  ],
+
+  Test|Feed({
+    # Regression test for a case where feeding overwrote the bits of the LFSR
+    # without accounting for the existing bits, thus losing all the randomness
+    # involved.
+    Unit@ _ := Lazy;
+    S@ seeded = Lfsr3.seed(Int|0);
+    S@ a = Lfsr3.feed(Int|4, Int|0, seeded);
+    S@ b = Lfsr3.feed(Int|4, Int|0, a);
+    AssertNotEquals(
+        /Std/List/Eq%.Eq(/Std/Bool/Eq%.Eq),
+        /Std/List/Show%.Show(/Std/Bool/Show%.Show),
+        a, b);
+  })
+
 ];
 
 @(Tests);

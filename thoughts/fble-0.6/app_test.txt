@@ -271,3 +271,45 @@ not needed on windows, right?
   tcsetattr(STDIN_FILENO, TCSANOW, &attr);
 
 I say, not worth the effort.
+
+---
+
+* Add -t option to compiler to pass expected type of main
+
+Remember why: so I can specify the type as part of the build command,
+independent of the main module. That's why we can't just ask the user to add
+to their main program:
+
+ Foo@ x = ...;
+ x;
+
+I think this should be straight forward, if slightly tedious to wire things
+through.
+
+Reviewing how I would add it, starting with fble-compile, which presumably is
+the easier case?
+
+* FbleLoadForModuleCompilation should take an extra argument?
+* FbleCompileModule should take an extra argument?
+ - Or do we put the type in the loaded program?
+
+Okay, so it's going to be slightly more involved to update the APIs to support
+this. We'll want to support it as part of FbleCompileModule and
+FbleCompileProgram?
+
+Or... should we just add a separate compilation mode? --typecheck? Because I
+would normally only want this when using the --main option to fble-compile
+otherwise.
+
+But it's a bit sad to have to reload the entire module, yet again, just to
+type check it.
+
+How does the interpreter path look?
+
+It uses FbleLoadForExecution, followed by FbleCompileProgram. Same kind of
+structure as fble-compile, only different function to load the program in the
+first place.
+
+Perhaps we should defer this discussion until after spending a little more
+time thinking about how to do true modular compilation.
+

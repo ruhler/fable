@@ -1329,3 +1329,40 @@ Done.
 
 I still need to migrate over the test cases, but for now let's tentatively
 mark standardization of random number generation done.
+
+---
+
+* Why does LFSR seem to do so poorly with snake?
+ - Is something broken? Or we're just unlucky?
+
+I've double checked the taps match the wikipedia page.
+
+Let me put some debug printing in that prints the calculation of the position
+for the next food based on whatever random number it gets? See if there are
+any hints there.
+
+Well, it's pretty obvious something is wrong:
+
+00010101: (20,38)
+11111111: (0,17)
+01010101: (10,2)
+00000000: (0,0)
+10101010: (20,5)
+00000000: (0,0)
+10101010: (20,5)
+00000000: (0,0)
+...
+
+We're not supposed to have 11111111 as a state.
+
+I bet it's a bug in 'feed' that causes it to get into an invalid state.
+
+In fact, if I'm just feeding in known bits, and I feed in enough bits to wipe
+out all the randomness, what good is that? Is that what's happening?
+
+Yes. What I need to do is shift in the random bits, not replace the random
+bits. So, for example, take the XOR of the bits to feed with the state of the
+LFSR, but also make sure we are avoiding the bad state?
+
+I should add a test for this case. Feed in 4 1 bits, get the state, feed in 4
+more 1 bits, get the state, make sure the state isn't the same.
