@@ -2,6 +2,20 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Debug jank issues in fble-invaders?
+  --fps shows a few slow frames.
+
+* Why is fbld outputting errors in reverse order?
+ - I'm not sure how to reproduce multiple errors at once though.
+
+* Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
+
+* Why don't interpreted cli tests output when running them during build?
+ - I have to go to the generated file to see the outputs?
+ - Because we generate the output first, then interpret as a test output.
+   It's slightly awkward to get the dependencies passed directly to the 
+   testsuite helper?
+
 Standard Library:
 * Break dependency of /Std/Map% on /Std/List%?
   By moving the Entries function somewhere else?
@@ -26,8 +40,6 @@ Tutorials:
 * Update references to /Core/List in tutorials.
 
 Other:
-* Why is fbld outputting errors in reverse order?
- - I'm not sure how to reproduce multiple errors at once though.
 
 * Update all the sample apps for latest features, styles, idioms.
 
@@ -38,20 +50,8 @@ Other:
   Consider rewriting it to be an explanation for how to use the functions
   instead of a description of what they are.
 
-* Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
-
 * See if there is more opportunity to typecheck more stuff before erroring
   out?
-
-* Why don't interpreted cli tests output when running them during build?
- - I have to go to the generated file to see the outputs?
- - Because we generate the output first, then interpret as a test output.
-   It's slightly awkward to get the dependencies passed directly to the 
-   testsuite helper?
-
-
-* Debug jank issues in fble-invaders?
-  --fps shows a few slow frames.
 
 * Write a script to help find unused modules?
  - Because I suspect I have some unused modules in my packages...

@@ -43,27 +43,58 @@
 #define BOOL_TAGWIDTH 1
 
 typedef struct {
-  bool fps;
+  bool jank_stats;
+  bool jank_display;
   bool no_video;
 } Args;
 
 static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error);
 
 /**
+ * @struct[CountV] Vector of size_t
+ *  @field[size_t][size] Number of elements.
+ *  @field[size_t*][xs] Elements.
+ */
+typedef struct {
+  size_t size;
+  size_t* xs;
+} CountV; 
+
+/**
  * @struct[App] Application state.
+ *  We define jank as any time an app requests a tick event to happen in the
+ *  past. The duration of the jank event is how far in the past the tick event
+ *  was requested to happen.
+ *
  *  @field[SDL_Window*][window] The application window for drawing.
  *  @field[Uint32][time] The application time based on effect ticks.
- *  @field[int*][fpsHistogram]
- *   The value at index i is the count of samples with i frames per second.
- *   Anything above 60 FPS is counted towards i = 60.
+ *  @field[size_t][ticks] Stats tracking the total number of ticks done.
+ *  @field[CountV][janks]
+ *   The value at index i is the count of janks of duration between 
+ *   2^i and 2^(i+1) milliseconds. Expanded as needed.
+ *  @field[size_t][jank_count] The number of jank occurences.
+ *  @field[Uint32][jank_total] The sum of all jank durations.
+ *  @field[Uint32][jank_max] The max value of all jank durations.
+ *  @field[Uint32][jank_running]
+ *   A running decaying average tracking cost of recent jank.
+ *  @field[bool][jank_display]
+ *   If true, highlight jank on display while drawing.
  */
 typedef struct {
   SDL_Window* window;
   Uint32 time;
-  int fpsHistogram[61];
+
+  size_t ticks;
+  CountV janks;
+  size_t jank_count;
+  Uint32 jank_total;
+  Uint32 jank_max;
+  Uint32 jank_running;
+  bool jank_display;
 } App;
 
-static void Draw(int ax, int ay, int bx, int by, FbleValue* drawing);
+static void Color(App* app, float r, float g, float b);
+static void Draw(App* app, int ax, int ay, int bx, int by, FbleValue* drawing);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button);
 
@@ -83,14 +114,40 @@ static Uint32 OnTimer(Uint32 interval, void* param);
 static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
 {
   Args* args = (Args*)dest;
-  if (FbleParseBoolArg("--fps", &args->fps, argc, argv, error)) return true;
+  if (FbleParseBoolArg("--jank-stats", &args->jank_stats, argc, argv, error)) return true;
+  if (FbleParseBoolArg("--jank-display", &args->jank_display, argc, argv, error)) return true;
   if (FbleParseBoolArg("--no-video", &args->no_video, argc, argv, error)) return true;
 
   return false;
 }
 
 /**
+ * @func[Color] Set the color to draw.
+ *  Adjusts the color to show jank display if requested.
+ *  @arg[App*][app] The app context.
+ *  @arg[float][r] How much red, in [0, 1]
+ *  @arg[float][g] How much green, in [0, 1]
+ *  @arg[float][b] How much blue, in [0, 1]
+ *  @sideeffects Sets the color to use in GL rendering.
+ */
+static void Color(App* app, float r, float g, float b)
+{
+  if (app->jank_display && app->jank_running != 0) {
+    float jr = 1.0 - r;
+    float jg = 1.0 - g;
+    float jb = 1.0 - b;
+    float jw = fmin(1.0, app->jank_running / 16.0);
+    float nw = 1.0 - jw;
+    r = nw*r + jw*jr;
+    g = nw*g + jw*jg;
+    b = nw*b + jw*jb;
+  }
+  glColor3f(r, g, b);
+}
+
+/**
  * @func[Draw] Draws a drawing to the screen of type @l{/Drawing%.Drawing@}.
+ *  @arg[App*][app] The app context.
  *  @arg[int][ax, ay, bx, by]
  *   A transformation to apply to the drawing: a*p + b.
  *  @arg[FbleValue*][drawing] The drawing to draw.
@@ -99,7 +156,7 @@ static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
  *   Draws the drawing to the window. The caller must call
  *   SDL_GL_SwapWindow for the screen to actually be updated.
  */
-static void Draw(int ax, int ay, int bx, int by, FbleValue* drawing)
+static void Draw(App* app, int ax, int ay, int bx, int by, FbleValue* drawing)
 {
   switch (FbleUnionValueTag(drawing, DRAWING_TAGWIDTH)) {
     case 0: {
@@ -126,7 +183,7 @@ static void Draw(int ax, int ay, int bx, int by, FbleValue* drawing)
       int red = FbleIntValueAccess(FbleStructValueField(color, COLOR_FIELDC, 0));
       int green = FbleIntValueAccess(FbleStructValueField(color, COLOR_FIELDC, 1));
       int blue = FbleIntValueAccess(FbleStructValueField(color, COLOR_FIELDC, 2));
-      glColor3f(red/256.0, green/256.0, blue/256.0);
+      Color(app, red/256.0, green/256.0, blue/256.0);
       glBegin(GL_TRIANGLES);
       glVertex2i(x0, y0);
       glVertex2i(x1, y1);
@@ -165,7 +222,7 @@ static void Draw(int ax, int ay, int bx, int by, FbleValue* drawing)
       int red = FbleIntValueAccess(FbleStructValueField(color, COLOR_FIELDC, 0));
       int green = FbleIntValueAccess(FbleStructValueField(color, COLOR_FIELDC, 1));
       int blue = FbleIntValueAccess(FbleStructValueField(color, COLOR_FIELDC, 2));
-      glColor3f(red/256.0, green/256.0, blue/256.0);
+      Color(app, red/256.0, green/256.0, blue/256.0);
       glRecti(r.x, r.y, r.x + r.w, r.y + r.h);
       return;
     }
@@ -183,15 +240,15 @@ static void Draw(int ax, int ay, int bx, int by, FbleValue* drawing)
       int byi = FbleIntValueAccess(FbleStructValueField(b, POINT_FIELDC, 1));
 
       // a * (ai * x + bi) + b ==> (a*ai) x + (a*bi + b)
-      Draw(ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d);
+      Draw(app, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d);
       return;
     }
 
     case 4: {
       // Over.
       FbleValue* over = FbleUnionValueArg(drawing, DRAWING_TAGWIDTH);
-      Draw(ax, ay, bx, by, FbleStructValueField(over, OVER_FIELDC, 0));
-      Draw(ax, ay, bx, by, FbleStructValueField(over, OVER_FIELDC, 1));
+      Draw(app, ax, ay, bx, by, FbleStructValueField(over, OVER_FIELDC, 0));
+      Draw(app, ax, ay, bx, by, FbleStructValueField(over, OVER_FIELDC, 1));
       return;
     }
 
@@ -381,8 +438,34 @@ static FbleValue* EffectImpl(
       int tick = FbleIntValueAccess(FbleUnionValueArg(effect, EFFECT_TAGWIDTH));
 
       Uint32 now = SDL_GetTicks();
+      if (app->time == 0) {
+        app->time = now;
+      }
+
       app->time += tick;
+      app->ticks++;
+      app->jank_running /= 2;
       if (app->time < now) {
+        // Jank! Update jank stats.
+        app->jank_count++;
+        Uint32 duration = now - app->time;
+        if (duration > app->jank_max) {
+          app->jank_max = duration;
+        }
+        app->jank_total += duration;
+        app->jank_running += duration;
+        size_t bucket = 0;
+        duration /= 2;
+        while (duration > 0) {
+          bucket++;
+          duration /= 2;
+        }
+        while (app->janks.size <= bucket) {
+          FbleAppendToVector(app->janks, 0);
+        }
+        app->janks.xs[bucket]++;
+
+        // Reset app time to catch up.
         app->time = now;
       }
       SDL_AddTimer(app->time - now, OnTimer, NULL);
@@ -390,23 +473,8 @@ static FbleValue* EffectImpl(
     }
 
     case 1: {
-      Draw(1, 1, 0, 0, FbleUnionValueArg(effect, EFFECT_TAGWIDTH));
+      Draw(app, 1, 1, 0, 0, FbleUnionValueArg(effect, EFFECT_TAGWIDTH));
       SDL_GL_SwapWindow(app->window);
-
-      // Collect status on frame rate.
-      static Uint32 last = 0;
-
-      Uint32 now = SDL_GetTicks();
-      if (last == 0) {
-        last = now;
-      } else if (now > last) {
-        Uint32 fps = 1000/(now - last);
-        if (fps > 60) {
-          fps = 60;
-        }
-        app->fpsHistogram[fps]++;
-        last = now;
-      }
       break;
     }
   }
@@ -452,7 +520,11 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   (void)(FbleIntValueAccess);
   (void)(FbleStringValueAccess);
 
-  Args app_args = { .fps = false, .no_video = false };
+  Args app_args = {
+    .jank_stats = false,
+    .jank_display = false,
+    .no_video = false
+  };
 
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
@@ -539,10 +611,14 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 
   App app;
   app.window = window;
-  app.time = SDL_GetTicks();
-  for (size_t i = 0; i < 61; ++i) {
-    app.fpsHistogram[i] = 0;
-  }
+  app.time = 0;
+  app.ticks = 0;
+  FbleInitVector(app.janks);
+  app.jank_count = 0;
+  app.jank_total = 0;
+  app.jank_max = 0;
+  app.jank_running = 0;
+  app.jank_display = app_args.jank_display;
 
   FbleValue* app_value = FbleNewNativeValue(heap, &app, NULL);
   FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe, block_id + 1, &app_value);
@@ -561,14 +637,18 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 
   FbleValue* result = FbleApply(heap, func, 7, func_args, profile);
 
-  if (app_args.fps) {
-    fprintf(stderr, "FPS Histogram:\n");
-    for (size_t i = 0; i < 61; ++i) {
-      if (app.fpsHistogram[i] > 0) {
-        fprintf(stderr, "  % 3zi: % 12i\n", i, app.fpsHistogram[i]);
-      }
+  if (app_args.jank_stats) {
+    fprintf(stderr, "Jank Stats:\n");
+    fprintf(stderr, "  jank count: %zi of %zi\n", app.jank_count, app.ticks); 
+    fprintf(stderr, "  jank total: %i\n", app.jank_total);
+    fprintf(stderr, "  jank max: %i\n", app.jank_max);
+    fprintf(stderr, "  jank count by duration:\n");
+    for (size_t i = 0; i < app.janks.size; ++i) {
+      fprintf(stderr, "    2^%zi ms: % 12zi\n", i, app.janks.xs[i]);
     }
   }
+
+  FbleFreeVector(app.janks);
 
   int exit_status = FbleCliMainAppStatus(result);
 
