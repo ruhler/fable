@@ -1,41 +1,16 @@
 
 OnAscii .= /Std/Char/Ascii%;
-Int@, Decr .= /Std/Int%;
 Int .= /Std/Int/Lit%;
-IsNegative .= /Std/Int/Sign%;
-Const .= /Std/Func%;
-Lazy .= /Std/Lazy%;
-Test@, Pass .= /Std/Test%;
-Test = OnAscii(/Std/Test%.Test);
-Unit@, Unit .= /Std/Unit%;
+Test@ .= /Std/Test%;
+Unit .= /Std/Unit%;
 
-App@, Key@, Event@, Effect@ .= /App/App%;
+Key@, Event@ .= /App/App%;
+Test = OnAscii(/App/Bench%.Bench);
 
-Test@ Bench = Test|Snake({
-  Unit@ _ := Lazy;
+Event@ Quit = Event@(key_down: Key@(q: Unit));
 
-  # 1300 is around the number of iterations the Snake app runs for. Don't try
-  # to run more, otherwise we could get deadlock.
-  Int@ n = Int|1300;
-
-  Int@ w = Int|640;
-  Int@ h = Int|480;
-
-  M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<Int@>;
-
-  M@<Event@> event = {
-    Int@ n := M.do(S.get);
-    IsNegative(n).?(true: M.return(Event@(key_down: Key@(q: Unit))));
-    Unit@ _ := M.do(S.put(Decr(n)));
-    M.return(Event@(tick: Unit));
-  };
-
-  (Effect@) { M@<Unit@>; } effect = Const(M.return(Unit))<Effect@>;
-
-  App@<M@> app = App@<M@>(event, effect);
-
-  Unit@ _ = Eval(/Games/Snake%.Main(M, app, w, h), n);
-  Pass;
-});
+# Snake speed is set at about 40ms per tick. For 60 seconds of game play, we
+# expect 1500 ticks.
+Test@ Bench = Test|Snake(/Games/Snake%.Main, Quit, Int|1500);
 
 @(Bench);

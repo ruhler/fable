@@ -4,7 +4,7 @@ List .= /Std/List%;
 Monad@ .= /Std/Monad%;
 Unit@, Unit .= /Std/Unit%;
 
-App@, Event@, Effect@ .= /App/App%;
+App@, Event@, Effect@, Main@ .= /App/App%;
 Drawing@, Point@, Blank, Color, Over, Triangle, Rect,
 Affine, Drawings, Translate .= /App/Drawing%;
 
@@ -161,8 +161,7 @@ Drawing@ DrawnBall = Circle(Point@(Floor(Int|0), Floor(Int|0)), Floor(Radius), C
   World@(w.gravity, w.ball, w.edges, List[l, RightPaddle(v, r.pos)]);
 };
 
-<<@>@ M@>(Monad@<M@>, App@<M@>, Int@, Int@) { M@<Unit@>; } 
-Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   M@<Event@> GetInput = app.event;
 
   Point@ a = @(x: Floor(Int|1), y: Floor(Neg(Int|1)));

@@ -1,41 +1,15 @@
 
 OnAscii .= /Std/Char/Ascii%;
-Int@, Decr .= /Std/Int%;
-Const .= /Std/Func%;
 Int .= /Std/Int/Lit%;
-IsNegative .= /Std/Int/Sign%;
-Lazy .= /Std/Lazy%;
-Test@, Pass .= /Std/Test%;
-Test = OnAscii(/Std/Test%.Test);
-Unit@, Unit .= /Std/Unit%;
+Test@ .= /Std/Test%;
+Unit .= /Std/Unit%;
 
-App@, Key@, Event@, Effect@ .= /App/App%;
+Key@, Event@ .= /App/App%;
+Test = OnAscii(/App/Bench%.Bench);
 
-Test@ Bench = Test|GameOfLife({
-  Unit@ _ := Lazy;
+Event@ Quit = Event@(key_down: Key@(q: Unit));
 
-  # The GameOfLife App is set to run for 200 iterations. Use a little less
-  # than that for the benchmark to avoid deadlock.
-  Int@ n = Int|180;
-
-  Int@ w = Int|640;
-  Int@ h = Int|480;
-
-  M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<Int@>;
-
-  M@<Event@> event = {
-    Int@ n := M.do(S.get);
-    IsNegative(n).?(true: M.return(Event@(key_down: Key@(q: Unit))));
-    Unit@ _ := M.do(S.put(Decr(n)));
-    M.return(Event@(tick: Unit));
-  };
-
-  (Effect@) { M@<Unit@>; } effect = Const(M.return(Unit))<Effect@>;
-
-  App@<M@> app = App@<M@>(event, effect);
-
-  Unit@ _ = Eval(/Games/GameOfLife/App%.Main(M, app, w, h), n);
-  Pass;
-});
+# Speed is set at 200ms per tick. For 60 seconds, we expect 300 ticks.
+Test@ Bench = Test|GameOfLife(/Games/GameOfLife/App%.Main, Quit, Int|300);
 
 @(Bench);

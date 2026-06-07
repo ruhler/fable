@@ -1,5 +1,6 @@
 
 Int@ .= /Std/Int%;
+Monad@ .= /Std/Monad%;
 Unit@ .= /Std/Unit%;
 
 Drawing@ .= /App/Drawing%;
@@ -62,4 +63,9 @@ App@ = <<@>@ M@> { *(
   (Effect@) { M@<Unit@>; } effect);
 };
 
-@(App@, Key@, Resize@, Event@, Effect@);
+# Type of a standard main function for pure apps. Runs the app in the given
+# monad, using the given app interface, in a window with dimensions of given
+# width and height.
+Main@ = <<@>@ M@>(Monad@<M@>, App@<M@>, Int@, Int@) { M@<Unit@>; } ;
+
+@(App@, Key@, Resize@, Event@, Effect@, Main@);

@@ -9,7 +9,7 @@ List .= /Std/List%;
 Monad@ .= /Std/Monad%;
 Unit@, Unit .= /Std/Unit%;
 
-App@, Event@, Effect@, Resize@ .= /App/App%;
+App@, Event@, Effect@, Resize@, Main@ .= /App/App%;
 Drawing@, Point@, Color, Rect, Over, Affine .= /App/Drawing%;
 
 World@, Coord@, World, ForWorld, Step .= /Games/GameOfLife%;
@@ -64,8 +64,7 @@ State@ = *(
   World@ w    # The game world.
 );
 
-<<@>@ M@>(Monad@<M@>, App@<M@>, Int@, Int@) { M@<Unit@>; } 
-Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   M@<Input@> GetInput = {
     Event@ e := m.do(app.event);
     e.?(tick: m.return(Input@(step: Unit)),

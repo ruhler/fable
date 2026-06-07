@@ -12,7 +12,7 @@ Monad@ .= /Std/Monad%;
 Exec, Run .= /Std/State/Pure%;
 Unit@, Unit .= /Std/Unit%;
 
-App@, Event@, Effect@, Resize@ .= /App/App%;
+App@, Event@, Effect@, Resize@, Main@ .= /App/App%;
 Color@, Drawing@, Point@, Blank, Color, Drawings,
 Rect, Over, Affine .= /App/Drawing%;
 
@@ -199,8 +199,7 @@ GetNextFood = (List@<Pos@> snake) {
   Best(Best(up, down), Best(left, right)).dir;
 };
 
-<<@>@ M@>(Monad@<M@>, App@<M@>, Int@, Int@) { M@<Unit@>; } 
-Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   M@<Input@> GetInput = {
     Event@ e := m.do(app.event);
     e.?(

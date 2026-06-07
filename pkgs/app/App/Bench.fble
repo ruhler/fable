@@ -1,0 +1,55 @@
+
+Bool@, True, False .= /Std/Bool%;
+Int@, Decr .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+IsNegative .= /Std/Int/Sign%;
+Lazy .= /Std/Lazy%;
+String@ .= /Std/String%;
+Test, Test@, Pass .= /Std/Test%;
+Unit@, Unit .= /Std/Unit%;
+
+App@, Event@, Effect@, Main@ .= /App/App%;
+
+# Helper for making benchmarks out of apps.
+# You give your application and a number of iterations to run. The benchmark
+# runs the app in a loop for the given number of tick iterations, restarting
+# the app as needed if the app completes or appears to be blocked waiting for
+# user input.
+(String@, Main@, Event@, Int@) { Test@; }
+Bench = (String@ name, Main@ main, Event@ quit, Int@ n) {
+  Test(name, {
+    Unit@ _ := Lazy;
+
+    S@ = *(Int@ n, Bool@ tick);
+
+    M@, m(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<S@>;
+
+    M@<Event@> event = {
+      S@ s := m.do(S.get);
+      IsNegative(s.n).?(true: m.return(quit));
+      s.tick.?(false: m.return(quit));
+      Unit@ _ := m.do(S.put(S@(Decr(s.n), False)));
+      m.return(Event@(tick: Unit));
+    };
+
+    (Effect@) { M@<Unit@>; } effect = (Effect@ e) {
+      e.?(draw: m.return(Unit));
+      S@ s := m.do(S.get);
+      S.put(s.@(tick: True));
+    };
+
+    App@<M@> app = App@<M@>(event, effect);
+
+    M@<Unit@> loop = {
+      S@ s := m.do(S.get);
+      IsNegative(s.n).?(true: m.return(Unit));
+      Unit@ _ := m.do(main(m, app, Int|640, Int|480));
+      loop;
+    };
+
+    Unit@ _ = Eval(loop, S@(n, True));
+    Pass;
+  });
+};
+
+@(Bench);

@@ -2,10 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Double check benchmark deadlock conditions
-  - for example, for snake, now that we changed the random number generator
-    used.
-
 Standard Library:
 * Break dependency of /Std/Map% on /Std/List%?
   By moving the Entries function somewhere else?

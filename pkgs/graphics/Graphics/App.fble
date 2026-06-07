@@ -5,7 +5,7 @@ Int .= /Std/Int/Lit%;
 Monad@ .= /Std/Monad%;
 Unit@, Unit .= /Std/Unit%;
 
-App@, Event@, Effect@ .= /App/App%;
+App@, Event@, Effect@, Main@ .= /App/App%;
 Drawing@, Point@, Color@,
 Color, Drawings, Over, Rect, Affine .= /App/Drawing%;
 
@@ -93,8 +93,7 @@ Vertices = {
   ];
 };
 
-<<@>@ M@>(Monad@<M@>, App@<M@>, Int@, Int@) { M@<Unit@>; } 
-Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   M@<Event@> In = app.event;
 
   # Set the window coordinates to (-32, -24) lower left corner, (32, 24) upper

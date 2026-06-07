@@ -1,46 +1,27 @@
 
 OnAscii .= /Std/Char/Ascii%;
-AssertEquals .= /Std/Eq/Assert%;
-Int@, Decr .= /Std/Int%;
+Int@ .= /Std/Int%;
 Int .= /Std/Int/Lit%;
-IsNegative .= /Std/Int/Sign%;
-Lazy .= /Std/Lazy%;
+Monad@ .= /Std/Monad%;
 Test@ .= /Std/Test%;
-Test = OnAscii(/Std/Test%.Test);
-Unit@, Unit .= /Std/Unit%;
+Unit .= /Std/Unit%;
 
-App@, Key@, Event@, Effect@ .= /App/App%;
+App@, Key@, Event@, Main@ .= /App/App%;
+Test = OnAscii(/App/Bench%.Bench);
+
 Put@, Get@, State@, Invaders .= /Invaders/App%;
-M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<Int@>;
 
-# The number of iterations is chosen so that the benchmark takes on the
-# order of 1 minute to run. The target goal for invaders is 60 frames a
-# second. If we can beat 1 minute for this, great.
-Test@ Bench = Test|Invaders({
-  Unit@ _ := Lazy;
-  Int@ n = Int|3600;
-  Int@ w = Int|640;
-  Int@ h = Int|480;
+Event@ Quit = Event@(key_down: Key@(q: Unit));
 
-  Event@ quit = Event@(key_down: Key@(q: Unit));
-
-  M@<Event@> Event = {
-    Int@ n := M.do(S.get);
-    IsNegative(n).?(true: M.return(quit));
-    Unit@ _ := M.do(S.put(Decr(n)));
-    M.return(Event@(tick: Unit));
-  };
-
-  (Effect@) { M@<Unit@>; } Effect = (Effect@ _) {
-    M.return(Unit);
-  };
-
-  Get@<M@, Int@> get_high_score = M.return(Int|0);
-  Put@<M@, Int@> put_high_score = (Int@ _) { M.return(Unit); };
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+  Get@<M@, Int@> get_high_score = m.return(Int|0);
+  Put@<M@, Int@> put_high_score = (Int@ _) { m.return(Unit); };
   State@<M@, Int@> high_score_s = State@<M@, Int@>(get_high_score, put_high_score);
+  Invaders(m, high_score_s, app, width, height);
+};
 
-  Unit@ u = Eval(Invaders(M, high_score_s, App@<M@>(Event, Effect), w, h), n);
-  AssertEquals(/Std/Unit/Eq%.Eq, /Std/Unit/Show%.Show, Unit, u);
-});
+# At 60 FPS, one minute of time is 3600 ticks.
+Test@ Bench = Test|Invaders(Main, Quit, Int|3600);
 
 @(Bench);
+

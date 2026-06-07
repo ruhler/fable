@@ -1,40 +1,15 @@
 
 OnAscii .= /Std/Char/Ascii%;
-Const .= /Std/Func%;
-Int@, Decr .= /Std/Int%;
-IsNegative .= /Std/Int/Sign%;
 Int .= /Std/Int/Lit%;
-Lazy .= /Std/Lazy%;
-Test@, Pass .= /Std/Test%;
-Test = OnAscii(/Std/Test%.Test);
-Unit@, Unit .= /Std/Unit%;
+Test@ .= /Std/Test%;
+Unit .= /Std/Unit%;
 
-App@, Key@, Event@, Effect@ .= /App/App%;
+Key@, Event@ .= /App/App%;
+Test = OnAscii(/App/Bench%.Bench);
 
-# The number of iterations is chosen so that the benchmark takes on the
-# order of 1 minute to run. The target goal is 60 frames a second.
-Test@ Bench = Test|Pinball({
-  Unit@ _ := Lazy;
+Event@ Quit = Event@(key_down: Key@(q: Unit));
 
-  Int@ n = Int|720;
-  Int@ w = Int|640;
-  Int@ h = Int|480;
-
-  M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<Int@>;
-
-  M@<Event@> event = {
-    Int@ n := M.do(S.get);
-    IsNegative(n).?(true: M.return(Event@(key_down: Key@(q: Unit))));
-    Unit@ _ := M.do(S.put(Decr(n)));
-    M.return(Event@(tick: Unit));
-  };
-
-  (Effect@) { M@<Unit@>; } effect = Const(M.return(Unit))<Effect@>;
-
-  App@<M@> app = App@<M@>(event, effect);
-
-  Unit@ _ = Eval(/Pinball/App%.Main(M, app, w, h), n);
-  Pass;
-});
+# At 60 FPS, one minute of time is 3600 ticks.
+Test@ Bench = Test|Pinball(/Pinball/App%.Main, Quit, Int|3600);
 
 @(Bench);

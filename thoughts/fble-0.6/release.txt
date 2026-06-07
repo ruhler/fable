@@ -680,3 +680,37 @@ like I need them in general.
 No. I don't think it's worth it. Not enough value add. Not part of the
 language itself. Not applicable in most places. Annoying to define because I
 can't use keywords and I have to escape things with regex.
+
+---
+
+* Double check benchmark deadlock conditions
+
+Let me add a library for App for turning it into a benchmark. You give it an
+app and a number of ticks to run for. As long as it gets a tick request (and
+drawings?), it replies with a tick. When it stops getting tick requests, it
+just loops the benchmark from the beginning.
+
+No fears of deadlock. Worst case the app gets stuck in a tight loop of tick
+requests that we don't detect. That's not quite satisfying though... how could
+we detect this? Just don't worry about it? But it seems a common thing to
+happen, when the app has either reached its end, or is waiting for some key
+press to continue.
+
+Think about what can happen:
+* The app can end: restart it
+* The app can get in a loop waiting for a certain key press
+  - it's not drawing, it's not requesting ticks, so restart it.
+* The app can get in a loop ticking and drawing
+  - I don't know how to detect this. Deal with it.
+
+Which means if we get a request for input without a request for a tick,
+clearly the app is waiting on user input, we should just restart it, since we
+don't know what user input to give. If the app ends, restart it. Otherwise,
+keep ticking away. Easy.
+
+Except, trouble: how do we get the app to end when we are done? We have to
+know how to quit the app. A sequence of events, or a single event, or
+something.
+
+Cool. Just need to port over the last few: Graphics, Invaders, Pinball.
+
