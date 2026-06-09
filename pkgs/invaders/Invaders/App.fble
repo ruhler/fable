@@ -57,32 +57,33 @@ Invaders = <<@>@ M@>(Monad@<M@> m, State@<M@, Int@> high_score_s, App@<M@> app, 
       Affine(a, b, Game.Draw(g)))));
   };
 
+  # The target is 60 FPS, or 16 millseconds per frame.
+  Int@ frame_period = Int|16;
+  M@<Unit@> Tick = app.effect(Effect@(tick: frame_period));
+
   # Returns the high score after playing the game.
-  (M@<Unit@>, Game@) { M@<Int@>; }
-  Run = (M@<Unit@> tick, Game@ game) {
+  (Game@) { M@<Int@>; }
+  Run = (Game@ game) {
     Input@ i := m.do(GetInput);
     i.?(
        tick: {
-         Unit@ _ := m.do(tick);
          Game@ ngame = Game.Tick(game);
          Unit@ _ := m.do(Draw(ngame));
-         Run(tick, ngame);
+         Unit@ _ := m.do(Tick);
+         Run(ngame);
        },
        quit: m.return(Max(game.score, game.high_score)),
-       game: Run(tick, Game.Input(game, i.game)));
+       game: Run(Game.Input(game, i.game)));
   };
-
-  # The target is 60 FPS, or 16 millseconds per frame.
-  Int@ frame_period = Int|16;
-  M@<Unit@> tick = app.effect(Effect@(tick: frame_period));
 
   # Setup
   Int@ high_score := m.do(high_score_s.get);
   Game@ game = Game.Initial(high_score);
-  Unit@ _ := m.do(app.effect(Effect@(tick: Int|0)));
+  Unit@ _ := m.do(Draw(game));
+  Unit@ _ := m.do(Tick);
 
   # Play
-  Int@ new_high_score := m.do(Run(tick, game));
+  Int@ new_high_score := m.do(Run(game));
 
   # Finish up
   Unit@ _ := m.do(high_score_s.put(new_high_score));

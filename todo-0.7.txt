@@ -16,9 +16,11 @@ Things to consider doing for the fble-0.7 release.
 * Consider pulling test, rand, io out of std into separate std-* packages.
  - See thoughts/fble-0.6/stdlib.txt for some discussion.
 
-
 * Improve the performance of fble-pprof.
   Taking more than a minute for a 5MB profile feels way too slow.
+
+* Fix jank in fble-invaders
+  See thoughts/fble-0.6/jank.txt
 
 * Figure out a real solution to error handling in general?
  - Examples to consider: file read/write, parsing an int.

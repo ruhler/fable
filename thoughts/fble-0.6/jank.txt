@@ -1,0 +1,207 @@
+
+* Debug jank issues in fble-invaders?
+  --fps shows a few slow frames.
+
+Can I add an option to fble-app to help with that? Like, any time there is
+jank, flash the screen red, or the edges of the screen, or something like
+that? Or add a border color always, where the color itself is a function of
+how delayed the frame is?
+
+---
+
+How about this:
+
+Define jank as any time we get a tick request where the upcoming tick event is
+in the past. And we can see how far it is in the past to measure the magnitude
+of that jank.
+
+Switch to reporting a jank histogram. I can maintain a vector of int, where
+index i counts the number of jank occurrences where the magnitude of the jank
+was between 2^i and 2^(i+1) ms. That gives us full visibility into the
+problem. I suppose we should count number of frames with 0 jank too, for
+comparison.
+
+We can also count total and max jank cost and report those.
+
+I can also introduce a notion of a running jank cost. Let's say every tick we
+do:
+  running_jank_cost = running_jank_cost / 2 + current_jank_cost;
+
+So we have some decay. Bigger jank stays longer. But also back to back jank
+stays longer.
+
+Hmm... maybe it should be:
+
+  running_jank_cost = running_jank_cost + current_jank_cost - 1;
+
+So decay is a lot slower? Anyway, doesn't matter too much. What matters is
+that I have a value of recent jank that doesn't go to zero right away. I can
+then use this to add a jank display. Some way of modifying the image being
+displayed to incorporate the current jank cost. Ideally in a way where high
+jank pops out a lot.
+
+Possible options:
+* Add a border that's white, but turns redder depending on running jank cost.
+* Add a bar along the top or bottom somewhere whose width is the running jank
+  cost.
+* Change the colors of the image based on current jank cost.
+ - Make them brighter, or darker, or redder, or rotated around some color
+   space.
+
+I propose two options to fble-app to replace the existing --fps:
+  --jank-stats: outputs jank stats at the end.
+  --jank-display: display jank while you go.
+
+Let me play around with this and see what I come up with.
+
+First step: jank stats.
+
+---
+
+Okay, jank stats and display are implemented. For the display, I take a
+weighted average of the target colors and the complement of the target colors,
+where the weight is how far over 16ms the jank is. It seems to work reasonably
+well.
+
+I can see a lot of low level jank on invaders. Isn't that weird? What are the
+odds that we keep missing the frame by just 1ms? Let me look into that next.
+
+---
+
+Since it seems like a lot of frames are just missing, presumably we just have
+to look at where the time is going in invaders, optimize that, and we should
+address most of the jank. What does perf say?
+
+Here's the fble-benchmark, limited to invaders, doing 3600 ticks:
+
+@[Benchmarks.Invaders]: @PASS
+Time: 0:06.60
+Memory: 3460
+
+That hardly seems like failure to meet frame deadlines. Is something else
+funny going on here?
+
+Well, we do an initial 0 width tick after setting up the game to start the
+main loop. Maybe I should do a normal tick instead? To fix that worst case
+jank on game initialization?
+
+Oh. I'm also calling tick before doing all my game logic, which is weird. Let
+me restructure this a little.
+
+Doesn't help. It must be that input processing is causing the jank, because we
+don't have that in the benchmark.
+
+No. I see jank when I just let the game scroll. It's very strange.
+
+Maybe something to do with drawing and sdl then, because that also doesn't
+happen in the benchmark.
+
+Let's turn on profiling while running the game. No input processing to start.
+See what happens.
+
+Some relevant samples from Overall:
+
+  46.027% 7650  [17]Draw
+  38.083% 6419  [20]/Invaders/Game%.Draw
+  27.014% 4488  [21]/Std/Map%.ForEach
+  23.5%   3812  [22]FbleIntValueAccess
+
+Here's the /Std/Map%.ForEach breakdown:
+
+  38.083% 6419 [5]/Invaders/Game%.Draw
+  ---
+  37.028% 1530 [12]/Invaders/Aliens%.Draw
+  30.066% 1258 [13]FblePopFrame
+  27.078% 1140 [14]/Invaders/Bases%.Draw
+
+Odd that /Invaders/Game%.Draw doesn't call /Std/Map%.ForEach?
+
+The places we call ForEach are:
+* To draw each base.
+* To draw aliens (via set).
+
+It's got to be the bases then, right?
+
+Should I turn this into a streaming call instead? Pass the result through all
+the way to the end instead of traversing down the tree and back?
+
+Still, half the time is spent converting integers to the C side of things. If
+it was in the fble code, we should see it show up in the benchmark when we
+run, right?
+
+So, let's see what's taking up all the time in the benchmark, for the fun of
+it. See if we can optimize that. Otherwise, see if we can optimize
+FbleIntValueAccess somehow.
+
+---
+
+Three things to try, then probably move on:
+
+1. Look at linux perf profile of the invaders benchmark.
+ - Represents what we can change on the fble side.
+
+2. Try lowering target FPS, verify jank goes away.
+ - Double checks we really are just at the edge of what we can do, rather than
+   having some glitch somewhere we could otherwise fix.
+
+3. Try moving ReadInt function to value.c so that the code it calls can be
+inlined, and see what impact that has on performance if any.
+
+Starting with 1:
+
+  21.033% 5379  [9]/Invaders/Game%.DrawScore
+
+This is weird to me: when does Game.Draw call /Std/Map%.ForEach?
+
+   89.025% 25261 [5]/Invaders/Game%.Draw
+   89.6%   25207 [6]FbleCall
+   69.077% 19746 [7]TailCall
+   67.036% 19065 [8]/Std/Map%.ForEach
+   66.4%   18692 [9]FbleCall
+   63.072% 18036 [10]TailCall
+
+                                    Incoming
+
+   100.0% 18036 [11]FbleCall
+
+                                    Outgoing
+
+   41.039% 7466 [12]/Invaders/Aliens%.Draw
+   32.016% 5801 [13]/Invaders/Bases%.Draw
+
+(2). Yes, jank goes away if we increase frame duration from 16ms to 19ms
+for example.
+
+I wonder if I can measure frame duration by setting frame duration to 0.
+
+Yes, but we don't have much precision:
+
+  jank count by duration:
+    2^0 ms:            0
+    2^1 ms:            0
+    2^2 ms:            1
+    2^3 ms:            5
+    2^4 ms:         1914
+
+It feels just like when normally playing it, which is pretty crazy.
+
+Going back to the profile for fble code side of things:
+ *   26.041% 7477  [25]/Invaders/Aliens%.Draw
+     20.050% 5802  [27]/Invaders/Bases%.Draw
+     19.0%   5379  [28]/Invaders/Game%.DrawScore
+
+So it's mostly drawing of various things.
+
+How about I improve score drawing by using a map instead of a list? Oh. I'm
+already using a map. Nevermind.
+
+Anyway, I think the fble side of things is okay right now. There's opportunity
+for a improvement here and there, but since time is dominated by non-fble
+stuff, let me try there.
+
+(3): Move read int functions into fble/value.c, just temporarily.
+
+No difference to jank. Oh well.
+
+Let's leave this for now. We are close. But it's really more a performance
+thing than an fble-0.6 thing I think.
