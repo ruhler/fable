@@ -871,7 +871,10 @@ static bool Eval(Cmd* cmd)
 
             cmd = c->_base.next;
             for (size_t i = 0; i < markup->markups.size; ++i) {
-              cmd = PushEval(cmd, c->env, markup->markups.xs[i], m->markups.xs + i);
+              // Push in reverse order so that elements are processed in order
+              // and error messages show up in order.
+              size_t j = markup->markups.size - 1 - i;
+              cmd = PushEval(cmd, c->env, markup->markups.xs[j], m->markups.xs + j);
             }
             FbldFreeMarkup(markup);
             FreeEnv(c->env);

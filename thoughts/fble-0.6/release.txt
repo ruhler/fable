@@ -716,3 +716,26 @@ Cool. Just need to port over the last few: Graphics, Invaders, Pinball.
 
 ---
 
+* Why is fbld outputting errors in reverse order?
+
+Repro: add too many arguments to @l in multiple places in the file.
+
+./tutorials/HelloWorld.fbld:14:24: error: expected 1 arguments to L, but got 2
+./tutorials/HelloWorld.fbld:14:10: error: expected 1 arguments to l, but got 2
+./tutorials/HelloWorld.fbld:9:8: error: expected 1 arguments to l, but got 2
+
+Questions:
+* What order are the errors raised in?
+* Do we evaluate front to back or back to front?
+* Should we reverse the order of printed errors knowing that?
+
+Given a sequence, I do the first then the second.
+
+Do tries the first thing, skipping the next otherwise.
+
+That's fun. It's the C implementation which is outputting errors in reverse
+order. I bet the fble implementation works fine.
+
+Looks like it evaluates sequences in LIFO order. I can put args on in reverse
+order to fix that I bet.
+

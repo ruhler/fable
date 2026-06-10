@@ -2,9 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Why is fbld outputting errors in reverse order?
- - I'm not sure how to reproduce multiple errors at once though.
-
 * Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
 
 * Why don't interpreted cli tests output when running them during build?
