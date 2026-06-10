@@ -22,6 +22,12 @@ Standard Library:
 * Add back character type functions isspace, isalnum, etc?
 * Add Lt, Le, Gt, Ge, etc for Char@?
 * Reconsider if Read, Write, Append should report error messages?
+* Think about api to break out of a ForEach loop mid way through.
+ - Because this comes up a lot, and I tend to just write 'TODO' in my code
+   where I should probably implement a proper interface.
+* Should we have a generic Container interface?
+ - As a way to standardize ForEach and perhaps other loop constructs across
+   all containers? Would that add anything of value?
 
 Tutorials:
 * Update the kind section of Polymorphism tutorial.
@@ -32,27 +38,37 @@ Tutorials:
   tutorials and everywhere for the new syntax.
 * Update references to /Core/Int in tutorials.
 * Update references to /Core/List in tutorials.
+* Update tutorial on literals.
+  - Particularly about 'longest' versus 'first' match.
+* Update tutorials for string literals: Foo(Str|...) now instead of Foo|...;
+* Update tutorials for character library.
+* Update tutorials for use of Concat instead of Strs.
+
+Documentation:
+* Double check all the old documentation referring to Output@, which is now
+  called Stream@?
+* A lot of the /Std/* documentation isn't very helpful.
+  Consider rewriting it to be an explanation for how to use the functions
+  instead of a description of what they are.
+* Figure out how to properly document List@ type
+ - Mix of poly, struct, and union all in one.
+* How to document a poly? @func? @value?
+* How to document methods of interface structs?
+* How to document an interface function type, like Eq@?
+* /Std/List/Eq% docs could be more precise and include examples.
+* How to document internal functions, e.g. /Std/List/Sort%.Insert?
+  Make sure this doesn't get shown in reference documentation.
+  e.g. /Std/Int/Lit% internal helper functions.
 
 Other:
 
 * Update all the sample apps for latest features, styles, idioms.
-
-* Double check all the old documentation referring to Output@, which is now
-  called Stream@?
-
-* A lot of the /Std/* documentation isn't very helpful.
-  Consider rewriting it to be an explanation for how to use the functions
-  instead of a description of what they are.
 
 * See if there is more opportunity to typecheck more stuff before erroring
   out?
 
 * Write a script to help find unused modules?
  - Because I suspect I have some unused modules in my packages...
-
-* Double check error message for over application of a function.
-  It shouldn't say "can't apply arguments to something of type (Foo@) { ...}"
-  Because that's not true, right? Better would be "too many arguments?"
 
 * Figure out what FbleStringValueAccess should do in terms of unicode.
 
@@ -64,13 +80,6 @@ Other:
 * Bug in type inference?
  - See /SpecTests/6.4-TypeInference/Regression/Getline%
  - /Std/Stream% is probably the relevant module now.
-
-* Think about api to break out of a ForEach loop mid way through.
- - Because this comes up a lot, and I tend to just write 'TODO' in my code
-   where I should probably implement a proper interface.
-* Should we have a generic Container interface?
- - As a way to standardize ForEach and perhaps other loop constructs across
-   all containers? Would that add anything of value?
 
 * Add test for /Core/Native/Env%.GetVar.
 
@@ -85,21 +94,6 @@ Other:
 
 * Double check @module[...] values are correct in /Std/...*.fble files.
 
-* Update tutorial on literals.
-  - Particularly about 'longest' versus 'first' match.
-* Update tutorials for string literals: Foo(Str|...) now instead of Foo|...;
-* Update tutorials for character library.
-* Update tutorials for use of Concat instead of Strs.
-
-* Figure out how to properly document List@ type
- - Mix of poly, struct, and union all in one.
-* How to document a poly? @func? @value?
-* How to document methods of interface structs?
-* How to document an interface function type, like Eq@?
-* /Std/List/Eq% docs could be more precise and include examples.
-* How to document internal functions, e.g. /Std/List/Sort%.Insert?
-  Make sure this doesn't get shown in reference documentation.
-  e.g. /Std/Int/Lit% internal helper functions.
 
 * Should I add @example as a doc comment field? Seems useful?
 * Reorder arguments in body function passed to ForEach?

@@ -739,3 +739,25 @@ order. I bet the fble implementation works fine.
 Looks like it evaluates sequences in LIFO order. I can put args on in reverse
 order to fix that I bet.
 
+---
+
+* Double check error message for over application of a function.
+  It shouldn't say "can't apply arguments to something of type (Foo@) { ...}"
+  Because that's not true, right? Better would be "too many arguments?"
+
+Example:
+
+  AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got, wnt);
+
+  error: cannot apply arguments to something of type <@ T@> { (Eq@<T@>,
+  Show@<T@>, T@, T@) { TestResult@; }; }
+
+Yeah, that's totally misleading. The error message I want in this case is: too
+many arguments. Or something like that.
+
+I'm not sure where the error message should be, or what the best location is,
+but I can at least switch it to something more meaningful that shows the type,
+how many arguments were provided, and how many (at most) were expected. Maybe
+go with that as a step forward and worry about improving the message later if
+it feels to awkward when I run into it next.
+

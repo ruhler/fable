@@ -2137,8 +2137,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             ReportError(apply_expr->misc->loc,
                 "invalid type for bind function: %t\n", misc.type);
           } else {
-            ReportError(expr->loc,
-                "cannot apply arguments to something of type %t\n", misc.type);
+            ReportError(apply_expr->misc->loc,
+                "expected %i arguments to something of type %t, but got %i\n",
+                i, misc.type, argc);
+            ReportError(args[i].tc->loc, "(extra arguments start here)\n");
           }
           return TC_FAILED;
         }
