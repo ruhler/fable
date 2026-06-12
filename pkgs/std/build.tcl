@@ -77,4 +77,19 @@ namespace eval "pkgs/std" {
     "$::b/pkgs/std/fble-cli-demo > $::b/pkgs/std/fble-cli-demo.out"
   test $::b/pkgs/std/fble-cli-demo.tr $::b/pkgs/std/fble-cli-demo.out \
     "grep hello $::b/pkgs/std/fble-cli-demo.out"
+
+  # Test FbleNewStringValue unicode conversion.
+  test $::b/pkgs/std/fble-cli-demo.unicode_arg.out \
+    $::b/pkgs/std/fble-cli-demo \
+    "$::b/pkgs/std/fble-cli-demo echo aπb > $::b/pkgs/std/fble-cli-demo.unicode_arg.out"
+  test $::b/pkgs/std/fble-cli-demo.unicode_arg.tr $::b/pkgs/std/fble-cli-demo.unicode_arg.out \
+    "grep aπb $::b/pkgs/std/fble-cli-demo.unicode_arg.out"
+
+  # Test FbleStringValueAccess unicode conversion.
+  test $::b/pkgs/std/fble-cli-demo.unicode_filename.out \
+    "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/aπb.txt" \
+    "$::b/pkgs/std/fble-cli-demo cat $::s/pkgs/std/aπb.txt > $::b/pkgs/std/fble-cli-demo.unicode_filename.out"
+  test $::b/pkgs/std/fble-cli-demo.unicode_filename.tr $::b/pkgs/std/fble-cli-demo.unicode_filename.out \
+    "grep helloπ $::b/pkgs/std/fble-cli-demo.unicode_filename.out"
+
 }

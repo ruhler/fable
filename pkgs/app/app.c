@@ -6,6 +6,7 @@
 #include "app.h"
 
 #include <assert.h>       // for assert
+#include <locale.h>       // for setlocale, LC_CTYPE
 #include <string.h>       // for strcmp
 
 #include <SDL.h>          // for SDL_*
@@ -511,7 +512,7 @@ static Uint32 OnTimer(Uint32 interval, void* param)
   return 0;
 }
 
-// FbleAppMain -- See documentation in app.fble.h
+// FbleAppMain -- See documentation in app.h
 int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 {
   // To ease debugging of FbleAppMain programs, cause the following useful
@@ -519,6 +520,9 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   (void)(FbleCharValueAccess);
   (void)(FbleIntValueAccess);
   (void)(FbleStringValueAccess);
+
+  // Set locale properly before converting command line args into fble land.
+  setlocale(LC_CTYPE, "");
 
   Args app_args = {
     .jank_stats = false,

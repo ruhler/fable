@@ -2,6 +2,12 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Document clearly somewhere my assumptions about locale
+ - Namely that we use mb to wc conversion for strings and stdio functions, and
+   we assume wchar_t is a unicode code point, and we set locale in fble-cli
+   and fble-app, but you should set it differently if you want or if you
+   aren't using those as your main drivers.
+
 * Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
 
 * Why don't interpreted cli tests output when running them during build?
@@ -64,14 +70,6 @@ Other:
 
 * Update all the sample apps for latest features, styles, idioms.
 
-* See if there is more opportunity to typecheck more stuff before erroring
-  out?
-
-* Write a script to help find unused modules?
- - Because I suspect I have some unused modules in my packages...
-
-* Figure out what FbleStringValueAccess should do in terms of unicode.
-
 * Any way to avoid exporting internally shared symbols in libfble.a?
 
 * Test unicode for character based native input and output streams.
@@ -91,6 +89,8 @@ Other:
  - And fix it.
 * Add -t option to compiler to pass expected type of main
  - Use it in fble-cli and fble-app for better type checking.
+* Be able to typecheck body of a let where the variables aren't all well
+  typed, to get more error messages at once.
 
 * Double check @module[...] values are correct in /Std/...*.fble files.
 

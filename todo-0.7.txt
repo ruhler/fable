@@ -64,6 +64,7 @@ Things to consider doing for the fble-0.7 release.
  - Some way to implement a web server that can handle multiple requests
    concurrently?
  - Think seriously about compatibility as the language and libraries evolve.
+ - Review literals again, because they still don't feel quite right.
 
 * Fbld Language
  - modularity

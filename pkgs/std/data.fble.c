@@ -115,41 +115,43 @@ FbleValue* FbleNewMaybeValue(FbleValueHeap* heap, FbleValue* arg)
 // FbleStringValueAccess -- see documentation in data.fble.h
 char* FbleStringValueAccess(FbleValue* str)
 {
-  struct { size_t size; char* xs; } chars;
+  struct { size_t size; wchar_t* xs; } chars;
   FbleInitVector(chars);
   while (FbleUnionValueTag(str, LIST_TAGWIDTH) == 0) {
     FbleValue* charP = FbleUnionValueArg(str, LIST_TAGWIDTH);
     FbleValue* charV = FbleStructValueField(charP, CONS_FIELDC, 0);
     str = FbleStructValueField(charP, CONS_FIELDC, 1);
 
-    char c = FbleCharValueAccess(charV);
+    wchar_t c = FbleCharValueAccess(charV);
     FbleAppendToVector(chars, c);
   }
   FbleAppendToVector(chars, '\0');
-  return chars.xs;
+
+  size_t mblen = wcstombs(NULL, chars.xs, 0);
+  if (mblen == (size_t)-1) {
+    return NULL;
+  }
+
+  char* buf = FbleAllocArray(char, mblen + 1);
+  wcstombs(buf, chars.xs, mblen + 1);
+  FbleFreeVector(chars);
+  return buf;
 }
 
 // FbleNewStringValue -- see documentation in data.fble.h
 FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str)
 {
-  size_t length = strlen(str);
-  FbleValue* charS = FbleNewEnumValue(heap, LIST_TAGWIDTH, 1);
-  for (size_t i = 0; i < length; ++i) {
-    FbleValue* charV = FbleNewCharValue(heap, str[length - i - 1]);
-    FbleValue* charP = FbleNewStructValue_(heap, 2, charV, charS);
-    charS = FbleNewUnionValue(heap, LIST_TAGWIDTH, 0, charP);
+  size_t mblen = mbstowcs(NULL, str, 0);
+  if (mblen == (size_t)-1) {
+    return NULL;
   }
-  return charS;
-}
-
-// FbleNewSubStringValue -- see documentation in data.fble.h
-FbleValue* FbleNewSubStringValue(FbleValueHeap* heap, const char* str, size_t length)
-{
-  size_t max_length = strlen(str);
-  length = max_length < length ? max_length : length;
+
+  wchar_t chars[mblen + 1];
+  mbstowcs(chars, str, mblen + 1);
+
   FbleValue* charS = FbleNewEnumValue(heap, LIST_TAGWIDTH, 1);
-  for (size_t i = 0; i < length; ++i) {
-    FbleValue* charV = FbleNewCharValue(heap, str[length - i - 1]);
+  for (size_t i = 0; i < mblen; ++i) {
+    FbleValue* charV = FbleNewCharValue(heap, chars[mblen - i - 1]);
     FbleValue* charP = FbleNewStructValue_(heap, 2, charV, charS);
     charS = FbleNewUnionValue(heap, LIST_TAGWIDTH, 0, charP);
   }

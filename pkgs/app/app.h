@@ -20,6 +20,7 @@
  *  @returns[FbleStdioMainStatus] The app exit status.
  *
  *  @sideeffects
+ *   @i Makes the program portable to all locales via setlocale.
  *   @item
  *    Runs the @l{App@} program, which may interact with keyboard and time
  *    events and draw to a display.

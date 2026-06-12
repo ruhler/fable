@@ -1115,3 +1115,95 @@ Where should Newline, Tab, and CR character definitions live?
 Okay, it's a little messy near the end. I'm not entirely sure on
 /Std/String/Lit% versus /Std/Char/Lit%, but I think it's okay. Let's declare
 standard string library done for now.
+
+---
+
+* Figure out what FbleStringValueAccess should do in terms of unicode.
+
+Current uses of FbleStringValueAccess:
+* Included in binaries to help with gdb debugging.
+* Get the host arg passed when creating sockets, which is subsequently passed
+  to getaddrinfo.
+* Used in FbleDebugTrace to print a string. What's this used for again?
+  It's not used, apparently. Unless I want it for gdb debug too.
+  Passed to fprintf.
+* Used to get file arg passed when opening a file, which is subsequently
+  passed to fopen.
+* Used to get env var name passed to getenv.
+
+In all these cases, I'm pretty sure I want to convert to a multibyte string
+using the current locale.
+
+How do I do that?
+
+  mbstowcs goes multibyte to wide. Maybe I need this for FbleNewStringValue?
+  wcstombs goes wide to multibyte.
+
+We also have per-character ones:
+
+  mbtowc
+  wctomb
+
+I should do this, but I should also test it somehow.
+
+Where do I use FbleNewStringValue?
+* Getting an environment variable.
+* fble-cli command line args.
+
+Ah, so both of these I could test with my cli demo app, right? Pass as an
+environment variable to get one with unicode characters in the name. Have its
+value be one with unicode characters in the name?
+
+Does getenv support multibyte environment variable names and values? Let's
+try. Then add a test case with my demo app. Then fix it when it fails.
+
+First step: defining a variable whose name has a unicode character in it.
+
+  aπb=cπd
+
+bash: export: `aπb=cπd': not a valid identifier
+
+But I can do 'aab=cπd'. What happens if I demo app try to read that now?
+
+  $ ./out/pkgs/std/fble-cli-demo env aab
+  $aab = cÏd
+
+Cool. So I can test the FbleNewStringValue that way.
+
+How do I get a unicode name for an env var? Or should I try file access
+instead?
+
+I can use echo. For example:
+
+$ ./out/pkgs/std/fble-cli-demo echo aπb
+aÏb
+
+That also tests FbleNewStringValue. Once FbleNewStringValue is working, cat
+will stop working properly I bet. Okay? Cool.
+
+In terms of implementation, starting with FbleNewStringValue:
+
+I could convert to a wide string all at once, then iterate. Seems like I would
+want to do that, because we want to build up the list from the last character.
+
+I do worry about when setlocale is set. If we don't do it early enough, this
+isn't going to work out well. But I can also test that: the echo case versus
+the env value case.
+
+Anyway, cool, sounds like a plan. Steps are:
+
+1. Add test for FbleNewStringValue (using echo, to catch it early?)
+  - Expected to fail to start.
+2. Add test for FbleStringValueAccess using cat
+  - Expected to pass to start, then fail when (1) is fixed.
+3. Fix impl of FbleNewStringValue
+  - Have to decide what to do if we can't convert the string though.
+4. Fix impl of FbleStringValueAccess
+
+Don't forget to fix FbleNewSubStringValue! Or remove it if it is not used
+anywhere.
+
+---
+
+Done. One thing though, I decided to move setlocale from init of Stdio to the
+main programs for fble-cli and fble-app.

@@ -761,3 +761,55 @@ how many arguments were provided, and how many (at most) were expected. Maybe
 go with that as a step forward and worry about improving the message later if
 it feels to awkward when I run into it next.
 
+---
+
+* See if there is more opportunity to typecheck more stuff before erroring
+  out?
+
+There is a progression of what I can do here:
+1. Stop at first error.
+2. Allow errors from multiple expressions that don't depend on each other.
+3. Allow errors from multiple expressions that do depend on each other.
+
+I'm at (2). Sure, there are probably opportunities to do a little more within
+(2), but the real benefits are going to come from (3): allowing typecheck in
+the body of a let expression, even if some of the bindings have failed.
+
+But imagine if I succeed at that. Given that I re-type check every thing?
+Well, actually, maybe it's not so bad. I was going to say we would start
+getting duplicate errors all over the place, but probably we wouldn't.
+
+Anyway, this would be a good thing to do, but it's also a risky thing to do,
+particularly without exercising the error paths much. And I don't expect to
+exercise the error paths much more in this release. So my vote is to put this
+off to the early part of a future release.
+
+And maybe wait until after I've fixed type checking dependencies, otherwise I
+really will get too many duplicate errors. Because every module I compile will
+give me errors for every other module it depends on directly or indirectly,
+rather than just the first. So we have like O(N^2) instead of O(N) duplicate
+error messages.
+
+---
+
+* Write a script to help find unused modules?
+ - Because I suspect I have some unused modules in my packages...
+
+What does this mean? What is an unused module?
+
+For something like md5, or invaders, I could probably list the top level
+modules. Things like: AppIO.fble, Bench.fble, Tests.fble. For things like Std,
+every module is potentially just a library to be used by another module.
+
+I could try listing all the modules not referenced by another module, in all
+my packages, and manually reviewing them. Or we could maybe generalize
+fble-deps tool to search for modules and give an entire dependency graph
+instead of the flattened graph.
+
+But honestly, this seems like a lot of work for very little value.
+
+Let me drop this. If it is useful to add back later, it should reveal itself
+as such and we can consider adding it then. Next time, I should record which
+module I'm afraid is unused.
+
+
