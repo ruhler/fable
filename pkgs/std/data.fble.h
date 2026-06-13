@@ -104,14 +104,5 @@ FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str);
  */
 char* FbleStringValueAccess(FbleValue* str);
 
-/**
- * @func[FbleDebugTrace] Prints a @l{/Std/String%.String@} value to stderr.
- *  @arg[FbleValue*][str] The @l{/Std/String%.String@} to print.
- *
- *  @sideeffects
- *   Prints the string to stderr.
- */
-void FbleDebugTrace(FbleValue* str);
-
 #endif // FBLE_STD_DATA_FBLE_H_
 

@@ -1207,3 +1207,32 @@ anywhere.
 
 Done. One thing though, I decided to move setlocale from init of Stdio to the
 main programs for fble-cli and fble-app.
+
+---
+
+* Document clearly somewhere my assumptions about locale
+ - Namely that we use mb to wc conversion for strings and stdio functions, and
+   we assume wchar_t is a unicode code point, and we set locale in fble-cli
+   and fble-app, but you should set it differently if you want or if you
+   aren't using those as your main drivers.
+
+Or... don't bother. If people really care, they can look at the
+implementation.
+
+It doesn't feel right to document in .fble code. It's platform specific
+behavior. It's like, what does it mean to open a file or read from a file?
+Depends on the platform. Where do you document the platform? As long as we
+document it in the C code, that should be fine? Except, the implementation is
+part of FFI.
+
+I don't know.
+
+Places where it is relevant and not already clearly documented:
+* fble-cli, fble-app usage docs
+* /Std/Stream/Debug%
+* /Std/Io/File/Text%
+
+And somehow I ended up removing some documentation from FbleCliMain
+and FbleAppMain. I don't know. People can consult the source code if they
+care. Platform specific behavior is platform specific.
+

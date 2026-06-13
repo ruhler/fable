@@ -46,7 +46,6 @@ FbleCliMainStatus FbleCliMainAppStatus(FbleValue* result);
  *  @returns[FbleCliMainStatus] The exit status.
  *
  *  @sideeffects
- *   @i Makes the program portable to all locales via setlocale.
  *   @i Application side effects from running the @l{/Std/Io/Cli%.Main@} program.
  *   @i Writes to a profile if specified by the command line options.
  */

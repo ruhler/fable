@@ -2,12 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Document clearly somewhere my assumptions about locale
- - Namely that we use mb to wc conversion for strings and stdio functions, and
-   we assume wchar_t is a unicode code point, and we set locale in fble-cli
-   and fble-app, but you should set it differently if you want or if you
-   aren't using those as your main drivers.
-
 * Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
 
 * Why don't interpreted cli tests output when running them during build?
