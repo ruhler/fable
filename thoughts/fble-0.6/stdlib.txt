@@ -532,3 +532,15 @@ debug use case. Without clear reason to go one way or another, let's just
 stick with how things are now. I expect to learn more in the future that could
 impact this decision. Things like standardizing network and app packages, and
 thoughts on package manager support.
+
+---
+
+* Double check @module[...] values are correct in /Std/...*.fble files.
+
+I can do a one-off check, or I can automate it. What do you think?
+
+It feels like it's not the right time to automate it yet. Wait until I start
+processing the doc comments into a real document. For now things are still
+ad-hoc. So check things ad-hoc.
+
+Done. There was one module missing the header. Otherwise all was okay.

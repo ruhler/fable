@@ -1,3 +1,5 @@
+# @module[/Std/Set%]
+#  Set type and basic operations.
 
 Bool@, True, False .= /Std/Bool%;
 Data@ .= /Std/Data%;

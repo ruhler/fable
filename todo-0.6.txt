@@ -28,6 +28,7 @@ Standard Library:
 * Should we have a generic Container interface?
  - As a way to standardize ForEach and perhaps other loop constructs across
    all containers? Would that add anything of value?
+* Add function to show an integer base 16? Base 2? Base anything?
 
 Tutorials:
 * Update the kind section of Polymorphism tutorial.
@@ -77,8 +78,6 @@ Other:
 
 * Print function names along with error location on stack trace?
 
-* Add function to show an integer base 16? Base 2? Base anything?
-
 * Figure out why we see the same errors reported many times when we build.
  - And fix it.
 * Add -t option to compiler to pass expected type of main
@@ -86,7 +85,6 @@ Other:
 * Be able to typecheck body of a let where the variables aren't all well
   typed, to get more error messages at once.
 
-* Double check @module[...] values are correct in /Std/...*.fble files.
 
 
 * Should I add @example as a doc comment field? Seems useful?
