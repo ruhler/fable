@@ -92,4 +92,11 @@ namespace eval "pkgs/std" {
   test $::b/pkgs/std/fble-cli-demo.unicode_filename.tr $::b/pkgs/std/fble-cli-demo.unicode_filename.out \
     "grep helloπ $::b/pkgs/std/fble-cli-demo.unicode_filename.out"
 
+  # Test environment variable access.
+  test $::b/pkgs/std/fble-cli-demo.env.out \
+    "$::b/pkgs/std/fble-cli-demo" \
+    "env FOO=hello $::b/pkgs/std/fble-cli-demo env FOO > $::b/pkgs/std/fble-cli-demo.env.out"
+  test $::b/pkgs/std/fble-cli-demo.env.tr $::b/pkgs/std/fble-cli-demo.env.out \
+    "grep hello $::b/pkgs/std/fble-cli-demo.env.out"
+
 }

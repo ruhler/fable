@@ -10,6 +10,7 @@ Things to consider doing for the fble-0.6 release.
    It's slightly awkward to get the dependencies passed directly to the 
    testsuite helper?
 
+
 Standard Library:
 * Break dependency of /Std/Map% on /Std/List%?
   By moving the Entries function somewhere else?
@@ -73,8 +74,6 @@ Other:
 * Bug in type inference?
  - See /SpecTests/6.4-TypeInference/Regression/Getline%
  - /Std/Stream% is probably the relevant module now.
-
-* Add test for /Core/Native/Env%.GetVar.
 
 * Print function names along with error location on stack trace?
 
