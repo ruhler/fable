@@ -2,6 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Print function names along with error location on stack trace?
+
 * Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
 
 * Why don't interpreted cli tests output when running them during build?
@@ -9,7 +11,6 @@ Things to consider doing for the fble-0.6 release.
  - Because we generate the output first, then interpret as a test output.
    It's slightly awkward to get the dependencies passed directly to the 
    testsuite helper?
-
 
 Standard Library:
 * Break dependency of /Std/Map% on /Std/List%?
@@ -30,6 +31,8 @@ Standard Library:
  - As a way to standardize ForEach and perhaps other loop constructs across
    all containers? Would that add anything of value?
 * Add function to show an integer base 16? Base 2? Base anything?
+* Reorder arguments in body function passed to ForEach?
+  See thoughts/fble-0.6/stdlib.list.txt for more discussion.
 
 Tutorials:
 * Update the kind section of Polymorphism tutorial.
@@ -61,12 +64,11 @@ Documentation:
 * How to document internal functions, e.g. /Std/List/Sort%.Insert?
   Make sure this doesn't get shown in reference documentation.
   e.g. /Std/Int/Lit% internal helper functions.
+* Should I add @example as a doc comment field? Seems useful?
 
 Other:
 
 * Update all the sample apps for latest features, styles, idioms.
-
-* Any way to avoid exporting internally shared symbols in libfble.a?
 
 * Test unicode for character based native input and output streams.
 * Add tests for /Core/Char/Stream/IStream%.GetLine.
@@ -75,8 +77,6 @@ Other:
  - See /SpecTests/6.4-TypeInference/Regression/Getline%
  - /Std/Stream% is probably the relevant module now.
 
-* Print function names along with error location on stack trace?
-
 * Figure out why we see the same errors reported many times when we build.
  - And fix it.
 * Add -t option to compiler to pass expected type of main
@@ -84,10 +84,6 @@ Other:
 * Be able to typecheck body of a let where the variables aren't all well
   typed, to get more error messages at once.
 
-
-
-* Should I add @example as a doc comment field? Seems useful?
-* Reorder arguments in body function passed to ForEach?
 
 * Clarify in spec whether poly apply to an undefined value results in an error
   or not.

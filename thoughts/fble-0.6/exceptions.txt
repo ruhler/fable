@@ -164,3 +164,135 @@ are trying and maybe an error code. And maybe you can rethrow an error to add
 to the stack trace and let someone else try to capture it? But how would you
 decide to catch it or not? Based on the stack trace?
 
+---
+
+* Print function names along with error location on stack trace?
+
+When FbleCall returns NULL, we print a callee aborted error using the location
+associated with the call instruction. Do we have the name of the function to
+report at the same time in general?
+
+Let's start with interpreted case. Instead of 'callee aborted', maybe I say
+'Foo aborted' for function name Foo? Or 'at Foo'?
+
+Here's a sample stack trace:
+
+@[Interpreted.Games.TicTacToe.TestChooseBestMoveNoLose]:
+./pkgs/std/Std/Map.fble:65:33: error: union field access undefined: wrong tag
+./pkgs/games/Games/TicTacToe/AI.fble:157:36: error: callee aborted
+./pkgs/games/Games/TicTacToe/AI.fble:201:37: error: callee aborted
+./pkgs/games/Games/TicTacToe/Tests.fble:45:16: error: callee aborted
+./pkgs/std/Std/Test/Run.fble:31:24: error: callee aborted
+./pkgs/std/Std/Bool.fble:34:3: error: undefined union value select
+./pkgs/std/Std/Test/Run.fble:51:20: error: callee aborted
+./pkgs/std/Std/Test/Run.fble:51:20: error: callee aborted
+./pkgs/std/Std/Test/Cli.fble:29:14: error: undefined union value select
+
+If we said instead:
+
+@[Interpreted.Games.TicTacToe.TestChooseBestMoveNoLose]:
+./pkgs/std/Std/Map.fble:65:33: error: union field access undefined: wrong tag
+./pkgs/games/Games/TicTacToe/AI.fble:157:36: error: at ChooseBestMove
+./pkgs/games/Games/TicTacToe/AI.fble:201:37: error: at Move
+...
+
+I think that would be useful.
+
+Okay, so how do I get to the file name? Let's start with the interpreter.
+Worry about c and aarch64 backend later.
+
+The trouble is, I don't have access to the profile blocks in run functions. We
+pass the entire profile to FbleEval, but only the specific profile thread to
+each run function depending on whether profiling is enabled or not.
+
+The call instruction could know the function name. We could change that from
+loc to name, for debug purposes. What do you think of that? Takes a little
+more space, yes, but doesn't add any complexity. We're already storing the
+entire source location. Adding the function name won't make that big a
+difference, right?
+
+Question: how easily can we get function name from the compiler when we emit a
+CALL_INSTR?
+
+It's pretty easy. I have GetBlockId. I could do an equivalent GetBlockName.
+Maybe even share the name with the profile, because presumably I already have
+the name of the function.
+
+Or, well, include details of where exactly within the function we are? No. I
+probably want to get the name of the block where the function is declared. Do
+I have access to that? Not today, but I could stash it with the Scope if I
+wanted to.
+
+Let me experiment with whatever the easiest name to get is (probably current
+block location, with a GetBlockName helper function). See how it looks. Then
+decide from there.
+
+Experience:
+* c and aarch64 backends assume all errors come with just a loc today, not
+  also a name. I'll need to update those if I want to support this there.
+
+Example stack trace now:
+
+@[Interpreted.Games.TicTacToe.TestChooseBestMoveNoLose]:
+./pkgs/std/Std/Map.fble:65:33: error: union field access undefined: wrong tag
+./pkgs/games/Games/TicTacToe/AI.fble:157:36: error: at /Games/TicTacToe/AI%.ChooseBestMove.cached
+./pkgs/games/Games/TicTacToe/AI.fble:201:37: error: at /Games/TicTacToe/AI%.Move.mpr
+./pkgs/games/Games/TicTacToe/Tests.fble:45:16: error: at /Games/TicTacToe/Tests%.Tests.air
+./pkgs/std/Std/Test/Run.fble:31:24: error: at /Std/Test/Run%.Run.tr
+./pkgs/std/Std/Bool.fble:34:3: error: undefined union value select
+./pkgs/std/Std/Test/Run.fble:51:20: error: at /Std/Test/Run%.Run
+./pkgs/std/Std/Test/Run.fble:51:20: error: at /Std/Test/Run%.Run
+./pkgs/std/Std/Test/Cli.fble:29:14: error: undefined union value select
+Segmentation fault
+
+Um, the segfault is not expected. But ignoring that.
+
+After fixing the segfault and an issue with io do monad implementation:
+
+@[Interpreted.Games.TicTacToe.TestChooseBestMoveWin]: ./pkgs/std/Std/Map.fble:65:16: error: union field access undefined: wrong tag
+./pkgs/games/Games/TicTacToe/AI.fble:157:36: error: at /Games/TicTacToe/AI%.ChooseBestMove.cached
+./pkgs/games/Games/TicTacToe/AI.fble:201:37: error: at /Games/TicTacToe/AI%.Move.mpr
+./pkgs/games/Games/TicTacToe/Tests.fble:32:16: error: at /Games/TicTacToe/Tests%.Tests.air
+./pkgs/std/Std/Test/Run.fble:31:24: error: at /Std/Test/Run%.Run.tr
+
+I think it would be better to use the block name associated with the function,
+not the current location. Because we don't show those subfunction names
+anywhere else right now.
+
+Here's a sample java stack trace for comparison:
+
+ Exception in thread "main" java.lang.NullPointerException
+         at com.example.myproject.Book.getTitle(Book.java:16)
+         at com.example.myproject.Author.getBookTitles(Author.java:25)
+         at com.example.myproject.Bootstrap.main(Bootstrap.java:14)
+
+Thus the question is... is adding the function names worth the minor extra
+cost to code complexity and code size needed to implement it?
+
+If you have the right version of the source code, you can figure it out easily
+enough from the line numbers. But it would be nice to automate that conversion
+maybe, to get you in the right direction.
+
+It's a little weird I don't have the /Std/Map% function call in this list.
+Otherwise, yeah, honestly, the function names make the stack trace much more
+informative.
+
+If you don't have the right version of the source code, having the function
+names can be pretty useful.
+
+If you don't have any version of the source code, having the function names
+can be pretty useful for the developer of the code in question. But maybe not
+the user? It comes back around to questions about error handling.
+
+I think the printing should be done in FbleCall itself if the function returns
+NULL. Not part of the CALL_INSTR. That way we print the name of the function
+that's returning the error in the first place (better behavior). We don't have
+to pass location for CALL_INSTR for the purposes of propagation (saves space),
+and I don't make the code messier to handle this. It's all encapsulated.
+
+It's just a question of how to get the function name. I wish I had access to
+the profile from FbleCall. Can we stash it in with the heap which is already
+passed around everywhere?
+
+Shall I hack that approach up and see how it feels?
+

@@ -51,6 +51,10 @@ static FbleValue* DoImpl(
   FbleValue* f = args[1];
   FbleValue* u = args[2];
   FbleValue* a = FbleCall(heap, profile, ma, 1, &u);
+  if (a == NULL) {
+    return NULL;
+  }
+
   heap->tail_call_argc = 2;
   heap->tail_call_buffer[0] = f;
   heap->tail_call_buffer[1] = a;

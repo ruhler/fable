@@ -1,0 +1,139 @@
+Shared Libraries
+---
+
+* Any way to avoid exporting internally shared symbols in libfble.a?
+
+In theory: 
+* -fvisibility=hidden to make things invisible
+* __attribute__((visibility("default"))) on functions to make them visible.
+
+But it's only for shared libraries?
+
+Clearly my .o files need to export the internal functions I want to share. So
+I have this collection of .o files.
+
+To turn those .o files into a library, I'm using:
+* ar rcs $lib $objs 
+
+In this case, I don't think it makes sense. We aren't linking at the time we
+make the library if it's a static library. It's just a pile of object files.
+Since we aren't linking, there's no way to say: link the internal functions
+now.
+
+Can I do that? Can I do some libfoo.a to libfoo.a transformation that invokes
+the linker, links up or inlines whatever we can internally, and only exports
+an explicit list of symbols?
+
+There is a '-r' flag to the linker to do incremental linking. But I think the
+output from the linker is either an executable or a shared library. In either
+case we could presumably use options to hide internal signals. But if we are
+distributing libfoo.a, I don't think there's anything we can do to hide
+internally shared functions aside from trying to mangle the names better.
+
+Okay, so here are my options as I see it:
+* If I want to do things as a static library, I must not include the internally
+  shared functions in any of the .o files from the library. Then where do they
+  live? They need to be inlined wherever they are used. So define them in .h
+  file as static and live with the fact that the code for them is duplicated.
+* Or produce a shared library, where there are ways for me to control the
+  dynamic export list explicitly.
+
+Should I distribute libfble as a shared library rather than a static library?
+Probably yes. It's reused in a bunch of different executables: fble-cli,
+fble-compile, fble-bin, fble-app, fble-md5, and on and on.
+
+So let's not worry about the static library case. I want, long term, to
+distribute code using shared libraries.
+
+And once I do that, there are ways in theory to control what symbols are
+exported. And then I can mark symbols as exported or not exported. Practically
+speaking this means defining a macro, or maybe a couple of macros to say which
+is which.
+
+Probably makes sense to have an explicit macro for things that are part of the
+public API. Or... I already have the list of symbols used for documentation
+purposes. Figure out how to pass that list explicitly at link time to only
+export those symbols.
+
+Is it worth doing this now, as part of this release? I already have a lot of
+the infrastructure in place for switching to shared libraries. How about
+making it the default on all platforms?
+
+Maybe let's try it, see what the issues are, and then decide how I want to
+proceed.
+
+I remember doing this before. Maybe I can find my notes and figure out why I
+decided to hold off on switching over to shared libraries.
+
+thoughts/fble-0.4/modular_compilation.txt has some notes, but I don't see
+clearly where I abandoned shared libraries. I should keep looking.
+
+thoughts/fble-0.4/foreign_function_interface.txt is the rest of the
+discussion.
+
+Sounds like what stopped me was I didn't know a good way to handle the search
+path for windows: current directory, executable directory, system directory.
+To be able to support running tools both from pre install and post install
+directory. And seeing that libSDL was distributed as a static library on
+windows. And knowing that, at the time, switching to shared libraries didn't
+really add anything.
+
+The last point has changed now, so it's worth revisiting.
+
+Is all this worth it just to hide some internal functions? Probably not. But
+it might be worth it for significant reductions in code size, using more
+standard approach for distributing the code on linux, and as a step forward
+for supporting dynamic loading of compiled code (think FFI) from the
+interpreter.
+
+Let's think about how things should work in terms of installs and stuff to get
+the library in the right place for things.
+
+---
+
+Don't overthink things. Don't do anything weird. Look at my existing
+platforms, aim to produce libraries in a consistent manner as my existing
+platforms.
+
+On linux, that means:
+* Looks like a mix of libraries installed as just .so, or just .a, or both .so
+  and .a. So not much guidance there.
+* For .so files, looks like NEEDED is a plain file: libfoo.so, and RUNPATH is
+  unused.
+
+So, conceptually:
+* libfble.so installed in standard system library path.
+* need some magic or something for testing the executables locally before they
+  are installed.
+* libfble-foo.so installed in a standard system library path, or opened
+  explicitly with dlopen.
+
+I can't quite tell what's happening on msys in Windows. Looks like:
+* Plenty of static libraries shipped in /usr/lib equivalent.
+* Dlls live in /usr/bin.
+
+It seems like there's a tradeoff for using a static vs shared library:
+* sharing means you can reuse code used in multiple places, but you have all
+  the code that might ever be used sitting around even if it's never used.
+* static means you use only the code you need, but you end up duplicating
+  anything that is needed multiple places.
+
+So, if you have the bulk of the library used in the bulk of applications, it
+makes more sense to do it as a shared library. If you have small, different
+parts of the library used in all different applications, it makes more sense
+to do as a static library.
+
+In my case, let's think about the different libraries:
+* libfble - bulk of it used in bulk of applications I would say.
+ - runtime is shared by anyone who runs things
+ - compiler is shared by anyone who compiles things
+ - lots of things do both.
+* libfble-foo - if it's mostly compiled fble code, we might expect a bunch of
+  it to be shared, but also a bunch of it not to be used by most applications,
+  depending on what files from the library they import. I would say it's hard
+  to say much generically.
+
+No. This isn't worth doing at this point in the release. Certainly not if the
+only goal is to prevent external access to internally shared functions. Let me
+put off the question of static versus shared libraries until I have a more
+compelling reason to switch, like support for dynamic code loading.

@@ -938,3 +938,65 @@ well, even if I can't think of a good case for it.
 
 What should 'Split' on an empty list return? An empty list, or a single empty
 list? Python returns a single empty list.
+
+---
+
+* Reorder arguments in body function passed to ForEach?
+
+Today we have:
+
+<@ A@>(List@<A@> list)<@ B@>(B@ base, (A@, B@) { B@; } body) {
+
+The proposal, I suppose, would be to pass base first everywhere:
+
+<@ B@>(B@ base)<@ A@>(List@<A@> list, (B@, A@) { B@; } body) {
+
+Still keep the body last. Now, what motivation do I have for changing it to be
+like this?
+
+  List@<Int@> nums = List[2, 5, 3, 6, 9];
+  Int@ sum = ForEach(nums, 0, (Int@ num, Int@ sum) {
+    Add(num, sum);
+  });
+
+  List@<Int@> nums = List[2, 5, 3, 6, 9];
+  Int@ sum = ForEach(0, nums, (Int@ sum, Int@ num) {
+    Add(num, sum);
+  });
+
+Well... if you treat it like a list, then it's like:
+  ForEach(elems, MyEmpty, MyCons);
+
+Where MyEmpty is what to put if the list is empty, and MyCons is how to add
+the next element to the front of the list. But why add to the front of the
+list?
+
+Stream interface is:
+
+Stream@ = <@ A@, @ S@>(S@, (A@, S@) { S@; }) { S@; };
+
+Which looks very similar to ForEach. In fact...
+
+
+  <@ A@>(List@<A@> list)<@ B@>(B@ base, (A@, B@) { B@; } body);
+
+  Let B@ = S@:
+
+  <@ A@>(List@<A@> list)<@ S@>(S@ base, (A@, S@) { S@; } body);
+
+  <@ A@>(List@<A@>) { Stream@<A@>; }
+
+Same type. And that makes sense to me, that ForEach is like a streamed version
+of a list. So it makes sense to put List@ before S@ base.
+
+Then the question is do we have motivation to change the stream type:
+
+  Stream@ = <@ A@, @ S@>(S@, (A@, S@) { S@; }) { S@; };
+
+versus:
+
+  Stream@ = <@ A@, @ S@>(S@, (S@, A@) { S@; }) { S@; };
+
+The former suggests building up a list of elements. The later suggests
+using elements to transform a value S@.
+
