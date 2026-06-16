@@ -362,3 +362,13 @@ How will the API look?
 
 Easy. Just add FbleProfile as a public field of FbleRuntime. Everything else
 can be the same. I can pass that through to FbleLink too.
+
+---
+
+Challenge: The C backend wants to hard code the string for the source file,
+which makes it difficult to reuse with FbleReportRuntimeError. Anything
+reasonable I can do there?
+
+Declare a static FbleString value for it. I know how do to do that. It
+shouldn't be hard.
+

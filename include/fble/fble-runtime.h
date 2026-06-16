@@ -563,6 +563,17 @@ FbleValue* FbleNewNativeValue(FbleRuntime* runtime,
 void* FbleNativeValueData(FbleValue* value);
 
 /**
+ * @func[FbleReportRuntimeError] Reports a runtime error.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
+ *  @arg[FbleLoc][loc] Location of the error.
+ *  @arg[FbleFunction*][func] Function where the error occured.
+ *  @arg[const char*][msg]
+ *   Error message. Maybe be NULL to indicate a location in the stack.
+ *  @sideeffects Outputs an error message.
+ */
+void FbleReportRuntimeError(FbleRuntime* runtime, FbleLoc loc, FbleFunction* func, const char* msg);
+
+/**
  * @func[FbleFullGc] Performs a full garbage collection.
  *  Frees any unreachable objects currently on the runtime.
  *

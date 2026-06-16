@@ -1930,6 +1930,17 @@ void* FbleNativeValueData(FbleValue* value)
 }
 
 // See documentation in fble-runtime.h
+void FbleReportRuntimeError(FbleRuntime* runtime, FbleLoc loc, FbleFunction* func, const char* msg)
+{
+  FbleName func_name = runtime->profile->blocks.xs[func->profile_block_id];
+  FbleReportError("in %s", loc, func_name.name->str);
+  if (msg != NULL) {
+    fprintf(stderr, ": %s", msg);
+  }
+  fprintf(stderr, "\n");
+}
+
+// See documentation in fble-runtime.h
 void FbleFullGc(FbleRuntime* runtime_)
 {
   Runtime* runtime = (Runtime*)runtime_;

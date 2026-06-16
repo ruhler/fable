@@ -17,7 +17,6 @@
 #include "code.h"
 #include "unreachable.h"
 
-static void ReportRuntimeError(FbleRuntime* runtime, FbleLoc loc, FbleFunction* func, const char* msg);
 static void FreeCode(void* code);
 
 /**
@@ -39,24 +38,6 @@ static void FreeCode(void* code);
  *   None.
  */
 #define GET(var) (vars[var.tag][var.index])
-
-/**
- * @func[ReportRuntimeError] Reports a runtime error.
- *  @arg[FbleRuntime*][runtime] The runtime context.
- *  @arg[FbleLoc][loc] Location of the error.
- *  @arg[FbleFunction*][func] Function where the error occured.
- *  @arg[const char*][msg] Error message. Maybe be NULL.
- *  @sideeffects Outputs an error message.
- */
-static void ReportRuntimeError(FbleRuntime* runtime, FbleLoc loc, FbleFunction* func, const char* msg)
-{
-  FbleName func_name = runtime->profile->blocks.xs[func->profile_block_id];
-  FbleReportError("in %s", loc, func_name.name->str);
-  if (msg != NULL) {
-    fprintf(stderr, ": %s", msg);
-  }
-  fprintf(stderr, "\n");
-}
 
 /**
  * @func[FreeCode] Calls FbleFreeCode.
@@ -146,7 +127,7 @@ static FbleValue* Interpret(
         locals[access_instr->dest] = FbleStructValueField(obj, access_instr->fieldc, access_instr->field);
 
         if (locals[access_instr->dest] == NULL) {
-          ReportRuntimeError(runtime, access_instr->loc, function, "undefined struct value access");
+          FbleReportRuntimeError(runtime, access_instr->loc, function, "undefined struct value access");
           return NULL;
         }
 
@@ -161,13 +142,13 @@ static FbleValue* Interpret(
         locals[access_instr->dest] = FbleUnionValueField(obj, access_instr->tagwidth, access_instr->tag);
 
         if (locals[access_instr->dest] == NULL) {
-          ReportRuntimeError(runtime, access_instr->loc, function, "undefined union value access");
+          FbleReportRuntimeError(runtime, access_instr->loc, function, "undefined union value access");
           return NULL;
         }
 
         if (locals[access_instr->dest] == FbleWrongUnionTag) {
           locals[access_instr->dest] = NULL;
-          ReportRuntimeError(runtime, access_instr->loc, function, "union field access undefined: wrong tag");
+          FbleReportRuntimeError(runtime, access_instr->loc, function, "union field access undefined: wrong tag");
           return NULL;
         }
 
@@ -181,7 +162,7 @@ static FbleValue* Interpret(
         size_t tag = FbleUnionValueTag(obj, select_instr->tagwidth);
 
         if (tag == (size_t)(-1)) {
-          ReportRuntimeError(runtime, select_instr->loc, function, "undefined union value select");
+          FbleReportRuntimeError(runtime, select_instr->loc, function, "undefined union value select");
           return NULL;
         }
 
@@ -236,7 +217,7 @@ static FbleValue* Interpret(
 
         locals[call_instr->dest] = FbleCall(runtime, profile, func, call_instr->args.size, call_args);
         if (locals[call_instr->dest] == NULL) {
-          ReportRuntimeError(runtime, call_instr->loc, function, NULL);
+          FbleReportRuntimeError(runtime, call_instr->loc, function, NULL);
           return NULL;
         }
 
@@ -248,7 +229,7 @@ static FbleValue* Interpret(
         FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
         FbleValue* func = GET(call_instr->func);
         if (func == NULL || ((uintptr_t)func & 0x3) == 0x2) {
-          ReportRuntimeError(runtime, call_instr->loc, function, "called undefined function");
+          FbleReportRuntimeError(runtime, call_instr->loc, function, "called undefined function");
           return NULL;
         };
 
@@ -282,7 +263,7 @@ static FbleValue* Interpret(
         size_t r = FbleDefineRecursiveValues(runtime, decl, defn);
 
         if (r != 0) {
-          ReportRuntimeError(runtime, defn_instr->locs.xs[r-1], function, "vacuous value");
+          FbleReportRuntimeError(runtime, defn_instr->locs.xs[r-1], function, "vacuous value");
           return NULL;
         }
 
@@ -326,7 +307,7 @@ static FbleValue* Interpret(
         FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
         FbleForeign* foreign = FbleLookupForeignValue(runtime, foreign_instr->path, foreign_instr->name.name->str);
         if (foreign == NULL) {
-          ReportRuntimeError(runtime, foreign_instr->name.loc, function, "foreign value not found");
+          FbleReportRuntimeError(runtime, foreign_instr->name.loc, function, "foreign value not found");
           return NULL;
         }
 
