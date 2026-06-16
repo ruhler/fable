@@ -566,12 +566,12 @@ void* FbleNativeValueData(FbleValue* value);
  * @func[FbleReportRuntimeError] Reports a runtime error.
  *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[FbleLoc][loc] Location of the error.
- *  @arg[FbleFunction*][func] Function where the error occured.
+ *  @arg[FbleBlockId][func] Profile block id of the function where the error occured.
  *  @arg[const char*][msg]
  *   Error message. Maybe be NULL to indicate a location in the stack.
  *  @sideeffects Outputs an error message.
  */
-void FbleReportRuntimeError(FbleRuntime* runtime, FbleLoc loc, FbleFunction* func, const char* msg);
+void FbleReportRuntimeError(FbleRuntime* runtime, FbleLoc loc, FbleBlockId func, const char* msg);
 
 /**
  * @func[FbleFullGc] Performs a full garbage collection.

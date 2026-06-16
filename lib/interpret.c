@@ -127,7 +127,7 @@ static FbleValue* Interpret(
         locals[access_instr->dest] = FbleStructValueField(obj, access_instr->fieldc, access_instr->field);
 
         if (locals[access_instr->dest] == NULL) {
-          FbleReportRuntimeError(runtime, access_instr->loc, function, "undefined struct value access");
+          FbleReportRuntimeError(runtime, access_instr->loc, profile_block_id, "undefined struct value access");
           return NULL;
         }
 
@@ -142,13 +142,13 @@ static FbleValue* Interpret(
         locals[access_instr->dest] = FbleUnionValueField(obj, access_instr->tagwidth, access_instr->tag);
 
         if (locals[access_instr->dest] == NULL) {
-          FbleReportRuntimeError(runtime, access_instr->loc, function, "undefined union value access");
+          FbleReportRuntimeError(runtime, access_instr->loc, profile_block_id, "undefined union value access");
           return NULL;
         }
 
         if (locals[access_instr->dest] == FbleWrongUnionTag) {
           locals[access_instr->dest] = NULL;
-          FbleReportRuntimeError(runtime, access_instr->loc, function, "union field access undefined: wrong tag");
+          FbleReportRuntimeError(runtime, access_instr->loc, profile_block_id, "union field access undefined: wrong tag");
           return NULL;
         }
 
@@ -162,7 +162,7 @@ static FbleValue* Interpret(
         size_t tag = FbleUnionValueTag(obj, select_instr->tagwidth);
 
         if (tag == (size_t)(-1)) {
-          FbleReportRuntimeError(runtime, select_instr->loc, function, "undefined union value select");
+          FbleReportRuntimeError(runtime, select_instr->loc, profile_block_id, "undefined union value select");
           return NULL;
         }
 
@@ -217,7 +217,7 @@ static FbleValue* Interpret(
 
         locals[call_instr->dest] = FbleCall(runtime, profile, func, call_instr->args.size, call_args);
         if (locals[call_instr->dest] == NULL) {
-          FbleReportRuntimeError(runtime, call_instr->loc, function, NULL);
+          FbleReportRuntimeError(runtime, call_instr->loc, profile_block_id, NULL);
           return NULL;
         }
 
@@ -229,7 +229,7 @@ static FbleValue* Interpret(
         FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
         FbleValue* func = GET(call_instr->func);
         if (func == NULL || ((uintptr_t)func & 0x3) == 0x2) {
-          FbleReportRuntimeError(runtime, call_instr->loc, function, "called undefined function");
+          FbleReportRuntimeError(runtime, call_instr->loc, profile_block_id, "called undefined function");
           return NULL;
         };
 
@@ -263,7 +263,7 @@ static FbleValue* Interpret(
         size_t r = FbleDefineRecursiveValues(runtime, decl, defn);
 
         if (r != 0) {
-          FbleReportRuntimeError(runtime, defn_instr->locs.xs[r-1], function, "vacuous value");
+          FbleReportRuntimeError(runtime, defn_instr->locs.xs[r-1], profile_block_id, "vacuous value");
           return NULL;
         }
 
@@ -307,7 +307,7 @@ static FbleValue* Interpret(
         FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
         FbleForeign* foreign = FbleLookupForeignValue(runtime, foreign_instr->path, foreign_instr->name.name->str);
         if (foreign == NULL) {
-          FbleReportRuntimeError(runtime, foreign_instr->name.loc, function, "foreign value not found");
+          FbleReportRuntimeError(runtime, foreign_instr->name.loc, profile_block_id, "foreign value not found");
           return NULL;
         }
 
