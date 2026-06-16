@@ -53,12 +53,12 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
 
 /**
  * @func[FbleCliArgs] Helper for creating List@<String@> args.
- *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[int][argc] Number of command line args.
  *  @arg[const char**][argv] The command line args.
  *  @returns[FbleValue*] List@<String@> for the command line args.
  *  @sideeffects Allocates values on the fble heap.
  */
-FbleValue* FbleCliArgs(FbleValueHeap* heap, int argc, const char** argv);
+FbleValue* FbleCliArgs(FbleRuntime* runtime, int argc, const char** argv);
 
 #endif // FBLE_STD_CLI_FBLE_H_

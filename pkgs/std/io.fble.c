@@ -10,13 +10,13 @@
 #include <fble/fble-runtime.h>   // for FbleValue, etc.
 
 static FbleValue* ReturnImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
 static FbleValue* DoImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
 static FbleValue* RunImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
 
 
@@ -29,7 +29,7 @@ static FbleValue* RunImpl(
  *  @sideeffects None.
  */
 static FbleValue* ReturnImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   return args[0];
@@ -44,22 +44,22 @@ static FbleValue* ReturnImpl(
  *  @sideeffects None.
  */
 static FbleValue* DoImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   FbleValue* ma = args[0];
   FbleValue* f = args[1];
   FbleValue* u = args[2];
-  FbleValue* a = FbleCall(heap, profile, ma, 1, &u);
+  FbleValue* a = FbleCall(runtime, profile, ma, 1, &u);
   if (a == NULL) {
     return NULL;
   }
 
-  heap->tail_call_argc = 2;
-  heap->tail_call_buffer[0] = f;
-  heap->tail_call_buffer[1] = a;
-  heap->tail_call_buffer[2] = u;
-  return heap->tail_call_sentinel;
+  runtime->tail_call_argc = 2;
+  runtime->tail_call_buffer[0] = f;
+  runtime->tail_call_buffer[1] = a;
+  runtime->tail_call_buffer[2] = u;
+  return runtime->tail_call_sentinel;
 }
 
 /**
@@ -71,7 +71,7 @@ static FbleValue* DoImpl(
  *  @sideeffects None.
  */
 static FbleValue* RunImpl(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   // External@ is exactly (Unit@) { A@; }, so we can just pass back the first
@@ -80,7 +80,7 @@ static FbleValue* RunImpl(
 }
 
 // See documentation in io.fble.h
-FbleValue* FbleIo(FbleValueHeap* heap, FbleProfile* profile)
+FbleValue* FbleIo(FbleRuntime* runtime, FbleProfile* profile)
 {
   FbleName block_names[1];
   block_names[0].name = FbleNewString("IoRun!");
@@ -95,13 +95,13 @@ FbleValue* FbleIo(FbleValueHeap* heap, FbleProfile* profile)
     .max_call_args = 0,
     .run = &RunImpl,
   };
-  FbleValue* run = FbleNewFuncValue(heap, &run_exe, block_id, NULL);
+  FbleValue* run = FbleNewFuncValue(runtime, &run_exe, block_id, NULL);
 
-  return FbleNewStructValue_(heap, 1, run);
+  return FbleNewStructValue_(runtime, 1, run);
 }
 
 // See documentation in io.fble.h
-FbleValue* FbleIoMonad(FbleValueHeap* heap, FbleProfile* profile)
+FbleValue* FbleIoMonad(FbleRuntime* runtime, FbleProfile* profile)
 {
   FbleName block_names[2];
   block_names[0].name = FbleNewString("IoReturn!");
@@ -119,7 +119,7 @@ FbleValue* FbleIoMonad(FbleValueHeap* heap, FbleProfile* profile)
     .max_call_args = 0,
     .run = &ReturnImpl,
   };
-  FbleValue* monad_return = FbleNewFuncValue(heap, &return_exe, block_id, NULL);
+  FbleValue* monad_return = FbleNewFuncValue(runtime, &return_exe, block_id, NULL);
 
   static FbleExecutable do_exe = {
     .num_args = 3,
@@ -127,8 +127,8 @@ FbleValue* FbleIoMonad(FbleValueHeap* heap, FbleProfile* profile)
     .max_call_args = 0,
     .run = &DoImpl,
   };
-  FbleValue* monad_do = FbleNewFuncValue(heap, &do_exe, block_id + 1, NULL);
+  FbleValue* monad_do = FbleNewFuncValue(runtime, &do_exe, block_id + 1, NULL);
 
   FbleValue* type = FbleGenericTypeValue;
-  return FbleNewStructValue_(heap, 3, type, monad_return, monad_do);
+  return FbleNewStructValue_(runtime, 3, type, monad_return, monad_do);
 }

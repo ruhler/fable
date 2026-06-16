@@ -24,18 +24,18 @@
  *  @code[fble] @
  *   (String@, Unit@) { Maybe@<String@>; }
  */
-static FbleValue* GetVarImpl(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* function, FbleValue** args)
+static FbleValue* GetVarImpl(FbleRuntime* runtime, FbleProfileThread* profile, FbleFunction* function, FbleValue** args)
 {
   char* var = FbleStringValueAccess(args[0]);
   char* value = getenv(var);
   FbleFree(var);
 
   if (value == NULL) {
-    return FbleNewMaybeValue(heap, NULL);
+    return FbleNewMaybeValue(runtime, NULL);
   }
 
-  FbleValue* str = FbleNewStringValue(heap, value);
-  return FbleNewMaybeValue(heap, str);
+  FbleValue* str = FbleNewStringValue(runtime, value);
+  return FbleNewMaybeValue(runtime, str);
 }
 
 // See documentation in env.fble.h

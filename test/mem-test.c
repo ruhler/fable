@@ -23,7 +23,7 @@ typedef struct {
 } Args;
 
 static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error);
-static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n);
+static size_t Run(FbleRuntime* runtime, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n);
 
 /**
  * @func[ParseArg] Arg parser for mem-tests.
@@ -40,7 +40,7 @@ static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
 
 /**
  * @func[Run] Runs the program for f[n].
- *  @arg[FbleValueHeap*][heap] Heap to use for allocations.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[FbleValue*][func] The function f to run.
  *  @arg[FbleProfile*][profile] The profile to run with.
  *  @arg[size_t][use_n] The value of n to run for.
@@ -53,10 +53,10 @@ static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
  *  @sideeffects
  *   Resets the number of max bytes allocated.
  */
-static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n)
+static size_t Run(FbleRuntime* runtime, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n)
 {
-  FbleValueFullGc(heap);
-  FblePushFrame(heap);
+  FbleValueFullGc(runtime);
+  FblePushFrame(runtime);
   assert(use_n <= alloc_n);
 
   size_t num_bits = 0;
@@ -70,19 +70,19 @@ static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, si
   // @ Bit@ = +(Unit@ 0, Unit@ 1);
   // @ BitS@ = +(BitP@ cons, Unit@ nil),
   // @ BitP@ = *(Bit@ msb, BitS@ tail);
-  FbleValue* zero = FbleNewEnumValue(heap, 1, 0);
-  FbleValue* one = FbleNewEnumValue(heap, 1, 1);
-  FbleValue* tail = FbleNewEnumValue(heap, 1, 1);
+  FbleValue* zero = FbleNewEnumValue(runtime, 1, 0);
+  FbleValue* one = FbleNewEnumValue(runtime, 1, 1);
+  FbleValue* tail = FbleNewEnumValue(runtime, 1, 1);
   for (size_t i = 0; i < num_bits; ++i) {
     FbleValue* bit = (use_n % 2 == 0) ? zero : one;
     use_n /= 2;
-    FbleValue* cons = FbleNewStructValue_(heap, 2, bit, tail);
-    tail = FbleNewUnionValue(heap, 1, 0, cons);
+    FbleValue* cons = FbleNewStructValue_(runtime, 2, bit, tail);
+    tail = FbleNewUnionValue(runtime, 1, 0, cons);
   }
 
   FbleResetMaxTotalBytesAllocated();
-  FbleApply(heap, func, 1, &tail, profile);
-  FblePopFrame(heap, NULL);
+  FbleApply(runtime, func, 1, &tail, profile);
+  FblePopFrame(runtime, NULL);
   return FbleMaxTotalBytesAllocated();
 }
 
@@ -94,17 +94,17 @@ FbleMainStatus FbleMemTestMain(int argc, const char** argv, FblePreloadedModule*
   // Use a profile during tests to ensure memory behavior works properly with
   // profiling turned on.
   FbleProfile* profile = FbleNewProfile();
-  FbleValueHeap* heap = FbleNewValueHeap();
+  FbleRuntime* runtime = FbleNewRuntime();
   const char* profile_output_file = NULL;
   uint64_t profile_sample_period = 0;
   FbleValue* func = NULL;
 
   argv[argc++] = "--";
   FbleMainStatus status = FbleMain(&ParseArg, &args, "fble-mem-test", fbldUsageHelpText,
-      &argc, &argv, preloaded, heap, profile, &profile_output_file, &profile_sample_period, &func);
+      &argc, &argv, preloaded, runtime, profile, &profile_output_file, &profile_sample_period, &func);
 
   if (func == NULL) {
-    FbleFreeValueHeap(heap);
+    FbleFreeRuntime(runtime);
     FbleFreeProfile(profile);
     return status;
   }
@@ -116,15 +116,15 @@ FbleMainStatus FbleMemTestMain(int argc, const char** argv, FblePreloadedModule*
 
   if (args.debug) {
     for (size_t i = 0; i <= large_n; i++) {
-      size_t max_n = Run(heap, func, profile, i, large_n);
+      size_t max_n = Run(runtime, func, profile, i, large_n);
       fprintf(stderr, "% 4zi: %zi\n", i, max_n);
     }
   }
 
-  size_t max_small_n = Run(heap, func, profile, small_n, large_n);
-  size_t max_large_n = Run(heap, func, profile, large_n, large_n);
+  size_t max_small_n = Run(runtime, func, profile, small_n, large_n);
+  size_t max_large_n = Run(runtime, func, profile, large_n, large_n);
 
-  FbleFreeValueHeap(heap);
+  FbleFreeRuntime(runtime);
   FbleFreeProfile(profile);
 
   // Be a little lenient with memory usage, because there can be small

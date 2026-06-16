@@ -24,12 +24,12 @@
  *  @sideeffects
  *   Writes a character to the debug stream.
  */
-static FbleValue* PutChar(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* function, FbleValue** args)
+static FbleValue* PutChar(FbleRuntime* runtime, FbleProfileThread* profile, FbleFunction* function, FbleValue** args)
 {
   wchar_t c = FbleCharValueAccess(args[0]);
   fputwc(c, stderr);
   fflush(stderr);
-  return FbleNewStructValue_(heap, 0);
+  return FbleNewStructValue_(runtime, 0);
 }
 
 FbleForeign _Fble_2f_Std_2f_Stream_2f_Debug_25__2e_PutChar = {

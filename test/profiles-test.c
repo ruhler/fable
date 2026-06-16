@@ -179,16 +179,16 @@ static size_t Calls(FbleProfile* profile, const char* caller, const char* callee
 int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 {
   FbleProfile* profile = FbleNewProfile();
-  FbleValueHeap* heap = FbleNewValueHeap();
+  FbleRuntime* runtime = FbleNewRuntime();
   const char* profile_output_file = NULL;
   uint64_t profile_sample_period = 0;
   FbleValue* result = NULL;
 
   argv[argc++] = "--";
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-profiles-test", fbldUsageHelpText,
-      &argc, &argv, preloaded, heap, profile, &profile_output_file, &profile_sample_period, &result);
+      &argc, &argv, preloaded, runtime, profile, &profile_output_file, &profile_sample_period, &result);
 
-  FbleFreeValueHeap(heap);
+  FbleFreeRuntime(runtime);
 
   if (result == NULL) {
     FbleFreeProfile(profile);

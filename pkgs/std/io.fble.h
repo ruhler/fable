@@ -13,20 +13,20 @@
 
 /**
  * @func[FbleIo] Helper for creating a /Std/Io%.Io@<M@> instance.
- *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[FbleProfile*][profile] Profile to add blocks to.
  *  @returns[FbleValue*] An instance of Io@.
  *  @sideeffects Adds blocks to profile.
  */
-FbleValue* FbleIo(FbleValueHeap* heap, FbleProfile* profile);
+FbleValue* FbleIo(FbleRuntime* runtime, FbleProfile* profile);
 
 /**
  * @func[FbleIoMonad] Helper for creating Io@'s Monad@ instance.
- *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[FbleProfile*][profile] Profile to add blocks to.
  *  @returns[FbleValue*] The instance of Monad@ for use with Io@.
  *  @sideeffects Adds blocks to profile.
  */
-FbleValue* FbleIoMonad(FbleValueHeap* heap, FbleProfile* profile);
+FbleValue* FbleIoMonad(FbleRuntime* runtime, FbleProfile* profile);
 
 #endif // FBLE_STD_IO_FBLE_H_

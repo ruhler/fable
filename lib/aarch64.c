@@ -43,7 +43,7 @@ typedef struct {
  *
  *  @field[void*][FP] Frame pointer.
  *  @field[void*][LR] Link register.
- *  @field[void*][r_heap_save] Saved contents of R_HEAP reg.
+ *  @field[void*][r_runtime_save] Saved contents of R_RUNTIME reg.
  *  @field[void*][r_locals_save] Saved contents of R_LOCALS reg.
  *  @field[void*][r_args_save] Saved contents of R_ARGS reg.
  *  @field[void*][r_statics_save] Saved contents of R_STATICS reg.
@@ -55,7 +55,7 @@ typedef struct {
 typedef struct {
   void* FP;
   void* LR;
-  void* r_heap_save;
+  void* r_runtime_save;
   void* r_locals_save;
   void* r_args_save;
   void* r_statics_save;
@@ -707,7 +707,7 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
         fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
       };
 
-      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x0, R_RUNTIME\n");
       Mov(fout, "x1", argc);
       fprintf(fout, "  mov x2, SP\n");
       fprintf(fout, "  bl FbleNewStructValue\n");
@@ -719,7 +719,7 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
 
     case FBLE_UNION_VALUE_INSTR: {
       FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
-      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x0, R_RUNTIME\n");
       Mov(fout, "x1", union_instr->tagwidth);
       Mov(fout, "x2", union_instr->tag);
       GetFrameVar(fout, "x3", union_instr->arg);
@@ -900,7 +900,7 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
         fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
       }
 
-      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x0, R_RUNTIME\n");
       Adr(fout, "x1", ".Lr.%04zx.%zi.exe", func_id, pc);
       fprintf(fout, "  add x2, R_PROFILE_BLOCK_ID, #%zi\n", func_instr->profile_block_offset);
       fprintf(fout, "  mov x3, SP\n");
@@ -922,7 +922,7 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
         fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
       }
 
-      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x0, R_RUNTIME\n");
       fprintf(fout, "  mov x1, R_PROFILE\n");
       GetFrameVar(fout, "x2", call_instr->func);
       Mov(fout, "x3", call_instr->args.size);
@@ -944,22 +944,22 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
       fprintf(fout, "  tst x1, #2\n");
       fprintf(fout, "  b.ne .Lo.%04zx.%zi.u\n", func_id, pc);       // Undefined
 
-      // Set heap->tail_call_argc
+      // Set runtime->tail_call_argc
       Mov(fout, "x0", call_instr->args.size);
-      fprintf(fout, "  str x0, [R_HEAP, #%zi]\n", offsetof(FbleValueHeap, tail_call_argc));
+      fprintf(fout, "  str x0, [R_RUNTIME, #%zi]\n", offsetof(FbleRuntime, tail_call_argc));
 
-      // heap->tail_call_buffer[0] = func
-      fprintf(fout, "  ldr x0, [R_HEAP, #%zi]\n", offsetof(FbleValueHeap, tail_call_buffer));
+      // runtime->tail_call_buffer[0] = func
+      fprintf(fout, "  ldr x0, [R_RUNTIME, #%zi]\n", offsetof(FbleRuntime, tail_call_buffer));
       fprintf(fout, "  str x1, [x0, #0]\n");
 
-      // heap->tail_call_buffer[1 + i] = arg[i]
+      // runtime->tail_call_buffer[1 + i] = arg[i]
       for (size_t i = 0; i < call_instr->args.size; ++i) {
         GetFrameVar(fout, "x1", call_instr->args.xs[i]);
         fprintf(fout, "  str x1, [x0, #%zi]\n", sizeof(FbleValue*) * (1 + i));
       }
 
-      // Return heap->tail_call_sentinel
-      fprintf(fout, "  ldr x0, [R_HEAP, #%zi]\n", offsetof(FbleValueHeap, tail_call_sentinel));
+      // Return runtime->tail_call_sentinel
+      fprintf(fout, "  ldr x0, [R_RUNTIME, #%zi]\n", offsetof(FbleRuntime, tail_call_sentinel));
       fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
       return;
     }
@@ -973,7 +973,7 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
 
     case FBLE_REC_DECL_INSTR: {
       FbleRecDeclInstr* decl_instr = (FbleRecDeclInstr*)instr;
-      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x0, R_RUNTIME\n");
       Mov(fout, "x1", decl_instr->n);
       fprintf(fout, "  bl FbleDeclareRecursiveValues\n");
       SetFrameVar(fout, "x0", decl_instr->dest);
@@ -993,7 +993,7 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
         .index = defn_instr->defn
       };
 
-      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x0, R_RUNTIME\n");
       GetFrameVar(fout, "x1", decl);
       GetFrameVar(fout, "x2", defn);
       fprintf(fout, "  bl FbleDefineRecursiveValues\n");
@@ -1028,7 +1028,7 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
         fprintf(fout, "  str x9, [SP, #%zi]\n", 8 * i);
       }
 
-      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x0, R_RUNTIME\n");
       Mov(fout, "x1", argc);
       fprintf(fout, "  mov x2, SP\n");
       fprintf(fout, "  bl FbleNewListValue\n");
@@ -1052,7 +1052,7 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
 
       fprintf(fout, "  .text\n");
       fprintf(fout, "  .align 2\n");
-      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x0, R_RUNTIME\n");
       Mov(fout, "x1", literal_instr->literal.size);
       Adr(fout, "x2", ".Lr.%04zx.%zi.prgm", func_id, pc);
       fprintf(fout, "  bl FbleNewLiteralValue\n");
@@ -1069,7 +1069,7 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
       FbleFreeString(foreign);
 
       // Call FbleNewForeignValue.
-      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x0, R_RUNTIME\n");
       fprintf(fout, "  mov x1, R_PROFILE\n");
       fprintf(fout, "  add x3, R_PROFILE_BLOCK_ID, #%zi\n", foreign_instr->profile_block_offset);
       fprintf(fout, "  bl FbleNewForeignValue\n");
@@ -1245,14 +1245,14 @@ static void EmitCode(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, Fb
   fprintf(fout, "  mov FP, SP\n");
 
   // Save callee saved registers for later restoration.
-  fprintf(fout, "  stp R_HEAP, R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+  fprintf(fout, "  stp R_RUNTIME, R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_runtime_save));
   fprintf(fout, "  stp R_ARGS, R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_args_save));
   fprintf(fout, "  stp R_PROFILE_BLOCK_ID, R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_id_save));
 
   // Set up common registers.
   fprintf(fout, "  ldr R_STATICS, [x2, #%zi]\n", offsetof(FbleFunction, statics));
   fprintf(fout, "  ldr R_PROFILE_BLOCK_ID, [x2, #%zi]\n", offsetof(FbleFunction, profile_block_id));
-  fprintf(fout, "  mov R_HEAP, x0\n");
+  fprintf(fout, "  mov R_RUNTIME, x0\n");
   fprintf(fout, "  mov R_ARGS, x3\n");
   fprintf(fout, "  mov R_PROFILE, x1\n");
   fprintf(fout, "  add R_LOCALS, SP, #%zi\n", offsetof(RunStackFrame, locals));
@@ -1265,7 +1265,7 @@ static void EmitCode(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, Fb
 
   // Restores stack and frame pointer and return whatever is in x0.
   fprintf(fout, ".Lr.%04zx.exit:\n", func_id);
-  fprintf(fout, "  ldp R_HEAP, R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+  fprintf(fout, "  ldp R_RUNTIME, R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_runtime_save));
   fprintf(fout, "  ldp R_ARGS, R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_args_save));
   fprintf(fout, "  ldp R_PROFILE_BLOCK_ID, R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_id_save));
   fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
@@ -1337,7 +1337,7 @@ void FbleGenerateAArch64(FILE* fout, FbleModule* module)
 
   // Common things we hold in callee saved registers for Run and Abort
   // functions.
-  fprintf(fout, "  R_HEAP .req x19\n");
+  fprintf(fout, "  R_RUNTIME .req x19\n");
   fprintf(fout, "  R_LOCALS .req x20\n");
   fprintf(fout, "  R_ARGS .req x21\n");
   fprintf(fout, "  R_STATICS .req x22\n");

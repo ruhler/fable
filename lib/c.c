@@ -286,7 +286,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   char label[SizeofSanitizedString(block.name->str)];
   SanitizeString(block.name->str, label);
   fprintf(fout, "static FbleValue* %s_%04zx("
-      "FbleValueHeap* heap, FbleProfileThread* profile, "
+      "FbleRuntime* runtime, FbleProfileThread* profile, "
       "FbleFunction* function, FbleValue** args)\n",
       label, code->profile_block_id);
   fprintf(fout, "{\n");
@@ -351,7 +351,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
         size_t argc = struct_instr->args.size;
 
-        fprintf(fout, "  l[%zi] = FbleNewStructValue_(heap, %zi", struct_instr->dest, argc);
+        fprintf(fout, "  l[%zi] = FbleNewStructValue_(runtime, %zi", struct_instr->dest, argc);
         for (size_t i = 0; i < argc; ++i) {
           fprintf(fout, ", %s[%zi]",
               var_tag[struct_instr->args.xs[i].tag],
@@ -364,7 +364,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
       case FBLE_UNION_VALUE_INSTR: {
         FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
-        fprintf(fout, "  l[%zi] = FbleNewUnionValue(heap, %zi, %zi, %s[%zi]);\n",
+        fprintf(fout, "  l[%zi] = FbleNewUnionValue(runtime, %zi, %zi, %s[%zi]);\n",
             union_instr->dest, union_instr->tagwidth, union_instr->tag,
             var_tag[union_instr->arg.tag],
             union_instr->arg.index);
@@ -453,7 +453,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         }
         fprintf(fout, "};\n");
 
-        fprintf(fout, "  l[%zi] = FbleNewFuncValue(heap, &exe_%zi, profile_block_id + %zi, fv%zi",
+        fprintf(fout, "  l[%zi] = FbleNewFuncValue(runtime, &exe_%zi, profile_block_id + %zi, fv%zi",
             func_instr->dest, exe_id, func_instr->profile_block_offset, pc);
         exe_id++;
         fprintf(fout, ");\n");
@@ -470,7 +470,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
               call_instr->args.xs[i].index);
         }
         fprintf(fout, "};\n");
-        fprintf(fout, "  l[%zi] = FbleCall(heap, profile, %s[%zi], %zi, ca%zi);\n",
+        fprintf(fout, "  l[%zi] = FbleCall(runtime, profile, %s[%zi], %zi, ca%zi);\n",
             call_instr->dest,
             var_tag[call_instr->func.tag], call_instr->func.index,
             call_instr->args.size, pc);
@@ -489,17 +489,17 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
             call_instr->func.index);
         ReturnAbort(fout, "UndefinedFunctionValue", call_instr->loc);
 
-        fprintf(fout, "  heap->tail_call_buffer[0] = %s[%zi];\n",
+        fprintf(fout, "  runtime->tail_call_buffer[0] = %s[%zi];\n",
             var_tag[call_instr->func.tag],
             call_instr->func.index);
-        fprintf(fout, "  heap->tail_call_argc = %zi;\n", call_instr->args.size);
+        fprintf(fout, "  runtime->tail_call_argc = %zi;\n", call_instr->args.size);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
-          fprintf(fout, "  heap->tail_call_buffer[%zi] = %s[%zi];\n", i + 1,
+          fprintf(fout, "  runtime->tail_call_buffer[%zi] = %s[%zi];\n", i + 1,
               var_tag[call_instr->args.xs[i].tag],
               call_instr->args.xs[i].index);
         }
 
-        fprintf(fout, "  return heap->tail_call_sentinel;\n");
+        fprintf(fout, "  return runtime->tail_call_sentinel;\n");
         break;
       }
 
@@ -514,14 +514,14 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
       case FBLE_REC_DECL_INSTR: {
         FbleRecDeclInstr* decl_instr = (FbleRecDeclInstr*)instr;
-        fprintf(fout, "  l[%zi] = FbleDeclareRecursiveValues(heap, %zi);\n",
+        fprintf(fout, "  l[%zi] = FbleDeclareRecursiveValues(runtime, %zi);\n",
             decl_instr->dest, decl_instr->n);
         break;
       }
 
       case FBLE_REC_DEFN_INSTR: {
         FbleRecDefnInstr* defn_instr = (FbleRecDefnInstr*)instr;
-        fprintf(fout, "  switch (FbleDefineRecursiveValues(heap, l[%zi], l[%zi])) {\n",
+        fprintf(fout, "  switch (FbleDefineRecursiveValues(runtime, l[%zi], l[%zi])) {\n",
             defn_instr->decl, defn_instr->defn);
         fprintf(fout, "    case 0: break;\n");
         for (size_t i = 0; i < defn_instr->locs.size; ++i) {
@@ -550,7 +550,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         FbleListInstr* list_instr = (FbleListInstr*)instr;
         size_t argc = list_instr->args.size;
 
-        fprintf(fout, "  l[%zi] = FbleNewListValue_(heap, %zi", list_instr->dest, argc);
+        fprintf(fout, "  l[%zi] = FbleNewListValue_(runtime, %zi", list_instr->dest, argc);
         for (size_t i = 0; i < argc; ++i) {
           fprintf(fout, ", %s[%zi]",
               var_tag[list_instr->args.xs[i].tag],
@@ -563,7 +563,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_LITERAL_INSTR: {
         FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
         size_t argc = literal_instr->literal.size;
-        fprintf(fout, "  l[%zi] = FbleNewLiteralValue(heap, %zi, \"", literal_instr->dest, argc);
+        fprintf(fout, "  l[%zi] = FbleNewLiteralValue(runtime, %zi, \"", literal_instr->dest, argc);
         for (size_t i = 0; i < argc; ++i) {
           fprintf(fout, "\\x%02x", literal_instr->literal.data[i]);
         }
@@ -575,7 +575,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
         FbleString* foreign = FbleMangleForeignName(foreign_instr->path, foreign_instr->name.name->str);
         fprintf(fout, "  extern FbleForeign %s;\n", foreign->str);
-        fprintf(fout, "  l[%zi] = FbleNewForeignValue(heap, profile, &%s, profile_block_id + %zi);\n",
+        fprintf(fout, "  l[%zi] = FbleNewForeignValue(runtime, profile, &%s, profile_block_id + %zi);\n",
             foreign_instr->dest, foreign->str, foreign_instr->profile_block_offset);
         FbleFreeString(foreign);
         break;
@@ -667,7 +667,7 @@ void FbleGenerateC(FILE* fout, FbleModule* module)
     char function_label[SizeofSanitizedString(function_block.name->str)];
     SanitizeString(function_block.name->str, function_label);
     fprintf(fout, "static FbleValue* %s_%04zx("
-      "FbleValueHeap* heap, FbleProfileThread* profile, "
+      "FbleRuntime* runtime, FbleProfileThread* profile, "
       "FbleFunction* function, FbleValue** args);\n",
         function_label, code->profile_block_id);
   }

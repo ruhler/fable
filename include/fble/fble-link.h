@@ -12,8 +12,8 @@
 
 /**
  * @func[FbleLink] Links together modules from a program into an FbleValue*.
- *  @arg[FbleValueHeap*] heap
- *   Heap to use for allocations.
+ *  @arg[FbleRuntime*] runtime
+ *   The runtime context.
  *  @arg[FbleProfile*] profile
  *   Profile to populate with blocks. May be NULL.
  *  @arg[FbleProgram*] program
@@ -26,6 +26,6 @@
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* program);
+FbleValue* FbleLink(FbleRuntime* runtime, FbleProfile* profile, FbleProgram* program);
 
 #endif // FBLE_LINK_H_

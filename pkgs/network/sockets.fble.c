@@ -75,7 +75,7 @@ void Write(SOCKET sfd, char c)
  *   Reads a byte from the socket.
  */
 static FbleValue* GetByte(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
@@ -86,11 +86,11 @@ static FbleValue* GetByte(
   int c = Read(sfd);
 
   if (c == EOF) {
-    return FbleNewMaybeValue(heap, NULL);
+    return FbleNewMaybeValue(runtime, NULL);
   }
 
-  FbleValue* v = FbleNewIntValue(heap, c);
-  return FbleNewMaybeValue(heap, v);
+  FbleValue* v = FbleNewIntValue(runtime, c);
+  return FbleNewMaybeValue(runtime, v);
 }
 
 // /Network/Sockets/Native%.GetByte foreign function.
@@ -110,7 +110,7 @@ FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_GetByte = {
  *  The fble type of the function is @l{(Socket@, Int@, Unit@) { Unit@; }}.
  */
 static FbleValue* PutByte(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
@@ -122,7 +122,7 @@ static FbleValue* PutByte(
   int64_t x = FbleIntValueAccess(byte);
   Write(sfd, (char)x);
 
-  return FbleNewStructValue_(heap, 0);
+  return FbleNewStructValue_(runtime, 0);
 }
 
 // /Network/Sockets/Native%.PutByte foreign function.
@@ -144,7 +144,7 @@ FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_PutByte = {
  *   (String@, Int@, Unit@) { Maybe@<Socket@>; }
  */
 static FbleValue* Client(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
@@ -188,11 +188,11 @@ static FbleValue* Client(
   freeaddrinfo(result);
 
   if (sfd == INVALID_SOCKET) {
-    return FbleNewMaybeValue(heap, NULL);
+    return FbleNewMaybeValue(runtime, NULL);
   }
 
-  FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, NULL);
-  return FbleNewMaybeValue(heap, sfd_value);
+  FbleValue* sfd_value = FbleNewNativeValue(runtime, (void*)(intptr_t)sfd, NULL);
+  return FbleNewMaybeValue(runtime, sfd_value);
 }
 
 // /Network/Sockets/Native%.Client foreign function.
@@ -214,7 +214,7 @@ FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_Client = {
  *   (Socket@, Unit@) { Socket@; }
  */
 static FbleValue* Accept(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
@@ -228,7 +228,7 @@ static FbleValue* Accept(
     assert(false);
   }
 
-  return FbleNewNativeValue(heap, (void*)(intptr_t)cfd, NULL);
+  return FbleNewNativeValue(runtime, (void*)(intptr_t)cfd, NULL);
 }
 
 // /Network/Sockets/Native%.Accept foreign function.
@@ -250,14 +250,14 @@ FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_Accept = {
  *   (Socket@, Unit@) { Unit@; }
  */
 static FbleValue* Close(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
 
   SOCKET sfd = (SOCKET)(intptr_t)FbleNativeValueData(args[0]);
   closesocket(sfd);
-  return FbleNewStructValue_(heap, 0);
+  return FbleNewStructValue_(runtime, 0);
 }
 
 // /Network/Sockets/Native%.Close foreign function.
@@ -280,7 +280,7 @@ FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_Close = {
  *   (String@, Int@, Unit@) { Maybe@<*(Int@ port, Socket@ socket)>; }
  */
 static FbleValue* Server(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
@@ -337,7 +337,7 @@ static FbleValue* Server(
   }
 
   if (sfd == INVALID_SOCKET) {
-    return FbleNewMaybeValue(heap, NULL); // Nothing
+    return FbleNewMaybeValue(runtime, NULL); // Nothing
   }
 
   // TODO: Don't assume AF_INET here?
@@ -349,10 +349,10 @@ static FbleValue* Server(
     port = ntohs(addr.sin_port);
   }
 
-  FbleValue* port_value = FbleNewIntValue(heap, port);
-  FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, NULL);
-  FbleValue* server_value = FbleNewStructValue_(heap, 2, port_value, sfd_value);
-  return FbleNewMaybeValue(heap, server_value);
+  FbleValue* port_value = FbleNewIntValue(runtime, port);
+  FbleValue* sfd_value = FbleNewNativeValue(runtime, (void*)(intptr_t)sfd, NULL);
+  FbleValue* server_value = FbleNewStructValue_(runtime, 2, port_value, sfd_value);
+  return FbleNewMaybeValue(runtime, server_value);
 }
 
 // /Network/Sockets/Native%.Server foreign function.
@@ -374,7 +374,7 @@ FbleForeign _Fble_2f_Network_2f_Sockets_2f_Native_25__2e_Server = {
  *   (Unit@) { Unit@; }
  */
 static FbleValue* Init(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
 #ifdef __WIN32
@@ -385,7 +385,7 @@ static FbleValue* Init(
   }
 #endif // __WIN32
 
-  return FbleNewStructValue_(heap, 0);
+  return FbleNewStructValue_(runtime, 0);
 }
 
 // /Network/Sockets/Native%.Init foreign function.

@@ -118,8 +118,8 @@ typedef struct {
 } FbleFuncValue;
 
 /**
- * @struct[FbleValueHeap] Memory heap for allocating fble values.
- *  Parts of the FbleValueHeap data structure are exposed for use by backends.
+ * @struct[FbleRuntime] A context for running fble code.
+ *  Parts of the FbleRuntime data structure are exposed for use by backends.
  *  Other parts are not exposed.
  *
  *  To perform a tail call, set tail_call_argc to the number of arguments to
@@ -134,8 +134,11 @@ typedef struct {
  *   function at index 0, followed by tail_call_argc worth of arguments.
  *  @field[size_t][tail_call_argc]
  *   Number of tail call arguments, not including the tail call function.
+ *
+ *  @field[FbleProfile*][profile]
+ *   The profile for the code loaded into and run in the runtime instance.
  */
-struct FbleValueHeap {
+struct FbleRuntime {
   FbleValue* tail_call_sentinel;
   FbleValue** tail_call_buffer;
   size_t tail_call_argc;
@@ -155,48 +158,48 @@ typedef struct {
 } FbleValueV;
 
 /**
- * @func[FbleNewValueHeap] Creates a new FbleValueHeap.
- *  The heap is organized as a stack of frames. New values are allocated to
- *  the top frame on the stack. Values are automatically freed when their
- *  frame is popped from the stack. See FblePushFrame and FblePopFrame for
- *  more info.
+ * @func[FbleNewRuntime] Creates a new FbleRuntime.
+ *  The runtime context tracks allocated values organized as a stack of
+ *  frames. New values are allocated to the top frame on the stack. Values
+ *  are automatically freed when their frame is popped from the stack. See
+ *  FblePushFrame and FblePopFrame for more info.
  *
- *  @returns FbleValueHeap*
- *   A heap that can be used to allocate values.
+ *  @returns FbleRuntime*
+ *   A context for allocating and evaluating values.
  *
  *  @sideeffects
- *   Allocates a heap that should be freed using FbleFreeValueHeap.
+ *   Allocates a runtime context that should be freed using FbleFreeRuntime.
  */
-FbleValueHeap* FbleNewValueHeap();
+FbleRuntime* FbleNewRuntime();
 
 /**
- * @func[FbleFreeValueHeap] Frees an FbleValueHeap.
- *  @arg[FbleValueHeap*][heap] The heap to free.
+ * @func[FbleFreeRuntime] Frees an FbleRuntime.
+ *  @arg[FbleRuntime*][runtime] The runtime to free.
  *
  *  @sideeffects
- *   The resources associated with the given heap are freed. The heap should
- *   not be used after this call.
+ *   The resources associated with the runtime context are freed. The runtime
+ *   should not be used after this call.
  */
-void FbleFreeValueHeap(FbleValueHeap* heap);
+void FbleFreeRuntime(FbleRuntime* runtime);
 
 /**
  * @func[FblePushFrame] Adds a new frame to the heap.
  *  Values allocated after this call will be allocated to a new frame, staying
  *  alive until the matching call to FblePopFrame.
  *
- *  @arg[FbleValueHeap*][heap] The heap.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @sideeffects
- *   Pushes a new frame on the heap that should be freed with a call to
+ *   Pushes a new frame on the runtime that should be freed with a call to
  *   FblePopFrame when no longer needed.
  */
-void FblePushFrame(FbleValueHeap* heap);
+void FblePushFrame(FbleRuntime* runtime);
 
 /**
  * @func[FblePopFrame] Pops a frame from the heap.
  *  All values allocated on the frame are freed. The returned value is moved
  *  to the parent frame.
  *
- *  @arg[FbleValueHeap*][heap] The heap.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[FbleValue*][value] Value to return when popping the frame.
  *  @returns[FbleValue*]
  *   A copy of @a[value] moved to the top frame after the frame is popped.
@@ -204,23 +207,23 @@ void FblePushFrame(FbleValueHeap* heap);
  *   Frees all values allocated on the top frame. You must not reference any
  *   values allocated to that frame after this call.
  */
-FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value);
+FbleValue* FblePopFrame(FbleRuntime* runtime, FbleValue* value);
 
 /**
  * @func[FbleRegisterForeignValue] Registers a foreign value.
- *  @arg[FbleValueHeap*][heap] The heap to register the value with.
+ *  @arg[FbleRuntime*][runtime] The runtime context to register the value with.
  *  @arg[FbleForeign*][foreign]
  *   The foreign value implementation to register. The lifetime of the foreign
- *   value implementation must persist beyond that of the FbleValueHeap.
+ *   value implementation must persist beyond that of the FbleRuntime.
  *  @sideeffects
- *   Registers the foreign value implementation with the heap.
+ *   Registers the foreign value implementation with the runtime.
  */
-void FbleRegisterForeignValue(FbleValueHeap* heap, FbleForeign* foreign);
+void FbleRegisterForeignValue(FbleRuntime* runtime, FbleForeign* foreign);
 
 /**
  * @func[FbleLookupForeignValue] Looks up a foreign value.
- *  @arg[FbleValueHeap*] heap
- *   Heap to look up the value in.
+ *  @arg[FbleRuntime*] runtime
+ *   The runtime context.
  *  @arg[FbleModulePath*] path
  *   Module path associated with the foreign value.
  *  @arg[const char*] name
@@ -229,12 +232,12 @@ void FbleRegisterForeignValue(FbleValueHeap* heap, FbleForeign* foreign);
  *  @returns FbleForeign*
  *   A pointer to the foreign value. NULL if the foreign value could not be
  *   found. The pointer is borrowed and assumed to have a lifetime at least as
- *   long as the lifetime of the FbleValueHeap.
+ *   long as the lifetime of the FbleRuntime.
  *
  *  @sideeffects
  *   None.
  */
-FbleForeign* FbleLookupForeignValue(FbleValueHeap* heap, FbleModulePath* path, const char* name);
+FbleForeign* FbleLookupForeignValue(FbleRuntime* runtime, FbleModulePath* path, const char* name);
 
 /**
  * @value[FbleGenericTypeValue] FbleValue instance for types.
@@ -247,7 +250,7 @@ extern FbleValue* FbleGenericTypeValue;
 
 /**
  * @func[FbleNewStructValue] Creates a new struct value.
- *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[size_t        ][argc] The number of fields in the struct value.
  *  @arg[FbleValue**   ][args]
  *   @@a[argc] arguments to the struct value. Args are borrowed. They must not
@@ -259,11 +262,11 @@ extern FbleValue* FbleGenericTypeValue;
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
+FbleValue* FbleNewStructValue(FbleRuntime* runtime, size_t argc, FbleValue** args);
 
 /**
  * @func[FbleNewStructValue_] Creates a new struct value using varargs.
- *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[size_t        ][argc] The number of fields in the struct value.
  *  @arg[...           ][    ]
  *   @@a[argc] FbleValue arguments to the struct value. Args are borrowed.
@@ -275,7 +278,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...);
+FbleValue* FbleNewStructValue_(FbleRuntime* runtime, size_t argc, ...);
 
 /**
  * @func[FbleStructValueField] Gets a field of a struct value.
@@ -296,7 +299,7 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t fieldc, size_t field);
 
 /**
  * @func[FbleNewUnionValue] Creates a new union value.
- *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[size_t        ][tagwidth]
  *   The number of bits needed to store a tag of this union type.
  *  @arg[size_t        ][tag ] The tag of the union value.
@@ -308,13 +311,13 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t fieldc, size_t field);
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tagwidth, size_t tag, FbleValue* arg);
+FbleValue* FbleNewUnionValue(FbleRuntime* runtime, size_t tagwidth, size_t tag, FbleValue* arg);
 
 /**
  * @func[FbleNewEnumValue] Creates a new enum value.
  *  Convenience function for creating unions with value of type *().
  *
- *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[size_t        ][tagwidth ] The number of bits needed for the tag.
  *  @arg[size_t        ][tag ] The tag of the union value.
  *
@@ -324,7 +327,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tagwidth, size_t tag, F
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tagwidth, size_t tag);
+FbleValue* FbleNewEnumValue(FbleRuntime* runtime, size_t tagwidth, size_t tag);
 
 /**
  * @func[FbleUnionValueTag] Gets the tag of a union value.
@@ -379,7 +382,7 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field)
 
 /**
  * @func[FbleNewListValue] Creates an fble list value.
- *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[size_t        ][argc] The number of elements on the list.
  *  @arg[FbleValue**   ][args] The elements to put on the list. Borrowed.
  *
@@ -389,11 +392,11 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field)
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
+FbleValue* FbleNewListValue(FbleRuntime* runtime, size_t argc, FbleValue** args);
 
 /**
  * @func[FbleNewListValue_] Creates an fble list value using varargs.
- *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[size_t        ][argc] The number of elements on the list.
  *  @arg[...           ][    ]
  *   @@a[argc] FbleValue elements to put on the list. Borrowed.
@@ -404,11 +407,11 @@ FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...);
+FbleValue* FbleNewListValue_(FbleRuntime* runtime, size_t argc, ...);
 
 /**
  * @func[FbleNewFuncValue] Creates an fble function value.
- *  @arg[FbleValueHeap*] heap
+ *  @arg[FbleRuntime*] runtime
  *   Heap to use for allocations.
  *  @arg[FbleExecutable*] executable
  *   The executable to run. Borrowed.
@@ -424,11 +427,11 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...);
  *  @sideeffects
  *   Allocates a function value on the heap.
  */
-FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics);
+FbleValue* FbleNewFuncValue(FbleRuntime* runtime, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics);
 
 /**
  * @func[FbleNewForeignValue] Creates an fble foreign value.
- *  @arg[FbleValueHeap*] heap
+ *  @arg[FbleRuntime*] runtime
  *   Heap to use for allocations.
  *  @arg[FbleProfileThread*] profile
  *   The current profile thread, or NULL if profiling is disabled.
@@ -448,14 +451,14 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
  *   Allocates a value on the heap. Anything else a zero-argument foreign
  *   value implementation might do.
  */
-FbleValue* FbleNewForeignValue(FbleValueHeap* heap, FbleProfileThread* profile, FbleForeign* foreign, size_t profile_block_id);
+FbleValue* FbleNewForeignValue(FbleRuntime* runtime, FbleProfileThread* profile, FbleForeign* foreign, size_t profile_block_id);
 
 /**
  * @func[FbleEval] Evaluates a linked program.
  *  The program is assumed to be a zero argument function as returned by
  *  FbleLink.
  * 
- *  @arg[FbleValueHeap*][heap   ] The heap to use for allocating values.
+ *  @arg[FbleRuntime*][runtime   ] The runtime context.
  *  @arg[FbleValue*    ][program] The program to evaluate.
  *  @arg[FbleProfile*  ][profile] The profile to update. Must not be NULL.
  * 
@@ -470,11 +473,11 @@ FbleValue* FbleNewForeignValue(FbleValueHeap* heap, FbleProfileThread* profile, 
  *    Updates profiling information in profile based on the execution of the
  *    program.
  */
-FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile);
+FbleValue* FbleEval(FbleRuntime* runtime, FbleValue* program, FbleProfile* profile);
 
 /**
  * @func[FbleApply] Applies an fble function to arguments.
- *  @arg[FbleValueHeap*][heap] The heap to use for allocating values.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[FbleValue*][func] The function to apply.
  *  @arg[size_t][argc] The number of args to apply.
  *  @arg[FbleValue**][args] The arguments to apply the function to.
@@ -489,7 +492,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
  *   @i Prints an error message to stderr in case of error.
  *   @i Updates the profile with stats from the evaluation.
  */
-FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
+FbleValue* FbleApply(FbleRuntime* runtime, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
 
 /**
  * @func[FbleDeclareRecursiveValues] Declare values intended to be recursive.
@@ -499,7 +502,7 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValu
  *  recursive definition. The FbleDefineRecursiveValues function should be
  *  called to complete the definition of the recursive values.
  *
- *  @arg[FbleValueHeap*][heap] The heap to allocate values on.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[size_t][n] The number of values to declare.
  *
  *  @returns FbleValue*
@@ -509,7 +512,7 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValu
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleDeclareRecursiveValues(FbleValueHeap* heap, size_t n);
+FbleValue* FbleDeclareRecursiveValues(FbleRuntime* runtime, size_t n);
 
 /**
  * @func[FbleDefineRecursiveValues] Define values intended to be recursive.
@@ -518,7 +521,7 @@ FbleValue* FbleDeclareRecursiveValues(FbleValueHeap* heap, size_t n);
  *  returned from FbleDeclareRecursiveValues. The @a[defn] argument should be
  *  a struct values whose fields hold the definitions of the recursive values.
  *
- *  @arg[FbleValueHeap*][heap  ] The heap to use for allocations
+ *  @arg[FbleRuntime*][runtime  ] The runtime context.
  *  @arg[FbleValue*   ][decl] The declaration of the reference values.
  *  @arg[FbleValue*   ][defn] The definition of the reference values.
  *
@@ -530,7 +533,7 @@ FbleValue* FbleDeclareRecursiveValues(FbleValueHeap* heap, size_t n);
  *   @i Updates the fields of @a[decl] to have the finalized values.
  *   @i Invalidates all handles to the original declared value standins.
  */
-size_t FbleDefineRecursiveValues(FbleValueHeap* heap, FbleValue* decl, FbleValue* defn);
+size_t FbleDefineRecursiveValues(FbleRuntime* runtime, FbleValue* decl, FbleValue* defn);
 
 /**
  * @func[FbleNewNativeValue] Creates a GC managed native allocation.
@@ -538,7 +541,7 @@ size_t FbleDefineRecursiveValues(FbleValueHeap* heap, FbleValue* decl, FbleValue
  *  is no longer reachable. Native values must not reference other values
  *  through the user data.
  *
- *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[void*][data] The user data to store on the native value.
  *  @arg[void (*)(void*)][on_free]
  *   Function called just before freeing the allocated native data. May be
@@ -549,7 +552,7 @@ size_t FbleDefineRecursiveValues(FbleValueHeap* heap, FbleValue* decl, FbleValue
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
+FbleValue* FbleNewNativeValue(FbleRuntime* runtime,
     void* data, void (*on_free)(void* data));
 
 /**
@@ -563,15 +566,15 @@ void* FbleNativeValueData(FbleValue* value);
 
 /**
  * @func[FbleValueFullGc] Performs a full garbage collection.
- *  Frees any unreachable objects currently on the heap.
+ *  Frees any unreachable objects currently on the runtime.
  *
  *  This is an expensive operation intended only for test and debug purposes.
  *
- *  @arg[FbleValueHeap*][heap] The heap to perform gc on.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *
  *  @sideeffects
  *   Frees any unreachable objects currently on the heap.
  */
-void FbleValueFullGc(FbleValueHeap* heap);
+void FbleValueFullGc(FbleRuntime* runtime);
 
 #endif // FBLE_RUNTIME_H_

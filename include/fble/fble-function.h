@@ -9,7 +9,7 @@
 #include "fble-profile.h"     // for FbleProfileThread
 
 // Forward references from fble-runtime.h
-typedef struct FbleValueHeap FbleValueHeap;
+typedef struct FbleRuntime FbleRuntime;
 typedef struct FbleValue FbleValue;
 
 // Forward references from fble-function.h
@@ -20,13 +20,13 @@ typedef struct FbleFunction FbleFunction;
  *  Type of a C function that implements an fble function.
  *
  *  To perform a tail call, the implementation of the run function should
- *  set heap->tail_call_argc to the number of arguments,
- *  set heap->tail_call_buffer[0] to the function to call, set
- *  heap->tail_call_buffer[i+1] to the ith argument, and return
- *  heap->tail_call_sentinel.
+ *  set runtime->tail_call_argc to the number of arguments,
+ *  set runtime->tail_call_buffer[0] to the function to call, set
+ *  runtime->tail_call_buffer[i+1] to the ith argument, and return
+ *  runtime->tail_call_sentinel.
  *
- *  @arg[FbleValueHeap*] heap
- *   The value heap.
+ *  @arg[FbleRuntime*] runtime
+ *   The runtime context.
  *  @arg[FbleProfileThread*] profile
  *   Profile thread for recording profiling information. NULL if profiling is
  *   disabled.
@@ -38,13 +38,13 @@ typedef struct FbleFunction FbleFunction;
  *  @returns FbleValue*
  *   @i The result of executing the function.
  *   @i NULL if the function aborts.
- *   @i heap->tail_call_sentinel in to request a tail call.
+ *   @i runtime->tail_call_sentinel in to request a tail call.
  *
  *  @sideeffects
  *   Executes the fble function, with whatever side effects that may have.
  */
 typedef FbleValue* FbleRunFunction(
-    FbleValueHeap* heap,
+    FbleRuntime* runtime,
     FbleProfileThread* profile,
     FbleFunction* function,
     FbleValue** args);
@@ -117,8 +117,8 @@ struct FbleFunction {
 
 /**
  * @func[FbleCall] Calls an fble function.
- *  @arg[FbleValueHeap*] heap
- *   The value heap.
+ *  @arg[FbleRuntime*] runtime
+ *   The runtime context.
  *  @arg[FbleProfileThread*] profile
  *   The current profile thread, or NULL if profiling is disabled.
  *  @arg[FbleValue*] func
@@ -136,6 +136,6 @@ struct FbleFunction {
  *   @i Enters a profiling block for the function being called.
  *   @i Executes the called function to completion, returning the result.
  */
-FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, size_t argc, FbleValue** args);
+FbleValue* FbleCall(FbleRuntime* runtime, FbleProfileThread* profile, FbleValue* func, size_t argc, FbleValue** args);
 
 #endif // FBLE_FUNCTION_H_

@@ -22,12 +22,12 @@
 #include "io.fble.h"            // for FbleIoM
 #include "stdio.fble.h"         // for /Std/Io/File/Internal%
 
-static FbleValue* Cli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv);
+static FbleValue* Cli(FbleRuntime* runtime, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv);
 
 
 /**
  * @func[Cli] Executes a @l{/Std/Io/Cli%.Main@} function.
- *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[FbleProfile*][profile] Profile to store execution results to.
  *  @arg[FbleValue*][main] The main program to execute. Borrowed.
  *  @arg[size_t][argc] The number of command line arguments. Borrowed.
@@ -39,38 +39,38 @@ static FbleValue* Cli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main
  *
  *  @sideeffects
  *   @i Updates the profile.
- *   @i Allocates a value on the heap.
+ *   @i Allocates a value on the runtime.
  *   @i Any side effects the main program itself has via native calls.
  */
-static FbleValue* Cli(FbleValueHeap* heap, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv)
+static FbleValue* Cli(FbleRuntime* runtime, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv)
 {
-  FbleValue* func = FbleEval(heap, main, profile);
+  FbleValue* func = FbleEval(runtime, main, profile);
   if (func == NULL) {
     return NULL;
   }
 
-  FblePushFrame(heap);
+  FblePushFrame(runtime);
 
   // We apply the main function with:
   //  M@ = <@ A@>(Unit@) { A@; }
-  FbleValue* m = FbleIoMonad(heap, profile);            // Monad@<M@>
-  FbleValue* io = FbleIo(heap, profile);                // Io@<M@>
-  FbleValue* args = FbleCliArgs(heap, argc, argv);      // List@<String@>
-  FbleValue* unit = FbleNewStructValue_(heap, 0);       // Unit@
+  FbleValue* m = FbleIoMonad(runtime, profile);            // Monad@<M@>
+  FbleValue* io = FbleIo(runtime, profile);                // Io@<M@>
+  FbleValue* args = FbleCliArgs(runtime, argc, argv);      // List@<String@>
+  FbleValue* unit = FbleNewStructValue_(runtime, 0);       // Unit@
 
   FbleValue* func_args[4] = { m, io, args, unit };
-  FbleValue* result = FbleApply(heap, func, 4, func_args, profile);
-  return FblePopFrame(heap, result);
+  FbleValue* result = FbleApply(runtime, func, 4, func_args, profile);
+  return FblePopFrame(runtime, result);
 }
 
 // See documentation in cli.fble.h
-FbleValue* FbleCliArgs(FbleValueHeap* heap, int argc, const char** argv)
+FbleValue* FbleCliArgs(FbleRuntime* runtime, int argc, const char** argv)
 {
   FbleValue* items[argc];
   for (size_t i = 0; i < argc; ++i) {
-    items[i] = FbleNewStringValue(heap, argv[i]);
+    items[i] = FbleNewStringValue(runtime, argv[i]);
   }
-  return FbleNewListValue(heap, argc, items);
+  return FbleNewListValue(runtime, argc, items);
 }
 
 // FbleCliMainStatus -- See documentation in cli.fble.h
@@ -110,29 +110,29 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   setlocale(LC_CTYPE, "");
 
   FbleProfile* profile = FbleNewProfile();
-  FbleValueHeap* heap = FbleNewValueHeap();
+  FbleRuntime* runtime = FbleNewRuntime();
   const char* profile_output_file = NULL;
   uint64_t profile_sample_period = 0;
   FbleValue* main = NULL;
 
-  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Stream_2f_Debug_25__2e_PutChar);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_Env_25__2e_GetVar);
-  FbleRegisterStdioForeignValues(heap);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Stream_2f_Debug_25__2e_PutChar);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_Env_25__2e_GetVar);
+  FbleRegisterStdioForeignValues(runtime);
 
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-cli", fbldUsageHelpText,
-      &argc, &argv, preloaded, heap, profile, &profile_output_file, &profile_sample_period, &main);
+      &argc, &argv, preloaded, runtime, profile, &profile_output_file, &profile_sample_period, &main);
 
   if (main == NULL) {
-    FbleFreeValueHeap(heap);
+    FbleFreeRuntime(runtime);
     FbleFreeProfile(profile);
     return FbleCliMainOtherStatus(status);
   }
 
-  FbleValue* value = Cli(heap, profile, main, argc, argv);
+  FbleValue* value = Cli(runtime, profile, main, argc, argv);
 
   int result = FbleCliMainAppStatus(value);
 
-  FbleFreeValueHeap(heap);
+  FbleFreeRuntime(runtime);
 
   FbleOutputProfile(profile_output_file, profile, profile_sample_period);
   FbleFreeProfile(profile);

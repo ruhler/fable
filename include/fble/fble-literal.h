@@ -8,7 +8,7 @@
 
 #include <stdint.h>        // for uint8_t
 
-#include "fble-runtime.h"    // for FbleValueHeap, FbleValue
+#include "fble-runtime.h"    // for FbleRuntime, FbleValue
 
 /**
  * @struct[FbleLiteral] Raw data describing a literal value.
@@ -27,7 +27,7 @@ typedef struct {
 
 /**
  * @func[FbleNewLiteralValue] Creates an fble literal value.
- *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[size_t][size] The size of the literal data.
  *  @arg[size_t*][data] The contents of the literal data.
  *  @returns[FbleValue*] A newly allocated literal value.
@@ -35,7 +35,7 @@ typedef struct {
  *   @i Allocates a value on the heap.
  *   @i Behavior is undefined if @a[data] is malformed.
  */
-FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t size, uint8_t* data);
+FbleValue* FbleNewLiteralValue(FbleRuntime* runtime, size_t size, uint8_t* data);
 
 #endif // FBLE_LITERAL_H_
 

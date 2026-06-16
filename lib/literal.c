@@ -196,12 +196,12 @@ FbleLiteral FbleParseLiteral(FbleTypeHeap* th, FbleType* type, const char* word)
 }
 
 // See documentation in fble-literal.h.
-FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t size, uint8_t* data)
+FbleValue* FbleNewLiteralValue(FbleRuntime* runtime, size_t size, uint8_t* data)
 {
   uint8_t* end = data + size;
 
-  FbleValue* unit = FbleNewStructValue_(heap, 0);
-  FbleValue* list = FbleNewUnionValue(heap, 1, 1, unit);
+  FbleValue* unit = FbleNewStructValue_(runtime, 0);
+  FbleValue* list = FbleNewUnionValue(runtime, 1, 1, unit);
   FbleValue* arg = unit;
   while (data < end) {
     uint8_t header = *data++;
@@ -215,10 +215,10 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t size, uint8_t* data)
       tag |= *data++;
     }
 
-    arg = FbleNewUnionValue(heap, tagwidth, tag, arg);
+    arg = FbleNewUnionValue(runtime, tagwidth, tag, arg);
     if (last) {
-      FbleValue* cons = FbleNewStructValue_(heap, 2, arg, list);
-      list = FbleNewUnionValue(heap, 1, 0, cons);
+      FbleValue* cons = FbleNewStructValue_(runtime, 2, arg, list);
+      list = FbleNewUnionValue(runtime, 1, 0, cons);
       arg = unit;
     }
   }

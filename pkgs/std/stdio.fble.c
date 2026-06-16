@@ -33,13 +33,13 @@ static void CloseFileOnFree(void* file)
  *   (Unit@) { File@; }
  */  
 static FbleValue* GetStdin(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
   (void)args;
 
-  return FbleNewNativeValue(heap, stdin, NULL);
+  return FbleNewNativeValue(runtime, stdin, NULL);
 }
 
 // /Std/Io/File/Internal%.GetStdin foreign function.
@@ -61,13 +61,13 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdin = {
  *   (Unit@) { File@; }
  */  
 static FbleValue* GetStdout(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
   (void)args;
 
-  return FbleNewNativeValue(heap, stdout, NULL);
+  return FbleNewNativeValue(runtime, stdout, NULL);
 }
 
 // /Std/Io/File/Internal%.GetStdout foreign function.
@@ -89,13 +89,13 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdout = {
  *   (Unit@) { File@; }
  */  
 static FbleValue* GetStderr(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
   (void)args;
 
-  return FbleNewNativeValue(heap, stderr, NULL);
+  return FbleNewNativeValue(runtime, stderr, NULL);
 }
 
 // /Std/Io/File/Internal%.GetStderr foreign function.
@@ -117,7 +117,7 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStderr = {
  *   (String@, String@, Unit@) { Maybe@<File@>; }
  */  
 static FbleValue* Open(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
@@ -130,11 +130,11 @@ static FbleValue* Open(
   FbleFree(mode);
 
   if (fout == NULL) {
-    return FbleNewMaybeValue(heap, NULL);
+    return FbleNewMaybeValue(runtime, NULL);
   }
 
-  FbleValue* v = FbleNewNativeValue(heap, fout, &CloseFileOnFree);
-  return FbleNewMaybeValue(heap, v);
+  FbleValue* v = FbleNewNativeValue(runtime, fout, &CloseFileOnFree);
+  return FbleNewMaybeValue(runtime, v);
 }
 // /Std/Io/File/Internal%.Open foreign function.
 FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Open = {
@@ -155,7 +155,7 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Open = {
  *   (File@, Unit@) { Unit@; }
  */  
 static FbleValue* Close(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
@@ -163,7 +163,7 @@ static FbleValue* Close(
 
   FILE* file = (FILE*)FbleNativeValueData(args[0]);
   fclose(file);
-  return FbleNewStructValue_(heap, 0);
+  return FbleNewStructValue_(runtime, 0);
 }
 // /Std/Io/File/Internal%.Close foreign function.
 FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Close = {
@@ -187,7 +187,7 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Close = {
  *   Reads a character from the give file.
  */
 static FbleValue* GetChar(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
@@ -197,11 +197,11 @@ static FbleValue* GetChar(
 
   wint_t c = fgetwc(file);
   if (c == WEOF) {
-    return FbleNewMaybeValue(heap, NULL);
+    return FbleNewMaybeValue(runtime, NULL);
   }
 
-  FbleValue* v = FbleNewCharValue(heap, c);
-  return FbleNewMaybeValue(heap, v);
+  FbleValue* v = FbleNewCharValue(runtime, c);
+  return FbleNewMaybeValue(runtime, v);
 }
 
 // /Std/Io/File/Internal%.GetChar foreign function.
@@ -226,7 +226,7 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetChar = {
  *   Reads a byte from the give file.
  */
 static FbleValue* GetByte(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
@@ -236,11 +236,11 @@ static FbleValue* GetByte(
 
   int c = fgetc(file);
   if (c == EOF) {
-    return FbleNewMaybeValue(heap, NULL);
+    return FbleNewMaybeValue(runtime, NULL);
   }
 
-  FbleValue* v = FbleNewIntValue(heap, c);
-  return FbleNewMaybeValue(heap, v);
+  FbleValue* v = FbleNewIntValue(runtime, c);
+  return FbleNewMaybeValue(runtime, v);
 }
 
 // /Std/Io/File/Internal%.GetByte foreign function.
@@ -265,7 +265,7 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetByte = {
  *   Writes a character to the give file.
  */
 static FbleValue* PutChar(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
@@ -274,7 +274,7 @@ static FbleValue* PutChar(
   FILE* file = (FILE*)FbleNativeValueData(args[0]);
   wchar_t c = FbleCharValueAccess(args[1]);
   fputwc(c, file);
-  return FbleNewStructValue_(heap, 0);
+  return FbleNewStructValue_(runtime, 0);
 }
 
 // /Std/Io/File/Internal%.PutChar foreign function.
@@ -299,7 +299,7 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutChar = {
  *   Writes a byte to the give file.
  */
 static FbleValue* PutByte(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
@@ -308,7 +308,7 @@ static FbleValue* PutByte(
   FILE* file = (FILE*)FbleNativeValueData(args[0]);
   int byte = FbleIntValueAccess(args[1]);
   fputc(byte, file);
-  return FbleNewStructValue_(heap, 0);
+  return FbleNewStructValue_(runtime, 0);
 }
 
 // /Std/Io/File/Internal%.PutByte foreign function.
@@ -333,7 +333,7 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutByte = {
  *   Flushes the given file.
  */
 static FbleValue* Flush(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   (void)profile;
@@ -341,7 +341,7 @@ static FbleValue* Flush(
 
   FILE* file = (FILE*)FbleNativeValueData(args[0]);
   fflush(file);
-  return FbleNewStructValue_(heap, 0);
+  return FbleNewStructValue_(runtime, 0);
 }
 
 // /Std/Io/File/Internal%.Flush foreign function.
@@ -354,16 +354,16 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Flush = {
 };
 
 // See documentation in stdio.fble.h
-void FbleRegisterStdioForeignValues(FbleValueHeap* heap)
+void FbleRegisterStdioForeignValues(FbleRuntime* runtime)
 {
-  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdin);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdout);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStderr);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Open);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Close);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetChar);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetByte);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutChar);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutByte);
-  FbleRegisterForeignValue(heap, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Flush);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdin);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdout);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStderr);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Open);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Close);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetChar);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetByte);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutChar);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutByte);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Flush);
 }

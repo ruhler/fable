@@ -12,8 +12,8 @@
 
 /**
  * @func[FbleNewInterpretedFuncValue] Creates an interprted fble function value.
- *  @arg[FbleValueHeap*] heap
- *   Heap to use for allocations.
+ *  @arg[FbleRuntime*] runtime
+ *   The runtime context.
  *  @arg[FbleCode*] code
  *   The code to interpret. Borrowed.
  *  @arg[size_t] profile_block_id
@@ -26,8 +26,8 @@
  *   A newly allocated function value.
  *
  *  @sideeffects
- *   Allocates a new function value on the heap.
+ *   Allocates a new function value on the runtime stack.
  */
-FbleValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, FbleCode* code, size_t profile_block_id, FbleValue** statics);
+FbleValue* FbleNewInterpretedFuncValue(FbleRuntime* runtime, FbleCode* code, size_t profile_block_id, FbleValue** statics);
 
 #endif // FBLE_INTERNAL_INTERPRET_H_

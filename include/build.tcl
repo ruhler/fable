@@ -86,9 +86,9 @@ namespace eval "include" {
       FblePreloadedModule FblePreloadedModuleV
     }
     fble-runtime.h {
-      FbleValue FbleValueHeap
+      FbleValue FbleRuntime
       FbleStructValue FbleUnionValue FbleFuncValue
-      FbleNewValueHeap FbleFreeValueHeap
+      FbleNewRuntime FbleFreeRuntime
       FblePushFrame FblePopFrame
       FbleRegisterForeignValue FbleLookupForeignValue
       FbleValueV

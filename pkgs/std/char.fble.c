@@ -11,9 +11,9 @@
 #include <fble/fble-runtime.h>   // for FbleValue, etc.
 
 // FbleNewCharValue -- see documentation in char.fble.h
-FbleValue* FbleNewCharValue(FbleValueHeap* heap, wchar_t c)
+FbleValue* FbleNewCharValue(FbleRuntime* runtime, wchar_t c)
 {
-  return FbleNewStructValue_(heap, 1, FbleNewIntValue(heap, (uint64_t)c));
+  return FbleNewStructValue_(runtime, 1, FbleNewIntValue(runtime, (uint64_t)c));
 }
 
 // FbleCharValueAccess -- see documentation in char.fble.h

@@ -17,12 +17,12 @@
 #define CONS_FIELDC 2
 #define MAYBE_TAGWIDTH 1
 
-static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x);
+static FbleValue* MakeIntP(FbleRuntime* runtime, int64_t x);
 static int64_t ReadIntP(FbleValue* num);
 
 /**
  * @func[MakeIntP] Makes an FbleValue of type @l{/Std/Int/IntP%.IntP@}.
- *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[int64_t][x] The integer value. Must be greater than 0.
  *
  *  @returns[FbleValue*]
@@ -31,15 +31,15 @@ static int64_t ReadIntP(FbleValue* num);
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x)
+static FbleValue* MakeIntP(FbleRuntime* runtime, int64_t x)
 {
   assert(x > 0);
   if (x == 1) {
-    return FbleNewEnumValue(heap, INTP_TAGWIDTH, 0);
+    return FbleNewEnumValue(runtime, INTP_TAGWIDTH, 0);
   }
 
-  FbleValue* p = MakeIntP(heap, x / 2);
-  return FbleNewUnionValue(heap, INTP_TAGWIDTH, 1 + (x % 2), p);
+  FbleValue* p = MakeIntP(runtime, x / 2);
+  return FbleNewUnionValue(runtime, INTP_TAGWIDTH, 1 + (x % 2), p);
 }
 
 /**
@@ -64,9 +64,9 @@ static int64_t ReadIntP(FbleValue* x)
 }
 
 // FbleNewCharValue -- see documentation in data.fble.h
-FbleValue* FbleNewCharValue(FbleValueHeap* heap, wchar_t c)
+FbleValue* FbleNewCharValue(FbleRuntime* runtime, wchar_t c)
 {
-  return FbleNewStructValue_(heap, 1, FbleNewIntValue(heap, (uint64_t)c));
+  return FbleNewStructValue_(runtime, 1, FbleNewIntValue(runtime, (uint64_t)c));
 }
 
 // FbleCharValueAccess -- see documentation in data.fble.h
@@ -76,20 +76,20 @@ wchar_t FbleCharValueAccess(FbleValue* c)
 }
 
 // See documentation in int.fble.h
-FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x)
+FbleValue* FbleNewIntValue(FbleRuntime* runtime, int64_t x)
 {
   if (x < 0) {
-    FbleValue* p = MakeIntP(heap, -x);
-    FbleValue* result = FbleNewUnionValue(heap, INT_TAGWIDTH, 0, p);
+    FbleValue* p = MakeIntP(runtime, -x);
+    FbleValue* result = FbleNewUnionValue(runtime, INT_TAGWIDTH, 0, p);
     return result;
   }
 
   if (x == 0) {
-    return FbleNewEnumValue(heap, INT_TAGWIDTH, 1);
+    return FbleNewEnumValue(runtime, INT_TAGWIDTH, 1);
   }
 
-  FbleValue* p = MakeIntP(heap, x);
-  return FbleNewUnionValue(heap, INT_TAGWIDTH, 2, p);
+  FbleValue* p = MakeIntP(runtime, x);
+  return FbleNewUnionValue(runtime, INT_TAGWIDTH, 2, p);
 }
 
 // FbleIntValueAccess -- see documentation in data.fble.h
@@ -104,12 +104,12 @@ int64_t FbleIntValueAccess(FbleValue* x)
 }
 
 // See documentation in data.fble.h
-FbleValue* FbleNewMaybeValue(FbleValueHeap* heap, FbleValue* arg)
+FbleValue* FbleNewMaybeValue(FbleRuntime* runtime, FbleValue* arg)
 {
   if (arg == NULL) {
-    return FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1);
+    return FbleNewEnumValue(runtime, MAYBE_TAGWIDTH, 1);
   }
-  return FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, arg);
+  return FbleNewUnionValue(runtime, MAYBE_TAGWIDTH, 0, arg);
 }
 
 // FbleStringValueAccess -- see documentation in data.fble.h
@@ -139,7 +139,7 @@ char* FbleStringValueAccess(FbleValue* str)
 }
 
 // FbleNewStringValue -- see documentation in data.fble.h
-FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str)
+FbleValue* FbleNewStringValue(FbleRuntime* runtime, const char* str)
 {
   size_t mblen = mbstowcs(NULL, str, 0);
   if (mblen == (size_t)-1) {
@@ -149,11 +149,11 @@ FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str)
   wchar_t chars[mblen + 1];
   mbstowcs(chars, str, mblen + 1);
 
-  FbleValue* charS = FbleNewEnumValue(heap, LIST_TAGWIDTH, 1);
+  FbleValue* charS = FbleNewEnumValue(runtime, LIST_TAGWIDTH, 1);
   for (size_t i = 0; i < mblen; ++i) {
-    FbleValue* charV = FbleNewCharValue(heap, chars[mblen - i - 1]);
-    FbleValue* charP = FbleNewStructValue_(heap, 2, charV, charS);
-    charS = FbleNewUnionValue(heap, LIST_TAGWIDTH, 0, charP);
+    FbleValue* charV = FbleNewCharValue(runtime, chars[mblen - i - 1]);
+    FbleValue* charP = FbleNewStructValue_(runtime, 2, charV, charS);
+    charS = FbleNewUnionValue(runtime, LIST_TAGWIDTH, 0, charP);
   }
   return charS;
 }

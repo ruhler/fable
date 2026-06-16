@@ -17,7 +17,7 @@
 #include "code.h"
 #include "unreachable.h"
 
-static void ReportRuntimeError(FbleValueHeap* heap, FbleLoc loc, FbleFunction* func, const char* msg);
+static void ReportRuntimeError(FbleRuntime* runtime, FbleLoc loc, FbleFunction* func, const char* msg);
 static void FreeCode(void* code);
 
 /**
@@ -42,15 +42,15 @@ static void FreeCode(void* code);
 
 /**
  * @func[ReportRuntimeError] Reports a runtime error.
- *  @arg[FbleValueHeap*][heap] The current heap.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[FbleLoc][loc] Location of the error.
  *  @arg[FbleFunction*][func] Function where the error occured.
  *  @arg[const char*][msg] Error message. Maybe be NULL.
  *  @sideeffects Outputs an error message.
  */
-static void ReportRuntimeError(FbleValueHeap* heap, FbleLoc loc, FbleFunction* func, const char* msg)
+static void ReportRuntimeError(FbleRuntime* runtime, FbleLoc loc, FbleFunction* func, const char* msg)
 {
-  FbleName func_name = heap->profile->blocks.xs[func->profile_block_id];
+  FbleName func_name = runtime->profile->blocks.xs[func->profile_block_id];
   FbleReportError("in %s", loc, func_name.name->str);
   if (msg != NULL) {
     fprintf(stderr, ": %s", msg);
@@ -72,7 +72,7 @@ static void FreeCode(void* data)
 // FbleRunFunction for running interpreted code.
 // See documentation for FbleRunFunction in fble-function.h.
 static FbleValue* Interpret(
-    FbleValueHeap* heap,
+    FbleRuntime* runtime,
     FbleProfileThread* profile,
     FbleFunction* function,
     FbleValue** args)
@@ -124,7 +124,7 @@ static FbleValue* Interpret(
           struct_args[i] = GET(struct_value_instr->args.xs[i]);
         }
 
-        locals[struct_value_instr->dest] = FbleNewStructValue(heap, argc, struct_args);
+        locals[struct_value_instr->dest] = FbleNewStructValue(runtime, argc, struct_args);
         pc++;
         break;
       }
@@ -134,7 +134,7 @@ static FbleValue* Interpret(
         size_t tagwidth = union_value_instr->tagwidth;
         size_t tag = union_value_instr->tag;
         FbleValue* arg = GET(union_value_instr->arg);
-        locals[union_value_instr->dest] = FbleNewUnionValue(heap, tagwidth, tag, arg);
+        locals[union_value_instr->dest] = FbleNewUnionValue(runtime, tagwidth, tag, arg);
         pc++;
         break;
       }
@@ -146,7 +146,7 @@ static FbleValue* Interpret(
         locals[access_instr->dest] = FbleStructValueField(obj, access_instr->fieldc, access_instr->field);
 
         if (locals[access_instr->dest] == NULL) {
-          ReportRuntimeError(heap, access_instr->loc, function, "undefined struct value access");
+          ReportRuntimeError(runtime, access_instr->loc, function, "undefined struct value access");
           return NULL;
         }
 
@@ -161,13 +161,13 @@ static FbleValue* Interpret(
         locals[access_instr->dest] = FbleUnionValueField(obj, access_instr->tagwidth, access_instr->tag);
 
         if (locals[access_instr->dest] == NULL) {
-          ReportRuntimeError(heap, access_instr->loc, function, "undefined union value access");
+          ReportRuntimeError(runtime, access_instr->loc, function, "undefined union value access");
           return NULL;
         }
 
         if (locals[access_instr->dest] == FbleWrongUnionTag) {
           locals[access_instr->dest] = NULL;
-          ReportRuntimeError(heap, access_instr->loc, function, "union field access undefined: wrong tag");
+          ReportRuntimeError(runtime, access_instr->loc, function, "union field access undefined: wrong tag");
           return NULL;
         }
 
@@ -181,7 +181,7 @@ static FbleValue* Interpret(
         size_t tag = FbleUnionValueTag(obj, select_instr->tagwidth);
 
         if (tag == (size_t)(-1)) {
-          ReportRuntimeError(heap, select_instr->loc, function, "undefined union value select");
+          ReportRuntimeError(runtime, select_instr->loc, function, "undefined union value select");
           return NULL;
         }
 
@@ -221,7 +221,7 @@ static FbleValue* Interpret(
           func_statics[i] = GET(func_value_instr->scope.xs[i]);
         }
 
-        locals[func_value_instr->dest] = FbleNewInterpretedFuncValue(heap, func_value_instr->code, profile_block_id + func_value_instr->profile_block_offset, func_statics);
+        locals[func_value_instr->dest] = FbleNewInterpretedFuncValue(runtime, func_value_instr->code, profile_block_id + func_value_instr->profile_block_offset, func_statics);
         pc++;
         break;
       }
@@ -234,9 +234,9 @@ static FbleValue* Interpret(
           call_args[i] = GET(call_instr->args.xs[i]);
         }
 
-        locals[call_instr->dest] = FbleCall(heap, profile, func, call_instr->args.size, call_args);
+        locals[call_instr->dest] = FbleCall(runtime, profile, func, call_instr->args.size, call_args);
         if (locals[call_instr->dest] == NULL) {
-          ReportRuntimeError(heap, call_instr->loc, function, NULL);
+          ReportRuntimeError(runtime, call_instr->loc, function, NULL);
           return NULL;
         }
 
@@ -248,17 +248,17 @@ static FbleValue* Interpret(
         FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
         FbleValue* func = GET(call_instr->func);
         if (func == NULL || ((uintptr_t)func & 0x3) == 0x2) {
-          ReportRuntimeError(heap, call_instr->loc, function, "called undefined function");
+          ReportRuntimeError(runtime, call_instr->loc, function, "called undefined function");
           return NULL;
         };
 
-        heap->tail_call_argc = call_instr->args.size;
-        heap->tail_call_buffer[0] = func;
+        runtime->tail_call_argc = call_instr->args.size;
+        runtime->tail_call_buffer[0] = func;
         for (size_t i = 0; i < call_instr->args.size; ++i) {
-          heap->tail_call_buffer[i+1] = GET(call_instr->args.xs[i]);
+          runtime->tail_call_buffer[i+1] = GET(call_instr->args.xs[i]);
         }
 
-        return heap->tail_call_sentinel;
+        return runtime->tail_call_sentinel;
       }
 
       case FBLE_COPY_INSTR: {
@@ -270,7 +270,7 @@ static FbleValue* Interpret(
 
       case FBLE_REC_DECL_INSTR: {
         FbleRecDeclInstr* decl_instr = (FbleRecDeclInstr*)instr;
-        locals[decl_instr->dest] = FbleDeclareRecursiveValues(heap, decl_instr->n);
+        locals[decl_instr->dest] = FbleDeclareRecursiveValues(runtime, decl_instr->n);
         pc++;
         break;
       }
@@ -279,10 +279,10 @@ static FbleValue* Interpret(
         FbleRecDefnInstr* defn_instr = (FbleRecDefnInstr*)instr;
         FbleValue* decl = locals[defn_instr->decl];
         FbleValue* defn = locals[defn_instr->defn];
-        size_t r = FbleDefineRecursiveValues(heap, decl, defn);
+        size_t r = FbleDefineRecursiveValues(runtime, decl, defn);
 
         if (r != 0) {
-          ReportRuntimeError(heap, defn_instr->locs.xs[r-1], function, "vacuous value");
+          ReportRuntimeError(runtime, defn_instr->locs.xs[r-1], function, "vacuous value");
           return NULL;
         }
 
@@ -310,27 +310,27 @@ static FbleValue* Interpret(
           list_args[i] = GET(list_instr->args.xs[i]);
         }
 
-        locals[list_instr->dest] = FbleNewListValue(heap, argc, list_args);
+        locals[list_instr->dest] = FbleNewListValue(runtime, argc, list_args);
         pc++;
         break;
       }
 
       case FBLE_LITERAL_INSTR: {
         FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-        locals[literal_instr->dest] = FbleNewLiteralValue(heap, literal_instr->literal.size, literal_instr->literal.data);
+        locals[literal_instr->dest] = FbleNewLiteralValue(runtime, literal_instr->literal.size, literal_instr->literal.data);
         pc++;
         break;
       }
 
       case FBLE_FOREIGN_VALUE_INSTR: {
         FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
-        FbleForeign* foreign = FbleLookupForeignValue(heap, foreign_instr->path, foreign_instr->name.name->str);
+        FbleForeign* foreign = FbleLookupForeignValue(runtime, foreign_instr->path, foreign_instr->name.name->str);
         if (foreign == NULL) {
-          ReportRuntimeError(heap, foreign_instr->name.loc, function, "foreign value not found");
+          ReportRuntimeError(runtime, foreign_instr->name.loc, function, "foreign value not found");
           return NULL;
         }
 
-        FbleValue* value = FbleNewForeignValue(heap, profile, foreign, profile_block_id + foreign_instr->profile_block_offset);
+        FbleValue* value = FbleNewForeignValue(runtime, profile, foreign, profile_block_id + foreign_instr->profile_block_offset);
         locals[foreign_instr->dest] = value;
         pc++;
         break;
@@ -345,7 +345,7 @@ static FbleValue* Interpret(
 }
 
 // See documentation in interpret.h
-FbleValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, FbleCode* code, size_t profile_block_id, FbleValue** statics)
+FbleValue* FbleNewInterpretedFuncValue(FbleRuntime* runtime, FbleCode* code, size_t profile_block_id, FbleValue** statics)
 {
   // Add an extra static to store the FbleCode for access in the interpreter.
   FbleExecutable exe = {
@@ -358,8 +358,8 @@ FbleValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, FbleCode* code, size
   memcpy(nstatics, statics, code->executable.num_statics * sizeof(FbleValue*));
 
   code->refcount++;
-  FbleValue* vcode = FbleNewNativeValue(heap, code, &FreeCode);
+  FbleValue* vcode = FbleNewNativeValue(runtime, code, &FreeCode);
   nstatics[exe.num_statics - 1 ] = vcode;
 
-  return FbleNewFuncValue(heap, &exe, profile_block_id, nstatics);
+  return FbleNewFuncValue(runtime, &exe, profile_block_id, nstatics);
 }

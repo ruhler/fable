@@ -10,13 +10,13 @@
  *  @sideeffects None
  */
 static FbleValue* Not(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
   FbleValue* arg = args[0];
   switch (FbleUnionValueTag(arg, 1)) {
-    case 0: return FbleNewEnumValue(heap, 1, 1);
-    case 1: return FbleNewEnumValue(heap, 1, 0);
+    case 0: return FbleNewEnumValue(runtime, 1, 1);
+    case 1: return FbleNewEnumValue(runtime, 1, 0);
   }
   return NULL;
 }
@@ -54,10 +54,10 @@ FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Unused_25_
  *  @sideeffects None
  */
 static FbleValue* Poly(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
-  return FbleNewUnionValue(heap, 1, 0, args[0]);
+  return FbleNewUnionValue(runtime, 1, 0, args[0]);
 }
 
 FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Poly_25__2e_Nothing = {
@@ -77,10 +77,10 @@ FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Poly_25__2
  *  @sideeffects None
  */
 static FbleValue* True(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
-  return FbleNewEnumValue(heap, 1, 0);
+  return FbleNewEnumValue(runtime, 1, 0);
 }
 
 FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_True = {
@@ -100,10 +100,10 @@ FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25
  *  @sideeffects None
  */
 static FbleValue* False(
-    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleRuntime* runtime, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
-  return FbleNewEnumValue(heap, 1, 1);
+  return FbleNewEnumValue(runtime, 1, 1);
 }
 
 FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_False = {
@@ -126,15 +126,15 @@ FbleForeign _Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_ModuleMatt
 
 /**
  * @func[FbleTestRegisterForeignValues] Register foreign values for test purposes.
- *  @arg[FbleValueHeap*][heap] The heap to register with.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @sideeffects Registers all the test ffi functions.
  */
-void FbleTestRegisterForeignValues(FbleValueHeap* heap) {
-  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Basic_25__2e_Not);
-  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_FunnyName_25__2e_N_21__2e__2f_t);
-  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Unused_25__2e_Not);
-  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Poly_25__2e_Nothing);
-  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_True);
-  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_False);
-  FbleRegisterForeignValue(heap, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_ModuleMatters_25__2e_False);
+void FbleTestRegisterForeignValues(FbleRuntime* runtime) {
+  FbleRegisterForeignValue(runtime, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Basic_25__2e_Not);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_FunnyName_25__2e_N_21__2e__2f_t);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Unused_25__2e_Not);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_Poly_25__2e_Nothing);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_True);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_NonFunc_25__2e_False);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_SpecTests_2f_10_2e_1_2d_ForeignValue_2f_Basic_2f_ModuleMatters_25__2e_False);
 }

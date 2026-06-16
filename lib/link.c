@@ -15,12 +15,12 @@
 #include "interpret.h"  // for FbleNewInterpretedFuncValue
 #include "program.h"    // for FbleModuleMap
 
-static size_t LinkedModule(FbleValueHeap* heap, FbleProfile* profile,
+static size_t LinkedModule(FbleRuntime* runtime, FbleProfile* profile,
     FbleModuleMap* linked, FbleValueV* funcs, FbleCode* code, FbleModule* module);
 
 /**
  * @func[LinkedModule] Get or link a module into the given code.
- *  @arg[FbleValueHeap*][heap] Heap to use to allocate value.s.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[FbleProfile*][profile] Profile to add block info to.
  *  @arg[FbleModuleMap*][linked] Map from already linked module to size_t index.
  *  @arg[FbleValueV*][funcs] Values of linked modules.
@@ -32,7 +32,7 @@ static size_t LinkedModule(FbleValueHeap* heap, FbleProfile* profile,
  *   @i Adds values of modules to @a[funcs].
  *   @i Adds instructions to call the module function to @a[code].
  */
-static size_t LinkedModule(FbleValueHeap* heap, FbleProfile* profile,
+static size_t LinkedModule(FbleRuntime* runtime, FbleProfile* profile,
     FbleModuleMap* linked, FbleValueV* funcs, FbleCode* code, FbleModule* module)
 {
   // Avoid linking a module that has already been linked into the code.
@@ -48,7 +48,7 @@ static size_t LinkedModule(FbleValueHeap* heap, FbleProfile* profile,
   call->func.tag = FBLE_STATIC_VAR;
   FbleInitVector(call->args);
   for (size_t i = 0; i < module->link_deps.size; ++i) {
-    size_t v = LinkedModule(heap, profile, linked, funcs, code, module->link_deps.xs[i]);
+    size_t v = LinkedModule(runtime, profile, linked, funcs, code, module->link_deps.xs[i]);
     FbleVar var = { .tag = FBLE_LOCAL_VAR, .index = v };
     FbleAppendToVector(call->args, var);
   }
@@ -62,10 +62,10 @@ static size_t LinkedModule(FbleValueHeap* heap, FbleProfile* profile,
   FbleValue* func = NULL;
   if (module->code != NULL) {
     assert(module->exe == NULL);
-    func = FbleNewInterpretedFuncValue(heap, module->code, profile_block_id, NULL);
+    func = FbleNewInterpretedFuncValue(runtime, module->code, profile_block_id, NULL);
   } else if (module->exe != NULL) {
     assert(module->code == NULL);
-    func = FbleNewFuncValue(heap, module->exe, profile_block_id, NULL);
+    func = FbleNewFuncValue(runtime, module->exe, profile_block_id, NULL);
   } else {
     assert(false && "Attempt to link uncompiled module");
   }
@@ -77,7 +77,7 @@ static size_t LinkedModule(FbleValueHeap* heap, FbleProfile* profile,
 }
 
 // See documentation in fble-link.h
-FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* program)
+FbleValue* FbleLink(FbleRuntime* runtime, FbleProfile* profile, FbleProgram* program)
 {
   // Write some code to call each of module functions in turn with the
   // appropriate module arguments. The function for module i will be static
@@ -92,7 +92,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* prog
   FbleValueV funcs;
   FbleInitVector(funcs);
   FbleModuleMap* map = FbleNewModuleMap();
-  size_t main_index = LinkedModule(heap, profile, map, &funcs, code, program);
+  size_t main_index = LinkedModule(runtime, profile, map, &funcs, code, program);
 
   code->executable.num_statics = funcs.size;
   code->num_locals = funcs.size;
@@ -103,7 +103,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* prog
   FbleAppendToVector(code->instrs, &return_instr->_base);
 
   // Wrap that all up into an FbleFuncValue.
-  FbleValue* linked = FbleNewInterpretedFuncValue(heap, code, 0, funcs.xs);
+  FbleValue* linked = FbleNewInterpretedFuncValue(runtime, code, 0, funcs.xs);
   FbleFreeVector(funcs);
   FbleFreeModuleMap(map, NULL, NULL);
   FbleFreeCode(code);

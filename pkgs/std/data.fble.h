@@ -12,7 +12,7 @@
 
 /**
  * @func[FbleNewCharValue] Creates an FbleValue of type @l{/Std/Char%.Char@}.
- *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[char][c] The value of the character to write.
  *
  *  @returns[FbleValue*]
@@ -21,7 +21,7 @@
  *  @sideeffects
  *   Allocates a value that must be freed when no longer required.
  */
-FbleValue* FbleNewCharValue(FbleValueHeap* heap, wchar_t c);
+FbleValue* FbleNewCharValue(FbleRuntime* runtime, wchar_t c);
 
 /**
  * @func[FbleCharValueAccess] Reads a character type @l{/Std/Char%.Char@}.
@@ -37,13 +37,13 @@ wchar_t FbleCharValueAccess(FbleValue* c);
 
 /**
  * @func[FbleNewIntValue] Creates a new @l{/Std/Int%.Int@} value.
- *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[int64_t][x] The integer value to create.
  *  @returns[FbleValue*] An newly allocated fble integer value.
  *  @sideeffects
  *   Allocates an FbleValue on the heap.
  */
-FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x);
+FbleValue* FbleNewIntValue(FbleRuntime* runtime, int64_t x);
 
 /**
  * @func[FbleIntValueAccess] Read a number of type @l{/Std/Int%.Int@}.
@@ -60,18 +60,18 @@ int64_t FbleIntValueAccess(FbleValue* x);
 
 /**
  * @func[FbleNewMaybeValue] Construct a @l{/Std/Maybe%.@} value.
- *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[FbleValue*][arg]
  *   The Just value of the maybe, or NULL to return a Nothing value.
  *  @returns[FbleValue*] The constructed Maybe@ value.
  *  @sideeffects
  *   Allocates an FbleValue on the heap.
  */
-FbleValue* FbleNewMaybeValue(FbleValueHeap* heap, FbleValue* arg);
+FbleValue* FbleNewMaybeValue(FbleRuntime* runtime, FbleValue* arg);
 
 /**
  * @func[FbleNewStringValue] Converts a C string to @l{/Std/String%.String@}.
- *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[const char*][str]
  *   The string to convert, interpreted as a multibyte character string based
  *   on the current locale, and assuming that the current locale wchar_t
@@ -85,7 +85,7 @@ FbleValue* FbleNewMaybeValue(FbleValueHeap* heap, FbleValue* arg);
  *  @sideeffects
  *   Allocates an FbleValue on the heap.
  */
-FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str);
+FbleValue* FbleNewStringValue(FbleRuntime* runtime, const char* str);
 
 /**
  * @func[FbleStringValueAccess] Convert a @l{String@} value to a c string.
