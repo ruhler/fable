@@ -8,7 +8,7 @@
 
 #include "data.fble.h"
 
-#include <fble/fble-value.h>   // for FbleValue, etc.
+#include <fble/fble-runtime.h>   // for FbleValue, etc.
 #include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #define INTP_TAGWIDTH 2

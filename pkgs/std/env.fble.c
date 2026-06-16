@@ -10,7 +10,7 @@
 
 #include <fble/fble-alloc.h>         // for FbleFree
 #include <fble/fble-function.h>
-#include <fble/fble-value.h>         // for FbleValue, etc.
+#include <fble/fble-runtime.h>       // for FbleValue, etc.
 
 #include "data.fble.h"               // For FbleNewStringValue.
 

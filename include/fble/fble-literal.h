@@ -8,7 +8,7 @@
 
 #include <stdint.h>        // for uint8_t
 
-#include "fble-value.h"    // for FbleValueHeap, FbleValue
+#include "fble-runtime.h"    // for FbleValueHeap, FbleValue
 
 /**
  * @struct[FbleLiteral] Raw data describing a literal value.

@@ -8,7 +8,7 @@
 #include "char.fble.h"
 #include "int.fble.h"
 
-#include <fble/fble-value.h>   // for FbleValue, etc.
+#include <fble/fble-runtime.h>   // for FbleValue, etc.
 
 // FbleNewCharValue -- see documentation in char.fble.h
 FbleValue* FbleNewCharValue(FbleValueHeap* heap, wchar_t c)

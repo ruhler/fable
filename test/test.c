@@ -8,7 +8,7 @@
 #include <fble/fble-main.h>        // for FbleMain, etc.
 #include <fble/fble-profile.h>     // for FbleNewProfile, etc.
 #include <fble/fble-program.h>     // for FblePreloadedModule
-#include <fble/fble-value.h>       // for FbleValue, etc.
+#include <fble/fble-runtime.h>     // for FbleValue, etc.
 #include <fble/fble-vector.h>      // for FbleInitVector, etc.
 
 #include "fble-test.usage.h"       // for fbldUsageHelpText

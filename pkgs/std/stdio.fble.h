@@ -6,7 +6,7 @@
 #ifndef FBLE_STD_STDIO_NATIVE_FBLE_H_
 #define FBLE_STD_STDIO_NATIVE_FBLE_H_
 
-#include <fble/fble-value.h>   // for FbleValueHeap
+#include <fble/fble-runtime.h>   // for FbleValueHeap
 
 /**
  * @func[FbleRegisterStdioForeignValues]

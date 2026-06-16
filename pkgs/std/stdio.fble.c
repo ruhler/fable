@@ -8,8 +8,8 @@
 #include <stdio.h>      // for FILE, fprintf, fflush, fgetc
 #include <wchar.h>      // for wint_t, fgetwc
 
-#include <fble/fble-alloc.h>  // for FbleFree
-#include <fble/fble-value.h>  // for FbleValue, etc.
+#include <fble/fble-alloc.h>    // for FbleFree
+#include <fble/fble-runtime.h>  // for FbleValue, etc.
 
 #include "data.fble.h"        // for FbleNewCharValue, etc.
 

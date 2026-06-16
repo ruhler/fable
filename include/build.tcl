@@ -85,11 +85,7 @@ namespace eval "include" {
       FbleFreeModule FbleFreeProgram
       FblePreloadedModule FblePreloadedModuleV
     }
-    fble-string.h {
-      FbleStringMagic FbleString FbleStringV
-      FbleNewString FbleCopyString FbleFreeString
-    }
-    fble-value.h {
+    fble-runtime.h {
       FbleValue FbleValueHeap
       FbleStructValue FbleUnionValue FbleFuncValue
       FbleNewValueHeap FbleFreeValueHeap
@@ -107,6 +103,10 @@ namespace eval "include" {
       FbleDeclareRecursiveValues FbleDefineRecursiveValues
       FbleNewNativeValue FbleNativeValueData
       FbleValueFullGc
+    }
+    fble-string.h {
+      FbleStringMagic FbleString FbleStringV
+      FbleNewString FbleCopyString FbleFreeString
     }
     fble-vector.h {
       FbleInitVector FbleFreeVector

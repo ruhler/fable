@@ -8,7 +8,7 @@
 
 #include "fble-profile.h"     // for FbleProfileThread
 
-// Forward references from fble-value.h
+// Forward references from fble-runtime.h
 typedef struct FbleValueHeap FbleValueHeap;
 typedef struct FbleValue FbleValue;
 

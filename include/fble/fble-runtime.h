@@ -1,10 +1,10 @@
 /**
- * @file fble-value.h
- *  API for interacting with fble values.
+ * @file fble-runtime.h
+ *  API for interacting with the fble runtime.
  */
 
-#ifndef FBLE_VALUE_H_
-#define FBLE_VALUE_H_
+#ifndef FBLE_RUNTIME_H_
+#define FBLE_RUNTIME_H_
 
 #include <stdbool.h>    // for bool
 
@@ -574,4 +574,4 @@ void* FbleNativeValueData(FbleValue* value);
  */
 void FbleValueFullGc(FbleValueHeap* heap);
 
-#endif // FBLE_VALUE_H_
+#endif // FBLE_RUNTIME_H_

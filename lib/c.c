@@ -642,7 +642,7 @@ void FbleGenerateC(FILE* fout, FbleModule* module)
   fprintf(fout, "#include <fble/fble-program.h>\n");  // for FbleNativedModule
   fprintf(fout, "#include <fble/fble-function.h>\n"); // for FbleCall
   fprintf(fout, "#include <fble/fble-literal.h>\n");  // for FbleNewLiteralValue
-  fprintf(fout, "#include <fble/fble-value.h>\n");    // for FbleValue
+  fprintf(fout, "#include <fble/fble-runtime.h>\n");  // for FbleValue
 
   // Error messages.
   fprintf(fout, "static const char* CalleeAborted = \"callee aborted\";\n");

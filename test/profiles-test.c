@@ -15,7 +15,7 @@
 #include <fble/fble-name.h>        // for FbleName.
 #include <fble/fble-profile.h>     // for FbleNewProfile, etc.
 #include <fble/fble-program.h>     // for FblePreloadedModule
-#include <fble/fble-value.h>       // for FbleValue, etc.
+#include <fble/fble-runtime.h>     // for FbleValue, etc.
 
 #include "fble-profiles-test.usage.h"    // for fbldUsageHelpText
 

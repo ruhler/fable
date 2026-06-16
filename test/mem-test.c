@@ -13,7 +13,7 @@
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-main.h>        // for FbleMain.
 #include <fble/fble-program.h>     // for FblePreloadedModule
-#include <fble/fble-value.h>       // for FbleValue, etc.
+#include <fble/fble-runtime.h>     // for FbleValue, etc.
 
 #include "fble-mem-test.usage.h"   // for fbldUsageHelpText
 

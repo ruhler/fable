@@ -1,6 +1,6 @@
 /**
- * @file value.c
- *  FbleValue routines.
+ * @file runtime.c
+ *  The core runtime implementation.
  *
  *  Including the implementations of:
  *
@@ -19,9 +19,10 @@
 #include <sys/resource.h>   // for getrlimit, setrlimit
 #endif // __WIN32
 
+#include <fble/fble-runtime.h>   // for FbleValue, etc.
+
 #include <fble/fble-alloc.h>     // for FbleAlloc, FbleFree, etc.
 #include <fble/fble-function.h>  // for FbleFunction, etc.
-#include <fble/fble-value.h>     // for FbleValue, etc.
 #include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "unreachable.h"    // for FbleUnreachable
@@ -1016,7 +1017,7 @@ static void IncrGc(ValueHeap* heap)
   }
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValueHeap* FbleNewValueHeap()
 {
   // If this fails, add support for whatever crazy architecture you are trying
@@ -1068,7 +1069,7 @@ FbleValueHeap* FbleNewValueHeap()
   return &heap->_base;
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 void FbleFreeValueHeap(FbleValueHeap* heap_)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
@@ -1105,7 +1106,7 @@ void FbleFreeValueHeap(FbleValueHeap* heap_)
   FbleFree(heap);
 }
 
-// See documentation of FblePushFrame in fble-value.h
+// See documentation of FblePushFrame in fble-runtime.h
 // If merge is true, reuse the same allocation space as the caller frame.
 static void PushFrame(ValueHeap* heap, bool merge)
 {
@@ -1135,13 +1136,13 @@ static void PushFrame(ValueHeap* heap, bool merge)
   heap->top = callee;
 }
 
-// See documentation in fble-value.h
+// See documentation in fble-runtime.h
 void FblePushFrame(FbleValueHeap* heap)
 {
   PushFrame((ValueHeap*)heap, false);
 }
 
-// See documentation in fble-value.h
+// See documentation in fble-runtime.h
 FbleValue* FblePopFrame(FbleValueHeap* heap_, FbleValue* value)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
@@ -1290,14 +1291,14 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
   }
 }
 
-// See documentation in fble-value.h
+// See documentation in fble-runtime.h
 //
 // Note: the packed value for a generic type matches the packed value of a
 // zero-argument struct value, so that it can be packed along with union and
 // struct values.
 FbleValue* FbleGenericTypeValue = (FbleValue*)1;
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
   // Try packing optimistically.
@@ -1346,7 +1347,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
   return &value->_base;
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...)
 {
   FbleValue* args[argc];
@@ -1359,7 +1360,7 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...)
   return FbleNewStructValue(heap, argc, args);
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleStructValueField(FbleValue* object, size_t fieldc, size_t field)
 {
   if (object == NULL || IsRefValue(object)) {
@@ -1395,7 +1396,7 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t fieldc, size_t field)
   return value->fields[field];
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tagwidth, size_t tag, FbleValue* arg)
 {
   if (IsPacked(arg)) {
@@ -1422,7 +1423,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tagwidth, size_t tag, F
   union_value->arg = arg;
   return &union_value->_base;
 }
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tagwidth, size_t tag)
 {
   FbleValue* unit = FbleNewStructValue_(heap, 0);
@@ -1430,7 +1431,7 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tagwidth, size_t tag)
   return result;
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth)
 {
   if (object == NULL || IsRefValue(object)) {
@@ -1449,7 +1450,7 @@ size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth)
   return value->_base.data;
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleUnionValueArg(FbleValue* object, size_t tagwidth)
 {
   if (object == NULL || IsRefValue(object)) {
@@ -1477,7 +1478,7 @@ FbleValue* FbleUnionValueArg(FbleValue* object, size_t tagwidth)
   return value->arg;
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field)
 {
   if (object == NULL || IsRefValue(object)) {
@@ -1538,7 +1539,7 @@ static void EnsureTailCallArgsSpace(ValueHeap* heap, size_t max_call_args)
 }
 
 // FbleRunFunction for PartialApply executable.
-// See documentation of FbleRunFunction in fble-value.h
+// See documentation of FbleRunFunction in fble-runtime.h
 static FbleValue* PartialApplyImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
@@ -1748,13 +1749,13 @@ FbleValue* FbleCall(FbleValueHeap* heap_, FbleProfileThread* profile, FbleValue*
   return result;
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile)
 {
   return FbleApply(heap, program, 0, NULL, profile);
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleApply(FbleValueHeap* heap_, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
@@ -1762,7 +1763,7 @@ FbleValue* FbleApply(FbleValueHeap* heap_, FbleValue* func, size_t argc, FbleVal
   return Eval(heap, func, argc, args, profile);
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap_, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
@@ -1778,14 +1779,14 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap_, FbleExecutable* executable, si
   return &v->_base;
 }
 
-// See documentation in fble-value.h
+// See documentation in fble-runtime.h
 void FbleRegisterForeignValue(FbleValueHeap* heap_, FbleForeign* foreign)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
   FbleAppendToVector(heap->foreign, foreign);
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleForeign* FbleLookupForeignValue(FbleValueHeap* heap_, FbleModulePath* path, const char* name)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
@@ -1805,7 +1806,7 @@ FbleForeign* FbleLookupForeignValue(FbleValueHeap* heap_, FbleModulePath* path, 
   return NULL;
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleNewForeignValue(FbleValueHeap* heap, FbleProfileThread* profile, FbleForeign* foreign, size_t profile_block_id)
 {
   FbleExecutable exe = {
@@ -1822,7 +1823,7 @@ FbleValue* FbleNewForeignValue(FbleValueHeap* heap, FbleProfileThread* profile, 
   return func;
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
   FbleValue* unit = FbleNewStructValue_(heap, 0);
@@ -1836,7 +1837,7 @@ FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
   return tail;
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...)
 {
   FbleValue* args[argc];
@@ -1849,7 +1850,7 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...)
   return FbleNewListValue(heap, argc, args);
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 FbleValue* FbleDeclareRecursiveValues(FbleValueHeap* heap_, size_t n)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
@@ -1862,7 +1863,7 @@ FbleValue* FbleDeclareRecursiveValues(FbleValueHeap* heap_, size_t n)
   return FbleNewStructValue(heap_, n, args);
 }
 
-// See documentation in fble-value.h.
+// See documentation in fble-runtime.h.
 size_t FbleDefineRecursiveValues(FbleValueHeap* heap_, FbleValue* decl, FbleValue* defn)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
@@ -1911,7 +1912,7 @@ size_t FbleDefineRecursiveValues(FbleValueHeap* heap_, FbleValue* decl, FbleValu
   return 0;
 }
 
-// See documentation in fble-value.h
+// See documentation in fble-runtime.h
 FbleValue* FbleNewNativeValue(FbleValueHeap* heap_,
     void* data, void (*on_free)(void* data))
 {
@@ -1923,14 +1924,14 @@ FbleValue* FbleNewNativeValue(FbleValueHeap* heap_,
   return &value->_base;
 }
 
-// See documentation in fble-value.h
+// See documentation in fble-runtime.h
 void* FbleNativeValueData(FbleValue* value)
 {
   assert((value->flags & FbleValueFlagTagBits) == NATIVE_VALUE);
   return ((NativeValue*)value)->data;
 }
 
-// See documentation in fble-value.h
+// See documentation in fble-runtime.h
 void FbleValueFullGc(FbleValueHeap* heap_)
 {
   ValueHeap* heap = (ValueHeap*)heap_;

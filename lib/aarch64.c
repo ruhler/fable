@@ -13,7 +13,7 @@
 #include <string.h>   // for strlen, strcat
 #include <unistd.h>   // for getcwd
 
-#include <fble/fble-value.h>     // for FbleWrongUnionTag, etc.
+#include <fble/fble-runtime.h>   // for FbleWrongUnionTag, etc.
 #include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "code.h"

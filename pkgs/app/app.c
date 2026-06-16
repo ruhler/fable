@@ -15,7 +15,7 @@
 #include <fble/fble-alloc.h>       // for FbleFree.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-main.h>        // for FbleMain.
-#include <fble/fble-value.h>       // for FbleValue, etc.
+#include <fble/fble-runtime.h>     // for FbleValue, etc.
 #include <fble/fble-vector.h>      // for FbleInitVector, etc.
 #include <fble/fble-version.h>     // for FblePrintVersion
 

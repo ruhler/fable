@@ -57,7 +57,7 @@ void Write(SOCKET sfd, char c)
 #endif
 
 #include <fble/fble-alloc.h>      // for FbleFree
-#include <fble/fble-value.h>      // for FbleValue, etc.
+#include <fble/fble-runtime.h>    // for FbleValue, etc.
 
 #include "data.fble.h"            // for FbleNewIntValue, etc.
 

@@ -7,7 +7,7 @@
 
 #include <assert.h>           // for assert
 
-#include <fble/fble-value.h>       // for FbleValue, etc.
+#include <fble/fble-runtime.h>   // for FbleValue, etc.
 
 static FbleValue* ReturnImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,

@@ -8,7 +8,7 @@
 
 #include "fble-program.h"
 #include "fble-profile.h"
-#include "fble-value.h"
+#include "fble-runtime.h"
 
 /**
  * @func[FbleLink] Links together modules from a program into an FbleValue*.

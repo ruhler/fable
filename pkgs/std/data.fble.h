@@ -8,7 +8,7 @@
 
 #include <stddef.h>            // for wchar_t
 
-#include <fble/fble-value.h>   // for FbleValue, etc.
+#include <fble/fble-runtime.h>   // for FbleValue, etc.
 
 /**
  * @func[FbleNewCharValue] Creates an FbleValue of type @l{/Std/Char%.Char@}.

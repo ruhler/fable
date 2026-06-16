@@ -9,7 +9,7 @@
 #include <fble/fble-main.h>      // for FbleMainStatus
 #include <fble/fble-program.h>   // for FblePreloadedModule
 #include <fble/fble-profile.h>   // for FbleProfile
-#include <fble/fble-value.h>     // for FbleValue
+#include <fble/fble-runtime.h>   // for FbleValue
 
 /**
  * @func[FbleIo] Helper for creating a /Std/Io%.Io@<M@> instance.
