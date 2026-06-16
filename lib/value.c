@@ -1029,6 +1029,7 @@ FbleValueHeap* FbleNewValueHeap()
   heap->_base.tail_call_sentinel = (FbleValue*)0x2;
   heap->_base.tail_call_buffer = FbleAllocArray(FbleValue*, heap->tail_call_capacity);
   heap->_base.tail_call_argc = 0;
+  heap->_base.profile = NULL;
 
   heap->stack = FbleAllocRaw(CHUNK_SIZE);
 
@@ -1683,6 +1684,7 @@ static FbleValue* Eval(ValueHeap* heap, FbleValue* func, size_t argc, FbleValue*
   }
 #endif // __WIN32
 
+  heap->_base.profile = profile;
   FbleProfileThread* profile_thread = FbleNewProfileThread(profile);
   FbleValue* result = FbleCall(&heap->_base, profile_thread, func, argc, args);
   FbleFreeProfileThread(profile_thread);

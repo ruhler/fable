@@ -17,6 +17,7 @@
 #include "code.h"
 #include "unreachable.h"
 
+static void ReportRuntimeError(FbleValueHeap* heap, FbleLoc loc, FbleFunction* func, const char* msg);
 static void FreeCode(void* code);
 
 /**
@@ -38,6 +39,24 @@ static void FreeCode(void* code);
  *   None.
  */
 #define GET(var) (vars[var.tag][var.index])
+
+/**
+ * @func[ReportRuntimeError] Reports a runtime error.
+ *  @arg[FbleValueHeap*][heap] The current heap.
+ *  @arg[FbleLoc][loc] Location of the error.
+ *  @arg[FbleFunction*][func] Function where the error occured.
+ *  @arg[const char*][msg] Error message. Maybe be NULL.
+ *  @sideeffects Outputs an error message.
+ */
+static void ReportRuntimeError(FbleValueHeap* heap, FbleLoc loc, FbleFunction* func, const char* msg)
+{
+  FbleName func_name = heap->profile->blocks.xs[func->profile_block_id];
+  FbleReportError("in %s", loc, func_name.name->str);
+  if (msg != NULL) {
+    fprintf(stderr, ": %s", msg);
+  }
+  fprintf(stderr, "\n");
+}
 
 /**
  * @func[FreeCode] Calls FbleFreeCode.
@@ -127,7 +146,7 @@ static FbleValue* Interpret(
         locals[access_instr->dest] = FbleStructValueField(obj, access_instr->fieldc, access_instr->field);
 
         if (locals[access_instr->dest] == NULL) {
-          FbleReportError("undefined struct value access\n", access_instr->loc);
+          ReportRuntimeError(heap, access_instr->loc, function, "undefined struct value access");
           return NULL;
         }
 
@@ -142,13 +161,13 @@ static FbleValue* Interpret(
         locals[access_instr->dest] = FbleUnionValueField(obj, access_instr->tagwidth, access_instr->tag);
 
         if (locals[access_instr->dest] == NULL) {
-          FbleReportError("undefined union value access\n", access_instr->loc);
+          ReportRuntimeError(heap, access_instr->loc, function, "undefined union value access");
           return NULL;
         }
 
         if (locals[access_instr->dest] == FbleWrongUnionTag) {
           locals[access_instr->dest] = NULL;
-          FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
+          ReportRuntimeError(heap, access_instr->loc, function, "union field access undefined: wrong tag");
           return NULL;
         }
 
@@ -162,7 +181,7 @@ static FbleValue* Interpret(
         size_t tag = FbleUnionValueTag(obj, select_instr->tagwidth);
 
         if (tag == (size_t)(-1)) {
-          FbleReportError("undefined union value select\n", select_instr->loc);
+          ReportRuntimeError(heap, select_instr->loc, function, "undefined union value select");
           return NULL;
         }
 
@@ -217,7 +236,7 @@ static FbleValue* Interpret(
 
         locals[call_instr->dest] = FbleCall(heap, profile, func, call_instr->args.size, call_args);
         if (locals[call_instr->dest] == NULL) {
-          FbleReportError("callee aborted\n", call_instr->loc);
+          ReportRuntimeError(heap, call_instr->loc, function, NULL);
           return NULL;
         }
 
@@ -229,7 +248,7 @@ static FbleValue* Interpret(
         FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
         FbleValue* func = GET(call_instr->func);
         if (func == NULL || ((uintptr_t)func & 0x3) == 0x2) {
-          FbleReportError("called undefined function\n", call_instr->loc);
+          ReportRuntimeError(heap, call_instr->loc, function, "called undefined function");
           return NULL;
         };
 
@@ -263,7 +282,7 @@ static FbleValue* Interpret(
         size_t r = FbleDefineRecursiveValues(heap, decl, defn);
 
         if (r != 0) {
-          FbleReportError("vacuous value\n", defn_instr->locs.xs[r - 1]);
+          ReportRuntimeError(heap, defn_instr->locs.xs[r-1], function, "vacuous value");
           return NULL;
         }
 
@@ -307,7 +326,7 @@ static FbleValue* Interpret(
         FbleForeignValueInstr* foreign_instr = (FbleForeignValueInstr*)instr;
         FbleForeign* foreign = FbleLookupForeignValue(heap, foreign_instr->path, foreign_instr->name.name->str);
         if (foreign == NULL) {
-          FbleReportError("foreign value not found\n", foreign_instr->name.loc);
+          ReportRuntimeError(heap, foreign_instr->name.loc, function, "foreign value not found");
           return NULL;
         }
 

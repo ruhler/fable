@@ -296,3 +296,69 @@ passed around everywhere?
 
 Shall I hack that approach up and see how it feels?
 
+The problem there is I don't get the line number of the call. So I'm getting
+the right function name, but not the right location.
+
+Maybe what I should do is say we print the current function name with every
+error message. So:
+
+I don't know.
+
+---
+
+So maybe every runtime error has:
+* line & col, message, function (name, source)
+
+Where message can be null. And we print message as:
+ 
+   foo:1:2: error: at Foo: wrong tag
+   foo:1:5: error: at Bar
+   foo:1:9: error: at Sludge
+   ...
+
+I could maybe have a FbleReportRuntimeError helper function that all the
+backends use.
+
+Let me hack something up in the interpreter first to see how it looks. I
+suspect there is a bit of cleanup work around it all we can do once we get
+there.
+
+@[Interpreted.Games.TicTacToe.TestChooseBestMoveWin]:
+./pkgs/std/Std/Map.fble:65:16: error: in /Std/Map%.Get.put: union field access undefined: wrong tag
+./pkgs/games/Games/TicTacToe/AI.fble:157:36: error: in /Games/TicTacToe/AI%.ChooseBestMove
+./pkgs/games/Games/TicTacToe/AI.fble:201:37: error: in /Games/TicTacToe/AI%.Move
+./pkgs/games/Games/TicTacToe/Tests.fble:32:16: error: in /Games/TicTacToe/Tests%.Tests
+./pkgs/std/Std/Test/Run.fble:31:24: error: in /Std/Test/Run%.Run
+
+This looks decent to me.
+
+How should I go about cleaning it up, if I want to do it cleanly? There are a
+few ideas:
+* Make ReportRuntimeError public somewhere.
+* Somehow officially make FbleProfile always part of FbleValueHeap?
+* Rename FbleValueHeap to FbleContext, or some such more generic?
+  FbleRuntime?
+* No need to copy source everywhere in the generated code, take that from the
+  function instead?
+* Switch all backends over to this new approach.
+
+I like this idea of switching FbleValueHeap, fble-value, value over to
+FbleRuntime, fble-runtime, runtime. Make profile a default part of the
+runtime. Add FbleReportRuntimeError as part of fble-runtime. Switch over all
+the backends.
+
+Let's not worry about copying source everywhere right now. But we can
+certainly add that as a todo to save space in the future.
+
+---
+
+What gets renamed when I move value to runtime?
+* FbleValueHeap -> FbleRuntime
+* FbleNewValueHeap -> FbleNewRuntime
+* FbleFreeValueHeap -> FbleFreeRuntime
+* FbleValueHeap* heap -> FbleRuntime* runtime
+
+How will the API look?
+
+Easy. Just add FbleProfile as a public field of FbleRuntime. Everything else
+can be the same. I can pass that through to FbleLink too.

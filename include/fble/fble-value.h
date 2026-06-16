@@ -139,6 +139,8 @@ struct FbleValueHeap {
   FbleValue* tail_call_sentinel;
   FbleValue** tail_call_buffer;
   size_t tail_call_argc;
+  FbleProfile* profile;
+
   // Additional internal fields follow.
 };
 
@@ -446,7 +448,7 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
  *   Allocates a value on the heap. Anything else a zero-argument foreign
  *   value implementation might do.
  */
-FbleValue* FbleNewForeignValue(FbleValueHeap* heap_, FbleProfileThread* profile, FbleForeign* foreign, size_t profile_block_id);
+FbleValue* FbleNewForeignValue(FbleValueHeap* heap, FbleProfileThread* profile, FbleForeign* foreign, size_t profile_block_id);
 
 /**
  * @func[FbleEval] Evaluates a linked program.
