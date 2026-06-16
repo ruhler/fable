@@ -14,8 +14,6 @@
  * @func[FbleLink] Links together modules from a program into an FbleValue*.
  *  @arg[FbleRuntime*] runtime
  *   The runtime context.
- *  @arg[FbleProfile*] profile
- *   Profile to populate with blocks. May be NULL.
  *  @arg[FbleProgram*] program
  *   The program of modules to link together.
  *
@@ -26,6 +24,6 @@
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleLink(FbleRuntime* runtime, FbleProfile* profile, FbleProgram* program);
+FbleValue* FbleLink(FbleRuntime* runtime, FbleProgram* program);
 
 #endif // FBLE_LINK_H_

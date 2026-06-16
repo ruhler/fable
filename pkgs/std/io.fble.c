@@ -80,13 +80,13 @@ static FbleValue* RunImpl(
 }
 
 // See documentation in io.fble.h
-FbleValue* FbleIo(FbleRuntime* runtime, FbleProfile* profile)
+FbleValue* FbleIo(FbleRuntime* runtime)
 {
   FbleName block_names[1];
   block_names[0].name = FbleNewString("IoRun!");
   block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   FbleNameV names = { .size = 1, .xs = block_names };
-  FbleBlockId block_id = FbleAddBlocksToProfile(profile, names);
+  FbleBlockId block_id = FbleAddBlocksToProfile(runtime->profile, names);
   FbleFreeName(block_names[0]);
 
   static FbleExecutable run_exe = {
@@ -101,7 +101,7 @@ FbleValue* FbleIo(FbleRuntime* runtime, FbleProfile* profile)
 }
 
 // See documentation in io.fble.h
-FbleValue* FbleIoMonad(FbleRuntime* runtime, FbleProfile* profile)
+FbleValue* FbleIoMonad(FbleRuntime* runtime)
 {
   FbleName block_names[2];
   block_names[0].name = FbleNewString("IoReturn!");
@@ -109,7 +109,7 @@ FbleValue* FbleIoMonad(FbleRuntime* runtime, FbleProfile* profile)
   block_names[1].name = FbleNewString("IoDo!");
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   FbleNameV names = { .size = 2, .xs = block_names };
-  FbleBlockId block_id = FbleAddBlocksToProfile(profile, names);
+  FbleBlockId block_id = FbleAddBlocksToProfile(runtime->profile, names);
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
 

@@ -460,7 +460,6 @@ FbleValue* FbleNewForeignValue(FbleRuntime* runtime, FbleProfileThread* profile,
  * 
  *  @arg[FbleRuntime*][runtime   ] The runtime context.
  *  @arg[FbleValue*    ][program] The program to evaluate.
- *  @arg[FbleProfile*  ][profile] The profile to update. Must not be NULL.
  * 
  *  @returns FbleValue*
  *   The value of the evaluated program, or @l[NULL] in case of a runtime
@@ -470,10 +469,10 @@ FbleValue* FbleNewForeignValue(FbleRuntime* runtime, FbleProfileThread* profile,
  *   @i Allocates a value on the heap.
  *   @i Prints an error message to stderr in case of a runtime error.
  *   @item
- *    Updates profiling information in profile based on the execution of the
- *    program.
+ *    Updates profiling information in the runtime profile based on the
+ *    execution of the program.
  */
-FbleValue* FbleEval(FbleRuntime* runtime, FbleValue* program, FbleProfile* profile);
+FbleValue* FbleEval(FbleRuntime* runtime, FbleValue* program);
 
 /**
  * @func[FbleApply] Applies an fble function to arguments.
@@ -481,7 +480,6 @@ FbleValue* FbleEval(FbleRuntime* runtime, FbleValue* program, FbleProfile* profi
  *  @arg[FbleValue*][func] The function to apply.
  *  @arg[size_t][argc] The number of args to apply.
  *  @arg[FbleValue**][args] The arguments to apply the function to.
- *  @arg[FbleProfile*][profile] The profile to update. Must not be NULL.
  *
  *  @returns FbleValue*
  *   The result of applying the function to the given arguments.
@@ -490,9 +488,9 @@ FbleValue* FbleEval(FbleRuntime* runtime, FbleValue* program, FbleProfile* profi
  *   @i Allocates a value on the heap.
  *   @i Prints warning messages to stderr.
  *   @i Prints an error message to stderr in case of error.
- *   @i Updates the profile with stats from the evaluation.
+ *   @i Updates the runtime profile with stats from the evaluation.
  */
-FbleValue* FbleApply(FbleRuntime* runtime, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
+FbleValue* FbleApply(FbleRuntime* runtime, FbleValue* func, size_t argc, FbleValue** args);
 
 /**
  * @func[FbleDeclareRecursiveValues] Declare values intended to be recursive.

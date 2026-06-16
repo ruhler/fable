@@ -22,7 +22,6 @@ void FbleTestRegisterForeignValues(FbleRuntime* runtime);
 // FbleTestMain -- see documentation in test.h
 int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 {
-  FbleProfile* profile = FbleNewProfile();
   FbleRuntime* runtime = FbleNewRuntime();
   const char* profile_output_file = NULL;
   uint64_t profile_sample_period = 0;
@@ -32,13 +31,12 @@ int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 
   argv[argc++] = "--";
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-test", fbldUsageHelpText,
-      &argc, &argv, preloaded, runtime, profile, &profile_output_file, &profile_sample_period, &result);
+      &argc, &argv, preloaded, runtime, &profile_output_file, &profile_sample_period, &result);
 
-  FbleFreeRuntime(runtime);
 
   if (profile_output_file != NULL) {
-    FbleOutputProfile(profile_output_file, profile, 0);
+    FbleOutputProfile(profile_output_file, runtime->profile, 0);
   }
-  FbleFreeProfile(profile);
+  FbleFreeRuntime(runtime);
   return status;
 }

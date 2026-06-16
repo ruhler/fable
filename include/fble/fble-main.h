@@ -51,7 +51,6 @@ typedef enum {
  *  @arg[const char***][argv] The command line arguments.
  *  @arg[FblePreloadedModule*][preloaded] Optional preloaded module to run.
  *  @arg[FbleRuntime*][runtime] The runtime context.
- *  @arg[FbleProfile*][profile] Profile for evaluating the main program.
  *  @arg[const char**][profile_output_file]
  *   Output parameter for the profile output file.
  *  @arg[uint64_t][profile_sample_period]
@@ -80,7 +79,6 @@ FbleMainStatus FbleMain(
     const char*** argv,
     FblePreloadedModule* preloaded,
     FbleRuntime* runtime,
-    FbleProfile* profile,
     const char** profile_output_file,
     uint64_t* profile_sample_period,
     FbleValue** result);

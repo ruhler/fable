@@ -4,12 +4,11 @@ Things to consider doing for the fble-0.6 release.
 
 * Move 'fble value' stuff to 'fble runtime'
  - move interpreter's ReportRuntimError to FbleReportRuntimeError in fble-value.h
- - Pass FbleProfile to FbleEval via FbleRuntime instead of as separate arg.
  - Switch to using FbleReportRuntimeError in c and aarch64 backends
 
-* Optimize size of generated FbleCode and resulting .c, .s artifacts?
-
 * Print function names along with error location on stack trace?
+
+* Optimize size of generated FbleCode and resulting .c, .s artifacts?
 
 * Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
 

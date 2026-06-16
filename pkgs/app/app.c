@@ -530,7 +530,6 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     .no_video = false
   };
 
-  FbleProfile* profile = FbleNewProfile();
   FbleRuntime* runtime = FbleNewRuntime();
   const char* profile_output_file = NULL;
   uint64_t profile_sample_period = 0;
@@ -541,13 +540,12 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleRegisterStdioForeignValues(runtime);
 
   FbleMainStatus status = FbleMain(&ParseArg, &app_args, "fble-app", fbldUsageHelpText,
-      &argc, &argv, preloaded, runtime, profile, &profile_output_file, &profile_sample_period, &func);
+      &argc, &argv, preloaded, runtime, &profile_output_file, &profile_sample_period, &func);
 
   bool video = !app_args.no_video;
 
   if (func == NULL) {
     FbleFreeRuntime(runtime);
-    FbleFreeProfile(profile);
     return FbleCliMainOtherStatus(status);
   }
 
@@ -555,7 +553,6 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   if (SDL_Init(SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0) {
     fprintf(stderr, "Unable to initialize SDL: %s\n", SDL_GetError());
     FbleFreeRuntime(runtime);
-    FbleFreeProfile(profile);
     return FbleCliMainOtherStatus(FBLE_MAIN_OTHER_ERROR);
   }
 
@@ -570,7 +567,6 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     if (window == NULL) {
       fprintf(stderr, "Unable to create window: %s\n", SDL_GetError());
       FbleFreeRuntime(runtime);
-      FbleFreeProfile(profile);
       return FbleCliMainOtherStatus(FBLE_MAIN_OTHER_ERROR);
     }
   }
@@ -594,7 +590,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   block_names[1].name = FbleNewString("effect!");
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   FbleNameV names = { .size = 2, .xs = block_names };
-  FbleBlockId block_id = FbleAddBlocksToProfile(profile, names);
+  FbleBlockId block_id = FbleAddBlocksToProfile(runtime->profile, names);
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
 
@@ -627,8 +623,8 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleValue* app_value = FbleNewNativeValue(runtime, &app, NULL);
   FbleValue* fble_effect = FbleNewFuncValue(runtime, &effect_exe, block_id + 1, &app_value);
 
-  FbleValue* m = FbleIoMonad(runtime, profile);            // Monad@<M@>
-  FbleValue* io = FbleIo(runtime, profile);                // Io@<M@>
+  FbleValue* m = FbleIoMonad(runtime);            // Monad@<M@>
+  FbleValue* io = FbleIo(runtime);                // Io@<M@>
   FbleValue* fble_app = FbleNewStructValue_(runtime, 2, fble_event, fble_effect);
   FbleValue* fble_width = FbleNewIntValue(runtime, width);
   FbleValue* fble_height = FbleNewIntValue(runtime, height);
@@ -639,7 +635,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     m, io, fble_app, fble_width, fble_height, args, unit
   };
 
-  FbleValue* result = FbleApply(runtime, func, 7, func_args, profile);
+  FbleValue* result = FbleApply(runtime, func, 7, func_args);
 
   if (app_args.jank_stats) {
     fprintf(stderr, "Jank Stats:\n");
@@ -656,10 +652,9 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 
   int exit_status = FbleCliMainAppStatus(result);
 
-  FbleFreeRuntime(runtime);
 
-  FbleOutputProfile(profile_output_file, profile, profile_sample_period);
-  FbleFreeProfile(profile);
+  FbleOutputProfile(profile_output_file, runtime->profile, profile_sample_period);
+  FbleFreeRuntime(runtime);
 
   SDL_GL_DeleteContext(glctx);
   SDL_DestroyWindow(window);

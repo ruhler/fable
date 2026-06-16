@@ -462,7 +462,7 @@ static FbleValue* PartialApplyImpl(
 static FbleValue* PartialApply(Runtime* runtime, FbleFuncValue* function, size_t argc, FbleValue** args);
 
 static FbleValue* TailCall(Runtime* runtime, FbleProfileThread* profile);
-static FbleValue* Eval(Runtime* runtime, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
+static FbleValue* Eval(Runtime* runtime, FbleValue* func, size_t argc, FbleValue** args);
 
 /**
  * @func[Clear] Initialize a list to empty.
@@ -1030,7 +1030,7 @@ FbleRuntime* FbleNewRuntime()
   runtime->_base.tail_call_sentinel = (FbleValue*)0x2;
   runtime->_base.tail_call_buffer = FbleAllocArray(FbleValue*, runtime->tail_call_capacity);
   runtime->_base.tail_call_argc = 0;
-  runtime->_base.profile = NULL;
+  runtime->_base.profile = FbleNewProfile();
 
   runtime->stack = FbleAllocRaw(CHUNK_SIZE);
 
@@ -1101,6 +1101,7 @@ void FbleFreeRuntime(FbleRuntime* runtime_)
     FreeGcValue(value);
   }
 
+  FbleFreeProfile(runtime->_base.profile);
   FbleFree(runtime->_base.tail_call_buffer);
   FbleFree(runtime->foreign.xs);
   FbleFree(runtime);
@@ -1657,18 +1658,16 @@ static FbleValue* TailCall(Runtime* runtime, FbleProfileThread* profile)
  *  @arg[FbleValue*][func] The function to evaluate.
  *  @arg[size_t][argc] Number of args to pass.
  *  @arg[FbleValue**][args] Args to pass to the function.
- *  @arg[FbleProfile*][profile]
- *   Profile to update with execution stats. Must not be NULL.
  *  
  *  @returns[FbleValue*] The computed value, or NULL on error.
  *  
  *  @sideeffects
  *   @i Allocates a value on the heap.
  *   @i Prints a message to stderr in case of error.
- *   @i Updates profile based on the execution.
+ *   @i Updates runtime profile based on the execution.
  *   @i Does not take ownership of the function or the args.
  */
-static FbleValue* Eval(Runtime* runtime, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile)
+static FbleValue* Eval(Runtime* runtime, FbleValue* func, size_t argc, FbleValue** args)
 {
 #ifndef __WIN32
   // The fble spec requires we don't put an arbitrarily low limit on the stack
@@ -1685,8 +1684,7 @@ static FbleValue* Eval(Runtime* runtime, FbleValue* func, size_t argc, FbleValue
   }
 #endif // __WIN32
 
-  runtime->_base.profile = profile;
-  FbleProfileThread* profile_thread = FbleNewProfileThread(profile);
+  FbleProfileThread* profile_thread = FbleNewProfileThread(runtime->_base.profile);
   FbleValue* result = FbleCall(&runtime->_base, profile_thread, func, argc, args);
   FbleFreeProfileThread(profile_thread);
 
@@ -1750,17 +1748,17 @@ FbleValue* FbleCall(FbleRuntime* runtime_, FbleProfileThread* profile, FbleValue
 }
 
 // See documentation in fble-runtime.h.
-FbleValue* FbleEval(FbleRuntime* runtime, FbleValue* program, FbleProfile* profile)
+FbleValue* FbleEval(FbleRuntime* runtime, FbleValue* program)
 {
-  return FbleApply(runtime, program, 0, NULL, profile);
+  return FbleApply(runtime, program, 0, NULL);
 }
 
 // See documentation in fble-runtime.h.
-FbleValue* FbleApply(FbleRuntime* runtime_, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile)
+FbleValue* FbleApply(FbleRuntime* runtime_, FbleValue* func, size_t argc, FbleValue** args)
 {
   Runtime* runtime = (Runtime*)runtime_;
   EnsureTailCallArgsSpace(runtime, argc);
-  return Eval(runtime, func, argc, args, profile);
+  return Eval(runtime, func, argc, args);
 }
 
 // See documentation in fble-runtime.h.

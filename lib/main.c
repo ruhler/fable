@@ -15,7 +15,7 @@
 #include <fble/fble-vector.h>       // for FbleInitVector, etc.
 
 static void PrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FblePreloadedModule* preloaded);
-static FbleValue* Link(FbleRuntime* runtime, FbleProfile* profile, FblePreloadedModuleV builtins, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
+static FbleValue* Link(FbleRuntime* runtime, FblePreloadedModuleV builtins, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
 /**
  * @func[PrintCompiledHeaderLine] Prints an information line about a preloaded module.
@@ -58,8 +58,6 @@ static void PrintCompiledHeaderLine(FILE* stream, const char* tool, const char* 
  * @func[Link] Load and link an optionally preloaded program.
  *  @arg[FbleRuntime*] runtime
  *   The runtime context.
- *  @arg[FbleProfile*] profile
- *   Profile to populate with blocks. May be NULL.
  *  @arg[FblePreloadedModuleV] builtins
  *   The list of builtin modules.
  *  @arg[FbleSearchPath*] search_path
@@ -80,7 +78,7 @@ static void PrintCompiledHeaderLine(FILE* stream, const char* tool, const char* 
  *    The user should free strings added to build_deps when no longer
  *    needed, including in the case when program loading fails.
  */
-static FbleValue* Link(FbleRuntime* runtime, FbleProfile* profile, FblePreloadedModuleV builtins, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
+static FbleValue* Link(FbleRuntime* runtime, FblePreloadedModuleV builtins, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
 {
   FbleProgram* program = FbleLoadForExecution(builtins, search_path, module_path, build_deps);
   if (program == NULL) {
@@ -92,7 +90,7 @@ static FbleValue* Link(FbleRuntime* runtime, FbleProfile* profile, FblePreloaded
     return NULL;
   }
 
-  FbleValue* linked = FbleLink(runtime, profile, program);
+  FbleValue* linked = FbleLink(runtime, program);
   FbleFreeProgram(program);
   return linked;
 }
@@ -107,7 +105,6 @@ FbleMainStatus FbleMain(
     const char*** argv,
     FblePreloadedModule* preloaded,
     FbleRuntime* runtime,
-    FbleProfile* profile,
     const char** profile_output_file,
     uint64_t* profile_sample_period,
     FbleValue** result)
@@ -198,7 +195,7 @@ FbleMainStatus FbleMain(
     module_arg.module_path = FbleCopyModulePath(preloaded->path);
   }
 
-  profile->enabled = (*profile_output_file != NULL);
+  runtime->profile->enabled = (*profile_output_file != NULL);
   if ((uint64_t)profile_sample_period_int != *profile_sample_period) {
     if (profile_sample_period_int < 0) {
       *profile_sample_period = 0;
@@ -215,7 +212,7 @@ FbleMainStatus FbleMain(
     FbleAppendToVector(preloaded_and_builtins, preloaded);
   }
 
-  FbleValue* linked = Link(runtime, profile, preloaded_and_builtins, module_arg.search_path, module_arg.module_path, &deps);
+  FbleValue* linked = Link(runtime, preloaded_and_builtins, module_arg.search_path, module_arg.module_path, &deps);
   FbleFreeVector(preloaded_and_builtins);
   FbleFreeModuleArg(module_arg);
 
@@ -246,7 +243,7 @@ FbleMainStatus FbleMain(
   }
   FbleFreeVector(deps);
 
-  FbleValue* func = FbleEval(runtime, linked, profile);
+  FbleValue* func = FbleEval(runtime, linked);
   if (func == NULL) {
     return FBLE_MAIN_RUNTIME_ERROR;
   }

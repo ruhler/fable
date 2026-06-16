@@ -22,13 +22,12 @@
 #include "io.fble.h"            // for FbleIoM
 #include "stdio.fble.h"         // for /Std/Io/File/Internal%
 
-static FbleValue* Cli(FbleRuntime* runtime, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv);
+static FbleValue* Cli(FbleRuntime* runtime, FbleValue* main, size_t argc, const char** argv);
 
 
 /**
  * @func[Cli] Executes a @l{/Std/Io/Cli%.Main@} function.
  *  @arg[FbleRuntime*][runtime] The runtime context.
- *  @arg[FbleProfile*][profile] Profile to store execution results to.
  *  @arg[FbleValue*][main] The main program to execute. Borrowed.
  *  @arg[size_t][argc] The number of command line arguments. Borrowed.
  *  @arg[const char**][argv] The command line arguments. Borrowed.
@@ -38,13 +37,13 @@ static FbleValue* Cli(FbleRuntime* runtime, FbleProfile* profile, FbleValue* mai
  *   error.
  *
  *  @sideeffects
- *   @i Updates the profile.
+ *   @i Updates the runtime profile.
  *   @i Allocates a value on the runtime.
  *   @i Any side effects the main program itself has via native calls.
  */
-static FbleValue* Cli(FbleRuntime* runtime, FbleProfile* profile, FbleValue* main, size_t argc, const char** argv)
+static FbleValue* Cli(FbleRuntime* runtime, FbleValue* main, size_t argc, const char** argv)
 {
-  FbleValue* func = FbleEval(runtime, main, profile);
+  FbleValue* func = FbleEval(runtime, main);
   if (func == NULL) {
     return NULL;
   }
@@ -53,13 +52,13 @@ static FbleValue* Cli(FbleRuntime* runtime, FbleProfile* profile, FbleValue* mai
 
   // We apply the main function with:
   //  M@ = <@ A@>(Unit@) { A@; }
-  FbleValue* m = FbleIoMonad(runtime, profile);            // Monad@<M@>
-  FbleValue* io = FbleIo(runtime, profile);                // Io@<M@>
+  FbleValue* m = FbleIoMonad(runtime);            // Monad@<M@>
+  FbleValue* io = FbleIo(runtime);                // Io@<M@>
   FbleValue* args = FbleCliArgs(runtime, argc, argv);      // List@<String@>
   FbleValue* unit = FbleNewStructValue_(runtime, 0);       // Unit@
 
   FbleValue* func_args[4] = { m, io, args, unit };
-  FbleValue* result = FbleApply(runtime, func, 4, func_args, profile);
+  FbleValue* result = FbleApply(runtime, func, 4, func_args);
   return FblePopFrame(runtime, result);
 }
 
@@ -109,7 +108,6 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   // Set locale properly before converting command line args into fble land.
   setlocale(LC_CTYPE, "");
 
-  FbleProfile* profile = FbleNewProfile();
   FbleRuntime* runtime = FbleNewRuntime();
   const char* profile_output_file = NULL;
   uint64_t profile_sample_period = 0;
@@ -120,21 +118,18 @@ FbleCliMainStatus FbleCliMain(int argc, const char** argv, FblePreloadedModule* 
   FbleRegisterStdioForeignValues(runtime);
 
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-cli", fbldUsageHelpText,
-      &argc, &argv, preloaded, runtime, profile, &profile_output_file, &profile_sample_period, &main);
+      &argc, &argv, preloaded, runtime, &profile_output_file, &profile_sample_period, &main);
 
   if (main == NULL) {
     FbleFreeRuntime(runtime);
-    FbleFreeProfile(profile);
     return FbleCliMainOtherStatus(status);
   }
 
-  FbleValue* value = Cli(runtime, profile, main, argc, argv);
+  FbleValue* value = Cli(runtime, main, argc, argv);
 
   int result = FbleCliMainAppStatus(value);
 
+  FbleOutputProfile(profile_output_file, runtime->profile, profile_sample_period);
   FbleFreeRuntime(runtime);
-
-  FbleOutputProfile(profile_output_file, profile, profile_sample_period);
-  FbleFreeProfile(profile);
   return result;
 }

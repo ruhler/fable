@@ -23,7 +23,7 @@ typedef struct {
 } Args;
 
 static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error);
-static size_t Run(FbleRuntime* runtime, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n);
+static size_t Run(FbleRuntime* runtime, FbleValue* func, size_t use_n, size_t alloc_n);
 
 /**
  * @func[ParseArg] Arg parser for mem-tests.
@@ -42,7 +42,6 @@ static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
  * @func[Run] Runs the program for f[n].
  *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[FbleValue*][func] The function f to run.
- *  @arg[FbleProfile*][profile] The profile to run with.
  *  @arg[size_t][use_n] The value of n to run for.
  *  @arg[size_t][alloc_n]
  *   The value of n to allocate, which should match on all runs if we want a
@@ -53,7 +52,7 @@ static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
  *  @sideeffects
  *   Resets the number of max bytes allocated.
  */
-static size_t Run(FbleRuntime* runtime, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n)
+static size_t Run(FbleRuntime* runtime, FbleValue* func, size_t use_n, size_t alloc_n)
 {
   FbleFullGc(runtime);
   FblePushFrame(runtime);
@@ -81,7 +80,7 @@ static size_t Run(FbleRuntime* runtime, FbleValue* func, FbleProfile* profile, s
   }
 
   FbleResetMaxTotalBytesAllocated();
-  FbleApply(runtime, func, 1, &tail, profile);
+  FbleApply(runtime, func, 1, &tail);
   FblePopFrame(runtime, NULL);
   return FbleMaxTotalBytesAllocated();
 }
@@ -91,9 +90,6 @@ FbleMainStatus FbleMemTestMain(int argc, const char** argv, FblePreloadedModule*
 {
   Args args = { .growth = false, .debug = false };
 
-  // Use a profile during tests to ensure memory behavior works properly with
-  // profiling turned on.
-  FbleProfile* profile = FbleNewProfile();
   FbleRuntime* runtime = FbleNewRuntime();
   const char* profile_output_file = NULL;
   uint64_t profile_sample_period = 0;
@@ -101,11 +97,10 @@ FbleMainStatus FbleMemTestMain(int argc, const char** argv, FblePreloadedModule*
 
   argv[argc++] = "--";
   FbleMainStatus status = FbleMain(&ParseArg, &args, "fble-mem-test", fbldUsageHelpText,
-      &argc, &argv, preloaded, runtime, profile, &profile_output_file, &profile_sample_period, &func);
+      &argc, &argv, preloaded, runtime, &profile_output_file, &profile_sample_period, &func);
 
   if (func == NULL) {
     FbleFreeRuntime(runtime);
-    FbleFreeProfile(profile);
     return status;
   }
 
@@ -116,16 +111,15 @@ FbleMainStatus FbleMemTestMain(int argc, const char** argv, FblePreloadedModule*
 
   if (args.debug) {
     for (size_t i = 0; i <= large_n; i++) {
-      size_t max_n = Run(runtime, func, profile, i, large_n);
+      size_t max_n = Run(runtime, func, i, large_n);
       fprintf(stderr, "% 4zi: %zi\n", i, max_n);
     }
   }
 
-  size_t max_small_n = Run(runtime, func, profile, small_n, large_n);
-  size_t max_large_n = Run(runtime, func, profile, large_n, large_n);
+  size_t max_small_n = Run(runtime, func, small_n, large_n);
+  size_t max_large_n = Run(runtime, func, large_n, large_n);
 
   FbleFreeRuntime(runtime);
-  FbleFreeProfile(profile);
 
   // Be a little lenient with memory usage, because there can be small
   // variations from run to run. If the total number of bytes increased is

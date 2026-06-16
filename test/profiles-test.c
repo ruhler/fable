@@ -178,7 +178,6 @@ static size_t Calls(FbleProfile* profile, const char* caller, const char* callee
 // FbleProfilesTestMain -- see documentation in profiles-test.h
 int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 {
-  FbleProfile* profile = FbleNewProfile();
   FbleRuntime* runtime = FbleNewRuntime();
   const char* profile_output_file = NULL;
   uint64_t profile_sample_period = 0;
@@ -186,14 +185,15 @@ int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* prelo
 
   argv[argc++] = "--";
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-profiles-test", fbldUsageHelpText,
-      &argc, &argv, preloaded, runtime, profile, &profile_output_file, &profile_sample_period, &result);
+      &argc, &argv, preloaded, runtime, &profile_output_file, &profile_sample_period, &result);
 
-  FbleFreeRuntime(runtime);
 
   if (result == NULL) {
-    FbleFreeProfile(profile);
+    FbleFreeRuntime(runtime);
     return status;
   }
+
+  FbleProfile* profile = runtime->profile;
 
   assert(profile->enabled && "--profile must be passed for this test");
 
@@ -223,6 +223,6 @@ int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* prelo
     assert(strstr(name.loc.source->str, "test/ProfilesTest.fble"));
   }
 
-  FbleFreeProfile(profile);
+  FbleFreeRuntime(runtime);
   return FBLE_MAIN_SUCCESS;
 }
