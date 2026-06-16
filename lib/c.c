@@ -265,7 +265,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
 static void ReturnAbort(FILE* fout, const char* lmsg, FbleLoc loc)
 {
   fprintf(fout, "{\n");
-  fprintf(fout, "    ReportAbort(%s, %zi, %zi);\n", lmsg, loc.line, loc.col);
+  fprintf(fout, "    ReportAbort(runtime, %s, %zi, %zi, function);\n", lmsg, loc.line, loc.col);
   fprintf(fout, "    return NULL;\n");
   fprintf(fout, "  }\n");
 }
@@ -645,7 +645,7 @@ void FbleGenerateC(FILE* fout, FbleModule* module)
   fprintf(fout, "#include <fble/fble-runtime.h>\n");  // for FbleValue
 
   // Error messages.
-  fprintf(fout, "static const char* CalleeAborted = \"callee aborted\";\n");
+  fprintf(fout, "static const char* CalleeAborted = NULL;\n");
   fprintf(fout, "static const char* UndefinedStructValue = \"undefined struct value access\";\n");
   fprintf(fout, "static const char* UndefinedUnionValue = \"undefined union value access\";\n");
   fprintf(fout, "static const char* UndefinedUnionSelect = \"undefined union value select\";\n");
@@ -653,10 +653,14 @@ void FbleGenerateC(FILE* fout, FbleModule* module)
   fprintf(fout, "static const char* UndefinedFunctionValue = \"called undefined function\";\n");
   fprintf(fout, "static const char* VacuousValue = \"vacuous value\";\n");
 
-  fprintf(fout, "static void ReportAbort(const char* msg, int line, int col)\n");
+  fprintf(fout, "static void ReportAbort(FbleRuntime* runtime, const char* msg, int line, int col, FbleFunction* func)\n");
   fprintf(fout, "{\n");
-  fprintf(fout, "  fprintf(stderr, \"%s:%%d:%%d: error: %%s\\n\", line, col, msg);\n",
-      module->path->loc.source->str);
+  {
+    LabelId ids = 0;
+    LabelId id = StaticString(fout, &ids, module->path->loc.source->str);
+    fprintf(fout, "  FbleLoc loc = { .source = &" LABEL ", .line = line, .col = col };\n", id);
+    fprintf(fout, "  FbleReportRuntimeError(runtime, loc, func, msg);\n");
+  }
   fprintf(fout, "}\n");
 
   // Generate prototypes for all the run functions.

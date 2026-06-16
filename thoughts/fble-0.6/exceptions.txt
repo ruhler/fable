@@ -372,3 +372,6 @@ reasonable I can do there?
 Declare a static FbleString value for it. I know how do to do that. It
 shouldn't be hard.
 
+The aarch64 backend doesn't save FbleFunction. It saves the profile block id.
+Should I change FbleReportRuntimeError to take profile block id instead so we
+can more easily reuse it there?

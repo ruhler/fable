@@ -3,10 +3,7 @@ Fble 0.6 TODO
 Things to consider doing for the fble-0.6 release.
 
 * Move 'fble value' stuff to 'fble runtime'
- - move interpreter's ReportRuntimError to FbleReportRuntimeError in fble-value.h
  - Switch to using FbleReportRuntimeError in c and aarch64 backends
-
-* Print function names along with error location on stack trace?
 
 * Optimize size of generated FbleCode and resulting .c, .s artifacts?
 
