@@ -55,7 +55,7 @@ static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
  */
 static size_t Run(FbleRuntime* runtime, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n)
 {
-  FbleValueFullGc(runtime);
+  FbleFullGc(runtime);
   FblePushFrame(runtime);
   assert(use_n <= alloc_n);
 

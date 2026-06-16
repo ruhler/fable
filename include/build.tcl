@@ -102,7 +102,7 @@ namespace eval "include" {
       FbleEval FbleApply
       FbleDeclareRecursiveValues FbleDefineRecursiveValues
       FbleNewNativeValue FbleNativeValueData
-      FbleValueFullGc
+      FbleFullGc
     }
     fble-string.h {
       FbleStringMagic FbleString FbleStringV

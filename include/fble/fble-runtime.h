@@ -565,7 +565,7 @@ FbleValue* FbleNewNativeValue(FbleRuntime* runtime,
 void* FbleNativeValueData(FbleValue* value);
 
 /**
- * @func[FbleValueFullGc] Performs a full garbage collection.
+ * @func[FbleFullGc] Performs a full garbage collection.
  *  Frees any unreachable objects currently on the runtime.
  *
  *  This is an expensive operation intended only for test and debug purposes.
@@ -575,6 +575,6 @@ void* FbleNativeValueData(FbleValue* value);
  *  @sideeffects
  *   Frees any unreachable objects currently on the heap.
  */
-void FbleValueFullGc(FbleRuntime* runtime);
+void FbleFullGc(FbleRuntime* runtime);
 
 #endif // FBLE_RUNTIME_H_

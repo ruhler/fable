@@ -1932,7 +1932,7 @@ void* FbleNativeValueData(FbleValue* value)
 }
 
 // See documentation in fble-runtime.h
-void FbleValueFullGc(FbleRuntime* runtime_)
+void FbleFullGc(FbleRuntime* runtime_)
 {
   Runtime* runtime = (Runtime*)runtime_;
 

@@ -6,7 +6,6 @@ Things to consider doing for the fble-0.6 release.
  - move interpreter's ReportRuntimError to FbleReportRuntimeError in fble-value.h
  - Pass FbleProfile to FbleEval via FbleRuntime instead of as separate arg.
  - Switch to using FbleReportRuntimeError in c and aarch64 backends
- - Rename FbleValueFullGc to just FbleFullGc.
 
 * Optimize size of generated FbleCode and resulting .c, .s artifacts?
 
