@@ -75,7 +75,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
 
 static void GetFrameVar(FILE* fout, const char* rdst, FbleVar index);
 static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index);
-static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, FbleLoc loc);
+static void DoAbort(FILE* fout, size_t func_id, const char* lmsg, FbleLoc loc);
 
 static size_t StackBytesForCount(size_t count);
 
@@ -446,31 +446,20 @@ static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index)
  * @func[DoAbort] Emits code to return an error from a Run function.
  *  @arg[FILE*][fout] The output stream.
  *  @arg[size_t][func_id] A unique id for the function to use for labels.
- *  @arg[size_t][pc] The program counter of the abort location.
  *  @arg[const char*][lmsg] The label of the error message to use.
  *  @arg[FbleLoc][loc] The location to report with the error message.
  *
  *  @sideeffects
  *   Emits code to return the error.
  */
-static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, FbleLoc loc)
+static void DoAbort(FILE* fout, size_t func_id, const char* lmsg, FbleLoc loc)
 {
-  // Print error message.
-  GAdr(fout, "x0", "stderr");
-  fprintf(fout, "  ldr x0, [x0]\n");
-  Adr(fout, "x1", ".L.ErrorFormatString");
-
-  char label[SizeofSanitizedString(loc.source->str)];
-  SanitizeString(loc.source->str, label);
-  Adr(fout, "x2", ".L.loc.%s", label);
-
-  Mov(fout, "x3", loc.line);
-  Mov(fout, "x4", loc.col);
-  Adr(fout, "x5", "%s", lmsg);
-  fprintf(fout, "  bl fprintf\n");
-
-  // Return NULL.
-  fprintf(fout, "  mov x0, xzr\n");
+  fprintf(fout, "  mov x0, R_RUNTIME\n");
+  Mov(fout, "x1", loc.line);
+  Mov(fout, "x2", loc.col);
+  fprintf(fout, "  mov x3, R_PROFILE_BLOCK_ID\n");
+  Adr(fout, "x4", "%s", lmsg);
+  fprintf(fout, "  bl FbleRuntimeError\n");
   fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
 }
 
@@ -1143,18 +1132,18 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
     case FBLE_STRUCT_ACCESS_INSTR: {
       FbleStructAccessInstr* access_instr = (FbleStructAccessInstr*)instr;
       fprintf(fout, ".Lo.%04zx.%zi.u:\n", func_id, pc);
-      DoAbort(fout, func_id, pc, ".L.UndefinedStructValue", access_instr->loc);
+      DoAbort(fout, func_id, ".L.UndefinedStructValue", access_instr->loc);
       return;
     }
 
     case FBLE_UNION_ACCESS_INSTR: {
       FbleUnionAccessInstr* access_instr = (FbleUnionAccessInstr*)instr;
       fprintf(fout, ".Lo.%04zx.%zi.u:\n", func_id, pc);
-      DoAbort(fout, func_id, pc, ".L.UndefinedUnionValue", access_instr->loc);
+      DoAbort(fout, func_id, ".L.UndefinedUnionValue", access_instr->loc);
 
       fprintf(fout, ".Lo.%04zx.%zi.bt:\n", func_id, pc);
       SetFrameVar(fout, "xzr", access_instr->dest);
-      DoAbort(fout, func_id, pc, ".L.WrongUnionTag", access_instr->loc);
+      DoAbort(fout, func_id, ".L.WrongUnionTag", access_instr->loc);
       return;
     }
 
@@ -1162,7 +1151,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
 
       fprintf(fout, ".Lo.%04zx.%zi.u:\n", func_id, pc);
-      DoAbort(fout, func_id, pc, ".L.UndefinedUnionSelect", select_instr->loc);
+      DoAbort(fout, func_id, ".L.UndefinedUnionSelect", select_instr->loc);
       return;
     }
 
@@ -1172,17 +1161,17 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       fprintf(fout, ".Lo.%04zx.%zi.abort:\n", func_id, pc);
-      DoAbort(fout, func_id, pc, ".L.CalleeAborted", call_instr->loc);
+      DoAbort(fout, func_id, ".L.CalleeAborted", call_instr->loc);
       return;
     }
 
     case FBLE_TAIL_CALL_INSTR: {
       FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
       fprintf(fout, ".Lo.%04zx.%zi.u:\n", func_id, pc);
-      DoAbort(fout, func_id, pc, ".L.UndefinedFunctionValue", call_instr->loc);
+      DoAbort(fout, func_id, ".L.UndefinedFunctionValue", call_instr->loc);
 
       fprintf(fout, ".Lo.%04zx.%zi.abort:\n", func_id, pc);
-      DoAbort(fout, func_id, pc, ".L.CalleeAborted", call_instr->loc);
+      DoAbort(fout, func_id, ".L.CalleeAborted", call_instr->loc);
       return;
     }
 
@@ -1196,7 +1185,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
       for (size_t i = 0; i < defn_instr->locs.size; ++i) {
         fprintf(fout, "  sub x0, x0, 1\n"); 
         fprintf(fout, "  cbnz x0, .Lo.%04zx.%zi.%zi.v\n", func_id, pc, i);
-        DoAbort(fout, func_id, pc, ".L.VacuousValue", defn_instr->locs.xs[i]);
+        DoAbort(fout, func_id, ".L.VacuousValue", defn_instr->locs.xs[i]);
         fprintf(fout, ".Lo.%04zx.%zi.%zi.v:\n", func_id, pc, i);
       }
       return;
@@ -1346,10 +1335,8 @@ void FbleGenerateAArch64(FILE* fout, FbleModule* module)
 
   // Error messages.
   fprintf(fout, "  .section .data\n");
-  fprintf(fout, ".L.ErrorFormatString:\n");
-  fprintf(fout, "  .string \"%%s:%%d:%%d: error: %%s\"\n");
   fprintf(fout, ".L.CalleeAborted:\n");
-  fprintf(fout, "  .string \"callee aborted\\n\"\n");
+  fprintf(fout, "  .string \"\"\n");
   fprintf(fout, ".L.UndefinedStructValue:\n");
   fprintf(fout, "  .string \"undefined struct value access\\n\"\n");
   fprintf(fout, ".L.UndefinedUnionValue:\n");
