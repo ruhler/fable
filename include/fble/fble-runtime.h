@@ -563,15 +563,24 @@ FbleValue* FbleNewNativeValue(FbleRuntime* runtime,
 void* FbleNativeValueData(FbleValue* value);
 
 /**
- * @func[FbleReportRuntimeError] Reports a runtime error.
+ * @func[FbleRuntimeError] Report and return a runtime error.
  *  @arg[FbleRuntime*][runtime] The runtime context.
- *  @arg[FbleLoc][loc] Location of the error.
- *  @arg[FbleBlockId][func] Profile block id of the function where the error occured.
+ *  @arg[size_t][line]
+ *   The line number of the error location in the file where the function is
+ *   defined.
+ *  @arg[size_t][col]
+ *   The column number of the error location in the file where the function is
+ *   defined.
+ *  @arg[FbleBlockId][func]
+ *   Profile block id of the function where the error occured. This is used to
+ *   determine the file name of the error location.
  *  @arg[const char*][msg]
- *   Error message. Maybe be NULL to indicate a location in the stack.
+ *   Error message. Maybe be NULL or empty string to indicate a location in
+ *   the stack without additional information.
+ *  @returns[FbleValue*] NULL, indicating an error value.
  *  @sideeffects Outputs an error message.
  */
-void FbleReportRuntimeError(FbleRuntime* runtime, FbleLoc loc, FbleBlockId func, const char* msg);
+FbleValue* FbleRuntimeError(FbleRuntime* runtime, size_t line, size_t col, FbleBlockId func, const char* msg);
 
 /**
  * @func[FbleFullGc] Performs a full garbage collection.

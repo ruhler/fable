@@ -3,7 +3,7 @@ Fble 0.6 TODO
 Things to consider doing for the fble-0.6 release.
 
 * Move 'fble value' stuff to 'fble runtime'
- - Switch to using FbleReportRuntimeError in c and aarch64 backends
+ - Switch to using FbleRuntimeError in aarch64 backend
 
 * Optimize size of generated FbleCode and resulting .c, .s artifacts?
 

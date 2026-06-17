@@ -375,3 +375,17 @@ shouldn't be hard.
 The aarch64 backend doesn't save FbleFunction. It saves the profile block id.
 Should I change FbleReportRuntimeError to take profile block id instead so we
 can more easily reuse it there?
+
+Maybe I should factor out a common error function for use in aarch64 backend
+so I can use as little code as possible around it in the outline code
+functions.
+
+Idea to make things super easy in aarch64 backend. Change
+FbleReportRuntimeError as follows:
+* Accept empty string as well as NULL for no message case.
+* Get source file for error from profile block id. Take line and col instead
+  of loc.
+* return FbleValue* NULL always.
+
+I can write a helper wrapper function in the interpreter if I want. Otherwise
+this should be pretty easy to use in C and aarch64 backend I think.
