@@ -24,12 +24,11 @@ namespace eval "pkgs/md5" {
   install $::b/pkgs/md5/fble-md5 $::config::bindir/fble-md5
 
   # fble-md5 test
-  build $::b/pkgs/md5/fble-md5.in "" "echo hello > $::b/pkgs/md5/fble-md5.in"
   build $::b/pkgs/md5/fble-md5.out \
-    "$::b/pkgs/md5/fble-md5 $::b/pkgs/md5/fble-md5.in" \
-    "$::b/pkgs/md5/fble-md5 < $::b/pkgs/md5/fble-md5.in > $::b/pkgs/md5/fble-md5.out"
+    "$::b/pkgs/md5/fble-md5 $::s/pkgs/md5/fble-md5.in" \
+    "$::b/pkgs/md5/fble-md5 < $::s/pkgs/md5/fble-md5.in > $::b/pkgs/md5/fble-md5.out"
   test $::b/pkgs/md5/fble-md5.tr \
     "$::b/pkgs/md5/fble-md5.out" \
-    "grep b1946ac92492d2347c6235b4d2611184 $::b/pkgs/md5/fble-md5.out"
+    "grep 96a1a5fea24987d6a38f206939ac148c $::b/pkgs/md5/fble-md5.out"
 }
 
