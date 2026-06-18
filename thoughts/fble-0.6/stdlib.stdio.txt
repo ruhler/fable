@@ -5317,3 +5317,23 @@ This can replace HelloWorld, Cat, and Demo that I already have.
 
 The only trouble is I don't have a way to read an Int@ in the standard library
 yet. I need to add that.
+
+---
+
+* Add tests for /Core/Char/Stream/IStream%.GetLine.
+
+Which is now: /Std/Stream/String%.GetLine.
+
+Test coverage that I want:
+* Get the full first line, including newline, if there are multiple lines.
+* Get the full thing, including newline, if there is 1 line with newline.
+* Get the full thing, without newline, if there is 1 line with no newline.
+* Get the empty string if there is nothing left.
+
+Presumably I have existing code to make it easy to turn a String@ into an In@
+for test purposes?
+
+Anything else I want to test here while I'm at it? Options are:
+
+@(String, Format, Lines, Join, ToString, GetLine, GetText);
+

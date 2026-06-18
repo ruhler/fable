@@ -812,3 +812,67 @@ Let me drop this. If it is useful to add back later, it should reveal itself
 as such and we can consider adding it then. Next time, I should record which
 module I'm afraid is unused.
 
+---
+
+* Optimize size of generated FbleCode and resulting .c, .s artifacts?
+
+The question is, what am I optimizing for? We could certainly shrink things by
+using macros, smaller label names, etc. But that's not what I'm after. For .c
+files, I think it's the memory required by cc to compile it that is the
+bottleneck.
+
+Here's my vote: look at some of the bigger generated .c and .s files. See if
+anything obvious sticks out, or what the top things are that stand out. If
+there are no obvious ways to improve things, then don't worry about this.
+
+Presumably the most impactful improvements are the kinds of things that will
+happen when I optimize fble for performance: direct branches in inline code
+units, omitting error checks at runtime, etc.
+
+Here are the top few:
+
+ 662766 graphics/Graphics/Triangle/Tests.fble.s
+ 771608 pprof/Pprof/Server/Main.fble.s
+1076908 graphics/Graphics/Camera/SinCos.fble.s
+1373630 invaders/Invaders/Graphics.fble.s
+
+/Invaders/Graphics% is mostly a pile of list and literals. Same with SinCos.
+There's lots of literals in /Pprof/Server/Main% too.
+
+What I see looking through the .s code for /Invaders/Graphics%:
+
+Common blocks for struct access like this:
+
+  ubfx x1, x0, 13, #6
+  add x1, x1, 42
+  ubfx x2, x0, 19, #6
+  add x2, x2, 42
+  lsr x0, x0, x1
+  sub x1, x2, x1
+  bfi x0, x1, #1, #6
+  orr x0, x0, #1
+  mov x2, -1
+  lsl x2, x2, x1
+  bic x0, x0, x2, lsl #7
+
+Common blocks for function calls, such as:
+
+  sub SP, SP, 16
+  ldr x0, [R_LOCALS, #184]
+  str x0, [SP, #0]
+  mov x0, R_RUNTIME
+  mov x1, R_PROFILE
+  ldr x2, [R_LOCALS, #24]
+  mov x3, 1
+  mov x4, SP
+  bl FbleCall
+  str x0, [R_LOCALS, #192]
+  add SP, SP, #16
+  cbz x0, .Lo.0000.101.abort
+
+We have 65K lines in the .s file. There's a function with almost 3K
+fble instructions. That's averaging like 22 machine instructions per fble
+instruction. The best way to reduce the size is going to be to optimize the
+fble code or optimize the generated code.
+
+Let's not worry about this.

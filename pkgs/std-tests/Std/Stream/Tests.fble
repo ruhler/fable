@@ -26,7 +26,8 @@ Test@ Tests = TestSuite|Stream[
   }),
 
   /Std/Stream/Debug/Tests%.Tests,
-  /Std/Stream/Null/Tests%.Tests
+  /Std/Stream/Null/Tests%.Tests,
+  /Std/Stream/String/Tests%.Tests
 ];
 
 @(Tests);

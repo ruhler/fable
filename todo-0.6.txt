@@ -2,9 +2,11 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Optimize size of generated FbleCode and resulting .c, .s artifacts?
+* Move /Std/Stream/String/Tests%.In to std package somewhere?
 
-* Re-open stdin, stdout, stderr in binary in /Std/Io/File/Binary%.
+* Fix failing windows build
+ - issues with utf-8 command line args
+ - issues with setlocale
 
 * Why don't interpreted cli tests output when running them during build?
  - I have to go to the generated file to see the outputs?
@@ -48,6 +50,7 @@ Tutorials:
 * Update tutorials for string literals: Foo(Str|...) now instead of Foo|...;
 * Update tutorials for character library.
 * Update tutorials for use of Concat instead of Strs.
+* Rename /Core/Unit% to /Std/Unit% in tutorials, if there are any references.
 
 Documentation:
 * Double check all the old documentation referring to Output@, which is now
@@ -71,7 +74,6 @@ Other:
 * Update all the sample apps for latest features, styles, idioms.
 
 * Test unicode for character based native input and output streams.
-* Add tests for /Core/Char/Stream/IStream%.GetLine.
 
 * Bug in type inference?
  - See /SpecTests/6.4-TypeInference/Regression/Getline%
@@ -84,12 +86,9 @@ Other:
 * Be able to typecheck body of a let where the variables aren't all well
   typed, to get more error messages at once.
 
-
 * Clarify in spec whether poly apply to an undefined value results in an error
   or not.
   And add spec tests for that case.
-
-* Rename /Core/Unit% to /Std/Unit% in tutorials, if there are any references.
 
 * Revamp the standard library.
  - Test and document (and tutorialize?) all functions.

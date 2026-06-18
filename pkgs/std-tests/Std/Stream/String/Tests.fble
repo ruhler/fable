@@ -1,0 +1,99 @@
+
+Char@ .= /Std/Char%;
+OnAscii, OnAsciiE, Str, StrE .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Lazy .= /Std/Lazy%;
+Just, Nothing .= /Std/Maybe%;
+In@ .= /Std/Stream/Io%;
+GetLine, GetText, Join, Lines, ToString .= /Std/Stream/String%;
+Format = OnAscii(/Std/Stream/String%.Format);
+String = OnAscii(/Std/Stream/String%.String);
+AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
+AssertStreamE = OnAsciiE(/Std/Stream/String/Assert%.AssertStream);
+String@ .= /Std/String%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+In = {
+  M@, m(.Monad), s(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+  In@<Char@, M@> in = {
+    String@ str := m.do(s.get);
+    str.?(empty: m.return(Nothing<Char@>));
+    Unit@ _ := m.do(s.put(str.items.tail));
+    m.return(Just(str.items.head));
+  };
+  @(Eval, m, in);
+};
+
+Test@ Tests = TestSuite|String[
+  Test|String({
+    Unit@ _ := Lazy;
+    AssertStream|'hello'(String|hello);
+  }),
+
+  Test|Lines({
+    Unit@ _ := Lazy;
+    AssertStreamE|'hello\nthere\nbye\n'(
+      Lines[String|hello, String|there, String|bye]
+    );
+  }),
+
+  Test|Join({
+    Unit@ _ := Lazy;
+    AssertStream|'ab,;cde,;f'(
+      Join(Str|',;')[String|ab, String|cde, String|f]
+    );
+  }),
+
+  Test|Format({
+    Unit@ _ := Lazy;
+    AssertStream|'a: hello, b: bye'(
+      Format|'a: %s, b: %s'[String|hello, String|bye]
+    );
+  }),
+
+  Test|ToString({
+    Unit@ _ := Lazy;
+    String@ wnt = Str|'hello there';
+    String@ got = ToString(String|'hello there');
+    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+  }),
+
+  TestSuite|GetLine[
+    Test|Multiline({
+      Unit@ _ := Lazy;
+      Eval, m, in .= In;
+      String@ got = Eval(GetLine(m, in), StrE|'hello\nthere\nnow');
+      String@ wnt = StrE|'hello\n';
+      AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+    }),
+
+    Test|Singleline({
+      Unit@ _ := Lazy;
+      Eval, m, in .= In;
+      String@ got = Eval(GetLine(m, in), StrE|'hello\n');
+      String@ wnt = StrE|'hello\n';
+      AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+    }),
+
+    Test|NoNewline({
+      Unit@ _ := Lazy;
+      Eval, m, in .= In;
+      String@ got = Eval(GetLine(m, in), StrE|'hello');
+      String@ wnt = StrE|'hello';
+      AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+    })
+  ],
+
+  Test|GetText({
+    Unit@ _ := Lazy;
+    Eval, m, in .= In;
+    String@ got = Eval(GetText(m, in), StrE|'hello\nthere\nnow');
+    String@ wnt = StrE|'hello\nthere\nnow';
+    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+  })
+];
+
+@(Tests);

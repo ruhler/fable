@@ -155,4 +155,15 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 #  @returns[String@] The string value.
 (List@<Ascii@>) { String@; } StrE = OnAscii(/Std/String/Escape%.Escape);
 
-@(Ascii@, Ascii, ToChar, Char, Str, StrE, OnAscii);
+# @func[OnAsciiE] Convert a string function to an escaped ascii string function.
+#  @arg[@][A@] The return type of the function.
+#  @arg[(String@) { A@; }][func] The string function to convert.
+#  @returns[(List@<Ascii@>) { A@; }]
+#   The converted function that takes an ascii string argument with support
+#   for escape sequences instead.
+<@ A@>((String@) { A@; }, List@<Ascii@>) { A@; }
+OnAsciiE = <@ A@>((String@) { A@; } f, List@<Ascii@> a) {
+  f(StrE(a));
+};
+
+@(Ascii@, Ascii, ToChar, Char, Str, StrE, OnAscii, OnAsciiE);
