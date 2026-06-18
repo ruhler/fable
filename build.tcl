@@ -234,12 +234,13 @@ proc test { tr deps cmd } {
 #   cmd - the testsuite command to run, which should output @[...] test info,
 #         exit 0 to indicate the test passed and non-zero to indicate the test
 #         failed.
+#   args - optional additional "key = argument" pairs to use for ninja rule.
 #
 # Adds the .tr file to global list of tests.
-proc testsuite { tr deps cmd } {
+proc testsuite { tr deps cmd args } {
   lappend ::tests $tr
   build $tr "$::s/test/log $deps" \
-    "$::s/test/log $tr $cmd"
+    "$::s/test/log $tr $cmd" {*}$args
 }
 
 # Read the version string from fble-version.h

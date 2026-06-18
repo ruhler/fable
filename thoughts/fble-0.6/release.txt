@@ -876,3 +876,31 @@ instruction. The best way to reduce the size is going to be to optimize the
 fble code or optimize the generated code.
 
 Let's not worry about this.
+
+---
+
+* Why don't interpreted cli tests output when running them during build?
+ - I have to go to the generated file to see the outputs?
+ - Because we generate the output first, then interpret as a test output.
+   It's slightly awkward to get the dependencies passed directly to the 
+   testsuite helper?
+
+Here's what we have:
+
+  proc ::run_cli { target cmdargs args } {
+    build $target "$::b/pkgs/std/fble-cli $args" \
+      "$::b/pkgs/std/fble-cli --deps-file $target.d --deps-target $target $cmdargs > $target" \
+      "depfile = $target.d"
+  }
+
+  proc ::run_cli_tests { target cmdargs deps } {
+    run_cli $target.out "$cmdargs -- --prefix Interpreted." $deps
+    testsuite $target $target.out "cat $target.out"
+  }
+
+What makes this annoying is the depfile thing. Does testsuite support that? It
+doesn't. So how about I use fble-deps directly to create the target.d file,
+have it depend on itself or something, and then depend on that for the call to
+testsuite? Or add support for varargs to testsuite to pass the depfile thing?
+
+Easy.

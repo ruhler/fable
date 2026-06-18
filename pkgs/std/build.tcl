@@ -60,8 +60,9 @@ namespace eval "pkgs/std" {
 
   # Runs an fble-cli tests suite interpreted.
   proc ::run_cli_tests { target cmdargs deps } {
-    run_cli $target.out "$cmdargs -- --prefix Interpreted." $deps
-    testsuite $target $target.out "cat $target.out"
+    testsuite $target "$::b/pkgs/std/fble-cli $deps" \
+      "$::b/pkgs/std/fble-cli --deps-file $target.d --deps-target $target $cmdargs -- --prefix Interpreted." \
+      "depfile = $target.d"
   }
 
   # /Std/Io/Cli/Demo% interpreted test.

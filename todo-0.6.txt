@@ -8,12 +8,6 @@ Things to consider doing for the fble-0.6 release.
  - issues with utf-8 command line args
  - issues with setlocale
 
-* Why don't interpreted cli tests output when running them during build?
- - I have to go to the generated file to see the outputs?
- - Because we generate the output first, then interpret as a test output.
-   It's slightly awkward to get the dependencies passed directly to the 
-   testsuite helper?
-
 Standard Library:
 * Break dependency of /Std/Map% on /Std/List%?
   By moving the Entries function somewhere else?
