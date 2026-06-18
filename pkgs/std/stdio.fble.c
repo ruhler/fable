@@ -8,6 +8,11 @@
 #include <stdio.h>      // for FILE, fprintf, fflush, fgetc
 #include <wchar.h>      // for wint_t, fgetwc
 
+#ifdef _WIN32
+#include <fcntl.h>      // for _O_BINARY, _O_TEXT
+#include <io.h>         // for _setmode
+#endif // _WIN32
+
 #include <fble/fble-alloc.h>    // for FbleFree
 #include <fble/fble-runtime.h>  // for FbleValue, etc.
 
@@ -30,7 +35,7 @@ static void CloseFileOnFree(void* file)
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Unit@) { File@; }
+ *   (Mode@, Unit@) { File@; }
  */  
 static FbleValue* GetStdin(
     FbleRuntime* runtime, FbleProfileThread* profile,
@@ -39,6 +44,11 @@ static FbleValue* GetStdin(
   (void)profile;
   (void)args;
 
+#ifdef __WIN32
+  int mode = FbleUnionValueTag(args[0], 1) == 0 ? _O_BINARY : _O_TEXT;
+  _setmode(_fileno(stdin), mode);
+#endif// __WIN32
+
   return FbleNewNativeValue(runtime, stdin, NULL);
 }
 
@@ -46,7 +56,7 @@ static FbleValue* GetStdin(
 FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdin = {
   .path = "/Std/Io/File/Internal%",
   .name = "GetStdin",
-  .num_args = 1,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &GetStdin,
 };
@@ -67,6 +77,11 @@ static FbleValue* GetStdout(
   (void)profile;
   (void)args;
 
+#ifdef __WIN32
+  int mode = FbleUnionValueTag(args[0], 1) == 0 ? _O_BINARY : _O_TEXT;
+  _setmode(_fileno(stdout), mode);
+#endif// __WIN32
+
   return FbleNewNativeValue(runtime, stdout, NULL);
 }
 
@@ -74,7 +89,7 @@ static FbleValue* GetStdout(
 FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdout = {
   .path = "/Std/Io/File/Internal%",
   .name = "GetStdout",
-  .num_args = 1,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &GetStdout,
 };
@@ -95,6 +110,11 @@ static FbleValue* GetStderr(
   (void)profile;
   (void)args;
 
+#ifdef __WIN32
+  int mode = FbleUnionValueTag(args[0], 1) == 0 ? _O_BINARY : _O_TEXT;
+  _setmode(_fileno(stderr), mode);
+#endif// __WIN32
+
   return FbleNewNativeValue(runtime, stderr, NULL);
 }
 
@@ -102,7 +122,7 @@ static FbleValue* GetStderr(
 FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStderr = {
   .path = "/Std/Io/File/Internal%",
   .name = "GetStderr",
-  .num_args = 1,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &GetStderr,
 };

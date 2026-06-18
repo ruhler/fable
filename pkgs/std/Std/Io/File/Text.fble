@@ -11,7 +11,7 @@ In@, Out@ .= /Std/Stream/Io%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 
-File@, GetStdin, GetStdout, GetStderr, Open, Flush,
+File@, Text, GetStdin, GetStdout, GetStderr, Open, Flush,
 GetChar, PutChar .= /Std/Io/File/Internal%;
 
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@<Char@>) { M@<Unit@>; }
@@ -42,7 +42,7 @@ Out = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file) {
 #  @returns[M@<In@<Char@, M@>>] The standard input stream.
 <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<In@<Char@, M@>>; }
 Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
-  File@ stdin := m.do(io.run(GetStdin));
+  File@ stdin := m.do(io.run(GetStdin(Text)));
   m.return(io.run(GetChar(stdin)));
 };
 
@@ -53,7 +53,7 @@ Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
 #  @returns[M@<Out@<Char@, M@>>] The standard output stream.
 <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Char@, M@>>; }
 Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
-  File@ stdout := m.do(io.run(GetStdout));
+  File@ stdout := m.do(io.run(GetStdout(Text)));
   m.return(Out(m, io, stdout));
 };
 
@@ -64,7 +64,7 @@ Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
 #  @returns[M@<Out@<Char@, M@>>] The standard error stream.
 <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Char@, M@>>; }
 Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
-  File@ stderr := m.do(io.run(GetStderr));
+  File@ stderr := m.do(io.run(GetStderr(Text)));
   m.return(Out(m, io, stderr));
 };
 

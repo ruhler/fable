@@ -11,7 +11,7 @@ In@, Out@ .= /Std/Stream/Io%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 
-File@, GetStdin, GetStdout, GetStderr, Open, Flush,
+File@, Binary, GetStdin, GetStdout, GetStderr, Open, Flush,
 GetByte, PutByte .= /Std/Io/File/Internal%;
 
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@<Int@>) { M@<Unit@>; }
@@ -33,8 +33,7 @@ Out = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file) {
 #  @returns[M@<In@<Int@, M@>>] The standard input stream.
 <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<In@<Int@, M@>>; }
 Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
-  # TODO: Re-open stdin in binary mode?
-  File@ stdin := m.do(io.run(GetStdin));
+  File@ stdin := m.do(io.run(GetStdin(Binary)));
   m.return(io.run(GetByte(stdin)));
 };
 
@@ -45,8 +44,7 @@ Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
 #  @returns[M@<Out@<Int@, M@>>] The standard output stream.
 <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Int@, M@>>; }
 Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
-  # TODO: Reopen Stdout in binary?
-  File@ stdout := m.do(io.run(GetStdout));
+  File@ stdout := m.do(io.run(GetStdout(Binary)));
   m.return(Out(m, io, stdout));
 };
 
@@ -57,8 +55,7 @@ Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
 #  @returns[M@<Out@<Int@, M@>>] The standard error stream.
 <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Int@, M@>>; }
 Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
-  # TODO: Reopen Stderr in binary?
-  File@ stderr := m.do(io.run(GetStderr));
+  File@ stderr := m.do(io.run(GetStderr(Binary)));
   m.return(Out(m, io, stderr));
 };
 
