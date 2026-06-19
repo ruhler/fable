@@ -5337,3 +5337,19 @@ Anything else I want to test here while I'm at it? Options are:
 
 @(String, Format, Lines, Join, ToString, GetLine, GetText);
 
+---
+
+* Move /Std/Stream/String/Tests%.In to std package somewhere?
+
+Specifically, the implementation of in for a State@<Char@>. Because that's
+really all it is. And I think that's more useful than assuming what the State@
+is.
+
+Where else do I have this kind of thing? Somewhere, right?
+
+Aha. That's funny. I already have that in the library:
+
+  /Std/Stream/State%.In
+
+Takes a monad, state of a list, and returns In@.
+
