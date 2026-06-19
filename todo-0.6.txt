@@ -2,13 +2,11 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Bug in type inference?
- - See /SpecTests/6.4-TypeInference/Regression/Getline%
- - /Std/Stream% is probably the relevant module now.
-
 * Test unicode for character based native input and output streams.
 
 * Move /Std/Stream/String/Tests%.In to std package somewhere?
+
+* Test for code coverage, given recent changes.
 
 * Fix failing windows build
  - issues with utf-8 command line args
@@ -114,5 +112,3 @@ Other:
  - Compiled gives link time error not an any particular line number.
  - We would need some extra spec infra support to describe this.
  - Add spec test for Foreign value not found in interpreted case.
-
-* Test for code coverage, given recent changes.

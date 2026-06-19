@@ -242,9 +242,14 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizin
         return result;
       }
 
-      // Don't bother simplifying at all if we can't do a substituion.
+      // We can't do a substitution, but we still want to normalize the poly
+      // and arg as much as we can to facilitate eta reduction.
+      FbleType* arg = Normal(heap, pat->arg, &nn);
+      FbleType* normal = FbleNewPolyApplyType(heap, type->loc, &poly->_base, arg);
+
       FbleReleaseType(heap, &poly->_base);
-      return FbleRetainType(heap, type);
+      FbleReleaseType(heap, arg);
+      return normal;
     }
 
     case FBLE_PACKAGE_TYPE: return FbleRetainType(heap, type);

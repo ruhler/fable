@@ -1,0 +1,348 @@
+
+* Bug in type inference?
+ - See /SpecTests/6.4-TypeInference/Regression/Getline%
+ - /Std/Stream% is probably the relevant module now.
+
+  Unit@ = *();
+  Get@ = <<@>@ M@, @ A@> { M@<A@>; };
+  IStream@ = <<@>@ M@> { Get@<M@, Unit@>; };
+
+  <<@>@ M@>(IStream@<M@>) { M@<Unit@>; }
+  GetLine = <<@>@ M@>(IStream@<M@> in) {
+    GetLine(in);
+  };
+
+  error: expected type IStream@<Get@<M@>>, but found IStream@<M@>
+  Inferred types:
+    M@: Get@<M@>
+
+I'm given the type of GetLine:
+  <<@>@ M@>(IStream@<M@>) { M@<Unit@>; }
+
+I'm doing application with argument type:
+  IStream@<M@>, using an abstract type for M@.
+
+IStream@<M@> is exactly...
+
+Okay, so I need to use different names of variables to start to know which M
+is being referred to.
+
+  Get@ = <<@>@ G@, @ A@> { G@<A@>; };
+  IStream@ = <<@>@ I@> { Get@<I@, Unit@>; };
+
+  <<@>@ M@>(IStream@<M@>) { M@<Unit@>; }
+  GetLine = <<@>@ N@>(IStream@<N@> in) {
+    # Type inference should be able to figure out the types for this recursive
+    # call.
+    GetLine(in);
+  };
+
+  error: expected type IStream@<Get@<N@>>, but found IStream@<N@>
+  Inferred types:
+    M@: Get@<N@>
+
+The concrete argument type is:
+  IStream@<N@> = Get@<N@, Unit@> = Get@<N@><Unit@> = N@<Unit@>.
+
+The expected type is:
+  IStream@<M@> = Get@<M@, Unit@> = Get@<M@><Unit@> = M@<Unit@>
+
+It should be able to infer M@ as N@, not as Get@<N@>.
+
+How did it come up with M@ = Get@<N@>?
+
+Well, if M@ = N@, then Get@<N@> = <@ A@> { N@<A@>; }???
+
+Let's step through the code for it and see how it came up with what it came up
+with.
+
+Step 1: type infer for
+  Stream@<M@> = IStream@<N@>
+  Get@<M@, Unit@> = Get@<N@, Unit@>
+  
+We say these are equal if the poly equals and the args equals, so:
+  Get@<M@> = Get@<N@> && Unit@ = Unit@
+
+  Get@<M@> = Get@<N@>
+  M@ = Get@<N@>
+  Type variable inferred!
+
+  Unit@ = Unit@
+
+So, we have successfully verified the type of M@ is Get@<N@>.
+
+Note that we did this by not fully normalizing Get@<N@> yet. But we know that
+Get@<N@> would normalize to N@, just like Get@<M@> normalized to M@.
+
+And to double check:
+
+  Get@<N@> = <@ A@> { N@<A@>; } = N@;
+
+So at this point, everything seems like it should be okay. What happens next?
+
+We specialize the type: IStream@<M@>
+
+Turns into IStream@<Get@<N@>>;
+
+Now we check if the types are equal using the specialized type.
+
+  IStream@<Get@<N@>> = IStream@<N@>
+  Get@<Get@<N@>, Unit@> = Get@<N@, Unit@>
+  Get@<Get@<N@>> = Get@<N@>
+  Get@<N@> = N@
+
+Now this is weird. Why does Get@<Get@<N@>> normalize to Get@<N@> rather than
+N@? It's only doing one layer?
+
+Because Get@<N@> is poly apply, N@ is var type, so they don't match.
+
+Looks to me like a bug in FbleNormalType. Something about FbleNormalType is
+successfully going from Get@<X@> to X@, but not from Get@<Get@<X@>> to X@.
+
+Here's the process for Get@<M@> normalization:
+
+  Get@<M@>
+  Get@
+  <<@>@ G@, @ A@> { G@<A@>; }
+  // eta-reduce (\x -> f x) ==> f
+  <@ A@> { G@<A@>; }
+  // eta-reduce (\x -> f x) ==> f
+  G@<A@>
+
+  Then we turn <@ A@> { G@<A@> } into just G@.
+
+  But then we see G@, and say that's not a poly, so let's just return the
+  whole <<@>@ G@, @ A@> { G@<A@>; }
+
+So that seems like a problem, right? We have a poly, we can simplify it, we
+should return the simplified version, not the generic version to start?
+
+I wonder how much stuff will break if I try this. But let's try it anyway,
+because it seems like an easy fix if it works.
+
+Oh. It's not quite so simple. The eta reduce is when the poly is:
+  \x -> f x
+
+And what we are normalizing is the poly body: f x
+
+So, \x -> ...
+    \x -> f x
+    we can go to f
+
+But if not... we don't want to normalizing inside the body prematurely? Why
+not?
+
+Stepping back. I want to normalize a poly. Best case is if we can eta reduce
+\x -> ... normalizes to \x -> f x, becomes f, without the poly.
+
+Remember what I had in my example though:
+
+  <<@>@ G@, @ A@> { G@<A@>; }
+  \G -> (\A -> G A)
+
+How would I normalize that? You can't, right? There's no reduction we can do
+here? That's not quite true. We could go to
+  \G -> G
+
+That's better, right? So why not normalize the body of the poly, and even if
+we can't eta reduce, return the normalized body? What could go wrong?
+
+I'm sure I'll find out. Let's give it a try and see what happens.
+
+Well, FbleNormal in general is supposed to be called for every individual
+component as you go. It's not supposed to completely inline and normalize
+everything. It's a lazy thing.
+
+Stepping back, the question is why does Get@<Get@<X@>> normalize to
+Get@<X@> instead of X@?
+
+Maybe before making changes I should understand that case specifically.
+
+Let's go back to the beginning.
+
+Normalize Get@<M@>:
+ Poly Apply
+  Normalize Get@
+   <<@>@ G@, @ A@> { G@<A@>; }
+   Normalize body (for eta reduce check): <@ A@> { G@<A@>; }
+   Normalize body (for eta reduce check): G@<A@>
+   Poly is G@, we can't apply, so we return unsimplified: G@<A@>
+   Eta reduce check matches, instead of <@ A@> { G@<A@> }, we can do G@.
+   <<@>@ G@> { G@; }. Nothing to eta reduce, so give up.
+   Returns <<@>@ G@, @ A@> { G@<A@>; }
+
+ Now we have a poly we can apply. Substitute M@ in place of G@.
+  Subst G@ = M@
+   in <@ A@> { G@<A@>; }
+   in G@<A@>
+   in G@ ==> M@
+   in A@
+   ==> M@<A@>
+   ==> <@ A@> { M@<A@>; }
+
+ Now we normalize the result:
+  <@ A@> { M@<A@>; }
+  eta reduces to M@
+
+And we are done normalizing Get@<M@> to M@.
+  
+Next step: Normalize Get@<Get@<N@>>, which surely ought to normalize to N@.
+ Poly Apply Get@ <Get@<N@>>
+  Get@ ==> <<@>@ G@, @ A@> { G@<A@>; }
+  Let G@ = Get@<N@>
+  in <@ A@> { G@<A@>; }
+  in G@<A@>
+  in G@ ==> Get@<N@>
+  ==> Get@<N@, A@>
+  ==> <@ A@> { Get@<N@, A@>; }
+ We've just finished substitution to go from
+  Get@<Get@<N@>> ==> <@ A@> { Get@<N@, A@>; }
+ Next step: normalize the result. Note that this is a poly we are normalizing.
+
+Normalize: <@ A@> { Get@<N@, A@>; }
+ Normalize the body: Get@<N@, A@>
+  Normalize the poly: Get@<N@>
+   Normalize the poly: Get@ ==> <<@>@ G@, @ A@> { G@<A@>; }
+   Substitute G@ = N@
+   in <@ A@> { G@<A@>; }
+   ==> <@ A@> { N@<A@>; }
+   Normalize the result: <@ A@> { N@<A@>; } ==> N@
+  We're left with: N@<A@>.
+  But! I said don't both simplifying at all, because we can't do a substitution.
+
+  So, instead of returning N@<A@>, I return the original Get@<N@, A@>.
+So, instead of normalizing :
+  <@ A@> { Get@<N@, A@>; } ==> N@
+I normalize
+  <@ A@> { Get@<N@, A@>; } ==> Get@<N@>
+
+And then I claim I'm done.
+
+Where did we go wrong? A few questions:
+* What is the right normal type here? N@ or Get@<N@>?
+  If Get@<N@> normalizes to N@, as we saw before, then N@ has to be the right
+  answer.
+* Should we have left the simplified N@<A@> instead of giving up since we
+  couldn't do a substitution?
+* Or should we have normalized the body of the poly after the eta
+  substitution?
+
+Like, basically, we normalize a poly, which gives no promises about the body
+being normal. But for eta substitution, we return the (possibly not
+normalized) body as is rather than try to normalize it. Surely we ought to try
+to normalize it in that case. I think that's the answer.
+
+A poly is in normal form even if it's body isn't. So that's fine. But as soon
+as we see we just want the body, we need to normalize that to say it's in
+normal form.
+
+No, that's not quite right. Because I'm trying to normalize a poly apply?
+
+  \x -> ...
+
+Normalize the body:
+   normal(...)
+
+It' gives a poly apply:
+
+   f x
+
+What does that tell us about f? Is f normalized? Presumably not. No, we say
+we don't both to normalize f.
+
+Okay, I just need to be more clear on what is normal form, internally, so I
+can know if I need to normalize or not. I suspect either option is fine?
+Probably best is to say: poly apply only goes to normal form if it can,
+otherwise it doesn't bother?
+
+But does that exclude opportunities for optimization? I think it does.
+Consider:
+
+  \x -> f Get(x)
+
+Where Get(x) would simplify to x.
+
+So that's a problem. If we need to rely on eta substitution, we really want to
+simplify poly apply as much as possible. Then we can assume for f x, f is in
+normal form.
+
+Okay? So, new proposal: normal form for poly apply is apply of normal forms.
+We know we need to do the arg in normal form to enable eta substitution:
+  \x -> f Get(x)
+
+We either need to do the poly in normal form or normalize it after eta
+reduction.
+
+I probably need to add a test for the \x -> f Get(x) case.
+
+So, what's the decision?
+A. N(A<B>) ==> N(A)<N(B)>
+B. N(A<B>) ==> A<N(B)>, and then eta reduce normalizes A in return?
+
+Can we think about crazier cases? As long as A is not poly, there is no
+substitution we can do. It's completely separate from B. There's like a wall
+between them.
+
+I like (A) personally. Why not normalize both?
+
+What happens during normal substitution? We substitute in whatever complex
+argument, and then normalize the result. We normalize the poly first, but not
+the arg. That makes me feel like we should pick an option:
+
+C. N(A<B>) ==> N(A)<B>
+
+No need to simplify or normalize B prematurely. But we do want to normalize
+the poly.
+
+I claim this would solve my current case. But it wouldn't solve the case of
+  \x -> f Id(x)
+ 
+But that could be fixed another way: normalize the arg to the poly as part of
+checking for eta substitution.
+
+That sounds better to me.
+
+I use normalization for type equality and inference. Any types that could be
+equal ought to normalize the same way.
+
+That's why it's important that \x -> f x normalizes to x.
+
+I wonder if there's an easier test case I can do not involving type inference,
+to cover these cases. Define Id@ type. Then verify equality of
+  f and \x -> f x
+  f and \x -> f Id<x>
+  f and \x -> Id<f> x
+
+Let's try that, just to see how easy it is. If so, I can simplify this weird
+spec test I have, or leave it in?
+
+The tests I have today:
+  M = \A -> M<A@>
+  M = \A -> Id<M<A>>
+
+Let's add a couple more. I like it better as type checking test rather than a
+type inference test.
+
+Yup. Tests added. Both fail. That's good to have. Now I should be able to fix
+things.
+
+Too many choices here. What should I pick? Maybe I can localize this around
+eta substitution specifically, because that seems to be the case that matters?
+
+Except, we may as well save the work we already did for normalizing the poly
+of a poly apply.
+
+My vote (somewhat arbitrarily):
+1. N(A<B>) ==> N(A)<B>
+2. No need to normalize ...
+
+Actually, if we do :
+ N(A<B>) ==> N(A)<N(B)>
+
+Then no need to special case things for eta substitution. The poly is already
+normal form, no need to normalize again before returning. The arg is already
+in normal form, no need to normalize again before checking. Deal?
+
+Let's try it anyway, see what goes wrong.
+
+Nothing went wrong. Easy. Fixed.

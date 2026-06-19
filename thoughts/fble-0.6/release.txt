@@ -940,5 +940,3 @@ same question, but it is a question. Current spec says:
 
 That makes it pretty clear. I can add a test to this case to be extra
 explicit.
-
-

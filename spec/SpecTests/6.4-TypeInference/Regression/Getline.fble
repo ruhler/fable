@@ -1,21 +1,17 @@
-# @@fble-test@@ xfail
-# @@fble-test@@ compile-error 19:11
 # @@fble-test@@ no-error
 # 
 # Regression test for an implementation of GetLine, where an extra layer of
-# indirection in type defs caused type inference to fail to infer the correct
-# type for a recursive call to GetLine.
-#
-# TODO: Figure out if type inference should be able to handle this case.
+# indirection in type defs confused the type checker into thinking the types
+# weren't compatible when they were.
 
 Unit@ = *();
-Get@ = <<@>@ M@, @ A@> { M@<A@>; };
-IStream@ = <<@>@ M@> { Get@<M@, Unit@>; };
+Get@ = <<@>@ G@, @ A@> { G@<A@>; };
+IStream@ = <<@>@ I@> { Get@<I@, Unit@>; };
 
 <<@>@ M@>(IStream@<M@>) { M@<Unit@>; }
-GetLine = <<@>@ M@>(IStream@<M@> in) {
-  # Type inference should be able to figure out the types for this recursive
-  # call.
+GetLine = <<@>@ N@>(IStream@<N@> in) {
+  # Type inference should be able to figure out and validate the types for
+  # this recursive call.
   GetLine(in);
 };
 

@@ -529,6 +529,10 @@ bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type);
  *  Normal form types are struct, union, and func types, but not var types,
  *  for example.
  *
+ *  To facilitate eta reduction, normal form of a non-reducible poly
+ *  application is a poly application of normal forms:
+ *    N[A<B>] = N[A]<N[B]>
+ *
  *  @arg[FbleTypeHeap*][heap] Heap to use for allocations.
  *  @arg[FbleType*][type] The type to reduce.
  *

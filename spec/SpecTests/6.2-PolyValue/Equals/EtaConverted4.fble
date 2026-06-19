@@ -1,0 +1,9 @@
+# @@fble-test@@ no-error
+Id@ = <@ B@> { B@; };
+<<@>@ M@> (M@ m) {
+  # M@ and N@ are the same type, even though one is a slightly complicated
+  # eta-converted version of the other.
+  N@ = <@ A@> { M@<Id@<A@>>; };
+  N@ n = m;
+  n;
+};
