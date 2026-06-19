@@ -1,0 +1,14 @@
+# @@fble-test@@ runtime-error 11:8
+Unit@ = *();
+Unit = Unit@();
+
+Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+
+<@ T@> { Unit@; } MkUnit = <@ T@> {
+  # The body of a poly is evaluated right away, so we should encounter an
+  # error here even though we never apply a type to the poly.
+  True.false;
+};
+
+MkUnit;

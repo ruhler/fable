@@ -904,3 +904,41 @@ have it depend on itself or something, and then depend on that for the call to
 testsuite? Or add support for varargs to testsuite to pass the depfile thing?
 
 Easy.
+
+---
+
+* Clarify in spec whether poly apply to an undefined value results in an error
+  or not.
+  And add spec tests for that case.
+
+Let's start with the spec test, see what happens. Then decide what to do.
+
+Um... is this even possible to write? Undefined means using a value in the
+binding of a recursive let. I suppose something like:
+
+  <@ T@> { Unit@; } u = {
+    ...
+
+But I can't do poly apply at all of a value in a recursive let, because it has
+kind @ in its own binding.
+
+We don't have an undefined expression anymore, so no need to worry about that.
+
+I think we're fine. I don't think this is possible to write, so no need to say
+in the spec what the behavior should be.
+    
+I suppose it's fair to ask when we get an error here:
+
+  <@ T@> { Unit@; } U = <@ T@> { /Std/Undef%.Undef.undef<Unit@>; };
+  Unit@ u = U<Int@>;
+
+Does the error happen when we define U or when we apply to U? It's not the
+same question, but it is a question. Current spec says:
+
+   The body of a poly is evaluated as part of evaluation of the poly value.
+   The runtime is the runtime of the body.
+
+That makes it pretty clear. I can add a test to this case to be extra
+explicit.
+
+

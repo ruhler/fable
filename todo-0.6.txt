@@ -2,6 +2,12 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Bug in type inference?
+ - See /SpecTests/6.4-TypeInference/Regression/Getline%
+ - /Std/Stream% is probably the relevant module now.
+
+* Test unicode for character based native input and output streams.
+
 * Move /Std/Stream/String/Tests%.In to std package somewhere?
 
 * Fix failing windows build
@@ -67,22 +73,12 @@ Other:
 
 * Update all the sample apps for latest features, styles, idioms.
 
-* Test unicode for character based native input and output streams.
-
-* Bug in type inference?
- - See /SpecTests/6.4-TypeInference/Regression/Getline%
- - /Std/Stream% is probably the relevant module now.
-
 * Figure out why we see the same errors reported many times when we build.
  - And fix it.
 * Add -t option to compiler to pass expected type of main
  - Use it in fble-cli and fble-app for better type checking.
 * Be able to typecheck body of a let where the variables aren't all well
   typed, to get more error messages at once.
-
-* Clarify in spec whether poly apply to an undefined value results in an error
-  or not.
-  And add spec tests for that case.
 
 * Revamp the standard library.
  - Test and document (and tutorialize?) all functions.
