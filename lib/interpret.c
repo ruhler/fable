@@ -90,26 +90,8 @@ static FbleValue* Interpret(
   while (true) {
     FbleInstr* instr = instrs[pc];
 
-    if (profile) {
-      for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
-        switch (op->tag) {
-          case FBLE_PROFILE_ENTER_OP:
-            FbleProfileEnterBlock(profile, profile_block_id + op->arg);
-            break;
-
-          case FBLE_PROFILE_REPLACE_OP:
-            FbleProfileReplaceBlock(profile, profile_block_id + op->arg);
-            break;
-
-          case FBLE_PROFILE_EXIT_OP:
-            FbleProfileExitBlock(profile);
-            break;
-
-          case FBLE_PROFILE_SAMPLE_OP:
-            FbleProfileSample(profile, op->arg);
-            break;
-        }
-      }
+    if (profile && instr->profile_sample_count != 0) {
+      FbleProfileSample(profile, instr->profile_sample_count);
     }
 
     switch (instr->tag) {

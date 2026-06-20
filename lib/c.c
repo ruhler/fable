@@ -315,31 +315,9 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     }
 
     // Profiling logic.
-    if (instr->profile_ops != NULL) {
+    if (instr->profile_sample_count != 0) {
       fprintf(fout, "  if (profile) {\n");
-      for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
-        switch (op->tag) {
-          case FBLE_PROFILE_ENTER_OP: {
-            fprintf(fout, "    FbleProfileEnterBlock(profile, profile_block_id + %zi);\n", op->arg);
-            break;
-          }
-
-          case FBLE_PROFILE_REPLACE_OP: {
-            fprintf(fout, "    FbleProfileReplaceBlock(profile, profile_block_id + %zi);\n", op->arg);
-            break;
-          }
-
-          case FBLE_PROFILE_EXIT_OP: {
-            fprintf(fout, "    FbleProfileExitBlock(profile);\n");
-            break;
-          }
-
-          case FBLE_PROFILE_SAMPLE_OP: {
-            fprintf(fout, "    FbleProfileSample(profile, %zi);\n", op->arg);
-            break;
-          }
-        }
-      }
+      fprintf(fout, "    FbleProfileSample(profile, %zi);\n", instr->profile_sample_count);
       fprintf(fout, "  }\n");
     }
 

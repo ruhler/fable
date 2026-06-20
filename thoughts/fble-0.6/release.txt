@@ -940,3 +940,50 @@ same question, but it is a question. Current spec says:
 
 That makes it pretty clear. I can add a test to this case to be extra
 explicit.
+
+---
+
+* Remove now unused FBLE_PROFILE_ENTER_OP, EXIT_OP, and REPLACE_OPs?
+ - Or wait to see if we want them for code coverage?
+
+I need to go back through history to recover these anyway. How about I remove
+them now, and add them back if/as needed if/when I want it for code coverage?
+
+Sounds fair to me.
+
+On the other hand, if I remove it, there's only one kind of profile op left,
+and it seems silly to have support for general profile ops when all we are
+doing is sampling. But the extra cleanup for that sounds more tedious.
+
+What cleanup would I do?
+* Remove FbleProfileOpTag
+* Rename FbleProfileOp to FbleSampleOp? Change arg to count?
+* There's no longer any need for a list, because multiple samples should be
+  merged.
+* So replace profile_ops with a single size_t sample count, which could be
+  zero or not. If not zero, do the sample, otherwise don't.
+  sample_count field.
+
+Okay? Shall we? Let's see what happens.
+
+I suppose it's worth testing by generating a profile before and after of
+fble-benchmark.
+
+The only tricky thing is in the compiler, figuring out when to add to the
+sample count of a previous instruction versus starting a new count. Something
+to do with basic blocks.
+
+Maybe we should accumulate count of instructions in the current basic block,
+and any time we end a basic block, move the count from the running count to
+the last instruction in the block? Then all we need is a running count of
+instructions in the basic block.
+
+Okay. I'll try that. I'm worried I'll break things. Maybe I should compare
+disassembly before and after...
+
+No. It's too hard to tell when the end of a basic block is. Better to figure
+out when the start of a basic block is.
+
+No. It's still hard. Maybe I can leave the same logic as before somehow, just
+change profile ops to pointers to instructions, or what have you?
+

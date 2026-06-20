@@ -14,32 +14,6 @@
 #include "var.h"            // for FbleVar, FbleLocalIndex
 
 /**
- * Different kinds of FbleProfileOps.
- */
-typedef enum {
-  FBLE_PROFILE_ENTER_OP,
-  FBLE_PROFILE_REPLACE_OP,
-  FBLE_PROFILE_EXIT_OP,
-  FBLE_PROFILE_SAMPLE_OP,
-} FbleProfileOpTag;
-
-/**
- * @struct[FbleProfileOp] Singly-linked list of profiling operations.
- *  @field[FbleProfileOpTag][tag] The profiling operation.
- *  @field[size_t][arg]
- *   Block to enter or replace, relative to current profile_block_id.
- *   Time to sample.
- *   Unused for EXIT ops.
- *  @field[FbleProfileOp*][next]
- *   Next profile op in the list, or NULL for end of list.
- */
-typedef struct FbleProfileOp {
-  FbleProfileOpTag tag;
-  size_t arg;
-  struct FbleProfileOp* next;
-} FbleProfileOp;
-
-/**
  * Different kinds of FbleDebugInfos.
  */
 typedef enum {
@@ -117,13 +91,14 @@ typedef enum {
  *  @field[FbleInstrTag][tag] The kind of instruction.
  *  @field[FbleDebugInfo*][debug_info]
  *   Debug info that applies to just before executing the instruction.
- *  @field[FbleProfileOp*][profile_ops]
- *   Profiling operations to perform before executing the instruction.
+ *  @field[size_t][profile_sample_count]
+ *   If non-zero, do given count worth of profile sample when executing this
+ *   instruction if profiling is enabled.
  */
 typedef struct {
   FbleInstrTag tag;
   FbleDebugInfo* debug_info;  
-  FbleProfileOp* profile_ops;
+  size_t profile_sample_count;
 } FbleInstr;
 
 /**
@@ -546,7 +521,7 @@ typedef struct {
  *
  *  @returns[void*]
  *   A pointer to a newly allocated size bytes of memory with FbleInstr tag,
- *   debug_info, and profile_ops initialized.
+ *   debug_info, and profile_sample_count initialized.
  */
 void* FbleRawAllocInstr(size_t size, FbleInstrTag tag);
 
@@ -557,7 +532,7 @@ void* FbleRawAllocInstr(size_t size, FbleInstrTag tag);
  *
  *  @returns[T*]
  *   A pointer to a newly allocated object of the given type with the
- *   FbleInstr tag, debug_info, and profile_ops fields initialized.
+ *   FbleInstr tag, debug_info, and profile_sample_count fields initialized.
  *
  *  @sideeffects
  *   The allocation should be freed by calling FbleFreeInstr when no longer in

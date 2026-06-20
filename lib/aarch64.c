@@ -678,7 +678,7 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
     }
   }
 
-  if (instr->profile_ops != NULL) {
+  if (instr->profile_sample_count != 0) {
     fprintf(fout, "  cbnz R_PROFILE, .Lo.%04zx.%zi.p\n", func_id, pc);
     fprintf(fout, ".Lr.%04zx.%zi.pp:\n", func_id, pc);
   }
@@ -1089,40 +1089,11 @@ static void EmitInstr(FILE* fout, LabelId* label_id, FbleNameV profile_blocks, s
  */
 static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* instr)
 {
-  if (instr->profile_ops != NULL) {
+  if (instr->profile_sample_count != 0) {
     fprintf(fout, ".Lo.%04zx.%zi.p:\n", func_id, pc);
-    for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
-      switch (op->tag) {
-        case FBLE_PROFILE_ENTER_OP: {
-          fprintf(fout, "  mov x0, R_PROFILE\n");
-          fprintf(fout, "  mov x1, R_PROFILE_BLOCK_ID\n");
-          fprintf(fout, "  add x1, x1, #%zi\n", op->arg);
-          fprintf(fout, "  bl FbleProfileEnterBlock\n");
-          break;
-        }
-
-        case FBLE_PROFILE_REPLACE_OP: {
-          fprintf(fout, "  mov x0, R_PROFILE\n");
-          fprintf(fout, "  mov x1, R_PROFILE_BLOCK_ID\n");
-          fprintf(fout, "  add x1, x1, #%zi\n", op->arg);
-          fprintf(fout, "  bl FbleProfileReplaceBlock\n");
-          break;
-        }
-
-        case FBLE_PROFILE_EXIT_OP: {
-          fprintf(fout, "  mov x0, R_PROFILE\n");
-          fprintf(fout, "  bl FbleProfileExitBlock\n");
-          break;
-        }
-
-        case FBLE_PROFILE_SAMPLE_OP: {
-          fprintf(fout, "  mov x0, R_PROFILE\n");
-          Mov(fout, "x1", op->arg);
-          fprintf(fout, "  bl FbleProfileSample\n");
-          break;
-        }
-      }
-    }
+    fprintf(fout, "  mov x0, R_PROFILE\n");
+    Mov(fout, "x1", instr->profile_sample_count);
+    fprintf(fout, "  bl FbleProfileSample\n");
     fprintf(fout, "  b .Lr.%04zx.%zi.pp\n", func_id, pc);
   }
 

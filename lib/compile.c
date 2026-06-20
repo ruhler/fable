@@ -54,14 +54,12 @@ struct Local {
  *  @field[FbleCode*][code] The instruction block for this scope.
  *  @field[FbleDebugInfo*][pending_debug_info]
  *   Debug info to apply before the next instruction to be added.
- *  @field[FbleProfileOp*][pending_profile_ops]
- *   Profiling ops associated with the next instruction to be added.
- *  @field[FbleProfileOp**][active_profile_ops]
- *   The currently active set of profiling ops.
- *  
- *   New ops should be added to this list to be coalesced together where
- *   possible. This should be reset to point to pending_profile_ops at the
- *   start of any new basic blocks.
+ *  @field[size_t][pending_profile_sample_count]
+ *   Profile sample count associated with the next instruction to be added.
+ *  @field[size_t*][active_profile_sample_count]
+ *   The currently active profile sample count. We should increment this count
+ *   where possible. This should be reset to point to
+ *   pending_profile_sample_count at the start of any new basic blocks.
  *  @field[Scope*][parent] The parent of this scope. May be NULL.
  */
 typedef struct Scope {
@@ -71,8 +69,8 @@ typedef struct Scope {
   LocalV locals;
   FbleCode* code;
   FbleDebugInfo* pending_debug_info;
-  FbleProfileOp* pending_profile_ops;
-  FbleProfileOp** active_profile_ops;
+  size_t pending_profile_sample_count;
+  size_t* active_profile_sample_count;
   struct Scope* parent;
 } Scope;
 
@@ -93,7 +91,7 @@ static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV s
 static void FreeScope(Scope* scope);
 static void AppendInstr(Scope* scope, FbleInstr* instr);
 static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info);
-static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg);
+static void AddProfileSample(Scope* scope);
 
 /**
  * @struct[Blocks] Stack of block frames for the current profiling block.
@@ -590,8 +588,8 @@ static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV s
 
   scope->code = FbleNewCode(args.size, statics.size, 0, block);
   scope->pending_debug_info = NULL;
-  scope->pending_profile_ops = NULL;
-  scope->active_profile_ops = &scope->pending_profile_ops;
+  scope->pending_profile_sample_count = 0;
+  scope->active_profile_sample_count = &scope->pending_profile_sample_count;
   scope->parent = parent;
 
   *code = scope->code;
@@ -648,12 +646,6 @@ static void FreeScope(Scope* scope)
   }
   FbleFreeVector(scope->locals);
   FbleFreeDebugInfo(scope->pending_debug_info);
-
-  while (scope->pending_profile_ops != NULL) {
-    FbleProfileOp* op = scope->pending_profile_ops;
-    scope->pending_profile_ops = op->next;
-    FbleFree(op);
-  }
 }
 
 /**
@@ -668,17 +660,17 @@ static void FreeScope(Scope* scope)
  */
 static void AppendInstr(Scope* scope, FbleInstr* instr)
 {
-  AppendProfileOp(scope, FBLE_PROFILE_SAMPLE_OP, 1);
+  AddProfileSample(scope);
 
   assert(instr->debug_info == NULL);
   instr->debug_info = scope->pending_debug_info;
   scope->pending_debug_info = NULL;
 
-  assert(instr->profile_ops == NULL);
-  if (scope->pending_profile_ops != NULL) {
-    instr->profile_ops = scope->pending_profile_ops;
-    scope->pending_profile_ops = NULL;
-    scope->active_profile_ops = &instr->profile_ops;
+  assert(instr->profile_sample_count == 0);
+  if (scope->pending_profile_sample_count != 0) {
+    instr->profile_sample_count = scope->pending_profile_sample_count;
+    scope->pending_profile_sample_count = 0;
+    scope->active_profile_sample_count = &instr->profile_sample_count;
   }
 
   FbleAppendToVector(scope->code->instrs, instr);
@@ -710,39 +702,14 @@ static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info)
 }
 
 /**
- * @func[AppendProfileOp]
- * @ Appends a profile op to the code block for the given scope.
+ * @func[AddProfileSample] Increment the current profile sample count.
  *  @arg[Scope*][scope] The scope to append the instruction to.
- *  @arg[FbleProfileOpTag][tag] The tag of the profile op to insert.
- *  @arg[size_t][arg] The argument to the profiling op if relevant.
- *
  *  @sideeffects
- *   Appends the profile op to the code block for the given scope.
+ *   Increments the profile sample count to the code block for the given scope.
  */
-static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg)
+static void AddProfileSample(Scope* scope)
 {
-  FbleProfileOp* op = FbleAlloc(FbleProfileOp);
-  op->tag = tag;
-  op->arg = arg;
-  op->next = NULL;
-
-  if (*scope->active_profile_ops == NULL) {
-    *scope->active_profile_ops = op;
-  } else {
-    FbleProfileOp* curr = *scope->active_profile_ops;
-    while (curr->next != NULL) {
-      curr = curr->next;
-    }
-
-    if (tag == FBLE_PROFILE_SAMPLE_OP && curr->tag == FBLE_PROFILE_SAMPLE_OP) {
-      // No need to add a new sample op, we can merge this with the existing
-      // profile sample op.
-      curr->arg += op->arg;
-      FbleFree(op);
-    } else {
-      curr->next = op;
-    }
-  } 
+  (*scope->active_profile_sample_count)++;
 }
 
 /**
@@ -1151,7 +1118,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       // Non-default branches.
       for (size_t i = 0; i < select_tc->targets.size; ++i) {
-        scope->active_profile_ops = &scope->pending_profile_ops;
+        scope->active_profile_sample_count = &scope->pending_profile_sample_count;
 
         FbleBranchTarget* tgt = FbleExtendVector(select_instr->targets);
         tgt->tag = select_tc->targets.xs[i].tag;
@@ -1177,7 +1144,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       // Default branch
       {
-        scope->active_profile_ops = &scope->pending_profile_ops;
+        scope->active_profile_sample_count = &scope->pending_profile_sample_count;
         select_instr->default_ = scope->code->instrs.size;
 
         Local* result = CompileExpr(blocks, true, exit, scope, select_tc->default_.tc);
@@ -1198,7 +1165,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         }
       }
 
-      scope->active_profile_ops = &scope->pending_profile_ops;
+      scope->active_profile_sample_count = &scope->pending_profile_sample_count;
 
       // Fix up exit gotos now that all the branch code is generated.
       if (!exit) {
@@ -1345,7 +1312,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         AppendInstr(scope, &call_instr->_base);
       }
 
-      scope->active_profile_ops = &scope->pending_profile_ops;
+      scope->active_profile_sample_count = &scope->pending_profile_sample_count;
       ReleaseLocal(scope, func, exit);
       for (size_t i = 0; i < argc; ++i) {
         ReleaseLocal(scope, args[i], exit);

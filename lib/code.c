@@ -25,7 +25,7 @@ void* FbleRawAllocInstr(size_t size, FbleInstrTag tag)
   FbleInstr* instr = FbleAllocRaw(size);
   instr->tag = tag;
   instr->debug_info = NULL;
-  instr->profile_ops = NULL;
+  instr->profile_sample_count = 0;
   return instr;
 }
 
@@ -57,12 +57,6 @@ void FbleFreeInstr(FbleInstr* instr)
 {
   assert(instr != NULL);
   FbleFreeDebugInfo(instr->debug_info);
-
-  while (instr->profile_ops != NULL) {
-    FbleProfileOp* op = instr->profile_ops;
-    instr->profile_ops = op->next;
-    FbleFree(op);
-  }
 
   switch (instr->tag) {
     case FBLE_UNION_VALUE_INSTR:
@@ -294,34 +288,8 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
         }
       }
 
-      for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
-        switch (op->tag) {
-          case FBLE_PROFILE_ENTER_OP: {
-            FbleBlockId block_id = op->arg;
-            FbleName* name = &profile_blocks.xs[block_id];
-            fprintf(fout, "    .  profile enter %s[%04zx];", name->name->str, block_id);
-            PrintLoc(fout, name->loc);
-            break;
-          }
-
-          case FBLE_PROFILE_REPLACE_OP: {
-            FbleBlockId block_id = op->arg;
-            FbleName* name = &profile_blocks.xs[block_id];
-            fprintf(fout, "    .  profile replace %s[%04zx];", name->name->str, block_id);
-            PrintLoc(fout, name->loc);
-            break;
-          }
-
-          case FBLE_PROFILE_EXIT_OP: {
-            fprintf(fout, "    .  profile exit;\n");
-            break;
-          }
-
-          case FBLE_PROFILE_SAMPLE_OP: {
-            fprintf(fout, "    .  profile sample %zi;\n", op->arg);
-            break;
-          }
-        }
+      if (instr->profile_sample_count != 0) {
+        fprintf(fout, "    .  profile sample %zi;\n", instr->profile_sample_count);
       }
 
       switch (instr->tag) {

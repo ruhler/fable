@@ -110,9 +110,6 @@ Other:
    compressed yet, can use uncompressed blocks).
  - Change fble-pprof to decompress profiles.
 
-* Remove now unused FBLE_PROFILE_ENTER_OP, EXIT_OP, and REPLACE_OPs?
- - Or wait to see if we want them for code coverage?
-
 * Figure out a way to test foreign function not found?
  - Interpreted gives runtime error.
  - Compiled gives link time error not an any particular line number.
