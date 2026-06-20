@@ -42,9 +42,6 @@ Standard Library:
 
 Tutorials:
 * Add left side menu to generated website for tutorials?
-* Add section of module imports to tutorials/Features.fbld?
-* Add section of pattern matching to tutorials/Features.fbld?
-* Add a tutorial for FFI.
 
 Documentation:
 * Double check all the old documentation referring to Output@, which is now

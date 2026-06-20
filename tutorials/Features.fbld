@@ -376,6 +376,32 @@
 
    @(Compared@, Cmp@, Less, Equal, Greater, Eq);
 
+ @section Package Imports
+  Fble has struct import syntax to make it easy to import values from other
+  modules. You can import values qualified or by name, and you can rename them
+  on import. Here are some examples:
+
+  @code[fble] @
+   Bool@, True, False, And, Or .= /Std/Bool%;      # Import by name.
+   B = /Std/Bool%;                                 # Import qualified by B.
+   B@(.Bool@), T(.True), F(.False) .= /Std/Bool%;  # Rename on import.
+   
+ @section Pattern Matching
+  Fble doesn't have general pattern matching support, but it does have struct
+  import syntax which provides some of the benefits of pattern matching. You
+  can import fields from a struct by name, or rename as you go. For example,
+  assuming the @L{Div} function returns a struct with fields @L{q} and @L{r}
+  for the quotient and remainder, you could write:
+
+  @code[fble] @
+   Int@ q, Int@ r .= Div(a, b);
+
+  If the field names were @L{quotient} and @L{remainder} instead and you wanted
+  to import them as @L{q} and @L{r}, you could write:
+
+  @code[fble] @
+   Int@ q(.quotient), Int@ r(.remainder) .= Div(a, b);
+
  @section Threading and Concurrency
   Fble does not have builtin support for threading or concurrency.
   

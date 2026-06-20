@@ -43,11 +43,14 @@
  @def @fbld[Polymorphism.fbld][Polymorphism]
   Learn all about polymorphic values in fble.
  
- @def @fbld[MonadicComputations.fbld][MonadicComputations]
+ @def @fbld[MonadicComputation.fbld][Monadic Computation]
   Learn about monad computations in fble.
 
  @def @fbld[PrivateTypes.fbld][Private Types]
   Learn about support for private types in fble.
+
+ @def @fbld[Foreign.fbld][Foreign Values]
+  Learn about fble's foreign function interface.
  
  @def @fbld[Std.fbld][Std]
   Learn about useful standard library types and functions.

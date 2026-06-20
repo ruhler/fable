@@ -142,4 +142,10 @@ Covered:
   Set, Map, Test, Monad, Random, State.
 
 Not covered:
-* 
+* ...
+
+---
+
+Okay. Draft is done. I've gone over everything. It should all be updated. Sure
+there are things we could improve. But at least now we are caught up with
+where we were.

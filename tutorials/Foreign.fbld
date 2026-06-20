@@ -1,0 +1,60 @@
+@tutorial Foreign Values
+ This tutorial touches briefly on fble's foreign function interface, which is
+ covered in section 10 of the fble language spec.
+
+ @section Foreign Function Interface
+  The fble language is a pure functional programming language. We saw how you
+  can use monadic computation to describe computations involving side effects.
+  To make a useful program, we need some way to wire up those side effects to the   real world. That's where the foreign function interface comes in.
+
+  The foreign function interface let's you define fble functions that call into
+  native platform code. The native platform code can, in turn, use whatever
+  support your platform is running on to interact with the rest of the world.
+
+  The reference implementation of fble is implemented using C99 and can be
+  linked against libraries that run on whatever OS you happening to running,
+  such as Linux or Windows. The foreign function interface gives you access to
+  whatever other functionality your platform provides.
+
+ @section Foreign Values
+  Most of the heavy lifting for the foreign function interface falls on the
+  native side of things, which we won't go into at all in this tutorial.
+  Suffice it to say, the reference implementation has some native APIs that
+  allow you to define an fble function in native code and export that for use
+  in your fble program.
+
+  On the fble language side of things, all we have is a way to declare values
+  that are defined this way.
+
+  Here's an example from the standard library for defining a foreign function
+  value that outputs a character for debug purposes:
+
+  @code[fble] @
+   (Char@) { Unit@; } PutChar;
+
+  That's it. We define the type of the value, in this case a function from
+  @L{Char@} to @L{Unit@}, and the name of the function, in this case
+  @L{PutChar}. You can now reference the @L{PutChar} function in the rest of
+  your fble code. The fble compiler or runtime will try to find the
+  implementation of @L{PutChar} in some platform dependant way when you build
+  or run your program.
+
+  On the native side of things, the foreign function is uniquely identified
+  using the combination of the module it is declared in and the name of the
+  function. Assuming the code above was in the module @L{/Std/Stream/Debug%},
+  there would need to be some native code somewhere that defines and registers
+  an @L{/Std/Stream/Debug%.PutChar} function.
+
+  Foreign values can be function values or any other type of fble value. It's
+  up to the foreign code to make sure the type is correct and to bide by the
+  conventions of fble that functions are pure functions and don't have side
+  effects unless properly sequenced via some monadic computation.
+
+ @section Foreign Values in the Language Specification
+  Foreign values are described in @fbld[../spec/fble.fbld#foreign][section 10
+  of the fble language specification].
+
+ @section Next Steps
+  You've now learned about all of the fble language features. Continue on to
+  the @fbld[Std.fbld][Std] tutorial to learn about some common types and
+  functions defined in the standard library.

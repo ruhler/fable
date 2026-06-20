@@ -106,6 +106,5 @@
   of the fble language specification].
  
  @section Next Steps
-  You've now learned about all of the fble language features. Continue on to
-  the @fbld[Std.fbld][Std] tutorial to learn about some common types and
-  functions defined in the standard library.
+  Head over to the @fbld[Foreign.fbld][Foreign Values] tutorial to learn
+  about fble's foreign function interface.

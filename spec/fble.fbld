@@ -1422,7 +1422,7 @@
    Any attempt to use the value of @L{/Foo/Internal%} from a module not
    starting with @L{/Foo%} will result in a type error.
  
- @section 10. Foreign Function Interface
+ @section @label[foreign][10. Foreign Function Interface]
   The foreign function interface provides a way to interact with native
   platform code more easily than via fully native builtin modules. It allows
   you to import a function defined with native code into fble as an fble
