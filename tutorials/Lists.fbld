@@ -8,7 +8,7 @@
   definition for a list of @L{Int@}:
  
   @code[fble] @
-   @ List@ = +(*(Int@ head, List@ tail) items, Unit@ empty);
+   List@ = +(*(Int@ head, List@ tail) items, Unit@ empty);
  
   This defines the list type as a union with two choices: a list constructed
   with a head element and tail of the list, or an empty list. We can define
@@ -92,9 +92,9 @@
   and still use the list expression:
  
   @code[fble] @
-   @ MyUnit@ = *();
-   @ NonEmptyIntList@ = *(Int@ element, IntList@ rest_of_list),
-   @ IntList@ = +(NonEmptyList@ not_empty, MyUnit@ empty);
+   MyUnit@ = *();
+   NonEmptyIntList@ = *(Int@ element, IntList@ rest_of_list),
+   IntList@ = +(NonEmptyList@ not_empty, MyUnit@ empty);
    
    (IntList@) { IntList@; } Elements = (IntList@ elements) {
      elements;
