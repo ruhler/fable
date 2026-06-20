@@ -1,0 +1,128 @@
+@tutorial IO
+ In this tutorial we'll learn how to write command line programs that interact
+ with the environment.
+
+ Until now we've been writing fble programs that use
+ @L{/Std/Io/Cli/Print%.Print} to output a string:
+
+ @code[fble] @
+  Stream@<Char@> output = StringE|'hello, world\n';
+  /Std/Io/Cli/Print%.Print(output);
+
+ The @L{/Std/Io%} library provides a more general interface for writing
+ fble programs that allows you to access command line arguments, access
+ standard input, output, and error streams, read and write files, read
+ environment variables, and return an exit status.
+
+ The @L{/Stdio/Io/Cli%.Run} function takes a @L{Main@} function with the
+ following type:
+
+ @code[fble] @
+  Main@ = <<@>@ M@>(Monad@<M@>, Io@<M@>, List@<String@>) { M@<Exit@>; };
+
+ Here is an example hello world program using this more general interface:
+
+ @code[fble] @
+  # A hello world program using the Stdio@ interface.
+  Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+    Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+
+    Unit@ _ := m.do(out(StringE|'hello, world\n'));
+    m.return(Success);
+  };
+
+ Let's break this down
+
+ @section @L{<<@>@ M@>}
+  The @L{Main@} function is polymorphic, parameterized by type @L{M@}. The
+  first two arguments to the function are @L{m} and @L{io}, which are
+  interfaces supported by the abstract type @L{M@}.
+
+  This says your main function can be used with any type @L{M@} that
+  implements the @L{Monad@} and @L{Io@} interfaces. The @l{fble-cli} program
+  provides a concrete type of @L{M@} when it calls your main program.
+
+  The reason @L{Main@} is polymorphic instead of hard coding the concrete type
+  for @L{M@} provided by @l{fble-cli} is to encourage you to write programs
+  that work in more general environments, such as in purely functional test
+  suites where the input and output are captured and checked internally without
+  going to the outside world.
+
+ @section @L{Monad@<M@> m}
+  The @L{Monad@<M@>} interface @L{m} provides a way to sequence operations.
+  This is needed to have a well defined order of operations when interacting
+  with input and output streams and files.
+
+ @section @L{Io@<M@> io}
+  The @L{Io@<M@>} interface is defined as follows:
+
+  @code[fble] @
+   Io@ = <<@>@ M@> { *(
+     <@ A@>(External@<A@>) { M@<A@>; } run
+   ); };
+
+  The @L{External@} type is an abstract type that can only be accessed via the
+  foreign function interface. This allows you to run foreign functions properly
+  sequenced with the monad @L{m}.
+
+ @section @L{List@<String@> args}
+  The @L{args} argument is the list of command line arguments passed when
+  invoking the program. For example, if you ran your program as:
+
+  @code[sh] @
+   fble-cli -p std -I . -m /Foo% -- hello there now
+
+  Then the value of @L{args} would be:
+
+  @code[fble] @
+   List[Str|'hello', Str|'there', Str|'now']
+
+ @section @L{Out@<Char@, M@> out := ... }
+  The line:
+
+  @code[fble] @
+   Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+
+  Uses the @L{Stdout} function from the standard library to get an output
+  stream that writes characters to standard out. Internally the library makes
+  use of foreign functions to access your platform's native standard output
+  stream, which is why it takes @L{io} as an argument and needs to be sequenced
+  using @L{m.do}.
+
+  Once we have the output stream, we can use it to write our message to
+  standard out:
+
+  @code[fble] @
+   Unit@ _ := m.do(out(StringE|'hello, world\n'));
+ 
+ @section @L{M@<Exit@>}
+  The result of the @L{Main@} program has type @L{M@<Exit@>}. If you return
+  @L{Success} using @L{m.return(Success)}, your program will have exit status
+  0. Otherwise your program will have whatever other exit code you provide.
+
+ @section Demo Program
+  The @L{/Std/Io/Cli/Demo%} module provides a demo command line program that
+  shows how to do common IO operations, including accessing command line
+  arguments, accessing environment variables, outputting to standard out, read
+  and writing files, and returning different exit status codes.
+
+ @section Exercises
+  @exercise
+   Write an fble program that prints out a sorted list of the command line
+   arguments passed to it.
+
+  @exercise
+   Write an fble program that outputs the length of a given file. Try passing
+   the file via standard input and as a file path.
+
+  @exercise
+   Write an fble program that repeatedly prompts the user for a number and
+   outputs the largest number input so far.
+   
+ @section Next Steps
+  This completes this tutorial series on the fble language. You now understand
+  all the fble language features and can write interesting programs that
+  interact with the environment on the command line. Go forth now and program.
+
+  Or you can head back to the @fbld[Tutorials.fbld]{Tutorials} page for links
+  to debug and profiling guides.

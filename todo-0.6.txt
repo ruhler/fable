@@ -44,14 +44,7 @@ Tutorials:
 * Add left side menu to generated website for tutorials?
 * Add section of module imports to tutorials/Features.fbld?
 * Add section of pattern matching to tutorials/Features.fbld?
-* Remove kinds from let expressions in all the examples in the spec and
-  tutorials and everywhere for the new syntax.
-* Update references to /Core/Int in tutorials.
-* Update references to /Core/List in tutorials.
-* Update tutorials for string literals: Foo(Str|...) now instead of Foo|...;
-* Update tutorials for character library.
-* Update tutorials for use of Concat instead of Strs.
-* Rename /Core/Unit% to /Std/Unit% in tutorials, if there are any references.
+* Add a tutorial for FFI.
 
 Documentation:
 * Double check all the old documentation referring to Output@, which is now

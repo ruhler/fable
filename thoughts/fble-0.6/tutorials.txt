@@ -122,3 +122,24 @@ How about try this:
 Shall we give that a try? Lets.
 
 I think it works well.
+
+---
+
+Next step for tutorials: rewrite the Core and Stdio tutorials. Those have
+changed a bunch now. Hmm... How do I want to approach this?
+
+Let's keep the same approach I have no: a high level view of the various
+features of the standard library in one tutorial. Command line programming in
+the next tutorial. Leave it at that.
+
+Review of topics to include in the tutorial, in case there's anything major I
+added since last time:
+* Func, Lazy, Undef
+* Cli, Env, File
+
+Covered:
+* Unit, Bool, Eq, Maybe, Char, Int, List, String, Stream, Show, Cmp, Data,
+  Set, Map, Test, Monad, Random, State.
+
+Not covered:
+* 

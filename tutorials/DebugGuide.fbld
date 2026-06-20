@@ -5,27 +5,20 @@
  tricks for making the most of the currently available debug support.
 
  @definition For printf like debugging
-  Use the @l{/Core/Debug%.Trace} functions for the strings to print.
+  Use the @l{/Std/Stream/Debug%.ToDebug} function to do printf like strings.
 
   For example:
   
   @code[fble] @
-   Unit@ _ = /Core/Debug%.Trace(Strs[Str|'x is: ', /Core/Int/Show%.Show(x)]);
+   Unit@ _ = /Std/Stream/Debug%.ToDebug(Format|'x is: %s'[/Std/Int/Show%.Show(x)]);
    ...
 
   To more easily enable or disable tracing, and avoid the costs of computing
   the trace message when disabled, you can use a style like this:
 
   @code[fble] @
-   % Trace = /Core/Debug%.Enable(True);  # Change to False to disable tracing.
-
-   Unit@ _ = {
-     Unit@ _ := Trace.TraceLn;
-     String@ debugDump = ExpensiveDebugFunction(x);
-     Strs[Str|'x is: ', debugDump];
-   };
-
-  You should see Trace values printed to stderr as the program executes.
+   ToDebug = /Std/Stream/Null%.ToNull;    # To disable debugging.
+   ToDebug = /Std/Stream/Debug%.ToDebug;  # To enable debugging.
 
  @definition Compile your code
   There is dwarf debug support for compiled fble code generated using the
@@ -50,10 +43,3 @@
  @definition To set a breakpoint that will trigger on runtime error
   @code[gdb] @
    break fprintf
-
- @definition To avoid stepping into runtime implementation code
-  @code[gdb] @
-   skip -gfi *.c
-
-  Note: This currently will not work because it's too much of a pain to
-  maintain the code needed to support it.

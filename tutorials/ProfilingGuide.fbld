@@ -6,7 +6,7 @@
   the end of a run. For example:
 
   @code[sh] @
-   fble-stdio --profile foo.prof -p core -m /Core/Stdio/HelloWorld%
+   fble-cli --profile foo.prof -p std -m /Std/Io/Cli/Demo%
 
   This will generate a file @l{foo.prof} after the run. The generated file is
   an uncompressed binary encoded google/pprof proto file. To use it with
@@ -19,7 +19,7 @@
   example:
 
   @code[sh] @
-   fble-stdio --profile foo.prof --profile-sample-period 1000 -p core -m /Core/Stdio/HelloWorld%
+   fble-cli --profile foo.prof --profile-sample-period 1000 -p std -m /Std/Io/Cli/Demo%
 
   This behaves as if only 1 in 1000 samples was actually recorded. Increase
   the sample period to decrease the size of the generated profile, at the

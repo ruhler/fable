@@ -49,10 +49,10 @@
  @def @fbld[PrivateTypes.fbld][Private Types]
   Learn about support for private types in fble.
  
- @def @fbld[Core.fbld][Core]
-  Learn about useful core library types and functions.
+ @def @fbld[Std.fbld][Std]
+  Learn about useful standard library types and functions.
  
- @def @fbld[Stdio.fbld][Standard IO]
+ @def @fbld[Io.fbld][IO]
   Learn how to write command line programs that interact with the environment.
 
  Additionally there are some guides with tips about debugging and profiling

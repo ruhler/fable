@@ -107,5 +107,5 @@
  
  @section Next Steps
   You've now learned about all of the fble language features. Continue on to
-  the @fbld[Core.fbld][Core Library] tutorial to learn about some common types
-  and functions defined in the core library.
+  the @fbld[Std.fbld][Std] tutorial to learn about some common types and
+  functions defined in the standard library.

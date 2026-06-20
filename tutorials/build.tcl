@@ -1,20 +1,20 @@
 namespace eval "tutorials" {
   set tutorials {
     Basics.fbld
-    Core.fbld
     Features.fbld
     Functions.fbld
     HelloWorld.fbld
     Install.fbld
     Introduction.fbld
+    Io.fbld
     Lists.fbld
     Literals.fbld
     Modules.fbld
     MonadicComputation.fbld
     Polymorphism.fbld
     PrivateTypes.fbld
+    Std.fbld
     Structs.fbld
-    Stdio.fbld
     Unions.fbld
     Variables.fbld
   }

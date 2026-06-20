@@ -1,0 +1,225 @@
+@tutorial Std
+ This tutorial goes over some of the types and functions available from the
+ fble standard library.
+
+ You've learned about all the fble language features already. The standard
+ library is implemented on top of those language features as a common set of
+ types and functions useful in programming with fble. Making use of the
+ standard library saves you the effort of defining and implementing these types
+ yourself and will allow your code to work together with code from other
+ developers who also use the types from the standard library.
+
+ The standard library is not part of the language specification. It is still
+ growing and evolving as we gain experience developing more code in fble.
+ 
+ The following sections highlight various useful parts of the standard library
+ available today. See the source code for the various library modules in
+ the @l{pkgs/std/Std} directory for more details and documentation.
+
+ @section @L{/Std/Unit%}
+  The @L{/Std/Unit%} module defines type @L{Unit@} and value @L{Unit}
+  that we have seen many times in this series of tutorials:
+ 
+  @code[fble] @
+   Unit@ = *();
+ 
+   Unit@ Unit = Unit@();
+ 
+  By itself @L{Unit@} is not very interesting, but it's a building block used
+  in all other data types.
+ 
+ @section @L{/Std/Bool%}
+  The @L{/Std/Bool%} module defines a boolean type @L{Bool@}, values @L{True}
+  and @L{False}, and a few functions that operate on booleans, such as
+  @L{And}, @L{Or}, and @L{Not}:
+ 
+  @code[fble] @
+   Bool@ = +(Unit@ true, Unit@ false);
+   
+   Bool@ True = Bool@(true: Unit);
+   Bool@ False = Bool@(false: Unit);
+   
+   (Bool@) { Bool@; } Not = ...;
+   (Bool@, Bool@) { Bool@; } And = ...;
+   (Bool@, Bool@) { Bool@; } Or = ...;
+
+ @section @L{/Std/Eq%}
+  The @L{/Std/Eq%} module defines an @L{Eq@} interface for types that can be
+  compared for equality or other kinds of relationships.
+
+  @code[fble] @
+   Eq@ = <@ T@>(T@, T@) { /Std/Bool%.Bool@; };
+
+ @section @L{/Std/Maybe%}
+  The @L{/Std/Maybe%} module defines a @L{Maybe@} type for representing
+  optional values. It defines functions @L{Just} and @L{Nothing} for
+  constructing these optional values.
+
+  @code[fble] @
+   Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+
+   <@ T@>(T@){ Maybe@<T@>; } Just = <@ T@>(T@ x) { Maybe@(just: x); };
+   Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
+ 
+ @section @L{/Std/Char%}
+  The @L{/Std/Char%} module defines a @L{Char@} type representing unicode
+  characters via their unicode code points. It defines literals for ascii
+  characters in @L{/Std/Char/Ascii%}, and helpers for defining literals
+  involving other character sets.
+ 
+ @section @L{/Std/Int%}
+  The @L{/Std/Int%} module defines an @L{Int@} type, representing unbounded
+  integers.
+ 
+  The @L{/Std/Int%} module provides standard integer arithmetic operations:
+  @L{Inc}, @L{Dec}, @L{Add}, @L{Sub}, @L{Neg}, @L{Mul}, @L{Exp}, etc.
+  Other operations are defined in submodules:
+ 
+  @def[@L{/Std/Int/Div%}] @L{Div} and @L{Mod} operation for integers.
+  @def[@L{/Std/Int/Cmp%}] @L{Lt}, @L{Le}, @L{Min}, @L{Max}, etc.
+  @def[@L{/Std/Int/Eq%}] Integer @L{Eq}, @L{Ne} comparison operations.
+  @def[@L{/Std/Int/Lit%}] @L{Bin}, @L{Oct}, @L{Int}, @L{Hex} literals.
+  @def[@L{/Std/Int/Parse%}] Parsing integers from strings.
+  @def[@L{/Std/Int/Sqrt%}] Integer @L{Sqrt}.
+  @def[@L{/Std/Int/Show%}] Outputting integers using @L{Show}.
+ 
+ @section @L{/Std/List%}
+  The @L{/Std/List%} module defines a polymorphic list type like the one we
+  have already seen in this tutorial series:
+ 
+  @code[fble] @
+   List@ = <@ T@> { +(*(T@ head, List@<T@> tail) items, Unit@ empty); };
+ 
+  It defines a number of functions for working with lists, including:
+ 
+  @def[@L{List}] For constructing lists using list expressions.
+  @def[@L{Items}] For adding a value to the front of a list.
+  @def[@L{Empty}] For the empty list.
+  @def[@L{Append}] For appending a list to another list.
+  @def[@L{Last}] For getting the last element of a list.
+  @def[@L{Init}] For getting all but the last element of a list.
+  @def[@L{Concat}] For flattening a list of lists into a single list.
+  @def[@L{Map}] For applying a function to each element of a list.
+  @def[@L{ForEach}] For iterating over elements of a list.
+  @def[@L{Reverse}] For reversing the elements of a list.
+
+  There are submodules for working with lists in more ways too:
+
+  @def[@L{/Std/List/Cmp%}] Ordering comparison between two lists
+  @def[@L{/Std/List/Count%}] Counts elements on a list.
+  @def[@L{/Std/List/Eq%}] Equality comparison between two lists
+  @def[@L{/Std/List/Index%}] Access ranges of elements in a list.
+  @def[@L{/Std/List/Maybe%}] Conversion between @L{List@} and @L{Maybe@} types.
+  @def[@L{/Std/List/Search%}] Finding elements in a list.
+  @def[@L{/Std/List/Show%}] Outputting lists.
+  @def[@L{/Std/List/Sort%}] Sorting lists.
+
+ @section @L{/Std/String%}
+  The @L{/Std/String%} module defines the type @L{String@} as list of
+  characters:
+ 
+  @code[fble] @
+   String@ = List@<Char@>;
+
+  Submodules for working with strings include:
+  
+  @def[@L{/Std/String/Cmp%}] Ordering comparison between strings.
+  @def[@L{/Std/String/Eq%}] Equality comparison between strings.
+  @def[@L{/Std/String/Escape%}] Strings with character escape sequences.
+  @def[@L{/Std/String/Lines%}] Joining and splitting strings by line.
+  @def[@L{/Std/String/Show%}] Outputting strings.
+
+ @section @L{/Std/Stream%}
+  The @L{/Std/Stream%} module defines a @L{Stream@} type for iterating over and
+  outputting a sequence of values.
+
+ @section @L{/Std/Show%}
+  The @L{/Std/Show%} module defines a @L{Show@} interface for types that can
+  be output to streams of characters.
+
+  @code[fble] @
+   Show@ = <@ T@>(T@) { Stream@<Char@>; };
+
+ @section @L{/Std/Cmp%}
+  The @L{/Std/Cmp%} module defines a @L{Compared@} type and @L{Cmp@}
+  interface for types that can be compared for ordering.
+
+  @code[fble] @
+   Compared@ = +(Unit@ less, Unit@ equal, Unit@ greater);
+
+   Compared@ Less = Compared@(less: Unit);
+   Compared@ Equal = Compared@(equal: Unit);
+   Compared@ Greater = Compared@(greater: Unit);
+
+   Cmp@ = <@ T@>(T@, T@) { Compared@; };
+
+  Along with generic implementations of @L{Eq}, @L{Ne}, @L{Lt}, @L{Le}, @L{Gt},
+  @L{Ge}, @L{Min}, and @L{Max} for types that implement @L{Cmp@}.
+
+ @section @L{/Std/Data%}
+  The @L{/Std/Data%} module defines a @L{Data@} interface for types that can be
+  expressed as a mix of structs and unions. The primary purpose of the
+  @L{Data@} type is to allow types to be used as keys with @L{/Std/Map%.Map@}
+  map type.
+
+ @section @L{/Std/Map%}
+  The @L{/Std/Map%} module defines a key value map type that works for any key
+  type @L{K@} with a @L{Data@} instance.
+
+  There are operations for inserting, looking up, removing, and traversing
+  elements of the map.
+
+  @@L{/Std/Map%} provides functions for inserting, looking up, and removing
+  values from the map, among other things.
+
+ @section @L{/Std/Set%}
+  The @L{/Std/Set%} module defines a @L{Set@} type for describing a set of
+  values implementing the @L{Data@} interface.
+
+ @section @L{/Std/Test%}
+  The @L{/Std/Test%} module defines types @L{Test@}, @L{TestSuite@} and
+  others for writing and running unit tests.
+
+ @section @L{/Std/Random%}
+  The @L{/Std/Random/Prng%} and @L{/Std/Random/Rng%} modules define interfaces
+  for working with pseudo random and random number generators. Standard types 
+  like @L{Int@} have utilities for generating random values from random number
+  generators in, e.g. @L{/Std/Int/Random%}. Fble provides a few different
+  random number generators to chose from depending on your needs, such as
+  @L{/Std/Random/Lcg%.Rand48} and @L{/Std/Random/Lfsr%.Lfsr24}.
+ 
+ @section @L{/Std/Monad%}
+  The @L{/Std/Monad%} module defines a monad interface like the one we saw in
+  the @fbld[MonadicComputation.fbld][MonadicComputation] tutorial:
+ 
+  @code[fble] @
+   <<@>@>@ Monad@ = <<@>@ M@> {
+     *(
+       @<M@> M@,
+       <@ A@>(A@) { M@<A@>; } return,
+       <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } do
+     );
+   };
+
+ @section @L{/Std/State%}
+  The @L{/Std/State%} module defines a monadic @L{State@} interface for putting
+  and getting values from state. @L{/Std/State/Pure%} provides a pure
+  implementation of a state monad.
+ 
+ @section @L{/Std/Io%}
+  The @L{/Std/Io%} module contains a collection of submodules for doing input
+  and output, including:
+
+  @definition[@L{/Std/Io/Cli%}]
+   For writing command line programs that have access to command line arguments
+   and can return exit status.
+  @definition[@L{/Std/Io/Env%}]
+   For reading environment variables.
+  @definition[@L{/Std/Io/File/Binary%}]
+   For reading and writing files and standard input output streams in binary mode.
+  @definition[@L{/Std/Io/File/Text%}]
+   For reading and writing files and standard input output streams in text mode.
+
+ @section Next Steps
+  Head over to the @fbld[Io.fbld][IO] tutorial to learn about writing command
+  line fble programs that can interact with their environment.
