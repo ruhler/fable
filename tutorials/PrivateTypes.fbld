@@ -36,11 +36,11 @@
   
   We can define a private type @L{MyBool@} that wraps the @L{Bool@} type,
   and make it so only modules in the @L{/Mine/} part of the module hierarchy
-  can teset if the boolean value is true or false or construct their own.
+  can test if the boolean value is true or false or construct their own.
   
   @code[fble] @
-   @ MyPackage@ = @/Mine%;
-   @ MyBool@ = Bool@.%(MyPackage@);
+   MyPackage@ = @/Mine%;
+   MyBool@ = Bool@.%(MyPackage@);
   
   The syntax @L{@} followed by a module path is used to describe a package
   type. Package types represent sets of modules. In this case, because it is
@@ -63,8 +63,7 @@
    MyBool@ MyTrue = Bool@(true: Unit);
 
   The types @L{MyBool@} and @L{Bool@} are one and the same from the point of
-  view of modules with access to @L{MyBool@}, they can be used
-  interchangeably.
+  view of modules with access to @L{MyBool@}, they can be used interchangeably.
 
   From the point of view of modules that aren't in the set described by the
   @L{MyPackage@} type, @L{MyBool@} is an opaque abstract type, in no apparent

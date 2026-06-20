@@ -1,6 +1,6 @@
 @tutorial Polymorphism
  This tutorial does a deep dive into polymorphism in fble. By the end of this
- tutorial, you'll be fully versed in section 7 of the fble language spec on
+ tutorial, you'll be fully versed in section 6 of the fble language spec on
  polymorphism.
  
  @section Basics
@@ -84,7 +84,7 @@
    provide a concrete type, resulting in the value of the poly with the type
    variable @L{T@} replaced with its concrete type.
  
-   For example, the first poly value we see in the definition of @L{Maybe@},
+   For example, the first poly value we see is the definition of @L{Maybe@},
    which is a poly of a type value:
  
    @code[fble] @
@@ -163,11 +163,10 @@
    # Not allowed!
    List@ = <@ T@> { +(*(T@ head, List@<T@> tail) items, Unit@ empty); };
  
-  The compiler will give you an error saying @L{List@} isn't polymorphic. When
-  specifying the kind of a variable instead of the type of the variable in the
-  variable definition, the variable is treated as non-polymorphic in its own
-  definition. To work around this, you need to define the list type in a
-  slightly different way:
+  The compiler will give you an error saying @L{List@} isn't polymorphic. If
+  you don't provide an explicit type for a variable in a let expression, the
+  variable is treated as non-polymorphic in its own definition. To work around
+  this, you need to define the list type in a slightly different way:
  
   @code[fble] @
    List@ = <@ T@> {
@@ -250,7 +249,7 @@
   to @L{Contains}. It would look something like this:
  
   @code[fble] @
-   Eq@ = <@ T@>(T@, T@) { Bool@ };
+   Eq@ = <@ T@>(T@, T@) { Bool@; };
    
    <@ T@>(Eq@<T@>, List@<T@>, T@) { Bool@; }
    Contains = <@ T@>(Eq@<T@> eq, List@<T@> l, T@ x) {
@@ -294,53 +293,10 @@
    Pair@<Int@, Bool@> x = Pair@<Int@, Bool@>(42, True);
    Int@ value = First<Int@, Bool@>(x);
  
-  In this case the kind of @L{First} can be written either as @L{<@><@>%} or
-  as @L{<@, @>%}, indicating that it takes two type arguments.
- 
   This means you can do partial application of multi-argument poly values. For
   example, you could write @L{Pair@<Int@>} to refer to the polymorphic type
   @L{<@ A@> { Pair@<Int@, A@>; }}.
- 
- @section Higher Order Polys
-  So far we've only shown type parameters of kind @L{@}. You could also
-  specify a type parameter of kind @L{<@>@} if you want.  This would be a
-  higher order polymorphic value.
- 
-  The classic example of a higher order polynomial value is the @L{Monad@}
-  type, which describes an interface that container types such as @L{List@}
-  can support:
- 
-  @code[fble] @
-   Monad@ = <<@>@ M@> {
-     *(
-       <@ A@>(A@) { M@<A@>; } return,
-       <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } do
-     );
-   };
- 
-  In this case the type parameter @L{M@} has kind @L{<@>@}, so we can say
-  things like @L{M@<A@>} and @L{M@<B@>} in the body of the poly. Even though
-  we don't know what type value will be passed for @L{M@}, the compiler will
-  make sure it is only called with a polymorphic type value of kind @L{<@>@}.
- 
-  We'll talk more about monads in the next tutorial. For now, the important
-  takeaway is that you specify the kind of the type variable in a polymorphic
-  value. You can make use of this in the body of the polymorphic value, and
-  the compiler will make sure you only instantiate the polymorphic value with
-  an argument of appropriate kind.
- 
-  For example, this would be okay:
- 
-  @code[fble] @
-   Monad@<List@> ListMonad = ...;
- 
-  But this would give you a type error:
- 
-  @code[fble] @
-   Monad@<Int@> IntMonad = ...;
- 
-  Because @L{Int@} has kind @L{@} when @L{<@>@} is required.
- 
+
  @section Polys are Values
   Polymorphic values are values. That means you can use them wherever you
   could use any other value in fble. You can have variables of polymorphic
@@ -349,7 +305,7 @@
  
   This is a bit subtle. You can pass around a polymorphic value in a struct.
   Whoever has access to that struct can instantiate that polymorphic value
-  multiple times with multiple different type arguments.
+  multiple times with different type arguments.
  
   Another example: in theory you could have a polymorphic function value that
   returns a polymorphic function. This isn't as far fetched as you might think
@@ -381,6 +337,71 @@
    
    Int@ my_id = LookupId(ids, Str|Richard);
    Grade@ my_grade = LookupGrade(grades, Str|Richard);
+ 
+ @section Higher Order Polys
+  So far we've used @L{@} to introduce type parameters on polys, such as:
+
+  @code[fble] @
+   Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+
+  The @L{@} character describes the kind of the type parameter. @L{@} means its
+  a an abstract type: you can do anything with the type that you could do with
+  any other type, and you can pass any type as an argument to the poly to
+  specialize it.
+
+  It's possible to require a type parameter to a poly to itself be a
+  polymorphic type. You would do that using the kind specification @L{<@>@}. If
+  a type parameter has kind @L{<@>@}, it means you are allowed to do poly
+  application to the type parameter to get back another type.
+
+  The classic example of a higher order polynomial value is the @L{Monad@}
+  type, which describes an interface that container types such as @L{List@}
+  can support:
+ 
+  @code[fble] @
+   Monad@ = <<@>@ M@> {
+     *(
+       <@ A@>(A@) { M@<A@>; } return,
+       <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } do
+     );
+   };
+ 
+  In this case the type parameter @L{M@} has kind @L{<@>@}, so we can say
+  things like @L{M@<A@>} and @L{M@<B@>} in the body of the poly. Even though
+  we don't know what type value will be passed for @L{M@}, the compiler will
+  make sure it is only called with a polymorphic type value of kind @L{<@>@}.
+ 
+  We'll talk more about the @L{Monad@} type in the next tutorial. For now, the
+  important takeaway is that you specify the kind of the type variable in a
+  polymorphic value. You can make use of this in the body of the polymorphic
+  value, and the compiler will make sure you only instantiate the polymorphic
+  value with an argument of appropriate kind.
+ 
+  For example, this would be okay:
+ 
+  @code[fble] @
+   Monad@<List@> ListMonad = ...;
+ 
+  But this would give you a type error:
+ 
+  @code[fble] @
+   Monad@<Int@> IntMonad = ...;
+ 
+  Because @L{Int@} has kind @L{@} when @L{<@>@} is required.
+
+  Here are examples of different kind specifications for the different kinds of
+  polymorphic type parameters you could write:
+
+  @def[@L{@}]
+   For any kind of type.
+  @def[@L{<@>@}]
+   For polymorphic types that take at least one type argument.
+  @def[@L{<@,@>@}]
+   For polymorphic types that take at least two type arguments.
+  @def[@L{<<@>@>@}]
+   For polymorphic types that take at least one polymorphic type argument.
+
+  And so on.
  
  @section Type Inference
   It's fairly common to define and use polymorphic functions. For example, we
@@ -421,15 +442,16 @@
    automatically infer and apply type arguments to polys.
  
    @item
-    When doing function application with a polymorphic function value instead of a
-    normal value. For example:
+    When doing function application with a polymorphic function value instead
+    of a normal value. For example:
  
     @code[fble] @
      Just<Int@>(Int|42)    # explicit
      Just(Int|42)          # type inferred
  
    @item
-    When constructing a struct value with a polymorphic struct type. For example:
+    When constructing a struct value with a polymorphic struct type. For
+    example:
    
     @code[fble] @
      Pair@<Int@, Bool@>(Int|42, True)    # explicit

@@ -42,7 +42,6 @@ Standard Library:
 
 Tutorials:
 * Add left side menu to generated website for tutorials?
-* Update the kind section of Polymorphism tutorial.
 * Add section of module imports to tutorials/Features.fbld?
 * Add section of pattern matching to tutorials/Features.fbld?
 * Remove kinds from let expressions in all the examples in the spec and
