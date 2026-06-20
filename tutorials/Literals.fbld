@@ -249,12 +249,13 @@
   The main use of literals, and all of the examples we've shown so far, have
   single-character letters. Technically speaking, a single letter could be
   made up of multiple characters. In that case, the next letter of the literal
-  word is the longest letter that is a prefix of the word.
+  word corresponds to the first field of the element type whose name is a
+  prefix of the word.
 
   For example, say our letter type was defined as:
 
   @code[fble] @
-   Letter@ = +(Unit@ a, Unit@ ab, Unit@ b);
+   Letter@ = +(Unit@ ab, Unit@ a, Unit@ b);
 
    (Letter@) { Letter@; } Letter = (Letter@ x) {
      x;
@@ -267,7 +268,35 @@
   harder to say where one character ends and the next character begins.
   Otherwise there's probably not much practical use for longer letters in
   literals.
- 
+
+ @section Composite Letters
+  For large sets of letters, it can be a pain to list out all the letters from
+  the set in a single type. Fble allows you to compose letter types together by
+  defining unions of letter types.
+
+  For example, say we have a letter type for digits and for alphabetic characters:
+
+  @code[fble] @
+   Digit@ = +(Unit@ 0, Unit@ 1, Unit@ 2, ...);
+   Alpha@ = +(Unit@ a, Unit@ b, Unit@ c, ...);
+
+  You can easily reuse the definitions of @L{Digit@} and @L{Alpha@} to form an
+  alphanumeric letter by composition:
+
+  @code[fble] @
+   AlphaNumeric@ = +(Digit@ digit, Alpha@ alpha);
+
+  To find the next matching letter, the compiler will search the fields of
+  @L{AlphaNumeric@} in order until it finds something. For example, if the word
+  starts with @L{b8c}, the compiler will start by looking for letters in the
+  first field @L{digit}. Since none of the fields of @L{Digit@} are a prefix of
+  the word @L{b8c}, the compiler will search then next field @L{alpha}. It
+  finds the field @L{b} of @L{Alpha@} as the matching next letter, and knows to
+  represent that as an @L{AlphaNumeric@} using:
+
+  @code[fble] @
+   AlphaNumeric@(alpha: Alpha(b: Unit));
+   
  @section Literals in the Language Specification
   Literals are described in @fbld[../spec/fble.fbld#literals][section 7.2 of
   the fble language specification].

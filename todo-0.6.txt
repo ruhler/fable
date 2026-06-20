@@ -49,8 +49,6 @@ Tutorials:
   tutorials and everywhere for the new syntax.
 * Update references to /Core/Int in tutorials.
 * Update references to /Core/List in tutorials.
-* Update tutorial on literals.
-  - Particularly about 'longest' versus 'first' match.
 * Update tutorials for string literals: Foo(Str|...) now instead of Foo|...;
 * Update tutorials for character library.
 * Update tutorials for use of Concat instead of Strs.
