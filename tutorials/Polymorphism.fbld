@@ -513,5 +513,5 @@
   now.
  
  @section Next Steps
-  Head over to the @fbld[Bind.fbld][Bind] tutorial to learn about function
-  bind syntax and monadic computations.
+  Head over to the @fbld[MonadicComputation.fbld][MonadicComputation] tutorial
+  to learn about monadic computations.

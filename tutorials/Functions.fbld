@@ -343,12 +343,46 @@
   we could have passed an anonymous implementation of the @L{And} function:
  
   @code[fble] @
-   (Bit4@, Bit4@) { Bit4@; } And4 = BinaryBitwise(
-     (Bit@ a, Bit@ b) {
+   (Bit4@, Bit4@) { Bit4@; } And4 = {
+     BinaryBitwise((Bit@ a, Bit@ b) {
        a.?(0: 0, 1: b);
-     }
-   );
- 
+     });
+   };
+
+ @section Function Bind
+  Function bind is special syntax in fble for passing an anonymous function as
+  the last argument to another function. We'll talk later about why this case
+  occurs and is worth adding special syntax for. For now, let's just look at
+  the syntax.
+
+  Notice that our implementation of @L{And4} using an anonymous
+  implementation of the @L{And} function satisfies the special requirements
+  for the bind syntax: we are passing an anonymous implementation of @L{And}
+  as the last argument to the @L{BinaryBitwise} function:
+
+  @code[fble] @
+   (Bit4@, Bit4@) { Bit4@; } And4 = {
+     BinaryBitwise((Bit@ a, Bit@ b) {
+       a.?(0: 0, 1: b);
+     });
+   };
+
+  To use function bind syntax, we move the arguments of the anonymous function
+  to the beginning of the line, add @L{:=} before the function we are calling,
+  and put the body of the anonymous function unindented on the following
+  lines, like so:
+
+  @code[fble] @
+   (Bit4@, Bit4@) { Bit4@; } And4 = {
+     Bit@ a, Bit@ b := BinaryBitwise;
+     a.?(0: 0, 1: b);
+   };
+
+  In this case, that's 4 fewer parenthesis and 2 fewer braces cluttering up
+  the code. We need to learn about a few more language features before we're
+  ready to talk about monadic computations where function bind syntax really
+  shines.
+
  @section Passing Type Values to and from Functions
   We know that types are values. In theory that means we could pass type
   values as arguments to functions and return type values as results from

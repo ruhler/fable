@@ -1,94 +1,24 @@
-@tutorial Bind
- This tutorial describes the function bind syntactic sugar in fble and the
- motivations for it.
+@tutorial Monadic Computation
+ This tutorial describes how function bind syntax can be used for describing
+ computations in a monadic style. There are no new language features introduced
+ in this tutorial. Rather we show how functions, polymorphism, and function
+ bind syntax come together in a nice way to make it easy to describe
+ computations with side effects in the pure functional programming language of
+ fble.
  
- @section The Syntax
-  Bind is syntactic sugar in fble to make the syntax a little bit nicer in the
-  following very specific situation:
- 
-  @item You are applying a function with a single argument.
-  @item That single argument is a function value.
-  @item You are specifying the argument function value as an anonymous function.
- 
-  We'll talk later about why this case occurs. For now, let's just look at the
-  syntax.
- 
-  @subsection Definition
-   Bind syntax takes something of the form:
- 
-   @code[fble] @
-    T1@ a1, T2@ a2, ... := FUNC;
-    BODY;
- 
-   And desugars it to:
- 
-   @code[fble] @
-    FUNC((T1@ a1, T2@ a2, ...) { BODY; });
- 
-   Where @l{FUNC} and @l{BODY} are fble expressions and @l{BODY} can refer to
-   the arguments @l{a1}, @l{a2}, @l{...}. Bind syntax can be used with one or
-   more arguments @l{a1}, @l{a2}, @l{...}.
- 
-  @subsection[Example]
-   In the @fbld[Functions.fbld][Functions] tutorial we gave an example of a
-   function that takes a function as an argument:
- 
-   @code[fble] @
-    ((Bit@, Bit@) { Bit@; }, Bit4@, Bit4@) { Bit4@; }
-    BinaryBitwise = ((Bit@, Bit@) { Bit@; } op, Bit4@ a, Bit4@ b) {
-      Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
-    };
- 
-   And we gave an example of passing an anonymous function to that:
- 
-   @code[fble] @
-    (Bit4@, Bit4@) { Bit4@; } And4 = BinaryBitwise(
-      (Bit@ a, Bit@ b) {
-        a.?(0: 0, 1: b);
-      }
-    );
- 
-   Let's rewrite the @L{BinaryBitwise} function to something where we could
-   apply the bind syntax. We need it to take a single function argument, so
-   we'll swap the order of arguments and have it return a function that takes
-   the single function argument:
- 
-   @code[fble] @
-    (Bit4@, Bit4@) { ((Bit@, Bit@) { Bit@; }) { Bit4@; }; }
-    BinaryBitwise = (Bit4@ a, Bit4@ b)((Bit@, Bit@) { Bit@; } op) {
-      Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
-    };
- 
-   We can define @L{And4} using our new @L{BinaryBitwise} function as follows:
- 
-   @code[fble] @
-    (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ x, Bit4@ y) {
-      BinaryBitwise(x, y)(
-        (Bit@ a, Bit@ b) {
-          a.?(0: 0, 1: b);
-        });
-    };
- 
-   Now all the requirements for bind are satisfied when we call the
-   @L{BinaryBitwise(x, y)} function: it takes a single function argument which
-   we are supplying with an anonymous function.
- 
-   Using the bind syntax, we can rewrite the code to:
- 
-   @code[fble] @
-    (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ x, Bit4@ y) {
-      Bit@ a, Bit@ b := BinaryBitwise(x, y);
-      a.?(0: 0, 1: b);
-    };
- 
-   You can double check that if we apply the definition for bind syntax from
-   above to this code, you'll get the right thing back.
- 
- @section A Less Contrived Example
-  The example we gave for bind syntax in the previous section was totally
-  contrived, just to demonstrate the syntax. You wouldn't implement @L{And4}
-  using bind syntax in practice.
- 
+ @section A Less Contrived Example for Function Bind
+  We introduced function bind syntax in the @fbld[Functions.fbld][Functions]
+  tutorial using a rather contrived example:
+
+  @code[fble] @
+   (Bit4@, Bit4@) { Bit4@; } And4 = {
+     Bit@ a, Bit@ b := BinaryBitwise;
+     a.?(0: 0, 1: b);
+   };
+
+  Remember that function bind syntax like this can be used any time you are
+  passing an anonymous function as the last argument to another function.
+
   Let's take a look at a less contrived example. Imagine you are doing
   arithmetic with integers. Division by zero is undefined for integer
   arithmetic. One way to deal with division by zero is to change the return
@@ -184,12 +114,11 @@
      Div(a, b);
    };
  
-  I would argue this is slightly better than our original definitions for
-  @L{MaybeAdd} and @L{MaybeDiv} because we've factored out the logic for
-  testing if a value is undefined or not. If we wanted to, we could easily
-  change the definition of @L{MaybeInt@} to take an error message in the case
-  of undefined and propagate that without having to change the definitions of
-  @L{MaybeAdd} or @L{MaybeDiv}.
+  This is a better approach for defining @L{MaybeAdd} and @L{MaybeDiv} because
+  we've factored out the common logic for testing if a value is undefined or
+  not. If we wanted to, we could easily change the definition of @L{MaybeInt@}
+  to take an error message in the case of divide by zero and propagate that
+  without having to change the definitions of @L{MaybeAdd} or @L{MaybeDiv}.
  
  @section Type Inference
   Bind is syntactic sugar for function application, which means it supports
@@ -251,8 +180,8 @@
   line where @L{Bool@} is mentioned.
  
   Fortunately we can take advantage of type inference here. In fact, this
-  scenario where we chain together bind syntax is the true motivation for
-  having type inference in fble:
+  scenario where we chain together function bind syntax is the true motivation
+  for having type inference in fble:
  
   @code[fble] @
    (Maybe@<Int@>, Maybe@<Int@>) { Maybe@<Bool@>; }
@@ -306,20 +235,23 @@
  
   @code[fble] @
    <<@>@ M@>(Monad@<M@> m, <@ A@> { M@<A@>; } divide_by_zero) {
-     (M@<Int@>, M@<Int@>) { M@<Int@>; } AddM = (M@<Int@> ma, M@<Int@> mb) {
+     (M@<Int@>, M@<Int@>) { M@<Int@>; }
+     AddM = (M@<Int@> ma, M@<Int@> mb) {
        Int@ a := m.do(ma);
        Int@ b := m.do(mb);
        m.return(Add(a, b));
      };
    
-     (M@<Int@>, M@<Int@>) { M@<Int@>; } DivM = (M@<Int@> a, M@<Int@> b) {
+     (M@<Int@>, M@<Int@>) { M@<Int@>; }
+     DivM = (M@<Int@> a, M@<Int@> b) {
        Int@ a := m.do(ma);
        Int@ b := m.do(mb);
        b.?(0: divide_by_zero<Int@>);
        m.return(SaveDiv(a, b));
      };
    
-     (M@<Int@>, M@<Int@>) { M@<Bool@>; } EqualsM = (M@<Int@> a, M@<Int@> b) {
+     (M@<Int@>, M@<Int@>) { M@<Bool@>; }
+     EqualsM = (M@<Int@> a, M@<Int@> b) {
        Int@ a := m.do(ma);
        Int@ b := m.do(mb);
        m.return(Equals(a, b));
@@ -342,10 +274,6 @@
   This is how standard input and output is described in fble. More about that
   in a later tutorial.
 
- @section Bind in the Language Specification
-  See @fbld[../spec/fble.fbld#bind][section 7.3 of the fble language
-  specification] for the specification of the bind syntax.
- 
  @section Next Steps
   Head over to the @fbld[PrivateTypes.fbld][Private Types] tutorial to learn
   about private types in fble.

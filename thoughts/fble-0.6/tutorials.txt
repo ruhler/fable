@@ -96,3 +96,27 @@ concepts I want them to cover.
 In progress: updating the structs tutorial. I should move namespaces before
 implicit struct type and copy expression. Talk about export and import in the
 context of namespaces. Then discuss copy expression after that.
+
+---
+
+Goal: move bind tutorial to be either part of function tutorial, or just
+after. That means no lists, literals, or polymorphism. Let's see how much it
+loses if we do that.
+
+There's an entire section on type inference and monads that we can't do
+without polymorhpism.
+
+Options:
+* Move non polymorphism stuff into function tutorial.
+* Move non polymorphism stuff to bind tutorial after function tutorial.
+* Move polymorphism stuff to polymorphism tutorial.
+* Move polymorphism stuff to new monad tutorial.
+* Drop polymorphism stuff entirely.
+
+How about try this:
+* Move bind stuff into function tutorial, but not the maybe stuff yet. Just
+  introduce it, say what it is, show how to use it in the existing approach.
+* Rename existing bind tutorial to Monad tutorial, keep it mostly as is and
+  where it is.
+
+Shall we give that a try? Lets.

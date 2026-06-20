@@ -41,10 +41,10 @@ Standard Library:
   See thoughts/fble-0.6/stdlib.list.txt for more discussion.
 
 Tutorials:
+* Add left side menu to generated website for tutorials?
 * Update the kind section of Polymorphism tutorial.
 * Add section of module imports to tutorials/Features.fbld?
 * Add section of pattern matching to tutorials/Features.fbld?
-* Move function bind syntax to Functions tutorial.
 * Remove kinds from let expressions in all the examples in the spec and
   tutorials and everywhere for the new syntax.
 * Update references to /Core/Int in tutorials.

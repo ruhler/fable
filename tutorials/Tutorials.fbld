@@ -43,8 +43,8 @@
  @def @fbld[Polymorphism.fbld][Polymorphism]
   Learn all about polymorphic values in fble.
  
- @def @fbld[Bind.fbld][Bind]
-  Learn about function bind syntax and monad computations in fble.
+ @def @fbld[MonadicComputations.fbld][MonadicComputations]
+  Learn about monad computations in fble.
 
  @def @fbld[PrivateTypes.fbld][Private Types]
   Learn about support for private types in fble.
