@@ -137,7 +137,10 @@ static void Color(App* app, float r, float g, float b)
     float jr = 1.0 - r;
     float jg = 1.0 - g;
     float jb = 1.0 - b;
-    float jw = fmin(1.0, app->jank_running / 16.0);
+    float jw = app->jank_running / 16.0;
+    if (jw > 1.0) {
+      jw = 1.0;
+    }
     float nw = 1.0 - jw;
     r = nw*r + jw*jr;
     g = nw*g + jw*jg;

@@ -27,7 +27,7 @@ jobs:
           ninja www
 
       - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ${{github.workspace}}/out/www/
           retention-days: 0
