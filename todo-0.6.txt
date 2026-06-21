@@ -14,7 +14,7 @@ Things to consider doing for the fble-0.6 release.
  - Maybe do from a clean build, just in case we are inheriting coverage from
    previous runs that we since lost.
 
-* Fix failing windows build
+* Fix failing unicode tests in pkgs/std on windows build
  - issues with utf-8 command line args
  - issues with setlocale
 
