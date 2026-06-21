@@ -922,14 +922,14 @@ static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV ex
       const char* comma = "";
       for (size_t j = 0; j < expected.size; ++j) {
         FblePrintType(expected.xs[j]);
-        fprintf(stderr, comma);
+        fprintf(stderr, "%s", comma);
         comma = ", ";
       }
       fprintf(stderr, " from ");
       comma = "";
       for (size_t j = 0; j < expected.size; ++j) {
         FblePrintType(actual.xs[j].type);
-        fprintf(stderr, comma);
+        fprintf(stderr, "%s", comma);
         comma = ", ";
       }
       fprintf(stderr, "\n");

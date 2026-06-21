@@ -81,7 +81,7 @@ while (0)
 %}
 
 %locations
-%define api.pure
+%define api.pure full
 %define parse.error verbose
 %param {Lex* lex}
 %parse-param {FbleExpr** result} {FbleModulePathV* deps}
@@ -225,6 +225,9 @@ start:
    PARSE_PROGRAM stmt {
      // Parsed program is stored in result.
      *result = $2;
+
+     // Work around yynerrs unused error.
+     (void)yynerrs;
    }
  | PARSE_MODULE_PATH module_path {
      // Parsed module path is stored in deps.
