@@ -82,17 +82,11 @@ static void AppendTag(size_t tagwidth, size_t tag, bool last, ByteV* data)
 
   // Encoding is minimum number of bytes for the given tag width, most
   // significant byte of the tag first.
-  if (tagwidth > 24) {
-    FbleAppendToVector(*data, (tag >> 24) & 0xFF);
-  }
-  if (tagwidth > 16) {
-    FbleAppendToVector(*data, (tag >> 16) & 0xFF);
-  }
-  if (tagwidth > 8) {
-    FbleAppendToVector(*data, (tag >> 8) & 0xFF);
-  }
-  if (tagwidth > 0) {
-    FbleAppendToVector(*data, (tag >> 0) & 0xFF);
+  for (size_t i = 0; i < 4; ++i) {
+    uint8_t w = 24 - 8*i;
+    if (tagwidth > w) {
+      FbleAppendToVector(*data, (tag >> w) & 0xFF);
+    }
   }
 }
 

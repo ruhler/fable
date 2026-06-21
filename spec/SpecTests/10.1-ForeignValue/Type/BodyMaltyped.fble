@@ -1,0 +1,13 @@
+# @@fble-test@@ compile-error 13:5
+
+Unit@ = *();
+Unit@ Unit = Unit@();
+
+Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+Bool@ False = Bool@(false: Unit@());
+
+(Bool@) { Bool@; } Not;
+
+# The body of the foreign expression is maltyped.
+Not(xxx);

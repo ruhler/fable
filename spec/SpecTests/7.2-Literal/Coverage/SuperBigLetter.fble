@@ -1,0 +1,57 @@
+# @@fble-test@@ no-error
+Unit@ = *();
+Unit@ Unit = Unit@();
+
+# An enum type with more than 256 options.
+# For code coverage of the internal packed representation of literals we use.
+Enum@ = +(
+  Unit@ 000, Unit@ 001, Unit@ 002, Unit@ 003, Unit@ 004, Unit@ 005, Unit@ 006,
+  Unit@ 007, Unit@ 008, Unit@ 009, Unit@ 010, Unit@ 011, Unit@ 012, Unit@ 013,
+  Unit@ 014, Unit@ 015, Unit@ 016, Unit@ 017, Unit@ 018, Unit@ 019, Unit@ 020,
+  Unit@ 021, Unit@ 022, Unit@ 023, Unit@ 024, Unit@ 025, Unit@ 026, Unit@ 027,
+  Unit@ 028, Unit@ 029, Unit@ 030, Unit@ 031, Unit@ 032, Unit@ 033, Unit@ 034,
+  Unit@ 035, Unit@ 036, Unit@ 037, Unit@ 038, Unit@ 039, Unit@ 040, Unit@ 041,
+  Unit@ 042, Unit@ 043, Unit@ 044, Unit@ 045, Unit@ 046, Unit@ 047, Unit@ 048,
+  Unit@ 049, Unit@ 050, Unit@ 051, Unit@ 052, Unit@ 053, Unit@ 054, Unit@ 055,
+  Unit@ 056, Unit@ 057, Unit@ 058, Unit@ 059, Unit@ 060, Unit@ 061, Unit@ 062,
+  Unit@ 063, Unit@ 064, Unit@ 065, Unit@ 066, Unit@ 067, Unit@ 068, Unit@ 069,
+  Unit@ 070, Unit@ 071, Unit@ 072, Unit@ 073, Unit@ 074, Unit@ 075, Unit@ 076,
+  Unit@ 077, Unit@ 078, Unit@ 079, Unit@ 080, Unit@ 081, Unit@ 082, Unit@ 083,
+  Unit@ 084, Unit@ 085, Unit@ 086, Unit@ 087, Unit@ 088, Unit@ 089, Unit@ 090,
+  Unit@ 091, Unit@ 092, Unit@ 093, Unit@ 094, Unit@ 095, Unit@ 096, Unit@ 097,
+  Unit@ 098, Unit@ 099, Unit@ 100, Unit@ 101, Unit@ 102, Unit@ 103, Unit@ 104,
+  Unit@ 105, Unit@ 106, Unit@ 107, Unit@ 108, Unit@ 109, Unit@ 110, Unit@ 111,
+  Unit@ 112, Unit@ 113, Unit@ 114, Unit@ 115, Unit@ 116, Unit@ 117, Unit@ 118,
+  Unit@ 119, Unit@ 120, Unit@ 121, Unit@ 122, Unit@ 123, Unit@ 124, Unit@ 125,
+  Unit@ 126, Unit@ 127, Unit@ 128, Unit@ 129, Unit@ 130, Unit@ 131, Unit@ 132,
+  Unit@ 133, Unit@ 134, Unit@ 135, Unit@ 136, Unit@ 137, Unit@ 138, Unit@ 139,
+  Unit@ 140, Unit@ 141, Unit@ 142, Unit@ 143, Unit@ 144, Unit@ 145, Unit@ 146,
+  Unit@ 147, Unit@ 148, Unit@ 149, Unit@ 150, Unit@ 151, Unit@ 152, Unit@ 153,
+  Unit@ 154, Unit@ 155, Unit@ 156, Unit@ 157, Unit@ 158, Unit@ 159, Unit@ 160,
+  Unit@ 161, Unit@ 162, Unit@ 163, Unit@ 164, Unit@ 165, Unit@ 166, Unit@ 167,
+  Unit@ 168, Unit@ 169, Unit@ 170, Unit@ 171, Unit@ 172, Unit@ 173, Unit@ 174,
+  Unit@ 175, Unit@ 176, Unit@ 177, Unit@ 178, Unit@ 179, Unit@ 180, Unit@ 181,
+  Unit@ 182, Unit@ 183, Unit@ 184, Unit@ 185, Unit@ 186, Unit@ 187, Unit@ 188,
+  Unit@ 189, Unit@ 190, Unit@ 191, Unit@ 192, Unit@ 193, Unit@ 194, Unit@ 195,
+  Unit@ 196, Unit@ 197, Unit@ 198, Unit@ 199, Unit@ 200, Unit@ 201, Unit@ 202,
+  Unit@ 203, Unit@ 204, Unit@ 205, Unit@ 206, Unit@ 207, Unit@ 208, Unit@ 209,
+  Unit@ 210, Unit@ 211, Unit@ 212, Unit@ 213, Unit@ 214, Unit@ 215, Unit@ 216,
+  Unit@ 217, Unit@ 218, Unit@ 219, Unit@ 220, Unit@ 221, Unit@ 222, Unit@ 223,
+  Unit@ 224, Unit@ 225, Unit@ 226, Unit@ 227, Unit@ 228, Unit@ 229, Unit@ 230,
+  Unit@ 231, Unit@ 232, Unit@ 233, Unit@ 234, Unit@ 235, Unit@ 236, Unit@ 237,
+  Unit@ 238, Unit@ 239, Unit@ 240, Unit@ 241, Unit@ 242, Unit@ 243, Unit@ 244,
+  Unit@ 245, Unit@ 246, Unit@ 247, Unit@ 248, Unit@ 249, Unit@ 250, Unit@ 251,
+  Unit@ 252, Unit@ 253, Unit@ 254, Unit@ 255, Unit@ 256, Unit@ 257, Unit@ 258
+);
+
+L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+
+(L@) { Unit@; } f = (L@ l) {
+  Unit@ _110 = l.cons.head.110;
+  Unit@ _257 = l.cons.tail.cons.head.257;
+  Unit@ _003 = l.cons.tail.cons.tail.cons.head.003;
+  l.cons.tail.cons.tail.cons.tail.nil;
+};
+
+Unit@ _ = f|110257003;
+Unit;

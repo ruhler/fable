@@ -1,0 +1,6 @@
+# @@fble-test@@ compile-error 4:1
+
+# The type ZZZ@ is maltyped.
+ZZZ@ Foreign;
+
+Foreign;

@@ -2,10 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Test for code coverage, given recent changes.
- - Maybe do from a clean build, just in case we are inheriting coverage from
-   previous runs that we since lost.
-
 * Fix failing unicode tests in pkgs/std on windows build
  - issues with utf-8 command line args
  - issues with setlocale
