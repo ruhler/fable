@@ -2,6 +2,7 @@ namespace eval "tutorials" {
   set tutorials {
     Basics.fbld
     Features.fbld
+    Foreign.fbld
     Functions.fbld
     HelloWorld.fbld
     Install.fbld
