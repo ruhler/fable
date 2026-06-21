@@ -149,3 +149,17 @@ Not covered:
 Okay. Draft is done. I've gone over everything. It should all be updated. Sure
 there are things we could improve. But at least now we are caught up with
 where we were.
+
+---
+
+I feel like my tutorial is good for deep dive exhaustive coverage of the
+language. But it's maybe not so good for getting started writing programs. If
+we wanted to get started writing programs, I would focus more on those things
+that are more common, ignore things that are esoteric, and provide a lot more
+about things like how to set up your own build system to compile fble code. I
+would demonstrate how to write things using the standard library rather than
+go out of my way to have people write things without the standard library.
+
+Like, you write code differently if writing an end user application with the
+standard library than you would if writing the standard library yourself.
+

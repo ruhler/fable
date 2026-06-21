@@ -1,0 +1,42 @@
+
+Char .= /Std/Char%;
+Show, Unicode .= /Std/Char/Show%;
+OnAscii .= /Std/Char/Ascii%;
+AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
+Hex .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Test@ Tests = TestSuite|Show[
+  Test|Show({
+    Unit@ _ := Lazy;
+    AssertStream|'''e'''(Show(Char(Hex|65)));
+  }),
+
+  TestSuite|Unicode[
+    Test|Zero({
+      Unit@ _ := Lazy;
+      AssertStream|'U+0000'(Unicode(Char(Hex|0)));
+    }),
+
+    Test|Pad({
+      Unit@ _ := Lazy;
+      AssertStream|'U+006F'(Unicode(Char(Hex|6f)));
+    }),
+
+    Test|NoPad({
+      Unit@ _ := Lazy;
+      AssertStream|'U+2260'(Unicode(Char(Hex|2260)));
+    }),
+
+    Test|Long({
+      Unit@ _ := Lazy;
+      AssertStream|'U+1F700'(Unicode(Char(Hex|1F700)));
+    })
+  ]
+];
+
+@(Tests);

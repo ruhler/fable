@@ -2,14 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Test unicode for character based native input and output streams.
- - Writing π to a file should result in π in the file.
- - Reading π from a file should result in π being read.
- - Be careful not to read from a file and write out, which fails to test that
-   it shows up as unicode within fble.
- - If we can test it shows up with the right code point inside fble, then we
-   can test output by using fble-cli-demo cat on a file with unicode.
-
 * Test for code coverage, given recent changes.
  - Maybe do from a clean build, just in case we are inheriting coverage from
    previous runs that we since lost.

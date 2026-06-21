@@ -23,7 +23,8 @@ Test@ Tests = TestSuite|Char[
   }),
 
   /Std/Char/Ascii/Tests%.Tests,
-  /Std/Char/Lit/Tests%.Tests
+  /Std/Char/Lit/Tests%.Tests,
+  /Std/Char/Show/Tests%.Tests
 ];
 
 @(Tests);

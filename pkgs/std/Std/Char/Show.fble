@@ -2,7 +2,20 @@
 #  The Show@ instance for Char@.
 
 Char@ .= /Std/Char%;
+Char, Str .= /Std/Char/Ascii%;
+Format .= /Std/Char/Ascii/Stream%;
+Int@ .= /Std/Int%;
+Ge .= /Std/Int/Cmp%;
+QR@, Div .= /Std/Int/Div%;
+Int .= /Std/Int/Lit%;
+IsZero .= /Std/Int/Sign%;
+Items .= /Std/List%;
+Get, Length .= /Std/List/Index%;
 Show@ .= /Std/Show%;
+Do, Return, Put .= /Std/Stream%;
+String, ToString .= /Std/Stream/String%;
+String@ .= /Std/String%;
+Unit@ .= /Std/Unit%;
 
 # @func[Show] Show a Char@ value.
 #  @arg[Char@][x] The value to show.
@@ -11,4 +24,30 @@ Show@<Char@> Show = (Char@ x) {
   /Std/String/Show%.Show[x];
 };
 
-@(Show);
+# @func[Unicode] Show a Char@ value in unicode U+ notation.
+#  @arg[Char@][x] The character to show.
+#  @returns[Stream@]
+#   Output that shows the character in U+ notation: upper case hex with
+#   minimum number of leading zeroes needed to have at least 4 hex digits.
+Show@<Char@> Unicode = {
+  Show@<Int@> Digit = (Int@ x) {
+    Put(Get(Str|0123456789ABCDEF, x));
+  };
+
+  Show@<Int@> Digits = (Int@ x) {
+    QR@ qr = Div(x, Int|16);
+    Unit@ _ := Do(IsZero(qr.q).?(true: Return<Char@>, : Digits(qr.q)));
+    Digit(qr.r);
+  };
+
+  (String@) { String@; } Pad = (String@ x) {
+    Ge(Length(x), Int|4).?(true: x);
+    Pad(Items(Char|0, x));
+  };
+
+  (Char@ c) {
+    Format|'U+%s'[String(Pad(ToString(Digits(c.pos))))];
+  };
+};
+
+@(Show, Unicode);

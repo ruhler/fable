@@ -987,3 +987,97 @@ out when the start of a basic block is.
 No. It's still hard. Maybe I can leave the same logic as before somehow, just
 change profile ops to pointers to instructions, or what have you?
 
+---
+
+* Test unicode for character based native input and output streams.
+ - Writing π to a file should result in π in the file.
+ - Reading π from a file should result in π being read.
+ - Be careful not to read from a file and write out, which fails to test that
+   it shows up as unicode within fble.
+ - If we can test it shows up with the right code point inside fble, then we
+   can test output by using fble-cli-demo cat on a file with unicode.
+
+The natural vehicle for testing these things is fble-cli-demo. I don't trust
+passing a multibyte character in and having that show up as a unicode
+character before going back out. I really want a way to specify a unicode code
+point directly as a thing to read or print.
+
+I can use files or stdin/stdout. It's the same code path.
+
+We have the problem with unicode command line args and code pages on windows
+today that complicates this. Let's split it up. To start, don't worry about
+the windows issue. Implement something I can run and test and works on linux.
+Treat the windows thing separately.
+
+Things we could do:
+* Add an fble-cli-demo command for printing a unicode character with given
+  code point. I'm confident we can pass the code point using ascii characters,
+  read the correct value in fble, then whatever we print as output we can
+  check in a grep command like I already have. That's a good test for unicode
+  in output streams. But, if we already have confidence we can read unicode
+  characters correctly, then we can just reuse fble-cli-demo cat command and
+  the existing unicode test that way.
+
+So, focus on testing that we read unicode characters properly. There are lots
+of input paths though:
+* command line argument
+* environment variable
+* input file.
+
+Ideally we could test all of them. For the purposes of this specific todo, I
+care about input file. I don't have demo code existing today that knows how to
+read stdin. What would I do?
+
+What kind of standard commands read and consume stdin, and what do they do
+with it? Anything usefully relevant here? How about grep?
+
+wc? wc has a -c option to count characters instead of bytes. But it's not the
+default.
+
+I could have a 'chars' command that takes an input file and converts it to a
+list of unicode code points? Not standard, but demonstrates input and could be
+used to test unicode?
+
+Let's say I wrote a 'chars' command. What exactly should it do? For each input
+character... print the code point in hex? Max 20 in a row?
+
+Maybe use U+ notation? U+ followed by uppercase hex with at least 4 digits.
+
+So, if I have text:
+
+helloπ!
+
+I would convert that to:
+
+U+0068 U+0065 U+006C U+006C U+006F U+03C0 U+0021 U+000A
+
+I'm fine with spaces between entries. Where should we put newlines?
+* nowhere? do it all one one long line?
+* After every character?
+* After every 8 characters, which worst case gives us 8 * (1+2+6) = 72?
+
+Let's do after every 8 characters a newline. Okay? Good. Spec is clear. I
+think 'chars' is a reasonable enough name: gives you the input as a sequence
+of characters.
+
+Hopefully the implementation isn't too complex.
+
+Should we read from stdin or from a file? How about stdin? We already have
+examples of how to read from a file with cat.
+
+I'll want a way to show an integer using uppercase hex... Or a way to show a
+character using U+ notation? /Std/Char/Show%.U maybe? Or
+/Std/Char/Show%.Unicode. Sure. But that wants a way to show Int as (uppercase)
+hex? Or just implement that internally, because uppercase versus lowercase is
+hard to specify?
+
+Steps:
+1. Implement and test /Std/Char/Show%.Unicode.
+2. Implement fble-cli-demo chars command.
+ - Actually, let's have it take an input file, optionally '-'. Just like cat.
+   We can reuse the code perhaps.
+3. Write my test case: call chars on my sample file with unicode in it.
+
+Done. It's a little bit hacky. Particularly with switching between strings and
+streams everywhere and being a non-standard command and not working on
+windows. But it gets the job done, no?

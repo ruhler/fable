@@ -94,6 +94,13 @@ namespace eval "pkgs/std" {
   #test $::b/pkgs/std/fble-cli-demo.unicode_filename.tr $::b/pkgs/std/fble-cli-demo.unicode_filename.out \
   #  "grep helloπ $::b/pkgs/std/fble-cli-demo.unicode_filename.out"
 
+  ## Test Reading of unicode characters from files.
+  #test $::b/pkgs/std/fble-cli-demo.unicode_read.out \
+  #  "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/aπb.txt" \
+  #  "$::b/pkgs/std/fble-cli-demo ucat $::s/pkgs/std/aπb.txt > $::b/pkgs/std/fble-cli-demo.unicode_read.out"
+  #test $::b/pkgs/std/fble-cli-demo.unicode_filename.tr $::b/pkgs/std/fble-cli-demo.unicode_read.out \
+  #  "grep U+03C0 $::b/pkgs/std/fble-cli-demo.unicode_read.out"
+
   # Test environment variable access.
   test $::b/pkgs/std/fble-cli-demo.env.out \
     "$::b/pkgs/std/fble-cli-demo" \
