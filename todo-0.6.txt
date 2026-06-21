@@ -42,6 +42,7 @@ Standard Library:
 
 Tutorials:
 * Add left side menu to generated website for tutorials?
+* Write a poker solitaire tutorial outside the repo?
 
 Documentation:
 * Double check all the old documentation referring to Output@, which is now

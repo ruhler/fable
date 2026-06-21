@@ -14,3 +14,26 @@ Category Simple:
 
  Halt and Catch Fire:
   Undef@
+
+---
+
+Let's write some more tasks, now that we have revamped the standard library.
+
+There are lots of them. Not sure how to do this systematically. Maybe start
+with categories:
+
+* Basic language learning
+
+Well... there are 86 basic language learning tasks. This could be a lot of
+work?
+
+I don't know. It feels cumbersome. Particularly around getting input from the
+user.
+
+Let me do A+B. Brute force it. See how it feels.
+
+Yeah, it's pretty tedious. Lots of boilerplate for imports and main and IO and
+parsing and stuff.
+
+And I should probably write test cases for them to make sure they actually
+work, but that's a bit tedious too.
