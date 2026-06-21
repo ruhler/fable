@@ -384,7 +384,7 @@
    Runtime is O(N) plus the runtimes of the arguments, where N is the number
    of fields of the struct.
 
-  @subsection [3.6 Struct Import]
+  @subsection 3.6 Struct Import
    @AbstractSyntax @
     Expr: struct_import (imports : [(Type, Name, Name)]) (def : Expr) (body : Expr)
 
@@ -790,8 +790,8 @@
    value, in which case type inference is performed as with func_apply
    expressions.
   
-   Struct types types cannot be used for the function in bind syntax, even
-   though they share a similar concrete syntax to function application.
+   Struct types cannot be used for the function in bind syntax, even though
+   they share a similar concrete syntax to function application.
  
  @section @label[polymorphism][6. Polymorphism]
   Polymorphism allows types and values to be parameterized by types.
