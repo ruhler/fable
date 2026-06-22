@@ -2,14 +2,7 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Fix failing unicode tests in pkgs/std on windows build
- - issues with utf-8 command line args
- - issues with setlocale
-
 Standard Library:
-* Break dependency of /Std/Map% on /Std/List%?
-  By moving the Entries function somewhere else?
-  Same for /Std/Set%.
 * Remove /Std/Stream%.Do?
   Because we don't make use of the laziness of it anymore?
   Or keep it, as a convenient way to do a sequence of nested function
@@ -91,3 +84,11 @@ Other:
  - Compiled gives link time error not an any particular line number.
  - We would need some extra spec infra support to describe this.
  - Add spec test for Foreign value not found in interpreted case.
+
+---
+
+* Fix failing unicode tests in pkgs/std on windows build
+ - See thoughts in thoughts/fble-0.6/stdlib.string.txt.
+ - issues with utf-8 command line args
+ - issues with setlocale
+

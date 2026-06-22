@@ -2527,3 +2527,64 @@ Wait just a second. Put and Update are clear. How about replace? Replace is
 supposed to be removing things. So how about I keep the old key?
 
 Arbitrary, but at least clearly specified and tested now.
+
+---
+
+* Break dependency of /Std/Map% on /Std/List%?
+  By moving the Entries function somewhere else?
+
+It makes sense to me to move Entries function to /Std/Map/List%, except for
+one thing: The 'Of' function would no longer give you access to Entries. You
+would have to supply your Data@ instance separately.
+
+Is it worth it? The list type is pretty small and presumably everyone already
+depends on it.
+
+I think this signals a bigger problem: Functions like 'Of' benefit most if
+every thing you might declare is all brought into a single module. But that
+ends up bringing full dependencies of everything in, even if you only use a
+few of the functions.
+
+Maybe we could define a field of 'Of' that applies the key, data, and value to
+whatever <@ K@>(Data@<K@>)<@ V@> thing you pass to it?
+
+Maybe that's work trying? How would it look in practice?
+
+  Map@, Get, Entries .= /Std/Map%.Of(/Std/Char/Data%.Data)<Drawing@>;
+  Map@ letters = Entries[...];
+
+Turns into either:
+
+  Map@, Get .= /Std/Map%.Of(/Std/Char/Data%.Data)<Drawing@>;
+  Entries = /Std/Map/List%.Entries(/Std/Char/Data%.Data)<Drawing@>;
+  Map@ letters = Entries[...];
+
+Or:
+  Map@, Get, Of .= /Std/Map%.Of(/Std/Char/Data%.Data)<Drawing@>;
+  Entries = Of(/Std/Map/List%.Entries);
+  Map@ letters = Entries[...];
+
+  Map@, Get, Of .= /Std/Map%.Of(/Std/Char/Data%.Data)<Drawing@>;
+  Entries .= /Std/Map/List%;
+  Map@ letters = Of(Entries)[...];
+
+  Map@, Get, Key, Value@ .= /Std/Map%.Of(/Std/Char/Data%.Data)<Drawing@>;
+  Entries .= /Std/Map/List%.Of(Key)<Value@>;
+  Map@ letters = Entries[...];
+
+The last one maybe...
+
+Except 'Of' doesn't make as much sense any more for a name. It's not a list of
+key. It's a map/list of key to value?
+
+How about let's try it and see how it feels. It feels more scalable if I can
+eliminate the false dependency than to continue on a path of grouping
+everything all into huge bundles.
+
+Well, it works. It's a bit tedious. Import Key and Value@. Then another line
+to import Entries .= /Std/Map/List%.Of(Key)<Value@>; But it's doable.
+
+It still doesn't feel worth it to me now, but it would scale better if we
+start to have lots of list and map interactions. So let's keep it for now and
+revisit later if it's too painful.
+

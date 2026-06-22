@@ -10,7 +10,8 @@ Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
 Unit@ .= /Std/Unit%;
 
-Map@, Entry@, Entries .= /Std/Map%.Of(/Std/Int/Data%.Data)<Bool@>;
+Map@, Entry@, Value@, Key .= /Std/Map%.Of(/Std/Int/Data%.Data)<Bool@>;
+Entries .= /Std/Map/List%.Of(Key)<Value@>;
 Eq = /Std/Map/Eq%.Eq(/Std/Int/Eq%.Eq, /Std/Bool/Eq%.Eq);
 
 Int@ A = Int|0;

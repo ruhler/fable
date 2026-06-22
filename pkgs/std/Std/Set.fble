@@ -3,7 +3,6 @@
 
 Bool@, True, False .= /Std/Bool%;
 Data@ .= /Std/Data%;
-List@ .= /Std/List%;
 Just, Nothing .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -43,17 +42,6 @@ Has = <@ T@>(Data@<T@> data, Set@<T@> set, T@ element) {
 <@ T@>(Data@<T@>, Set@<T@>, T@) { Set@<T@>; }
 Add = <@ T@>(Data@<T@> data, Set@<T@> set, T@ element) {
   /Std/Map%.Put(data, set, element, Unit);
-};
-
-# @func[Set] Construct a set from a list of elements.
-#  @arg[@][T@] The type of element.
-#  @arg[Data@<T@>][data] The Data@ instance for the element type.
-#  @arg[List@<T@>>][elements] List of elements to populate the set with.
-#  @returns[Set@<T@>] A set with the given elements.
-<@ T@>(Data@<T@>)(List@<T@>) { Set@<T@>; }
-Set = <@ T@>(Data@<T@> data)(List@<T@> elements) {
-  elements.?(empty: Empty<T@>);
-  Add(data, Set(data, elements.items.tail), elements.items.head);
 };
 
 # @func[Remove] Remove an element from the set.
@@ -156,11 +144,11 @@ Omit = <@ T@>(Set@<T@> set, (T@) { Bool@; } p) {
 Of = <@ T@>(Data@<T@> data) {
   @(
     Set@: Set@<T@>,
+    T: data,
     Empty: Empty<T@>,
     IsEmpty: IsEmpty<T@>,
     Has: Has(data),
     Add: Add(data),
-    Set: Set(data),
     Remove: Remove(data),
     ForEach: ForEach<T@>,
     And: And<T@>,
@@ -172,4 +160,4 @@ Of = <@ T@>(Data@<T@> data) {
 };
 
 @(Set@, Empty, IsEmpty, Has, Add, Remove, ForEach,
-  And, Set, Or, Diff, Keep, Omit, Of);
+  And, Or, Diff, Keep, Omit, Of);

@@ -21,7 +21,8 @@ Main@ .= /Games/BenchmarkGame/Game%;
 Seq@ = *(String@ header, String@ codes);
 
 (Char@) { Char@; } ComplementCode = {
-  Map@, Get, Entries .= /Std/Map%.Of(/Std/Char/Data%.Data)<Char@>;
+  Map@, Value@, Get, Key .= /Std/Map%.Of(/Std/Char/Data%.Data)<Char@>;
+  Entries .= /Std/Map/List%.Of(Key)<Value@>;
 
   Map@ Complements = Entries[
     @(key: Char|A, value: Char|T),

@@ -9,7 +9,8 @@ Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
 Unit@ .= /Std/Unit%;
 
-Map@, Entry@, Entries .= /Std/Map%.Of(/Std/Int/Data%.Data)<Bool@>;
+Map@, Entry@, Value@, Key .= /Std/Map%.Of(/Std/Int/Data%.Data)<Bool@>;
+Entries .= /Std/Map/List%.Of(Key)<Value@>;
 Show = /Std/Map/Show%.Show(/Std/Int/Show%.Show, /Std/Bool/Show%.Show);
 
 Test@ Tests = TestSuite|Show[

@@ -16,7 +16,8 @@ Test@ Tests = TestSuite|Data[
     # Test that the data implementation for Int@ puts integers in the order
     # you expect.
     Unit@ _ := Lazy;
-    Set@, Set, ForEach .= /Std/Set%.Of(/Std/Int/Data%.Data);
+    Set@, T, ForEach .= /Std/Set%.Of(/Std/Int/Data%.Data);
+    Set .= /Std/Set/List%.Of(T);
     List@<Int@> ints = ToList(/Std/Int/Stream%.Range(Neg(Int|5), Int|6));
     Set@ set = Set(ints);
     List@<Int@> wnt = ints;

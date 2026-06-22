@@ -24,9 +24,10 @@ Data@<Int@> Data = (Int@ x) {
   /Std/Int/Data%.Data(Abs(x));
 };
 
-Map@, Entry@, Entries, IsEmpty, Get, Put, Update, Remove, Replace,
+Map@, Entry@, Value@, Key, IsEmpty, Get, Put, Update, Remove, Replace,
 ForEach, ReplaceAll, Map, Keep, Omit,
 Meet, Join, Diff .= /Std/Map%.Of(Data)<Bool@>;
+Entries .= /Std/Map/List%.Of(Key)<Value@>;
 
 Eq = /Std/Map/Eq%.Eq(/Std/Int/Eq%.Eq, /Std/Bool/Eq%.Eq);
 Show = /Std/Map/Show%.Show(/Std/Int/Show%.Show, /Std/Bool/Show%.Show);

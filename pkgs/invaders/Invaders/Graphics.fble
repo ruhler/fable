@@ -344,7 +344,8 @@ Drawing@ LetterV = Drawings[
 # String --
 #   Draw a string of letters.
 (String@) { Drawing@; } String = {
-  Map@, Get, Entries .= /Std/Map%.Of(/Std/Char/Data%.Data)<Drawing@>;
+  Map@, Value@, Key, Get .= /Std/Map%.Of(/Std/Char/Data%.Data)<Drawing@>;
+  Entries .= /Std/Map/List%.Of(Key)<Value@>;
   Map@ letters = Entries[
     @(key: Char|0, value: Digit0),
     @(key: Char|1, value: Digit1),

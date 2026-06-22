@@ -8,7 +8,8 @@ Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
 Unit@ .= /Std/Unit%;
 
-Set@, Set .= /Std/Set%.Of(/Std/Int/Data%.Data);
+Set@, T .= /Std/Set%.Of(/Std/Int/Data%.Data);
+Set .= /Std/Set/List%.Of(T);
 Show = /Std/Set/Show%.Show(/Std/Int/Show%.Show);
 
 Test@ Tests = TestSuite|Show[

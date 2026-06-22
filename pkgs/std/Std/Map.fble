@@ -3,7 +3,6 @@
 
 Bool@, True, False, And .= /Std/Bool%;
 Data@, Bit@ .= /Std/Data%;
-List@ .= /Std/List%;
 Maybe@, Just, Nothing, Default .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -133,22 +132,6 @@ Update = <@ K@>(Data@<K@> data)<@ V@> {
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
 Put = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
   Update(data, map, key, (Maybe@<V@> _) { value; });
-};
-
-# @func[Entries] Construct a map from a list of entries.
-#  @arg[@][K@] The type of key.
-#  @arg[Data@<K@>][data] The Data@ instance for the key type.
-#  @arg[@][V@] The type of value.
-#  @arg[List@<Entry@<K@, V@>>][entries]
-#   List of entries to populate the map with.
-#  @returns[Map@<K@, V@>]
-#   A map with the given entries. Earlier entries in the entries list are used
-#   in case of duplicate keys in the entries list.
-<@ K@>(Data@<K@>)<@ V@>(List@<Entry@<K@, V@>>) { Map@<K@, V@>; }
-Entries = <@ K@>(Data@<K@> data)<@ V@>(List@<Entry@<K@, V@>> entries) {
-  entries.?(empty: Empty<K@, V@>);
-  K@ key, V@ value .= entries.items.head;
-  Put(data, Entries(data, entries.items.tail), key, value);
 };
 
 # @func[Replace] Replace or delete a value already present in a map.
@@ -430,10 +413,10 @@ Of = <@ K@>(Data@<K@> data)<@ V@> {
     Key@: K@,
     Value@: V@,
     Entry@: Entry@<K@, V@>,
+    Key: data,
     Empty: Empty<K@, V@>,
     IsEmpty: IsEmpty<K@, V@>,
     Put: Put(data)<V@>,
-    Entries: Entries(data)<V@>,
     Update: Update(data)<V@>,
     Remove: Remove(data)<V@>,
     Replace: Replace(data)<V@>,
@@ -451,6 +434,6 @@ Of = <@ K@>(Data@<K@> data)<@ V@> {
 
 @(
   Entry@, Map@,
-  Empty, IsEmpty, Get, Update, Put, Entries, Remove, Replace,
+  Empty, IsEmpty, Get, Update, Put, Remove, Replace,
   ForEach, ReplaceAll, Map, Keep, Omit, Meet, Join, Diff, Of
 );

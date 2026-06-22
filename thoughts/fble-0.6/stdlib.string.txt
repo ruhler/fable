@@ -1282,3 +1282,35 @@ I don't have mt.exe installed to try it out. Looks like I will need to change
 LOCALE somehow to make things work, even ignoring the argv issue. The utf8
 code page works, but not the 1252 one I get with the checked in code.
 
+---
+
+Reviewing the msys command line arg unicode code change in question:
+
+On windows, if I don't do anything, my unicode pi is being replaced with ascii
+'p'. Which is ridiculous in my opinion.
+
+It's easy to reproduce with a simple file outside of fble. Things tried:
+* -municode option to gcc fails with undefined reference to wWinMain
+
+Let's take a step back and say what's going on here:
+* By default, main on windows mangles unicode arguments.
+* We could add an app manifest on windows using mt.exe to making main on
+  windows give utf8.
+ - I haven't tried it because I don't have mt.exe installed
+* We can write wmain with wchar_t instead of main on windows
+ - Have to link with -municode for this to work.
+ - Have to setlocale LC_TYPE  to ".UTF-8"
+* fble-compile writes the main function for us when requested.
+ - fble-cli has its own main function defined otherwise.
+
+I don't think there's anything stopping me from writing a little .o file that
+implements wmain, gets the args in wchar_t format, converts to UTF8 char* and
+calls into main. If we link with that and -municode, presumably the rest of
+the code will work as is.
+
+Or I could do the opposite. Use wmain with wchar_t everywhere, and define a
+.o file to convert main to wmain on linux.
+
+I don't know what to do. If I don't do something for windows, unicode
+character support is basically broken on that platform.
+

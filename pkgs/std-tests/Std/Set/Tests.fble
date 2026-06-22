@@ -11,8 +11,9 @@ TestSuite = OnAscii(/Std/Test%.TestSuite);
 Test = OnAscii(/Std/Test%.Test);
 Unit@ .= /Std/Unit%;
 
-Set@, Set, IsEmpty, Has, Add, Remove, ForEach, And, Or, Diff,
+Set@, T, IsEmpty, Has, Add, Remove, ForEach, And, Or, Diff,
   Keep, Omit .= /Std/Set%.Of(/Std/Int/Data%.Data);
+Set .= /Std/Set/List%.Of(T);
 Eq = /Std/Set/Eq%.Eq(/Std/Int/Eq%.Eq);
 Show = /Std/Set/Show%.Show(/Std/Int/Show%.Show);
 

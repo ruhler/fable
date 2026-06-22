@@ -1,0 +1,33 @@
+
+Data@ .= /Std/Data%;
+List@ .= /Std/List%;
+Map@, Entry@, Put, Empty .= /Std/Map%;
+
+# @func[Entries] Construct a map from a list of entries.
+#  @arg[@][K@] The type of key.
+#  @arg[Data@<K@>][data] The Data@ instance for the key type.
+#  @arg[@][V@] The type of value.
+#  @arg[List@<Entry@<K@, V@>>][entries]
+#   List of entries to populate the map with.
+#  @returns[Map@<K@, V@>]
+#   A map with the given entries. Earlier entries in the entries list are used
+#   in case of duplicate keys in the entries list.
+<@ K@>(Data@<K@>)<@ V@>(List@<Entry@<K@, V@>>) { Map@<K@, V@>; }
+Entries = <@ K@>(Data@<K@> data)<@ V@>(List@<Entry@<K@, V@>> entries) {
+  entries.?(empty: Empty<K@, V@>);
+  K@ key, V@ value .= entries.items.head;
+  Put(data, Entries(data, entries.items.tail), key, value);
+};
+
+# @func[Of] Functions specialized for the given key and value types.
+#  @arg[@][K@] The key type.
+#  @arg[Data@<K@>][data] The Data@ instance to use with the map.
+#  @arg[@][V@] The value type.
+#  @returns[...] The methods specialized for the given key and value.
+Of = <@ K@>(Data@<K@> data)<@ V@> {
+  @(
+    Entries: Entries(data)<V@>
+  );
+};
+
+@(Entries, Of);

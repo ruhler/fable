@@ -1,0 +1,28 @@
+
+Data@ .= /Std/Data%;
+List@ .= /Std/List%;
+Set@, Add, Empty .= /Std/Set%;
+
+
+# @func[Set] Construct a set from a list of elements.
+#  @arg[@][T@] The type of element.
+#  @arg[Data@<T@>][data] The Data@ instance for the element type.
+#  @arg[List@<T@>>][elements] List of elements to populate the set with.
+#  @returns[Set@<T@>] A set with the given elements.
+<@ T@>(Data@<T@>)(List@<T@>) { Set@<T@>; }
+Set = <@ T@>(Data@<T@> data)(List@<T@> elements) {
+  elements.?(empty: Empty<T@>);
+  Add(data, Set(data, elements.items.tail), elements.items.head);
+};
+
+# @func[Of] Set functions specialized for the given type.
+#  @arg[@][T@] The set element type.
+#  @arg[Data@<K@>][data] The Data@ instance to use with the set.
+#  @returns[...] The Set methods specialized for the given type.
+Of = <@ T@>(Data@<T@> data) {
+  @(
+    Set: Set(data)
+  );
+};
+
+@(Set, Of);

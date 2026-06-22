@@ -10,7 +10,8 @@ Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
 Unit@ .= /Std/Unit%;
 
-Set@, Set .= /Std/Set%.Of(/Std/Int/Data%.Data);
+Set@, T .= /Std/Set%.Of(/Std/Int/Data%.Data);
+Set .= /Std/Set/List%.Of(T);
 Eq = /Std/Set/Eq%.Eq(/Std/Int/Eq%.Eq);
 
 Int@ A = Int|0;
