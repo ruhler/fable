@@ -6,14 +6,14 @@
 #ifndef FBLE_STD_DATA_FBLE_H_
 #define FBLE_STD_DATA_FBLE_H_
 
-#include <stddef.h>            // for wchar_t
+#include <stdint.h>              // for uint32_t
 
 #include <fble/fble-runtime.h>   // for FbleValue, etc.
 
 /**
  * @func[FbleNewCharValue] Creates an FbleValue of type @l{/Std/Char%.Char@}.
  *  @arg[FbleRuntime*][runtime] The runtime context.
- *  @arg[char][c] The value of the character to write.
+ *  @arg[uint32_t][c] The unicode code point of the character.
  *
  *  @returns[FbleValue*]
  *   The FbleValue c represented as an @l{/Std/Char%.Char@}.
@@ -21,19 +21,19 @@
  *  @sideeffects
  *   Allocates a value that must be freed when no longer required.
  */
-FbleValue* FbleNewCharValue(FbleRuntime* runtime, wchar_t c);
+FbleValue* FbleNewCharValue(FbleRuntime* runtime, uint32_t c);
 
 /**
  * @func[FbleCharValueAccess] Reads a character type @l{/Std/Char%.Char@}.
  *  @arg[FbleValue*][c] The value of the character.
  *
- *  @returns[char]
- *   The value x represented as a c char.
+ *  @returns[uint32_t]
+ *   The unicode code point associated with the character.
  *
  *  @sideeffects
  *   None
  */
-wchar_t FbleCharValueAccess(FbleValue* c);
+uint32_t FbleCharValueAccess(FbleValue* c);
 
 /**
  * @func[FbleNewIntValue] Creates a new @l{/Std/Int%.Int@} value.

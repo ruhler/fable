@@ -64,15 +64,15 @@ static int64_t ReadIntP(FbleValue* x)
 }
 
 // FbleNewCharValue -- see documentation in data.fble.h
-FbleValue* FbleNewCharValue(FbleRuntime* runtime, wchar_t c)
+FbleValue* FbleNewCharValue(FbleRuntime* runtime, uint32_t c)
 {
-  return FbleNewStructValue_(runtime, 1, FbleNewIntValue(runtime, (uint64_t)c));
+  return FbleNewStructValue_(runtime, 1, FbleNewIntValue(runtime, c));
 }
 
 // FbleCharValueAccess -- see documentation in data.fble.h
-wchar_t FbleCharValueAccess(FbleValue* c)
+uint32_t FbleCharValueAccess(FbleValue* c)
 {
-  return (wchar_t)FbleIntValueAccess(FbleStructValueField(c, 1, 0));
+  return (uint32_t)FbleIntValueAccess(FbleStructValueField(c, 1, 0));
 }
 
 // See documentation in int.fble.h

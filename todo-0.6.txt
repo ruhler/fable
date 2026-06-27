@@ -5,6 +5,7 @@ Things to consider doing for the fble-0.6 release.
 * Revisit handling of wchar_t vs. unicode, locale, and all that.
  - Switch string conversion to use utf8.
  - finish implementing utf8 decoding in fble.
+ - Update /Std/Stream/Debug%.PutChar impl to use utf8.
 
 * Inline /Std/Io/File/Utf8%.Text fields into the module directly?
  - Is the extra indirection of 'Text' worth having?
