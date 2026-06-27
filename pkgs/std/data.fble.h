@@ -73,14 +73,13 @@ FbleValue* FbleNewMaybeValue(FbleRuntime* runtime, FbleValue* arg);
  * @func[FbleNewStringValue] Converts a C string to @l{/Std/String%.String@}.
  *  @arg[FbleRuntime*][runtime] The runtime context.
  *  @arg[const char*][str]
- *   The string to convert, interpreted as a multibyte character string based
- *   on the current locale, and assuming that the current locale wchar_t
- *   values are unicode code points.
+ *   The string to convert, interpreted as a UTF-8 encoded multibyte character
+ *   string.
  *
  *  @returns[FbleValue*]
  *   A newly allocated fble @l{/Std/String%.String@} with the contents of str.
- *   Returns NULL if the string is not a valid multibyte character string
- *   under the current locale.
+ *   Returns NULL if the string is not a valid UTF-8 encoded multibyte
+ *   character string.
  *
  *  @sideeffects
  *   Allocates an FbleValue on the heap.
@@ -93,10 +92,9 @@ FbleValue* FbleNewStringValue(FbleRuntime* runtime, const char* str);
  *
  *  @returns[char*]
  *   A newly allocated nul terminated c string with the contents of str. The
- *   resulting string is a multibyte character string encoded based on the
- *   current locale, assuming that the current locale wchar_t values are
- *   unicode code points. Returns NULL if the string could not be converted
- *   under the current locale.
+ *   resulting string is a UTF-8 encoded multibyte character string. Returns
+ *   NULL if the string can't be encoded properly, because for example it
+ *   contains invalid unicode code points.
  *
  *  @sideeffects
  *   The caller should call FbleFree on the returned string when it is no

@@ -6,7 +6,6 @@
 #include "app.h"
 
 #include <assert.h>       // for assert
-#include <locale.h>       // for setlocale, LC_CTYPE
 #include <string.h>       // for strcmp
 
 #include <SDL.h>          // for SDL_*
@@ -523,9 +522,6 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   (void)(FbleCharValueAccess);
   (void)(FbleIntValueAccess);
   (void)(FbleStringValueAccess);
-
-  // Set locale properly before converting command line args into fble land.
-  setlocale(LC_CTYPE, "");
 
   Args app_args = {
     .jank_stats = false,
