@@ -3,6 +3,9 @@ Fble 0.6 TODO
 Things to consider doing for the fble-0.6 release.
 
 * Revisit handling of wchar_t vs. unicode, locale, and all that.
+ - Remove old text based IO.
+ - Switch string conversion to use utf8.
+ - finish implementing utf8 decoding in fble.
 
 * It's hard to find where fble functions live
  - Anything I can do about that?
