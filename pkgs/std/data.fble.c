@@ -111,77 +111,101 @@ FbleValue* FbleNewMaybeValue(FbleRuntime* runtime, FbleValue* arg)
   }
   return FbleNewUnionValue(runtime, MAYBE_TAGWIDTH, 0, arg);
 }
+/**
+ * @func[FbleUtf8Encode] Encode a character in utf8.
+ *  You give a unicode code point, it gives you back the sequence of utf-8
+ *  bytes to represent that code point. The resulting bytes are not null
+ *  terminated or anything like that.
+ *
+ *  @arg[uint32_t][c] The unicode code point.
+ *  @arg{char[6]}[bytes] 6 bytes of output buffer.
+ *  @returns[size_t]
+ *   The number of bytes used for the encoded character. Zero on failure.
+ *  @sideeffects
+ *   @i Fills in up to 6 bytes in the given bytes array.
+ */
+size_t FbleUtf8Encode(uint32_t c, char bytes[6])
+{
+  // 0x00000000 - 0x0000007F:
+  //        0xxxxxxx
+  if (c <= 0x7F) {
+    bytes[0] = c;
+    return 1;
+  }
+
+  // 0x00000080 - 0x000007FF:
+  //        110xxxxx 10xxxxxx
+  if (c <= 0x7FF) {
+    bytes[0] = 0xC0 | (c >> 6);
+    bytes[1] = 0x80 | ((c >> 0) & 0x3F);
+    return 2;
+  }
+
+  // 0x00000800 - 0x0000FFFF:
+  //        1110xxxx 10xxxxxx 10xxxxxx
+  if (c <= 0xFFFF) {
+    bytes[0] = 0xE0 | (c >> 12);
+    bytes[1] = 0x80 | ((c >> 6) & 0x3F);
+    bytes[2] = 0x80 | ((c >> 0) & 0x3F);
+    return 3;
+  }
+
+  // 0x00010000 - 0x001FFFFF:
+  //        11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+  if (c <= 0x1FFFFF) {
+    bytes[0] = 0xF0 | (c >> 18);
+    bytes[1] = 0x80 | ((c >> 12) & 0x3F);
+    bytes[2] = 0x80 | ((c >> 6) & 0x3F);
+    bytes[3] = 0x80 | ((c >> 0) & 0x3F);
+    return 4;
+  }
+
+  // 0x00200000 - 0x03FFFFFF:
+  //        111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+  if (c <= 0x3FFFFFF) {
+    bytes[0] = 0xF0 | (c >> 24);
+    bytes[1] = 0x80 | ((c >> 18) & 0x3F);
+    bytes[2] = 0x80 | ((c >> 12) & 0x3F);
+    bytes[3] = 0x80 | ((c >> 6) & 0x3F);
+    bytes[4] = 0x80 | ((c >> 0) & 0x3F);
+    return 5;
+  }
+
+  // 0x04000000 - 0x7FFFFFFF:
+  //        1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+  if (c <= 0x7FFFFFFF) {
+    bytes[0] = 0xF0 | (c >> 30);
+    bytes[1] = 0x80 | ((c >> 24) & 0x3F);
+    bytes[2] = 0x80 | ((c >> 18) & 0x3F);
+    bytes[3] = 0x80 | ((c >> 12) & 0x3F);
+    bytes[4] = 0x80 | ((c >> 6) & 0x3F);
+    bytes[5] = 0x80 | ((c >> 0) & 0x3F);
+    return 6;
+  }
+
+  return 0;
+}
 
 // FbleStringValueAccess -- see documentation in data.fble.h
 char* FbleStringValueAccess(FbleValue* str)
 {
   struct { size_t size; char* xs; } chars;
   FbleInitVector(chars);
+  char buf[8];
   while (FbleUnionValueTag(str, LIST_TAGWIDTH) == 0) {
     FbleValue* charP = FbleUnionValueArg(str, LIST_TAGWIDTH);
     FbleValue* charV = FbleStructValueField(charP, CONS_FIELDC, 0);
     str = FbleStructValueField(charP, CONS_FIELDC, 1);
 
     uint32_t c = FbleCharValueAccess(charV);
-
-    // 0x00000000 - 0x0000007F:
-    //        0xxxxxxx
-    if (c <= 0x7F) {
-      FbleAppendToVector(chars, c);
-      continue;
+    size_t n = FbleUtf8Encode(c, buf);
+    if (n == 0) {
+      return NULL;
     }
 
-    // 0x00000080 - 0x000007FF:
-    //        110xxxxx 10xxxxxx
-    if (c <= 0x7FF) {
-      FbleAppendToVector(chars, 0xC0 | (c >> 6));
-      FbleAppendToVector(chars, 0x80 | ((c >> 0) & 0x3F));
-      continue;
+    for (size_t i = 0; i < n; ++i) {
+      FbleAppendToVector(chars, buf[i]);
     }
-
-    // 0x00000800 - 0x0000FFFF:
-    //        1110xxxx 10xxxxxx 10xxxxxx
-    if (c <= 0xFFFF) {
-      FbleAppendToVector(chars, 0xE0 | (c >> 12));
-      FbleAppendToVector(chars, 0x80 | ((c >> 6) & 0x3F));
-      FbleAppendToVector(chars, 0x80 | ((c >> 0) & 0x3F));
-      continue;
-    }
-
-    // 0x00010000 - 0x001FFFFF:
-    //        11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-    if (c <= 0x1FFFFF) {
-      FbleAppendToVector(chars, 0xF0 | (c >> 18));
-      FbleAppendToVector(chars, 0x80 | ((c >> 12) & 0x3F));
-      FbleAppendToVector(chars, 0x80 | ((c >> 6) & 0x3F));
-      FbleAppendToVector(chars, 0x80 | ((c >> 0) & 0x3F));
-      continue;
-    }
-
-    // 0x00200000 - 0x03FFFFFF:
-    //        111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-    if (c <= 0x3FFFFFF) {
-      FbleAppendToVector(chars, 0xF0 | (c >> 24));
-      FbleAppendToVector(chars, 0x80 | ((c >> 18) & 0x3F));
-      FbleAppendToVector(chars, 0x80 | ((c >> 12) & 0x3F));
-      FbleAppendToVector(chars, 0x80 | ((c >> 6) & 0x3F));
-      FbleAppendToVector(chars, 0x80 | ((c >> 0) & 0x3F));
-      continue;
-    }
-
-    // 0x04000000 - 0x7FFFFFFF:
-    //        1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-    if (c <= 0x7FFFFFFF) {
-      FbleAppendToVector(chars, 0xF0 | (c >> 30));
-      FbleAppendToVector(chars, 0x80 | ((c >> 24) & 0x3F));
-      FbleAppendToVector(chars, 0x80 | ((c >> 18) & 0x3F));
-      FbleAppendToVector(chars, 0x80 | ((c >> 12) & 0x3F));
-      FbleAppendToVector(chars, 0x80 | ((c >> 6) & 0x3F));
-      FbleAppendToVector(chars, 0x80 | ((c >> 0) & 0x3F));
-      continue;
-    }
-
-    return NULL;
   }
 
   FbleAppendToVector(chars, '\0');

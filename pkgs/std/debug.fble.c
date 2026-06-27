@@ -3,14 +3,15 @@
  *  Implementation of /Std/Stream/Debug% module FFI.
  */
 
-#include <stddef.h>                  // for wchar_t
-#include <stdio.h>                   // for fputwc
-#include <wchar.h>                   // for fputwc
+#include <stdio.h>                   // for fwrite, fflush
 
 #include <fble/fble-function.h>
 #include <fble/fble-runtime.h>       // for FbleValue, etc.
 
 #include "data.fble.h"               // for FbleCharValueAccess
+
+// See documentation in data.fble.c.
+size_t FbleUtf8Encode(uint32_t c, char bytes[6]);
 
 /**
  * @func[PutChar] FbleRunFunction for PutChar foreign function.
@@ -26,8 +27,10 @@
  */
 static FbleValue* PutChar(FbleRuntime* runtime, FbleProfileThread* profile, FbleFunction* function, FbleValue** args)
 {
-  wchar_t c = FbleCharValueAccess(args[0]);
-  fputwc(c, stderr);
+  uint32_t c = FbleCharValueAccess(args[0]);
+  char bytes[8];
+  size_t n = FbleUtf8Encode(c, bytes);
+  fwrite(bytes, sizeof(char), n, stderr);
   fflush(stderr);
   return FbleNewStructValue_(runtime, 0);
 }
