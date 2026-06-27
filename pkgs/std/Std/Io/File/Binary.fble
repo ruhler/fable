@@ -3,7 +3,7 @@
 
 Str .= /Std/Char/Ascii%;
 Int@ .= /Std/Int%;
-Io@ .= /Std/Io%;
+External@, Io@ .= /Std/Io%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@ .= /Std/Stream%;
@@ -11,8 +11,17 @@ In@, Out@ .= /Std/Stream/Io%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 
-File@, GetStdin, GetStdout, GetStderr, Open, Flush,
-GetByte, PutByte .= /Std/Io/File/Internal%;
+# Pretend type for FILE*. Only to be accessed from FFI functions.
+File@ = *(Unit@ file);
+
+# FFI for binary file IO.
+External@<File@> GetStdin;
+External@<File@> GetStdout;
+External@<File@> GetStderr;
+(String@, String@) { External@<Maybe@<File@>>; } Open;
+(File@) { External@<Unit@>; } Flush;
+(File@) { External@<Maybe@<Int@>>; } GetByte;
+(File@, Int@) { External@<Unit@>; } PutByte;
 
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@<Int@>) { M@<Unit@>; }
 Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@<Int@> output) {
