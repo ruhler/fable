@@ -1,0 +1,187 @@
+Unicode
+=======
+The big question. How to deal with unicode all around things.
+
+We're at the tail end of the fble-0.6 release, and I'm running into challenges
+with the choices I've made. Let's take the time to reconsider.
+
+See thoughts/fble-0.6/stdlib.char.txt and others for some context.
+
+Summary of where we are today:
+* The language spec says nothing about character sets or encodings.
+  - Just a small set of punctuation characters that you have to have.
+* Literals in the spec are encoded in a character set independent way using
+  prefix matching in the source code.
+* In practice the compiler using default "C" locale, which works fine for UTF8
+  encoded source files with funny characters because it only ever does prefix
+  matching of characters in the source file.
+* /Std/Char%.Char@ type claims to be unicode code points.
+* Reading and writing of files is done via wchar_t
+  - By assuming (without good reason) that wchar_t is unicode code points.
+* Conversion of fble String@ to multibyte char* is provided at C api level via
+  wchar_t.
+* setlocale(LC_CTYPE, "") is called in FbleCliMain, FbleAppMain to set up the
+  locale fairly early on.
+
+The challenges I'm facing right now:
+* Windows command line arguments are mangled to de-unicode them.
+ - Unless I can figure out a way to enable UTF8 mode for the compiled apps or
+   the whole system.
+* Windows wchar_t is 16 bits, so obviously can't work as unicode code points.
+* Windows setlocale with "" value does not work to switch to UTF8 locale.
+* In theory we can't rely on wchar_t being unicode points, depending on the
+  platform or locale settings.
+
+I've skimmed through the source code for iconv. It looks complicated.
+Essentially you have to hard code knowledge about all the various platforms to
+know what the meaning of wchar_t is, and customize based on that.
+
+Go and Rust seem to take the stance that UTF8 is the encoding to use (for
+source files and string literals, anyway), and that you only ever read or
+write bytes to files.
+
+So, straw proposal:
+* What if change the fble reference implementation to:
+ - Treat all char* as UTF8 encoded strings.
+ - Generate UTF8 encoded char* for strings.
+ - Write characters to files in binary mode encoded as UTF8 strings.
+ - Read characters from files in binary mode encoded as UTF8 strings.
+
+In other words, remove all dependence on wchar_t and locale. Force everyone
+around us to make it work with UTF8.
+
+In practice this means things like:
+* I could special case windows command line args to work via wchar_t and
+  assumptions about windows, or via UTF8 mode for apps.
+* Reading files generated from other programs or writing files and sending
+  them to other programs will mess up if those programs don't also assume
+  UTF8 encodings of things. Or we could use iconv in between to translate as
+  needed.
+
+We could also consider, at the same time, but orthogonally, whether we want to
+support separate text / binary mode for files. I think it makes sense at the
+library level. But also whether that should do something to line endings or
+not (an internal implementation detail ish).
+
+This approach would solve all of my challenges, except not entirely solve the
+windows command line argument issue, but at least make it possibly slightly
+easier to deal with.
+
+It let's us continue to be character set agnostic for the fble language spec.
+Instead it would be a reference implementation / platform defined reliance on
+UTF8.
+
+Or, we could go the extra step and say the language itself must be encoded
+UTF8. And maybe that gives us some magic thing with regards to literals? But
+not really. Because I don't have a language Char@ type. If we did, we could
+say literal is a list of Char@.
+
+It's an interesting idea, but I don't think it adds anything right now. Maybe
+keep it around for whatever next improvement I make to literals, but limit the
+scope of this discussion for now.
+
+In practice, to switch to UTF8 for the implementation, I'll want to have some
+code to translate uint64_t unicode point to a sequence of UTF8 bytes when
+writing out characters. And read a sequence of UTF8 encoded bytes into a
+single uint64_t when reading a character. And hope we don't try reading files
+in character mode that aren't valid UTF8 encodings (we can worry about the
+right way to handle those kinds of errors when we figure out the right way to
+deal with errors in fble in general).
+
+As long as we are well defined in saying that we are using UTF8, anyone could
+work around non-utf8 locales by using iconv or converting between their
+multibyte string encodings and utf8 multibyte string encodings when
+interacting with the fble runtime. It seems reasonable.
+
+So, choices are:
+A. Assume wchar_t is unicode code points, hack around locale to get it to
+support unicode characters (via UTF8 explicitly on windows, or just hope it's
+UTF8 by default).
+B. Declare we do things via UTF8, and have everyone interacting with fble at
+the native level deal with it.
+
+It's rough that the main platform I'm using has UTF8 as the "" locale, because
+it feels a lot like: well it doesn't matter because everything is UTF8 in
+practice, so who cares?
+
+Either way, we need to go out of our way to make things portable, right?
+Either by calling setlocale or converting from given char* to utf8 encoded.
+We're just pushing the problem on to the end user and hoping that makes it go
+away because there are so few end users not already using UTF8. I'm not
+convinced option (B) solves anything fundamentally.
+
+Except, with UTF8, I wouldn't need setlocale? Which feels like a marginal
+improvement. You could have C locale set, and still pass a utf8 encoded
+sequence of bytes for command line arguments or in files and have it just
+work. That is, if the system is using a utf8 locale, then it will just work
+even without calling setlocale. If not, then, well you're screwed regardless,
+no?
+
+---
+
+I think it's worth a try to switch to an assumption of UTF8 over an assumption
+of wchar_t as unicode code points. Specifically:
+* FbleNewCharValue - convert unicode code (as uint64_t or some such) point to fble char.
+* FbleCharValueAccess - convert char to unicode code point?
+* PutChar - implement on top of binary file IO, explicit UTF8 translation.
+* GetChar - implement on top of binary file IO, explicit UTF8 translation.
+* FbleStringValueAccess, FbleNewStringValue
+ - Convert to and from UTF8 encoded multibyte char*.
+
+Main questions are:
+* What C type to use when converting to/from an individual character?
+ - uint32_t is wide enough for any unicode char.
+ - wchar_t is not wide enough on windows, for example.
+ - char is not wide enough for most anything anywhere.
+* What to do if we encounter an illegal UTF8 sequence?
+ - For now, I think best to crash with a runtime error.
+ - Eventually we need a way to catch and report these kinds of errors back to
+   the program.
+
+Note: if we do text things on top of binary file IO, we lose newline
+translation on Windows. I'm willing to try that.
+
+What will go wrong here?
+* Any place I may have generated files outside of fble, if I try to process
+  them inside, I'll see extra \r characters that may mess things up. But I
+  don't think this is the case today?
+* I'm not sure how my unicode chars are being encoded on windows. Presumably
+  utf8 and we'll be fine there.
+
+So I think it could work okay. I also like if we generalize the stdio text
+interface to take a generic encoder/decoder of characters, the programmer
+could decide they want to assume different encodings. The only real thing we
+lose is the way to ask the platform what encoding and text line endings it
+thinks you ought to be using. But we could add an API for that if appropriate.
+
+Steps:
+* On linux, re-implement text based stdio on top of binary based stdio and
+  get everything to work. Including the currently commented out std test
+  cases.
+* Get that all to work on Windows too.
+* Remove old text based stdio implementation and clean up.
+* Change FbleNewCharValue and FbleCharValueAccess to go via uint32_t instead
+  of wchar_t.
+* Change FbleStringValueAccess and FbleNewStringValue to assume UTF8 encoded.
+ - Remove calls to setlocale, which should no longer be needed.
+
+Oh, yeah, the real problem here is it's going to be stupidly slow to do the
+utf8 conversion in fble itself? Maybe not too bad. But certainly significant.
+I guess it's good to exercise that kind of bottleneck to get it improved.
+
+---
+
+Draft done:
+* /Std/Io/File/Text2% defines Encoding@ and Text.
+* /Std/Io/File/Utf8% defines Utf8 and Text.
+
+We should be able to do a drop in replacement of /Std/Io/File/Utf8%.Text for
+/Std/Io/File/Text%.
+
+The code is tricky. The tricky parts should be factored out somewhere.
+Specifically a monadic do like thing over Stream@ and Out@.
+
+I suppose try migrating things one at a time? Or... all at once?
+
+All at once... things seem to build and all tests are passing. Why does that
+not give me as much confidence as I would like?

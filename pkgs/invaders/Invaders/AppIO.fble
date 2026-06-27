@@ -21,9 +21,9 @@ Put@, Get@, State@, Invaders .= /Invaders/App%;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
 	Maybe@<String@> home := m.do(/Std/Io/Env%.GetVar(m, io, Str|'HOME'));
-  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
-  (String@) { M@<Maybe@<Out@<Char@, M@>>>; } write = /Std/Io/File/Text%.Write(m, io);
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Text.Stdout(m, io));
+  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = /Std/Io/File/Utf8%.Text.Read(m, io);
+  (String@) { M@<Maybe@<Out@<Char@, M@>>>; } write = /Std/Io/File/Utf8%.Text.Write(m, io);
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ := m.do(out(String(/Invaders/Usage%)));

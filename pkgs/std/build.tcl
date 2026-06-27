@@ -80,26 +80,26 @@ namespace eval "pkgs/std" {
     "grep hello $::b/pkgs/std/fble-cli-demo.out"
 
   # TODO: Fix the unicode tests on windows.
-  ## Test FbleNewStringValue unicode conversion.
-  #test $::b/pkgs/std/fble-cli-demo.unicode_arg.out \
-  #  $::b/pkgs/std/fble-cli-demo \
-  #  "$::b/pkgs/std/fble-cli-demo echo aπb > $::b/pkgs/std/fble-cli-demo.unicode_arg.out"
-  #test $::b/pkgs/std/fble-cli-demo.unicode_arg.tr $::b/pkgs/std/fble-cli-demo.unicode_arg.out \
-  #  "grep aπb $::b/pkgs/std/fble-cli-demo.unicode_arg.out"
+  # Test FbleNewStringValue unicode conversion.
+  test $::b/pkgs/std/fble-cli-demo.unicode_arg.out \
+    $::b/pkgs/std/fble-cli-demo \
+    "$::b/pkgs/std/fble-cli-demo echo aπb > $::b/pkgs/std/fble-cli-demo.unicode_arg.out"
+  test $::b/pkgs/std/fble-cli-demo.unicode_arg.tr $::b/pkgs/std/fble-cli-demo.unicode_arg.out \
+    "grep aπb $::b/pkgs/std/fble-cli-demo.unicode_arg.out"
 
-  ## Test FbleStringValueAccess unicode conversion.
-  #test $::b/pkgs/std/fble-cli-demo.unicode_filename.out \
-  #  "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/aπb.txt" \
-  #  "$::b/pkgs/std/fble-cli-demo cat $::s/pkgs/std/aπb.txt > $::b/pkgs/std/fble-cli-demo.unicode_filename.out"
-  #test $::b/pkgs/std/fble-cli-demo.unicode_filename.tr $::b/pkgs/std/fble-cli-demo.unicode_filename.out \
-  #  "grep helloπ $::b/pkgs/std/fble-cli-demo.unicode_filename.out"
+  # Test FbleStringValueAccess unicode conversion.
+  test $::b/pkgs/std/fble-cli-demo.unicode_filename.out \
+    "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/aπb.txt" \
+    "$::b/pkgs/std/fble-cli-demo cat $::s/pkgs/std/aπb.txt > $::b/pkgs/std/fble-cli-demo.unicode_filename.out"
+  test $::b/pkgs/std/fble-cli-demo.unicode_filename.tr $::b/pkgs/std/fble-cli-demo.unicode_filename.out \
+    "grep helloπ $::b/pkgs/std/fble-cli-demo.unicode_filename.out"
 
-  ## Test Reading of unicode characters from files.
-  #test $::b/pkgs/std/fble-cli-demo.unicode_read.out \
-  #  "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/aπb.txt" \
-  #  "$::b/pkgs/std/fble-cli-demo ucat $::s/pkgs/std/aπb.txt > $::b/pkgs/std/fble-cli-demo.unicode_read.out"
-  #test $::b/pkgs/std/fble-cli-demo.unicode_filename.tr $::b/pkgs/std/fble-cli-demo.unicode_read.out \
-  #  "grep U+03C0 $::b/pkgs/std/fble-cli-demo.unicode_read.out"
+  # Test Reading of unicode characters from files.
+  test $::b/pkgs/std/fble-cli-demo.unicode_read.out \
+    "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/aπb.txt" \
+    "$::b/pkgs/std/fble-cli-demo ucat $::s/pkgs/std/aπb.txt > $::b/pkgs/std/fble-cli-demo.unicode_read.out"
+  test $::b/pkgs/std/fble-cli-demo.unicode_read.tr $::b/pkgs/std/fble-cli-demo.unicode_read.out \
+    "grep U+03C0 $::b/pkgs/std/fble-cli-demo.unicode_read.out"
 
   # Test environment variable access.
   test $::b/pkgs/std/fble-cli-demo.env.out \

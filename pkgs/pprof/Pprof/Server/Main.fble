@@ -114,8 +114,8 @@ Percent = (Int@ numerator, Int@ denominator) {
 };
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
-  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  Out@<Char@, M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Text.Stdout(m, io));
+  Out@<Char@, M@> err := m.do(/Std/Io/File/Utf8%.Text.Stderr(m, io));
   (String@) { M@<Maybe@<In@<Int@, M@>>>; } read = /Std/Io/File/Binary%.Read(m, io);
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets(io, m));

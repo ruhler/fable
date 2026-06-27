@@ -1,0 +1,131 @@
+# @module[/Std/Io/File/Text%]
+#  Reading and writing text files and streams.
+
+Char@ .= /Std/Char%;
+Int@ .= /Std/Int%;
+Io@ .= /Std/Io%;
+Maybe@, Just, Nothing .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
+Stream@ .= /Std/Stream%;
+In@, Out@ .= /Std/Stream/Io%;
+String@ .= /Std/String%;
+
+Byte@ = Int@;
+
+Encoding@ = *(
+  (Char@) { Stream@<Byte@>; } encode,
+  <<@>@ M@>(Monad@<M@>, In@<Byte@, M@>) { In@<Char@, M@>; } decode
+);
+
+Text = (Encoding@ encoding) {
+  Binary = /Std/Io/File/Binary%;
+
+  <<@>@ M@>(Monad@<M@>, In@<Byte@, M@>) { In@<Char@, M@>; }
+  Decode = encoding.decode;
+
+  (Stream@<Char@>) { Stream@<Byte@>; }
+  EncodeStream = (Stream@<Char@> chars) {
+    <@ S@>(S@ return, (Byte@, S@) { S@; } put) {
+      Char@ c, S@ s := chars(return);
+      encoding.encode(c, s, put);
+    };
+  };
+
+  <<@>@ M@>(Monad@<M@>, Out@<Byte@, M@>) { Out@<Char@, M@>; }
+  EncodeOut = <<@>@ M@>(Monad@<M@> _m, Out@<Byte@, M@> out) {
+    (Stream@<Char@> chars) {
+      out(EncodeStream(chars));
+    };
+  };
+
+  # @func[Stdin] Standard input stream.
+  #  @arg[<@>@][M@] The monadic type for side effects.
+  #  @arg[Monad@<M@>][m] The monad instance.
+  #  @arg[Io@<M@>][io] Interface for performing io.
+  #  @returns[M@<In@<Char@, M@>>] The standard input stream.
+  <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<In@<Char@, M@>>; }
+  Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
+    In@<Byte@, M@> stdin := m.do(Binary.Stdin(m, io));
+    m.return(Decode(m, stdin));
+  };
+
+  # @func[Stdout] Standard output stream.
+  #  @arg[<@>@][M@] The monadic type for side effects.
+  #  @arg[Monad@<M@>][m] The monad instance.
+  #  @arg[Io@<M@>][io] Interface for performing io.
+  #  @returns[M@<Out@<Char@, M@>>] The standard output stream.
+  <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Char@, M@>>; }
+  Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
+    Out@<Byte@, M@> stdout := m.do(Binary.Stdout(m, io));
+    m.return(EncodeOut(m, stdout));
+  };
+
+  # @func[Stderr] Standard error stream.
+  #  @arg[<@>@][M@] The monadic type for side effects.
+  #  @arg[Monad@<M@>][m] The monad instance.
+  #  @arg[Io@<M@>][io] Interface for performing io.
+  #  @returns[M@<Out@<Char@, M@>>] The standard error stream.
+  <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Char@, M@>>; }
+  Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
+    Out@<Byte@, M@> stderr := m.do(Binary.Stderr(m, io));
+    m.return(EncodeOut(m, stderr));
+  };
+
+  # @func[Read] Opens a file for reading.
+  #  Note: the opened file will be closed automatically when you are done
+  #  reading from it.
+  #
+  #  @arg[<@>@][M@] The monadic type for side effects.
+  #  @arg[Monad@<M@>][m] The monad instance.
+  #  @arg[Io@<M@>][io] Interface for performing io.
+  #  @arg[String@][path] Path to the file to open.
+  #  @returns[M@<Maybe@<In@<Char@, M@>>>]
+  #   An input stream for the file to read. Nothing if the file could not be
+  #   opened for reading.
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<In@<Char@, M@>>>; }
+  Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
+    Maybe@<In@<Byte@, M@>> file := m.do(Binary.Read(m, io, path));
+    file.?(nothing: m.return(Nothing<In@<Char@, M@>>));
+    m.return(Just(Decode(m, file.just)));
+  };
+
+  # @func[Write] Opens a file for writing.
+  #  Note: the opened file will be closed automatically when you are done
+  #  writing to it.
+  #
+  #  @arg[<@>@][M@] The monadic type for side effects.
+  #  @arg[Monad@<M@>][m] The monad instance.
+  #  @arg[Io@<M@>][io] Interface for performing io.
+  #  @arg[String@][path] Path to the file to open.
+  #  @returns[M@<Maybe@<Out@<Char@, M@>>>]
+  #   An output stream for writing to the file. Nothing if the file could not be
+  #   opened for writing.
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<Out@<Char@, M@>>>; }
+  Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
+    Maybe@<Out@<Byte@, M@>> file := m.do(Binary.Write(m, io, path));
+    file.?(nothing: m.return(Nothing<Out@<Char@, M@>>));
+    m.return(Just(EncodeOut(m, file.just)));
+  };
+
+  # @func[Append] Opens a file for appending.
+  #  Note: the opened file will be closed automatically when you are done
+  #  appending to it.
+  #
+  #  @arg[<@>@][M@] The monadic type for side effects.
+  #  @arg[Monad@<M@>][m] The monad instance.
+  #  @arg[Io@<M@>][io] Interface for performing io.
+  #  @arg[String@][path] Path to the file to open.
+  #  @returns[M@<Maybe@<Out@<Char@, M@>>>]
+  #   An output stream for appending to the file. Nothing if the file could not
+  #   be opened for writing.
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<Out@<Char@, M@>>>; }
+  Append = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
+    Maybe@<Out@<Byte@, M@>> file := m.do(Binary.Append(m, io, path));
+    file.?(nothing: m.return(Nothing<Out@<Char@, M@>>));
+    m.return(Just(EncodeOut(m, file.just)));
+  };
+
+  @(Stdin, Stdout, Stderr, Read, Write, Append);
+};
+
+@(Byte@, Encoding@, Text);

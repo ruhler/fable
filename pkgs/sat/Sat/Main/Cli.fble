@@ -12,9 +12,9 @@ String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  Out@<Char@, M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
-  In@<Char@, M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Text.Stdout(m, io));
+  Out@<Char@, M@> err := m.do(/Std/Io/File/Utf8%.Text.Stderr(m, io));
+  In@<Char@, M@> in := m.do(/Std/Io/File/Utf8%.Text.Stdin(m, io));
 
   Any(args, /Std/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ := m.do(out(String(/Sat/Usage%)));

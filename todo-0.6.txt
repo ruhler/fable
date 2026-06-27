@@ -2,12 +2,15 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Revisit handling of wchar_t vs. unicode, locale, and all that.
+
+* It's hard to find where fble functions live
+ - Anything I can do about that?
+
+* Add Monad for Stream on stream type itself?
+ - Reuse that in the new impl of Text based file IO?
+
 Standard Library:
-* Remove /Std/Stream%.Do?
-  Because we don't make use of the laziness of it anymore?
-  Or keep it, as a convenient way to do a sequence of nested function
-  application?
-* Should we provide Monad instances for Maybe@ and Lazy@ somewhere? List@?
 * Add back character type functions isspace, isalnum, etc?
 * Add Lt, Le, Gt, Ge, etc for Char@?
 * Reconsider if Read, Write, Append should report error messages?

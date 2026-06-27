@@ -9,10 +9,10 @@ String@ .= /Std/String%;
 In@, Out@ .= /Std/Stream/Io%;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-  In@<Char@, M@> in := m.do(/Std/Io/File/Text%.Stdin(m, io));
-  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  Out@<Char@, M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
-  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = /Std/Io/File/Text%.Read(m, io);
+  In@<Char@, M@> in := m.do(/Std/Io/File/Utf8%.Text.Stdin(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Text.Stdout(m, io));
+  Out@<Char@, M@> err := m.do(/Std/Io/File/Utf8%.Text.Stderr(m, io));
+  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = /Std/Io/File/Utf8%.Text.Read(m, io);
   /Fbld/Main%.Main(m, @(in, out, err, read), args);
 };
 

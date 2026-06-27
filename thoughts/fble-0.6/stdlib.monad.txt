@@ -153,3 +153,26 @@ helper functions like ForEach? I'm not sure.
 But it makes sense to me, for the sake of making forward progress, to move
 ahead with Monad@ type to start.
 
+---
+
+* Should we provide Monad instances for Maybe@ and Lazy@ somewhere? List@?
+
+/Std/Maybe% defines Do and Just. It would be trivial to give a Monad@
+implementation. /Std/Lazy% provides Do and Return. /Std/List% provides Do and
+it's not hard to define a single element list.
+
+So it's not like I need to do any extra work here. The question is whether
+there is value exposing a pre-populated Monad@ instance.
+
+But where do I use Monad@ instances for things where it's useful to have the
+wrapper?
+
+We use Monad@ for:
+* random number generators
+* state monads
+* top level IO monads
+
+I don't have lots of things like: seqM, seqM_, etc. I don't see any place we
+would want to use a Monad@ instance for these types. So I don't see any value
+at this point in time in providing them. Maybe in the future if we have a
+compelling reason. But I don't see a compelling reason today.

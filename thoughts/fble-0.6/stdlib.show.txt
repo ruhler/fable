@@ -1152,3 +1152,100 @@ Yes, let's go with that. And let's test that.
 
 Show and Char are moved over. That's all the Shows for now. Let's call this
 done.
+
+---
+
+* Remove /Std/Stream%.Do?
+  Because we don't make use of the laziness of it anymore?
+  Or keep it, as a convenient way to do a sequence of nested function
+  application?
+
+I use it all the time, right? Or did I used to and I don't as much anymore?
+
+Here's an implementation of Join that uses it:
+
+  (String@, List@<Stream@<Char@>>) { Stream@<Char@>; }
+  Join = (String@ sep, List@<Stream@<Char@>> xs) {
+    xs.?(empty: Return<Char@>);
+    xs.items.tail.?(empty: xs.items.head);
+    Unit@ _ := Do(xs.items.head);
+    Unit@ _ := Do(String(sep));
+    Join(sep, xs.items.tail);
+  };
+
+What would you have me write instead? In general, given two Stream@<A@>, I
+want to sequence them. How?
+
+  <@ S@>(S@ return, (A@, S@) { S@; } put) {
+    a(b(return, put), put);
+  };
+
+Which we could implement as a Seq function.
+
+  (String@, List@<Stream@<Char@>>) { Stream@<Char@>; }
+  Join = (String@ sep, List@<Stream@<Char@>> xs) {
+    xs.?(empty: Return<Char@>);
+    xs.items.tail.?(empty: xs.items.head);
+    Seq[xs.items.head, String(sep), Join(sep, xs.items.tail)];
+  };
+
+But it's not nice for making use of function bind. Imagine we had a plain Seq
+function that takes two streams:
+
+  (String@, List@<Stream@<Char@>>) { Stream@<Char@>; }
+  Join = (String@ sep, List@<Stream@<Char@>> xs) {
+    xs.?(empty: Return<Char@>);
+    xs.items.tail.?(empty: xs.items.head);
+    Seq(xs.items.head, {
+      Seq(String(sep), {
+        Join(sep, xs.items.tail);
+      });
+    });
+  };
+
+That's fine, but again, I want to make use of function bind for this. Or have
+some other syntax (here we go again...) that let's me do application
+sequentially in a statement.
+
+If we had something more general, maybe:
+
+  (String@, List@<Stream@<Char@>>) { Stream@<Char@>; }
+  Join = (String@ sep, List@<Stream@<Char@>> xs) {
+    xs.?(empty: Return<Char@>);
+    xs.items.tail.?(empty: xs.items.head);
+    Unit@ _ := Bind(Seq(xs.items.head));
+    Unit@ _ := Bind(Seq(String(sep)));
+    Join(sep, xs.items.tail);
+  };
+
+Have 'Bind' be a generic /Std/Func% thing, or part of Lazy type?
+
+Except they don't mean the same thing, right? Use of 'Bind' requires we have
+to evaluate the function being passed before outputting the first argument. We
+can only properly change that later if we use the 'Do' api.
+
+---
+
+The implementation of /Std/Stream%.Do feels suspect:
+
+<@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
+Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> f) {
+  <@ S@>(S@ return, (A@, S@) { S@; } put) {
+    ma(f(Unit, return, put), put);
+  };
+};
+
+It's calling the second first. Getting the resulting value, then passing that
+to the first.
+
+We could change the type of stream to be:
+
+  <@ S@>((Unit@) { S@; } return, (A@, S@) { S@; } put) {
+
+Then pass the function through and it would make sense.
+
+Anyway, I don't think the Do API is the problem. I think it makes sense and is
+what I want everyone to be using. If anything is a problem, it's the
+implementation. But I can change that later if/when I find a concrete instance
+of it being a real problem.
+

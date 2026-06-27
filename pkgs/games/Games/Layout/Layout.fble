@@ -240,7 +240,7 @@ State@ InitialState = @(
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ _width, Int@ height, List@<String@> _args) {
-  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Text.Stdout(m, io));
 
   M@<Event@> FilterEvent = {
     Event@ e := m.do(app.event);

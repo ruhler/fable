@@ -24,7 +24,7 @@ Run = (Test@ tests) {
       args.items.tail.items.head;
     };
 
-    Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
+    Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Text.Stdout(m, io));
     Bool@ passed := m.do(/Std/Test/Run%.Run(m, out, prefix, tests));
     m.return(passed.?(true: Success, false: Failure));
   };

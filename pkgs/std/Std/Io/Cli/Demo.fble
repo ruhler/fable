@@ -21,8 +21,8 @@ Unit@, Unit .= /Std/Unit%;
 # @func[Demo] Demo command line interface program.
 #  Run with command line argument 'help' for usage info.
 Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-  Out@<Char@, M@> out := m.do(/Std/Io/File/Text%.Stdout(m, io));
-  Out@<Char@, M@> err := m.do(/Std/Io/File/Text%.Stderr(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Text.Stdout(m, io));
+  Out@<Char@, M@> err := m.do(/Std/Io/File/Utf8%.Text.Stderr(m, io));
 
   Stream@<Char@> Usage = Lines[
     StringE|'Usage: fble-cli-demo [COMMAND [ARGS]...]',
@@ -85,7 +85,7 @@ Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
 
   # Calls a function to process each file listed on the command line.
   ForEachFile = ((In@<Char@, M@>) { M@<Unit@>; } f) {
-    (String@) { M@<Maybe@<In@<Char@, M@>>>; } Read = /Std/Io/File/Text%.Read(m, io);
+    (String@) { M@<Maybe@<In@<Char@, M@>>>; } Read = /Std/Io/File/Utf8%.Text.Read(m, io);
 
     ForEach(cmd_args, m.return(Success),
       (String@ path, M@<Exit@> return) {

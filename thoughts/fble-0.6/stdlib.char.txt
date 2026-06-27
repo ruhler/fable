@@ -477,3 +477,111 @@ will be obvious what definition to use for that standardization.
 I ended up basically inlining everything. But ... oh, it feels like it would
 be so nice to have ascii definitions for Alpha, Lower, Upper, AlNum, Space,
 etc... Or at least an easier way to define and check ranges of characters?
+
+---
+
+* Add back character type functions isspace, isalnum, etc?
+
+For Rosetta it would certainly be nice to have IsSpace. But again, it feels
+like there isn't a clear universal standard version of isspace that meets the
+needs for all the applications.
+
+Why not C99 isspace function?
+
+ isspace()
+        checks for white-space characters.  In the "C"  and  "POSIX" lo‐
+        cales,  these  are: space, form-feed ('\f'), newline ('\n'), car‐
+        riage return ('\r'), horizontal  tab  ('\t'),  and  vertical tab
+        ('\v').
+
+Because it depends on the locale. And I don't have a notion of locale really,
+aside from assuming a unicode compatible one.
+
+I could provide: /Std/Char/C%.IsSpace and friends? Or
+/Std/Char/Posix%.IsSpace and friends? That's well defined. But that would also
+encourage use of that behavior, and who knows if that's the right thing to use
+for the application in question?
+
+I could define /Std/Locale/C%, /Std/Locale/Posix%, etc. modules that define
+all these locale specific behaviors. Or I could pull something from unicode
+standard.
+
+Maybe I need ICU u_isspace?
+
+Also, internet suggests wchar_t is 16 bits on windows, so is not going to work
+for all my unicode needs.
+
+Which begs the question: should I use notion of 'locale' instead of 'unicode'
+for Char@?
+
+But posix suggests it's a bad idea to have a single global locale that
+everyone has to use. Better to be explicit to what the app needs?
+
+But we would want some way to ask the system what default locale it should
+use. That comes from the system, right?
+
+Whose job should it be to specify the current locale? Both in terms of which
+locale we want to use, and what the definition of that locale is?
+
+From ICU website:
+
+   Note: There are several ICU whitespace functions. Comparison:
+
+     • u_isUWhiteSpace=UCHAR_WHITE_SPACE: Unicode White_Space property; most
+       of general categories "Z" (separators) + most whitespace ISO controls
+       (including no-break spaces, but excluding IS1..IS4)
+     • u_isWhitespace: Java isWhitespace; Z + whitespace ISO controls but
+       excluding no-break spaces
+     • u_isJavaSpaceChar: Java isSpaceChar; just Z (including no-break
+       spaces)
+     • u_isspace: Z + whitespace ISO controls (including no-break spaces)
+     • u_isblank: "horizontal spaces" = TAB + Zs
+
+So once again, I'm feel like the application really ought to define whatever
+version of isspace is appropriate for it. It doesn't make sense to provide a
+standard one that sort of works, but doesn't always work. Even if the standard
+one is well specified to be, e.g. C locale isspace or something.
+
+---
+
+The more I read, the more I feel like wchar_t may not be the right solution.
+
+There is not guarantee that wchar_t is unicode code points. On windows it
+decidedly isn't. Certainly C99 doesn't tell us anything about wchar_t being
+unicode or large enough for unicode.
+
+Having Char@ refer to unicode code points still makes sense to me, I think.
+The concern is more the implementations of:
+* FbleNewCharValue - convert C char to fble char.
+* FbleCharValueAccess
+* PutChar - writing an fble character to a file.
+* GetChar - reading an fble character from a file.
+* FbleStringValueAccess, FbleNewStringValue
+ - Used for opening files by name, reading env vars, etc.
+
+Windows is going to have issues on the command line regardless if I don't take
+special care to prevent it from turning π into p.
+
+Let's review what go does:
+* go.dev/blog/strings.
+* strings are sequences of bytes.
+* source code is UTF8 encoded.
+* 'rune' is their term for unicode code point, represented as int32
+* you can do for-each on a string that goes UTF8 char at a time
+  - The string is UTF8 encoded. You see a sequence of runes.
+
+That doesn't really help much here. Maybe with string literals, if I wanted to
+make the same assumption about UTF8 source encoding, but that's a different
+problem than I'm worried about right now.
+
+I can use Char@, have it be unicode code point, provide libraries for working
+with unicode in the language in fancy ways. That's all fine.
+
+But how do I translate characters into and out of fble? How do I write
+characters to a file? How do I interpret the characters of a command line
+argument?
+
+---
+
+Let's move this discussion to thoughts/fble-0.6/unicode.txt, since it is
+talking about something slightly broader than the Char@ standard library type.
