@@ -6,17 +6,16 @@
 #include "stdio.fble.h"
 
 #include <stdio.h>      // for FILE, fprintf, fflush, fgetc
-#include <wchar.h>      // for wint_t, fgetwc
 
 #ifdef _WIN32
-#include <fcntl.h>      // for _O_BINARY, _O_TEXT
+#include <fcntl.h>      // for _O_BINARY
 #include <io.h>         // for _setmode
 #endif // _WIN32
 
 #include <fble/fble-alloc.h>    // for FbleFree
 #include <fble/fble-runtime.h>  // for FbleValue, etc.
 
-#include "data.fble.h"        // for FbleNewCharValue, etc.
+#include "data.fble.h"        // for FbleIntValueAccess, etc.
 
 /**
  * @func[CloseFileOnFree] on_free function for closing a file.
@@ -35,7 +34,7 @@ static void CloseFileOnFree(void* file)
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Mode@, Unit@) { File@; }
+ *   (Unit@) { File@; }
  */  
 static FbleValue* GetStdin(
     FbleRuntime* runtime, FbleProfileThread* profile,
@@ -45,9 +44,8 @@ static FbleValue* GetStdin(
   (void)args;
 
 #ifdef __WIN32
-  int mode = FbleUnionValueTag(args[0], 1) == 0 ? _O_BINARY : _O_TEXT;
-  _setmode(_fileno(stdin), mode);
-#endif// __WIN32
+  _setmode(_fileno(stdin), _O_BINARY);
+#endif // __WIN32
 
   return FbleNewNativeValue(runtime, stdin, NULL);
 }
@@ -56,7 +54,7 @@ static FbleValue* GetStdin(
 FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdin = {
   .path = "/Std/Io/File/Internal%",
   .name = "GetStdin",
-  .num_args = 2,
+  .num_args = 1,
   .max_call_args = 0,
   .run = &GetStdin,
 };
@@ -78,9 +76,8 @@ static FbleValue* GetStdout(
   (void)args;
 
 #ifdef __WIN32
-  int mode = FbleUnionValueTag(args[0], 1) == 0 ? _O_BINARY : _O_TEXT;
-  _setmode(_fileno(stdout), mode);
-#endif// __WIN32
+  _setmode(_fileno(stdout), _O_BINARY);
+#endif // __WIN32
 
   return FbleNewNativeValue(runtime, stdout, NULL);
 }
@@ -89,7 +86,7 @@ static FbleValue* GetStdout(
 FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStdout = {
   .path = "/Std/Io/File/Internal%",
   .name = "GetStdout",
-  .num_args = 2,
+  .num_args = 1,
   .max_call_args = 0,
   .run = &GetStdout,
 };
@@ -111,8 +108,7 @@ static FbleValue* GetStderr(
   (void)args;
 
 #ifdef __WIN32
-  int mode = FbleUnionValueTag(args[0], 1) == 0 ? _O_BINARY : _O_TEXT;
-  _setmode(_fileno(stderr), mode);
+  _setmode(_fileno(stderr), _O_BINARY);
 #endif// __WIN32
 
   return FbleNewNativeValue(runtime, stderr, NULL);
@@ -122,7 +118,7 @@ static FbleValue* GetStderr(
 FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStderr = {
   .path = "/Std/Io/File/Internal%",
   .name = "GetStderr",
-  .num_args = 2,
+  .num_args = 1,
   .max_call_args = 0,
   .run = &GetStderr,
 };
@@ -195,45 +191,6 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Close = {
 };
 
 /**
- * @func[GetChar] FbleRunFunction for GetChar foreign function.
- *  See documentation of FbleRunFunction in fble-function.h
- *
- *  The fble type of the function is:
- *
- *  @code[fble] @
- *   (File@, Unit@) { Maybe@<Char@>; }
- *
- *  @sideeffects
- *   Reads a character from the give file.
- */
-static FbleValue* GetChar(
-    FbleRuntime* runtime, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args)
-{
-  (void)profile;
-  (void)args;
-
-  FILE* file = (FILE*)FbleNativeValueData(args[0]);
-
-  wint_t c = fgetwc(file);
-  if (c == WEOF) {
-    return FbleNewMaybeValue(runtime, NULL);
-  }
-
-  FbleValue* v = FbleNewCharValue(runtime, c);
-  return FbleNewMaybeValue(runtime, v);
-}
-
-// /Std/Io/File/Internal%.GetChar foreign function.
-FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetChar = {
-  .path = "/Std/Io/File/Internal%",
-  .name = "GetChar",
-  .num_args = 2,
-  .max_call_args = 0,
-  .run = &GetChar,
-};
-
-/**
  * @func[GetByte] FbleRunFunction for GetByte foreign function.
  *  See documentation of FbleRunFunction in fble-function.h
  *
@@ -270,40 +227,6 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetByte = {
   .num_args = 2,
   .max_call_args = 0,
   .run = &GetByte,
-};
-
-/**
- * @func[PutChar] FbleRunFunction for PutChar foreign function.
- *  See documentation of FbleRunFunction in fble-function.h
- *
- *  The fble type of the function is:
- *
- *  @code[fble] @
- *   (File@, Char@, Unit@) { Unit@; }.
- *
- *  @sideeffects
- *   Writes a character to the give file.
- */
-static FbleValue* PutChar(
-    FbleRuntime* runtime, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args)
-{
-  (void)profile;
-  (void)args;
-
-  FILE* file = (FILE*)FbleNativeValueData(args[0]);
-  wchar_t c = FbleCharValueAccess(args[1]);
-  fputwc(c, file);
-  return FbleNewStructValue_(runtime, 0);
-}
-
-// /Std/Io/File/Internal%.PutChar foreign function.
-FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutChar = {
-  .path = "/Std/Io/File/Internal%",
-  .name = "PutChar",
-  .num_args = 3,
-  .max_call_args = 0,
-  .run = &PutChar,
 };
 
 /**
@@ -381,9 +304,7 @@ void FbleRegisterStdioForeignValues(FbleRuntime* runtime)
   FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetStderr);
   FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Open);
   FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Close);
-  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetChar);
-  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetByte);
-  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutChar);
   FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_PutByte);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_GetByte);
   FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Internal_25__2e_Flush);
 }

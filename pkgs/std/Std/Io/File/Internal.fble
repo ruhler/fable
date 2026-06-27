@@ -1,23 +1,18 @@
 # @module[/Std/Io/File/Internal%]
 #  For internal use only.
 
-Char@ .= /Std/Char%;
 Int@ .= /Std/Int%;
 External@ .= /Std/Io%;
 Maybe@ .= /Std/Maybe%;
 String@ .= /Std/String%;
-Unit@, Unit .= /Std/Unit%;
+Unit@ .= /Std/Unit%;
 
 # Pretend type for FILE*. Only to be accessed from FFI functions.
 File@ = *(Unit@ file).%(@/Std/Io/File/Internal%);
 
-Mode@ = +(Unit@ binary, Unit@ text);
-Mode@ Binary = Mode@(binary: Unit);
-Mode@ Text = Mode@(text: Unit);
-
-(Mode@) { External@<File@>; } GetStdin;
-(Mode@) { External@<File@>; } GetStdout;
-(Mode@) { External@<File@>; } GetStderr;
+External@<File@> GetStdin;
+External@<File@> GetStdout;
+External@<File@> GetStderr;
 (String@, String@) { External@<Maybe@<File@>>; } Open;
 (File@) { External@<Unit@>; } Close;
 (File@) { External@<Unit@>; } Flush;
@@ -25,9 +20,6 @@ Mode@ Text = Mode@(text: Unit);
 (File@) { External@<Maybe@<Int@>>; } GetByte;
 (File@, Int@) { External@<Unit@>; } PutByte;
 
-(File@) { External@<Maybe@<Char@>>; } GetChar;
-(File@, Char@) { External@<Unit@>; } PutChar;
-
-@(File@, Mode@, Binary, Text, GetStdin, GetStdout, GetStderr,
-  Open, Close, Flush,
-  GetByte, PutByte, GetChar, PutChar).%(@/Std/Io/File%);
+@(File@, GetStdin, GetStdout, GetStderr,
+  Open, Close, Flush, GetByte, PutByte
+).%(@/Std/Io/File%);
