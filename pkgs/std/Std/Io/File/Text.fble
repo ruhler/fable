@@ -12,11 +12,19 @@ String@ .= /Std/String%;
 
 Byte@ = Int@;
 
+# @struct[Encoding@] A character encoding.
+#  @field[(Char@) { Stream@<Byte@>; }] encode
+#   How to encode a character as a sequence of bytes.
+#  @field[<<@>@ M@>(Monad@<M@>, In@<Byte@, M@>) { In@<Char@, M@>; }] decode
+#   How to decode a sequence of bytes into a sequence of characters.
 Encoding@ = *(
   (Char@) { Stream@<Byte@>; } encode,
   <<@>@ M@>(Monad@<M@>, In@<Byte@, M@>) { In@<Char@, M@>; } decode
 );
 
+# @func[Text] Text APIs for working with files.
+#  @arg[Encoding@][encoding] The character encoding to use.
+#  @return[...] Text APIs that use the given character encoding.
 Text = (Encoding@ encoding) {
   Binary = /Std/Io/File/Binary%;
 

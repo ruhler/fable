@@ -6,7 +6,7 @@ Int@, Add, Shl, Shr .= /Std/Int%;
 Int, Hex .= /Std/Int/Lit%;
 Le .= /Std/Int/Cmp%;
 Mod .= /Std/Int/Div%;
-Byte@, Encoding@ .= /Std/Io/File/Text2%;
+Byte@, Encoding@ .= /Std/Io/File/Text%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@, Put .= /Std/Stream%;
@@ -124,6 +124,6 @@ Decode = <<@>@ M@>(Monad@<M@> m, In@<Byte@, M@> in) {
 
 Encoding@ Utf8 = Encoding@(Encode, Decode);
 
-Text = /Std/Io/File/Text2%.Text(Utf8);
+Text = /Std/Io/File/Text%.Text(Utf8);
 
 @(Utf8, Text);

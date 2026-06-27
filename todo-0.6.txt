@@ -7,6 +7,9 @@ Things to consider doing for the fble-0.6 release.
  - Switch string conversion to use utf8.
  - finish implementing utf8 decoding in fble.
 
+* Inline /Std/Io/File/Utf8%.Text fields into the module directly?
+ - Is the extra indirection of 'Text' worth having?
+
 * It's hard to find where fble functions live
  - Anything I can do about that?
 
