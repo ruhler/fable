@@ -2,11 +2,14 @@
 #  Reading and writing UTF-8 encoded text files and streams.
 
 Char@, Char, Pos .= /Std/Char%;
-Int@, Add, Shl, Shr .= /Std/Int%;
+Int@, Decr, Add, Shl, Shr .= /Std/Int%;
 Int, Hex .= /Std/Int/Lit%;
-Le .= /Std/Int/Cmp%;
+Le, Lt .= /Std/Int/Cmp%;
 Mod .= /Std/Int/Div%;
+IsZero .= /Std/Int/Sign%;
 Byte@, Encoding@ .= /Std/Io/File/Text%;
+List@, List .= /Std/List%;
+Get .= /Std/List/Index%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@, Put .= /Std/Stream%;
@@ -71,55 +74,75 @@ Encode = (Char@ c) {
   /Std/Undef%.Undef.undef<Stream@<Byte@>>;
 };
 
+List@<Int@> Utf8Limits = List[
+  Hex|0, Hex|80, Hex|800, Hex|10000, Hex|200000, Hex|4000000, Hex|80000000
+];
+
 # Decodes a character from a sequence of UTF-8 bytes.
 # Crashes if the bytes aren't properly encoded.
 # TODO: Provide some way for apps to catch and handle that case.
 <<@>@ M@>(Monad@<M@>, In@<Byte@, M@>) { In@<Char@, M@>; }
 Decode = <<@>@ M@>(Monad@<M@> m, In@<Byte@, M@> in) {
-  Maybe@<Byte@> m0 := m.do(in);
-  m0.?(nothing: m.return(Nothing<Char@>));
-  Byte@ 0 = m0.just;
+  Maybe@<Byte@> mh := m.do(in);
+  mh.?(nothing: m.return(Nothing<Char@>));
+  Byte@ h = mh.just;
 
-  # 0x00000000 - 0x0000007F:
-  #        0xxxxxxx
-  /Std/Int/Eq%.Eq(Hex|0, Shr(0, Int|7)).?(true: {
-    m.return(Just(Char(0)));
+  # Get the content bits from the header byte along with the number of
+  # expected subsequent bytes.
+  Int@ v, Int@ tn .= {
+    # 0xxxxxxx
+    /Std/Int/Eq%.Eq(Hex|0, Shr(h, Int|7)).?(true: {
+      @(v: h, tn: Int|0);
+    });
+
+    # 110xxxxx 10xxxxxx
+    /Std/Int/Eq%.Eq(Hex|6, Shr(h, Int|5)).?(true: {
+      @(v: Mod(h, Hex|20), tn: Int|1);
+    });
+
+    # 1110xxxx 10xxxxxx 10xxxxxx
+    /Std/Int/Eq%.Eq(Hex|E, Shr(h, Int|4)).?(true: {
+      @(v: Mod(h, Hex|10), tn: Int|2);
+    });
+
+    # 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+    /Std/Int/Eq%.Eq(Hex|1E, Shr(h, Int|3)).?(true: {
+      @(v: Mod(h, Hex|08), tn: Int|3);
+    });
+
+    # 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+    /Std/Int/Eq%.Eq(Hex|3E, Shr(h, Int|2)).?(true: {
+      @(v: Mod(h, Hex|04), tn: Int|4);
+    });
+
+    # 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+    /Std/Int/Eq%.Eq(Hex|7E, Shr(h, Int|1)).?(true: {
+      @(v: Mod(h, Hex|02), tn: Int|5);
+    });
+
+    /Std/Undef%.Undef.undef<*(Int@ v, Int@ tn)>;
+  };
+
+  # Get the contents from the next t bytes.
+  (Int@, Int@) { M@<Int@>; } Next = (Int@ v, Int@ n) {
+    IsZero(n).?(true: m.return(v));
+    Maybe@<Byte@> mt := m.do(in);
+    mt.?(nothing: /Std/Undef%.Undef.undef<M@<Int@>>);
+    Byte@ t = mt.just;
+    /Std/Int/Eq%.Eq(Hex|2, Shr(t, Int|6)).?(false: {
+      /Std/Undef%.Undef.undef<M@<Int@>>;
+    });
+    Next(Add(Shl(v, Int|6), Mod(t, Hex|40)), Decr(n));
+  };
+
+  Int@ v := m.do(Next(v, tn));
+
+  # Make sure the shortest encoding was used.
+  Lt(v, Get(Utf8Limits, tn)).?(true: {
+    /Std/Undef%.Undef.undef<M@<Maybe@<Char@>>>;
   });
 
-  # 0x00000080 - 0x000007FF:
-  #        110xxxxx 10xxxxxx
-  /Std/Int/Eq%.Eq(Hex|6, Shr(0, Int|5)).?(true: {
-    Maybe@<Byte@> m1 := m.do(in);
-    m1.?(nothing: {
-      # Unexpected end of file.
-      /Std/Undef%.Undef.undef<In@<Char@, M@>>;
-    });
-
-    Byte@ 1 = m1.just;
-    /Std/Int/Eq%.Eq(Hex|2, Shr(1, Int|6)).?(false: {
-      # Invalid utf8 encoding.
-      /Std/Undef%.Undef.undef<In@<Char@, M@>>;
-    });
-
-    Int@ v = Add(Shl(Mod(0, Hex|20), Int|6), Mod(1, Hex|40));
-    Le(v, Hex|7F).?(true: {
-      # Not in shortest form.
-      /Std/Undef%.Undef.undef<In@<Char@, M@>>;
-    });
-    m.return(Just(Char(v)));
-  });
-
-  # TODO: Support for decoding the rest.
-  # Consider generalizing the code to extra the data from low bytes.
-  /Std/Undef%.Undef.undef<In@<Char@, M@>>;
-  # 0x00000800 - 0x0000FFFF:
-  #        1110xxxx 10xxxxxx 10xxxxxx
-  # 0x00010000 - 0x001FFFFF:
-  #        11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-  # 0x00200000 - 0x03FFFFFF:
-  #        111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-  # 0x04000000 - 0x7FFFFFFF:
-  #        1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+  m.return(Just(Char(v)));
 };
 
 Encoding@ Utf8 = Encoding@(Encode, Decode);

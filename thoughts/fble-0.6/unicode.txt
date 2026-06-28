@@ -234,4 +234,38 @@ that tests the fble implementation, which is easy to unit test anyway. It
 doesn't test the c implementation. Maybe I should add a special unit test for
 that.
 
+---
 
+Apparently unicode is limited to 4 byte utf8 characters now, since they
+decided they wouldn't need more, and because UTF-16 already had that
+limitation. In case that matters any.
+
+---
+
+Okay. So in theory utf8 encoding and decoding is properly implemented in C and
+fble where needed. Where does that leave us?
+
+I feel like I like the change:
+* No more dependency on locales, wchar_t, etc.
+* The library allows users to override the encoding they use for files
+  explicitly. Feels nice.
+
+The downsides feel minor. If utf8 is going to be the standard way of things
+moving forward, I'm fine with that. That's what I can test anyway. If there's
+some cost of encoding/decoding utf8 in fble, well that's the perfect thing to
+try to address by improving fble performance in general.
+
+There's one thing left open still. How do I want to deal with command line
+arguments on windows?
+
+Options are:
+* Don't care. Let it be broken. Don't test it.
+ - Then I should separate out the other utf8 tests I do care about.
+* Figure out how to enable utf8 by default on windows in the apps.
+* Switch to using wmain, link in my own version that converts to utf8 command
+  line arguments and calls main with those.
+
+Feels like the last version would be easiest. Everything stays the same,
+except I implement an extra wmain function that takes wchar_t and passes on to
+main. And I add command line options to bin for windows to link do -municode
+and add my wmain.o file. Let's try to get that working.

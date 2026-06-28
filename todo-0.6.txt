@@ -2,8 +2,7 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Revisit handling of wchar_t vs. unicode, locale, and all that.
- - finish implementing utf8 decoding in fble.
+* Fix failing utf8 tests on windows.
 
 * Inline /Std/Io/File/Utf8%.Text fields into the module directly?
  - Is the extra indirection of 'Text' worth having?
