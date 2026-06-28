@@ -73,39 +73,37 @@ namespace eval "pkgs/std" {
 
   # /Std/Io/Cli/Demo% compiled test.
   cli $::b/pkgs/std/fble-cli-demo "/Std/Io/Cli/Demo%" "" ""
-  test $::b/pkgs/std/fble-cli-demo.out \
+  build $::b/pkgs/std/fble-cli-demo.out \
     $::b/pkgs/std/fble-cli-demo \
     "$::b/pkgs/std/fble-cli-demo > $::b/pkgs/std/fble-cli-demo.out"
   test $::b/pkgs/std/fble-cli-demo.tr $::b/pkgs/std/fble-cli-demo.out \
     "grep hello $::b/pkgs/std/fble-cli-demo.out"
 
-  # TODO: Fix the unicode tests on windows.
-  # Test FbleNewStringValue unicode conversion.
-  test $::b/pkgs/std/fble-cli-demo.unicode_arg.out \
-    $::b/pkgs/std/fble-cli-demo \
-    "$::b/pkgs/std/fble-cli-demo echo aπb > $::b/pkgs/std/fble-cli-demo.unicode_arg.out"
-  test $::b/pkgs/std/fble-cli-demo.unicode_arg.tr $::b/pkgs/std/fble-cli-demo.unicode_arg.out \
-    "grep aπb $::b/pkgs/std/fble-cli-demo.unicode_arg.out"
-
-  # Test FbleStringValueAccess unicode conversion.
-  test $::b/pkgs/std/fble-cli-demo.unicode_filename.out \
-    "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/aπb.txt" \
-    "$::b/pkgs/std/fble-cli-demo cat $::s/pkgs/std/aπb.txt > $::b/pkgs/std/fble-cli-demo.unicode_filename.out"
-  test $::b/pkgs/std/fble-cli-demo.unicode_filename.tr $::b/pkgs/std/fble-cli-demo.unicode_filename.out \
-    "grep helloπ $::b/pkgs/std/fble-cli-demo.unicode_filename.out"
-
-  # Test Reading of unicode characters from files.
-  test $::b/pkgs/std/fble-cli-demo.unicode_read.out \
-    "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/aπb.txt" \
-    "$::b/pkgs/std/fble-cli-demo ucat $::s/pkgs/std/aπb.txt > $::b/pkgs/std/fble-cli-demo.unicode_read.out"
-  test $::b/pkgs/std/fble-cli-demo.unicode_read.tr $::b/pkgs/std/fble-cli-demo.unicode_read.out \
-    "grep U+03C0 $::b/pkgs/std/fble-cli-demo.unicode_read.out"
-
   # Test environment variable access.
-  test $::b/pkgs/std/fble-cli-demo.env.out \
+  build $::b/pkgs/std/fble-cli-demo.env.out \
     "$::b/pkgs/std/fble-cli-demo" \
     "env FOO=hello $::b/pkgs/std/fble-cli-demo env FOO > $::b/pkgs/std/fble-cli-demo.env.out"
   test $::b/pkgs/std/fble-cli-demo.env.tr $::b/pkgs/std/fble-cli-demo.env.out \
     "grep hello $::b/pkgs/std/fble-cli-demo.env.out"
+
+  # Unicode Tests:
+  # Note: 'utf–8.txt' is using a multibyte '–' character.
+  # * We can read command line arguments with multibyte utf8 chars.
+  # * We can open files whose names contain multibyte utf8 chars.
+  # * We can read files containing 1, 2, 3, and 4 byte utf8 chars.
+  # * We can write files containing 1, 2, 3, and 4 byte utf8 chars.
+  # TODO: Fix the unicode tests on windows.
+  build $::b/pkgs/std/fble-cli-demo.utf8.ucat.out \
+    "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/utf–8.txt" \
+    "$::b/pkgs/std/fble-cli-demo ucat $::s/pkgs/std/utf–8.txt > $::b/pkgs/std/fble-cli-demo.utf8.ucat.out"
+  test $::b/pkgs/std/fble-cli-demo.utf8.ucat.tr \
+    "$::s/pkgs/std/utf–8.ucat.txt $::b/pkgs/std/fble-cli-demo.utf8.ucat.out" \
+    "cmp $::s/pkgs/std/utf–8.ucat.txt $::b/pkgs/std/fble-cli-demo.utf8.ucat.out"
+  build $::b/pkgs/std/fble-cli-demo.utf8.cat.out \
+    "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/utf–8.txt" \
+    "$::b/pkgs/std/fble-cli-demo cat $::s/pkgs/std/utf–8.txt > $::b/pkgs/std/fble-cli-demo.utf8.cat.out"
+  test $::b/pkgs/std/fble-cli-demo.utf8.cat.tr \
+    "$::s/pkgs/std/utf–8.txt $::b/pkgs/std/fble-cli-demo.utf8.cat.out" \
+    "cmp $::s/pkgs/std/utf–8.txt $::b/pkgs/std/fble-cli-demo.utf8.cat.out"
 
 }
