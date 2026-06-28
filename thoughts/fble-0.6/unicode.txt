@@ -185,3 +185,53 @@ I suppose try migrating things one at a time? Or... all at once?
 
 All at once... things seem to build and all tests are passing. Why does that
 not give me as much confidence as I would like?
+
+---
+
+Any clever thing I can do for decoding unicode safely?
+
+       0x00000000 - 0x0000007F:
+              0xxxxxxx
+
+       0x00000080 - 0x000007FF:
+              110xxxxx 10xxxxxx
+
+       0x00000800 - 0x0000FFFF:
+              1110xxxx 10xxxxxx 10xxxxxx
+
+       0x00010000 - 0x001FFFFF:
+              11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+
+       0x00200000 - 0x03FFFFFF:
+              111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+
+       0x04000000 - 0x7FFFFFFF:
+              1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+
+Step 1: Count the number of 1 bits before the most significant 0 bit.
+  Easy: just keep shifting left by 1 until we get a '0' bit.
+  Call that n.
+
+Step 2: Extract the content bits from that first byte.
+  Easy, assuming uint8_t data type. Right shift by n.
+
+Step 3: Figure out number of tail bytes;
+  t = n > 1 ? (n - 1) : 0;
+
+Step 4: Read and validate the next t bytes of data, shift it into our value.
+
+Step 5: Validate the final value was encoded using the right number for n.
+  Special case <= 7F for 0 bits.
+  Iterate over list of 7FF, FFFF, ... for the rest.
+  
+Easy. General. No? Let's try it. First in C, where unfortunately I'm not going
+to have much testing...
+
+How to test? I should have my test file encoding a unicode character of each
+kind with interesting enough bits. Then run 'chars', verify it reads the right
+characters. And verify when written back out it produces the right values. But
+that tests the fble implementation, which is easy to unit test anyway. It
+doesn't test the c implementation. Maybe I should add a special unit test for
+that.
+
+

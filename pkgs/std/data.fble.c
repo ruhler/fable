@@ -221,42 +221,40 @@ FbleValue* FbleNewStringValue(FbleRuntime* runtime, const char* str)
   // Convert UTF-8 to unicode code points.
   size_t len = 0;
   for ( ; *str != '\0'; len++) {
-    char b0 = *str++;
+    uint8_t h = (uint8_t)*str++;
 
-    // 0x00000000 - 0x0000007F:
-    //        0xxxxxxx
-    if (b0 <= 0x7F) {
-      chars[len] = b0;
-      continue;
+    // Count number of 1 bits in the byte.
+    size_t n = 0;
+    while (h & 0x80) {
+      n++;
+      h <<= 1;
     }
 
-    // 0x00000080 - 0x000007FF:
-    //        110xxxxx 10xxxxxx
-    if ((b0 & 0xE0) == 0xC0) {
-      char b1 = *str++;
-      if ((b1 & 0xC0) != 0x80) {
-        // Invalid UTF-8 encoding.
+    // Extract the content bits from the byte.
+    uint32_t v = h >> n;
+
+    // Get the content from the next t bytes.
+    size_t tn = n > 1 ? (n - 1) : 0;
+    for (size_t i = 0; i < tn; ++i) {
+      uint8_t t = (uint8_t)*str++;
+      if ((t & 0xC0) != 0x80) {
         return NULL;
       }
-      uint32_t v = ((b0 & 0x1F) << 6) | (b1 & 0x3F);
-      if (v <= 0x7F) {
-        // Not shortest possible encoding.
-        return NULL;
-      }
-      chars[len] = v;
-      continue;
+      v = (v << 6) | (t & 0x3F);
     }
 
-    // 0x00000800 - 0x0000FFFF:
-    //        1110xxxx 10xxxxxx 10xxxxxx
-    // 0x00010000 - 0x001FFFFF:
-    //        11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-    // 0x00200000 - 0x03FFFFFF:
-    //        111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-    // 0x04000000 - 0x7FFFFFFF:
-    //        1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-    assert(false && "TODO: finish utf8 decoding");
-    return NULL;
+    // Verify we used the shortest encoding.
+    static uint32_t limits[6] = { 0x7F, 0x7FF, 0xFFFF, 0x1FFFFF, 0x3FFFFFF, 0x7FFFFFFF };
+    for (size_t i = 0; i < 6; ++i) {
+      if (v <= limits[i]) {
+        if (tn != i) {
+          return NULL;
+        }
+        break;
+      }
+    }
+
+    chars[len] = v;
   }
 
   // Build up the fble string from unicode code points.
