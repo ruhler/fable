@@ -4,9 +4,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Fix failing utf8 tests on windows.
 
-* Inline /Std/Io/File/Utf8%.Text fields into the module directly?
- - Is the extra indirection of 'Text' worth having?
-
 * It's hard to find where fble functions live
  - Anything I can do about that?
 

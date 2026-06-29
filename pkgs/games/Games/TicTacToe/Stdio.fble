@@ -88,9 +88,9 @@ Input@ = +(Unit@ quit, Unit@ reset, Move@ move);
 
 # Play a game of tic-tac-toe.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
-  Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Text.Stdout(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Stdout(m, io));
 
-  In@<Char@, M@> in := m.do(/Std/Io/File/Utf8%.Text.Stdin(m, io));
+  In@<Char@, M@> in := m.do(/Std/Io/File/Utf8%.Stdin(m, io));
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
     Unit@ _ := m.do(out(ShowGame(game)));

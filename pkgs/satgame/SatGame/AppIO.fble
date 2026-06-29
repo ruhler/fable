@@ -51,8 +51,8 @@ GetArgs = (List@<String@> args, Args@ default) {
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
 	Maybe@<String@> home := m.do(/Std/Io/Env%.GetVar(m, io, Str|HOME));
-  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = /Std/Io/File/Utf8%.Text.Read(m, io);
-  (String@) { M@<Maybe@<Out@<Char@, M@>>>; } write = /Std/Io/File/Utf8%.Text.Write(m, io);
+  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = /Std/Io/File/Utf8%.Read(m, io);
+  (String@) { M@<Maybe@<Out@<Char@, M@>>>; } write = /Std/Io/File/Utf8%.Write(m, io);
 
   # Read and update the default seed value.
   Int@ seed := m.do({
@@ -76,7 +76,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ 
     m.return(seed);
   });
 
-  Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Text.Stdout(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Stdout(m, io));
   Args@ args = GetArgs(argv, DefaultArgs.@(seed));
   Unit@ _ := m.do(SatGame(m, out, app, width, height, args));
   m.return(Success);

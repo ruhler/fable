@@ -22,7 +22,7 @@ Unit@ .= /Std/Unit%;
 (Stream@<Char@>) { Main@; }
 Print = (Stream@<Char@> stream) {
   <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
-    Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Text.Stdout(m, io));
+    Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Stdout(m, io));
     Unit@ _ := m.do(out(stream));
     m.return(Success);
   };

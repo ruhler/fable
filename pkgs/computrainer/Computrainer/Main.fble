@@ -67,8 +67,8 @@ State@ = *(
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
-  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = /Std/Io/File/Utf8%.Text.Read(m, io);
-  (String@) { M@<Maybe@<Out@<Char@, M@>>>; } write = /Std/Io/File/Utf8%.Text.Write(m, io);
+  (String@) { M@<Maybe@<In@<Char@, M@>>>; } read = /Std/Io/File/Utf8%.Read(m, io);
+  (String@) { M@<Maybe@<Out@<Char@, M@>>>; } write = /Std/Io/File/Utf8%.Write(m, io);
 
   Int@ MenuScale = Int|8;
   Int@ MenuHeight = Add(Mul(MenuScale, W), Int|8);

@@ -32,8 +32,8 @@ IsSpace = (Char@ c) {
 };
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
-  In@<Char@, M@> in := m.do(/Std/Io/File/Utf8%.Text.Stdin(m, io));
-  Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Text.Stdout(m, io));
+  In@<Char@, M@> in := m.do(/Std/Io/File/Utf8%.Stdin(m, io));
+  Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Stdout(m, io));
 
   String@ line := m.do(GetLine(m, in));
   List@<String@> ints = Split(line, IsSpace);

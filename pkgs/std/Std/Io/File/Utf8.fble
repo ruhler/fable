@@ -147,6 +147,6 @@ Decode = <<@>@ M@>(Monad@<M@> m, In@<Byte@, M@> in) {
 
 Encoding@ Utf8 = Encoding@(Encode, Decode);
 
-Text = /Std/Io/File/Text%.Text(Utf8);
+Stdin, Stdout, Stderr, Read, Write, Append .= /Std/Io/File/Text%.Text(Utf8);
 
-@(Utf8, Text);
+@(Utf8, Stdin, Stdout, Stderr, Read, Write, Append);
