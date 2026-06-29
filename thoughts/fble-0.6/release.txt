@@ -1105,3 +1105,42 @@ if I have /Std/Stream/Map%.Do? Or move it all to /Std/Stream/Monad%?
 
 Should we also generalize In and Out functions?
 
+What we ought to do is have a different name for our existing Do function
+which is just sequencing. Move Map into /Std/Stream%. Implement the proper Do
+function in /Std/Stream%. And move In and Out functions to /Std/Stream/Io%,
+generalizing them to operate on stream functions.
+
+If I did that, what new name should I use for the existing Do function?
+
+It's kind of like the difference between Stream@ as an output stream and
+Stream@ as a collection of values. Like the difference between producing
+streams and consuming streams?
+
+Or, this kind of gets back to the previous thing I was thinking: should we
+replace Do with Seq?
+
+For example:
+
+  <@ K@>(Show@<K@>)<@ V@>(Show@<V@>) { Show@<Map@<K@, V@>>; }
+  Show = <@ K@>(Show@<K@> show_key)<@ V@>(Show@<V@> show_value, Map@<K@, V@> map) {
+    Unit@ _ := Do(ForEach(map, String|'{ ',
+      (K@ k, V@ v, Stream@<Char@> shown) {
+        Unit@ _ := Do(shown);
+        Format|'%s => %s; '[show_key(k), show_value(v)];
+      }));
+    String|'}';
+  };
+
+Becomes...
+
+  <@ K@>(Show@<K@>)<@ V@>(Show@<V@>) { Show@<Map@<K@, V@>>; }
+  Show = <@ K@>(Show@<K@> show_key)<@ V@>(Show@<V@> show_value, Map@<K@, V@> map) {
+    Unit@ _ := Seq(ForEach(map, String|'{ ',
+      (K@ k, V@ v, Stream@<Char@> shown) {
+        Unit@ _ := Seq(shown);
+        Format|'%s => %s; '[show_key(k), show_value(v)];
+      }));
+    String|'}';
+  };
+
+  ??

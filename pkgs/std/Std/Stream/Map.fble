@@ -19,6 +19,24 @@ Stream = <@ A@, @ B@>((A@) { B@; } f, Stream@<A@> s) {
   };
 };
 
+# @func[Do] Monadic Do for streams.
+#  Applies a function to every element of a stream and streams out the
+#  results.
+#
+#  @arg[@][A@] The type of element on the given stream.
+#  @arg[Stream<A@>][stream] The stream to map over.
+#  @arg[@][B@] The type of element on the returned stream.
+#  @arg[(A@) { Stream<B@>; }][f] The function to apply.
+#  @returns[Stream<B@>]
+#   The list of elements f(a_i) for each a_i in the input stream.
+<@ A@>(Stream@<A@>)<@ B@>((A@) { Stream@<B@>; }) { Stream@<B@>; }
+Do = <@ A@>(Stream@<A@> stream)<@ B@>((A@) { Stream@<B@>; } f) {
+  <@ S@>(S@ return, (B@, S@) { S@; } put) {
+    A@ a, S@ s := stream(return);
+    f(a, s, put);
+  };
+};
+
 # @func[Out] Changes the output type of a Out@.
 #  @arg[@][A@] The output type of the original Out@.
 #  @arg[@][B@] The output type of the new Out@.
@@ -48,4 +66,4 @@ In = <@ A@, @ B@>((A@) { B@; } f)<<@>@ M@>(Monad@<M@> m, In@<A@, M@> in) {
   m.return(Just(f(ma.just)));
 };
 
-@(Stream, Out, In);
+@(Stream, Do, Out, In);

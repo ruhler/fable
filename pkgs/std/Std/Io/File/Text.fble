@@ -31,18 +31,10 @@ Text = (Encoding@ encoding) {
   <<@>@ M@>(Monad@<M@>, In@<Byte@, M@>) { In@<Char@, M@>; }
   Decode = encoding.decode;
 
-  (Stream@<Char@>) { Stream@<Byte@>; }
-  EncodeStream = (Stream@<Char@> chars) {
-    <@ S@>(S@ return, (Byte@, S@) { S@; } put) {
-      Char@ c, S@ s := chars(return);
-      encoding.encode(c, s, put);
-    };
-  };
-
   <<@>@ M@>(Out@<Byte@, M@>) { Out@<Char@, M@>; }
   EncodeOut = <<@>@ M@>(Out@<Byte@, M@> out) {
     (Stream@<Char@> chars) {
-      out(EncodeStream(chars));
+      out(/Std/Stream/Map%.Do(chars, encoding.encode));
     };
   };
 
