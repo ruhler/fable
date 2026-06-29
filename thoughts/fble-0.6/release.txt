@@ -1081,3 +1081,27 @@ Steps:
 Done. It's a little bit hacky. Particularly with switching between strings and
 streams everywhere and being a non-standard command and not working on
 windows. But it gets the job done, no?
+
+---
+
+* Add Monad for Stream on stream type itself?
+ - Reuse that in the new impl of Text based file IO?
+
+Stream@ today has Do, Return. The Do doesn't get any data from the stream, it
+just sequences. The return outputs.
+
+I'm thinking of a different Do function that I also want: for each. It says:
+for each value in the stream, call this function, sequence the resulting
+outputs. And related 'Map' function.
+
+But what do I call this function? Do?
+
+On the other hand, having written my EncodeStream and EncodeOut functions in
+/Std/Io/File/Text%, I'm no longer have much motivation for factoring those
+out?
+
+But we have /Std/Stream/Map%, like a whole module for this kind of thing. What
+if I have /Std/Stream/Map%.Do? Or move it all to /Std/Stream/Monad%?
+
+Should we also generalize In and Out functions?
+
