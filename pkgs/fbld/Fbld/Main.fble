@@ -8,7 +8,8 @@ Maybe@, Just .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 String@ = /Std/String%.String@;
 Stream@ .= /Std/Stream%;
-In@, Out@ .= /Std/Stream/Io%;
+In@ .= /Std/Stream/In%;
+Out@ .= /Std/Stream/Out%;
 String, GetText .= /Std/Stream/String%;
 Unit@ .= /Std/Unit%;
 

@@ -2,7 +2,7 @@
 Int@ .= /Std/Int%;
 List@, Items, Reverse .= /Std/List%;
 Monad@ .= /Std/Monad%;
-In@ .= /Std/Stream/Io%;
+In@ .= /Std/Stream/In%;
 String@ .= /Std/String%;
 
 Block@, Blocks@, Sample@, Profile@ .= /Pprof/Profile%;

@@ -1,7 +1,8 @@
 
 Int@ .= /Std/Int%;
 Maybe@ .= /Std/Maybe%;
-In@, Out@ .= /Std/Stream/Io%;
+In@ .= /Std/Stream/In%;
+Out@ .= /Std/Stream/Out%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 

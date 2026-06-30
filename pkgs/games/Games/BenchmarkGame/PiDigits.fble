@@ -8,7 +8,8 @@ Eq .= /Std/Int/Eq%;
 Int .= /Std/Int/Lit%;
 List@ .= /Std/List%;
 Monad@ .= /Std/Monad%;
-In@, Out@ .= /Std/Stream/Io%;
+In@ .= /Std/Stream/In%;
+Out@ .= /Std/Stream/Out%;
 String@ = /Std/String%.String@;
 Unit@, Unit .= /Std/Unit%;
 

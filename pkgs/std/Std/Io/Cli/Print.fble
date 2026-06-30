@@ -7,7 +7,7 @@ Main@, Success .= /Std/Io/Cli%;
 List@ .= /Std/List%;
 Monad@ .= /Std/Monad%;
 Stream@ .= /Std/Stream%;
-Out@ .= /Std/Stream/Io%;
+Out@ .= /Std/Stream/Out%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 

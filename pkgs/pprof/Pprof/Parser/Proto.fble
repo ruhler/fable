@@ -12,7 +12,7 @@ List@, Empty, Items .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@ .= /Std/Stream%;
-In@ .= /Std/Stream/Io%;
+In@ .= /Std/Stream/In%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 

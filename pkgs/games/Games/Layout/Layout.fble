@@ -12,7 +12,7 @@ QR@, Quot .= /Std/Int/Div%;
 List@, Items, Empty .= /Std/List%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Out@ .= /Std/Stream/Io%;
+Out@ .= /Std/Stream/Out%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 

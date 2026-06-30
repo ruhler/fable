@@ -4,7 +4,8 @@ Io@, External@ .= /Std/Io%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@ .= /Std/Stream%;
-In@, Out@ .= /Std/Stream/Io%;
+In@ .= /Std/Stream/In%;
+Out@ .= /Std/Stream/Out%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 

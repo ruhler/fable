@@ -15,7 +15,8 @@ Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@, Do, Put, Return .= /Std/Stream%;
 ToDebug .= /Std/Stream/Debug%;
-Out@, In@ .= /Std/Stream/Io%;
+In@ .= /Std/Stream/In%;
+Out@ .= /Std/Stream/Out%;
 String, GetLine, Lines .= /Std/Stream/String%;
 Split .= /Std/String/Eq%;
 String@ .= /Std/String%;
@@ -347,8 +348,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   M@<Unit@> Serve = {
     # TODO: Don't assume ascii encoding of characters like this.
     InOut@<M@> ios := m.do(s.accept);
-    Out@<Char@, M@> os = /Std/Stream/Map%.Out(Pos, ios.out);
-    In@<Char@, M@> is = /Std/Stream/Map%.In(/Std/Char%.Char, m, ios.in);
+    Out@<Char@, M@> os = /Std/Stream/Out%.Map(Pos, ios.out);
+    In@<Char@, M@> is = /Std/Stream/In%.Map(/Std/Char%.Char, m, ios.in);
     Unit@ _ := m.do(HandleConnection(is, os));
     Unit@ _ := m.do(ios.close);
     Serve;

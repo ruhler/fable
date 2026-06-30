@@ -8,9 +8,6 @@ Things to consider doing for the fble-0.6 release.
 * It's hard to find where fble functions live
  - Anything I can do about that?
 
-* Add Monad for Stream on stream type itself?
- - Reuse that in the new impl of Text based file IO?
-
 Standard Library:
 * Add back character type functions isspace, isalnum, etc?
 * Add Lt, Le, Gt, Ge, etc for Char@?

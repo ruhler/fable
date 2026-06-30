@@ -6,7 +6,8 @@ List@ .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 String@ .= /Std/String%;
-In@, Out@ .= /Std/Stream/Io%;
+In@ .= /Std/Stream/In%;
+Out@ .= /Std/Stream/Out%;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   In@<Char@, M@> in := m.do(/Std/Io/File/Utf8%.Stdin(m, io));

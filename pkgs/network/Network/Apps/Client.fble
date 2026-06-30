@@ -12,7 +12,8 @@ List@ .= /Std/List%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@, Put .= /Std/Stream%;
-In@, Out@ .= /Std/Stream/Io%;
+In@ .= /Std/Stream/In%;
+Out@ .= /Std/Stream/Out%;
 S(.String) .= /Std/Stream/String%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
@@ -126,7 +127,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   });
 
   InOut@<M@> ios = mios.just;
-  Out@<Char@, M@> os = /Std/Stream/Map%.Out(Pos, ios.out);
+  Out@<Char@, M@> os = /Std/Stream/Out%.Map(Pos, ios.out);
   Out@<Int@, M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
 
   Unit@ _ := m.do(os(S(args.message)));

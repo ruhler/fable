@@ -3,7 +3,7 @@
 
 Monad@ .= /Std/Monad%;
 Stream@ .= /Std/Stream%;
-Out@ .= /Std/Stream/Io%;
+Out@ .= /Std/Stream/Out%;
 Unit@, Unit .= /Std/Unit%;
 
 # @func[ToNull] Stream discarder.

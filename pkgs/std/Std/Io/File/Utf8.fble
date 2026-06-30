@@ -13,7 +13,7 @@ Get .= /Std/List/Index%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@, Put .= /Std/Stream%;
-In@ .= /Std/Stream/Io%;
+In@ .= /Std/Stream/In%;
 Puts .= /Std/Stream/List%;
 
 # Encodes a character as a sequence of UTF-8 encoded bytes.

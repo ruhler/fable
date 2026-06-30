@@ -7,7 +7,7 @@ Div .= /Std/Int/Div%;
 Int .= /Std/Int/Lit%;
 Maybe@ .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Out@ .= /Std/Stream/Io%;
+Out@ .= /Std/Stream/Out%;
 Unit@, Unit .= /Std/Unit%;
 
 App@, Event@, Effect@ .= /App/App%;
