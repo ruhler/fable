@@ -6,7 +6,7 @@ Int@ .= /Std/Int%;
 Io@ .= /Std/Io%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Stream@ .= /Std/Stream%;
+Stream@, DoM .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
 String@ .= /Std/String%;
 
@@ -32,9 +32,9 @@ Text = (Encoding@ encoding) {
   Decode = encoding.decode;
 
   <<@>@ M@>(Out@<Byte@, M@>) { Out@<Char@, M@>; }
-  EncodeOut = <<@>@ M@>(Out@<Byte@, M@> out) {
+  Encode = <<@>@ M@>(Out@<Byte@, M@> out) {
     (Stream@<Char@> chars) {
-      out(/Std/Stream/Map%.Do(chars, encoding.encode));
+      out(DoM(chars, encoding.encode));
     };
   };
 
@@ -57,7 +57,7 @@ Text = (Encoding@ encoding) {
   <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Char@, M@>>; }
   Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
     Out@<Byte@, M@> stdout := m.do(Binary.Stdout(m, io));
-    m.return(EncodeOut(stdout));
+    m.return(Encode(stdout));
   };
 
   # @func[Stderr] Standard error stream.
@@ -68,7 +68,7 @@ Text = (Encoding@ encoding) {
   <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Char@, M@>>; }
   Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
     Out@<Byte@, M@> stderr := m.do(Binary.Stderr(m, io));
-    m.return(EncodeOut(stderr));
+    m.return(Encode(stderr));
   };
 
   # @func[Read] Opens a file for reading.
@@ -104,7 +104,7 @@ Text = (Encoding@ encoding) {
   Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
     Maybe@<Out@<Byte@, M@>> file := m.do(Binary.Write(m, io, path));
     file.?(nothing: m.return(Nothing<Out@<Char@, M@>>));
-    m.return(Just(EncodeOut(file.just)));
+    m.return(Just(Encode(file.just)));
   };
 
   # @func[Append] Opens a file for appending.
@@ -122,7 +122,7 @@ Text = (Encoding@ encoding) {
   Append = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
     Maybe@<Out@<Byte@, M@>> file := m.do(Binary.Append(m, io, path));
     file.?(nothing: m.return(Nothing<Out@<Char@, M@>>));
-    m.return(Just(EncodeOut(file.just)));
+    m.return(Just(Encode(file.just)));
   };
 
   @(Stdin, Stdout, Stderr, Read, Write, Append);

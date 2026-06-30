@@ -6,37 +6,6 @@ Monad@ .= /Std/Monad%;
 Stream@ .= /Std/Stream%;
 In@, Out@ .= /Std/Stream/Io%;
 
-# @func[Stream] Changes the output type of a stream.
-#  @arg[@][A@] The output type of the original stream.
-#  @arg[@][B@] The output type of the new stream.
-#  @arg[(A@) { B@; }][f] Function to convert output values.
-#  @arg[Stream@<A@>][stream] The original stream.
-#  @return[Stream@<B@>] A new stream that outputs the target output type.
-<@ A@, @ B@>((A@) { B@; }, Stream@<A@>) { Stream@<B@>; }
-Stream = <@ A@, @ B@>((A@) { B@; } f, Stream@<A@> s) {
-  <@ S@>(S@ return, (B@, S@) { S@; } put) {
-    s(return, (A@ a, S@ t) { put(f(a), t); });
-  };
-};
-
-# @func[Do] Monadic Do for streams.
-#  Applies a function to every element of a stream and streams out the
-#  results.
-#
-#  @arg[@][A@] The type of element on the given stream.
-#  @arg[Stream<A@>][stream] The stream to map over.
-#  @arg[@][B@] The type of element on the returned stream.
-#  @arg[(A@) { Stream<B@>; }][f] The function to apply.
-#  @returns[Stream<B@>]
-#   The list of elements f(a_i) for each a_i in the input stream.
-<@ A@>(Stream@<A@>)<@ B@>((A@) { Stream@<B@>; }) { Stream@<B@>; }
-Do = <@ A@>(Stream@<A@> stream)<@ B@>((A@) { Stream@<B@>; } f) {
-  <@ S@>(S@ return, (B@, S@) { S@; } put) {
-    A@ a, S@ s := stream(return);
-    f(a, s, put);
-  };
-};
-
 # @func[Out] Changes the output type of a Out@.
 #  @arg[@][A@] The output type of the original Out@.
 #  @arg[@][B@] The output type of the new Out@.
@@ -47,7 +16,7 @@ Do = <@ A@>(Stream@<A@> stream)<@ B@>((A@) { Stream@<B@>; } f) {
 <@ A@, @ B@>((B@) { A@; })<<@>@ M@>(Out@<A@, M@>) { Out@<B@, M@>; }
 Out = <@ A@, @ B@>((B@) { A@; } f)<<@>@ M@>(Out@<A@, M@> out) {
   (Stream@<B@> stream) {
-    out(Stream(f, stream));
+    out(/Std/Stream%.Map(f, stream));
   };
 };
 
@@ -66,4 +35,4 @@ In = <@ A@, @ B@>((A@) { B@; } f)<<@>@ M@>(Monad@<M@> m, In@<A@, M@> in) {
   m.return(Just(f(ma.just)));
 };
 
-@(Stream, Do, Out, In);
+@(Out, In);

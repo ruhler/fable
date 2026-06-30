@@ -32,6 +32,24 @@ Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> f) {
   };
 };
 
+# @func[DoM] Monadic Do for streams.
+#  Applies a function to every element of a stream and streams out the
+#  results.
+#
+#  @arg[@][A@] The type of element on the given stream.
+#  @arg[Stream<A@>][stream] The stream to map over.
+#  @arg[@][B@] The type of element on the returned stream.
+#  @arg[(A@) { Stream<B@>; }][f] The function to apply.
+#  @returns[Stream<B@>]
+#   The list of elements f(a_i) for each a_i in the input stream.
+<@ A@>(Stream@<A@>)<@ B@>((A@) { Stream@<B@>; }) { Stream@<B@>; }
+DoM = <@ A@>(Stream@<A@> stream)<@ B@>((A@) { Stream@<B@>; } f) {
+  <@ S@>(S@ return, (B@, S@) { S@; } put) {
+    A@ a, S@ s := stream(return);
+    f(a, s, put);
+  };
+};
+
 # @func[Put] Output a single value.
 #  @arg[@][A@] The type of values to output.
 #  @arg[A@][v] The value to output.
@@ -70,4 +88,17 @@ ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
   stream(return, put, base);
 };
 
-@(Stream@, Return, Do, Put, ForEach);
+# @func[Map] Map a function over the elements of a stream.
+#  @arg[@][A@] The output type of the original stream.
+#  @arg[@][B@] The output type of the new stream.
+#  @arg[(A@) { B@; }][f] Function to convert output values.
+#  @arg[Stream@<A@>][stream] The original stream.
+#  @return[Stream@<B@>] A new stream that outputs the target output type.
+<@ A@, @ B@>((A@) { B@; }, Stream@<A@>) { Stream@<B@>; }
+Map = <@ A@, @ B@>((A@) { B@; } f, Stream@<A@> s) {
+  <@ S@>(S@ return, (B@, S@) { S@; } put) {
+    s(return, (A@ a, S@ t) { put(f(a), t); });
+  };
+};
+
+@(Stream@, Return, Do, DoM, Put, ForEach, Map);
