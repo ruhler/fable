@@ -92,7 +92,7 @@ Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
       (String@ path, M@<Exit@> return) {
         Maybe@<In@<Char@, M@>> in := m.do(Read(path));
         in.?(nothing: {
-          Unit@ _ := m.do(err(FormatE|'%s: unable to open\n'[String(path)]));
+          Unit@ _ := m.do(err(FormatE|'unable to open %s\n'[String(path)]));
           m.return(Failure);
         });
         Unit@ _ := m.do(f(in.just));

@@ -269,3 +269,25 @@ Feels like the last version would be easiest. Everything stays the same,
 except I implement an extra wmain function that takes wchar_t and passes on to
 main. And I add command line options to bin for windows to link do -municode
 and add my wmain.o file. Let's try to get that working.
+
+---
+
+Windows investigation:
+* Sample code to convert 'arg' from wchar_t* to utf8 char*:
+    int len = WideCharToMultiByte(CP_UTF8, 0, arg, -1, NULL, 0, NULL, NULL);
+    char buf[len];
+    WideCharToMultiByte(CP_UTF8, 0, arg, -1, buf, len, NULL, NULL);
+* For output to show up properly on the terminal, still need setlocale
+  ".UTF8".
+* To open a file with utf8 encoded name...
+ - I can't tell. It seems to keep changing what works and what doesn't.
+ - I think the only thing that solved it was setting 'Use UTF-8' in windows
+   settings. But there's some caching going on that makes things sticky for a
+   while.
+
+If I use UTF-8 in windows settings, everything just works. But it's not like I
+have a way to do that in general.
+
+Otherwise... well, 'cat' must have had some way to work on windows, but I
+don't know what it was. Because _wfopen didn't work for me either. Strange.
+
