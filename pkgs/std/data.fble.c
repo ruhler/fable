@@ -4,7 +4,7 @@
  */
 #include <assert.h>   // for assert
 #include <stdlib.h>   // for abort
-#include <string.h>   // for strchr
+#include <string.h>   // for strlen
 
 #include "data.fble.h"
 

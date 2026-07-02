@@ -331,9 +331,14 @@ Review of existing /Core/Char/Type% uses:
 * Fbld Loc uses IsNewline to know when to advance line counter.
 * Fbld parse uses IsAlNum for IsNameChar.
 
-In general, seems like I use IsNewline function out of convenience. Maybe move that to /Std/Char/Eq%. The others probably ought to be app specific. Things like fbld parsing, or dimacs. Depends on the input program. If the input program is in ascii, makes sense perhaps to put the character class in ascii.
+In general, seems like I use IsNewline function out of convenience. Maybe move
+that to /Std/Char/Eq%. The others probably ought to be app specific. Things
+like fbld parsing, or dimacs. Depends on the input program. If the input
+program is in ascii, makes sense perhaps to put the character class in ascii.
 
-Ascii standard itself doesn't say anything about character classes. I think that's from C99. Well, ascii says "Control Character" versus "Graphic Character".
+Ascii standard itself doesn't say anything about character classes. I think
+that's from C99. Well, ascii says "Control Character" versus "Graphic
+Character".
 
 First names to figure out:
 * Char@ field name.
@@ -585,3 +590,112 @@ argument?
 
 Let's move this discussion to thoughts/fble-0.6/unicode.txt, since it is
 talking about something slightly broader than the Char@ standard library type.
+
+---
+
+Back to this question:
+
+* Add back character type functions isspace, isalnum, etc?
+
+Now that the discussion in thoughts/fble-0.6/unicode.txt has led to us keeping
+the existing unicode code point based Char@ type and removing notions of
+locale from the platform by assuming UTF-8.
+
+I feel like it would be useful to define all these, specifically for a C99 "C"
+locale, with suitable module name. People can use it if they want. If they
+need something different, they don't use it. Maybe: /Std/Char/C/Type%? Or
+/Std/Char/C%? /Std/Char/CType%? /Std/Char/Ascii/Type%?
+
+Double check the C spec and the specs for all these functions. See if there's
+any ambiguity in how they are defined for ascii. If not, then I vote we go for
+/Std/Char/Ascii/Type%. That makes it pretty clear what values to expect, and
+that it only covers ascii, and it fits in with the existing Ascii submodule.
+
+---
+
+From C99:
+* isalnum = isalpha OR isdigit
+* isalpha = isupper OR islower, in the "C" locale. Otherwise there could be
+  more.
+* isblank: Space and Tab., in "C" locale.
+* iscntrl: "any control character".
+* isdigit: decimal digit
+* isgraph: printing character except space.
+* islower: lowercase letters
+* isprint: printing character including space.
+* ispunct: print - (space | alnum)
+* isspace: ...
+
+I think we can do this as ascii and make sense of it that way.
+
+Where can I see the definition of the C locale?
+
+I'm not convinced I want all of these. I'm not convinced yet that I want any
+of these. But let's break it down:
+1. Which of these have clear definitions?
+2. Which of these do I want, if any.
+
+I have the list of ascii chars. For any of them, I can test the difference
+between C and POSIX locale. Though I wish I could just see the definition.
+Hmm...
+
+  isalnum: a-zA-Z0-9
+  isalpha: a-zA-Z
+  isascii: 0 - 127
+  isblank: space or tab
+  iscntrl: 0 - 0x1F, 0x7F
+  isdigit: 0-9
+  isgraph: print not space
+  islower: a-z
+  isprint: 0x20 - 0x7E
+  ispunct: print not alnum
+  isspace: \f\n\r\t\v
+  isupper: A-Z
+  isxdigit: 0-9a-fA-F
+
+So, question is, what counts as print and what counts as control.
+
+Apparently 'C' and 'POSIX' are identical locales.
+
+C99 spec says these are graphic characters:
+
+   !"#%&'()*+,-./:
+   ;<=>?[\]ˆ_{|}˜
+
+So print must be graphic plus space.
+Control characters are alert, backspace, \r, and \n
+
+Oh, here we go, from C99 spec:
+
+   167) In an implementation that uses the seven-bit US ASCII character set,
+   the printing characters are those whose values lie from 0x20 (space)
+   through 0x7E (tilde); the control characters are those whose values lie
+   from 0 (NUL) through 0x1F (US), and the character 0x7F (DEL).
+
+So it's well defined for ASCII, though that may differ from non-ascii C
+systems. And I can double check myself easily enough by writing a program to
+loop through all the ascii characters. But at least, if I'm putting it under
+Ascii module, I can use this definition.
+
+Next question: do I want any or all of these? Useful ones I've wished at some
+time or another that I had:
+* isalnum, isalpha, isdigit, isspace, isxdigit.
+* Probably isupper and islower at some point, but I don't know what for.
+
+These I don't have intuition for: isblank, iscntrl, isgraph, isprint, ispunct.
+
+---
+
+Here's my proposal:
+
+/Std/Char/Ascii/Type% defines all the C99 standard functions listed above.
+
+I still believe any character classification you use should be as specified
+for the application in question. You should not rely on the definitions of
+ascii character types for the specification of your app.
+
+But just because these aren't intended to be used for app specifications, and
+may not be useful depending on the app specifications, doesn't mean there
+won't be some apps that can and would like to use them. They are well defined,
+independent of locale, and clearly labelled as Ascii.
+

@@ -106,4 +106,13 @@ namespace eval "pkgs/std" {
     "$::s/pkgs/std/utf–8.txt $::b/pkgs/std/fble-cli-demo.utf8.cat.out" \
     "cmp $::s/pkgs/std/utf–8.txt $::b/pkgs/std/fble-cli-demo.utf8.cat.out"
 
+  # data.fble.test.c unit test
+  obj $::b/pkgs/std/data.fble.test.o $::s/pkgs/std/data.fble.test.c \
+    "-I $::s/include -I $::s/pkgs/std"
+  bin $::b/pkgs/std/data.fble.test \
+    "$::b/pkgs/std/data.fble.test.o" \
+    "$::b/pkgs/std/libfble-std$::lext $::b/lib/libfble$::lext" ""
+  test $::b/pkgs/std/data.fble.test.tr \
+    $::b/pkgs/std/data.fble.test \
+    $::b/pkgs/std/data.fble.test
 }
