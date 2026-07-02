@@ -10,7 +10,7 @@
 Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
 Ascii .= /Std/Char/Ascii%;
-InRange .= /Std/Cmp%.Cmp(/Std/Char/Cmp%.Cmp);
+InRange .= /Std/Char/Cmp%;
 Eq .= /Std/Char/Eq%;
 U .= /Std/Char/Lit%;
 

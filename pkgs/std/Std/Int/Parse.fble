@@ -4,7 +4,7 @@
 Bool@, True, False .= /Std/Bool%;
 Char@, Pos .= /Std/Char%;
 Char .= /Std/Char/Ascii%;
-Lt, Gt .= /Std/Cmp%.Cmp(/Std/Char/Cmp%.Cmp);
+Lt, Gt .= /Std/Char/Cmp%;
 Int@, Add, Sub, Neg, Mul .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 Maybe@, Just, Nothing, Do, Map .= /Std/Maybe%;

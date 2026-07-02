@@ -6,7 +6,6 @@ Things to consider doing for the fble-0.6 release.
  - Anything I can do about that?
 
 Standard Library:
-* Add Lt, Le, Gt, Ge, etc for Char@?
 * Reconsider if Read, Write, Append should report error messages?
 * Think about api to break out of a ForEach loop mid way through.
  - Because this comes up a lot, and I tend to just write 'TODO' in my code

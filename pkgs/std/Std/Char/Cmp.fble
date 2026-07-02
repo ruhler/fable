@@ -11,4 +11,7 @@ On .= /Std/Func%;
 #  Characters are ordered by their unicode code point.
 Cmp@<Char@> Cmp = On(/Std/Int/Cmp%.Cmp, Pos);
 
-@(Cmp);
+# Standard comparison operations.
+Lt, Le, Gt, Ge, InRange, Min, Max .= /Std/Cmp%.Cmp(Cmp);
+
+@(Cmp, Lt, Le, Gt, Ge, InRange, Min, Max);

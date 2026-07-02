@@ -699,3 +699,8 @@ may not be useful depending on the app specifications, doesn't mean there
 won't be some apps that can and would like to use them. They are well defined,
 independent of locale, and clearly labelled as Ascii.
 
+---
+
+* Add Lt, Le, Gt, Ge, etc for Char@?
+
+Sure. May as well. For consistency with Int. It's not hard to define.

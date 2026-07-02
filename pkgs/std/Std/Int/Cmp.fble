@@ -17,6 +17,6 @@ Cmp@<Int@> Cmp = (Int@ a, Int@ b) {
 };
 
 # Standard comparison operations.
-Lt, Le, Gt, Ge, Min, Max .= /Std/Cmp%.Cmp(Cmp);
+Lt, Le, Gt, Ge, InRange, Min, Max .= /Std/Cmp%.Cmp(Cmp);
 
-@(Cmp, Lt, Le, Gt, Ge, Min, Max);
+@(Cmp, Lt, Le, Gt, Ge, InRange, Min, Max);
