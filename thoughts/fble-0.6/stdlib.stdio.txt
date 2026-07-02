@@ -5353,3 +5353,20 @@ Aha. That's funny. I already have that in the library:
 
 Takes a monad, state of a list, and returns In@.
 
+---
+
+* Reconsider if Read, Write, Append should report error messages?
+
+Today we use Maybe. So we can tell if there was an error or not, and we know
+the name of the thing you tried to open. But we can't tell you what type of
+error there may have been.
+
+What kind of errors are we talking about? Any error fopen might return:
+* invalid mode - should never happen.
+* errors from malloc: OutOfMemory.
+* errors from open: there are a bunch of them.
+
+I vote to stick with what we have for now. Worry about adding proper error
+handling once I have a better story for error handling in general in fble.
+Rather than pretend to support something now that doesn't really work as well
+as we would like.

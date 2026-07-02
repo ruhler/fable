@@ -544,3 +544,54 @@ processing the doc comments into a real document. For now things are still
 ad-hoc. So check things ad-hoc.
 
 Done. There was one module missing the header. Otherwise all was okay.
+
+---
+
+* Think about api to break out of a ForEach loop mid way through.
+ - Because this comes up a lot, and I tend to just write 'TODO' in my code
+   where I should probably implement a proper interface.
+
+Examples:
+  /Sat/Solver%.PickSomeVar, wants any value in a map.
+  /Hwdg/Memory%.Disjoint Wants to stop as soon as a matching map entry is found.
+  /Games/Layout/Layout%.NodeAt Wants to stop at first match, iterating over a map.
+  /Games/Sudoku%.SolveFrom wants to break out as soon as a solution is found, iterating over a list.
+
+So clearly it's a common thing we want to express, and I have plenty of
+examples that could take advantage of an API that lets us break out early.
+
+Now, my claim is, if we use a Stream API instead of generic ForEach, it should
+be possible to break out early like we do in the Map implementation for things
+like lookup. But:
+* I'm not convinced that actually does break out early like I think.
+* If it does, I'm not convinced we couldn't already do that with existing
+  ForEach.
+
+How about let's work on /Hwdg/Memory%.Disjoint to start.
+
+  # Return true if the two memories have no addresses in common.
+  (Memory@, Memory@) { Bool@; }
+  Disjoint = (Memory@ a, Memory@ b) {
+      # TODO: avoid iterating as soon as we find something in common.
+      ForEach(a, True, (Addr@ k, Data@ _, Bool@ disjoint) {
+          disjoint.?(false: False);
+          Get(b, k).?(just: False);
+          True;
+      });
+  };
+
+I would kind of like to write something like: ...
+
+Well, honestly, it would be nice to have an 'Any' function for map that lets
+me search for any: Not(Any(a, (Addr@ k) { Get(b, k).?(just: True, : False); };
+
+But that just shifts the question to how we would implement 'Any', preferably
+on top of an existing ForEach API.
+
+For /Std/List/Search%.Any we implement the recursive function directly
+ourself. We can do that for list. We can only do that for Map internal to the
+Map module though, because ForEach API is the only way we have externally for
+iterating over all the values of a map.
+
+Let's work out the details for.
+

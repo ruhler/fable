@@ -162,35 +162,6 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_Open = {
 };
 
 /**
- * @func[Close] FbleRunFunction to for Close foreign function.
- *  See documentation of FbleRunFunction in fble-function.h
- *
- *  The fble type of the function is:
- *
- *  @code[fble] @
- *   (File@, Unit@) { Unit@; }
- */  
-static FbleValue* Close(
-    FbleRuntime* runtime, FbleProfileThread* profile,
-    FbleFunction* function, FbleValue** args)
-{
-  (void)profile;
-  (void)args;
-
-  FILE* file = (FILE*)FbleNativeValueData(args[0]);
-  fclose(file);
-  return FbleNewStructValue_(runtime, 0);
-}
-// /Std/Io/File/Binary%.Close foreign function.
-FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_Close = {
-  .path = "/Std/Io/File/Binary%",
-  .name = "Close",
-  .num_args = 2,
-  .max_call_args = 0,
-  .run = &Close,
-};
-
-/**
  * @func[GetByte] FbleRunFunction for GetByte foreign function.
  *  See documentation of FbleRunFunction in fble-function.h
  *
@@ -303,7 +274,6 @@ void FbleRegisterStdioForeignValues(FbleRuntime* runtime)
   FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStdout);
   FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStderr);
   FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_Open);
-  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_Close);
   FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_PutByte);
   FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetByte);
   FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_Flush);

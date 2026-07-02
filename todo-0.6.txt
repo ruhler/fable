@@ -6,7 +6,6 @@ Things to consider doing for the fble-0.6 release.
  - Anything I can do about that?
 
 Standard Library:
-* Reconsider if Read, Write, Append should report error messages?
 * Think about api to break out of a ForEach loop mid way through.
  - Because this comes up a lot, and I tend to just write 'TODO' in my code
    where I should probably implement a proper interface.
@@ -80,11 +79,4 @@ Other:
  - Compiled gives link time error not an any particular line number.
  - We would need some extra spec infra support to describe this.
  - Add spec test for Foreign value not found in interpreted case.
-
----
-
-* Fix failing unicode tests in pkgs/std on windows build
- - See thoughts in thoughts/fble-0.6/stdlib.string.txt.
- - issues with utf-8 command line args
- - issues with setlocale
 
