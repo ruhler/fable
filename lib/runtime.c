@@ -751,6 +751,7 @@ static FbleValue* GcRealloc(Runtime* runtime, FbleValue* value)
   }
 
   FbleUnreachable("should never get here");
+  return NULL;
 }
 
 /**
