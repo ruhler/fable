@@ -87,24 +87,20 @@ namespace eval "pkgs/std" {
     "grep hello $::b/pkgs/std/fble-cli-demo.env.out"
 
   # Unicode Tests:
-  # Note: 'utf–8.txt' is using a multibyte '–' character.
-  # * We can read command line arguments with multibyte utf8 chars.
-  # * We can open files whose names contain multibyte utf8 chars.
   # * We can read files containing 1, 2, 3, and 4 byte utf8 chars.
   # * We can write files containing 1, 2, 3, and 4 byte utf8 chars.
-  # TODO: Fix the unicode tests on windows.
   build $::b/pkgs/std/fble-cli-demo.utf8.ucat.out \
-    "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/utf–8.txt" \
-    "$::b/pkgs/std/fble-cli-demo ucat $::s/pkgs/std/utf–8.txt > $::b/pkgs/std/fble-cli-demo.utf8.ucat.out"
+    "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/utf-8.txt" \
+    "$::b/pkgs/std/fble-cli-demo ucat $::s/pkgs/std/utf-8.txt > $::b/pkgs/std/fble-cli-demo.utf8.ucat.out"
   test $::b/pkgs/std/fble-cli-demo.utf8.ucat.tr \
-    "$::s/pkgs/std/utf–8.ucat.txt $::b/pkgs/std/fble-cli-demo.utf8.ucat.out" \
-    "cmp $::s/pkgs/std/utf–8.ucat.txt $::b/pkgs/std/fble-cli-demo.utf8.ucat.out"
+    "$::s/pkgs/std/utf-8.ucat.txt $::b/pkgs/std/fble-cli-demo.utf8.ucat.out" \
+    "cmp $::s/pkgs/std/utf-8.ucat.txt $::b/pkgs/std/fble-cli-demo.utf8.ucat.out"
   build $::b/pkgs/std/fble-cli-demo.utf8.cat.out \
-    "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/utf–8.txt" \
-    "$::b/pkgs/std/fble-cli-demo cat $::s/pkgs/std/utf–8.txt > $::b/pkgs/std/fble-cli-demo.utf8.cat.out"
+    "$::b/pkgs/std/fble-cli-demo $::s/pkgs/std/utf-8.txt" \
+    "$::b/pkgs/std/fble-cli-demo cat $::s/pkgs/std/utf-8.txt > $::b/pkgs/std/fble-cli-demo.utf8.cat.out"
   test $::b/pkgs/std/fble-cli-demo.utf8.cat.tr \
-    "$::s/pkgs/std/utf–8.txt $::b/pkgs/std/fble-cli-demo.utf8.cat.out" \
-    "cmp $::s/pkgs/std/utf–8.txt $::b/pkgs/std/fble-cli-demo.utf8.cat.out"
+    "$::s/pkgs/std/utf-8.txt $::b/pkgs/std/fble-cli-demo.utf8.cat.out" \
+    "cmp $::s/pkgs/std/utf-8.txt $::b/pkgs/std/fble-cli-demo.utf8.cat.out"
 
   # data.fble.test.c unit test
   obj $::b/pkgs/std/data.fble.test.o $::s/pkgs/std/data.fble.test.c \
