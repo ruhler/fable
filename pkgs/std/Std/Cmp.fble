@@ -106,6 +106,20 @@ Ge = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
   cmp(a, b).?(less: False, : True);
 };
 
+# @func[InRange] Check if a value is in an inclusive range.
+#  @arg[@][T@] The type of values to compare.
+#  @arg[Cmp@<T>][cmp] The compare instance to use.
+#  @arg[T@][lo] The inclusive low end of the range.
+#  @arg[T@][hi] The inclusive high end of the range.
+#  @arg[T@][x] The value to check.
+#  @returns[Bool@] True if x is in the interval [lo, hi].
+<@ T@>(Cmp@<T@>, T@, T@, T@) { Bool@; }
+InRange = <@ T@>(Cmp@<T@> cmp, T@ lo, T@ hi, T@ x) {
+  Le(cmp, lo, x).?(false: False);
+  Le(cmp, x, hi).?(false: False);
+  True;
+};
+
 # @func[Min] Minimum operator.
 #  @arg[@][T@] The type of values to compare.
 #  @arg[Cmp@<T>][cmp] The compare instance to use.
@@ -137,8 +151,9 @@ Cmp = <@ T@>(Cmp@<T@> cmp) {
     Eq: Eq(cmp), Ne: Ne(cmp),
     Lt: Lt(cmp), Le: Le(cmp),
     Gt: Gt(cmp), Ge: Ge(cmp),
+    InRange: InRange(cmp),
     Min: Min(cmp), Max: Max(cmp));
 };
 
 @(Compared@, Cmp@, Less, Equal, Greater,
-  Eq, Ne, Lt, Le, Gt, Ge, Min, Max, Cmp);
+  Eq, Ne, Lt, Le, Gt, Ge, InRange, Min, Max, Cmp);

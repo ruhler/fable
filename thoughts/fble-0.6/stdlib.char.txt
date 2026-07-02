@@ -639,19 +639,19 @@ I have the list of ascii chars. For any of them, I can test the difference
 between C and POSIX locale. Though I wish I could just see the definition.
 Hmm...
 
-  isalnum: a-zA-Z0-9
-  isalpha: a-zA-Z
-  isascii: 0 - 127
-  isblank: space or tab
-  iscntrl: 0 - 0x1F, 0x7F
-  isdigit: 0-9
-  isgraph: print not space
-  islower: a-z
-  isprint: 0x20 - 0x7E
-  ispunct: print not alnum
-  isspace: \f\n\r\t\v
-  isupper: A-Z
-  isxdigit: 0-9a-fA-F
+. isalnum: a-zA-Z0-9
+. isalpha: a-zA-Z
+. isascii: 0 - 127
+. isblank: space or tab
+. iscntrl: 0 - 0x1F, 0x7F
+. isdigit: 0-9
+. isgraph: print not space
+. islower: a-z
+. isprint: 0x20 - 0x7E
+. ispunct: print not alnum
+. isspace: \f\n\r\t\v
+. isupper: A-Z
+. isxdigit: 0-9a-fA-F
 
 So, question is, what counts as print and what counts as control.
 

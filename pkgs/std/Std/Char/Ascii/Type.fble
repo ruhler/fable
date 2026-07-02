@@ -1,0 +1,111 @@
+# @module[/Std/Char/Ascii/Type%]
+#  Ascii character type classification.
+#
+#  Normally an application should use its own character classification, as
+#  per the spec of the application. These ascii character classification
+#  functions are for convenience in the rare case when your application's
+#  needs happen to correspond to ascii character classification as defined
+#  according to the C99 language spec.
+
+Bool@, True, False .= /Std/Bool%;
+Char@ .= /Std/Char%;
+Ascii .= /Std/Char/Ascii%;
+InRange .= /Std/Cmp%.Cmp(/Std/Char/Cmp%.Cmp);
+Eq .= /Std/Char/Eq%;
+U .= /Std/Char/Lit%;
+
+# @func[IsUpper] Checks for uppercase ascii characters.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is in A-Z.
+(Char@) { Bool@; } IsUpper = InRange(Ascii.A, Ascii.Z);
+
+# @func[IsLower] Checks for lowercase ascii characters.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is in a-z.
+(Char@) { Bool@; } IsLower = InRange(Ascii.a, Ascii.z);
+
+# @func[IsAscii] Checks for ascii characters.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is in the ascii range.
+(Char@) { Bool@; } IsAscii = InRange(U|0000, U|007F);
+
+# @func[IsDigit] Checks for decimal digits.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is in 0-9.
+(Char@) { Bool@; } IsDigit = InRange(Ascii.0, Ascii.9);
+
+# @func[IsPrint] Checks for printable ascii characters.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is in U+0020-U+007E.
+(Char@) { Bool@; } IsPrint = InRange(U|0020, U|007E);
+
+# @func[IsGraph] Checks for graphic ascii characters.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is printable and not space.
+(Char@) { Bool@; } IsGraph = InRange(U|0021, U|007E);
+
+# @func[IsAlpha] Checks for alphabetic ascii characters.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is in A-Za-z.
+(Char@) { Bool@; } IsAlpha = (Char@ c) {
+  IsLower(c).?(true: True);
+  IsUpper(c).?(true: True);
+  False;
+};
+
+# @func[IsAlNum] Checks for alphanumeric ascii characters.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is in 0-9A-Za-z.
+(Char@) { Bool@; } IsAlNum = (Char@ c) {
+  IsAlpha(c).?(true: True);
+  IsDigit(c).?(true: True);
+  False;
+};
+
+# @func[IsCntrl] Checks for ascii control characters.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is in U|0000-U|001F or U|007F.
+(Char@) { Bool@; } IsCntrl = (Char@ c) {
+  InRange(U|0000, U|001F, c).?(true: True);
+  Eq(U|007F, c).?(true: True);
+  False;
+};
+
+# @func[IsXDigit] Checks for hex digit.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is in 0-9A-Fa-f.
+(Char@) { Bool@; } IsXDigit = (Char@ c) {
+  IsDigit(c).?(true: True);
+  InRange(Ascii.A, Ascii.F, c).?(true: True);
+  InRange(Ascii.a, Ascii.f, c).?(true: True);
+  False;
+};
+
+# @func[IsSpace] Checks for a space ascii character.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is space or \t\n\v\f\r.
+(Char@) { Bool@; } IsSpace = (Char@ c) {
+  Eq(Ascii.space, c).?(true: True);
+  InRange(U|0009, U|000D, c).?(true: True);
+  False;
+};
+
+# @func[IsPunct] Checks for a punctuation ascii character.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is printable but not alphanumeric.
+(Char@) { Bool@; } IsPunct = (Char@ c) {
+  IsAlNum(c).?(true: False);
+  IsPrint(c);
+};
+
+# @func[IsBlank] Checks for a blank ascii character.
+#  @arg[Char@][c] The character to check.
+#  @returns[Bool@] True if the character is the space or tab character.
+(Char@) { Bool@; } IsBlank = (Char@ c) {
+  Eq(Ascii.space, c).?(true: True);
+  Eq(Ascii.tab, c).?(true: True);
+  False;
+};
+
+@(IsAlNum, IsAlpha, IsAscii, IsBlank, IsCntrl, IsDigit, IsGraph, IsLower,
+  IsPrint, IsPunct, IsSpace, IsUpper, IsXDigit);

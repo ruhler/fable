@@ -7,9 +7,8 @@
 #
 # Their sum needs to be calculated.
 
-Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
-Ascii .= /Std/Char/Ascii%;
+IsSpace .= /Std/Char/Ascii/Type%;
 FormatE .= /Std/Char/Ascii/Stream%;
 Int@, Add .= /Std/Int%;
 Int .= /Std/Int/Lit%;
@@ -24,13 +23,6 @@ String@ .= /Std/String%;
 Main@, Success .= /Std/Io/Cli%;
 Monad@ .= /Std/Monad%;
 Unit@ .= /Std/Unit%;
-
-(Char@) { Bool@; }
-IsSpace = (Char@ c) {
-  /Std/Char/Eq%.Eq(Ascii.' ', c).?(true: True);
-  /Std/Char/Eq%.Eq(Ascii.nl, c).?(true: True);
-  False;
-};
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
   In@<Char@, M@> in := m.do(/Std/Io/File/Utf8%.Stdin(m, io));
