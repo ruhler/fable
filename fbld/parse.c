@@ -53,6 +53,9 @@ static char Char(Lex* lex);
 static bool Is(Lex* lex, const char* str);
 static bool IsEnd(Lex* lex);
 static void Advance(Lex* lex);
+static void AdvanceLine(Lex* lex);
+
+#define IsEol(lex, str) (Is(lex, str "\n") || Is(lex, str "\r\n"))
 
 static bool IsNameChar(int c);
 static FbldText* ParseName(Lex* lex);
@@ -94,7 +97,9 @@ static char GetC(Lex* lex)
     if (strcmp(filename, "-") == 0) {
       lex->fin = stdin;
     } else {
-      lex->fin = fopen(filename, "r");
+      // Open in binary mode because we handle \r\n ourselves regardless of
+      // the platform we are running on.
+      lex->fin = fopen(filename, "rb");
       if (lex->fin == NULL) {
         fprintf(stderr, "ERROR: unable to open '%s' for reading\n", filename); 
         abort();
@@ -156,7 +161,7 @@ static char NextFetched(Lex* lex, size_t* i)
     }
 
     if (col < lex->indent + 1) {
-      if (lex->next[*i] == ' ') {
+      if (lex->next[*i] == ' ' || lex->next[*i] == '\r') {
         col++;
         (*i)++;
         continue;
@@ -164,6 +169,16 @@ static char NextFetched(Lex* lex, size_t* i)
 
       if (lex->next[*i] == '\n') {
         return '\n';
+      }
+      
+      // \r\n can ignore indent, but anything else after \r can't.
+      if (lex->next_size > 1 && lex->next[(*i) - 1] == '\r') {
+        if (lex->next[*i] == '\n') {
+          (*i)--;
+          return '\r';
+        }
+        (*i)--;
+        return END;
       }
 
       // Unindented text is treated as 'END'.
@@ -252,6 +267,22 @@ static void Advance(Lex* lex)
   }
   lex->next_size -= len;
   memmove(lex->next, lex->next + len, lex->next_size);
+}
+
+/**
+ * @func[AdvanceLine] Advances to the next line in the input.
+ *  Assumes you have already verified that there is a next line in the input.
+ * 
+ *  @arg[Lex*][lex] The lexer state.
+ *  @sideeffects Advances to the next line in the input.
+ */
+static void AdvanceLine(Lex* lex)
+{
+  char c;
+  do {
+    c = Char(lex);
+    Advance(lex);
+  } while (c != '\n');
 }
 
 /**
@@ -416,12 +447,12 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
     }
 
     if (context == SAME_LINE_ARG
-        && (Is(lex, "\n") || Is(lex, " @\n") || Is(lex, " @@\n"))) {
+        && (IsEol(lex, "") || IsEol(lex, " @") || IsEol(lex, " @@"))) {
       break;
     }
 
     if (context == IMPLICIT_BLOCK) {
-      if (lex->loc.column == 1 && Is(lex, "\n")) {
+      if (lex->loc.column == 1 && IsEol(lex, "")) {
         break;
       }
       if (IsEnd(lex)) {
@@ -458,6 +489,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
         case '\\': FbldAppendToVector(chars, '\\'); break;
         case ']': FbldAppendToVector(chars, ']'); break;
         case 'n': FbldAppendToVector(chars, '\n'); break;
+        case 'r': FbldAppendToVector(chars, '\r'); break;
         default: {
           FbldReportError("unsupported escape sequence\n", lex->loc);
           FbldFree(chars.xs);
@@ -517,7 +549,7 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
     }
 
     // Same line arg.
-    if (Is(lex, " ") && !Is(lex, " @\n") && !Is(lex, " @@\n")) {
+    if (Is(lex, " ") && !IsEol(lex, " @") && !IsEol(lex, " @@")) {
       Advance(lex);
       FbldMarkup* same_line = ParseInline(lex, SAME_LINE_ARG);
       if (same_line == NULL) {
@@ -528,8 +560,8 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
     }
 
     // Same line final arg.
-    if (Is(lex, " @@\n")) {
-      Advance(lex); Advance(lex); Advance(lex); Advance(lex);
+    if (IsEol(lex, " @@")) {
+      AdvanceLine(lex);
       FbldMarkup* final = ParseBlock(lex);
       if (final == NULL) {
         FbldFreeMarkup(markup);
@@ -540,8 +572,8 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
     }
 
     // Next line literal arg.
-    if (Is(lex, " @\n")) {
-      Advance(lex); Advance(lex); Advance(lex);
+    if (IsEol(lex, " @")) {
+      AdvanceLine(lex);
       FbldLoc loc = lex->loc;
 
       lex->indent++;
@@ -554,21 +586,35 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
       lex->indent--;
 
       // Strip any trailing blank lines.
-      while (chars.size > 1
-          && chars.xs[chars.size-1] == '\n'
-          && chars.xs[chars.size-2] == '\n') {
-        chars.size--;
+      // \n\n ==> \n, \n\r\n ==> \n
+      while (true) {
+        if (chars.size > 1
+            && chars.xs[chars.size-2] == '\n'
+            && chars.xs[chars.size-1] == '\n') {
+          chars.size--;
+          continue;
+        }
+
+        if (chars.size > 2
+            && chars.xs[chars.size-3] == '\n'
+            && chars.xs[chars.size-2] == '\r'
+            && chars.xs[chars.size-1] == '\n') {
+          chars.size -= 2;
+          continue;
+        }
+
+        break;
       }
 
       FbldAppendToVector(chars, '\0');
       FbldMarkup* arg = FbldNewPlainMarkup(loc, chars.xs);
       FbldFree(chars.xs);
       FbldAppendToVector(markup->markups, arg);
-    } else if (Is(lex, "\n")) {
-      Advance(lex);
+    } else if (IsEol(lex, "")) {
+      AdvanceLine(lex);
     } else {
       fprintf(stderr, "Got: 0x%x\n", Char(lex));
-      FbldReportError("expected newline\n", lex->loc);
+      FbldReportError("expected end of line\n", lex->loc);
       FbldFreeMarkup(markup);
       return NULL;
     }
@@ -587,8 +633,8 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
     }
 
     // Next line final arg.
-    if (Is(lex, "@@\n")) {
-      Advance(lex); Advance(lex); Advance(lex);
+    if (IsEol(lex, "@@")) {
+      AdvanceLine(lex);
       FbldMarkup* final = ParseBlock(lex);
       if (final == NULL) {
         FbldFreeMarkup(markup);
@@ -599,7 +645,7 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
     }
 
     // Continuation.
-    if (Is(lex, "@\n") || Is(lex, "@ ") || Is(lex, "@[") || Is(lex, "@{")) {
+    if (IsEol(lex, "@") || Is(lex, "@ ") || Is(lex, "@[") || Is(lex, "@{")) {
       Advance(lex);
       continue;
     }
@@ -629,7 +675,7 @@ static FbldMarkup* ParseBlock(Lex* lex)
   FbldInitVector(markup->markups);
 
   // Skip blank lines.
-  while (Is(lex, "\n")) Advance(lex);
+  while (IsEol(lex, "")) AdvanceLine(lex);
 
   while (!IsEnd(lex)) {
     // Explicit implicit block command.
@@ -652,7 +698,7 @@ static FbldMarkup* ParseBlock(Lex* lex)
       FbldAppendToVector(markup->markups, cmd);
 
       // Skip blank lines.
-      while (Is(lex, "\n")) Advance(lex);
+      while (IsEol(lex, "")) AdvanceLine(lex);
       continue;
     }
 
@@ -667,7 +713,7 @@ static FbldMarkup* ParseBlock(Lex* lex)
       FbldAppendToVector(markup->markups, command);
 
       // Skip blank lines.
-      while (Is(lex, "\n")) Advance(lex);
+      while (IsEol(lex, "")) AdvanceLine(lex);
       continue;
     }
 
@@ -689,7 +735,7 @@ static FbldMarkup* ParseBlock(Lex* lex)
     FbldAppendToVector(markup->markups, cmd);
 
     // Skip blank lines.
-    while (Is(lex, "\n")) Advance(lex);
+    while (IsEol(lex, "")) AdvanceLine(lex);
   }
 
   return markup;

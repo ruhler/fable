@@ -1,0 +1,21 @@
+@test no-error @@
+
+Test for use of CRLF as line endings.
+
+@assert_eq[Hi.\r\nThere.\r\n]
+ Hi.
+
+ @assert_eq[foo][foo]
+
+ There.
+
+@assert_eq[Hello.\r\nThere.\r\nNext line here.\r\n]
+ Hello.
+ There.
+
+ Next line here.
+
+@assert_eq[foo][foo]
+@assert_eq[bar][bar]
+
+End of test.

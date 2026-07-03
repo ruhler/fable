@@ -29,6 +29,7 @@ syn match fbldEscape "\\\["
 syn match fbldEscape "\\@"
 syn match fbldEscape "\\\\"
 syn match fbldEscape "\\n"
+syn match fbldEscape "\\r"
 
 " Specify highlight groups to use for each of the syntax groups.
 hi def link fbldTag Identifier

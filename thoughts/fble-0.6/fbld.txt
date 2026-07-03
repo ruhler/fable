@@ -1,0 +1,69 @@
+
+Since changing fble standard io library to be binary utf8 encoded
+interpretation of text, we have fbld test failures on windows because the
+files get checked out from git with \r\n line endings instead of \n.
+
+We could just force git to check everything out with \n instead of \r\n. But I
+think it would be better to change the fbld spec to allow \r\n anywhere \n is
+currently expected. Regardless of what platform you are on.
+
+How hard would that be?
+
+Steps would be:
+* Update the spec.
+* Add a spec tests - I should see failures for both the c and fble based
+  implementations on linux then.
+* Fix the implementations.
+
+Review of spec references to lines:
+* Blank lines between commands act as delimiters of block commands.
+* Text on the same line... trailing newline ...
+
+The spec doesn't mention newline character really. It's vague. I could
+interpret \r\n as line delimiters. It's probably worth specifying, but
+otherwise I don't need much change in the spec.
+
+In terms of implementation, I just need to factor out any where I try to match
+to match '\n' or '\r\n'.
+
+Often I try to match things at the end of the line, like ' @\n' or ' @@\n'. I
+could maybe add a helper for LineEnd that takes the last characters we are
+trying to match.
+
+The parser has an Or combinator, so it shouldn't be too hard. It might be
+slow, but who cares about that these days?
+
+This sounds like a plan to me.
+
+---
+
+This is hard. If the C implementation opens as text, on windows that will
+strip the \r and change the contents of the file. On fble it will not. If we
+are asserting against the contents of the parsed line, that's bad, right?
+
+The \n is supposed to be included in the parsed line, which would imply \r\n
+is also supposed to be include. Do we really want fbld programmers to have to
+worry about this? Why can't I say line endings for fbld files have to be \n?
+
+I can change the c implementation for fbld to open its file in binary mode. I
+should do that. That's would solve that issue.
+
+Dealing with \r\n when parsing indented lines is tedious.
+
+Anyway, let me figure out the actual reason the C implementation is failing my
+new test before giving up. If \r\n is stripped from the input, it should be
+failing due to assertion mismatch, not with a parsing error.
+
+Okay, I see what's happening. Remember: my line endings are \r\n, but I'm
+testing on linux, so even though we are in text mode, we still see the \r. I
+often as IsEol, and if so, assume the right number of characters to get to
+pass the end of line. That assumption is wrong now. I should add a helper to
+advance past end of line.
+
+---
+
+Okay. So the C implementation passes the test on linux now. It won't pass the
+test on windows though, because the line endings are mangled by text
+conversion. Not unless we read in binary mode. But that's fine, because we
+handle line endings explicitly now.
+

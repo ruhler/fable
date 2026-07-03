@@ -159,6 +159,7 @@
     @def[@l{\[}] @l{[}
     @def[@l{\]}] @l{]}
     @def[@l{\n}] Newline
+    @def[@l{\r}] Carriage Return
 
     Any other character following a backslash is considered reserved for
     future use and is not currently allowed. The escape sequences make it
@@ -208,13 +209,16 @@
     backslash characters:
 
     @code[fbld] @
-     @emph{The escape sequences in fbld are: \\, \@, \[, \], and \n.}
+     @emph{The escape sequences in fbld are: \\, \@, \[, \], \n and \r.}
 
   @subsection Block Structured Text
    Block structured text is used for marking up larger sections of document
-   spanning multiple lines or paragraphs. It provides a variety concrete
+   spanning multiple lines or paragraphs. It provides a variety of concrete
    syntax options for specifying arguments to commands. Documents are parsed
    as block structured text.
+
+   Both @l{\n} and @l{\r\n} can be used to denote end of line, regardless of
+   platform.
 
    @subsubsection Block Commands
     Commands are introduced in block structured text using the @l{@} symbol,
