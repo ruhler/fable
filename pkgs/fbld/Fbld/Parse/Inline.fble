@@ -113,7 +113,6 @@ M@<Markup@> Command = {
       /Std/Char/Eq%.Eq(e.c, Char|'\').?(true: Return(Char|'\'));
       /Std/Char/Eq%.Eq(e.c, Char|']').?(true: Return(Char|']'));
       /Std/Char/Eq%.Eq(e.c, Char|'n').?(true: Return(Ascii.nl));
-      /Std/Char/Eq%.Eq(e.c, Char|'r').?(true: Return(Ascii.cr));
       Error<Char@>(e.l, Format|'Unsupported escape sequence: ''\%s'''[C(e.c)]);
     });
     Return(c);

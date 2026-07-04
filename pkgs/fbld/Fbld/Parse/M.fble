@@ -1,12 +1,12 @@
 
 Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
-Ascii, Char, StrE .= /Std/Char/Ascii%;
+Char .= /Std/Char/Ascii%;
 Format, String .= /Std/Char/Ascii/Stream%;
 Int@, Incr .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
-List@, Items, Empty, Last, Append .= /Std/List%;
+List@, Items, Empty, Last .= /Std/List%;
 Stream@, C(.Put) .= /Std/Stream%;
 String@ .= /Std/String%;
 IsNewline .= /Std/String/Lines%;
@@ -122,26 +122,12 @@ Run = <@ T@>(M@<T@> m, List@<Text@> input) {
 # appropriate. Fails if there are no more characters in the input stream.
 # Takes account of the current indent level.
 M@<CharL@> GetL = {
-  M@<Maybe@<Char@>> Peak = (R@ r) {
-    List@<CharL@> in = r.s;
-    in.?(empty: Ok(SM@(in, Nothing<Char@>)));
-    Ok(SM@(in, Just(in.items.head.c)));
-  };
-
   CharL@ cl := Do(GetL_);
   Int@ indent := Do(GetIndent);
 
   /Std/Int/Cmp%.Le(cl.l.col, indent).?(true: {
     IsNewline(cl.c).?(true: Return(cl));
     /Std/Char/Eq%.Eq(Char|' ', cl.c).?(true: GetL);
-    /Std/Char/Eq%.Eq(Ascii.cr, cl.c).?(true: {
-      # Peak into the next character to see if it's \n.
-      Maybe@<Char@> nc := Do(Peak);
-      nc.?(nothing: Error<CharL@>(cl.l, String|'end of indented block'));
-      IsNewline(nc.just).?(true: Return(cl));
-      Error<CharL@>(cl.l, String|'end of indented block');
-    });
-
     Error<CharL@>(cl.l, String|'end of indented block');
   });
 
@@ -206,14 +192,7 @@ String = (String@ s) {
     });
 };
 
-# Parse a string at the end of a line. Fails if the input doesn't match the
-# given string at the end of a line.
-(String@) { M@<Unit@>; }
-EndOfLine = (String@ s) {
-  Or(String(Append(s, StrE|'\n')), String(Append(s, StrE|'\r\n')));
-};
-
 @(M@, CharL@,
   Return, Error, Do, Loc, Get, GetL, GetIndent, EndOfInput, Indented,
-  Try, Try_, Test, Test_, Or, String, EndOfLine,
+  Try, Try_, Test, Test_, Or, String,
   Run);

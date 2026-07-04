@@ -73,3 +73,31 @@ Fble implementation wasn't hard either. Most of the stuff we can abstract
 behind helper functions. So at the end of the day, this isn't too complex.
 Let's see if it resolves the errors on windows builds.
 
+---
+
+No. This wasn't the right approach. Because now if you have \r\n in the file,
+the \r stays in and you have to deal with it. For example, assertions that
+expected just \n before now fail because we see \r\n.
+
+On windows, if I used text mode, even if the file is stored with \r\n as line
+endings, text mode gets rid of that and makes it just \n.
+
+Why does windows do this? Why does it insert \r when you write out a text
+file, even though internally there is no \r?
+
+Do we need to bring back text mode after all? And an option to use text mode
+when opening a file?
+
+Because we don't know if a file is written in binary mode or in text mode. But
+to properly interpret the file, it seems like we need to know. So we need to
+follow convention and say: well, this is a text file we want to read, so
+anyone who wrote it better have written text, so we'll interpret it in text.
+
+If you are using text mode, it doesn't hurt if it was written in text or
+binary, because you see the same thing regardless. If you are using binary
+mode, it better have been written in binary.
+
+The silly thing is, fble already distinguishes between binary and text files
+in terms of how you consume it as a sequence of Char@ or a sequence of Byte@.
+We ought to know, at least under the covers, which you intend to use.
+
