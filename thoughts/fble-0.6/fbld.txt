@@ -67,3 +67,9 @@ test on windows though, because the line endings are mangled by text
 conversion. Not unless we read in binary mode. But that's fine, because we
 handle line endings explicitly now.
 
+---
+
+Fble implementation wasn't hard either. Most of the stuff we can abstract
+behind helper functions. So at the end of the day, this isn't too complex.
+Let's see if it resolves the errors on windows builds.
+

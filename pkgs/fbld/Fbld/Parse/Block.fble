@@ -12,7 +12,7 @@ Unit@, Unit .= /Std/Unit%;
 Loc@ .= /Fbld/Loc%;
 Markup@, Empty, Append .= /Fbld/Markup%;
 M@, Return, Error, Do, Loc, Get, GetIndent, Try_, Test, Test_,
-String, Or, EndOfInput, Indented .= /Fbld/Parse/M%;
+String, Or, EndOfInput, EndOfLine, Indented .= /Fbld/Parse/M%;
 Inline, Name, InlineArgs(.Args) .= /Fbld/Parse/Inline%;
 
 # Parses a blank line. Fails if we aren't at a blank line.
@@ -22,7 +22,7 @@ M@<Unit@> BlankLine = {
   /Std/Int/Cmp%.Lt(Incr(indent), l.col).?(true: {
     Error<Unit@>(l, Format|'not a blank line'[]);
   });
-  String(StrE|'\n');
+  EndOfLine(Str|'');
 };
 
 M@<Unit@> SkipBlankLines = {
@@ -53,8 +53,8 @@ M@<String@> Raw = {
 Args = (Loc@ l, String@ name, List@<Markup@> args) {
   List@<Markup@> inline_args := Do(InlineArgs);
 
-  M@<Unit@> EndOfSameLine = Or(String(StrE|'\n'),
-    Or(String(StrE|' @\n'), String(StrE|' @@\n')));
+  M@<Unit@> EndOfSameLine = Or(EndOfLine(StrE|''),
+    Or(EndOfLine(StrE|' @'), EndOfLine(StrE|' @@')));
 
   List@<Markup@> same_line := Do({
     Bool@ none := Do(Test_(EndOfSameLine));
@@ -70,7 +70,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
     Return(List[m]);
   });
 
-  Bool@ final_same_line := Do(Try_(String(StrE|' @@\n')));
+  Bool@ final_same_line := Do(Try_(EndOfLine(StrE|' @@')));
   final_same_line.?(true: {
     Markup@ arg := Do(Block);
     Return(/Fbld/Markup%.Command(l, name, Concat[
@@ -78,10 +78,10 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
   });
 
   List@<Markup@> literal := Do({
-    Bool@ none := Do(Try_(String(StrE|'\n')));
+    Bool@ none := Do(Try_(EndOfLine(StrE|'')));
     none.?(true: Return(/Std/List%.Empty<Markup@>));
 
-    Unit@ _ := Do(String(StrE|' @\n'));
+    Unit@ _ := Do(EndOfLine(StrE|' @'));
     Markup@ e := Do(Indented({
       Loc@ l := Do(Loc);
       String@ raw := Do(Raw);
@@ -97,7 +97,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
     Return(List[m]);
   });
 
-  Bool@ final := Do(Try_(String(StrE|'@@\n')));
+  Bool@ final := Do(Try_(EndOfLine(StrE|'@@')));
   final.?(true: {
     Markup@ arg := Do(Block);
     Return(/Fbld/Markup%.Command(l, name, Concat[
@@ -106,7 +106,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
 
   Bool@ continue := Do(Test_(
       Or(
-        Or(String(StrE|'@\n'), String(Str|'@ ')),
+        Or(EndOfLine(StrE|'@'), String(Str|'@ ')),
         Or(String(Str|'@['), String(Str|'@{')))));
   continue.?(true: {
     Unit@ _ := Do(String(Str|'@'));
