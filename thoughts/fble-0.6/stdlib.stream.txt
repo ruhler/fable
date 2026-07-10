@@ -1,0 +1,302 @@
+
+* Think about api to break out of a ForEach loop mid way through.
+ - Because this comes up a lot, and I tend to just write 'TODO' in my code
+   where I should probably implement a proper interface.
+
+Examples:
+  /Sat/Solver%.PickSomeVar, wants any value in a map.
+  /Hwdg/Memory%.Disjoint Wants to stop as soon as a matching map entry is found.
+  /Games/Layout/Layout%.NodeAt Wants to stop at first match, iterating over a map.
+  /Games/Sudoku%.SolveFrom wants to break out as soon as a solution is found, iterating over a list.
+
+So clearly it's a common thing we want to express, and I have plenty of
+examples that could take advantage of an API that lets us break out early.
+
+Now, my claim is, if we use a Stream API instead of generic ForEach, it should
+be possible to break out early like we do in the Map implementation for things
+like lookup. But:
+* I'm not convinced that actually does break out early like I think.
+* If it does, I'm not convinced we couldn't already do that with existing
+  ForEach.
+
+How about let's work on /Hwdg/Memory%.Disjoint to start.
+
+  # Return true if the two memories have no addresses in common.
+  (Memory@, Memory@) { Bool@; }
+  Disjoint = (Memory@ a, Memory@ b) {
+      # TODO: avoid iterating as soon as we find something in common.
+      ForEach(a, True, (Addr@ k, Data@ _, Bool@ disjoint) {
+          disjoint.?(false: False);
+          Get(b, k).?(just: False);
+          True;
+      });
+  };
+
+I would kind of like to write something like: ...
+
+Well, honestly, it would be nice to have an 'Any' function for map that lets
+me search for any: Not(Any(a, (Addr@ k) { Get(b, k).?(just: True, : False); };
+
+But that just shifts the question to how we would implement 'Any', preferably
+on top of an existing ForEach API.
+
+For /Std/List/Search%.Any we implement the recursive function directly
+ourself. We can do that for list. We can only do that for Map internal to the
+Map module though, because ForEach API is the only way we have externally for
+iterating over all the values of a map.
+
+Let's work out the details for.
+
+---
+
+Stream and ForEach APIs are close. I'm pretty sure the stream API gives us the
+potential to break out early but ForEach does not. Consider:
+
+  <@ A@>(List@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
+  ForEach = <@ A@>(List@<A@> list)<@ B@>(B@ base, (A@, B@) { B@; } body) {
+    list.?(empty: base);
+    ForEach(list.items.tail, body(list.items.head, base), body);
+  };
+
+  <@ A@>(List@<A@>) { Stream@<A@>; }
+  Puts = <@ A@>(List@<A@> values) {
+    values.?(empty: Return<A@>);
+    Unit@ _ := Do(Put(values.items.head));
+    Puts(values.items.tail);
+  };
+
+In ForEach, we traverse the entire list regardless. The body itself might just
+be a thunk. In Puts, assuming Do was actually lazy, the recursive call could
+be lazy. I should do it properly and write it out directly:
+
+  <@ A@>(List@<A@>) { Stream@<A@>; }
+  Puts = <@ A@>(List@<A@> values) {
+    <@ S@>(S@ return, (A@, S@) { S@; } put) {
+      values.?(empty: return);
+      put(values.items.head, Puts(value.items.tail, return, put));
+    };
+  };
+
+Written this way, we could just a value for S@ that makes it a thunk so that
+the tail call to Puts doesn't actually evaluate until you choose to.
+
+I have some doubts about the details, but we can test them. Write a function
+that iterates over elements of a list until it finds a specific value. Pass an
+infinite list to that function, like: s = [1, 2, 3] + s, and see if we can
+call it without it hanging.
+
+I'm inclined to have Stream@<A@> be the main way to traverse a list or a map,
+rather than ForEach. Then implement ForEach on top of Stream@<A@>, but
+implement two variations: the one that goes for each, and the one that can
+break out early. Maybe call it 'For'?
+
+I already have /Std/Stream%.ForEach:
+
+  <@ A@>(Stream@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
+  ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
+    S@ = (B@) { B@; };
+    S@ return = (B@ b) { b; };
+    put = (A@ x, S@ f, B@ b) {
+      f(body(x, b));
+    };
+    stream(return, put, base);
+  };
+
+Notice that Stream effectively builds from back to front. ForEach builds from
+front to back. Use a function type for S@ to let us build up on the stack and
+reverse that way.
+
+How about a For function? The goal is to be able to break out early.
+
+  For@ = <@ A@> { +(A@ continue, A@ break); };
+  <@ A@>(Stream@<A@>)<@ B@>(B@, (A@, B@) { For@<B@>; }) { B@; }
+  For = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { For@<B@>; } body) { B@; }
+    S@ = (B@) { B@; };
+    S@ return = (B@ b) { b; };
+    put = (A@ x, S@ f, B@ b) {
+      For@<B@> fb = body(x, b);
+      fb.?(continue: f(fb.continue));
+      fb.break;
+    };
+    stream(return, put, base);
+  };
+
+Notice we don't call f unless the result was 'continue' instead of break.
+
+Let's try and see if this works.
+
+Looks like it doesn't work. My implementation of Puts tries to traverse the
+entire list.
+
+  <@ A@>(List@<A@>) { Stream@<A@>; }
+  Puts = <@ A@>(List@<A@> values) {
+    <@ S@>(S@ return, (A@, S@) { S@; } put) {
+      values.?(empty: return);
+      put(values.items.head, Puts(values.items.tail, return, put));
+    };
+  };
+
+Can I rewrite that to be more explicitly lazy somehow?
+
+We need the recursive Puts call to be a thunk that isn't evaluated until it's
+needed. I think that requires a change to the type of Stream@.
+
+Maybe we just need a helper function for constructing Puts?
+
+    <@ A@>(List@<A@>) { Lazy@<Stream@<A@>>; }
+    LazyPuts = <@ A@>(List@<A@> values) {
+      <@ S@>(S@ return, (A@, S@) { S@; } put) {
+        values.?(empty: return);
+        Unit@ _ = /Std/Stream/Debug%.ToDebug(FormatE|'put\n'[]);
+        put(values.items.head, LazyPuts(values.items.tail, return, put));
+      };
+    };
+
+    <@ A@>(List@<A@>) { Stream@<A@>; }
+    Puts = <@ A@>(List@<A@> l) {
+      LazyPuts(l, Unit);
+    };
+
+Not sure how that would work.
+
+How about rethinking from the scratch what the Stream@ type should be? With
+this idea that my goal is: deliver the next element of input on request. But
+with me driving the traversal.
+
+Should I go back to my old Iter@ type? But I want to be able to do the full
+traversal from the stream function. That means Stream@<A@> should be a
+function that, when you are ready to start iterating, you give me:
+* A function that accepts the next element (or empty), and ... you give that
+  function the way to iterate over the rest of the elements when ready?
+
+Assuming Stream@<A@> is everything you need to iterate over elements when you
+are ready, maybe something like:
+
+  Stream@ = {
+    <@ S@>(S@ onEmpty, (A@, Stream@<A@>) { S@; } onItems);
+  };
+
+Passing separate onEmpty and onItems functions is equivalent to passing one
+function that accepts Maybe@<*(A@, Stream@<A@>)>. It just feels easier to work
+with to me.
+
+If we had this, then turning a list into a stream would be:
+
+    <@ A@>(List@<A@>) { Stream@<A@>; }
+    Puts = <@ A@>(List@<A@> values) {
+      <@ S@>(S@ return, (A@, Stream@<A@>) { S@; } put) {
+        values.?(empty: return);
+        put(values.items.head, Puts(values.items.tail));
+      };
+    };
+
+Notice now that the recursive call to Puts is a thunk, which should give us
+what we want.
+
+Contrast this with my previous Iter@ type, which was something like a lazy
+list:
+
+  Iter@ = Lazy@<+(Unit@ empty, *(A@ head, Iter@ tail) items)>;
+
+I don't know. As a function it feels slightly cleaner?
+
+  Stream@ = {
+    <@ S@>(S@ onEmpty, (A@, Stream@<A@>) { S@; } onItems);
+  };
+
+How well does this compose?
+
+Maybe start with: how would I implement ForEach and For functions?
+
+  <@ A@>(Stream@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
+  ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
+    stream(base, (A@ h, Stream@<A@> t) {
+      ForEach(tail, body(h, base));
+    }
+  };
+
+That's pretty nice.
+
+Of course, I could just as well have had something like:
+      
+  <@ A@>(Stream@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
+  ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
+    s = stream(Unit);
+    s.?(empty: base);
+    ForEach(s.items.tail, body(s.items.head, base));
+  };
+
+---
+
+I claim the Stream@ approach is better than the Iter@ approach only because it
+passes the partial thunk down to a callee rather than back up to the caller.
+Going down to the callee means the thunk can live on the stack. If we go back
+up to the caller, we might have to GcAlloc.
+
+Now I have my proposal. Maybe let's start by updating the Stream@ to the new
+type, and migrating things minimally as possible in place.
+
+---
+
+As I implement Do, I feel like there's still something missing:
+
+  <@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
+  Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> f) {
+    <@ S@>(S@ empty, (A@, Stream@<A@>) { S@; } items) {
+      ma(f(Unit, empty, items), items);
+    };
+  };
+
+It would be nice if empty was Lazy@<S@> maybe? Anyway, that's separate. I can
+worry about that later.
+
+Or, as I write more stuff, it almost feels like I want Stream@<A@> empty? And
+some separate way to go ... ug. It's complicated a bit.
+
+---
+
+Lazy@<S@> for empty is the right direction. Really it's all kind of the same,
+between:
+
+1. S@ empty, (A@, Stream@<A@>) { S@; } items
+2. (Unit@) { S@; } empty, (A@, Stream@<A@>) { S@; } items
+3. (+(Unit@ empty, *(A@ head, Stream@<A@> tail) items)) { S@; } f
+4. (Unit@) { +(Unit@ empty, *(A@ head, Stream@<A@> tail) items); }
+
+Where (4) is my Iter@ type. Probably I should just use (4) for Stream@,
+because it removes the indirection of S@. I'm afraid of the performance
+consequences, but maybe there are none, or maybe there should be none. And if
+there are some, we should fix that in the implementation of the language
+rather than doing this weird tail call instead of return thing.
+
+But let me keep going incrementally, one step at a time, to simplify the
+implementation, and see where we ultimately land.
+
+---
+
+1. S@ empty, (A@, Stream@<A@>) { S@; } items
+
+This one works. It seems like an improvement in the sense that we pass the
+thunk. But it also has a bit of weirdness. For example, completely ignoring
+'empty' in case we are putting items, because I guess the empty gets passed
+down recursively some other way?
+
+I am worried about performance implications of this change. I should be sure
+to double check benchmark results before and after.
+
+And, well, it seems I broke something, because fble-cli is printing 'h'
+instead of 'hello'. Let's track that down.
+
+It could be Puts, or whoever is consuming the values from Puts.
+
+Puts is fine. But it could be Do or Put.
+
+Put is ignoring _empty, which feels risky?
+
+Yeah. I can't get rid of that. That's how we pass the tail.
+
+So, how do I wrap a value S@ as a Stream@<A@>?
+
+I give up. Let me write it the way I ought to from the start. Without some S@
+intermediate type. Worry about performance later.
+

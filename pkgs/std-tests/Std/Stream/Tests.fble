@@ -1,10 +1,10 @@
 
 Char@ .= /Std/Char%;
-OnAscii, Str .= /Std/Char/Ascii%;
-String .= /Std/Char/Ascii/Stream%;
+OnAscii, Char, Str .= /Std/Char/Ascii%;
+FormatE, String .= /Std/Char/Ascii/Stream%;
 AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
-Items, Empty .= /Std/List%;
+List@, Items, Empty .= /Std/List%;
 Stream@, ForEach .= /Std/Stream%;
 String@ .= /Std/String%;
 Test@ .= /Std/Test%;
@@ -22,6 +22,48 @@ Test@ Tests = TestSuite|Stream[
     # of the output string.
     String@ got = ForEach(stream, Empty<Char@>, Items<Char@>);
     String@ wnt = Str|olleh;
+    AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+  }),
+
+  Test|For({
+    Unit@ _ := Lazy;
+
+    For@ = <@ A@> { +(A@ continue, A@ break); };
+    Continue = <@ A@>(A@ x) { For@(continue: x); };
+    Break = <@ A@>(A@ x) { For@(break: x); };
+
+    <@ A@>(Stream@<A@>)<@ B@>(B@, (A@, B@) { For@<B@>; }) { B@; }
+    For = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { For@<B@>; } body) {
+      S@ = (B@) { B@; };
+      S@ empty = (B@ b) { b; };
+      items = (A@ x, Stream@<A@> t, B@ b) {
+        For@<B@> fb = body(x, b);
+        fb.?(continue: For(t, fb.continue, body));
+        fb.break;
+      };
+      stream(empty, items, base);
+    };
+
+    <@ A@>(List@<A@>) { Stream@<A@>; }
+    Puts = <@ A@>(List@<A@> values) {
+      <@ S@>(S@ empty, (A@, Stream@<A@>) { S@; } items) {
+        values.?(empty: empty);
+        Unit@ _ = /Std/Stream/Debug%.ToDebug(FormatE|'put\n'[]);
+        items(values.items.head, Puts(values.items.tail));
+      };
+    };
+
+    List@<Char@> list = Items(Char|a, Items(Char|b, Items(Char|c, list)));
+    Stream@<Char@> stream = Puts(list);
+
+    String@ got = {
+      Char@ c, String@ s := For(stream, Str|'');
+      Unit@ _ = /Std/Stream/Debug%.ToDebug(FormatE|'got %s'[/Std/Char/Show%.Show(c)]);
+      String@ ns = Items(c, s);
+      /Std/Char/Eq%.Eq(c, Char|b).?(true: Break(ns));
+      Continue(ns);
+    };
+    String@ wnt = Str|bb;
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   }),
 

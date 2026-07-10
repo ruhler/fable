@@ -65,25 +65,25 @@ Char@ '%s' = U|73;
 #  @return[Stream@<Char@>] The formatted output.
 (String@, List@<Stream@<Char@>>) { Stream@<Char@>; }
 Format = (String@ fmt, List@<Stream@<Char@>> args) {
-  <@ S@>(S@ return, (Char@, S@) { S@; } put) {
-    fmt.?(empty: return);
+  <@ S@>(S@ empty, (Char@, Stream@<Char@>) { S@; } items) {
+    fmt.?(empty: empty);
     Char@ c = fmt.items.head;
     /Std/Char/Eq%.Eq('%%', c).?(true: {
       fmt.items.tail.?(empty: /Std/Undef%.Undef.undef<S@>);
       Char@ e = fmt.items.tail.items.head;
 
       /Std/Char/Eq%.Eq('%%', e).?(true: {
-        put(c, Format(fmt.items.tail.items.tail, args, return, put));
+        items(c, Format(fmt.items.tail.items.tail, args));
       });
 
       /Std/Char/Eq%.Eq('%s', e).?(true: {
-        args.items.head(Format(fmt.items.tail.items.tail, args.items.tail, return, put), put);
+        args.items.head(Format(fmt.items.tail.items.tail, args.items.tail, empty, items), items);
       });
 
       /Std/Undef%.Undef.undef<S@>;
     });
 
-    put(c, Format(fmt.items.tail, args, return, put));
+    items(c, Format(fmt.items.tail, args));
   };
 };
 

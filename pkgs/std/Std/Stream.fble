@@ -7,15 +7,18 @@ Unit .= /Std/Unit%;
 # @type@[Stream@] A computation that outputs a stream of values.
 #  @arg[@][A@] The type of value to output.
 #  @arg[@][S@] The type to stream the outputs into.
-#  @arg[S@][return] Used to indicate the end of the computation.
-#  @arg[(A@, S@) { S@; }][put] Outputs a single value.
+#  @arg[S@][empty] Called when the stream is empty.
+#  @arg[(A@, Stream@<A@>) { S@; }][items] Called when the stream is not empty.
 #  @returns[S@] The final result.
-Stream@ = <@ A@, @ S@>(S@, (A@, S@) { S@; }) { S@; };
+Stream@ = <@ A@> {
+  Stream@ = <@ S@>(S@, (A@, Stream@) { S@; }) { S@; };
+  Stream@;
+};
 
 # @value[Return] A computation that outputs nothing.
 #  @type[Stream@]
-Stream@ Return = <@ A@, @ S@>(S@ return, (A@, S@) { S@; } _) {
-  return;
+Stream@ Return = <@ A@, @ S@>(S@ empty, (A@, Stream@<A@>) { S@; } _) {
+  empty;
 };
 
 # @func[Do] Stream one thing after another.
@@ -27,8 +30,8 @@ Stream@ Return = <@ A@, @ S@>(S@ return, (A@, S@) { S@; } _) {
 #   function f to get the second set of outputs to stream.
 <@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
 Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> f) {
-  <@ S@>(S@ return, (A@, S@) { S@; } put) {
-    ma(f(Unit, return, put), put);
+  <@ S@>(S@ empty, (A@, Stream@<A@>) { S@; } items) {
+    ma(f(Unit, empty, items), items);
   };
 };
 
@@ -44,9 +47,9 @@ Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> f) {
 #   The list of elements f(a_i) for each a_i in the input stream.
 <@ A@>(Stream@<A@>)<@ B@>((A@) { Stream@<B@>; }) { Stream@<B@>; }
 DoM = <@ A@>(Stream@<A@> stream)<@ B@>((A@) { Stream@<B@>; } f) {
-  <@ S@>(S@ return, (B@, S@) { S@; } put) {
-    A@ a, S@ s := stream(return);
-    f(a, s, put);
+  <@ S@>(S@ empty, (B@, Stream@<B@>) { S@; } items) {
+    A@ a, Stream@<A@> sa := stream(empty);
+    f(a, DoM(sa, f, empty, items), items);
   };
 };
 
@@ -55,8 +58,8 @@ DoM = <@ A@>(Stream@<A@> stream)<@ B@>((A@) { Stream@<B@>; } f) {
 #  @arg[A@][v] The value to output.
 #  @returns[Stream@] A computation that outputs the value.
 <@ A@>(A@) { Stream@<A@>; }
-Put = <@ A@>(A@ v)<@ S@>(S@ return, (A@, S@) { S@; } put) {
-  put(v, return);
+Put = <@ A@>(A@ v)<@ S@>(S@ _empty, (A@, Stream@<A@>) { S@; } items) {
+  items(v, Return<A@>);
 };
 
 # @func[ForEach] Iterate over elements of a stream.
@@ -80,12 +83,8 @@ Put = <@ A@>(A@ v)<@ S@>(S@ return, (A@, S@) { S@; } put) {
 #  return b
 <@ A@>(Stream@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
 ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
-  S@ = (B@) { B@; };
-  S@ return = (B@ b) { b; };
-  put = (A@ x, S@ f, B@ b) {
-    f(body(x, b));
-  };
-  stream(return, put, base);
+  A@ head, Stream@<A@> tail := stream(base);
+  ForEach(tail, body(head, base), body);
 };
 
 # @func[Map] Map a function over the elements of a stream.
@@ -96,8 +95,9 @@ ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
 #  @return[Stream@<B@>] A new stream that outputs the target output type.
 <@ A@, @ B@>((A@) { B@; }, Stream@<A@>) { Stream@<B@>; }
 Map = <@ A@, @ B@>((A@) { B@; } f, Stream@<A@> s) {
-  <@ S@>(S@ return, (B@, S@) { S@; } put) {
-    s(return, (A@ a, S@ t) { put(f(a), t); });
+  <@ S@>(S@ empty, (B@, Stream@<B@>) { S@; } items) {
+    A@ a, Stream@<A@> t := s(empty);
+    items(f(a), Map(f, t));
   };
 };
 

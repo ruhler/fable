@@ -50,9 +50,11 @@ Data@ = <@ A@>(A@) { Stream@<Bit@>; };
 #     Struct[/Std/Int/Data%.Data(x.a), /Std/Int/Data%.Data(x.b)];
 #   };
 (List@<Stream@<Bit@>>) { Stream@<Bit@>; }
-Struct = (List@<Stream@<Bit@>> fields)<@ S@>(S@ return, (Bit@, S@) { S@; } put) {
-  fields.?(empty: return);
-  fields.items.head(Struct(fields.items.tail, return, put), put);
+Struct = (List@<Stream@<Bit@>> fields) {
+  <@ S@>(S@ empty, (Bit@, Stream@<Bit@>) { S@; } items) {
+    fields.?(empty: empty);
+    fields.items.head(Struct(fields.items.tail, empty, items), items);
+  };
 };
 
 # @func[Enum] Generates a bit stream for an enum.
@@ -68,9 +70,9 @@ Struct = (List@<Stream@<Bit@>> fields)<@ S@>(S@ return, (Bit@, S@) { S@; } put) 
 #
 #  The tags for all the enum values must satisfy the prefix property.
 (List@<Bit@>) { Stream@<Bit@>; }
-Enum = (List@<Bit@> tag)<@ S@>(S@ empty, (Bit@, S@) { S@; } items) {
+Enum = (List@<Bit@> tag)<@ S@>(S@ empty, (Bit@, Stream@<Bit@>) { S@; } items) {
   tag.?(empty: empty);
-  items(tag.items.head, Enum(tag.items.tail, empty, items));
+  items(tag.items.head, Enum(tag.items.tail));
 };
 
 # @func[Union] Generates a bit stream for a union value.

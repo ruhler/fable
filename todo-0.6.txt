@@ -3,6 +3,7 @@ Fble 0.6 TODO
 Things to consider doing for the fble-0.6 release.
 
 * Figure out how to solve line ending issues in fble.
+* Revisit approach to utf8
 
 * It's hard to find where fble functions live
  - Anything I can do about that?

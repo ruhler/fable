@@ -33,7 +33,8 @@ Concat = <@ A@>(List@<Stream@<A@>> xs) {
 #  @returns[List@<A@>] A list of the output values.
 <@ A@>(Stream@<A@>) { List@<A@>; }
 ToList = <@ A@>(Stream@<A@> stream) {
-  stream(Empty<A@>, Items<A@>);
+  A@ h, Stream@<A@> t := stream(Empty<A@>);
+  Items(h, ToList(t));
 };
 
 @(Puts, Concat, ToList);

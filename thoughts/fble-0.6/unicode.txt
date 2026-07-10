@@ -291,3 +291,143 @@ have a way to do that in general.
 Otherwise... well, 'cat' must have had some way to work on windows, but I
 don't know what it was. Because _wfopen didn't work for me either. Strange.
 
+---
+
+The line endings things is a problem.
+
+On windows, text and binary files are treated differently. Text files are
+stored with \n ==> \r\n and read with \r\n ==> \n. The only way to know if a
+file is a text file or a binary file, and thus whether it is stored with \n or
+\r\n, is from context.
+
+The programmer using file read and write functions has that context. It's
+quite obvious when I'm working with a file if I'm using it in a text or a
+binary context. It's quite obvious in fble: any time you are getting Char@ you
+are working with text, Byte@ is working with binary.
+
+So the answer here should be straight forward:
+* Anyone using /Std/Io/File/Text% interface should open the file in text mode,
+  converting \r\n into \n and, if on windows, converting \n into \r\n.
+* Anyone using /Std/Io/File/Binary% interface should open the file in binary
+  mode.
+
+What makes this tedious/tricky is:
+* My implementation of Text% runs on top of Binary% at this point. 
+ - We would need a mode option to Binary% for Text% to be able to reuse it.
+ - I don't really want to expose a mode option to users of the library.
+ - But maybe in some rare cases we need to?
+* stdin, stdout, stderr might then need to be text or binary.
+* Expected behavior changes depending on platform, so if I do make changes on
+  the fble side of things, it has to know what platform we are on.
+
+The brute force approach would be to go back to the way I used to have things:
+* Internal% exposes raw Open call.
+* Binary% opens in binary mode, which goes into the platform via fopen, which
+  does whatever is standard for the platform.
+* Text% opens in text mode, again going into fopen to be standard for the
+  platform.
+* Special case needed for stdin, stdout, stderr to put them in binary mode if
+  requested.
+
+I can still say everything is utf8.
+
+Here's what I asked before:
+
+What will go wrong here?
+* Any place I may have generated files outside of fble, if I try to process
+  them inside, I'll see extra \r characters that may mess things up. But I
+  don't think this is the case today?
+
+Turns out git checkout is introducing \r characters into my .fbld spec test
+files. The fbld spec says line endings are \n, so if we read them in binary
+mode, the tests fail. I tried updating fbld language to accept \r\n line
+endings, but that means the contents of a line read depend on platform, and
+you have to deal with that anyway. It's like worse than the worst of both
+worlds, because windows in text mode would never see \r\n read in, but now we
+might see that on linux too.
+
+How about let's do the brute force approach, go back to the structure I used
+to have, then revisit and see how I feel after that.
+
+---
+
+Assuming it's the right thing to pass a mode to open and handle it at the
+platform level, is it the right thing to do the same for character encoding?
+What's fundamentally different about character encoding that we should assume
+utf8 everywhere instead of whatever the platform default is?
+
+If I assume wchar_t is 32 bit unicode code point on linux, and 16 bit
+surrogate pair on windows, I can convert those into Char@.
+
+There is a practical question here of whether I can call setlocale generically
+and have it work on windows. If windows is put into utf8 mode, what will the
+effect of setlocale be?
+
+It would be nice not to have to hard code utf8 into the standard library.
+Um... probably we need a way to let people open binary files in text mode in
+case they want to use their own encoding but still have line ending
+transformations on input and output.
+
+Let's stew on this a little. Also, when I get a chance, figure out what
+happens on windows in utf8 mode in terms of setlocale.
+
+---
+
+Without putting windows in Utf8 mode globally, doesn't seem like I can do
+anything with wchar_t or C99 and locales to successfully read unicode from my
+utf8 file. Even with locale as ".UTF8", the 4 byte utf8 character doesn't get
+decoded properly. It gets decoded as an invalid character.
+
+I should try with windows in utf8 mode globally too, to see if that improves
+anything.
+
+---
+
+Thoughts on text versus binary:
+* The app knows if it wants text or binary.
+* The mode option to c99 fopen works right regardless of platform for interop
+  with other programs (e.g. git) on the platform.
+* Do I want to continue the contagion of line endings, or try to break out of
+  it by forcing the user to treat text and binary identically?
+
+Thoughts on character encoding:
+* Windows setlocale doesn't work for UTF8.
+* For text files without an explicit encoding, we should have a reasonable
+  default. UTF8 is probably the best reasonable default to use.
+* Apps should be able to use their own explicit encoding when reading and
+  writing. This can be done by reading/writing raw bytes and manually
+  encoding/decoding (with question about line ending still relevant).
+
+Various combinations that make sense:
+* Byte@, binary - read/write bytes in binary mode.
+* Byte@, text - read/write bytes in text mode, assuming you'll provide your
+  own encoding/decoding to Char@.
+* Char@, text - read/write in text mode, say UTF8 by default.
+* Char@, text, <encoding> - read/write in text mode with given encoding.
+* Char@, binary - in case you want to do your own treatment for line endings.
+
+Combinations that don't make sense or are not relevant:
+* Byte@, <encoding> - Encoding is only relevant when converting to Char@.
+
+Which suggests the API should be something like:
+* Type = Byte@ or Char@
+* Mode = binary or text
+* Encoding = UTF8 or ...
+* Byte based API: parameterized by mode.
+* Char based API: parameterized by mode and encoding, with utf8 as default.
+
+The Char based API can be implemented on top of the Byte based API. So my raw
+byte based API should be parameterized by mode, and go from there.
+
+It would make sense for Mode to not have to exist, in a world where everyone
+agrees on line endings. That would simplify the api. For transition purposes
+and interop, it makes sense I think to support the mode API. If/when everyone
+is ready to get rid of it, they can do that outside of the API. When all
+platforms are aligned and treat binary and text identical, then the mode can
+be dropped. But we aren't there yet.
+
+Thus I have my proposal. I just need to come up with better names, because
+Byte@ vs Char@ means something different from binary vs text.
+
+File/Byte% and File/Char% maybe?
+
