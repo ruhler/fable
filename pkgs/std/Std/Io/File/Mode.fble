@@ -1,0 +1,28 @@
+# @module[/Std/Io/File/Mode%]
+#  Distinction between text and binary files for purposes of line ending
+#  treatment.
+
+Unit@, Unit .= /Std/Unit%;
+
+# @type[Mode@] Whether to open a file in binary or text mode.
+#  Some platforms treat line endings differently depending on the file mode.
+#
+#  Use binary mode for anything you expect to be binary data. Use text mode
+#  for anything you expect to be text data.
+#
+#  Hopefully one day certain platforms will stop mangling data read and
+#  written to files in text mode and this will no longer be necessary. For the
+#  time being, for interoperability with other programs that use text mode in
+#  a more portable way across platforms, you should pick whichever mode makes
+#  most sense for your application.
+Mode@ = +(Unit@ binary, Unit@ text);
+
+# @value[Binary] Binary mode
+#  @type[Mode@]
+Mode@ Binary = Mode@(binary: Unit);
+
+# @value[Text] Text mode
+#  @type[Mode@]
+Mode@ Text = Mode@(text: Unit);
+
+@(Mode@, Binary, Text);

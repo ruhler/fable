@@ -3,7 +3,8 @@
 
 Char@ .= /Std/Char%;
 Io@ .= /Std/Io%;
-Byte@, Mode@ .= /Std/Io/File/Binary%;
+Byte@ .= /Std/Io/File/Binary%;
+Mode@ .= /Std/Io/File/Mode%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@, Do .= /Std/Stream%;
