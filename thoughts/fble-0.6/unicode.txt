@@ -442,3 +442,7 @@ I think Char should support binary or text mode. But Utf8 can assume text
 mode.
 
 Shall we pass Mode@ along with encoding for Text? Yes. Absolutely.
+
+---
+
+Okay. Hopefully things are settled for now.

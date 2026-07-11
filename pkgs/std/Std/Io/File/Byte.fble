@@ -1,5 +1,5 @@
-# @module[/Std/Io/File/Binary%]
-#  Reading and writing binary files and streams.
+# @module[/Std/Io/File/Byte%]
+#  Reading and writing bytes from files and streams.
 
 Str .= /Std/Char/Ascii%;
 Int@ .= /Std/Int%;

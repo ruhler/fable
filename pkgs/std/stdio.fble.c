@@ -1,6 +1,6 @@
 /**
  * @file stdio.fble.c
- *  Implementation of /Std/Io/File/Binary% functions.
+ *  Implementation of /Std/Io/File/Byte% functions.
  */
 
 #include "stdio.fble.h"
@@ -51,9 +51,9 @@ static FbleValue* GetStdin(
   return FbleNewNativeValue(runtime, stdin, NULL);
 }
 
-// /Std/Io/File/Binary%.GetStdin foreign function.
-FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStdin = {
-  .path = "/Std/Io/File/Binary%",
+// /Std/Io/File/Byte%.GetStdin foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_GetStdin = {
+  .path = "/Std/Io/File/Byte%",
   .name = "GetStdin",
   .num_args = 2,
   .max_call_args = 0,
@@ -84,9 +84,9 @@ static FbleValue* GetStdout(
   return FbleNewNativeValue(runtime, stdout, NULL);
 }
 
-// /Std/Io/File/Binary%.GetStdout foreign function.
-FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStdout = {
-  .path = "/Std/Io/File/Binary%",
+// /Std/Io/File/Byte%.GetStdout foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_GetStdout = {
+  .path = "/Std/Io/File/Byte%",
   .name = "GetStdout",
   .num_args = 2,
   .max_call_args = 0,
@@ -117,9 +117,9 @@ static FbleValue* GetStderr(
   return FbleNewNativeValue(runtime, stderr, NULL);
 }
 
-// /Std/Io/File/Binary%.GetStderr foreign function.
-FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStderr = {
-  .path = "/Std/Io/File/Binary%",
+// /Std/Io/File/Byte%.GetStderr foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_GetStderr = {
+  .path = "/Std/Io/File/Byte%",
   .name = "GetStderr",
   .num_args = 2,
   .max_call_args = 0,
@@ -155,9 +155,9 @@ static FbleValue* Open(
   FbleValue* v = FbleNewNativeValue(runtime, fout, &CloseFileOnFree);
   return FbleNewMaybeValue(runtime, v);
 }
-// /Std/Io/File/Binary%.Open foreign function.
-FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_Open = {
-  .path = "/Std/Io/File/Binary%",
+// /Std/Io/File/Byte%.Open foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_Open = {
+  .path = "/Std/Io/File/Byte%",
   .name = "Open",
   .num_args = 3,
   .max_call_args = 0,
@@ -194,9 +194,9 @@ static FbleValue* GetByte(
   return FbleNewMaybeValue(runtime, v);
 }
 
-// /Std/Io/File/Binary%.GetByte foreign function.
-FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetByte = {
-  .path = "/Std/Io/File/Binary%",
+// /Std/Io/File/Byte%.GetByte foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_GetByte = {
+  .path = "/Std/Io/File/Byte%",
   .name = "GetByte",
   .num_args = 2,
   .max_call_args = 0,
@@ -228,9 +228,9 @@ static FbleValue* PutByte(
   return FbleNewStructValue_(runtime, 0);
 }
 
-// /Std/Io/File/Binary%.PutByte foreign function.
-FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_PutByte = {
-  .path = "/Std/Io/File/Binary%",
+// /Std/Io/File/Byte%.PutByte foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_PutByte = {
+  .path = "/Std/Io/File/Byte%",
   .name = "PutByte",
   .num_args = 3,
   .max_call_args = 0,
@@ -261,9 +261,9 @@ static FbleValue* Flush(
   return FbleNewStructValue_(runtime, 0);
 }
 
-// /Std/Io/File/Binary%.Flush foreign function.
-FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_Flush = {
-  .path = "/Std/Io/File/Binary%",
+// /Std/Io/File/Byte%.Flush foreign function.
+FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_Flush = {
+  .path = "/Std/Io/File/Byte%",
   .name = "Flush",
   .num_args = 2,
   .max_call_args = 0,
@@ -273,11 +273,11 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_Flush = {
 // See documentation in stdio.fble.h
 void FbleRegisterStdioForeignValues(FbleRuntime* runtime)
 {
-  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStdin);
-  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStdout);
-  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStderr);
-  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_Open);
-  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_PutByte);
-  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetByte);
-  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_Flush);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_GetStdin);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_GetStdout);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_GetStderr);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_Open);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_PutByte);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_GetByte);
+  FbleRegisterForeignValue(runtime, &_Fble_2f_Std_2f_Io_2f_File_2f_Byte_25__2e_Flush);
 }

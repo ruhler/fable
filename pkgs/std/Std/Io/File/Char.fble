@@ -1,9 +1,9 @@
-# @module[/Std/Io/File/Text%]
-#  Reading and writing text files and streams.
+# @module[/Std/Io/File/Char%]
+#  Reading and writing characters from files and streams.
 
 Char@ .= /Std/Char%;
 Io@ .= /Std/Io%;
-Byte@ .= /Std/Io/File/Binary%;
+Byte@ .= /Std/Io/File/Byte%;
 Mode@ .= /Std/Io/File/Mode%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
@@ -22,12 +22,12 @@ Encoding@ = *(
   <<@>@ M@>(Monad@<M@>, In@<Byte@, M@>) { In@<Char@, M@>; } decode
 );
 
-# @func[Text] Text APIs for working with files.
+# @func[Of] Character based APIs for working with files.
 #  @arg[Encoding@][encoding] The character encoding to use.
 #  @arg[Mode@][mode] Whether to open files in binary or text mode.
-#  @return[...] Text APIs that use the given character encoding.
-Text = (Encoding@ encoding, Mode@ mode) {
-  Binary = /Std/Io/File/Binary%;
+#  @return[...] Character based APIs that use the given character encoding.
+Of = (Encoding@ encoding, Mode@ mode) {
+  Byte = /Std/Io/File/Byte%;
 
   <<@>@ M@>(Monad@<M@>, In@<Byte@, M@>) { In@<Char@, M@>; }
   Decode = encoding.decode;
@@ -46,7 +46,7 @@ Text = (Encoding@ encoding, Mode@ mode) {
   #  @returns[M@<In@<Char@, M@>>] The standard input stream.
   <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<In@<Char@, M@>>; }
   Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
-    In@<Byte@, M@> stdin := m.do(Binary.Stdin(m, io, mode));
+    In@<Byte@, M@> stdin := m.do(Byte.Stdin(m, io, mode));
     m.return(Decode(m, stdin));
   };
 
@@ -57,7 +57,7 @@ Text = (Encoding@ encoding, Mode@ mode) {
   #  @returns[M@<Out@<Char@, M@>>] The standard output stream.
   <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Char@, M@>>; }
   Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
-    Out@<Byte@, M@> stdout := m.do(Binary.Stdout(m, io, mode));
+    Out@<Byte@, M@> stdout := m.do(Byte.Stdout(m, io, mode));
     m.return(Encode(stdout));
   };
 
@@ -68,7 +68,7 @@ Text = (Encoding@ encoding, Mode@ mode) {
   #  @returns[M@<Out@<Char@, M@>>] The standard error stream.
   <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Char@, M@>>; }
   Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
-    Out@<Byte@, M@> stderr := m.do(Binary.Stderr(m, io, mode));
+    Out@<Byte@, M@> stderr := m.do(Byte.Stderr(m, io, mode));
     m.return(Encode(stderr));
   };
 
@@ -85,7 +85,7 @@ Text = (Encoding@ encoding, Mode@ mode) {
   #   opened for reading.
   <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<In@<Char@, M@>>>; }
   Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
-    Maybe@<In@<Byte@, M@>> file := m.do(Binary.Read(m, io, path, mode));
+    Maybe@<In@<Byte@, M@>> file := m.do(Byte.Read(m, io, path, mode));
     file.?(nothing: m.return(Nothing<In@<Char@, M@>>));
     m.return(Just(Decode(m, file.just)));
   };
@@ -103,7 +103,7 @@ Text = (Encoding@ encoding, Mode@ mode) {
   #   opened for writing.
   <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<Out@<Char@, M@>>>; }
   Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
-    Maybe@<Out@<Byte@, M@>> file := m.do(Binary.Write(m, io, path, mode));
+    Maybe@<Out@<Byte@, M@>> file := m.do(Byte.Write(m, io, path, mode));
     file.?(nothing: m.return(Nothing<Out@<Char@, M@>>));
     m.return(Just(Encode(file.just)));
   };
@@ -121,7 +121,7 @@ Text = (Encoding@ encoding, Mode@ mode) {
   #   be opened for writing.
   <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<Out@<Char@, M@>>>; }
   Append = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
-    Maybe@<Out@<Byte@, M@>> file := m.do(Binary.Append(m, io, path, mode));
+    Maybe@<Out@<Byte@, M@>> file := m.do(Byte.Append(m, io, path, mode));
     file.?(nothing: m.return(Nothing<Out@<Char@, M@>>));
     m.return(Just(Encode(file.just)));
   };
@@ -129,4 +129,4 @@ Text = (Encoding@ encoding, Mode@ mode) {
   @(Stdin, Stdout, Stderr, Read, Write, Append);
 };
 
-@(Encoding@, Text);
+@(Encoding@, Of);

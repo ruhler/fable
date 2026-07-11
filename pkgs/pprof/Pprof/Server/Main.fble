@@ -119,7 +119,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Stdout(m, io));
   Out@<Char@, M@> err := m.do(/Std/Io/File/Utf8%.Stderr(m, io));
   (String@) { M@<Maybe@<In@<Int@, M@>>>; } read = (String@ path) {
-    /Std/Io/File/Binary%.Read(m, io, path, Binary);
+    /Std/Io/File/Byte%.Read(m, io, path, Binary);
   };
 
   Sockets@<M@> sockets := m.do(/Network/Sockets/Native%.Sockets(io, m));

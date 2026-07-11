@@ -2,9 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Rename /Std/Io/File/Binary% to /Std/Io/File/Byte%
-* Rename /Std/Io/File/Text% to /Std/Io/File/Char%
-
 * Move implementation of 'For' out of pkgs/std-tests/Std/Stream/Tests%.
  - And start using it more places.
 
