@@ -11,9 +11,8 @@ Insert = /Fbld/Env%.Insert<Impl@>;
 Builtin@ = *(String@ name, Impl@ impl);
 
 (List@<Builtin@>) { Env@; } Builtins = (List@<Builtin@> builtins) {
-  /Std/List%.ForEach(builtins, Empty, (Builtin@ x, Env@ e) {
-    Insert(e, x.name, x.impl);
-  });
+  Env@ e, Builtin@ x := /Std/List/For%.ForEach(builtins, Empty);
+  Insert(e, x.name, x.impl);
 };
 
 Env@ Env = Builtins[

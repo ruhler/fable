@@ -1,9 +1,9 @@
 
 Data@, Enum, Struct .= /Std/Data%;
-List@, List, ForEach .= /Std/List%;
+List@, List .= /Std/List%;
+ForEach .= /Std/List/For%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Unit .= /Std/Unit%;
-
 Board@, Player@, Position@, Result@, Square@,
 BoardStatus, Move .= /Games/TicTacToe/Board%;
 
@@ -159,7 +159,7 @@ ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
 
   MemoState@<Maybe@<PositionResult@>> best =
     ForEach(Positions, MemoState@(m, Nothing<PositionResult@>),
-      (Position@ p, MemoState@<Maybe@<PositionResult@>> best) {
+      (MemoState@<Maybe@<PositionResult@>> best, Position@ p) {
         MemoState@<Maybe@<PositionResult@>> curr = MoveResult(best.memo, b, x, p);
         MemoState@<Maybe@<PositionResult@>>(
           curr.memo,
@@ -170,7 +170,7 @@ ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
     ForEach(
       AllSymmetries(BoardPositionResult@(b, best.data.just)),
       best.memo,
-      (BoardPositionResult@ bpr, MemoTable@ m) {
+      (MemoTable@ m, BoardPositionResult@ bpr) {
         Put(m, bpr.board, bpr.pr);
       });
 

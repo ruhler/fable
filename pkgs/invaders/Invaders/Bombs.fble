@@ -3,7 +3,8 @@ Bool@, True, False .= /Std/Bool%;
 Int@, Add, Sub .= /Std/Int%;
 Lt, Gt .= /Std/Int/Cmp%;
 Int .= /Std/Int/Lit%;
-List@, Items, Empty, ForEach .= /Std/List%;
+List@, Items, Empty .= /Std/List%;
+ForEach .= /Std/List/For%;
 Length .= /Std/List/Index%;
 Unit@ .= /Std/Unit%;
 
@@ -81,19 +82,17 @@ HitBases = (Bombs@ bombs, Bases@ bases) {
 };
 
 (Bombs@) { Bombs@; } Tick = (Bombs@ bombs) {
-  ForEach(bombs, Empty<Bomb@>, (Bomb@ b, Bombs@ bs) {
-    Int@ v = b.kind.?(bomb: BombVelocity, squiggle: SquiggleVelocity);
-    Bomb@ nb = Bomb@(b.x, Sub(b.y, v), b.kind);
-    Lt(nb.y, MinY).?(true: bs);
-    Items(nb, bs);
-  });
+  Bombs@ bs, Bomb@ b := ForEach(bombs, Empty<Bomb@>);
+  Int@ v = b.kind.?(bomb: BombVelocity, squiggle: SquiggleVelocity);
+  Bomb@ nb = Bomb@(b.x, Sub(b.y, v), b.kind);
+  Lt(nb.y, MinY).?(true: bs);
+  Items(nb, bs);
 };
 
 (Bombs@) { Drawing@; } Draw = (Bombs@ bombs) {
-  ForEach(bombs, Blank, (Bomb@ b, Drawing@ d) {
-    Drawing@ sprite = b.kind.?(bomb: Graphics.Bomb, squiggle: Graphics.Squiggle);
-    Over(d, Translate(b.x, b.y, sprite));
-  });
+  Drawing@ d, Bomb@ b := ForEach(bombs, Blank);
+  Drawing@ sprite = b.kind.?(bomb: Graphics.Bomb, squiggle: Graphics.Squiggle);
+  Over(d, Translate(b.x, b.y, sprite));
 };
 
 @(Bombs@, Kind@, HitResult@, HitBasesResult@,

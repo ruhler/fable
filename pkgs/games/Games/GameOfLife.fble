@@ -6,7 +6,8 @@ Eq@ .= /Std/Eq%;
 Int@, Incr, Decr .= /Std/Int%;
 Eq .= /Std/Int/Eq%;
 IsZero .= /Std/Int/Sign%;
-List@, List, ForEach .= /Std/List%;
+List@, List .= /Std/List%;
+ForEach .= /Std/List/For%;
 Maybe@ .= /Std/Maybe%;
 Show@ .= /Std/Show%;
 Unit@, Unit .= /Std/Unit%;
@@ -91,12 +92,10 @@ Cand@ = C.Map@;
         Coord@(Incr(coord.row),     coord.col ),
         Coord@(Incr(coord.row), Incr(coord.col))];
 
-      ForEach(neighbors, cand_alive, (Coord@ n, Cand@ c) {
-        C.Update(c, n, (Maybe@<Status@> ms) {
-          ms.?(just: Status@(ms.just.alive, IncCount(ms.just.neighbors)),
-               nothing: Status@(False, Count@(1: Unit)));
-        });
-      });
+      Cand@ c, Coord@ n := ForEach(neighbors, cand_alive);
+      Maybe@<Status@> ms := C.Update(c, n);
+      ms.?(nothing: Status@(False, Count@(1: Unit)));
+      Status@(ms.just.alive, IncCount(ms.just.neighbors));
     }
   );
 

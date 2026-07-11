@@ -1,9 +1,9 @@
 
 Bool@, True, False .= /Std/Bool%;
-List@, List, ForEach .= /Std/List%;
+Break, Continue .= /Std/For%;
+List@, List .= /Std/List%;
+For, ForEach .= /Std/List/For%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
-Stream@, End, Puts, Return .= /Std/Stream%;
-ToList .= /Std/Stream/List%;
 Unit@, Unit .= /Std/Unit%;
 
 # The 9 symbols used in sudoku: 1 through 9.
@@ -89,16 +89,11 @@ Set2D = (Symbol@ a, Symbol@ b)<@ T@>(T@ x, Array@<Array@<T@>> array) {
 CellId@ = *(Symbol@ row, Symbol@ col);
 
 # The list of cell ids, going left to right and top to bottom.
-List@<CellId@> CellIds = ToList({
-  ForEach(Symbols, End<CellId@>,
-    (Symbol@ col, Stream@<CellId@> stream) {
-      ForEach(Symbols, stream,
-        (Symbol@ row, Stream@<CellId@> stream) {
-          Unit@ _ := Puts(stream);
-          Return(CellId@(row, col));
-        });
-    });
-});
+List@<CellId@> CellIds = {
+  Symbol@ col := /Std/List%.Do(Symbols);
+  Symbol@ row := /Std/List%.Do(Symbols);
+  List[CellId@(row, col)];
+};
 
 # Return the id of the box group that this cell belongs to.
 (CellId@) { Symbol@; } BoxGroupOf = (CellId@ cell) {
@@ -133,7 +128,7 @@ Set@ FullSet = (Symbol@ _s) { True; };
   State@ = +(Unit@ empty, Symbol@ single, Unit@ multi);
 
   State@ state = ForEach(Symbols, State@(empty: Unit),
-    (Symbol@ symbol, State@ state) {
+    (State@ state, Symbol@ symbol) {
       set(symbol).?(false: state);
       state.?(
         empty: State@(single: symbol),
@@ -184,7 +179,7 @@ XS@ EmptyXS = XS@(empty: Unit);
   # Cell: This cell cannot be any symbol other than s.
   Set@ isS = Set(s, True, (Symbol@ _) { False; });
   XS@ xCell = ForEach(Symbols, EmptyXS,
-    (Symbol@ other, XS@ xs) {
+    (XS@ xs, Symbol@ other) {
       isS(other).?(true: xs);
       AddX(X@(cell, other), xs);
     });
@@ -193,11 +188,9 @@ XS@ EmptyXS = XS@(empty: Unit);
   # This is a helper function we'll reuse for rows, columns, and boxes.
   (Set@, (Symbol@) { CellId@; }) { XS@; }
   Group = (Set@ isThis, (Symbol@) { CellId@; } cellOf) {
-    ForEach(Symbols, EmptyXS,
-      (Symbol@ i, XS@ xs) {
-        isThis(i).?(true: xs);
-        AddX(X@(cellOf(i), s), xs);
-      });
+    XS@ xs, Symbol@ i := ForEach(Symbols, EmptyXS);
+    isThis(i).?(true: xs);
+    AddX(X@(cellOf(i), s), xs);
   };
 
   # Row: No other cell in this row can be the symbol s.
@@ -306,16 +299,11 @@ SolveFrom = (Board@ board, List@<CellId@> mfrom) {
     nothing: {
       # We don't know the symbol for this cell yet. Try all possible
       # options until we've found a solution to the puzzle.
-      ForEach(Symbols, Nothing<Board@>,
-        (Symbol@ s, Maybe@<Board@> solved) {
-          # TODO: Can we break out more efficiently in the case when it's
-          # solved, rather than have to iterate through and ignore all the
-          # rest of the possible symbols?
-          solved.?(just: solved);
-          cell(s).?(
-            true: SolveFrom(ApplyXS(board, Assign(from, s)), next),
-            false: Nothing<Board@>);
-        });
+      Maybe@<Board@> unsolved, Symbol@ s := For(Symbols, Nothing<Board@>);
+      cell(s).?(false: Continue(unsolved));
+      Maybe@<Board@> solved = SolveFrom(ApplyXS(board, Assign(from, s)), next);
+      solved.?(just: Break(solved));
+      Continue(unsolved);
     });
 };
 
@@ -323,12 +311,10 @@ Input@ = (Symbol@, Symbol@) { Maybe@<Symbol@>; };
 
 # Generate constraints based on the given input board.
 (Input@) { XS@; } InputXS = (Input@ board) {
-  ForEach(CellIds, EmptyXS,
-    (CellId@ cell, XS@ xs) {
-      Maybe@<Symbol@> ms = board(cell.row, cell.col);
-      ms.?(nothing: xs);
-      AppendXS(Assign(cell, ms.just), xs);
-    });
+  XS@ xs, CellId@ cell := ForEach(CellIds, EmptyXS);
+  Maybe@<Symbol@> ms = board(cell.row, cell.col);
+  ms.?(nothing: xs);
+  AppendXS(Assign(cell, ms.just), xs);
 };
 
 Solved@ = (Symbol@, Symbol@) { Symbol@; };

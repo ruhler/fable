@@ -77,10 +77,9 @@ Clause = {
 
   # Removes a variable from a clause.
   (VarId@, Clause@) { Clause@; } RemoveVar = (VarId@ vid, Clause@ c) {
-    /Std/List%.ForEach(c, Empty<Var@>, (Var@ v, List@<Var@> vars) {
-      EqId(vid, v.id).?(true: vars);
-      Items(v, vars);
-    });
+    List@<Var@> vars, Var@ v := /Std/List/For%.ForEach(c, Empty<Var@>);
+    EqId(vid, v.id).?(true: vars);
+    Items(v, vars);
   };
 
   @(AddVar, AddVars, RemoveVar);
@@ -144,17 +143,16 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
   };
 
   # Update Vars@ data structure.
-  Vars@ vars = /Std/List%.ForEach(clause, s.vars,
-    (Var@ v, Vars@ vs) {
-      Vars.Update(vs, v.id, (Maybe@<VarS@> mx) {
-          VarS@ x = mx.?(
-            just: mx.just,
-            nothing: VarS@(ClauseIds.Empty, ClauseIds.Empty));
-          v.pos.?(
-            true: VarS@(ClauseIds.Add(x.pos, id), x.neg),
-            false: VarS@(x.pos, ClauseIds.Add(x.neg, id)));
-        });
-    });
+  Vars@ vars = {
+    Vars@ vs, Var@ v := /Std/List/For%.ForEach(clause, s.vars);
+    Maybe@<VarS@> mx := Vars.Update(vs, v.id);
+    VarS@ x = mx.?(
+      just: mx.just,
+      nothing: VarS@(ClauseIds.Empty, ClauseIds.Empty));
+    v.pos.?(
+      true: VarS@(ClauseIds.Add(x.pos, id), x.neg),
+      false: VarS@(x.pos, ClauseIds.Add(x.neg, id)));
+  };
 
   Clauses@ clauses = Clauses.Put(s.clauses, id, clause);
   s.@(vars, clauses, todo);
@@ -175,9 +173,7 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
 
 (Solver@, List@<Clause@>) { Solver@; }
 AddClauses = (Solver@ solver, List@<Clause@> clauses) {
-  /Std/List%.ForEach(clauses, solver, (Clause@ c, Solver@ s) {
-    AddClause(s, c);
-  });
+  /Std/List/For%.ForEach(clauses, solver, AddClause);
 };
 
 # Adds a clause to the solver state for the given conflict.
@@ -199,8 +195,8 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
 };
 
 # Removes a clause from a Vars@ var entry.
-(ClauseId@, Var@, Solver@) { Solver@; }
-RemoveClauseFromVar = (ClauseId@ clause, Var@ var, Solver@ s) {
+(ClauseId@, Solver@, Var@) { Solver@; }
+RemoveClauseFromVar = (ClauseId@ clause, Solver@ s, Var@ var) {
   Maybe@<VarS@> mvs = Vars.Get(s.vars, var.id);
   mvs.?(nothing: s);
   VarS@ vs = mvs.just;
@@ -227,7 +223,7 @@ RemoveClause = (ClauseId@ id, Solver@ s) {
   mcs.?(nothing: s);
 
   Clause@ cs = mcs.just;
-  Solver@ ns = /Std/List%.ForEach(cs, s, RemoveClauseFromVar(id));
+  Solver@ ns = /Std/List/For%.ForEach(cs, s, RemoveClauseFromVar(id));
   ns.@(clauses: Clauses.Remove(ns.clauses, id));
 };
 

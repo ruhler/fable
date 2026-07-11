@@ -7,7 +7,8 @@ Quot .= /Std/Int/Div%;
 Int .= /Std/Int/Lit%;
 Range .= /Std/Int/Random%;
 Abs .= /Std/Int/Sign%;
-List@, List, Init, Items, ForEach .= /Std/List%;
+List@, List, Init, Items .= /Std/List%;
+ForEach .= /Std/List/For%;
 Monad@ .= /Std/Monad%;
 Exec, Run .= /Std/State/Pure%;
 Unit@, Unit .= /Std/Unit%;
@@ -77,9 +78,8 @@ State@ = *(
 );
 
 (List@<Pos@>) { Drawing@; } DrawSnake = (List@<Pos@> s) {
-  ForEach(s, Blank, (Pos@ p, Drawing@ d) {
-    Over(DrawCell(p, Cell@(snake: Unit)), d);
-  });
+  Drawing@ d, Pos@ p := ForEach(s, Blank);
+  Over(DrawCell(p, Cell@(snake: Unit)), d);
 };
 
 (State@) { Drawing@; } Draw = (State@ s) {

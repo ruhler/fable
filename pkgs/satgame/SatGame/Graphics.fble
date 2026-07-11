@@ -84,11 +84,11 @@ Drawing@ Background = Rect(Int|0, Int|0, Int|640, Int|480, Color.Black);
 Split12 = (List@<ImagePair@> pairs) {
   pairs.?(empty: Empty<List@<Drawing@>>);
 
-  List@<Drawing@> head = /Std/List%.ForEach(
-    /Std/List/Index%.Take(pairs, Int|6), Empty<Drawing@>,
-    (ImagePair@ p, List@<Drawing@> l) {
-      Items(p.a, Items(p.b, l));
-    });
+  List@<Drawing@> head = {
+    List@<Drawing@> s, ImagePair@ p := /Std/List/For%.ForEach(
+      /Std/List/Index%.Take(pairs, Int|6), Empty<Drawing@>);
+    Items(p.a, Items(p.b, s));
+  };
     
   List@<List@<Drawing@>> tail = Split12(/Std/List/Index%.Drop(pairs, Int|6));
   Items(head, tail);
@@ -98,11 +98,11 @@ Drawing@ Screenshot = {
   List@<List@<Drawing@>> images = Split12(ImagePairs);
 
   S@ = *(Int@ x, Drawing@ d);
-  /Std/List%.ForEach(images, S@(Int|4, Background),
-    (List@<Drawing@> drawings, S@ s) {
+  /Std/List/For%.ForEach(images, S@(Int|4, Background),
+    (S@ s, List@<Drawing@> drawings) {
       Int@ y = s.x;
-      S@(Add(Int|48, y), /Std/List%.ForEach(drawings, s.@(x: Int|4),
-          (Drawing@ i, S@ r) {
+      S@(Add(Int|48, y), /Std/List/For%.ForEach(drawings, s.@(x: Int|4),
+          (S@ r, Drawing@ i) {
             S@(Add(Int|48, r.x), Over(r.d, Translate(r.x, y, Tile(i))));
           }).d);
       }).d;

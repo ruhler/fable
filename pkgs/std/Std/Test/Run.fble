@@ -5,7 +5,8 @@ Bool@, True, False, And .= /Std/Bool%;
 Char@ .= /Std/Char%;
 Str .= /Std/Char/Ascii%;
 FormatE, StringE .= /Std/Char/Ascii/Stream%;
-Concat, ForEach .= /Std/List%;
+Concat .= /Std/List%;
+ForEach .= /Std/List/For%;
 Monad@ .= /Std/Monad%;
 Stream@ .= /Std/Stream%;
 Out@ .= /Std/Stream/Out%;
@@ -44,12 +45,10 @@ Run = <<@>@ M@>(Monad@<M@> m, Out@<Char@, M@> out, String@ prefix, Test@ test) {
     },
     suite: {
       String@ name = Concat[prefix, test.suite.name, Str|'.'];
-      ForEach(test.suite.tests, m.return(True),
-        (Test@ test, M@<Bool@> mp) {
-          Bool@ passing := m.do(mp);
-          Bool@ pass := m.do(Run(m, out, name, test));
-          m.return(And(passing, pass));
-        });
+      M@<Bool@> s, Test@ test := ForEach(test.suite.tests, m.return(True));
+      Bool@ passing := m.do(s);
+      Bool@ pass := m.do(Run(m, out, name, test));
+      m.return(And(passing, pass));
     });
 };
 

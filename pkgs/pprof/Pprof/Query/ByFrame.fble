@@ -42,11 +42,10 @@ Query = ((Sequence@) { List@<BlockId@>; } frames, Profile@ profile) {
     List@<BlockId@> set = DeDup(frames(sample.sequence));
     Int@ count = MetricOf(sample.values);
 
-    /Std/List%.ForEach(set, map, (BlockId@ block, Map@ m) {
-      Maybe@<Int@> mx := Update(m, block);
-      mx.?(just: Add(mx.just, count));
-      count;
-    });
+    Map@ m, BlockId@ block := /Std/List/For%.ForEach(set, map);
+    Maybe@<Int@> mx := Update(m, block);
+    mx.?(just: Add(mx.just, count));
+    count;
   };
 
   (List@<Sample@>, Map@) { Map@; }

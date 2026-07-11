@@ -544,3 +544,118 @@ whatever it is we are doing now.
 
 Or, in other words: how to shift all those function allocations associated
 with streams to stack allocations or get rid of them entirely.
+
+---
+
+Anyway, let's get back to the question of the ForEach, For APIs.
+
+Now that stream properly supports For, ForEach... do we want to have list and
+map implement For and ForEach via stream, or should they support it natively?
+
+It feels silly to go from list to stream and then for. It feels like there's
+overhead.
+
+How about instead I use some conventions for For and ForEach functions, and
+then implement them for Stream, List, Map - Keys, Values, and Entries. I can
+put them in separate For% submodules. If I want, I can define /Std/For% with
+a generic type for them, to define Break and Continue helpers.
+
+Then transition all those use cases listed above to use For instead of
+ForEach.
+
+While we are at it, let's discuss again the order of arguments to pass to
+ForEach.
+
+Right now I have:
+
+  <@ B@>(B@, (A@, B@) { B@; }) { B@; }
+
+And my draft 'For':
+
+  <@ B@>(B@ base, (A@, B@) { For@<B@>; } body) {
+
+I know we want the function at the end. Seems like base should go first then:
+
+  <@ B@>(B@, (B@, A@) { B@; }) { B@; }
+
+What did I say before? How does fold look in haskell?
+* Before I said ForEach looks just like Stream, and the second argument to
+  Stream is like a cons function where we put the value first.
+
+Haskell has:
+
+foldl :: (b -> a -> b) -> b -> [a] -> b
+foldr :: (a -> b -> b) -> b -> [a] -> b
+
+So they have both depending on foldl versus foldr.
+
+I always want to think of ForEach as going left to right. You have some base
+value that you are transforming, one element at a time. So yes, I should
+change the order of arguments. I should use:
+
+  <@ B@>(B@, (B@, A@) { B@; }) { B@; }
+
+Can I come up with a better name for the types than B@? What does B@ stand
+for? Let me play around with things when I rewrite them.
+
+---
+
+Now, I have to ask the question. If I have a For function, and it's fairly
+standard... why is it any different from Stream@? Should Stream@ be changed to
+my For function type?
+
+Let's compare.
+
+  Stream@ = +(*(A@ head, Lazy@<Stream@> tail) items, Unit@ empty);
+
+  For@ = <@ B@>(B@, (B@, A@) { +(B@ continue, B@ break); }) { B@; }
+
+In the case of Stream@, I can get the tail of the stream, save it, restore it
+later. In the case of For@, there's no way to see the tail. You can only
+process elements from start to when you stop, you have to do it all at once,
+and then you stop.
+
+I bet For@ would be more efficient in terms of allocations. I wonder how it
+would be in terms of coding.
+
+Maybe let's try to implement our friends End, Put, Puts, Return using the For@
+type.
+
+* End = <@ B@>(B@ end, _) { end; };
+ - It ignores the function, because there's nothing after this.
+* Put x tail = \base body -> tail(body(base, x), body)
+ - Okay. Not too bad yet.
+* Puts s tail = \base body -> tail(s(base, body), body)
+ - Okay. Still not too bad yet.
+ - We are applying functions and traversing in order.
+
+It feels a little more complex, but maybe not so bad as the old Stream@ was.
+
+How about the implementation of my Map functions? That's where things start to
+get tricky. I need the type B@ to be my (S@) { R@; }, which is a lot more
+painful.
+
+Let's keep Stream@ for now. Keep For@ as an idea for how to improve
+performance if we can't fix it in the runtime itself. But also add my For
+traversals for stream, list, maps. Start using them. See how it feels.
+
+What name do I want to use for the type of what is returned by the loop?
+* R@? B@? S@?
+
+I kind of like S@, short for loop state.
+
+---
+
+/Games/Sudoku% has a TODO for breaking out of a loop early. In that case we
+want to iterate over all symbols, return Just(r) for the first that gives a
+result, otherwise return Nothing. The thing is, it doesn't need the input loop
+state. It's just going to ignore that. It feels like I'm not using the right
+abstraction somehow. It's not (a, s -> s), it's (a -> s).
+
+Anyway, experience with the change:
+* order of arguments doesn't matter. Otherwise ForEach for list is the same as
+  it was.
+* For with Continue and Break is pretty easy to use, though doesn't perfectly
+  fit the one case in question, because the body doesn't care about the loop
+  state.
+

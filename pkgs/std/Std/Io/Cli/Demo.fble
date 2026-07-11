@@ -8,7 +8,8 @@ Int@ .= /Std/Int%;
 Io@ .= /Std/Io%;
 Main@, Exit@, Success, Failure .= /Std/Io/Cli%;
 GetVar .= /Std/Io/Env%;
-List@, ForEach, Join, Map .= /Std/List%;
+List@, Join, Map .= /Std/List%;
+ForEach .= /Std/List/For%;
 Maybe@ .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@ .= /Std/Stream%;
@@ -88,16 +89,14 @@ Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   ForEachFile = ((In@<Char@, M@>) { M@<Unit@>; } f) {
     (String@) { M@<Maybe@<In@<Char@, M@>>>; } Read = /Std/Io/File/Utf8%.Read(m, io);
 
-    ForEach(cmd_args, m.return(Success),
-      (String@ path, M@<Exit@> return) {
-        Maybe@<In@<Char@, M@>> in := m.do(Read(path));
-        in.?(nothing: {
-          Unit@ _ := m.do(err(FormatE|'unable to open %s\n'[String(path)]));
-          m.return(Failure);
-        });
-        Unit@ _ := m.do(f(in.just));
-        return;
-      });
+    M@<Exit@> return, String@ path := ForEach(cmd_args, m.return(Success));
+    Maybe@<In@<Char@, M@>> in := m.do(Read(path));
+    in.?(nothing: {
+      Unit@ _ := m.do(err(FormatE|'unable to open %s\n'[String(path)]));
+      m.return(Failure);
+    });
+    Unit@ _ := m.do(f(in.just));
+    return;
   };
 
   # Prints out contents of files.

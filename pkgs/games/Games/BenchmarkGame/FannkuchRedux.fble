@@ -5,7 +5,8 @@ Max .= /Std/Int/Cmp%;
 Eq .= /Std/Int/Eq%;
 Int .= /Std/Int/Lit%;
 IsZero .= /Std/Int/Sign%;
-List@, List, Items, Empty, Append, Last, Init, ForEach .= /Std/List%;
+List@, List, Items, Empty, Append, Last, Init .= /Std/List%;
+ForEach .= /Std/List/For%;
 Monad@ .= /Std/Monad%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -39,7 +40,7 @@ Flip = (Int@ n, List@<Int@> pre, List@<Int@> l) {
 Permutes = <<@>@ M@>(Monad@<M@> m, List@<Int@> l, (List@<Int@>) { M@<Unit@>; } f) {
   l.items.tail.?(empty: f(l));
   List@<Int@> _ := m.do(ForEach(l, m.return(l),
-      (Int@ _, M@<List@<Int@>> ml) {
+      (M@<List@<Int@>> ml, Int@ _) {
         List@<Int@> rotated := m.do(ml);
         Int@ head = rotated.items.head;
         Unit@ _ := m.do(Permutes(m, rotated.items.tail, (List@<Int@> permuted) {

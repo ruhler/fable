@@ -110,25 +110,21 @@ Routing = (List@<String@> args, Model@ m) {
     m.@(s: m.s.@(routing: Grid<Dir@>.Put(m.s.routing, coord, dir)));
 };
 
-(String@, Model@) { Model@; }
-DoLine = (String@ line, Model@ m) {
-    List@<String@> args = Split(line, /Std/Char/Eq%.Eq(Char|' '));
-    args.?(empty: m);
-
-    String@ head = args.items.head;
-    List@<String@> tail = args.items.tail;
-
-    StrIs|'gate'(head).?(true: AddGate(tail, m));
-    StrIs|'car'(head).?(true: AddCar(tail, m));
-    StrIs|'phase'(head).?(true: Phase(tail, m));
-    StrIs|'routing'(head).?(true: Routing(tail, m));
-    m;
-};
-
 (String@) { Model@; }
 Model = (String@ lines) {
-    Model@ empty = /Computrainer/Model%.Model(Grid<Gate@>.Empty, Grid<Car@>.Empty);
-    /Std/List%.ForEach(SplitLines(lines), empty, DoLine);
+  Model@ empty = /Computrainer/Model%.Model(Grid<Gate@>.Empty, Grid<Car@>.Empty);
+  Model@ m, String@ line := /Std/List/For%.ForEach(SplitLines(lines), empty);
+  List@<String@> args = Split(line, /Std/Char/Eq%.Eq(Char|' '));
+  args.?(empty: m);
+
+  String@ head = args.items.head;
+  List@<String@> tail = args.items.tail;
+
+  StrIs|'gate'(head).?(true: AddGate(tail, m));
+  StrIs|'car'(head).?(true: AddCar(tail, m));
+  StrIs|'phase'(head).?(true: Phase(tail, m));
+  StrIs|'routing'(head).?(true: Routing(tail, m));
+  m;
 };
 
 @(Model);

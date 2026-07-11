@@ -1,9 +1,10 @@
 
 Char@ .= /Std/Char%;
+Ascii .= /Std/Char/Ascii%;
 String .= /Std/Char/Ascii/Stream%;
 List@ .= /Std/List%;
 Show@ .= /Std/Show%;
-Stream@, End, Puts .= /Std/Stream%;
+End, Put .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 Bit@, Hex@ .= /Md5/Digits%;
@@ -13,10 +14,10 @@ Show@<Bit@> ShowBit = (Bit@ b) {
 };
 
 Show@<List@<Bit@>> ShowBits = (List@<Bit@> bits) {
-  /Std/List%.ForEach(bits, End<Char@>, (Bit@ bit, Stream@<Char@> shown) {
-    Unit@ _ := Puts(shown);
-    ShowBit(bit);
-  });
+  bits.?(empty: End<Char@>);
+  Bit@ bit = bits.items.head;
+  Unit@ _ := Put(bit.?(0: Ascii.0, 1: Ascii.1));
+  ShowBits(bits.items.tail);
 };
 
 Show@<Hex@> ShowHex = (Hex@ h) {

@@ -56,9 +56,9 @@ Adder1 = (Adder@ ifc) {
 (Adder@) { Build@<Design@>; }
 Adder = (Adder@ ifc) {
     # Instantiate N 1-bit adders, connected together via cout => cin.
-    List@<MAddr@> cs := Do(/Std/List%.ForEach(
+    List@<MAddr@> cs := Do(/Std/List/For%.ForEach(
         ifc.a.items.tail, Return(Empty<MAddr@>),
-        (MAddr@ _, Build@<List@<MAddr@>> mkcs) {
+        (Build@<List@<MAddr@>> mkcs, MAddr@ _) {
             Addr@ data := Do(Addr(Data.0));
             Addr@ valid := Do(Addr(Data.0));
             List@<MAddr@> tail := Do(mkcs);
@@ -82,8 +82,8 @@ Adder = (Adder@ ifc) {
     };
 
     List@<Adder@> bits = Zip(ifc.a, ifc.b, cins, ifc.z, couts);
-    List@<Design@> designs := Do(/Std/List%.ForEach(
-        bits, Return(Empty<Design@>), (Adder@ adder, Build@<List@<Design@>> mk) {
+    List@<Design@> designs := Do(/Std/List/For%.ForEach(bits, Return(Empty<Design@>),
+        (Build@<List@<Design@>> mk, Adder@ adder) {
             Design@ head := Do(Adder1(adder));
             List@<Design@> tail := Do(mk);
             Return(Items(head, tail));

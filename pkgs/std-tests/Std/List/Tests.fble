@@ -6,7 +6,7 @@ String .= /Std/Char/Ascii/Stream%;
 AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
 List@, List, Items, Empty, Append, Concat,
-Join, Head, Tail, Last,Init, Map, Do, ForEach, Reverse .= /Std/List%;
+Join, Head, Tail, Last, Init, Map, Do, Reverse .= /Std/List%;
 Test@, Pass, Fail .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
@@ -84,16 +84,6 @@ Test@ Tests = TestSuite|List[
     AssertEquals(Eqs, Shows, wnt, got);
   }),
 
-  Test|ForEach({
-    Unit@ _ := Lazy;
-    List@<Elem@> wnt = Elems|EDCBA;
-    List@<Elem@> got =
-      ForEach(Elems|ABCDE, Empty<Elem@>, (Elem@ e, List@<Elem@> b) {
-        Items(e, b);
-      });
-    AssertEquals(Eqs, Shows, wnt, got);
-  }),
-
   Test|Map({
     (Elem@) { Elem@; } f = (Elem@ e) {
       e.?(A: Elem.B, B: Elem.C, C: Elem.D, D: Elem.E, E: Elem.A);
@@ -125,6 +115,7 @@ Test@ Tests = TestSuite|List[
 
   /Std/List/Count/Tests%.Tests,
   /Std/List/Eq/Tests%.Tests,
+  /Std/List/For/Tests%.Tests,
   /Std/List/Index/Tests%.Tests,
   /Std/List/Maybe/Tests%.Tests,
   /Std/List/Search/Tests%.Tests,

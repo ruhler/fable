@@ -10,9 +10,8 @@ MetricOf .= /Pprof/Query/Util%;
 # Returns the total number of samples in a profile.
 (Profile@) { Int@; }
 Total = (Profile@ profile) {
-  /Std/List%.ForEach(profile.samples, Int|0, (Sample@ sample, Int@ sum) {
-    Add(sum, MetricOf(sample.values));
-  });
+  Int@ sum, Sample@ sample := /Std/List/For%.ForEach(profile.samples, Int|0);
+  Add(sum, MetricOf(sample.values));
 };
 
 # Returns the number of samples containing the given subsequence.
@@ -25,10 +24,9 @@ Contains = (Profile@ profile, Sequence@ needle) {
     Find(haystack.items.tail, needle);
   };
 
-  /Std/List%.ForEach(profile.samples, Int|0, (Sample@ sample, Int@ sum) {
-    Find(sample.sequence, needle).?(false: sum);
-    Add(sum, MetricOf(sample.values));
-  });
+  Int@ sum, Sample@ sample := /Std/List/For%.ForEach(profile.samples, Int|0);
+  Find(sample.sequence, needle).?(false: sum);
+  Add(sum, MetricOf(sample.values));
 };
 
 @(Total, Contains);

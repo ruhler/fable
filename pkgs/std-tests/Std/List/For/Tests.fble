@@ -1,0 +1,42 @@
+# @module[/Std/List/For/Tests%]
+#  Tests for /Std/List/For%.
+
+OnAscii .= /Std/Char/Ascii%;
+AssertEquals .= /Std/Eq/Assert%;
+Break, Continue .= /Std/For%;
+Lazy .= /Std/Lazy%;
+List@, Items, Empty .= /Std/List%;
+For, ForEach .= /Std/List/For%;
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Elem@, Elem, Elems, Eq, Eqs, Shows .= /Std/List/Tests/Elem%;
+
+# @value[Tests] Test suite for /Std/List/For%
+#  @type[Test@]
+Test@ Tests = TestSuite|For[
+  Test|For({
+    Unit@ _ := Lazy;
+    List@<Elem@> wnt = Elems|CBA;
+    List@<Elem@> got = {
+      List@<Elem@> s, Elem@ e := For(Elems|ABCDE, Empty<Elem@>);
+      Eq(Elem.D, e).?(true: Break(s));
+      Continue(Items(e, s));
+    };
+    AssertEquals(Eqs, Shows, wnt, got);
+  }),
+
+  Test|ForEach({
+    Unit@ _ := Lazy;
+    List@<Elem@> wnt = Elems|EDCBA;
+    List@<Elem@> got = {
+      List@<Elem@> b, Elem@ e := ForEach(Elems|ABCDE, Empty<Elem@>);
+      Items(e, b);
+    };
+    AssertEquals(Eqs, Shows, wnt, got);
+  })
+];
+
+@(Tests);

@@ -468,8 +468,8 @@ Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
 # Draw --
 #   Make a drawing of the aliens in their current location.
 (Aliens@) { Drawing@; } Draw = (Aliens@ as) {
-  Drawing@ dying = /Std/List%.ForEach(as.dying, Blank,
-    (Dying@ dy, Drawing@ d) {
+  Drawing@ dying = /Std/List/For%.ForEach(as.dying, Blank,
+    (Drawing@ d, Dying@ dy) {
       Over(d, Translate(dy.x, dy.y, DeadAlien));
     });
      

@@ -149,39 +149,6 @@ Init = <@ T@>(List@<T@> list) {
   Items(list.items.head, Init(list.items.tail));
 };
 
-# @func[ForEach] Iterate over elements of a list.
-#  @arg[@][A@] The type of element on the list.
-#  @arg[List@<A@>][list] The list to iterate over.
-#  @arg[@][B@] The type of data to return.
-#  @arg[B@][base] The value to return for an empty list.
-#  @arg[(A@, B@) { B@; }][body]
-#   A function to update the value to return given the next element on the
-#   list.
-#  @returns[B@]
-#   The result of applying the body consecutively to the base value, once for
-#   each element in the list in list order.
-#
-# Conceptually the behavior is like:
-#
-# @code[txt] @
-#  B@ b = base
-#  foreach x in list:
-#    b = body(x, b)
-#  return b
-#
-# For example, to sum the elements of a list:
-#
-# @code[fble] @
-#  List@<Int@> nums = List[2, 5, 3, 6, 9];
-#  Int@ sum = ForEach(nums, 0, (Int@ num, Int@ sum) {
-#    Add(num, sum);
-#  });
-<@ A@>(List@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
-ForEach = <@ A@>(List@<A@> list)<@ B@>(B@ base, (A@, B@) { B@; } body) {
-  list.?(empty: base);
-  ForEach(list.items.tail, body(list.items.head, base), body);
-};
-
 # @func[Map] Applies a function to every element of a list.
 #  @arg[@][A@] The type of element on the given list.
 #  @arg[List@<A@>][list] The list to map over.
@@ -215,14 +182,21 @@ Do = <@ A@>(List@<A@> list)<@ B@>((A@) { List@<B@>; } f) {
 #  @arg[List@<T@>][list] The list to reverse.
 #  @returns[List@<T@>] The elements of the given list in reverse order.
 <@ T@>(List@<T@>) { List@<T@>; }
-Reverse = <@ T@>(List@<T@> list) {
-  ForEach(list, Empty<T@>, Items<T@>);
+Reverse = <@ T@> {
+  (List@<T@>, List@<T@>) { List@<T@>; }
+  reverse = (List@<T@> in, List@<T@> out) {
+    in.?(empty: out);
+    reverse(in.items.tail, Items(in.items.head, out));
+  };
+
+  (List@<T@> list) {
+    reverse(list, Empty<T@>);
+  };
 };
 
 @(
   List@, List, Items, Empty,
   Append, Concat, Join,
   Head, Tail, Last, Init,
-  ForEach, Map, Do,
-  Reverse
+  Map, Do, Reverse
 );
