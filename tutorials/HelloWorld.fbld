@@ -115,22 +115,22 @@
     Stream@<Char@> output = StringE|'hello, world\ngoodbye!\n';
 
    But it's also nice sometimes to split it over multiple lines of source
-   code. The @L{/Std/Stream%} module provides a helper function @L{Do} that
+   code. The @L{/Std/Stream%} module provides a helper function @L{Puts} that
    lets you output one thing followed by another thing. We can import the
-   @L{Do} function by adding it to our list of imports from the
+   @L{Puts} function by adding it to our list of imports from the
    @L{/Std/Stream%} module. We'll also want to import the @L{Unit@} type from
    the @L{/Std/Unit%} module:
 
    @code[fble] @
-    Stream@, Do .= /Std/Stream%;
+    Stream@, Puts .= /Std/Stream%;
     Unit@ .= /Std/Unit%;
 
-   With the help of the @L{Do} function, we can split our output across
+   With the help of the @L{Puts} function, we can split our output across
    multiple lines:
 
    @code[fble] @
     Stream@<Char@> output = {
-      Unit@ _ := Do(StringE|'hello, world\n');
+      Unit@ _ := Puts(StringE|'hello, world\n');
 
       StringE|'goodbye!\n';
     };
@@ -140,8 +140,8 @@
    given that this is how we write things.
 
    If you wanted to print more things, you would add more lines like the one
-   with the call to @L{Do}. Only the last line in a block like this is can be
-   a plain call to @L{StringE} without the @L{Unit@ _ := Do(...);}.
+   with the call to @L{Puts}. Only the last line in a block like this is can be
+   a plain call to @L{StringE} without the @L{Unit@ _ := Puts(...);}.
 
    @exercise
     Update your hello world program to output hello and goodbye, split across
@@ -166,10 +166,10 @@
      Bool@, True, False .= /Std/Bool%;
 
      Stream@<Char@> output = {
-       Unit@ _ := StringE|'hello, world\n';
+       Unit@ _ := Puts(StringE|'hello, world\n');
 
        Bool@ bool = True;
-       Unit@ _ := /Std/Bool/Show%.Show(bool);
+       Unit@ _ := Puts(/Std/Bool/Show%.Show(bool));
 
        StringE|'goodbye!\n';
      };

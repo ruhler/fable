@@ -379,9 +379,53 @@
    };
 
   In this case, that's 4 fewer parenthesis and 2 fewer braces cluttering up
-  the code. We need to learn about a few more language features before we're
-  ready to talk about monadic computations where function bind syntax really
-  shines.
+  the code.
+
+  If you recall, we made use of function bind syntax in the hello world
+  tutorial. That's a much less contrived example:
+
+  @code[fble] @
+   Stream@<Char@> output = {
+     Unit@ _ := Puts(StringE|'hello, world\n');
+
+     StringE|'goodbye!\n';
+   };
+
+  The @L{Puts} function is a function that takes two arguments: a stream of
+  characters, and a (typically anonymous) function that produces another
+  stream of characters when called:
+
+  @code[fble] @
+   (Stream@<Char@>, (Unit@) { Stream@<Char@>;}) { Stream@<Char@>; } Puts = ...
+
+  You can see how it's a lot more convenient to write something like:
+
+  @code[fble] @
+   Stream@<Char@> output = {
+     Unit@ _ := Puts(StringE|'hello, world\n');
+     Unit@ _ := Puts(FormatE|'A boolean: %s\n'[/Std/Bool/Show%.Show(True)]);
+     Unit@ _ := Puts(FormatE|'A character: %s\n'[/Std/Char/Show%.Show(Char|A)]);
+     Unit@ _ := Puts(FormatE|'An integer: %s\n'[/Std/Int/Show%.Show(Int|42)]);
+     StringE|'goodbye!\n';
+   };
+
+  Than it would be to write the same thing without bind syntax:
+
+  @code[fble] @
+   Stream@<Char@> output = {
+     Puts(StringE|'hello, world\n', (Unit@ _) {
+      Puts(FormatE|'A boolean: %s\n'[/Std/Bool/Show%.Show(True)], (Unit@ _) {
+       Puts(FormatE|'A character: %s\n'[/Std/Char/Show%.Show(Char|A)], (Unit@ _) {
+        Puts(FormatE|'An integer: %s\n'[/Std/Int/Show%.Show(Int|42)], (Unit@ _) {
+         StringE|'goodbye!\n';
+        });
+       });
+      });
+     });
+   };
+
+  We'll see more examples of how function bind syntax is useful later on when
+  we're ready to talk about monadic computations.
 
  @section Passing Type Values to and from Functions
   We know that types are values. In theory that means we could pass type

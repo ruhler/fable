@@ -5,8 +5,6 @@ Things to consider doing for the fble-0.6 release.
 * Move implementation of 'For' out of pkgs/std-tests/Std/Stream/Tests%.
  - And start using it more places.
 
-* Update tutorials for rename from Do to PutStream.
- - HelloWorld.
 * Clean up /Std/Char/Show% for unicode.
  - Don't keep switching between stream and list.
 
