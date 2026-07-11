@@ -2,7 +2,7 @@
 #  Interface for pure data types.
 
 List@ .= /Std/List%;
-Stream@, End, Put, PutStream .= /Std/Stream%;
+Stream@, End, Put, Puts .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 # @type[Bit@] A single bit of data.
@@ -52,7 +52,7 @@ Data@ = <@ A@>(A@) { Stream@<Bit@>; };
 (List@<Stream@<Bit@>>) { Stream@<Bit@>; }
 Struct = (List@<Stream@<Bit@>> fields) {
   fields.?(empty: End<Bit@>);
-  Unit@ _ := PutStream(fields.items.head);
+  Unit@ _ := Puts(fields.items.head);
   Struct(fields.items.tail);
 };
 

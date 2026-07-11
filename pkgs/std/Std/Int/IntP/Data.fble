@@ -5,7 +5,7 @@
 
 Data@, Bit@, 0, 1 .= /Std/Data%;
 IntP@ .= /Std/Int/IntP%;
-Stream@, End, Put, PutStream, Return, Map .= /Std/Stream%;
+Stream@, End, Put, Puts, Return, Map .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # @func[Data] Convert an IntP@ to a data bit stream.
@@ -44,12 +44,12 @@ Data@<IntP@> Data = {
   RawBits = (IntP@ x) {
     x.?(
       1: End<Bit@>,
-      2p0: { Unit@ _ := PutStream(RawBits(x.2p0)); Return(0); },
-      2p1: { Unit@ _ := PutStream(RawBits(x.2p1)); Return(1); });
+      2p0: { Unit@ _ := Puts(RawBits(x.2p0)); Return(0); },
+      2p1: { Unit@ _ := Puts(RawBits(x.2p1)); Return(1); });
   };
 
   (IntP@ x) {
-    Unit@ _ := PutStream(NumBits(x));
+    Unit@ _ := Puts(NumBits(x));
     RawBits(x);
   };
 };

@@ -3,7 +3,7 @@ Char@ .= /Std/Char%;
 String .= /Std/Char/Ascii/Stream%;
 List@ .= /Std/List%;
 Show@ .= /Std/Show%;
-Stream@, End, PutStream .= /Std/Stream%;
+Stream@, End, Puts .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 Bit@, Hex@ .= /Md5/Digits%;
@@ -14,7 +14,7 @@ Show@<Bit@> ShowBit = (Bit@ b) {
 
 Show@<List@<Bit@>> ShowBits = (List@<Bit@> bits) {
   /Std/List%.ForEach(bits, End<Char@>, (Bit@ bit, Stream@<Char@> shown) {
-    Unit@ _ := PutStream(shown);
+    Unit@ _ := Puts(shown);
     ShowBit(bit);
   });
 };

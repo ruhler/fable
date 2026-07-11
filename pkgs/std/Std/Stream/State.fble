@@ -5,7 +5,7 @@ List@ .= /Std/List%;
 Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 State@ .= /Std/State%;
-Stream@, PutStream .= /Std/Stream%;
+Stream@, Puts .= /Std/Stream%;
 In@ .= /Std/Stream/In%;
 Out@ .= /Std/Stream/Out%;
 Unit@ .= /Std/Unit%;
@@ -36,7 +36,7 @@ In = <<@>@ M@>(Monad@<M@> m)<@ A@>(State@<List@<A@>, M@> s) {
 Out = <<@>@ M@>(Monad@<M@> m)<@ A@>(State@<Stream@<A@>, M@> s) {
   (Stream@<A@> stream) {
     Stream@<A@> prev := m.do(s.get);
-    s.put(PutStream(prev, (Unit@ _) { stream; }));
+    s.put(Puts(prev, (Unit@ _) { stream; }));
   };
 };
 

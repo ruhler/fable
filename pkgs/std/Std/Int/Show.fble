@@ -10,7 +10,7 @@ Sgn .= /Std/Int/Sign%;
 QR@, Div .= /Std/Int/Div%;
 Get .= /Std/List/Index%;
 Show@ .= /Std/Show%;
-End, PutStream, Return .= /Std/Stream%;
+End, Puts, Return .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 Int@ 10 = Int|10;
@@ -23,7 +23,7 @@ Show@<Int@> Digit = (Int@ x) {
 # Show a positive integer.
 Show@<Int@> Positive = (Int@ x) {
   QR@ qr = Div(x, 10);
-  Unit@ _ := PutStream(qr.q.?(0: End<Char@>, : Positive(qr.q)));
+  Unit@ _ := Puts(qr.q.?(0: End<Char@>, : Positive(qr.q)));
   Digit(qr.r);
 };
 

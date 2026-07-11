@@ -2,7 +2,7 @@
 Bool@, True, False .= /Std/Bool%;
 List@, List, ForEach .= /Std/List%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
-Stream@, End, PutStream, Return .= /Std/Stream%;
+Stream@, End, Puts, Return .= /Std/Stream%;
 ToList .= /Std/Stream/List%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -94,7 +94,7 @@ List@<CellId@> CellIds = ToList({
     (Symbol@ col, Stream@<CellId@> stream) {
       ForEach(Symbols, stream,
         (Symbol@ row, Stream@<CellId@> stream) {
-          Unit@ _ := PutStream(stream);
+          Unit@ _ := Puts(stream);
           Return(CellId@(row, col));
         });
     });

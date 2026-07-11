@@ -6,7 +6,7 @@ U .= /Std/Char/Lit%;
 List@, List, Items .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Stream@, End, Put, PutStream .= /Std/Stream%;
+Stream@, End, Put, Puts .= /Std/Stream%;
 In@ .= /Std/Stream/In%;
 ToStream, ToList .= /Std/Stream/List%;
 String@ .= /Std/String%;
@@ -29,7 +29,7 @@ String = (String@ s) {
 (List@<Stream@<Char@>>) { Stream@<Char@>; }
 Lines = (List@<Stream@<Char@>> xs) {
   xs.?(empty: End<Char@>);
-  Unit@ _ := PutStream(xs.items.head);
+  Unit@ _ := Puts(xs.items.head);
   Unit@ _ := Put(/Std/String/Lines%.Newline);
   Lines(xs.items.tail);
 };
@@ -42,8 +42,8 @@ Lines = (List@<Stream@<Char@>> xs) {
 Join = (String@ sep, List@<Stream@<Char@>> xs) {
   xs.?(empty: End<Char@>);
   xs.items.tail.?(empty: xs.items.head);
-  Unit@ _ := PutStream(xs.items.head);
-  Unit@ _ := PutStream(String(sep));
+  Unit@ _ := Puts(xs.items.head);
+  Unit@ _ := Puts(String(sep));
   Join(sep, xs.items.tail);
 };
 
@@ -78,7 +78,7 @@ Format = (String@ fmt, List@<Stream@<Char@>> args) {
     });
 
     /Std/Char/Eq%.Eq('s', e).?(true: {
-      Unit@ _ := PutStream(args.items.head);
+      Unit@ _ := Puts(args.items.head);
       Format(fmt.items.tail.items.tail, args.items.tail);
     });
 

@@ -448,3 +448,45 @@ But! I declare, the code benefits are so overwhelming, if making the code so
 much better hurts performance so much, that's a problem with performance not a
 problem with code.
 
+---
+
+The name PutStream feels a bit verbose. Can I come up with anything better?
+
+Think about the tutorials. We used to have:
+
+    Stream@<Char@> output = {
+      Unit@ _ := Do(StringE|'hello, world\n');
+
+      StringE|'goodbye!\n';
+    };
+
+Now...
+
+    Stream@<Char@> output = {
+      Unit@ _ := PutStream(StringE|'hello, world\n');
+
+      StringE|'goodbye!\n';
+    };
+
+Alternatives?
+* PutS, Puts, ...
+
+Let's just try PutS. The S can be ambiguous. Put string, stream. Whatever. I
+think that's better than Puts.
+
+    Stream@<Char@> output = {
+      Unit@ _ := PutS(StringE|'hello, world\n');
+
+      StringE|'goodbye!\n';
+    };
+
+    Stream@<Char@> output = {
+      Unit@ _ := Puts(StringE|'hello, world\n');
+
+      StringE|'goodbye!\n';
+    };
+
+I don't know. Neither feels quite right.
+
+Puts looks better? I no longer have a conflict with converting a list to a
+stream, because I renamed that from Puts to ToStream.

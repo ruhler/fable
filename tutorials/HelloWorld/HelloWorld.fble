@@ -6,24 +6,24 @@ Char .= /Std/Char/Ascii%;
 Int@ .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 List@, List .= /Std/List%;
-Stream@, PutStream .= /Std/Stream%;
+Stream@, Puts .= /Std/Stream%;
 FormatE, StringE .= /Std/Char/Ascii/Stream%;
 Unit@ .= /Std/Unit%;
 
 # Define a variable with the output we want to print.
 Stream@<Char@> output = {
-  Unit@ _ := PutStream(StringE|'hello, world\n');
+  Unit@ _ := Puts(StringE|'hello, world\n');
 
-  Unit@ _ := PutStream(FormatE|'A boolean: %s\n'[/Std/Bool/Show%.Show(True)]);
+  Unit@ _ := Puts(FormatE|'A boolean: %s\n'[/Std/Bool/Show%.Show(True)]);
 
   Char@ c = Char|A;
-  Unit@ _ := PutStream(FormatE|'A character: %s\n'[/Std/Char/Show%.Show(c)]);
+  Unit@ _ := Puts(FormatE|'A character: %s\n'[/Std/Char/Show%.Show(c)]);
 
   Int@ x = Int|42;
-  Unit@ _ := PutStream(FormatE|'An integer: %s\n'[/Std/Int/Show%.Show(x)]);
+  Unit@ _ := Puts(FormatE|'An integer: %s\n'[/Std/Int/Show%.Show(x)]);
 
   List@<Bool@> l = List[True, False, False];
-  Unit@ _ := PutStream(FormatE|'A list: %s\n'[/Std/List/Show%.Show(/Std/Bool/Show%.Show, l)]);
+  Unit@ _ := Puts(FormatE|'A list: %s\n'[/Std/List/Show%.Show(/Std/Bool/Show%.Show, l)]);
 
   StringE|'goodbye!\n';
 };

@@ -2,7 +2,7 @@
 #  Utilities for converting between lists and streams.
 
 List@, Empty, Items .= /Std/List%;
-Stream@, End, Put, PutStream .= /Std/Stream%;
+Stream@, End, Put, Puts .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 # @func[ToStream] Convert a list to as stream.
@@ -23,7 +23,7 @@ ToStream = <@ A@>(List@<A@> values) {
 <@ A@>(List@<Stream@<A@>>) { Stream@<A@>; }
 Concat = <@ A@>(List@<Stream@<A@>> xs) {
   xs.?(empty: End<A@>);
-  Unit@ _ := PutStream(xs.items.head);
+  Unit@ _ := Puts(xs.items.head);
   Concat(xs.items.tail);
 };
 

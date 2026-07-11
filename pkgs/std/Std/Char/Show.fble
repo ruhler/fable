@@ -12,7 +12,7 @@ IsZero .= /Std/Int/Sign%;
 Items .= /Std/List%;
 Get, Length .= /Std/List/Index%;
 Show@ .= /Std/Show%;
-End, PutStream, Return .= /Std/Stream%;
+End, Puts, Return .= /Std/Stream%;
 String, ToString .= /Std/Stream/String%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
@@ -36,7 +36,7 @@ Show@<Char@> Unicode = {
 
   Show@<Int@> Digits = (Int@ x) {
     QR@ qr = Div(x, Int|16);
-    Unit@ _ := PutStream(IsZero(qr.q).?(true: End<Char@>, : Digits(qr.q)));
+    Unit@ _ := Puts(IsZero(qr.q).?(true: End<Char@>, : Digits(qr.q)));
     Digit(qr.r);
   };
 

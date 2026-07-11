@@ -5,7 +5,7 @@ Char@ .= /Std/Char%;
 Format, String .= /Std/Char/Ascii/Stream%;
 Set@, ForEach .= /Std/Set%;
 Show@ .= /Std/Show%;
-Stream@, PutStream .= /Std/Stream%;
+Stream@, Puts .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # @func[Show] Show a Set@ value.
@@ -15,9 +15,9 @@ Unit@ .= /Std/Unit%;
 #  @returns[Stream@] Output that shows the contents of the map.
 <@ T@>(Show@<T@>) { Show@<Set@<T@>>; }
 Show = <@ T@>(Show@<T@> show, Set@<T@> set) {
-  Unit@ _ := PutStream(ForEach(set, String|'{ ',
+  Unit@ _ := Puts(ForEach(set, String|'{ ',
     (T@ x, Stream@<Char@> shown) {
-      Unit@ _ := PutStream(shown);
+      Unit@ _ := Puts(shown);
       Format|'%s; '[show(x)];
     }));
   String|'}';

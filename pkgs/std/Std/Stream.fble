@@ -46,7 +46,7 @@ Put = <@ A@>(A@ head, Lazy@<Stream@<A@>> tail) {
   Stream@(items: @(head, tail));
 };
 
-# @func[PutStream] Outputs a stream of values to a stream.
+# @func[Puts] Outputs a stream of values to a stream.
 #  @arg[@][A@] The type of items on the stream.
 #  @arg[Stream@<A@>][a] A stream of values to add to the stream.
 #  @arg[Lazy@<Stream@<A@>>][tail]
@@ -55,10 +55,10 @@ Put = <@ A@>(A@ head, Lazy@<Stream@<A@>> tail) {
 #   A stream with all values from the given stream followed by followed by
 #   @a[tail].
 <@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
-PutStream = <@ A@>(Stream@<A@> a, Lazy@<Stream@<A@>> b) {
+Puts = <@ A@>(Stream@<A@> a, Lazy@<Stream@<A@>> b) {
   a.?(empty: b(Unit));
   Unit@ _ := Put(a.items.head);
-  PutStream(a.items.tail(Unit), b);
+  Puts(a.items.tail(Unit), b);
 };
 
 # @func[Return] Monadic Return for streams.
@@ -84,7 +84,7 @@ Return = <@ A@>(A@ x) {
 <@ A@>(Stream@<A@>)<@ B@>((A@) { Stream@<B@>; }) { Stream@<B@>; }
 Do = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { Stream@<B@>; } f) {
   ma.?(empty: End<B@>);
-  Unit@ _ := PutStream(f(ma.items.head));
+  Unit@ _ := Puts(f(ma.items.head));
   Do(ma.items.tail(Unit), f);
 };
 
@@ -127,4 +127,4 @@ ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
   ForEach(stream.items.tail(Unit), next, body);
 };
 
-@(Stream@, End, Put, PutStream, Return, Do, Map, ForEach);
+@(Stream@, End, Put, Puts, Return, Do, Map, ForEach);
