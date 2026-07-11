@@ -45,14 +45,13 @@ World@ acorn = World(List<Coord@>[
          Sub(Width, Int|2), Sub(Height, Int|2), Color.Black));
     
   # 2. For each live cell in range, draw a green unit square.
-  ForWorld(w, clear, (Coord@ coord, Drawing@ d) {
-    Int@ r = coord.row;
-    Int@ c = coord.col;
-    And(And(Lt(YMin, r), Lt(XMin, c)),
-        And(Lt(r, YMax), Lt(c, XMax))).?(
-       true: Over(d, Rect(c, r, 1, 1, Color.Green)),
-       false: d);
-  });
+  Drawing@ d, Coord@ coord := ForWorld(w, clear);
+  Int@ r = coord.row;
+  Int@ c = coord.col;
+  And(And(Lt(YMin, r), Lt(XMin, c)),
+      And(Lt(r, YMax), Lt(c, XMax))).?(
+     true: Over(d, Rect(c, r, 1, 1, Color.Green)),
+     false: d);
 };
 
 Input@ = +(Unit@ quit, Unit@ step, Resize@ resize);

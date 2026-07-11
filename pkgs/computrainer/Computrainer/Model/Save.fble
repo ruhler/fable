@@ -24,45 +24,48 @@ Dir = (Dir@ d) {
 
 (Gates@) { Stream@<Char@>; }
 Gates = (Gates@ gates) {
-    Grid<Gate@>.ForEach(gates, End<Char@>, (Coord@ c, Gate@ g, Stream@<Char@> out) {
-        Stream@<Char@> head = Format|'gate %s %s '[
-            /Std/Int/Show%.Show(c.x),
-            /Std/Int/Show%.Show(c.y)
-        ];
-        Stream@<Char@> body = g.?(
-            stop: String|'stop',
-            move: Format|'move %s'[Dir(g.move)],
-            source: Format|'source %s %s'[Car(g.source.car), Dir(g.source.dir)],
-            sink: String|'sink',
-            dup: Format|'dup %s %s'[Dir(g.dup.a), Dir(g.dup.b)],
-            wait: Format|'wait %s'[Dir(g.wait)],
-            split: Format|'split %s %s'[Dir(g.split.head), Dir(g.split.tail)],
-            filter: Format|'filter %s %s %s'[Car(g.filter.car), Dir(g.filter.match), Dir(g.filter.default)]
-        );
-        FormatE|'%s%s%s\n'[out, head, body];
-    });
+  Stream@<Char@> out, Grid<Gate@>.Entry@ e := Grid<Gate@>.ForEach(gates, End<Char@>);
+  Coord@ c = e.key;
+  Gate@ g = e.value;
+  Stream@<Char@> head = Format|'gate %s %s '[
+      /Std/Int/Show%.Show(c.x),
+      /Std/Int/Show%.Show(c.y)
+  ];
+  Stream@<Char@> body = g.?(
+      stop: String|'stop',
+      move: Format|'move %s'[Dir(g.move)],
+      source: Format|'source %s %s'[Car(g.source.car), Dir(g.source.dir)],
+      sink: String|'sink',
+      dup: Format|'dup %s %s'[Dir(g.dup.a), Dir(g.dup.b)],
+      wait: Format|'wait %s'[Dir(g.wait)],
+      split: Format|'split %s %s'[Dir(g.split.head), Dir(g.split.tail)],
+      filter: Format|'filter %s %s %s'[Car(g.filter.car), Dir(g.filter.match), Dir(g.filter.default)]
+  );
+  FormatE|'%s%s%s\n'[out, head, body];
 };
 
 (Cars@) { Stream@<Char@>; }
 Cars = (Cars@ cars) {
-    Grid<Car@>.ForEach(cars, End<Char@>, (Coord@ c, Car@ car, Stream@<Char@> out) {
-        FormatE|'%scar %s %s %s\n'[
-            out,
-            /Std/Int/Show%.Show(c.x),
-            /Std/Int/Show%.Show(c.y),
-            Car(car)];
-        });
+  Stream@<Char@> out, Grid<Car@>.Entry@ e := Grid<Car@>.ForEach(cars, End<Char@>);
+  Coord@ c = e.key;
+  Car@ car = e.value;
+  FormatE|'%scar %s %s %s\n'[
+      out,
+      /Std/Int/Show%.Show(c.x),
+      /Std/Int/Show%.Show(c.y),
+      Car(car)];
 };
 
 (Grid@<Dir@>) { Stream@<Char@>; }
 Routing = (Grid@<Dir@> routing) {
-    Grid<Dir@>.ForEach(routing, End<Char@>, (Coord@ c, Dir@ dir, Stream@<Char@> out) {
-        FormatE|'%srouting %s %s %s\n'[
-            out,
-            /Std/Int/Show%.Show(c.x),
-            /Std/Int/Show%.Show(c.y),
-            Dir(dir)];
-        });
+  Stream@<Char@> out, Grid<Dir@>.Entry@ e := Grid<Dir@>.ForEach(routing, End<Char@>);
+  Coord@ c = e.key;
+  Dir@ dir = e.value;
+  FormatE|'%srouting %s %s %s\n'[
+      out,
+      /Std/Int/Show%.Show(c.x),
+      /Std/Int/Show%.Show(c.y),
+      Dir(dir)];
 };
 
 (Phase@) { Stream@<Char@>; }

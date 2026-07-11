@@ -16,8 +16,8 @@ Unit@ .= /Std/Unit%;
 <@ T@>(Show@<T@>) { Show@<Set@<T@>>; }
 Show = <@ T@>(Show@<T@> show, Set@<T@> set) {
   Unit@ _ := Puts(ForEach(set, String|'{ ',
-    (T@ x, Stream@<Char@> shown) {
-      Unit@ _ := Puts(shown);
+    (Stream@<Char@> s, T@ x) {
+      Unit@ _ := Puts(s);
       Format|'%s; '[show(x)];
     }));
   String|'}';

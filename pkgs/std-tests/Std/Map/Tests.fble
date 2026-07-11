@@ -220,13 +220,13 @@ Test@ Tests = TestSuite|Map[
   Test|ForEach({
     Unit@ _ := Lazy;
     Map@ map = Entries[Entry@(Int|0, True), Entry@(Int|1, False), Entry@(Int|2, True)];
-    Stream@<Char@> got = ForEach(map, End<Char@>,
-      (Int@ key, Bool@ value, Stream@<Char@> tail) {
-        Format|'%s:%s,%s'[
-          /Std/Int/Show%.Show(key),
-          /Std/Bool/Show%.Show(value),
-          tail];
-      });
+    Stream@<Char@> got = {
+      Stream@<Char@> tail, Entry@ e := ForEach(map, End<Char@>);
+      Format|'%s:%s,%s'[
+        /Std/Int/Show%.Show(e.key),
+        /Std/Bool/Show%.Show(e.value),
+        tail];
+    };
     AssertStream|'2:True,1:False,0:True,'(got);
   }),
 

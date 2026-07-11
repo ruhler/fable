@@ -2,6 +2,7 @@
 Bool@, True, False .= /Std/Bool%;
 OnAscii .= /Std/Char/Ascii%;
 AssertEquals .= /Std/Eq/Assert%;
+Flip .= /Std/Func%;
 Int@ .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 Lazy .= /Std/Lazy%;
@@ -122,7 +123,7 @@ Test@ Tests = TestSuite|Set[
     Unit@ _ := Lazy;
     Set@ set = Set[B, A, C];
     List@<Int@> wnt = List[C, B, A]; # Reverse order expected.
-    List@<Int@> got = ForEach(set, /Std/List%.Empty<Int@>, Items<Int@>);
+    List@<Int@> got = ForEach(set, /Std/List%.Empty<Int@>, Flip(Items<Int@>));
     AssertEquals(
       /Std/List/Eq%.Eq(/Std/Int/Eq%.Eq),
       /Std/List/Show%.Show(/Std/Int/Show%.Show),

@@ -3,7 +3,7 @@
 
 Char@ .= /Std/Char%;
 Format, String .= /Std/Char/Ascii/Stream%;
-Map@, ForEach .= /Std/Map%;
+Map@, Entry@, ForEach .= /Std/Map%;
 Show@ .= /Std/Show%;
 Stream@, Puts .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
@@ -18,9 +18,9 @@ Unit@ .= /Std/Unit%;
 <@ K@>(Show@<K@>)<@ V@>(Show@<V@>) { Show@<Map@<K@, V@>>; }
 Show = <@ K@>(Show@<K@> show_key)<@ V@>(Show@<V@> show_value, Map@<K@, V@> map) {
   Unit@ _ := Puts(ForEach(map, String|'{ ',
-    (K@ k, V@ v, Stream@<Char@> shown) {
-      Unit@ _ := Puts(shown);
-      Format|'%s => %s; '[show_key(k), show_value(v)];
+    (Stream@<Char@> s, Entry@<K@, V@> e) {
+      Unit@ _ := Puts(s);
+      Format|'%s => %s; '[show_key(e.key), show_value(e.value)];
     }));
   String|'}';
 };

@@ -8,7 +8,8 @@ BlockId@, Profile@, Sequence@, Sample@ .= /Pprof/Profile%;
 Entry@, Query@ .= /Pprof/Query%;
 MetricOf, Sort .= /Pprof/Query/Util%;
 
-Map@, Empty, Update, ForEach .= /Std/Map%.Of(/Std/Int/Data%.Data)<Int@>;
+Map@, MapEntry@(.Entry@), Empty, Update,
+ForEach .= /Std/Map%.Of(/Std/Int/Data%.Data)<Int@>;
 
 (List@<BlockId@>, BlockId@) { Bool@; }
 ContainsBlock = (List@<BlockId@> l, BlockId@ id) {
@@ -57,8 +58,8 @@ Query = ((Sequence@) { List@<BlockId@>; } frames, Profile@ profile) {
   Map@ counts = Samples(profile.samples, Empty);
 
   Sort(ForEach(counts, /Std/List%.Empty<Entry@>,
-    (BlockId@ block, Int@ value, List@<Entry@> l) {
-      Items(Entry@(List[block], value), l);
+    (List@<Entry@> l, MapEntry@ e) {
+      Items(Entry@(List[e.key], e.value), l);
     }));
 };
 

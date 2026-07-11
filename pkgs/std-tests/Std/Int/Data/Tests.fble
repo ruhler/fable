@@ -1,6 +1,7 @@
 
 OnAscii .= /Std/Char/Ascii%;
 AssertEquals .= /Std/Eq/Assert%;
+Flip .= /Std/Func%;
 Int@, Neg .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 Lazy .= /Std/Lazy%;
@@ -21,7 +22,7 @@ Test@ Tests = TestSuite|Data[
     List@<Int@> ints = ToList(/Std/Int/Stream%.Range(Neg(Int|5), Int|6));
     Set@ set = Set(ints);
     List@<Int@> wnt = ints;
-    List@<Int@> got = Reverse(ForEach(set, Empty<Int@>, Items<Int@>));
+    List@<Int@> got = Reverse(ForEach(set, Empty<Int@>, Flip(Items<Int@>)));
     AssertEquals(
       /Std/List/Eq%.Eq(/Std/Int/Eq%.Eq),
       /Std/List/Show%.Show(/Std/Int/Show%.Show), wnt, got);

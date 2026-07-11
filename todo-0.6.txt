@@ -2,8 +2,10 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Move implementation of 'For' out of pkgs/std-tests/Std/Stream/Tests%.
- - And start using it more places.
+* Add tests for Set.For and Map.For.
+
+* Implement ForEachKey, ForEachValue, ForEachEntry for Map?
+ Or Keys, Values, Entries?
 
 * Clean up /Std/Char/Show% for unicode.
  - Don't keep switching between stream and list.
@@ -12,15 +14,10 @@ Things to consider doing for the fble-0.6 release.
  - Anything I can do about that?
 
 Standard Library:
-* Think about api to break out of a ForEach loop mid way through.
- - Because this comes up a lot, and I tend to just write 'TODO' in my code
-   where I should probably implement a proper interface.
 * Should we have a generic Container interface?
  - As a way to standardize ForEach and perhaps other loop constructs across
    all containers? Would that add anything of value?
 * Add function to show an integer base 16? Base 2? Base anything?
-* Reorder arguments in body function passed to ForEach?
-  See thoughts/fble-0.6/stdlib.list.txt for more discussion.
 
 Tutorials:
 * Add left side menu to generated website for tutorials?

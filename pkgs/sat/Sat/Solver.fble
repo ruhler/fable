@@ -1,6 +1,7 @@
 
 Bool@, True, False, Not .= /Std/Bool%;
 Format, String .= /Std/Char/Ascii/Stream%;
+Break .= /Std/For%;
 Incr .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 List@, List, Empty, Items, Append .= /Std/List%;
@@ -217,8 +218,8 @@ RemoveClauseFromVar = (ClauseId@ clause, Solver@ s, Var@ var) {
 };
 
 # Removes a clause from the solver.
-(ClauseId@, Solver@) { Solver@; }
-RemoveClause = (ClauseId@ id, Solver@ s) {
+(Solver@, ClauseId@) { Solver@; }
+RemoveClause = (Solver@ s, ClauseId@ id) {
   Maybe@<Clause@> mcs = Clauses.Get(s.clauses, id);
   mcs.?(nothing: s);
 
@@ -229,8 +230,8 @@ RemoveClause = (ClauseId@ id, Solver@ s) {
 
 # Caller is responsible for ensuring no conflict arises as a result of
 # removing the variable.
-(VarId@, ClauseId@, Solver@) { Solver@; }
-RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
+(VarId@, Solver@, ClauseId@) { Solver@; }
+RemoveVarFromClause = (VarId@ var, Solver@ s, ClauseId@ clause) {
   Maybe@<Clause@> mcs = Clauses.Get(s.clauses, clause);
   mcs.?(nothing: s);
 
@@ -387,12 +388,8 @@ Solve = {
 
   # Pick some variable that exists in the given vars map.
   (Vars@) { Maybe@<VarId@>; } PickSomeVar = (Vars@ vars) {
-    # TODO: Come up with a more efficient way to pick any single existing
-    # variable.
-    Vars.ForEach(vars, Nothing<VarId@>,
-      (VarId@ v, VarS@ _, Maybe@<VarId@> _mv) {
-        Just(v);
-      });
+    Maybe@<VarId@> _, Vars.Entry@ e := Vars.For(vars, Nothing<VarId@>);
+    Break(Just(e.key));
   };
 
   (Solver@) { SearchResult@; } Unsat = (Solver@ s) {

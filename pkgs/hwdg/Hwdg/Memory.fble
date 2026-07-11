@@ -1,44 +1,40 @@
 
 Bool@, True, False .= /Std/Bool%;
+Break, Continue .= /Std/For%;
 List@ .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 
 Addr@ .= /Hwdg/Addr%;
 Data@ .= /Hwdg/Data%;
 
-Map@, ForEach, Put, Get, Empty .= /Std/Map%.Of(/Hwdg/Addr%.Data)<Data@>;
+Map@, Entry@, For, ForEach, Put, Get,
+Empty .= /Std/Map%.Of(/Hwdg/Addr%.Data)<Data@>;
 
 Memory@ = Map@;
 
 # Insert all values from 'v' into 'm'.
 (Memory@, Memory@) { Memory@; }
 Override = (Memory@ m, Memory@ v) {
-    ForEach(v, m, (Addr@ k, Data@ v, Memory@ s) {
-        Put(s, k, v);
-    });
+  Memory@ s, Entry@ e := ForEach(v, m);
+  Put(s, e.key, e.value);
 };
 
 # Return true if the two memories have no addresses in common.
 (Memory@, Memory@) { Bool@; }
 Disjoint = (Memory@ a, Memory@ b) {
-    # TODO: avoid iterating as soon as we find something in common.
-    ForEach(a, True, (Addr@ k, Data@ _, Bool@ disjoint) {
-        disjoint.?(false: False);
-        Get(b, k).?(just: False);
-        True;
-    });
+  Bool@ _, Entry@ e := For(a, True);
+  Get(b, e.key).?(just: Break(False));
+  Continue(True);
 };
 
 # Return true if the first memory contains the second.
 (Memory@, Memory@) { Bool@; }
 Contains = (Memory@ a, Memory@ b) {
-    ForEach(b, True, (Addr@ k, Data@ vb, Bool@ contains) {
-        contains.?(false: False);
-        Maybe@<Data@> mva = Get(a, k);
-        mva.?(nothing: False);
-        /Hwdg/Data/Eq%.Eq(vb, mva.just).?(false: False);
-        True;
-    });
+  Bool@ _, Entry@ e := For(b, True);
+  Maybe@<Data@> mva = Get(a, e.key);
+  mva.?(nothing: Break(False));
+  /Hwdg/Data/Eq%.Eq(e.value, mva.just).?(false: Break(False));
+  Continue(True);
 };
 
 # Memory literal. For example:
@@ -51,4 +47,4 @@ Memory = (List@<Addr@> addrs, List@<Data@> data) {
     Put(tail, addrs.items.head, data.items.head);
 };
 
-@(Memory@, Empty, Memory, Override, Disjoint, Contains, ForEach);
+@(Memory@, Entry@, Empty, Memory, Override, Disjoint, Contains, ForEach);

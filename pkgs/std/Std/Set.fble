@@ -3,6 +3,7 @@
 
 Bool@, True, False .= /Std/Bool%;
 Data@ .= /Std/Data%;
+Control@, For@, ForEach@ .= /Std/For%;
 Just, Nothing .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -55,28 +56,28 @@ Remove = <@ T@>(Data@<T@> data) {
   /Std/Map%.Remove(data)<Unit@>;
 };
 
-# @func[ForEach] Iterate over elements of a set.
-#  @arg[@][T@] The type of element.
+# @func[For] Iterate over values of a set.
+#  @arg[@][T@] The element type.
 #  @arg[Set@<T@>][set] The set to iterate over.
-#  @arg[B@][base] The value to return for an empty set.
-#  @arg[(T@, B@) { B@; }][body]
-#   A function to update the value to return given the next element of the
-#   set.
-#  @returns[B@]
-#   The result of applying the body consecutively to the base value, once for
-#   each element in the set. The order of iteration corresponds to
-#   lexicographical ordering of the stream of bits associated with each key.
-#
-# Conceptually the behavior is like:
-#
-# @code[fble] @
-#  B@ b = base
-#  foreach (v) in set:
-#    b = body(v, b)
-#  return b
-<@ T@>(Set@<T@>)<@ B@>(B@, (T@, B@) { B@; }) { B@; }
-ForEach = <@ T@>(Set@<T@> set)<@ B@>(B@ base, (T@, B@) { B@; } body) {
-  /Std/Map%.ForEach(set, base, (T@ x, Unit@ _, B@ b) { body(x, b); });
+#  @returns[For<T@>] A for loop iteration over the set elements.
+<@ T@>(Set@<T@>) { For@<T@>; }
+For = <@ T@>(Set@<T@> set) {
+  <@ S@>(S@ s, (S@, T@) { Control@<S@>; } body) {
+    S@ s, /Std/Map%.Entry@<T@, Unit@> e := /Std/Map%.For(set, s);
+    body(s, e.key);
+  };
+};
+
+# @func[ForEach] Iterate over values of a set.
+#  @arg[@][T@] The element type.
+#  @arg[Set@<T@>][set] The set to iterate over.
+#  @returns[ForEach<T@>] A foreach loop iteration over the set elements.
+<@ T@>(Set@<T@>) { ForEach@<T@>; }
+ForEach = <@ T@>(Set@<T@> set) {
+  <@ S@>(S@ s, (S@, T@) { S@; } body) {
+    S@ s, /Std/Map%.Entry@<T@, Unit@> e := /Std/Map%.ForEach(set, s);
+    body(s, e.key);
+  };
 };
 
 # @func[And] Intersection of two sets.
@@ -150,6 +151,7 @@ Of = <@ T@>(Data@<T@> data) {
     Has: Has(data),
     Add: Add(data),
     Remove: Remove(data),
+    For: For<T@>,
     ForEach: ForEach<T@>,
     And: And<T@>,
     Or: Or<T@>,
@@ -159,5 +161,5 @@ Of = <@ T@>(Data@<T@> data) {
   );
 };
 
-@(Set@, Empty, IsEmpty, Has, Add, Remove, ForEach,
+@(Set@, Empty, IsEmpty, Has, Add, Remove, For, ForEach,
   And, Or, Diff, Keep, Omit, Of);

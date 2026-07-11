@@ -2,6 +2,7 @@
 Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
 FormatE .= /Std/Char/Ascii/Stream%;
+Break, Continue .= /Std/For%;
 Int@, Incr, Decr, Add, Sub, Neg, Mul, Shr .= /Std/Int%;
 Max, Min .= /Std/Int/Cmp%;
 Io@ .= /Std/Io%;
@@ -53,17 +54,14 @@ Cost = (Layout@ layout, List@<Edge@> edges) {
 (Layout@, Pos@) { Maybe@<Node@>; }
 NodeAt = (Layout@ layout, Pos@ pos) {
   # TODO: More efficient mapping from position to node?
-  Map.ForEach(layout, Nothing<Node@>,
-    (Node@ key, Pos@ value, Maybe@<Node@> found) {
-      found.?(just: found);
-      Bool@ match = {
-        /Std/Int/Eq%.Eq(value.x, pos.x).?(false: False);
-        /Std/Int/Eq%.Eq(value.y, pos.y).?(false: False);
-        True;
-      };
-      match.?(true: Just(key));
-      Nothing<Node@>;
-    });
+  Maybe@<Node@> looking, Map.Entry@ e := Map.For(layout, Nothing<Node@>);
+  Bool@ match = {
+    /Std/Int/Eq%.Eq(e.value.x, pos.x).?(false: False);
+    /Std/Int/Eq%.Eq(e.value.y, pos.y).?(false: False);
+    True;
+  };
+  match.?(true: Break(Just(e.key)));
+  Continue(looking);
 };
 
 # Swap the position of two nodes in the layout.
@@ -119,11 +117,11 @@ Colors = @(
   Int@ NodeOffset = Shr(Sub(TileWidth, NodeWidth), Int|1);
   
   (Layout@ layout) {
-    Map.ForEach(layout, Blank, (Node@ _, Pos@ pos, Drawing@ d) {
-      Int@ x = Add(Mul(TileWidth, pos.x), NodeOffset);
-      Int@ y = Add(Mul(TileWidth, pos.y), NodeOffset);
-      Over(d, Rect(x, y, NodeWidth, NodeWidth, Colors.Node));
-    });
+    Drawing@ d, Map.Entry@ e := Map.ForEach(layout, Blank);
+    Pos@ pos = e.value;
+    Int@ x = Add(Mul(TileWidth, pos.x), NodeOffset);
+    Int@ y = Add(Mul(TileWidth, pos.y), NodeOffset);
+    Over(d, Rect(x, y, NodeWidth, NodeWidth, Colors.Node));
   };
 };
 

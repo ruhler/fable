@@ -668,3 +668,37 @@ I'm going to need to think more about why I need so many different ways of
 representing sequences. When should we use List@, Stream@, or For@? Is there
 no way to collapse down to fewer options?
 
+For Map, iterating over entries is awkward because I have to use Event@ e and
+then e.key and e.value, whereas before I could pick better variable names for
+the key and value separately. I think I should have a version of iteration for
+entries that takes a 3 argument function instead of a 2 argument function.
+It's also nice to give concrete types for key and value.
+
+It's pretty amazing how often I make use of ForEach.
+
+Anyway, now that I have For, all those original cases where I wanted it are
+using it.
+
+So, what's next? Can I consolidate? Can I understand why I need three
+different kinds of sequences?
+
+* List@
+ - For when you want the entire sequence in memory all at once. You might want
+   to traverse repeatedly.
+ - Inefficient to build up via Append though.
+* Stream@
+ - For when you want to build up with fast Append.
+ - In theory for when you want to be able to access some of the elements
+   without ever building up or accessing all of the elements. But I'm not sure
+   we take advantage of that in practice. Except maybe for Map@ using Data for
+   the key, where in theory a really long key would be bad to eagerly
+   traverse in its entirety.
+* For@, ForEach@
+ - For when you want to consume some or all of a sequence of elements.
+ - Where the recursive call is already taken care of for you.
+
+Also, my benchmark has gotten much slower now after all these changes :(
+
+  Time: 4:55.24
+  Memory: 39512
+

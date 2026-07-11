@@ -6,7 +6,7 @@ In@ .= /Std/Stream/In%;
 String@ .= /Std/String%;
 
 Block@, Blocks@, Sample@, Profile@ .= /Pprof/Profile%;
-Function@, Location@, LocationId@, StringId@,
+Function@, Location@, StringId@,
 ProtoProfile@(.Profile@), ProfileParser(.Profile) .= /Pprof/Parser/Profile%;
 Run .= /Pprof/Parser/Proto%;
 Result@ .= /Pprof/Result%;
@@ -45,10 +45,8 @@ Block = (ProtoProfile@ parsed, Location@ location) {
 
 (ProtoProfile@) { Blocks@; }
 Blocks = (ProtoProfile@ parsed) {
-  Map<Location@>.ForEach(parsed.locations, Map<Block@>.Empty,
-    (LocationId@ id, Location@ location, Blocks@ blocks) {
-       Map<Block@>.Put(blocks, id, Block(parsed, location));
-    });
+  Blocks@ blocks, Map<Location@>.Entry@ e := Map<Location@>.ForEach(parsed.locations, Map<Block@>.Empty);
+  Map<Block@>.Put(blocks, e.key, Block(parsed, e.value));
 };
 
 (ProtoProfile@) { Profile@; }

@@ -40,11 +40,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> _, App@<M@> app, Int@ width, Int@ h
   (Memory@) { Drawing@; }
   Draw = (Memory@ memory) {
     Drawing@ clear = Rect(Int|0, Int|0, width, height, Color.Black);
-    /Hwdg/Memory%.ForEach(memory, clear,
-      (Addr@ addr, Data@ data, Drawing@ d) {
-        Color@ color = data.?(0: Color.Red, 1: Color.Green);
-        Over(d, Rect(Mul(W, addr.x), Mul(W, addr.y), W, W, color));
-      });
+    Drawing@ d, /Hwdg/Memory%.Entry@ e := /Hwdg/Memory%.ForEach(memory, clear);
+    Addr@ addr = e.key;
+    Data@ data = e.value;
+    Color@ color = data.?(0: Color.Red, 1: Color.Green);
+    Over(d, Rect(Mul(W, addr.x), Mul(W, addr.y), W, W, color));
   };
 
   # Map game coordinates into screen coordinate.

@@ -26,7 +26,7 @@ Int@ BaseY = Int|36;
 
 # Bases@ --
 #   Map from x coordinate to the slice of base, if any, at that x coordinate.
-Map@, Empty, Get, Remove, Put, ForEach .= /Std/Map%.Of(/Std/Int/Data%.Data)<Slice@>;
+Map@, Entry@, Empty, Get, Remove, Put, ForEach .= /Std/Map%.Of(/Std/Int/Data%.Data)<Slice@>;
 Bases@ = Map@;
 
 # BaseSpec --
@@ -128,9 +128,10 @@ BulletHit = (Int@ x, Int@ y, Bases@ bases) {
 # Draw --
 #   Draw the bases.
 (Bases@) { Drawing@; } Draw = (Bases@ bases) {
-  ForEach(bases, Blank, (Int@ x, Slice@ s, Drawing@ d) {
-    Over(d, Rect(x, s.min, 1, Sub(s.max, s.min), Color.Green));
-  });
+  Drawing@ d, Entry@ e := ForEach(bases, Blank);
+  Int@ x = e.key;
+  Slice@ s = e.value;
+  Over(d, Rect(x, s.min, 1, Sub(s.max, s.min), Color.Green));
 };
 
 @(Bases@, HitResult@, Initial, BombHit, BulletHit, Draw);

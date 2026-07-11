@@ -21,7 +21,10 @@ Model = (Gates@ gates, Cars@ cars) {
 # Run activation for a gate, if any.
 (Gates@, State@) { State@; }
 GoGates = (Gates@ gates, State@ state) {
-    Grid<Gate@>.ForEach(gates, state, (Coord@ c, Gate@ g, State@ s) { Gate.Action(g, c, s); });
+  State@ s, Grid<Gate@>.Entry@ e := Grid<Gate@>.ForEach(gates, state);
+  Coord@ c = e.key;
+  Gate@ g = e.value;
+  Gate.Action(g, c, s);
 };
 
 # Try advancing each of the engines in the list.
@@ -82,8 +85,8 @@ Tick = (Model@ m) {
         # TODO: Who knows what order the engines come back in. Maybe we want to
         # make this more fair at some point.
         List@<Coord@> engines = Grid<Car@>.ForEach(m.s.cars, Empty<Coord@>,
-            (Coord@ k, Car@ v, List@<Coord@> es) {
-                v.?(C: Items(k, es), : es);
+            (List@<Coord@> es, Grid<Car@>.Entry@ e) {
+                e.value.?(C: Items(e.key, es), : es);
             });
         m.@(s: FlipPhase(GoEngines(m.gates, m.s, engines)));
     });
