@@ -101,30 +101,4 @@ Map = <@ A@>(Stream@<A@> s)<@ B@>((A@) { B@; } f) {
   Map(s.items.tail(Unit), f);
 };
 
-# @func[ForEach] Iterate over elements of a stream.
-#  @arg[@][A@] The type of element on the stream.
-#  @arg[Stream@<A@>][stream] The stream of elements to iterate over.
-#  @arg[@][B@] The type of data to return.
-#  @arg[B@][base] The value to return for an empty list.
-#  @arg[(A@, B@) { B@; }][body]
-#   A function to update the value to return given the next element on the
-#   stream.
-#  @returns[B@]
-#   The result of applying the body consecutively to the base value, once for
-#   each element in the stream in order.
-#
-# Conceptually the behavior is like:
-#
-# @code[txt] @
-#  B@ b = base
-#  foreach x in stream:
-#    b = body(x, b)
-#  return b
-<@ A@>(Stream@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
-ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
-  stream.?(empty: base);
-  B@ next = body(stream.items.head, base);
-  ForEach(stream.items.tail(Unit), next, body);
-};
-
-@(Stream@, End, Put, Puts, Return, Do, Map, ForEach);
+@(Stream@, End, Put, Puts, Return, Do, Map);

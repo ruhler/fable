@@ -94,11 +94,9 @@ Draw_ = {
         Int@ ymin = Lt(h, Int|0).?(true: Add(y, h), false: y);
         Int@ ymax = Lt(h, Int|0).?(true: y, false: Add(y, h));
 
-        /Std/Stream%.ForEach(Range(xmin, xmax), drawn, (Int@ x, Drawn@ d) {
-          /Std/Stream%.ForEach(Range(ymin, ymax), d, (Int@ y, Drawn@ d) {
-            Put(d, Point@(x, y), drawing.rect.color);
-          });
-        });
+        Drawn@ d, Int@ x := /Std/Stream/For%.ForEach(Range(xmin, xmax), drawn);
+        Drawn@ d, Int@ y := /Std/Stream/For%.ForEach(Range(ymin, ymax), d);
+        Put(d, Point@(x, y), drawing.rect.color);
       },
       transformed: {
         Int@ axi = drawing.transformed.a.x;

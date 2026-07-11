@@ -4,7 +4,7 @@ Le, Max, Min .= /Std/Int/Cmp%;
 Int .= /Std/Int/Lit%;
 IsNegative .= /Std/Int/Sign%;
 Range .= /Std/Int/Stream%;
-ForEach .= /Std/Stream%;
+ForEach .= /Std/Stream/For%;
 
 Drawing@, Color@, Point@, Blank, Over, Rect .= /App/Drawing%;
 
@@ -70,7 +70,7 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
   Point@ db = Point@(Sub(b.x, a.x), Sub(b.y, a.y));
   Point@ dc = Point@(Sub(c.x, a.x), Sub(c.y, a.y));
   State@ bottom = ForEach(Range(a.y, b.y), initial, 
-    (Int@ y, State@ state) {
+    (State@ state, Int@ y) {
       Int@ xmin = Min(state.xb.x, state.xc.x);
       Int@ xmax = Max(state.xb.x, state.xc.x);
       Fixed@ xb = Fixed(state.xb.x, Add(state.xb.r, db.x), db.y);
@@ -89,7 +89,7 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
     xb: Fixed@(b.x, 0),
     xc: bottom.xc);
   State@ top = ForEach(Range(b.y, c.y), initial,
-    (Int@ y, State@ state) {
+    (State@ state, Int@ y) {
       Int@ xmin = Min(state.xc.x, state.xb.x);
       Int@ xmax = Max(state.xc.x, state.xb.x);
       Fixed@ xc = Fixed(state.xc.x, Add(state.xc.r, dc.x), dc.y);

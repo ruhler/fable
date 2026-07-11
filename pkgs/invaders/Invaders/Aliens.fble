@@ -93,13 +93,9 @@ Set@ = Set.Set@;
 # AllAliens --
 #   The set of all aliens.
 Set@ AllAliens = {
-  /Std/Stream%.ForEach(Range(Int|0, NumRows), Set.Empty,
-    (Int@ row, Set@ set) {
-      /Std/Stream%.ForEach(Range(Int|0, NumCols), set,
-        (Int@ col, Set@ set) {
-          Set.Add(set, Alien@(row, col));
-        });
-      });
+  Set@ set, Int@ row := /Std/Stream/For%.ForEach(Range(Int|0, NumRows), Set.Empty);
+  Set@ set, Int@ col := /Std/Stream/For%.ForEach(Range(Int|0, NumCols), set);
+  Set.Add(set, Alien@(row, col));
 };
 
 (Set@) { Bool@; } IsEmpty = Set.IsEmpty;
@@ -295,24 +291,22 @@ Vanguard = (Aliens@ aliens, Int@ col) {
     # We launch bombs once all aliens have completed their move.
     aliens.next.?(just: M.return(bombs));
 
-    /Std/Stream%.ForEach(Range(Int|0, NumCols), M.return(bombs), 
-      (Int@ col, M@<Bombs@> mbombs) {
-        Maybe@<Alien@> alien = Vanguard(aliens, col);
-        alien.?(nothing: mbombs);
+    M@<Bombs@> mbombs, Int@ col := /Std/Stream/For%.ForEach(Range(Int|0, NumCols), M.return(bombs)); 
+    Maybe@<Alien@> alien = Vanguard(aliens, col);
+    alien.?(nothing: mbombs);
 
-        Bombs@ bombs := M.do(mbombs);
-        Int@ r := M.do(UpTo(M, Rng, Int|100));
-        Lt(r, Int|15).?(false: M.return(bombs));
+    Bombs@ bombs := M.do(mbombs);
+    Int@ r := M.do(UpTo(M, Rng, Int|100));
+    Lt(r, Int|15).?(false: M.return(bombs));
 
-        Int@ x_shift := M.do(UpTo(M, Rng, MoveX));
-        Int@ x = Add(Add(Int|4, x_shift),
-          Add(aliens.dst_x, Mul(StrideX, alien.just.col)));
-        Int@ y = Sub(Add(aliens.dst_y, Mul(StrideY, alien.just.row)), Int|6);
-        Kind@ kind = Lt(r, Int|2).?(
-          true: Kind@(squiggle: Unit),
-          false: Kind@(bomb: Unit));
-        M.return(/Invaders/Bombs%.Fire(x, y, kind, bombs));
-      });
+    Int@ x_shift := M.do(UpTo(M, Rng, MoveX));
+    Int@ x = Add(Add(Int|4, x_shift),
+      Add(aliens.dst_x, Mul(StrideX, alien.just.col)));
+    Int@ y = Sub(Add(aliens.dst_y, Mul(StrideY, alien.just.row)), Int|6);
+    Kind@ kind = Lt(r, Int|2).?(
+      true: Kind@(squiggle: Unit),
+      false: Kind@(bomb: Unit));
+    M.return(/Invaders/Bombs%.Fire(x, y, kind, bombs));
   };
 
   (Aliens@ aliens, Bombs@ bombs) {

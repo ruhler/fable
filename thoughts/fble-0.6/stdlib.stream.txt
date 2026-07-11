@@ -658,4 +658,13 @@ Anyway, experience with the change:
 * For with Continue and Break is pretty easy to use, though doesn't perfectly
   fit the one case in question, because the body doesn't care about the loop
   state.
+* I've been switching ForEach to use function bind where it makes sense. Not
+  sure how readable that will be, but at least the code looks prettier
+  syntactically.
+
+---
+
+I'm going to need to think more about why I need so many different ways of
+representing sequences. When should we use List@, Stream@, or For@? Is there
+no way to collapse down to fewer options?
 

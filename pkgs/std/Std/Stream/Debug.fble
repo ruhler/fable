@@ -4,7 +4,8 @@
 
 Char@ .= /Std/Char%;
 Monad@ .= /Std/Monad%;
-Stream@, ForEach .= /Std/Stream%;
+Stream@ .= /Std/Stream%;
+ForEach .= /Std/Stream/For%;
 Out@ .= /Std/Stream/Out%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -18,7 +19,7 @@ Unit@, Unit .= /Std/Unit%;
 #  @returns[Unit@] Nothing interesting.
 (Stream@<Char@>) { Unit@; }
 ToDebug = (Stream@<Char@> output) {
-  Char@ c, Unit@ _ := ForEach(output, Unit);
+  Unit@ _, Char@ c := ForEach(output, Unit);
   PutChar(c);
 };
 

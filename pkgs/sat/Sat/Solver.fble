@@ -311,12 +311,10 @@ _Show = {
 (Solver@, Solver@) { Solver@; }
 ApplyLearnedClauses = (Solver@ to, Solver@ from) {
   Solver@ s = to.@(clause_id: from.clause_id, conflicts: from.conflicts);
-  /Std/Stream%.ForEach(
-      /Std/Int/Stream%.Range(to.clause_id, from.clause_id), s,
-      (Id@ i, Solver@ s) {
-        Maybe@<Conflict@> conflict = Conflicts.Get(s.conflicts, i);
-        AddConflictClause(i, conflict.just, s);
-      });
+  Solver@ s, Id@ i := /Std/Stream/For%.ForEach(
+      /Std/Int/Stream%.Range(to.clause_id, from.clause_id), s);
+  Maybe@<Conflict@> conflict = Conflicts.Get(s.conflicts, i);
+  AddConflictClause(i, conflict.just, s);
 };
 
 (Assign@, Assign@) { Bool@; }

@@ -80,13 +80,13 @@ Eval .= /Std/State/Pure%;
     Int@ num_free_vars = Sub(params.num_vars, params.num_literals_per_clause);
     Int@ clauses_per_variable = Div(Decr(Add(params.num_clauses, num_free_vars)), num_free_vars).q;
 
-    Puzzle@ puzzle := M.do(/Std/Stream%.ForEach(
+    Puzzle@ puzzle := M.do(/Std/Stream/For%.ForEach(
       Range(params.num_literals_per_clause, params.num_vars), M.return(/Std/List%.Empty<Clause@>),
-      (Int@ i, M@<Puzzle@> mp) {
+      (M@<Puzzle@> mp, Int@ i) {
         Bool@ pos := M.do(/Std/Bool/Random%.Uniform(M, Rng));
         Literal@ var = Literal@(Get(vars, i).just, pos);
-        /Std/Stream%.ForEach(Range(Int|0, clauses_per_variable), mp,
-          (Int@ _, M@<Puzzle@> mp) {
+        /Std/Stream/For%.ForEach(Range(Int|0, clauses_per_variable), mp,
+          (M@<Puzzle@> mp, Int@ _) {
             Puzzle@ tail := M.do(mp);
             Clause@ clause := M.do(GenClause(params, i, var));
             M.return(Items(clause, tail));
