@@ -490,3 +490,57 @@ I don't know. Neither feels quite right.
 
 Puts looks better? I no longer have a conflict with converting a list to a
 stream, because I renamed that from Puts to ToStream.
+
+---
+
+I collected perf profiles for fble-benchmark before and after the streams
+change: streams.old.pprof and streams.new.pprof.
+
+As before, it looks to be almost entirely in the Sat benchmark:
+
+     19.038% 3718  [32]/Sat/Solver%.Solve.Search
+ ==> 33.042% 8428  [22]/Sat/Solver%.Solve.Search
+
+And as before, I bet it's because of all these extra calls to
+FbleNewFuncValue:
+
+     0.091% 175 [5]FbleNewFuncValue
+ ==>   2.0% 506 [5]FbleNewFuncValue
+
+   Incoming
+
+   66.085% 117 [6]PartialApply
+   8.0%    14  [7]/Std/Map%.Update
+   2.028%  4   [8]/Std/Map%.Remove
+   2.028%  4   [9]/Std/Map%.Replace
+
+==>
+
+   Incoming
+
+   50.059% 256 [6]/Std/Stream%.PutStream
+   12.045% 63  [7]/Std/Stream%.Return
+   11.085% 60  [8]/Std/Int/IntP/Data%.Data.NumBits
+   10.027% 52  [9]/Std/Int/IntP/Data%.Data.RawBits
+   2.056%  13  [10]/Std/Stream%.Map
+   2.056%  13  [11]/Std/Int/IntP/Data%.Data
+   2.037%  12  [12]/Std/Int/Data%.Data
+   1.018%  6   [13]/Std/Int/Stream%.Range
+   1.018%  6   [14]/Std/Map%.Put
+   0.059%  3   [15]/Std/Data%.Struct
+   0.059%  3   [16]PartialApply
+   0.039%  2   [17]/Std/Map%.Remove
+
+Also, all the extra allocations of the stream struct value. Basically, it
+feels like we are not able to do nearly as many allocations on the stack as we
+used to, so we are doing more Gc allocations, so we spend more time doing GC.
+
+You see how the previous approach to streams avoided GC allocations and struct
+allocations?
+
+So I think the performance focus/question in this case should be why we can do
+so much better when we structure it as a traversal via tail calls rather than
+whatever it is we are doing now.
+
+Or, in other words: how to shift all those function allocations associated
+with streams to stack allocations or get rid of them entirely.

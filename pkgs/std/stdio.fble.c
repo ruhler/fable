@@ -8,7 +8,7 @@
 #include <stdio.h>      // for FILE, fprintf, fflush, fgetc
 
 #ifdef _WIN32
-#include <fcntl.h>      // for _O_BINARY
+#include <fcntl.h>      // for _O_BINARY, _O_TEXT
 #include <io.h>         // for _setmode
 #endif // _WIN32
 
@@ -34,7 +34,7 @@ static void CloseFileOnFree(void* file)
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Unit@) { File@; }
+ *   (Mode@, Unit@) { File@; }
  */  
 static FbleValue* GetStdin(
     FbleRuntime* runtime, FbleProfileThread* profile,
@@ -44,7 +44,8 @@ static FbleValue* GetStdin(
   (void)args;
 
 #ifdef __WIN32
-  _setmode(_fileno(stdin), _O_BINARY);
+  int mode = FbleUnionValueTag(args[0], 1) == 0 ? _O_BINARY : _O_TEXT;
+  _setmode(_fileno(stdin), mode);
 #endif // __WIN32
 
   return FbleNewNativeValue(runtime, stdin, NULL);
@@ -54,7 +55,7 @@ static FbleValue* GetStdin(
 FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStdin = {
   .path = "/Std/Io/File/Binary%",
   .name = "GetStdin",
-  .num_args = 1,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &GetStdin,
 };
@@ -66,7 +67,7 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStdin = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Unit@) { File@; }
+ *   (Mode@, Unit@) { File@; }
  */  
 static FbleValue* GetStdout(
     FbleRuntime* runtime, FbleProfileThread* profile,
@@ -76,7 +77,8 @@ static FbleValue* GetStdout(
   (void)args;
 
 #ifdef __WIN32
-  _setmode(_fileno(stdout), _O_BINARY);
+  int mode = FbleUnionValueTag(args[0], 1) == 0 ? _O_BINARY : _O_TEXT;
+  _setmode(_fileno(stdout), mode);
 #endif // __WIN32
 
   return FbleNewNativeValue(runtime, stdout, NULL);
@@ -86,7 +88,7 @@ static FbleValue* GetStdout(
 FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStdout = {
   .path = "/Std/Io/File/Binary%",
   .name = "GetStdout",
-  .num_args = 1,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &GetStdout,
 };
@@ -98,7 +100,7 @@ FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStdout = {
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (Unit@) { File@; }
+ *   (Mode@, Unit@) { File@; }
  */  
 static FbleValue* GetStderr(
     FbleRuntime* runtime, FbleProfileThread* profile,
@@ -108,7 +110,8 @@ static FbleValue* GetStderr(
   (void)args;
 
 #ifdef __WIN32
-  _setmode(_fileno(stderr), _O_BINARY);
+  int mode = FbleUnionValueTag(args[0], 1) == 0 ? _O_BINARY : _O_TEXT;
+  _setmode(_fileno(stderr), mode);
 #endif// __WIN32
 
   return FbleNewNativeValue(runtime, stderr, NULL);
@@ -118,7 +121,7 @@ static FbleValue* GetStderr(
 FbleForeign _Fble_2f_Std_2f_Io_2f_File_2f_Binary_25__2e_GetStderr = {
   .path = "/Std/Io/File/Binary%",
   .name = "GetStderr",
-  .num_args = 1,
+  .num_args = 2,
   .max_call_args = 0,
   .run = &GetStderr,
 };

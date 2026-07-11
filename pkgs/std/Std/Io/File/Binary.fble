@@ -12,26 +12,50 @@ Out@ .= /Std/Stream/Out%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 
+# @type[Mode@] Whether to open a file in binary or text mode.
+#  Some platforms treat line endings differently depending on the file mode.
+#
+#  Use binary mode for anything you expect to be binary data. Use text mode
+#  for anything you expect to be text data.
+#
+#  Hopefully one day certain platforms will stop mangling data read and
+#  written to files in text mode and this will no longer be necessary. For the
+#  time being, for interoperability with other programs that use text mode in
+#  a more portable way across platforms, you should pick whichever mode makes
+#  most sense for your application.
+Mode@ = +(Unit@ binary, Unit@ text);
+
+# @value[Binary] Binary mode
+#  @type[Mode@]
+Mode@ Binary = Mode@(binary: Unit);
+
+# @value[Text] Text mode
+#  @type[Mode@]
+Mode@ Text = Mode@(text: Unit);
+
+# @type[Byte@] An integer that holds 8 bits of data.
+Byte@ = Int@;
+
 # Pretend type for FILE*. Only to be accessed from FFI functions.
 File@ = *(Unit@ file);
 
-# FFI for binary file IO.
-External@<File@> GetStdin;
-External@<File@> GetStdout;
-External@<File@> GetStderr;
+# FFI for byte based file IO.
+(Mode@) { External@<File@>; } GetStdin;
+(Mode@) { External@<File@>; } GetStdout;
+(Mode@) { External@<File@>; } GetStderr;
 (String@, String@) { External@<Maybe@<File@>>; } Open;
 (File@) { External@<Unit@>; } Flush;
-(File@) { External@<Maybe@<Int@>>; } GetByte;
-(File@, Int@) { External@<Unit@>; } PutByte;
+(File@) { External@<Maybe@<Byte@>>; } GetByte;
+(File@, Byte@) { External@<Unit@>; } PutByte;
 
-<<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@<Int@>) { M@<Unit@>; }
-Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@<Int@> output) {
+<<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@<Byte@>) { M@<Unit@>; }
+Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@<Byte@> output) {
   output.?(empty: io.run(Flush(file)));
   Unit@ _ := m.do(io.run(PutByte(file, output.items.head)));
   Output(m, io, file, output.items.tail(Unit));
 };
 
-<<@>@ M@>(Monad@<M@>, Io@<M@>, File@) { Out@<Int@, M@>; }
+<<@>@ M@>(Monad@<M@>, Io@<M@>, File@) { Out@<Byte@, M@>; }
 Out = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file) {
   Output(m, io, file);
 };
@@ -40,10 +64,11 @@ Out = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file) {
 #  @arg[<@>@][M@] The monadic type for side effects.
 #  @arg[Monad@<M@>][m] The monad instance.
 #  @arg[Io@<M@>][io] Interface for performing io.
-#  @returns[M@<In@<Int@, M@>>] The standard input stream.
-<<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<In@<Int@, M@>>; }
-Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
-  File@ stdin := m.do(io.run(GetStdin));
+#  @arg[Mode@][mode] Whether to open in binary or text mode.
+#  @returns[M@<In@<Byte@, M@>>] The standard input stream.
+<<@>@ M@>(Monad@<M@>, Io@<M@>, Mode@) { M@<In@<Byte@, M@>>; }
+Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
+  File@ stdin := m.do(io.run(GetStdin(mode)));
   m.return(io.run(GetByte(stdin)));
 };
 
@@ -51,10 +76,11 @@ Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
 #  @arg[<@>@][M@] The monadic type for side effects.
 #  @arg[Monad@<M@>][m] The monad instance.
 #  @arg[Io@<M@>][io] Interface for performing io.
-#  @returns[M@<Out@<Int@, M@>>] The standard output stream.
-<<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Int@, M@>>; }
-Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
-  File@ stdout := m.do(io.run(GetStdout));
+#  @arg[Mode@][mode] Whether to open in binary or text mode.
+#  @returns[M@<Out@<Byte@, M@>>] The standard output stream.
+<<@>@ M@>(Monad@<M@>, Io@<M@>, Mode@) { M@<Out@<Byte@, M@>>; }
+Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
+  File@ stdout := m.do(io.run(GetStdout(mode)));
   m.return(Out(m, io, stdout));
 };
 
@@ -62,10 +88,11 @@ Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
 #  @arg[<@>@][M@] The monadic type for side effects.
 #  @arg[Monad@<M@>][m] The monad instance.
 #  @arg[Io@<M@>][io] Interface for performing io.
-#  @returns[M@<Out@<Int@, M@>>] The standard error stream.
-<<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Int@, M@>>; }
-Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
-  File@ stderr := m.do(io.run(GetStderr));
+#  @arg[Mode@][mode] Whether to open in binary or text mode.
+#  @returns[M@<Out@<Byte@, M@>>] The standard error stream.
+<<@>@ M@>(Monad@<M@>, Io@<M@>, Mode@) { M@<Out@<Byte@, M@>>; }
+Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
+  File@ stderr := m.do(io.run(GetStderr(mode)));
   m.return(Out(m, io, stderr));
 };
 
@@ -77,13 +104,15 @@ Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
 #  @arg[Monad@<M@>][m] The monad instance.
 #  @arg[Io@<M@>][io] Interface for performing io.
 #  @arg[String@][path] Path to the file to open.
-#  @returns[M@<Maybe@<In@<Int@, M@>>>]
+#  @arg[Mode@][mode] Whether to open in binary or text mode.
+#  @returns[M@<Maybe@<In@<Byte@, M@>>>]
 #   An input stream for the file to read. Nothing if the file could not be
 #   opened for reading.
-<<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<In@<Int@, M@>>>; }
-Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
-  Maybe@<File@> file := m.do(io.run(Open(path, Str|rb)));
-  file.?(nothing: m.return(Nothing<In@<Int@, M@>>));
+<<@>@ M@>(Monad@<M@>, Io@<M@>, String@, Mode@) { M@<Maybe@<In@<Byte@, M@>>>; }
+Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path, Mode@ mode) {
+  String@ modestr = mode.?(binary: Str|rb, text: Str|r);
+  Maybe@<File@> file := m.do(io.run(Open(path, modestr)));
+  file.?(nothing: m.return(Nothing<In@<Byte@, M@>>));
   m.return(Just(io.run(GetByte(file.just))));
 };
 
@@ -95,13 +124,15 @@ Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
 #  @arg[Monad@<M@>][m] The monad instance.
 #  @arg[Io@<M@>][io] Interface for performing io.
 #  @arg[String@][path] Path to the file to open.
-#  @returns[M@<Maybe@<Out@<Int@, M@>>>]
+#  @arg[Mode@][mode] Whether to open in binary or text mode.
+#  @returns[M@<Maybe@<Out@<Byte@, M@>>>]
 #   An output stream for writing to the file. Nothing if the file could not be
 #   opened for writing.
-<<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<Out@<Int@, M@>>>; }
-Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
-  Maybe@<File@> file := m.do(io.run(Open(path, Str|wb)));
-  file.?(nothing: m.return(Nothing<Out@<Int@, M@>>));
+<<@>@ M@>(Monad@<M@>, Io@<M@>, String@, Mode@) { M@<Maybe@<Out@<Byte@, M@>>>; }
+Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path, Mode@ mode) {
+  String@ modestr = mode.?(binary: Str|wb, text: Str|w);
+  Maybe@<File@> file := m.do(io.run(Open(path, modestr)));
+  file.?(nothing: m.return(Nothing<Out@<Byte@, M@>>));
   m.return(Just(Out(m, io, file.just)));
 };
 
@@ -113,14 +144,16 @@ Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
 #  @arg[Monad@<M@>][m] The monad instance.
 #  @arg[Io@<M@>][io] Interface for performing io.
 #  @arg[String@][path] Path to the file to open.
-#  @returns[M@<Maybe@<Out@<Int@, M@>>>]
+#  @arg[Mode@][mode] Whether to open in binary or text mode.
+#  @returns[M@<Maybe@<Out@<Byte@, M@>>>]
 #   An output stream for appending to the file. Nothing if the file could not
 #   be opened for writing.
-<<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<Out@<Int@, M@>>>; }
-Append = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
-  Maybe@<File@> file := m.do(io.run(Open(path, Str|ab)));
-  file.?(nothing: m.return(Nothing<Out@<Int@, M@>>));
+<<@>@ M@>(Monad@<M@>, Io@<M@>, String@, Mode@) { M@<Maybe@<Out@<Byte@, M@>>>; }
+Append = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path, Mode@ mode) {
+  String@ modestr = mode.?(binary: Str|ab, text: Str|a);
+  Maybe@<File@> file := m.do(io.run(Open(path, modestr)));
+  file.?(nothing: m.return(Nothing<Out@<Byte@, M@>>));
   m.return(Just(Out(m, io, file.just)));
 };
 
-@(Stdin, Stdout, Stderr, Read, Write, Append);
+@(Byte@, Mode@, Binary, Text, Stdin, Stdout, Stderr, Read, Write, Append);

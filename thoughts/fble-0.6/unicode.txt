@@ -431,3 +431,14 @@ Byte@ vs Char@ means something different from binary vs text.
 
 File/Byte% and File/Char% maybe?
 
+---
+
+Should I expose Mode@ to the Text interface, or just the binary? When would
+you ever want Utf8, for example, with binary mode?
+
+It seems pretty strange. But maybe you want your own encoding...
+
+I think Char should support binary or text mode. But Utf8 can assume text
+mode.
+
+Shall we pass Mode@ along with encoding for Text? Yes. Absolutely.

@@ -2,14 +2,15 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Rename /Std/Io/File/Binary% to /Std/Io/File/Byte%
+* Rename /Std/Io/File/Text% to /Std/Io/File/Char%
+* Move Mode@ to /Std/Io/File%? Or /Std/Io/File/Mode%?
+
 * Move implementation of 'For' out of pkgs/std-tests/Std/Stream/Tests%.
  - And start using it more places.
 
 * Clean up /Std/Char/Show% for unicode.
  - Don't keep switching between stream and list.
-
-* Figure out how to solve line ending issues in fble.
-* Revisit approach to utf8
 
 * It's hard to find where fble functions live
  - Anything I can do about that?

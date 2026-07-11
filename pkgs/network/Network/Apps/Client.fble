@@ -8,6 +8,7 @@ Int .= /Std/Int/Lit%;
 IsZero .= /Std/Int/Sign%;
 Main@, Success, Failure .= /Std/Io/Cli%;
 Io@ .= /Std/Io%;
+Binary .= /Std/Io/File/Binary%;
 List@ .= /Std/List%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
@@ -128,7 +129,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   InOut@<M@> ios = mios.just;
   Out@<Char@, M@> os = /Std/Stream/Out%.Map(Pos, ios.out);
-  Out@<Int@, M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io));
+  Out@<Int@, M@> out := m.do(/Std/Io/File/Binary%.Stdout(m, io, Binary));
 
   Unit@ _ := m.do(os(S(args.message)));
   Unit@ _ := m.do(ForwardN(args.num_bytes, ios.in, out));

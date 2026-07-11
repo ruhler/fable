@@ -1,3 +1,0 @@
-# Make sure git checkout doesn't mess up the line endings of this file on
-# Windows, otherwise it will cause the test to fail.
-pkgs/std/utf-8.txt text eol=lf

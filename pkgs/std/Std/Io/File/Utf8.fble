@@ -7,7 +7,9 @@ Int, Hex .= /Std/Int/Lit%;
 Le, Lt .= /Std/Int/Cmp%;
 Mod .= /Std/Int/Div%;
 IsZero .= /Std/Int/Sign%;
-Byte@, Encoding@ .= /Std/Io/File/Text%;
+Text = /Std/Io/File/Binary%.Text;
+Byte@ .= /Std/Io/File/Binary%;
+Encoding@ .= /Std/Io/File/Text%;
 List@, List .= /Std/List%;
 Get .= /Std/List/Index%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
@@ -147,6 +149,6 @@ Decode = <<@>@ M@>(Monad@<M@> m, In@<Byte@, M@> in) {
 
 Encoding@ Utf8 = Encoding@(Encode, Decode);
 
-Stdin, Stdout, Stderr, Read, Write, Append .= /Std/Io/File/Text%.Text(Utf8);
+Stdin, Stdout, Stderr, Read, Write, Append .= /Std/Io/File/Text%.Text(Utf8, Text);
 
 @(Utf8, Stdin, Stdout, Stderr, Read, Write, Append);
