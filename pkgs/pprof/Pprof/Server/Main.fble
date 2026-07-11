@@ -13,7 +13,7 @@ List@, List, Last, Append .= /Std/List%;
 Get, Drop, Length .= /Std/List/Index%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Stream@, Do, Put, Return .= /Std/Stream%;
+Stream@, End, Put, PutStream .= /Std/Stream%;
 ToDebug .= /Std/Stream/Debug%;
 In@ .= /Std/Stream/In%;
 Out@ .= /Std/Stream/Out%;
@@ -123,11 +123,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   (Profile@, Table@, Int@, (Sequence@) { Sequence@; }) { Stream@<Char@>; }
   Table = (Profile@ profile, Table@ table, Int@ total, (Sequence@) { Sequence@; } link) {
-    Unit@ _ := Do(StringE|'<table>\n');
+    Unit@ _ := PutStream(StringE|'<table>\n');
 
     (Sequence@) { Stream@<Char@>; }
     SeqNames = (Sequence@ seq) {
-      seq.?(empty: Return<Char@>);
+      seq.?(empty: End<Char@>);
 
       BlockId@ block = seq.items.head;
       Maybe@<Block@> mname = Blocks.Get(profile.blocks, block);
@@ -136,45 +136,45 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
         Unit@ _ = ToDebug(Format|'block %s not found'[/Std/Int/Show%.Show(block)]);
         Format|'??%s??'[/Std/Int/Show%.Show(block)];
       };
-      Unit@ _ := Do(name);
-      seq.items.tail.?(empty: Return<Char@>);
+      Unit@ _ := PutStream(name);
+      seq.items.tail.?(empty: End<Char@>);
 
-      Unit@ _ := Do(Put(Char|';'));
+      Unit@ _ := Put(Char|';');
       SeqNames(seq.items.tail);
     };
 
     (Sequence@) { Stream@<Char@>; }
     SeqBlocks = (Sequence@ seq) {
-      seq.?(empty: Return<Char@>);
+      seq.?(empty: End<Char@>);
 
       BlockId@ block = seq.items.head;
-      Unit@ _ := Do(/Std/Int/Show%.Show(block));
-      seq.items.tail.?(empty: Return<Char@>);
+      Unit@ _ := PutStream(/Std/Int/Show%.Show(block));
+      seq.items.tail.?(empty: End<Char@>);
 
-      Unit@ _ := Do(Put(Char|','));
+      Unit@ _ := Put(Char|',');
       SeqBlocks(seq.items.tail);
     };
 
     (Entry@) { Stream@<Char@>; }
     Row = (Entry@ entry) {
-      Unit@ _ := Do(
+      Unit@ _ := PutStream(
           Format|'<tr><td>%s</td><td>%s</td><td><a href="/seq/'[
             Percent(entry.value, total),
             /Std/Int/Show%.Show(entry.value)]);
-      Unit@ _ := Do(SeqBlocks(link(entry.seq)));
-      Unit@ _ := Do(StringE|'">');
-      Unit@ _ := Do(SeqNames(entry.seq));
+      Unit@ _ := PutStream(SeqBlocks(link(entry.seq)));
+      Unit@ _ := PutStream(StringE|'">');
+      Unit@ _ := PutStream(SeqNames(entry.seq));
       StringE|'</a></td></tr>\n';
     };
 
     (List@<Entry@>) { Stream@<Char@>; }
     Rows = (List@<Entry@> entries) {
-      entries.?(empty: Return<Char@>);
-      Unit@ _ := Do(Row(entries.items.head));
+      entries.?(empty: End<Char@>);
+      Unit@ _ := PutStream(Row(entries.items.head));
       Rows(entries.items.tail);
     };
 
-    Unit@ _ := Do(Rows(table));
+    Unit@ _ := PutStream(Rows(table));
     StringE|'</table>\n';
   };
 
@@ -232,28 +232,28 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   Stream@<Char@> OverviewPage = {
     Int@ total = Total.Total(profile);
-    Unit@ _ := Do(StringE|'<h1>Overview</h1>\n');
-    Unit@ _ := Do(FormatE|'Profile: %s<br />\n'[String(args.file)]);
-    Unit@ _ := Do(FormatE|'Samples: %s<br />\n'[/Std/Int/Show%.Show(total)]);
+    Unit@ _ := PutStream(StringE|'<h1>Overview</h1>\n');
+    Unit@ _ := PutStream(FormatE|'Profile: %s<br />\n'[String(args.file)]);
+    Unit@ _ := PutStream(FormatE|'Samples: %s<br />\n'[/Std/Int/Show%.Show(total)]);
     FormatE|'Sequences: %s<br />\n'[/Std/Int/Show%.Show(Length(profile.samples))];
   };
 
   Stream@<Char@> OverallPage = {
-    Unit@ _ := Do(StringE|'<h1>Frames by overall time</h1>\n');
+    Unit@ _ := PutStream(StringE|'<h1>Frames by overall time</h1>\n');
     Table@ table = Overall.Query(profile);
     Int@ total = Total.Total(profile);
     Table(profile, table, total, (Sequence@ s) { s; });
   };
 
   Stream@<Char@> SelfPage = {
-    Unit@ _ := Do(StringE|'<h1>Frames by self time</h1>\n');
+    Unit@ _ := PutStream(StringE|'<h1>Frames by self time</h1>\n');
     Table@ table = Self.Query(profile);
     Int@ total = Total.Total(profile);
     Table(profile, table, total, (Sequence@ s) { s; });
   };
 
   Stream@<Char@> SeqsPage = {
-    Unit@ _ := Do(StringE|'<h1>Full Sequences</h1>\n');
+    Unit@ _ := PutStream(StringE|'<h1>Full Sequences</h1>\n');
     Table@ table = Sequences.Query(profile);
     Int@ total = Total.Total(profile);
     Table(profile, table, total, (Sequence@ s) { s; });
@@ -261,18 +261,18 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
 
   (Sequence@) { Stream@<Char@>; }
   SeqPage = (Sequence@ seq) {
-    Unit@ _ := Do(StringE|'<h1>Sequence</h1>\n');
+    Unit@ _ := PutStream(StringE|'<h1>Sequence</h1>\n');
     Int@ total = Total.Total(profile);
     Table@ sequence = Sequence.Sequence(seq, profile);
-    Unit@ _ := Do(Table(profile, sequence, total, (Sequence@ s) { s; }));
+    Unit@ _ := PutStream(Table(profile, sequence, total, (Sequence@ s) { s; }));
 
-    Unit@ _ := Do(StringE|'<h1>Incoming</h1>\n');
+    Unit@ _ := PutStream(StringE|'<h1>Incoming</h1>\n');
     Int@ ss_total = Total.Contains(profile, seq);
     Table@ incoming = Sequence.Incoming(seq, profile);
-    Unit@ _ := Do(Table(profile, incoming, ss_total,
+    Unit@ _ := PutStream(Table(profile, incoming, ss_total,
         (Sequence@ s) { Append(s, seq); }));
 
-    Unit@ _ := Do(StringE|'<h1>Outgoing</h1>\n');
+    Unit@ _ := PutStream(StringE|'<h1>Outgoing</h1>\n');
     Table@ outgoing = Sequence.Outgoing(seq, profile);
     Table(profile, outgoing, ss_total,
       (Sequence@ s) { Append(seq, s); });

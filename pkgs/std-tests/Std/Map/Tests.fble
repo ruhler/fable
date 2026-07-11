@@ -10,7 +10,7 @@ Int .= /Std/Int/Lit%;
 Abs, IsZero, IsPositive .= /Std/Int/Sign%;
 Lazy .= /Std/Lazy%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
-Stream@, Return .= /Std/Stream%;
+Stream@, End .= /Std/Stream%;
 AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
 Test@ .= /Std/Test%;
 TestSuite = OnAscii(/Std/Test%.TestSuite);
@@ -220,7 +220,7 @@ Test@ Tests = TestSuite|Map[
   Test|ForEach({
     Unit@ _ := Lazy;
     Map@ map = Entries[Entry@(Int|0, True), Entry@(Int|1, False), Entry@(Int|2, True)];
-    Stream@<Char@> got = ForEach(map, Return<Char@>,
+    Stream@<Char@> got = ForEach(map, End<Char@>,
       (Int@ key, Bool@ value, Stream@<Char@> tail) {
         Format|'%s:%s,%s'[
           /Std/Int/Show%.Show(key),

@@ -2,7 +2,7 @@
 Char@ .= /Std/Char%;
 String, Format, FormatE .= /Std/Char/Ascii/Stream%;
 Show@ .= /Std/Show%;
-Do, Return .= /Std/Stream%;
+End, PutStream .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 Literal@, Clause@, Puzzle@, Params@ .= /SatGame/Puzzle%;
@@ -15,16 +15,16 @@ Show@<Literal@> Literal = (Literal@ literal) {
 };
 
 Show@<Clause@> Clause = (Clause@ clause) {
-  clause.?(empty: Return<Char@>);
-  Unit@ _ := Do(Literal(clause.items.head));
-  clause.items.tail.?(empty: Return<Char@>);
-  Unit@ _ := Do(String|' ');
+  clause.?(empty: End<Char@>);
+  Unit@ _ := PutStream(Literal(clause.items.head));
+  clause.items.tail.?(empty: End<Char@>);
+  Unit@ _ := PutStream(String|' ');
   Clause(clause.items.tail);
 };
 
 Show@<Puzzle@> Puzzle = (Puzzle@ puzzle) {
-  puzzle.?(empty: Return<Char@>);
-  Unit@ _ := Do(FormatE|'%s\n'[Clause(puzzle.items.head)]);
+  puzzle.?(empty: End<Char@>);
+  Unit@ _ := PutStream(FormatE|'%s\n'[Clause(puzzle.items.head)]);
   Puzzle(puzzle.items.tail);
 };
 

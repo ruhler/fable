@@ -35,31 +35,6 @@ IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
   False;
 };
 
-# Look up data in a map from the given stream of bits.
-(Stream@<Bit@>)<@ K@, @ V@>(Map@<K@, V@>) { Maybe@<V@>; }
-Get_ = (Stream@<Bit@> bits)<@ K@, @ V@> {
-  S@ = Map@<K@, V@>;
-  R@ = Maybe@<V@>;
-
-  (S@) { R@; } r = (S@ m) {
-    m.?(empty: Nothing<V@>);
-
-    # If m.value access fails with wrong tag, it means your data type
-    # didn't satisfy the prefix code requirement.
-    Just(m.entry.value);
-  };
-
-  put = (Bit@ x, Stream@<Bit@> t, S@ m) {
-    m.?(empty: Nothing<V@>);
-
-    # If m.children access fails with wrong tag, it means your data type
-    # didn't satisfy the prefix code requirement.
-    Get_(t, x.?(0: m.children.0, 1: m.children.1));
-  };
-
-  bits(r, put);
-};
-
 # @func[Get] Look up a value in the map.
 #  @arg[@][K@] The type of key.
 #  @arg[Data@<K@>][data] The Data@ instance for the key type.
@@ -70,45 +45,25 @@ Get_ = (Stream@<Bit@> bits)<@ K@, @ V@> {
 #   The value in the map associated with the given key if present. Nothing
 #   otherwise.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
-Get = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
-  Get_(data(key), map);
-};
+Get = {
+  (Stream@<Bit@>)<@ K@, @ V@>(Map@<K@, V@>) { Maybe@<V@>; }
+  get = (Stream@<Bit@> hash)<@ K@, @ V@>(Map@<K@, V@> map) {
+    hash.?(empty: {
+      map.?(empty: Nothing<V@>);
 
-# Update using stream of bits for the key.
-(Stream@<Bit@>)<@ K@, @ V@>(Map@<K@, V@>, K@, (Maybe@<V@>) { V@; }) { Map@<K@, V@>; }
-Update_ = (Stream@<Bit@> bits)<@ K@, @ V@> {
-  S@ = Map@<K@, V@>;
-  R@ = Map@<K@, V@>;
+      # If m.value access fails with wrong tag, it means your data type
+      # didn't satisfy the prefix code requirement.
+      Just(map.entry.value);
+    });
 
-  (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
-    put = (Bit@ x, Stream@<Bit@> t, S@ m) {
-      children = {
-        m.?(empty: @(0: Empty<K@, V@>, 1: Empty<K@, V@>));
+    map.?(empty: Nothing<V@>);
+    Bit@ x = hash.items.head;
+    Map@<K@, V@> child = x.?(0: map.children.0, 1: map.children.1);
+    get(hash.items.tail(Unit), child);
+  };
 
-        # If m.children access fails with wrong tag, it means your data
-        # type didn't satisfy the prefix code requirement.
-        m.children;
-      };
-
-      Map@<K@, V@> child = Update_(t, x.?(0: children.0, 1: children.1), key, with);
-      x.?(
-        0: Map@(children: children.@(0: child)),
-        1: Map@(children: children.@(1: child)));
-    };
-
-    (S@) { R@; } r = (Map@<K@, V@> leaf) {
-      V@ value = with({
-        leaf.?(empty: Nothing<V@>);
-
-        # If you get a wrong tag access error here on leaf.entry, then your
-        # data type violates the prefix property.
-        Just(leaf.entry.value);
-      });
-
-      Map@(entry: Entry@(key, value));
-    };
-
-    bits(r, put, map);
+  <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
+    get(data(key), map);
   };
 };
 
@@ -126,8 +81,42 @@ Update_ = (Stream@<Bit@> bits)<@ K@, @ V@> {
 #   to this function to determine the value to insert.
 #  @return[Map@<K@, V@>] The map with the updated value.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>) { V@; }) { Map@<K@, V@>; }
-Update = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
-  Update_(data(key), map, key);
+Update = {
+  (Stream@<Bit@>)<@ K@, @ V@>(Map@<K@, V@>, K@, (Maybe@<V@>) { V@; }) { Map@<K@, V@>; }
+  update = (Stream@<Bit@> hash)<@ K@, @ V@> {
+    (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
+      hash.?(empty: {
+        V@ value = with({
+          map.?(empty: Nothing<V@>);
+
+          # If you get a wrong tag access error here on map.entry, then your
+          # data type violates the prefix property.
+          Just(map.entry.value);
+        });
+
+        Map@(entry: Entry@(key, value));
+      });
+
+      children = {
+        map.?(empty: @(0: Empty<K@, V@>, 1: Empty<K@, V@>));
+
+        # If map.children access fails with wrong tag, it means your data
+        # type didn't satisfy the prefix code requirement.
+        map.children;
+      };
+
+      Bit@ x = hash.items.head;
+      Stream@<Bit@> t = hash.items.tail(Unit);
+      Map@<K@, V@> child = update(t, x.?(0: children.0, 1: children.1), key, with);
+      x.?(
+        0: Map@(children: children.@(0: child)),
+        1: Map@(children: children.@(1: child)));
+    };
+  };
+
+  <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
+    update(data(key), map, key);
+  };
 };
 
 # @func[Put] Inserts a value into a map.
@@ -143,52 +132,6 @@ Update = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
 Put = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
   Update(data, map, key, (Maybe@<V@> _) { value; });
-};
-
-# Replace using stream of bits.
-(Stream@<Bit@>)<@ K@, @ V@>(Map@<K@, V@>, K@, (V@) { Maybe@<V@>; }) { Maybe@<Map@<K@, V@>>; }
-Replace_ = (Stream@<Bit@> bits)<@ K@, @ V@> {
-  # Given a function that optionally modifies the map at the current
-  # location, returns the final modified map at the root location.
-  # The modification may remove elements.
-  S@ = Map@<K@, V@>;
-  R@ = Maybe@<Map@<K@, V@>>;
-
-  (Map@<K@, V@> map, K@ key, (V@) { Maybe@<V@>; } with) {
-    put = (Bit@ x, Stream@<Bit@> t, S@ m) {
-      m.?(empty: Nothing<Map@<K@, V@>>);
-
-      # If m.children access fails with wrong tag, it means your data
-      # type didn't satisfy the prefix code requirement.
-      Map@<K@, V@> child = x.?(0: m.children.0, 1: m.children.1);
-      Maybe@<Map@<K@, V@>> nchild = Replace_(t, child, key, with);
-      nchild.?(nothing: Nothing<Map@<K@, V@>>);
-
-      nchild.just.?(empty: {
-        Bool@ empty = x.?(0: IsEmpty(m.children.1), 1: IsEmpty(m.children.0));
-        empty.?(true: Just(Empty<K@, V@>));
-
-        x.?(0: Just(Map@(children: m.children.@(0: Empty<K@, V@>))));
-        Just(Map@(children: m.children.@(1: Empty<K@, V@>)));
-      });
-
-      x.?(0: Just(Map@(children: m.children.@(0: nchild.just))));
-      Just(Map@(children: m.children.@(1: nchild.just)));
-    };
-
-    (S@) { R@; } r = (Map@<K@, V@> leaf) {
-      # If you get undef here, then your data type violates the prefix
-      # property.
-      leaf.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@<K@, V@>>>);
-
-      leaf.?(empty: Nothing<Map@<K@, V@>>);
-      Maybe@<V@> value = with(leaf.entry.value);
-      value.?(nothing: Just(Empty<K@, V@>));
-      Just(Map@(entry: leaf.entry.@(value: value.just)));
-    };
-
-    bits(r, put, map);
-  };
 };
 
 # @func[Replace] Replace or delete a value already present in a map.
@@ -207,9 +150,51 @@ Replace_ = (Stream@<Bit@> bits)<@ K@, @ V@> {
 #   The map with the replaced value. If no value was associated with the key
 #   in the original map, the original map is returned unmodified.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (V@) { Maybe@<V@>; }) { Map@<K@, V@>; }
-Replace = <@ K@>(Data@<K@> data) {
-  <@ V@>(Map@<K@, V@> map, K@ key, (V@) { Maybe@<V@>; } replace) {
-    Default(map, Replace_(data(key), map, key, replace));
+Replace = {
+  # Given a function that optionally modifies the map at the current location,
+  # returns the final modified map at the root location. The modification may
+  # remove elements.
+  (Stream@<Bit@>)<@ K@, @ V@>(Map@<K@, V@>, K@, (V@) { Maybe@<V@>; }) { Maybe@<Map@<K@, V@>>; }
+  replace = (Stream@<Bit@> hash)<@ K@, @ V@> {
+    (Map@<K@, V@> map, K@ key, (V@) { Maybe@<V@>; } with) {
+      hash.?(empty: {
+        # If you get undef here, then your data type violates the prefix
+        # property.
+        map.?(children: /Std/Undef%.Undef.undef<Maybe@<Map@<K@, V@>>>);
+
+        map.?(empty: Nothing<Map@<K@, V@>>);
+        Maybe@<V@> value = with(map.entry.value);
+        value.?(nothing: Just(Empty<K@, V@>));
+        Just(Map@(entry: map.entry.@(value: value.just)));
+      });
+
+      map.?(empty: Nothing<Map@<K@, V@>>);
+
+      # If map.children access fails with wrong tag, it means your data
+      # type didn't satisfy the prefix code requirement.
+      Bit@ x = hash.items.head;
+      Stream@<Bit@> t = hash.items.tail(Unit);
+      Map@<K@, V@> child = x.?(0: map.children.0, 1: map.children.1);
+      Maybe@<Map@<K@, V@>> nchild = replace(t, child, key, with);
+      nchild.?(nothing: Nothing<Map@<K@, V@>>);
+
+      nchild.just.?(empty: {
+        Bool@ empty = x.?(0: IsEmpty(map.children.1), 1: IsEmpty(map.children.0));
+        empty.?(true: Just(Empty<K@, V@>));
+
+        x.?(0: Just(Map@(children: map.children.@(0: Empty<K@, V@>))));
+        Just(Map@(children: map.children.@(1: Empty<K@, V@>)));
+      });
+
+      x.?(0: Just(Map@(children: map.children.@(0: nchild.just))));
+      Just(Map@(children: map.children.@(1: nchild.just)));
+    };
+  };
+
+  <@ K@>(Data@<K@> data) {
+    <@ V@>(Map@<K@, V@> map, K@ key, (V@) { Maybe@<V@>; } f) {
+      Default(map, replace(data(key), map, key, f));
+    };
   };
 };
 

@@ -10,20 +10,20 @@ Sgn .= /Std/Int/Sign%;
 QR@, Div .= /Std/Int/Div%;
 Get .= /Std/List/Index%;
 Show@ .= /Std/Show%;
-Do, Return, Put .= /Std/Stream%;
+End, PutStream, Return .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 Int@ 10 = Int|10;
 
 # Show an int value in the range [0-9].
 Show@<Int@> Digit = (Int@ x) {
-  Put(Get(Str|0123456789, x));
+  Return(Get(Str|0123456789, x));
 };
 
 # Show a positive integer.
 Show@<Int@> Positive = (Int@ x) {
   QR@ qr = Div(x, 10);
-  Unit@ _ := Do(qr.q.?(0: Return<Char@>, : Positive(qr.q)));
+  Unit@ _ := PutStream(qr.q.?(0: End<Char@>, : Positive(qr.q)));
   Digit(qr.r);
 };
 

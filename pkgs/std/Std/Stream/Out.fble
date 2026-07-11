@@ -18,7 +18,7 @@ Out@ = <@ A@, <@>@ M@>(Stream@<A@>) { M@<Unit@>; };
 <@ A@, @ B@>((B@) { A@; })<<@>@ M@>(Out@<A@, M@>) { Out@<B@, M@>; }
 Map = <@ A@, @ B@>((B@) { A@; } f)<<@>@ M@>(Out@<A@, M@> out) {
   (Stream@<B@> stream) {
-    out(/Std/Stream%.Map(f, stream));
+    out(/Std/Stream%.Map(stream, f));
   };
 };
 

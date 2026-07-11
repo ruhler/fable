@@ -5,7 +5,8 @@
 
 Data@, Bit@, 0, 1 .= /Std/Data%;
 IntP@ .= /Std/Int/IntP%;
-Stream@, Return .= /Std/Stream%;
+Stream@, End, Put, PutStream, Return, Map .= /Std/Stream%;
+Unit@ .= /Std/Unit%;
 
 # @func[Data] Convert an IntP@ to a data bit stream.
 #  The lexicographical order of the generated bit streams matches the natural
@@ -30,25 +31,26 @@ Data@<IntP@> Data = {
   # Compute the number of bits N needed to encode x. Output that number N
   # using a unary encoding: 0, 10, 110, 1110, ...
   (IntP@) { Stream@<Bit@>; }
-  NumBits = (IntP@ x)<@ S@>(S@ _empty, (Bit@, Stream@<Bit@>) { S@; } items) {
+  NumBits = (IntP@ x) {
     x.?(
-      1: items(0, Return<Bit@>),
-      2p0: items(1, NumBits(x.2p0)),
-      2p1: items(1, NumBits(x.2p1)));
+      1: Return(0),
+      2p0: { Unit@ _ := Put(1); NumBits(x.2p0); },
+      2p1: { Unit@ _ := Put(1); NumBits(x.2p1); });
   };
 
   # Output the raw bits of the number in order, not including the most
   # significant bit.
   (IntP@) { Stream@<Bit@>; }
-  RawBits = (IntP@ x)<@ S@>(S@ empty, (Bit@, Stream@<Bit@>) { S@; } items) {
+  RawBits = (IntP@ x) {
     x.?(
-      1: empty,
-      2p0: RawBits(x.2p0, items(0, Return<Bit@>), items),
-      2p1: RawBits(x.2p1, items(1, Return<Bit@>), items));
+      1: End<Bit@>,
+      2p0: { Unit@ _ := PutStream(RawBits(x.2p0)); Return(0); },
+      2p1: { Unit@ _ := PutStream(RawBits(x.2p1)); Return(1); });
   };
 
-  (IntP@ x)<@ S@>(S@ empty, (Bit@, Stream@<Bit@>) { S@; } items) {
-    NumBits(x, RawBits(x, empty, items), items);
+  (IntP@ x) {
+    Unit@ _ := PutStream(NumBits(x));
+    RawBits(x);
   };
 };
 
@@ -58,11 +60,11 @@ Data@<IntP@> Data = {
 #
 #  @arg[IntP@][x] The integer to convert.
 #  @returns[Stream@<Bit@>] The stream of bits describing the IntP@.
-Data@<IntP@> DataR = (IntP@ x)<@ S@>(S@ empty, (Bit@, Stream@<Bit@>) { S@; } items) {
+Data@<IntP@> DataR = (IntP@ x) {
   # Same encoding as forward, but flip the bits 0 to 1 and 1 to 0 so it comes
   # out in the opposite order.
-  Bit@ b, Stream@<Bit@> t := Data(x, empty);
-  items(b.?(0: 1, 1: 0), t);
+  Bit@ b := Map(Data(x));
+  b.?(0: 1, 1: 0);
 };
 
 @(Data, DataR).%(@/Std/Int%);

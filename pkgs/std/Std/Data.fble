@@ -2,7 +2,7 @@
 #  Interface for pure data types.
 
 List@ .= /Std/List%;
-Stream@ .= /Std/Stream%;
+Stream@, End, Put, PutStream .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 # @type[Bit@] A single bit of data.
@@ -51,10 +51,9 @@ Data@ = <@ A@>(A@) { Stream@<Bit@>; };
 #   };
 (List@<Stream@<Bit@>>) { Stream@<Bit@>; }
 Struct = (List@<Stream@<Bit@>> fields) {
-  <@ S@>(S@ empty, (Bit@, Stream@<Bit@>) { S@; } items) {
-    fields.?(empty: empty);
-    fields.items.head(Struct(fields.items.tail, empty, items), items);
-  };
+  fields.?(empty: End<Bit@>);
+  Unit@ _ := PutStream(fields.items.head);
+  Struct(fields.items.tail);
 };
 
 # @func[Enum] Generates a bit stream for an enum.
@@ -70,9 +69,10 @@ Struct = (List@<Stream@<Bit@>> fields) {
 #
 #  The tags for all the enum values must satisfy the prefix property.
 (List@<Bit@>) { Stream@<Bit@>; }
-Enum = (List@<Bit@> tag)<@ S@>(S@ empty, (Bit@, Stream@<Bit@>) { S@; } items) {
-  tag.?(empty: empty);
-  items(tag.items.head, Enum(tag.items.tail));
+Enum = (List@<Bit@> tag) {
+  tag.?(empty: End<Bit@>);
+  Unit@ _ := Put(tag.items.head);
+  Enum(tag.items.tail);
 };
 
 # @func[Union] Generates a bit stream for a union value.

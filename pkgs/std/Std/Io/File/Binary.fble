@@ -10,7 +10,7 @@ Stream@ .= /Std/Stream%;
 In@ .= /Std/Stream/In%;
 Out@ .= /Std/Stream/Out%;
 String@ .= /Std/String%;
-Unit@ .= /Std/Unit%;
+Unit@, Unit .= /Std/Unit%;
 
 # Pretend type for FILE*. Only to be accessed from FFI functions.
 File@ = *(Unit@ file);
@@ -26,9 +26,9 @@ External@<File@> GetStderr;
 
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@<Int@>) { M@<Unit@>; }
 Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@<Int@> output) {
-  Int@ c, Stream@<Int@> tail := output(io.run(Flush(file)));
-  Unit@ _ := m.do(io.run(PutByte(file, c)));
-  Output(m, io, file, tail);
+  output.?(empty: io.run(Flush(file)));
+  Unit@ _ := m.do(io.run(PutByte(file, output.items.head)));
+  Output(m, io, file, output.items.tail(Unit));
 };
 
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@) { Out@<Int@, M@>; }

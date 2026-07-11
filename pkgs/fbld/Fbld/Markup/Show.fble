@@ -1,7 +1,7 @@
 
 Format, String .= /Std/Char/Ascii/Stream%;
 Show@ .= /Std/Show%;
-Do .= /Std/Stream%;
+PutStream .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 Command@, Markup@ .= /Fbld/Markup%;
@@ -19,7 +19,7 @@ Show@<Markup@> Markup = (Markup@ m) {
     plain: /Fbld/Text/Show%.Show(m.plain),
     command: Command(m.command),
     sequence: {
-      Unit@ _ := Do(Markup(m.sequence.a));
+      Unit@ _ := PutStream(Markup(m.sequence.a));
       Markup(m.sequence.b);
     });
 

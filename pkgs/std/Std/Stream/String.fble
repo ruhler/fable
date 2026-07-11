@@ -6,9 +6,9 @@ U .= /Std/Char/Lit%;
 List@, List, Items .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Stream@, Return, Do, Put .= /Std/Stream%;
+Stream@, End, Put, PutStream .= /Std/Stream%;
 In@ .= /Std/Stream/In%;
-Puts, ToList .= /Std/Stream/List%;
+ToStream, ToList .= /Std/Stream/List%;
 String@ .= /Std/String%;
 IsNewline .= /Std/String/Lines%;
 Unit@ .= /Std/Unit%;
@@ -18,7 +18,7 @@ Unit@ .= /Std/Unit%;
 #  @returns[Output] A computation that outputs the string.
 (String@) { Stream@<Char@>; }
 String = (String@ s) {
-  Puts(s);
+  ToStream(s);
 };
 
 # @func[Lines] Output a sequence of lines.
@@ -28,9 +28,9 @@ String = (String@ s) {
 #   after every one.
 (List@<Stream@<Char@>>) { Stream@<Char@>; }
 Lines = (List@<Stream@<Char@>> xs) {
-  xs.?(empty: Return<Char@>);
-  Unit@ _ := Do(xs.items.head);
-  Unit@ _ := Do(Put(/Std/String/Lines%.Newline));
+  xs.?(empty: End<Char@>);
+  Unit@ _ := PutStream(xs.items.head);
+  Unit@ _ := Put(/Std/String/Lines%.Newline);
   Lines(xs.items.tail);
 };
 
@@ -40,15 +40,15 @@ Lines = (List@<Stream@<Char@>> xs) {
 #  @return[Stream@<Char@>] Outputs each element in turn, separated by @a[sep].
 (String@, List@<Stream@<Char@>>) { Stream@<Char@>; }
 Join = (String@ sep, List@<Stream@<Char@>> xs) {
-  xs.?(empty: Return<Char@>);
+  xs.?(empty: End<Char@>);
   xs.items.tail.?(empty: xs.items.head);
-  Unit@ _ := Do(xs.items.head);
-  Unit@ _ := Do(String(sep));
+  Unit@ _ := PutStream(xs.items.head);
+  Unit@ _ := PutStream(String(sep));
   Join(sep, xs.items.tail);
 };
 
-Char@ '%%' = U|25;
-Char@ '%s' = U|73;
+Char@ '%' = U|25;
+Char@ 's' = U|73;
 
 # @func[Format] Construct a formatted output.
 #  Provides printf like formatting, except the only supported format type is
@@ -65,26 +65,28 @@ Char@ '%s' = U|73;
 #  @return[Stream@<Char@>] The formatted output.
 (String@, List@<Stream@<Char@>>) { Stream@<Char@>; }
 Format = (String@ fmt, List@<Stream@<Char@>> args) {
-  <@ S@>(S@ empty, (Char@, Stream@<Char@>) { S@; } items) {
-    fmt.?(empty: empty);
-    Char@ c = fmt.items.head;
-    /Std/Char/Eq%.Eq('%%', c).?(true: {
-      fmt.items.tail.?(empty: /Std/Undef%.Undef.undef<S@>);
-      Char@ e = fmt.items.tail.items.head;
+  fmt.?(empty: End<Char@>);
 
-      /Std/Char/Eq%.Eq('%%', e).?(true: {
-        items(c, Format(fmt.items.tail.items.tail, args));
-      });
+  Char@ c = fmt.items.head;
+  /Std/Char/Eq%.Eq('%', c).?(true: {
+    fmt.items.tail.?(empty: /Std/Undef%.Undef.undef<Stream@<Char@>>);
+    Char@ e = fmt.items.tail.items.head;
 
-      /Std/Char/Eq%.Eq('%s', e).?(true: {
-        args.items.head(Format(fmt.items.tail.items.tail, args.items.tail, empty, items), items);
-      });
-
-      /Std/Undef%.Undef.undef<S@>;
+    /Std/Char/Eq%.Eq('%', e).?(true: {
+      Unit@ _ := Put(e);
+      Format(fmt.items.tail.items.tail, args);
     });
 
-    items(c, Format(fmt.items.tail, args));
-  };
+    /Std/Char/Eq%.Eq('s', e).?(true: {
+      Unit@ _ := PutStream(args.items.head);
+      Format(fmt.items.tail.items.tail, args.items.tail);
+    });
+
+    /Std/Undef%.Undef.undef<Stream@<Char@>>;
+  });
+
+  Unit@ _ := Put(c);
+  Format(fmt.items.tail, args);
 };
 
 # @func[ToString] Output to a String@.

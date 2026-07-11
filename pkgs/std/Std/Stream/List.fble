@@ -2,18 +2,18 @@
 #  Utilities for converting between lists and streams.
 
 List@, Empty, Items .= /Std/List%;
-Stream@, Return, Do, Put .= /Std/Stream%;
-Unit@ .= /Std/Unit%;
+Stream@, End, Put, PutStream .= /Std/Stream%;
+Unit@, Unit .= /Std/Unit%;
 
-# @func[Puts] Output a list of values.
-#  @arg[@][A@] The type of values to output.
-#  @arg[List@<A@>][values] The values to output.
-#  @returns[Stream@<A@>] A computation that outputs the values.
+# @func[ToStream] Convert a list to as stream.
+#  @arg[@][A@] The type of element on the list.
+#  @arg[List@<A@>][values] The list to convert.
+#  @returns[Stream@<A@>] A stream of the values in the list.
 <@ A@>(List@<A@>) { Stream@<A@>; }
-Puts = <@ A@>(List@<A@> values) {
-  values.?(empty: Return<A@>);
-  Unit@ _ := Do(Put(values.items.head));
-  Puts(values.items.tail);
+ToStream = <@ A@>(List@<A@> values) {
+  values.?(empty: End<A@>);
+  Unit@ _ := Put(values.items.head);
+  ToStream(values.items.tail);
 };
 
 # @func[Concat] Output a sequence of computations.
@@ -22,19 +22,19 @@ Puts = <@ A@>(List@<A@> values) {
 #  @returns[Output<A@>] A computation to output each give output in turn.
 <@ A@>(List@<Stream@<A@>>) { Stream@<A@>; }
 Concat = <@ A@>(List@<Stream@<A@>> xs) {
-  xs.?(empty: Return<A@>);
-  Unit@ _ := Do(xs.items.head);
+  xs.?(empty: End<A@>);
+  Unit@ _ := PutStream(xs.items.head);
   Concat(xs.items.tail);
 };
 
 # @func[ToList] Output a stream to a list.
 #  @arg[@][A@] The type of value to output.
-#  @arg[Stream@<A@>] The output to perform.
-#  @returns[List@<A@>] A list of the output values.
+#  @arg[Stream@<A@>] The stream of values.
+#  @returns[List@<A@>] The list of vales in the stream.
 <@ A@>(Stream@<A@>) { List@<A@>; }
 ToList = <@ A@>(Stream@<A@> stream) {
-  A@ h, Stream@<A@> t := stream(Empty<A@>);
-  Items(h, ToList(t));
+  stream.?(empty: Empty<A@>);
+  Items(stream.items.head, ToList(stream.items.tail(Unit)));
 };
 
-@(Puts, Concat, ToList);
+@(ToStream, Concat, ToList);

@@ -5,7 +5,7 @@ String .= /Std/Char/Ascii/Stream%;
 Hex@ .= /Md5/Digits%;
 List@, List, ForEach .= /Std/List%;
 Show@ .= /Std/Show%;
-Stream@, Do, Return .= /Std/Stream%;
+Stream@, End, PutStream .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 H8 .= /Md5/Bits/Bit8%;
@@ -44,8 +44,8 @@ Show@<Hex@> Hex = (Hex@ h) {
 
 (List@<Stream@<Char@>>) { Stream@<Char@>; }
 Seq = (List@<Stream@<Char@>> xs) {
-  xs.?(empty: Return<Char@>);
-  Unit@ _ := Do(xs.items.head);
+  xs.?(empty: End<Char@>);
+  Unit@ _ := PutStream(xs.items.head);
   Seq(xs.items.tail);
 };
 

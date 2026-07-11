@@ -6,7 +6,7 @@ Int@ .= /Std/Int%;
 Io@ .= /Std/Io%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Stream@, DoM .= /Std/Stream%;
+Stream@, Do .= /Std/Stream%;
 In@ .= /Std/Stream/In%;
 Out@ .= /Std/Stream/Out%;
 String@ .= /Std/String%;
@@ -35,7 +35,7 @@ Text = (Encoding@ encoding) {
   <<@>@ M@>(Out@<Byte@, M@>) { Out@<Char@, M@>; }
   Encode = <<@>@ M@>(Out@<Byte@, M@> out) {
     (Stream@<Char@> chars) {
-      out(DoM(chars, encoding.encode));
+      out(Do(chars, encoding.encode));
     };
   };
 

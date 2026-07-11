@@ -2,40 +2,76 @@
 #  Types and utilities for streaming data out.
 
 Lazy@ .= /Std/Lazy%;
-Unit .= /Std/Unit%;
+Unit@, Unit .= /Std/Unit%;
 
-# @type@[Stream@] A computation that outputs a stream of values.
-#  @arg[@][A@] The type of value to output.
-#  @arg[@][S@] The type to stream the outputs into.
-#  @arg[S@][empty] Called when the stream is empty.
-#  @arg[(A@, Stream@<A@>) { S@; }][items] Called when the stream is not empty.
-#  @returns[S@] The final result.
-Stream@ = <@ A@> {
-  Stream@ = <@ S@>(S@, (A@, Stream@) { S@; }) { S@; };
-  Stream@;
+# @type[Stream] An incrementally computed list of values.
+#  @arg[@][A@] The type of element on the stream.
+#  
+#  @field[A@][head] The first item in the stream.
+#  @field[Lazy@<Stream@<A@>>][tail]
+#   Everything after the first item in the stream.
+#
+#  @field[@][items] A stream with one or more items.
+#  @field[Unit@][empty] A stream with no items.
+Stream@ = <@ A@> { 
+  S@ = +(*(A@ head, Lazy@<S@> tail) items, Unit@ empty);
+  S@;
 };
 
-# @value[Return] A computation that outputs nothing.
+# @value[End] The end of a stream.
 #  @type[Stream@]
-Stream@ Return = <@ A@, @ S@>(S@ empty, (A@, Stream@<A@>) { S@; } _) {
-  empty;
+#
+#  Also known as an empty stream.
+Stream@ End = <@ A@> {
+  Stream@<A@>(empty: Unit);
 };
 
-# @func[Do] Stream one thing after another.
-#  @arg[@][A@] The type of values to output.
-#  @arg[Stream@][ma] The first stream of outputs.
-#  @arg[(Unit@) { Stream@; }][f] The next stream of outputs.
-#  @return[Stream@]
-#   A computation that streams out the first set of outputs, then calls the
-#   function f to get the second set of outputs to stream.
+# @func[Put] Outputs a value to a stream.
+#  @arg[@][A@] The type of items on the stream.
+#  @arg[A@][head] A value to put to the stream.
+#  @arg[Lazy@<Stream@<A@>>][tail]
+#   A function to compute the rest of the stream.
+#  @returns[Stream@<A@>]
+#   A stream with @a[head] as the first value, followed by @a[tail].
+#
+#  Typically this is called using function bind syntax. For example:
+#
+#  @code[fble] @
+#   Unit@ _ := Put(1);
+#   Unit@ _ := Put(2);
+#   Unit@ _ := Put(3);
+#   End<Int@>;
+<@ A@>(A@, Lazy@<Stream@<A@>>) { Stream@<A@>; }
+Put = <@ A@>(A@ head, Lazy@<Stream@<A@>> tail) {
+  Stream@(items: @(head, tail));
+};
+
+# @func[PutStream] Outputs a stream of values to a stream.
+#  @arg[@][A@] The type of items on the stream.
+#  @arg[Stream@<A@>][a] A stream of values to add to the stream.
+#  @arg[Lazy@<Stream@<A@>>][tail]
+#   A function to compute the rest of the stream.
+#  @returns[Stream@<A@>]
+#   A stream with all values from the given stream followed by followed by
+#   @a[tail].
 <@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
-Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> f) {
-  <@ S@>(S@ empty, (A@, Stream@<A@>) { S@; } items) {
-    ma(f(Unit, empty, items), items);
-  };
+PutStream = <@ A@>(Stream@<A@> a, Lazy@<Stream@<A@>> b) {
+  a.?(empty: b(Unit));
+  Unit@ _ := Put(a.items.head);
+  PutStream(a.items.tail(Unit), b);
 };
 
-# @func[DoM] Monadic Do for streams.
+# @func[Return] Monadic Return for streams.
+#  @arg[@][A@] The type of item on the stream.
+#  @arg[A@][x] The value to return.
+#  @returns[Stream@<A@>] A stream with the single given item.
+<@ A@>(A@) { Stream@<A@>; }
+Return = <@ A@>(A@ x) {
+  Unit@ _ := Put(x);
+  End<A@>;
+};
+
+# @func[Do] Monadic Do for streams.
 #  Applies a function to every element of a stream and streams out the
 #  results.
 #
@@ -46,20 +82,23 @@ Do = <@ A@>(Stream@<A@> ma, Lazy@<Stream@<A@>> f) {
 #  @returns[Stream<B@>]
 #   The list of elements f(a_i) for each a_i in the input stream.
 <@ A@>(Stream@<A@>)<@ B@>((A@) { Stream@<B@>; }) { Stream@<B@>; }
-DoM = <@ A@>(Stream@<A@> stream)<@ B@>((A@) { Stream@<B@>; } f) {
-  <@ S@>(S@ empty, (B@, Stream@<B@>) { S@; } items) {
-    A@ a, Stream@<A@> sa := stream(empty);
-    f(a, DoM(sa, f, empty, items), items);
-  };
+Do = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { Stream@<B@>; } f) {
+  ma.?(empty: End<B@>);
+  Unit@ _ := PutStream(f(ma.items.head));
+  Do(ma.items.tail(Unit), f);
 };
 
-# @func[Put] Output a single value.
-#  @arg[@][A@] The type of values to output.
-#  @arg[A@][v] The value to output.
-#  @returns[Stream@] A computation that outputs the value.
-<@ A@>(A@) { Stream@<A@>; }
-Put = <@ A@>(A@ v)<@ S@>(S@ _empty, (A@, Stream@<A@>) { S@; } items) {
-  items(v, Return<A@>);
+# @func[Map] Map a function over the elements of a stream.
+#  @arg[@][A@] The output type of the original stream.
+#  @arg[Stream@<A@>][stream] The original stream.
+#  @arg[@][B@] The output type of the new stream.
+#  @arg[(A@) { B@; }][f] Function to convert output values.
+#  @return[Stream@<B@>] A new stream that outputs the target output type.
+<@ A@>(Stream@<A@>)<@ B@>((A@) { B@; }) { Stream@<B@>; }
+Map = <@ A@>(Stream@<A@> s)<@ B@>((A@) { B@; } f) {
+  s.?(empty: End<B@>);
+  Unit@ _ := Put(f(s.items.head));
+  Map(s.items.tail(Unit), f);
 };
 
 # @func[ForEach] Iterate over elements of a stream.
@@ -83,22 +122,9 @@ Put = <@ A@>(A@ v)<@ S@>(S@ _empty, (A@, Stream@<A@>) { S@; } items) {
 #  return b
 <@ A@>(Stream@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
 ForEach = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { B@; } body) {
-  A@ head, Stream@<A@> tail := stream(base);
-  ForEach(tail, body(head, base), body);
+  stream.?(empty: base);
+  B@ next = body(stream.items.head, base);
+  ForEach(stream.items.tail(Unit), next, body);
 };
 
-# @func[Map] Map a function over the elements of a stream.
-#  @arg[@][A@] The output type of the original stream.
-#  @arg[@][B@] The output type of the new stream.
-#  @arg[(A@) { B@; }][f] Function to convert output values.
-#  @arg[Stream@<A@>][stream] The original stream.
-#  @return[Stream@<B@>] A new stream that outputs the target output type.
-<@ A@, @ B@>((A@) { B@; }, Stream@<A@>) { Stream@<B@>; }
-Map = <@ A@, @ B@>((A@) { B@; } f, Stream@<A@> s) {
-  <@ S@>(S@ empty, (B@, Stream@<B@>) { S@; } items) {
-    A@ a, Stream@<A@> t := s(empty);
-    items(f(a), Map(f, t));
-  };
-};
-
-@(Stream@, Return, Do, DoM, Put, ForEach, Map);
+@(Stream@, End, Put, PutStream, Return, Do, Map, ForEach);

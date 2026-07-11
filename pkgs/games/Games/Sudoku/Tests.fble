@@ -7,7 +7,7 @@ Eq@ .= /Std/Eq%;
 AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
-Stream@, Return .= /Std/Stream%;
+Stream@, End .= /Std/Stream%;
 Test@, TestResult@, Pass .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
@@ -50,8 +50,8 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
         7: String|7, 8: String|8, 9: String|9);
   };
 
-  Stream@<Char@> space = spaced.?(true: String|' ', false: Return<Char@>);
-  Stream@<Char@> nl = spaced.?(true: StringE|'\n', false: Return<Char@>);
+  Stream@<Char@> space = spaced.?(true: String|' ', false: End<Char@>);
+  Stream@<Char@> nl = spaced.?(true: StringE|'\n', false: End<Char@>);
 
   (Array@<Symbol@>) { Stream@<Char@>; } ShowRow = (Array@<Symbol@> row) {
     /Std/Stream/List%.Concat[

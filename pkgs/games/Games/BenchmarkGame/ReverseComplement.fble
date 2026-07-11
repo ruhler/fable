@@ -8,7 +8,7 @@ IsZero .= /Std/Int/Sign%;
 List@, Items, Append, Reverse, Map .= /Std/List%;
 Maybe@, Default .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Stream@, Put, Do .= /Std/Stream%;
+Stream@, Put, Return .= /Std/Stream%;
 In@ .= /Std/Stream/In%;
 Out@ .= /Std/Stream/Out%;
 String .= /Std/Stream/String%;
@@ -80,14 +80,14 @@ Main = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> in, Out@<Char@, M@> out, List@<Str
 
   # Prints codes to stdout, breaking lines every 60 characters.
   (Int@, String@) { Stream@<Char@>; } OutputCodes = (Int@ n, String@ codes) {
-    codes.?(empty: Put(Ascii.nl));
+    codes.?(empty: Return(Ascii.nl));
 
     IsZero(n).?(true: {
-      Unit@ _ := Do(Put(Ascii.nl));
+      Unit@ _ := Put(Ascii.nl);
       OutputCodes(Int|60, codes);
     });
 
-    Unit@ _ := Do(Put(codes.items.head));
+    Unit@ _ := Put(codes.items.head);
     OutputCodes(Sub(n, Int|1), codes.items.tail);
   };
 

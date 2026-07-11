@@ -26,7 +26,7 @@ Result@ = <@ T@> {
 };
 
 <@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
-  Result@(/Std/Stream%.Return<Char@>, False, Just(x));
+  Result@(/Std/Stream%.End<Char@>, False, Just(x));
 };
 
 # Indicate an error with location and error message.
@@ -38,7 +38,7 @@ Error = <@ T@>(Loc@ l, Stream@<Char@> msg) {
 # Indicate an error with no error message.
 <@ T@> { Result@<T@>; }
 Fail = <@ T@> {
-  Result@(/Std/Stream%.Return<Char@>, True, Nothing<T@>);
+  Result@(/Std/Stream%.End<Char@>, True, Nothing<T@>);
 };
 
 # Assuming the given result is an error, change its type.
@@ -63,7 +63,7 @@ Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
 
   Result@<B@> rb = f(ra.value.just);
   Stream@<Char@> errors = {
-    Unit@ _ := /Std/Stream%.Do(ra.errors);
+    Unit@ _ := /Std/Stream%.PutStream(ra.errors);
     rb.errors;
   };
   Result@(errors, Or(ra.failed, rb.failed), rb.value);

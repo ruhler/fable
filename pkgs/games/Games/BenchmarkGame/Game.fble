@@ -5,7 +5,7 @@ Io@ .= /Std/Io%;
 Success .= /Std/Io/Cli%;
 List@ .= /Std/List%;
 Monad@ .= /Std/Monad%;
-Stream@, Return .= /Std/Stream%;
+Stream@, End .= /Std/Stream%;
 In@ .= /Std/Stream/In%;
 Out@ .= /Std/Stream/Out%;
 NullOut .= /Std/Stream/Null%;
@@ -49,7 +49,7 @@ Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ ex
     In@<Char@, M@> in = /Std/Stream/State%.In(M, s_in);
     Out@<Char@, M@> out = /Std/Stream/State%.Out(M, s_out);
     M@<Unit@> go = game(M, in, out, args);
-    String@ got = ToString(Exec(go, S@(input, Return<Char@>)).out);
+    String@ got = ToString(Exec(go, S@(input, End<Char@>)).out);
     String@ wnt = expected_output;
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   });

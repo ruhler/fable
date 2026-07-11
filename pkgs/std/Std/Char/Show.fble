@@ -12,7 +12,7 @@ IsZero .= /Std/Int/Sign%;
 Items .= /Std/List%;
 Get, Length .= /Std/List/Index%;
 Show@ .= /Std/Show%;
-Do, Return, Put .= /Std/Stream%;
+End, PutStream, Return .= /Std/Stream%;
 String, ToString .= /Std/Stream/String%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
@@ -31,12 +31,12 @@ Show@<Char@> Show = (Char@ x) {
 #   minimum number of leading zeroes needed to have at least 4 hex digits.
 Show@<Char@> Unicode = {
   Show@<Int@> Digit = (Int@ x) {
-    Put(Get(Str|0123456789ABCDEF, x));
+    Return(Get(Str|0123456789ABCDEF, x));
   };
 
   Show@<Int@> Digits = (Int@ x) {
     QR@ qr = Div(x, Int|16);
-    Unit@ _ := Do(IsZero(qr.q).?(true: Return<Char@>, : Digits(qr.q)));
+    Unit@ _ := PutStream(IsZero(qr.q).?(true: End<Char@>, : Digits(qr.q)));
     Digit(qr.r);
   };
 

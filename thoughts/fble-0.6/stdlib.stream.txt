@@ -300,3 +300,151 @@ So, how do I wrap a value S@ as a Stream@<A@>?
 I give up. Let me write it the way I ought to from the start. Without some S@
 intermediate type. Worry about performance later.
 
+---
+
+Here's the baseline performance:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+
+Time: 3:10.39
+Memory: 80904
+
+Now then. Let's rewrite Stream@ type entirely and hope for the best.
+
+Thoughts as I go:
+* Should I rename this to Iter@?
+* I'm getting this weird double f(Unit, Unit) in the implementation of Do.
+* I feel like a stream should be a function from stream to something? Like,
+  you give it the tail? Not sure. It just feels awkward to have Put have the
+  tail be an empty stream, and then first thing concatenate that with whatever
+  we do after the put.
+
+Maybe...
+
+  Stream@ = <@ A@> {
+    # Given the rest of the stream, returns the next element of the stream?
+    Stream@ = (Stream@) { 
+  };
+
+---
+
+Stepping back, because I don't think I have things quite right. I know we've
+been through all this discussion before, but since I don't understand where we
+ended up, let's do it all over again.
+
+We start with List@<A@>. That has two problems:
+1. Append is O(N) instead of constant time.
+2. You have to have computed the entire rest of the list before you can access
+   the first element.
+
+We can address (1) by switching to (List@<A@>) { List@<A@>; }: you give the
+rest of the list, it adds elements to the front of the list.
+
+We address (2) by adding a function call between the head and tail that you
+can chose to call or not. So...
+
+  +(*(A@ head, (Unit@) { List@; } tail) items, Unit@ empty);
+
+Does (2) also address (1)?
+
+  Append a b = {
+    a.?(empty: b);
+    Unit@ _ := Items(head);
+    Append(a.items.tail, b);
+  };
+
+If the first list is empty, it's constant time. If the first list is not
+empty, we allocate a function that captures the tail and passes it along until
+we need it. So we are amortizing the O(N) time for append over the O(N)
+traversal of the list.
+
+Now I don't want to think too hard about how costly it's going to be to
+traverse a list where we have done lots of appends, because we'll be holding
+on to lots of tails? Maybe not. Maybe it's okay.
+
+So let's tentatively say (2) also addresses (1).
+
+Is this proposed structure easy to: produce, modify, and consume? I feel like
+yes?
+
+Notice the difference here: I'm working with the non-lazy stream, rather than
+the lazy one. You always know right away if it's empty or non-empty. It's only
+the tail that you don't know about. Maybe that makes things easier?
+
+Let me try switching to that and see how it feels.
+
+* Return/empty stream is easy. No need to allocate a function. That's nice.
+ - I rather call it 'Empty' though.
+
+Seems like I'm getting confused by Return/Do/Put versus Empty/Append/Items.
+They aren't the same.
+
+Now, with Items helper function, it's really easy to construct a stream
+element by element:
+
+  Unit@ _ := Items(a);
+  Unit@ _ := Items(b);
+  Unit@ _ := Items(c);
+  ...
+
+That's nice.
+
+So Empty, Items, Append all are very nice, straight forward to implement. What
+else do I need?
+
+Note that 'Items' is like Do(Put); Maybe I should call it Put and be done?
+That's how we avoid the weird type for Do and that put returns a stream with
+empty tail. And now we don't have conflict between 'Do' and 'DoM' for naming,
+which is pretty cool.
+
+To avoid confusion between Stream@ and List@, let me use names:
+  Return, Put, Append.
+
+Wait. I kind of wish Append took the second value lazily. Maybe call it
+PutAll?
+
+Cool. So producing these kinds of streams feels really nice, straight forward,
+and easy. Everything feels like it makes sense so far.
+
+Time to try consuming them.
+
+Looks good. We apply Unit when we need the next elements.
+
+Next test: re-implementing /Std/Map%.
+
+It's super nice. So simple. No need for any of this boiler plate stuff. We do
+still end up splitting into two functions: the recursive helper one that
+operates on streams and the one that gets the stream of bits from data.
+
+I think this is the right approach. Let's keep moving forward with it and see
+where we end up.
+
+---
+
+With this new type, the code feels great. Everything is direct and simple and
+exactly as I would want to write it.
+
+Now, let's see if the tests pass, including my new infinite list as a stream
+test, what the impact is on performance.
+
+Well, clearly I broke something. I suspect a minor bug. Something to do with
+Showing numbers maybe?
+
+Compiled.Std.Char.Show.Unicode.NoPad
+  @FAIL: Expected 'U+2260', but got 'U+0260'
+  @[Compiled.Std.Int.Show.P]: @FAIL: Expected '1029384756', but got '029384756'
+  @[Compiled.Std.Int.Show.N]: @FAIL: Expected '-1029384756', but got '-029384756'
+
+Let's fix those first.
+
+Done. Works great. All tests are passing. Let's check performance.
+
+Time: 3:10.39 ==> 4:09.79
+Memory: 80904 ==> 41344
+
+Well. That's a little sad. Interesting.
+
+But! I declare, the code benefits are so overwhelming, if making the code so
+much better hurts performance so much, that's a problem with performance not a
+problem with code.
+

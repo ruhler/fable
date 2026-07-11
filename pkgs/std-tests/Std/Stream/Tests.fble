@@ -1,16 +1,17 @@
 
 Char@ .= /Std/Char%;
 OnAscii, Char, Str .= /Std/Char/Ascii%;
-FormatE, String .= /Std/Char/Ascii/Stream%;
+String .= /Std/Char/Ascii/Stream%;
 AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
 List@, Items, Empty .= /Std/List%;
 Stream@, ForEach .= /Std/Stream%;
+ToStream .= /Std/Stream/List%;
 String@ .= /Std/String%;
 Test@ .= /Std/Test%;
 TestSuite = OnAscii(/Std/Test%.TestSuite);
 Test = OnAscii(/Std/Test%.Test);
-Unit@ .= /Std/Unit%;
+Unit@, Unit .= /Std/Unit%;
 
 Test@ Tests = TestSuite|Stream[
   Test|ForEach({
@@ -34,36 +35,22 @@ Test@ Tests = TestSuite|Stream[
 
     <@ A@>(Stream@<A@>)<@ B@>(B@, (A@, B@) { For@<B@>; }) { B@; }
     For = <@ A@>(Stream@<A@> stream)<@ B@>(B@ base, (A@, B@) { For@<B@>; } body) {
-      S@ = (B@) { B@; };
-      S@ empty = (B@ b) { b; };
-      items = (A@ x, Stream@<A@> t, B@ b) {
-        For@<B@> fb = body(x, b);
-        fb.?(continue: For(t, fb.continue, body));
-        fb.break;
-      };
-      stream(empty, items, base);
-    };
-
-    <@ A@>(List@<A@>) { Stream@<A@>; }
-    Puts = <@ A@>(List@<A@> values) {
-      <@ S@>(S@ empty, (A@, Stream@<A@>) { S@; } items) {
-        values.?(empty: empty);
-        Unit@ _ = /Std/Stream/Debug%.ToDebug(FormatE|'put\n'[]);
-        items(values.items.head, Puts(values.items.tail));
-      };
+      stream.?(empty: base);
+      For@<B@> fb = body(stream.items.head, base);
+      fb.?(break: fb.break);
+      For(stream.items.tail(Unit), fb.continue, body);
     };
 
     List@<Char@> list = Items(Char|a, Items(Char|b, Items(Char|c, list)));
-    Stream@<Char@> stream = Puts(list);
+    Stream@<Char@> stream = ToStream(list);
 
     String@ got = {
       Char@ c, String@ s := For(stream, Str|'');
-      Unit@ _ = /Std/Stream/Debug%.ToDebug(FormatE|'got %s'[/Std/Char/Show%.Show(c)]);
       String@ ns = Items(c, s);
       /Std/Char/Eq%.Eq(c, Char|b).?(true: Break(ns));
       Continue(ns);
     };
-    String@ wnt = Str|bb;
+    String@ wnt = Str|ba;
     AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
   }),
 

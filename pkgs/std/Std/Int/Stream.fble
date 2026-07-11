@@ -3,7 +3,7 @@
 
 Int@, Incr .= /Std/Int%;
 Lt .= /Std/Int/Cmp%;
-Stream@, Return, Do, Put .= /Std/Stream%;
+Stream@, End, Put .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # @func[Range] A stream of integers in the range [lo, hi).
@@ -12,8 +12,8 @@ Unit@ .= /Std/Unit%;
 #  @returns[Stream@<Int@>] The stream of integers from lo to hi.
 (Int@, Int@) { Stream@<Int@>; }
 Range = (Int@ lo, Int@ hi) {
-  Lt(lo, hi).?(false: Return<Int@>);
-  Unit@ _ := Do(Put(lo));
+  Lt(lo, hi).?(false: End<Int@>);
+  Unit@ _ := Put(lo);
   Range(Incr(lo), hi);
 };
 

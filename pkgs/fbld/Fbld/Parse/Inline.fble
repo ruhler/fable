@@ -9,7 +9,7 @@ Int .= /Std/Int/Lit%;
 IsZero .= /Std/Int/Sign%;
 List@, Items .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
-C(.Put) .= /Std/Stream%;
+C(.Return) .= /Std/Stream%;
 String@ .= /Std/String%;
 Unit@, Unit .= /Std/Unit%;
 

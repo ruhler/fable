@@ -5,7 +5,7 @@ Char@ .= /Std/Char%;
 Format, String .= /Std/Char/Ascii/Stream%;
 Map@, ForEach .= /Std/Map%;
 Show@ .= /Std/Show%;
-Stream@, Do .= /Std/Stream%;
+Stream@, PutStream .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # @func[Show] Show a Map@ value.
@@ -17,9 +17,9 @@ Unit@ .= /Std/Unit%;
 #  @returns[Stream@] Output that shows the contents of the map.
 <@ K@>(Show@<K@>)<@ V@>(Show@<V@>) { Show@<Map@<K@, V@>>; }
 Show = <@ K@>(Show@<K@> show_key)<@ V@>(Show@<V@> show_value, Map@<K@, V@> map) {
-  Unit@ _ := Do(ForEach(map, String|'{ ',
+  Unit@ _ := PutStream(ForEach(map, String|'{ ',
     (K@ k, V@ v, Stream@<Char@> shown) {
-      Unit@ _ := Do(shown);
+      Unit@ _ := PutStream(shown);
       Format|'%s => %s; '[show_key(k), show_value(v)];
     }));
   String|'}';

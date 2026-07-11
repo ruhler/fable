@@ -2,7 +2,7 @@
 Char@ .= /Std/Char%;
 Format, FormatE, String .= /Std/Char/Ascii/Stream%;
 Concat .= /Std/Stream/List%;
-Stream@, Return .= /Std/Stream%;
+Stream@, End .= /Std/Stream%;
 
 Car@, Cars@ .= /Computrainer/Car%;
 Dir@ .= /Computrainer/Dir%;
@@ -24,7 +24,7 @@ Dir = (Dir@ d) {
 
 (Gates@) { Stream@<Char@>; }
 Gates = (Gates@ gates) {
-    Grid<Gate@>.ForEach(gates, Return<Char@>, (Coord@ c, Gate@ g, Stream@<Char@> out) {
+    Grid<Gate@>.ForEach(gates, End<Char@>, (Coord@ c, Gate@ g, Stream@<Char@> out) {
         Stream@<Char@> head = Format|'gate %s %s '[
             /Std/Int/Show%.Show(c.x),
             /Std/Int/Show%.Show(c.y)
@@ -45,7 +45,7 @@ Gates = (Gates@ gates) {
 
 (Cars@) { Stream@<Char@>; }
 Cars = (Cars@ cars) {
-    Grid<Car@>.ForEach(cars, Return<Char@>, (Coord@ c, Car@ car, Stream@<Char@> out) {
+    Grid<Car@>.ForEach(cars, End<Char@>, (Coord@ c, Car@ car, Stream@<Char@> out) {
         FormatE|'%scar %s %s %s\n'[
             out,
             /Std/Int/Show%.Show(c.x),
@@ -56,7 +56,7 @@ Cars = (Cars@ cars) {
 
 (Grid@<Dir@>) { Stream@<Char@>; }
 Routing = (Grid@<Dir@> routing) {
-    Grid<Dir@>.ForEach(routing, Return<Char@>, (Coord@ c, Dir@ dir, Stream@<Char@> out) {
+    Grid<Dir@>.ForEach(routing, End<Char@>, (Coord@ c, Dir@ dir, Stream@<Char@> out) {
         FormatE|'%srouting %s %s %s\n'[
             out,
             /Std/Int/Show%.Show(c.x),

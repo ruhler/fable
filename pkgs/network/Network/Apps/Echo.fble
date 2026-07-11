@@ -14,7 +14,7 @@ List@, List .= /Std/List%;
 Any .= /Std/List/Search%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
-Stream@, Put .= /Std/Stream%;
+Stream@, Return .= /Std/Stream%;
 In@ .= /Std/Stream/In%;
 Out@ .= /Std/Stream/Out%;
 S(.String) .= /Std/Stream/String%;
@@ -98,7 +98,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   ForwardAll = (In@<Int@, M@> in, Out@<Int@, M@> out) {
     Maybe@<Int@> mb := m.do(in);
     mb.?(nothing: m.return(Unit));
-    Unit@ _ := m.do(out(Put(mb.just)));
+    Unit@ _ := m.do(out(Return(mb.just)));
     ForwardAll(in, out);
   };
 

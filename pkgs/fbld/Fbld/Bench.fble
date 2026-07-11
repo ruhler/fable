@@ -7,7 +7,7 @@ Lazy .= /Std/Lazy%;
 List@, List .= /Std/List%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 State@, Modify, Gets .= /Std/State%;
-Stream@, Return .= /Std/Stream%;
+Stream@, End .= /Std/Stream%;
 In@ .= /Std/Stream/In%;
 Out@ .= /Std/Stream/Out%;
 NullOut = /Std/Stream/Null%.NullOut<Char@>;
@@ -58,7 +58,7 @@ Test@ Bench = Test|Fbld({
   };
 
   Maybe@<String@> wnt = Nothing<String@>;
-  Maybe@<String@> got = Eval(bench, S@(/Fbld/Bench/Input%, Return<Char@>));
+  Maybe@<String@> got = Eval(bench, S@(/Fbld/Bench/Input%, End<Char@>));
 
   AssertEquals(
     /Std/Maybe/Eq%.Eq(/Std/String/Eq%.Eq),

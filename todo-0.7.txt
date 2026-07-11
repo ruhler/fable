@@ -2,6 +2,21 @@ Fble 0.7 TODO
 =============
 Things to consider doing for the fble-0.7 release.
 
+* Make programs run twice as fast.
+ - Use native stack for stack allocations.
+ - Return stack allocated value directly instead of gc reallocating if it
+   lives on caller's stack frame?
+ - Inline FbleCall into aarch64 backend.
+ - Specialize call logic based on what we can figure out statically in terms
+   of number of args expected and tail/non-tail possibilities.
+ - Avoid redundant undef checks on values based on static info.
+ - Use a special ref value instead of NULL to represent undefined values?
+ - Something to reduce overhead associated with streams.
+   See thoughts/fble-0.6/stdlib.map.txt for analysis and discussion.
+   See thoughts/fble-0.6/stdlib.stream.txt for performance costs of Stream@.
+
+* Reimplement fbld in rust?
+
 * Switch to sdl3?
 * Standardize /App%
  - Add dpi as separate from width and height?
@@ -31,18 +46,6 @@ Things to consider doing for the fble-0.7 release.
 
 * Design a package management / versioning scheme?
  - see thoughts/fble-0.5/modular_compilation.txt for context.
-
-* Make programs run twice as fast.
- - Use native stack for stack allocations.
- - Return stack allocated value directly instead of gc reallocating if it
-   lives on caller's stack frame?
- - Inline FbleCall into aarch64 backend.
- - Specialize call logic based on what we can figure out statically in terms
-   of number of args expected and tail/non-tail possibilities.
- - Avoid redundant undef checks on values based on static info.
- - Use a special ref value instead of NULL to represent undefined values?
- - Something to reduce overhead of use of 'Do'
-   See thoughts/fble-0.6/stdlib.map.txt for analysis and discussion.
 
 * Fix potential GC gen overflow?
  - See thoughts/fble-0.3/stack_alloc.txt for details.
