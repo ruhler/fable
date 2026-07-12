@@ -1,23 +1,8 @@
 # @module[/Std/Stream/For%]
 #  For loop iteration over streams
 
-Control@, For@, ForEach@ .= /Std/For%;
+ForEach@ .= /Std/For%;
 Stream@ .= /Std/Stream%;
-
-# @func[For] Iterate over elements of a stream.
-#  @arg[@][A@] The type of element on the stream.
-#  @arg[Stream<A@>][stream] The stream to iterate over.
-#  @returns[For<A@>] A for loop iteration over the stream elements.
-<@ A@>(Stream@<A@>) { For@<A@>; }
-For = <@ A@>(Stream@<A@> stream)<@ S@>(S@ s, (S@, A@) { Control@<S@>; } body) {
-  S@ s := {
-    S@ s, A@ x, (S@) { S@; } r := stream(s);
-    Control@<S@> c = body(s, x);
-    c.?(break: c.break);
-    r(c.continue);
-  };
-  s;
-};
 
 # @func[ForEach] Iterate over elements of a stream.
 #  @arg[@][A@] The type of element on the stream.
@@ -32,4 +17,4 @@ ForEach = <@ A@>(Stream@<A@> stream)<@ S@>(S@ s, (S@, A@) { S@; } body) {
   s;
 };
 
-@(For, ForEach);
+@(ForEach);
