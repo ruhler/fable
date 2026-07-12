@@ -1,30 +1,31 @@
 # @module[/Std/Int/Data%]
 #  The Data@ instance for Int@.
 
-Data@, 0, 1 .= /Std/Data%;
+Data@, Bit@, 0, 1 .= /Std/Data%;
 Int@ .= /Std/Int%;
-Put, Return .= /Std/Stream%;
-Unit@ .= /Std/Unit%;
 
 # @func[Data] Convert an Int@ to a data bit stream.
 #  @arg[Int@][x] The integer to convert.
 #  @returns[Stream@<Bit@>] The stream of bits describing the Int@.
 Data@<Int@>
 Data = (Int@ x) {
-  x.?(
-    n: {
-      Unit@ _ := Put(0);
-      Unit@ _ := Put(0);
-      /Std/Int/IntP/Data%.DataR(x.n);
-    },
-    0: {
-      Unit@ _ := Put(0);
-      Return(1);
-    },
-    p: {
-      Unit@ _ := Put(1);
-      /Std/Int/IntP/Data%.Data(x.p);
-    });
+  <@ S@>(S@ s)<@ R@>((S@, Bit@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+    x.?(
+      n: {
+        S@ s := onItem(s, 0);
+        S@ s := onItem(s, 0);
+        /Std/Int/IntP/Data%.DataR(x.n, s, onItem, onEmpty);
+      },
+      0: {
+        S@ s := onItem(s, 0);
+        S@ s := onItem(s, 1);
+        onEmpty(s);
+      },
+      p: {
+        S@ s := onItem(s, 1);
+        /Std/Int/IntP/Data%.Data(x.p, s, onItem, onEmpty);
+      });
+  };
 };
 
 @(Data);

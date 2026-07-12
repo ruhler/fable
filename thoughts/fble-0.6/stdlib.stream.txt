@@ -1649,3 +1649,100 @@ Time: 3:46.03
 Memory: 80992
 
 I'm liking this Stream@ thing. Let's stick with it.
+
+It's interesting performance wise that Sat solver is still taking up a lot
+more than it used to. I wonder if this means we can get performance better
+than we used to?
+
+Here are where we are allocating a bunch of functions:
+
+   18.092% 109 [6]/Std/Stream%.Put
+   17.1%   98  [7]PartialApply
+   17.1%   98  [8]/Std/Stream%.Puts
+   14.058% 84  [9]/Std/Int/IntP/Data%.Data.NumBits
+   12.015% 70  [10]/Std/Int/IntP/Data%.Data.RawBits
+   2.043%  14  [11]/Std/Int/IntP/Data%.Data
+   2.025%  13  [12]/Std/Int/Data%.Data
+
+I'm not sure how to navigate the profile in the right way. But seems like if
+we can find who is calling Puts and Put so much and inline those instead, that
+should point is in the right direction?
+
+But if I look at Put and Puts, it shows us who is consuming the streams, not
+who is producing the streams.
+
+     16.051% 18 [11]/Sat/Solver%.RemoveClauseFromVar
+
+It's all the sat solver and maps stuff. So let me clean up the instances of
+Data@ for everything used by the sat solver to avodi use of Put or Puts. And I
+bet that solves my performance problem?
+
+How's this for a sequence?
+
+   99.023% 22880 [5]TailCall
+   30.046% 7024  [6]/Sat/Solver%.Solve.Search
+   30.045% 7023  [7]FbleCall
+   23.084% 5498  [8]/Sat/Solver%.Solve.Simplify
+   23.083% 5496  [9]FbleCall
+   15.095% 3678  [10]/Sat/Solver%.Assign
+   15.094% 3676  [11]FbleCall
+   15.093% 3674  [12]TailCall
+   15.084% 3654  [13]/Std/Map%.ForEach
+   15.080% 3644  [14]FbleCall
+   15.076% 3635  [15]TailCall
+   15.071% 3623  [16]/Sat/Solver%.RemoveClause
+   15.068% 3617  [17]FbleCall
+   13.024% 3054  [18]TailCall
+   10.049% 2419  [19]/Std/List/For%.ForEach
+   10.045% 2410  [20]FbleCall
+   10.043% 2406  [21]TailCall
+   10.042% 2403  [22]/Sat/Solver%.RemoveClauseFromVar
+
+So, where before we had:
+
+  Unit@ _ := Put(0);
+  Unit@ _ := Put(0);
+  /Std/Int/IntP/Data%.DataR(x.n);
+
+Now we have:
+
+  S@ s := onItem(s, 0);
+  S@ s := onItem(s, 0);
+  /Std/Int/IntP/Data%.DataR(x.n, s, onItem, onEmpty);
+
+---
+
+Can I think of better names for onItem and onEmpty?
+
+Mostly we use the names when constructing stream values. In those cases... how
+about: put and finish? Or put and end?
+
+  S@ s := onItem(s, 0);
+  S@ s := onItem(s, 1);
+  onEmpty(s);
+
+  S@ s := put(s, 0);
+  S@ s := put(s, 1);
+  finish(s);
+
+  S@ s := put(s, 0);
+  S@ s := put(s, 1);
+  end(s);
+
+  S@ s := put(s, 0);
+  S@ s := put(s, 1);
+  return(s);
+
+I guess I want different names for building versus consuming. When producing:
+put and return sound nice. When consuming: ... actually, put and return are
+still okay. Maybe go with that.
+
+After updating instance of Data@ for Int@:
+
+Time: 3:32.90
+Memory: 81120
+
+So not as much impact as you might think. That's interesting.
+
+I wonder if the issue is me re-allocating when you do a removal that doesn't
+actually remove something. Worth trying. But not right now.

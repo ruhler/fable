@@ -5,8 +5,7 @@
 
 Data@, Bit@, 0, 1 .= /Std/Data%;
 IntP@ .= /Std/Int/IntP%;
-Stream@, End, Put, Puts, Return, Map .= /Std/Stream%;
-Unit@ .= /Std/Unit%;
+Stream@, Map .= /Std/Stream%;
 
 # @func[Data] Convert an IntP@ to a data bit stream.
 #  The lexicographical order of the generated bit streams matches the natural
@@ -32,25 +31,49 @@ Data@<IntP@> Data = {
   # using a unary encoding: 0, 10, 110, 1110, ...
   (IntP@) { Stream@<Bit@>; }
   NumBits = (IntP@ x) {
-    x.?(
-      1: Return(0),
-      2p0: { Unit@ _ := Put(1); NumBits(x.2p0); },
-      2p1: { Unit@ _ := Put(1); NumBits(x.2p1); });
+    <@ S@>(S@ s)<@ R@>((S@, Bit@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+      x.?(
+        1: {
+          S@ s := onItem(s, 0);
+          onEmpty(s);
+        },
+        2p0: {
+          S@ s := onItem(s, 1);
+          NumBits(x.2p0, s, onItem, onEmpty);
+        },
+        2p1: {
+          S@ s := onItem(s, 1);
+          NumBits(x.2p1, s, onItem, onEmpty);
+        });
+    };
   };
 
   # Output the raw bits of the number in order, not including the most
   # significant bit.
   (IntP@) { Stream@<Bit@>; }
   RawBits = (IntP@ x) {
-    x.?(
-      1: End<Bit@>,
-      2p0: { Unit@ _ := Puts(RawBits(x.2p0)); Return(0); },
-      2p1: { Unit@ _ := Puts(RawBits(x.2p1)); Return(1); });
+    <@ S@>(S@ s)<@ R@>((S@, Bit@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+      x.?(
+        1: onEmpty(s),
+        2p0: {
+          S@ s := RawBits(x.2p0, s, onItem);
+          S@ s := onItem(s, 0);
+          onEmpty(s);
+        },
+        2p1: {
+          S@ s := RawBits(x.2p1, s, onItem);
+          S@ s := onItem(s, 1);
+          onEmpty(s);
+        });
+    };
   };
 
   (IntP@ x) {
-    Unit@ _ := Puts(NumBits(x));
-    RawBits(x);
+    <@ S@>(S@ s)<@ R@>((S@, Bit@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+      S@ s := NumBits(x, s, onItem);
+      S@ s := RawBits(x, s, onItem);
+      onEmpty(s);
+    };
   };
 };
 
