@@ -3,7 +3,7 @@ Bool@, True, False .= /Std/Bool%;
 List@, List .= /Std/List%;
 ForEach .= /Std/List/For%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
-ToStream .= /Std/Stream/List%;
+Each .= /Std/Stream/List%;
 Unit@, Unit .= /Std/Unit%;
 
 # The 9 symbols used in sudoku: 1 through 9.
@@ -300,7 +300,7 @@ SolveFrom = (Board@ board, List@<CellId@> mfrom) {
       # We don't know the symbol for this cell yet. Try all possible
       # options until we've found a solution to the puzzle.
       Unit@ _ := {
-        Unit@ _, Symbol@ s, (Unit@) { Maybe@<Board@>; } r := ToStream(Symbols, Unit);
+        Unit@ _, Symbol@ s, (Unit@) { Maybe@<Board@>; } r := Each(Symbols, Unit);
         cell(s).?(false: r(Unit));
         Maybe@<Board@> solved = SolveFrom(ApplyXS(board, Assign(from, s)), next);
         solved.?(just: solved);

@@ -8,7 +8,7 @@ Maybe@ .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@, End, Put, Puts .= /Std/Stream%;
 In@ .= /Std/Stream/In%;
-ToStream, ToList .= /Std/Stream/List%;
+Each, ToList .= /Std/Stream/List%;
 String@ .= /Std/String%;
 IsNewline .= /Std/String/Lines%;
 Unit@ .= /Std/Unit%;
@@ -18,7 +18,7 @@ Unit@ .= /Std/Unit%;
 #  @returns[Output] A computation that outputs the string.
 (String@) { Stream@<Char@>; }
 String = (String@ s) {
-  ToStream(s);
+  Each(s);
 };
 
 # @func[Lines] Output a sequence of lines.

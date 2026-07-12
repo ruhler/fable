@@ -5,7 +5,7 @@ String .= /Std/Char/Ascii/Stream%;
 AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
 List@, Empty, Items .= /Std/List%;
-ToStream .= /Std/Stream/List%;
+Each .= /Std/Stream/List%;
 Stream@, For .= /Std/Stream%;
 String@ .= /Std/String%;
 Test@ .= /Std/Test%;
@@ -20,7 +20,7 @@ Test@ Tests = TestSuite|Stream[
     # Verify we can construct and partially iterate over elements of an
     # infinite stream.
     List@<Char@> list = Items(Char|a, Items(Char|b, Items(Char|c, list)));
-    Stream@<Char@> stream = ToStream(list);
+    Stream@<Char@> stream = Each(list);
 
     String@ got = {
       String@ s := {

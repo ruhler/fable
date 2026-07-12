@@ -16,7 +16,7 @@ Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 Stream@, Return .= /Std/Stream%;
 In@ .= /Std/Stream/In%;
-ToStream .= /Std/Stream/List%;
+Each .= /Std/Stream/List%;
 
 # Encodes a character as a sequence of UTF-8 encoded bytes.
 (Char@) { Stream@<Byte@>; }
@@ -29,14 +29,14 @@ Encode = (Char@ c) {
 
   # 0x00000080 - 0x000007FF:
   #        110xxxxx 10xxxxxx
-  Le(v, Hex|7FF).?(true: ToStream[
+  Le(v, Hex|7FF).?(true: Each[
     Add(Hex|C0, Shr(v, Int|6)),
     Add(Hex|80, Mod(v, Hex|40))
   ]);
 
   # 0x00000800 - 0x0000FFFF:
   #        1110xxxx 10xxxxxx 10xxxxxx
-  Le(v, Hex|FFFF).?(true: ToStream[
+  Le(v, Hex|FFFF).?(true: Each[
     Add(Hex|E0, Shr(v, Int|12)),
     Add(Hex|80, Mod(Shr(v, Int|6), Hex|40)),
     Add(Hex|80, Mod(v, Hex|40))
@@ -44,7 +44,7 @@ Encode = (Char@ c) {
 
   # 0x00010000 - 0x001FFFFF:
   #        11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-  Le(v, Hex|1FFFFF).?(true: ToStream[
+  Le(v, Hex|1FFFFF).?(true: Each[
     Add(Hex|F0, Shr(v, Int|18)),
     Add(Hex|80, Mod(Shr(v, Int|12), Hex|40)),
     Add(Hex|80, Mod(Shr(v, Int|6), Hex|40)),
@@ -53,7 +53,7 @@ Encode = (Char@ c) {
 
   # 0x00200000 - 0x03FFFFFF:
   #        111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-  Le(v, Hex|3FFFFFF).?(true: ToStream[
+  Le(v, Hex|3FFFFFF).?(true: Each[
     Add(Hex|F8, Shr(v, Int|24)),
     Add(Hex|80, Mod(Shr(v, Int|18), Hex|40)),
     Add(Hex|80, Mod(Shr(v, Int|12), Hex|40)),
@@ -63,7 +63,7 @@ Encode = (Char@ c) {
 
   # 0x04000000 - 0x7FFFFFFF:
   #        1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-  Le(v, Hex|7FFFFFFF).?(true: ToStream[
+  Le(v, Hex|7FFFFFFF).?(true: Each[
     Add(Hex|FC, Shr(v, Int|30)),
     Add(Hex|80, Mod(Shr(v, Int|24), Hex|40)),
     Add(Hex|80, Mod(Shr(v, Int|18), Hex|40)),

@@ -5,15 +5,15 @@ List@, Empty, Items .= /Std/List%;
 Stream@, End, Put, Puts .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
-# @func[ToStream] Convert a list to as stream.
+# @func[Each] Visit each element of a list as a stream.
 #  @arg[@][A@] The type of element on the list.
 #  @arg[List@<A@>][values] The list to convert.
 #  @returns[Stream@<A@>] A stream of the values in the list.
 <@ A@>(List@<A@>) { Stream@<A@>; }
-ToStream = <@ A@>(List@<A@> values) {
+Each = <@ A@>(List@<A@> values) {
   values.?(empty: End<A@>);
   Unit@ _ := Put(values.items.head);
-  ToStream(values.items.tail);
+  Each(values.items.tail);
 };
 
 # @func[Concat] Output a sequence of computations.
@@ -40,4 +40,4 @@ ToList = <@ A@>(Stream@<A@> stream) {
   Empty<A@>;
 };
 
-@(ToStream, Concat, ToList);
+@(Each, Concat, ToList);
