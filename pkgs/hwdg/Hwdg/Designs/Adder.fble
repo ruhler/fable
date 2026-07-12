@@ -1,5 +1,5 @@
 
-List@, List, Empty, Items, Append .= /Std/List%;
+List@, List, Empty, Items, Append, ForEach .= /Std/List%;
 
 Addr@ .= /Hwdg/Addr%;
 Build@, Return, Do, Addr .= /Hwdg/Build%;
@@ -56,7 +56,7 @@ Adder1 = (Adder@ ifc) {
 (Adder@) { Build@<Design@>; }
 Adder = (Adder@ ifc) {
     # Instantiate N 1-bit adders, connected together via cout => cin.
-    List@<MAddr@> cs := Do(/Std/List/For%.ForEach(
+    List@<MAddr@> cs := Do(ForEach(
         ifc.a.items.tail, Return(Empty<MAddr@>),
         (Build@<List@<MAddr@>> mkcs, MAddr@ _) {
             Addr@ data := Do(Addr(Data.0));
@@ -82,7 +82,7 @@ Adder = (Adder@ ifc) {
     };
 
     List@<Adder@> bits = Zip(ifc.a, ifc.b, cins, ifc.z, couts);
-    List@<Design@> designs := Do(/Std/List/For%.ForEach(bits, Return(Empty<Design@>),
+    List@<Design@> designs := Do(ForEach(bits, Return(Empty<Design@>),
         (Build@<List@<Design@>> mk, Adder@ adder) {
             Design@ head := Do(Adder1(adder));
             List@<Design@> tail := Do(mk);

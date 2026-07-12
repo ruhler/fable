@@ -3,8 +3,7 @@ Bool@, True, False .= /Std/Bool%;
 Int@, Add, Sub .= /Std/Int%;
 Lt, Gt .= /Std/Int/Cmp%;
 Int .= /Std/Int/Lit%;
-List@, Items, Empty .= /Std/List%;
-ForEach .= /Std/List/For%;
+List@, Items, Empty, ForEach .= /Std/List%;
 Length .= /Std/List/Index%;
 Unit@ .= /Std/Unit%;
 

@@ -6,6 +6,7 @@ String, StringE .= /Std/Char/Ascii/Stream%;
 Eq@ .= /Std/Eq%;
 AssertEquals .= /Std/Eq/Assert%;
 Lazy .= /Std/Lazy%;
+ForEach .= /Std/List%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Stream@, End .= /Std/Stream%;
 Test@, TestResult@, Pass .= /Std/Test%;
@@ -34,7 +35,7 @@ Array@ = <@ T@>(Symbol@){ T@; };
 
 <@ T@>((T@, T@) { Bool@; }, Array@<T@>, Array@<T@>) { Bool@; }
 EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
-  Bool@ p, Symbol@ s := /Std/List/For%.ForEach(Symbols, True);
+  Bool@ p, Symbol@ s := ForEach(Symbols, True);
   And(p, eq(a(s), b(s)));
 };
 

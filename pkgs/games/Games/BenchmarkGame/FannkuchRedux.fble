@@ -5,8 +5,7 @@ Max .= /Std/Int/Cmp%;
 Eq .= /Std/Int/Eq%;
 Int .= /Std/Int/Lit%;
 IsZero .= /Std/Int/Sign%;
-List@, List, Items, Empty, Append, Last, Init .= /Std/List%;
-ForEach .= /Std/List/For%;
+List@, List, Items, Empty, Append, Last, Init, ForEach .= /Std/List%;
 Monad@ .= /Std/Monad%;
 Unit@, Unit .= /Std/Unit%;
 

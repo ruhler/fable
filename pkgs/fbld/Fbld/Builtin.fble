@@ -1,6 +1,6 @@
 
 Str .= /Std/Char/Ascii%;
-List@ .= /Std/List%;
+List@, ForEach .= /Std/List%;
 String@ .= /Std/String%;
 
 Impl@ .= /Fbld/Markup%;
@@ -11,7 +11,7 @@ Insert = /Fbld/Env%.Insert<Impl@>;
 Builtin@ = *(String@ name, Impl@ impl);
 
 (List@<Builtin@>) { Env@; } Builtins = (List@<Builtin@> builtins) {
-  Env@ e, Builtin@ x := /Std/List/For%.ForEach(builtins, Empty);
+  Env@ e, Builtin@ x := ForEach(builtins, Empty);
   Insert(e, x.name, x.impl);
 };
 

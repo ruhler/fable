@@ -3,7 +3,7 @@ Bool@ .= /Std/Bool%;
 Ascii@, Char, Str .= /Std/Char/Ascii%;
 Int@ .= /Std/Int%;
 Int .= /Std/Int/Lit%;
-List@ .= /Std/List%;
+List@, ForEach .= /Std/List%;
 Get .= /Std/List/Index%;
 Split .= /Std/List/Search%;
 String@ .= /Std/String%;
@@ -113,7 +113,7 @@ Routing = (List@<String@> args, Model@ m) {
 (String@) { Model@; }
 Model = (String@ lines) {
   Model@ empty = /Computrainer/Model%.Model(Grid<Gate@>.Empty, Grid<Car@>.Empty);
-  Model@ m, String@ line := /Std/List/For%.ForEach(SplitLines(lines), empty);
+  Model@ m, String@ line := ForEach(SplitLines(lines), empty);
   List@<String@> args = Split(line, /Std/Char/Eq%.Eq(Char|' '));
   args.?(empty: m);
 

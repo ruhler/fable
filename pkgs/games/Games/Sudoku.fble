@@ -1,7 +1,6 @@
 
 Bool@, True, False .= /Std/Bool%;
-List@, List .= /Std/List%;
-ForEach .= /Std/List/For%;
+List@, List, ForEach .= /Std/List%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Each .= /Std/Stream/List%;
 Unit@, Unit .= /Std/Unit%;

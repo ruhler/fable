@@ -1,7 +1,6 @@
 
 Data@, Enum, Struct .= /Std/Data%;
-List@, List .= /Std/List%;
-ForEach .= /Std/List/For%;
+List@, List, ForEach .= /Std/List%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Unit .= /Std/Unit%;
 Board@, Player@, Position@, Result@, Square@,

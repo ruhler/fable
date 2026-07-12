@@ -2,6 +2,7 @@
 Bool@, True, False .= /Std/Bool%;
 Int@, Add .= /Std/Int%;
 Int .= /Std/Int/Lit%;
+ForEach .= /Std/List%;
 StartsWith .= /Std/List/Eq%;
 
 Sample@, Sequence@, Profile@ .= /Pprof/Profile%;
@@ -10,7 +11,7 @@ MetricOf .= /Pprof/Query/Util%;
 # Returns the total number of samples in a profile.
 (Profile@) { Int@; }
 Total = (Profile@ profile) {
-  Int@ sum, Sample@ sample := /Std/List/For%.ForEach(profile.samples, Int|0);
+  Int@ sum, Sample@ sample := ForEach(profile.samples, Int|0);
   Add(sum, MetricOf(sample.values));
 };
 
@@ -24,7 +25,7 @@ Contains = (Profile@ profile, Sequence@ needle) {
     Find(haystack.items.tail, needle);
   };
 
-  Int@ sum, Sample@ sample := /Std/List/For%.ForEach(profile.samples, Int|0);
+  Int@ sum, Sample@ sample := ForEach(profile.samples, Int|0);
   Find(sample.sequence, needle).?(false: sum);
   Add(sum, MetricOf(sample.values));
 };

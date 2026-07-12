@@ -7,7 +7,7 @@ Int .= /Std/Int/Lit%;
 UpTo .= /Std/Int/Random%;
 IsZero .= /Std/Int/Sign%;
 Range .= /Std/Int/Stream%;
-List@, Items, List .= /Std/List%;
+List@, Items, List, ForEach .= /Std/List%;
 Take .= /Std/List/Index%;
 For .= /Std/Stream%;
 
@@ -37,7 +37,7 @@ Eval .= /Std/State/Pure%;
     Map@ vars := M.do({
       List@<Var@> list := M.do(/SatGame/Var/Rand%.Vars(M, Rng, params.num_vars));
       S@ = *(Int@ i, Map@ map);
-      Map@ map = /Std/List/For%.ForEach(list, S@(Int|0, Empty),
+      Map@ map = ForEach(list, S@(Int|0, Empty),
         (S@ s, Var@ vid) {
           S@(Incr(s.i), Put(s.map, s.i, vid));
         }).map;

@@ -4,7 +4,7 @@ Format, String .= /Std/Char/Ascii/Stream%;
 Incr .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 Range .= /Std/Int/Stream%;
-List@, List, Empty, Items, Append .= /Std/List%;
+List@, List, Empty, Items, Append, ForEach .= /Std/List%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Show@ .= /Std/Show%;
 For .= /Std/Stream%;
@@ -79,7 +79,7 @@ Clause = {
 
   # Removes a variable from a clause.
   (VarId@, Clause@) { Clause@; } RemoveVar = (VarId@ vid, Clause@ c) {
-    List@<Var@> vars, Var@ v := /Std/List/For%.ForEach(c, Empty<Var@>);
+    List@<Var@> vars, Var@ v := ForEach(c, Empty<Var@>);
     EqId(vid, v.id).?(true: vars);
     Items(v, vars);
   };
@@ -146,7 +146,7 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
 
   # Update Vars@ data structure.
   Vars@ vars = {
-    Vars@ vs, Var@ v := /Std/List/For%.ForEach(clause, s.vars);
+    Vars@ vs, Var@ v := ForEach(clause, s.vars);
     Maybe@<VarS@> mx := Vars.Update(vs, v.id);
     VarS@ x = mx.?(
       just: mx.just,
@@ -175,7 +175,7 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
 
 (Solver@, List@<Clause@>) { Solver@; }
 AddClauses = (Solver@ solver, List@<Clause@> clauses) {
-  /Std/List/For%.ForEach(clauses, solver, AddClause);
+  ForEach(clauses, solver, AddClause);
 };
 
 # Adds a clause to the solver state for the given conflict.
@@ -225,7 +225,7 @@ RemoveClause = (Solver@ s, ClauseId@ id) {
   mcs.?(nothing: s);
 
   Clause@ cs = mcs.just;
-  Solver@ ns = /Std/List/For%.ForEach(cs, s, RemoveClauseFromVar(id));
+  Solver@ ns = ForEach(cs, s, RemoveClauseFromVar(id));
   ns.@(clauses: Clauses.Remove(ns.clauses, id));
 };
 

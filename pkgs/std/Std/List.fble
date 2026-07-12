@@ -1,6 +1,7 @@
 # @module[/Std/List%]
 #  List type and basic operations.
 
+For@ .= /Std/For%;
 Unit@, Unit .= /Std/Unit%;
 
 # @type[List@] A list of items.
@@ -177,26 +178,29 @@ Do = <@ A@>(List@<A@> list)<@ B@>((A@) { List@<B@>; } f) {
   Concat(Map(list, f));
 };
 
+# @func[ForEach] Iterate over elements of a list.
+#  @arg[@][A@] The type of element on the list.
+#  @arg[List@<A@>][list] The list to iterate over.
+#  @returns[For@<A@>] A for loop iteration over the list elements.
+<@ A@>(List@<A@>) { For@<A@>; }
+ForEach = <@ A@>(List@<A@> list)<@ S@>(S@ s, (S@, A@) { S@; } body) {
+  list.?(empty: s);
+  ForEach(list.items.tail, body(s, list.items.head), body);
+};
+
 # @func[Reverse] Reverses the elements of a list.
 #  @arg[@][T@] The type of element on the list.
 #  @arg[List@<T@>][list] The list to reverse.
 #  @returns[List@<T@>] The elements of the given list in reverse order.
 <@ T@>(List@<T@>) { List@<T@>; }
-Reverse = <@ T@> {
-  (List@<T@>, List@<T@>) { List@<T@>; }
-  reverse = (List@<T@> in, List@<T@> out) {
-    in.?(empty: out);
-    reverse(in.items.tail, Items(in.items.head, out));
-  };
-
-  (List@<T@> list) {
-    reverse(list, Empty<T@>);
-  };
+Reverse = <@ T@>(List@<T@> list) {
+  List@<T@> l, T@ x := ForEach(list, Empty<T@>);
+  Items(x, l);
 };
 
 @(
   List@, List, Items, Empty,
   Append, Concat, Join,
   Head, Tail, Last, Init,
-  Map, Do, Reverse
+  Map, Do, ForEach, Reverse
 );
