@@ -7,7 +7,7 @@ Unit@, Unit .= /Std/Unit%;
 Addr@ .= /Hwdg/Addr%;
 Data@ .= /Hwdg/Data%;
 
-Map@, Entry@, Entries, Keys, ForEach, Put, Get,
+Map@, Entry@, Each, Keys, ForEach, Put, Get,
 Empty .= /Std/Map%.Of(/Hwdg/Addr%.Data)<Data@>;
 
 Memory@ = Map@;
@@ -34,10 +34,10 @@ Disjoint = (Memory@ a, Memory@ b) {
 (Memory@, Memory@) { Bool@; }
 Contains = (Memory@ a, Memory@ b) {
   Unit@ _ := {
-    Unit@ _, Addr@ addr, Data@ data, (Unit@) { Bool@; } r := Entries(b, Unit);
-    Maybe@<Data@> mva = Get(a, addr);
+    Unit@ _, Entry@ entry, (Unit@) { Bool@; } r := Each(b, Unit);
+    Maybe@<Data@> mva = Get(a, entry.key);
     mva.?(nothing: False);
-    /Hwdg/Data/Eq%.Eq(data, mva.just).?(false: False);
+    /Hwdg/Data/Eq%.Eq(entry.value, mva.just).?(false: False);
     r(Unit);
   };
   True;

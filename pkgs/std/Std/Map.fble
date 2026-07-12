@@ -168,21 +168,19 @@ Remove = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
   Replace(data, map, key, (V@ _) { Nothing<V@>; });
 };
 
-# @func[Entries] Iterate over entries of a map.
+# @func[Each] Iterate over entries of a map.
 #  @arg[@][K@] The type of key.
 #  @arg[@][V@] The type of value.
 #  @arg[Map@<K@, V@>][map] The map to iterate over.
-#  @returns[Stream@<K@, V@>] The stream of map entries.
-#   Note this doesn't use the actual Stream@ type, but a modified one where
-#   the put function takes key and value as separate arguments.
-<@ K@, @ V@>(Map@<K@, V@>) { <@ S@>(S@)<@ R@>((S@, K@, V@, (S@) { R@; }) { R@; }, (S@) { R@; }) { R@; }; }
-Entries = <@ K@, @ V@>(Map@<K@, V@> map) {
-  <@ S@>(S@ s)<@ R@>((S@, K@, V@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
+#  @returns[Stream@<Entry@<K@, V@>>] The stream of map entries.
+<@ K@, @ V@>(Map@<K@, V@>) { Stream@<Entry@<K@, V@>>; }
+Each = <@ K@, @ V@>(Map@<K@, V@> map) {
+  <@ S@>(S@ s)<@ R@>((S@, Entry@<K@, V@>, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
     map.?(empty: return(s));
-    map.?(entry: put(s, map.entry.key, map.entry.value, return));
+    map.?(entry: put(s, map.entry, return));
 
-    S@ s := Entries(map.children.0, s, put);
-    Entries(map.children.1, s, put, return);
+    S@ s := Each(map.children.0, s, put);
+    Each(map.children.1, s, put, return);
   };
 };
 
@@ -417,7 +415,7 @@ Of = <@ K@>(Data@<K@> data)<@ V@> {
     Remove: Remove(data)<V@>,
     Replace: Replace(data)<V@>,
     Get: Get(data)<V@>,
-    Entries: Entries<K@, V@>,
+    Each: Each<K@, V@>,
     Keys: Keys<K@, V@>,
     Values: Values<K@, V@>,
     ForEach: ForEach<K@, V@>,
@@ -434,6 +432,6 @@ Of = <@ K@>(Data@<K@> data)<@ V@> {
 @(
   Entry@, Map@,
   Empty, IsEmpty, Get, Update, Put, Remove, Replace,
-  Entries, Keys, Values,
+  Each, Keys, Values,
   ForEach, ReplaceAll, Map, Keep, Omit, Meet, Join, Diff, Of
 );

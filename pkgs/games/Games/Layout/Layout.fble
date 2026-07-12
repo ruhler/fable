@@ -53,10 +53,10 @@ Cost = (Layout@ layout, List@<Edge@> edges) {
 NodeAt = (Layout@ layout, Pos@ pos) {
   # TODO: More efficient mapping from position to node?
   Unit@ _ := {
-    Unit@ _, Node@ key, Pos@ value, (Unit@) { Maybe@<Node@>; } r := Map.Entries(layout, Unit);
-    /Std/Int/Eq%.Eq(value.x, pos.x).?(false: r(Unit));
-    /Std/Int/Eq%.Eq(value.y, pos.y).?(false: r(Unit));
-    Just(key);
+    Unit@ _, Map.Entry@ e, (Unit@) { Maybe@<Node@>; } r := Map.Each(layout, Unit);
+    /Std/Int/Eq%.Eq(e.value.x, pos.x).?(false: r(Unit));
+    /Std/Int/Eq%.Eq(e.value.y, pos.y).?(false: r(Unit));
+    Just(e.key);
   };
   Nothing<Node@>;
 };
