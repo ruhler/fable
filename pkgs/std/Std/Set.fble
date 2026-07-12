@@ -3,7 +3,7 @@
 
 Bool@, True, False .= /Std/Bool%;
 Data@ .= /Std/Data%;
-Control@, For@, ForEach@ .= /Std/For%;
+ForEach@ .= /Std/For%;
 Just, Nothing .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -54,18 +54,6 @@ Add = <@ T@>(Data@<T@> data, Set@<T@> set, T@ element) {
 <@ T@>(Data@<T@>, Set@<T@>, T@) { Set@<T@>; }
 Remove = <@ T@>(Data@<T@> data) {
   /Std/Map%.Remove(data)<Unit@>;
-};
-
-# @func[For] Iterate over values of a set.
-#  @arg[@][T@] The element type.
-#  @arg[Set@<T@>][set] The set to iterate over.
-#  @returns[For<T@>] A for loop iteration over the set elements.
-<@ T@>(Set@<T@>) { For@<T@>; }
-For = <@ T@>(Set@<T@> set) {
-  <@ S@>(S@ s, (S@, T@) { Control@<S@>; } body) {
-    S@ s, /Std/Map%.Entry@<T@, Unit@> e := /Std/Map%.For(set, s);
-    body(s, e.key);
-  };
 };
 
 # @func[ForEach] Iterate over values of a set.
@@ -151,7 +139,6 @@ Of = <@ T@>(Data@<T@> data) {
     Has: Has(data),
     Add: Add(data),
     Remove: Remove(data),
-    For: For<T@>,
     ForEach: ForEach<T@>,
     And: And<T@>,
     Or: Or<T@>,
@@ -161,5 +148,5 @@ Of = <@ T@>(Data@<T@> data) {
   );
 };
 
-@(Set@, Empty, IsEmpty, Has, Add, Remove, For, ForEach,
+@(Set@, Empty, IsEmpty, Has, Add, Remove, ForEach,
   And, Or, Diff, Keep, Omit, Of);
