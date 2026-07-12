@@ -12,6 +12,21 @@
 #   The body of the loop. Computes the next state of the loop given the
 #   current state and the next element.
 #  @returns[S@] The final state of the loop.
+#
+#  Conceptually, For(xs, s, body) behaves as:
+#  
+#  @code[txt] @
+#   for each x in xs:
+#     s = body(s, x)
+#   return s;
+#
+#  For example, to sum integers in a list, you could write something like:
+#
+#  @code[fble] @
+#   Int@ final_sum = {
+#     Int@ sum, Int@ x := For(xs, Int|0);
+#     Add(sum, x);
+#   };
 For@ = <@ A@> { <@ S@>(S@, (S@, A@) { S@; }) { S@; }; };
 
 @(For@);

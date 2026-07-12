@@ -1834,10 +1834,10 @@ So there is a performance cost to this approach. Not too surprising. Good to
 know.
 
 Here's my proposal:
-* Move ForEach back into /Std/Stream, /Std/List.
+* Move ForEach back into /Std/Stream, /Std/List. [DONE]
 * Remove ForEach@ type? Or put into /Std/Stream%?
 * Remove /Std/For%, which is now empty. 
-* Remove /Std/Stream/For% and /Std/List/For% which are now empty.
+* Remove /Std/Stream/For% and /Std/List/For% which are now empty. [DONE]
 * Rename ForEach everywhere to 'For'.
 
 I don't know. I like ForEach better as a name. It reads much better.
@@ -1879,3 +1879,23 @@ list. So Each would be a better name for that function.
   Nothing<Node@>;
 
 All good food for thought.
+
+---
+
+Summary of where I am now:
+* /Std/For% defines For@ helper type for for-each loop iteration.
+* /Std/Stream% implements For function for generic streams.
+* /Std/Stream/List% and /Std/Map% define Each functions to convert to stream.
+* /Std/List and /Std/Map define ForEach functions to do direct loop.
+  Should be equivalent to For(Each(x)), but I guess a tiny bit faster.
+
+For completeness, I should:
+* Implement /Std/Set%.Each.
+* Test /Std/Map% Each, Keys, Values and /Std/Set% Each.
+
+Some lingering minor questions:
+* Is there a better home for /Std/Stream/List%.Each?
+* Do I want to implement /Std/Map%.Replace optimization to avoid reallocating
+  if nothing was removed?
+ - Seems worth a try. See how it impacts performance.
+
