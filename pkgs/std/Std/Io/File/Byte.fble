@@ -30,9 +30,12 @@ File@ = *(Unit@ file);
 
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@<Byte@>) { M@<Unit@>; }
 Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@<Byte@> output) {
-  output.?(empty: io.run(Flush(file)));
-  Unit@ _ := m.do(io.run(PutByte(file, output.items.head)));
-  Output(m, io, file, output.items.tail(Unit));
+  Unit@ _ := {
+    Unit@ _, Byte@ byte, (Unit@) { M@<Unit@>; } r := output(Unit);
+    Unit@ _ := m.do(io.run(PutByte(file, byte)));
+    r(Unit);
+  };
+  io.run(Flush(file));
 };
 
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@) { Out@<Byte@, M@>; }

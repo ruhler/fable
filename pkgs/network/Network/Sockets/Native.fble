@@ -11,6 +11,8 @@ Unit@, Unit .= /Std/Unit%;
 
 InOut@, Sockets@, Server@ .= /Network/Sockets%;
 
+Byte@ = Int@;
+
 # Abstract type for a socket that should only be accessed via FFI.
 Socket@ = *(Unit@ socket).%(@/Network/Sockets/Native%);
 
@@ -19,22 +21,25 @@ Socket@ = *(Unit@ socket).%(@/Network/Sockets/Native%);
 (String@, Int@) { External@<Maybe@<*(Int@ port, Socket@ socket)>>; } Server;
 (Socket@) { External@<Socket@>; } Accept;
 (Socket@) { External@<Unit@>; } Close;
-(Socket@) { External@<Maybe@<Int@>>; } GetByte;
-(Socket@, Int@) { External@<Unit@>; } PutByte;
+(Socket@) { External@<Maybe@<Byte@>>; } GetByte;
+(Socket@, Byte@) { External@<Unit@>; } PutByte;
 
 <<@>@ M@>(Io@<M@>, Monad@<M@>) { M@<Sockets@<M@>>; }
 Sockets = <<@>@ M@>(Io@<M@> io, Monad@<M@> m) {
-  (Socket@, Stream@<Int@>) { M@<Unit@>; }
-  Output = (Socket@ socket, Stream@<Int@> output) {
-    output.?(empty: m.return(Unit));
-    Unit@ _ := m.do(io.run(PutByte(socket, output.items.head)));
-    Output(socket, output.items.tail(Unit));
+  (Socket@, Stream@<Byte@>) { M@<Unit@>; }
+  Output = (Socket@ socket, Stream@<Byte@> output) {
+    Unit@ _ := {
+      Unit@ _, Byte@ byte, (Unit@) { M@<Unit@>; } r := output(Unit);
+      Unit@ _ := m.do(io.run(PutByte(socket, byte)));
+      r(Unit);
+    };
+    m.return(Unit);
   };
 
   (Socket@) { InOut@<M@>; }
   InOut = (Socket@ socket) {
-    In@<Int@, M@> in = io.run(GetByte(socket));
-    Out@<Int@, M@> out = Output(socket);
+    In@<Byte@, M@> in = io.run(GetByte(socket));
+    Out@<Byte@, M@> out = Output(socket);
     M@<Unit@> end = io.run(Close(socket));
     InOut@(in, out, end);
   };

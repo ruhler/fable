@@ -2,20 +2,59 @@
 #  Types and utilities for streaming data out.
 
 Lazy@ .= /Std/Lazy%;
-Unit@, Unit .= /Std/Unit%;
+Unit .= /Std/Unit%;
 
-# @type[Stream] An incrementally computed list of values.
-#  @arg[@][A@] The type of element on the stream.
-#  
-#  @field[A@][head] The first item in the stream.
-#  @field[Lazy@<Stream@<A@>>][tail]
-#   Everything after the first item in the stream.
+# @type[Stream] A stream of elements for traversal.
+#  Elements are traversed from the beginning of the stream. You can traverse
+#  through all the elements of the stream, or you can break out of the
+#  traversal early. Later elements of the stream are not computed until/unless
+#  you traverse all the way through to them.
 #
-#  @field[@][items] A stream with one or more items.
-#  @field[Unit@][empty] A stream with no items.
+#  @arg[@][A@] The type of element on the stream.
+#  @arg[@][S@] The traversal state type.
+#  @arg[S@][s] The traversal state.
+#  @arg[(S@, A@, (S@) { R@; }) { R@; }][onItem]
+#   Function called for the next item in the stream.
+#
+#   @arg[S@][s] The traversal state.
+#   @arg[A@][x] The next item in the stream.
+#   @arg[(S@) { R@; }][r]
+#    Function to continue traversing the rest of the elements of the stream.
+#    You can call this to continue traversing the stream, or ignore it to
+#    return a value early without traversing any more of the stream.
+#   @returns[R@] The final result of traversal.
+#  @arg[(S@) { R@; }][onEmpty]
+#   Function called when the end of the stream is reached.
+#
+#   @arg[S@][s] The traversal state.
+#   @returns[R@] The final result of traversal.
+#  @returns The final result of traversal.
+#
+#  If you want to be clever when traversing a stream, you can use function
+#  bind syntax to provide implementations for onItem and onEmpty. Instead of:
+#
+#  @code[fble] @
+#   onItem = (S@ s, A@ x, (S@) { R@; } r) {
+#     # on item code here ...
+#   };
+#   onEmpty = (S@ s) {
+#     # on empty code here ...
+#   };
+#   stream(s, onItem, onEmpty);
+#
+#  You could write:
+#   
+#  @code[fble] @
+#   S@ s := {
+#     S@ s, A@ x, (S@) { R@; } r := stream(s);
+#     # on item code here ...
+#   };
+#   # on empty code here ...
 Stream@ = <@ A@> { 
-  S@ = +(*(A@ head, Lazy@<S@> tail) items, Unit@ empty);
-  S@;
+  <@ S@>(S@)<@ R@>(
+    (S@, A@, (S@) { R@; }) { R@; },
+    (S@) { R@; }
+  ) { R@; };
 };
 
 # @value[End] The end of a stream.
@@ -23,7 +62,9 @@ Stream@ = <@ A@> {
 #
 #  Also known as an empty stream.
 Stream@ End = <@ A@> {
-  Stream@<A@>(empty: Unit);
+  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } _onItem, (S@) { R@; } onEmpty) {
+    onEmpty(s);
+  };
 };
 
 # @func[Put] Outputs a value to a stream.
@@ -43,7 +84,10 @@ Stream@ End = <@ A@> {
 #   End<Int@>;
 <@ A@>(A@, Lazy@<Stream@<A@>>) { Stream@<A@>; }
 Put = <@ A@>(A@ head, Lazy@<Stream@<A@>> tail) {
-  Stream@(items: @(head, tail));
+  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+    S@ s := onItem(s, head);
+    tail(Unit, s, onItem, onEmpty);
+  };
 };
 
 # @func[Puts] Outputs a stream of values to a stream.
@@ -56,9 +100,10 @@ Put = <@ A@>(A@ head, Lazy@<Stream@<A@>> tail) {
 #   @a[tail].
 <@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
 Puts = <@ A@>(Stream@<A@> a, Lazy@<Stream@<A@>> b) {
-  a.?(empty: b(Unit));
-  Unit@ _ := Put(a.items.head);
-  Puts(a.items.tail(Unit), b);
+  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+    S@ s := a(s, onItem);
+    b(Unit, s, onItem, onEmpty);
+  };
 };
 
 # @func[Return] Monadic Return for streams.
@@ -67,8 +112,9 @@ Puts = <@ A@>(Stream@<A@> a, Lazy@<Stream@<A@>> b) {
 #  @returns[Stream@<A@>] A stream with the single given item.
 <@ A@>(A@) { Stream@<A@>; }
 Return = <@ A@>(A@ x) {
-  Unit@ _ := Put(x);
-  End<A@>;
+  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+    onItem(s, x, onEmpty);
+  };
 };
 
 # @func[Do] Monadic Do for streams.
@@ -83,9 +129,13 @@ Return = <@ A@>(A@ x) {
 #   The list of elements f(a_i) for each a_i in the input stream.
 <@ A@>(Stream@<A@>)<@ B@>((A@) { Stream@<B@>; }) { Stream@<B@>; }
 Do = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { Stream@<B@>; } f) {
-  ma.?(empty: End<B@>);
-  Unit@ _ := Puts(f(ma.items.head));
-  Do(ma.items.tail(Unit), f);
+  <@ S@>(S@ s)<@ R@>((S@, B@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+    S@ s := {
+      S@ s, A@ a, (S@) { R@; } r := ma(s);
+      f(a, s, onItem, r);
+    };
+    onEmpty(s);
+  };
 };
 
 # @func[Map] Map a function over the elements of a stream.
@@ -95,10 +145,14 @@ Do = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { Stream@<B@>; } f) {
 #  @arg[(A@) { B@; }][f] Function to convert output values.
 #  @return[Stream@<B@>] A new stream that outputs the target output type.
 <@ A@>(Stream@<A@>)<@ B@>((A@) { B@; }) { Stream@<B@>; }
-Map = <@ A@>(Stream@<A@> s)<@ B@>((A@) { B@; } f) {
-  s.?(empty: End<B@>);
-  Unit@ _ := Put(f(s.items.head));
-  Map(s.items.tail(Unit), f);
+Map = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { B@; } f) {
+  <@ S@>(S@ s)<@ R@>((S@, B@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+    S@ s := {
+      S@ s, A@ a, (S@) { R@; } r := ma(s);
+      onItem(s, f(a), r);
+    };
+    onEmpty(s);
+  };
 };
 
 @(Stream@, End, Put, Puts, Return, Do, Map);

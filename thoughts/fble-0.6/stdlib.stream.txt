@@ -702,3 +702,950 @@ Also, my benchmark has gotten much slower now after all these changes :(
   Time: 4:55.24
   Memory: 39512
 
+For and ForEach are fairly restrictive. For example, you can't iterate
+partially, save where you left off, and later pick up again.
+
+I'm certainly concerned about performance. But on the one hand, I don't know
+if that's premature. Maybe it's just some silly optimization I'm missing in
+the runtime implementation.
+
+Now, if you had a lazy language, List@ and Stream@ suddenly merge into the
+same single thing, and you get the best of both worlds, except that it's less
+explicit what code is executed when.
+
+Is there any nice way I could combine For and ForEach? For feels a bit clunky
+with the need for Continue and Break and Control@. But ForEach doesn't let you
+break out early.
+
+If all I want is to be able to easily tie the recursive not, maybe we could
+come up with a fancier way to do that? Something like...
+
+  S@ s - the current loop state
+  A@ x - the next element
+  (S@) { S@; } continue - a function to continue traversal if desired.
+
+Now, a foreach iteration looks something like:
+
+    List@<Var@> vars, Var@ v := /Std/List/For%.ForEach(c, Empty<Var@>);
+    EqId(vid, v.id).?(true: vars);
+    Items(v, vars);
+
+==>
+
+    List@<Var@> vars, Var@ v, ... continue := /Std/List/For%.ForEach(c, Empty<Var@>);
+    EqId(vid, v.id).?(true: vars);
+    continue(Items(v, vars));
+
+And a For iteration looks something like:
+
+  Bool@ _, Entry@ e, ... continue := For(a, True);
+  Get(b, e.key).?(just: False);
+  continue(True);
+
+Could we generalize it for cases like this where we pass the state explicitly,
+but only if we need to? Like, the input state doesn't have to match the output
+state?
+
+So, given a list and my iteration function, I return a function from I@ to O@.
+
+  (List@<A@>, (I@, A@, (I@) { O@; }) { O@; }) { (I@) { O@; }; }
+
+Seems tedious.
+
+Let's change order of arguments to match what we have before, then...
+
+  Unit@ _, Entry@ e, (Unit@) { Bool@; } continue := For(a, );
+  Get(b, e.key).?(just: False);
+  continue(Unit);
+
+But we need a way to say what the final result is if you don't have any
+elements in the list. That's why it's nice to combine input and output both
+into a single S@ type.
+
+Okay. We can do that still.
+
+  Bool@ _, Entry@ e, (Bool@) { Bool@; } continue := For(a, True);
+  Get(b, e.key).?(just: False);
+  continue(True);
+
+No need for a Control@ type. No need for Break or Continue. But we do have to
+pass the recursive function call in, which is tedious. Especially if we have
+to give an explicit type for it.
+
+How would the implementation look?
+
+  <@ A@>(List@<A@>) { For@<A@>; }
+  For = <@ A@>(List@<A@> list) {
+    <@ S@>(S@ s, (S@, A@, (S@) { S@; }) { S@; } body) {
+      list.?(empty: s);
+      S@ ns := body(s, list.items.head);
+      For(list.items.tail, ns, body);
+    };
+  };
+
+That's not too bad.
+
+But I still probably would want a ForEach helper. It's just maybe easier to
+implement ForEach on top of For now without having to suffer the overhead of
+Control@, Continue, and Break.
+
+  <@ A@>(List@<A@>) { ForEach@<A@>; }
+  ForEach = <@ A@>(List@<A@> list) {
+    <@ S@>(S@ s, (S@, A@) { S@; } body) {
+      S@ s, A@ x, (S@) { S@; } c := For(list, s);
+      continue(body(s, x));
+    };
+  };
+
+---
+
+What if we were given access to (S@) { S@; } in the body of the iteration. An
+empty list will pass Id. The dream here would be to unify Stream@ and For@ and
+ForEach@ as a way to iterate over elements of a container. Keep List@
+separate, as just another kind of container.
+
+Okay. So what is my stream type? What am I doing with this (S@) { S@; }
+function you are giving me? I have a decision about what to do with it.
+
+  Stream@ = <@ S@>((S@, A@, (S@) { S@; }) { S@; }) { (S@) { S@; }; };
+
+Which says... you want to compute something of type S@. Fine. So you give me a
+function that knows how to take whatever we have computed so far, the next
+element, and how to compute the rest, and we'll give you the function to
+compute from the beginning.
+
+If the list is empty, we'll ignore your function and give back id.
+
+Potentially you could capture the continuation function we give to you. It's
+just slightly awkward that it would have to be captured in S@ but is itself
+(S@) { S@; }. So that's a little bit complicated.
+
+And I feel like I'm somewhat going in circles.
+
+If my goal is to feed zero or more values into something to get a result, how
+would that look?
+
+  (S@ 0) { 
+    S@ 1 = f(0, a);
+    S@ 2 = f(1, b);
+    S@ 3 = f(2, c);
+    ...
+    f(n, z);
+  };
+
+Or maybe you want to provide the continuation?
+    
+
+  (S@ 0) { 
+    S@ 1, g = f(0, a);
+    S@ 2, h = g(1, b);
+    S@ 3, i = h(2, c);
+    ...
+    fx(n, z);
+  };
+
+But if you are providing the continuation, no need to give me the state:
+
+  (S@ 0) { 
+    S@ 1 = 0(a);
+    S@ 2 = 1(b);
+    S@ 3 = 2(c);
+    ...
+    n(z);
+  };
+
+If I'm constructing a stream, then, what I want is:
+
+  Given (Stream@) { R@; }, that knows how to com
+
+Um...
+
+Let's say I have 5 elements I want to add somewhere in the stream. Honestly, I
+don't know if I'm at the end, or in the middle, or at the front of the stream.
+You want to do a transformation of some state based on these 5 elements. So
+you have some state coming in. Call it S@. And you want some state going out.
+But I want some way to have an element modify that transformation. And then I
+want some way to chain together multiple of these. Seems pretty clear?
+
+You have to tell me how to convert my elements into a state transformation. I
+can chain them together, probably? Maybe? Or maybe you want to chain them
+together too?
+
+  ((A@) { (S@) { S@; }; } put) { (S@) { S@; }; }
+
+So, you give me this put function that tells me how to transform the state for
+each element. I'll chain them together and give you a transformation over the
+sequence of elements I have. Whatever that sequence may be.
+
+For example, if I have 3 elements, a, b, and c:
+
+  <@ S@>((A@) { (S@) { S@; }; } put) {
+    (S@ 0) {
+      S@ 1 = put(a, 0);
+      S@ 2 = put(b, 1);
+      S@ 3 = put(c, 2);
+      3;
+    };
+  };
+
+If we inlined it:
+
+    (S@ 0) {
+      put(c, put(b, put(a, 0)));
+    };
+
+But that's exactly what I used to have my stream type be. Remember?
+
+ <@ S@>(S@, (A@, S@) { S@; }) { S@; }
+
+It doesn't let me break out early.
+
+Let's say now I have 100 elements. I want to put them all into the
+transformation, but only if you want me to. If you don't want me to, I'll
+stop.
+
+Well, if you want to control things, then I should give you a function that
+can put the rest of my elements, and you chose if you want to call it. And
+once we go that route, there's no need for me to chain things together. That's
+on you.
+
+But are we still using the same put everywhere that you provided? The same S@
+state that we are trying to compute? Let's try to.
+
+That would be something like:
+
+  ((A@, (S@) { S@; }) { (S@) { S@; }; } put) { (S@) { S@; }; }
+  
+You'll see soon here though that I can rename (S@) { S@; } to something else
+and it simplifies things:
+
+  ((A@, R@) { R@; } put) { R@; }
+
+Let's hold off on that just a moment though.
+
+Now, I'm going to give you the next element, and, using the put function you
+gave me, the result you would get for the rest of the list, if you chose to
+make use of it. You give me the final result. So...
+
+  <@ S@> ((A@, (S@) { S@; }) { (S@) { S@; }; } put) {
+    (S@ 0) {
+      put(a, (S@ 1) {
+        put(b, (S@ 2) {
+          put(c, (S@ 3) { 3; }, 2);
+        }, 1);
+      }, 0);
+    };
+  };
+
+Which I could rewrite as:
+
+  <@ S@> ((A@, (S@) { S@; }) { (S@) { S@; }; } put) {
+    put(a, put(b, put(c, Id))
+  };
+
+If your put expects 3 arguments, then this returns a thunk that you can decide
+to call or not.
+
+Now id is a special looking thing. I use that when I get to the end. But maybe
+I want to do my rewrite, and have you tell me to do when I get to the end
+instead?
+
+  (R@ end, (A@, R@) { R@; } put) { R@; }
+
+  <@ S@> (S@ end, (A@, S@) { S@; } put) {
+    put(a, put(b, put(c, end))
+  };
+
+Which is, also, exactly what I used to have for Stream@. And apparently it
+does allow me to break out early? As long as your put function treats S@ as a
+function and thus expects 3 arguments when we are only supplying 2 during
+construction.
+
+Okay. If that's the case, then I ought to be able to do my infinite list
+traversal breaking out early using this approach. How would that look?
+
+  ToStream = (List@<A@> list) {
+    <@ S@>(S@ end, (A@, S@) { S@; } put) {
+      list.?(empty: end);
+      put(list.items.head, ToStream(list.items.tail, end, put));
+    };
+  };
+
+But that's never going to work, because ToStream will go all the way to the
+end of the list. On the other hand, if we knew that S@ was a function type?
+
+In other words, instead of change put to take Stream@ as the tail, let's have
+it take (S@) { S@; }.
+
+  ToStream = (List@<A@> list) {
+    <@ S@>((S@) { S@; } end, (A@, (S@) { S@; }) { (S@) { S@; }; } put) {
+      (S@ 0) {
+        list.?(empty: end(0));
+        put(list.items.head, (S@ 1) {
+          ToStream(list.items.tail, end, put, 1);
+        }, 0);
+      };
+    };
+  };
+
+Which simplifies to:
+
+  ToStream = (List@<A@> list) {
+    <@ S@>((S@) { S@; } end, (A@, (S@) { S@; }) { (S@) { S@; }; } put) {
+      (S@ 0) {
+        list.?(empty: end(0));
+        put(list.items.head, ToStream(list.items.tail, end, put), 0);
+      };
+    };
+  };
+
+Which I could decide to rewrite to:
+
+  ToStream = (List@<A@> list) {
+    <@ S@>((S@) { S@; } end, (A@, (S@) { S@; }) { (S@) { S@; }; } put) {
+      list.?(empty: end);
+      put(list.items.head, ToStream(list.items.tail, end, put))
+    };
+  };
+
+But now we've lost the laziness in the recursive call to ToStream.
+
+So I think the key to being able to construct the stream lazily is waiting
+until we get the next computed state before traversing to the next children.
+
+Now, do you really want to tell me I have to work with this type and
+implementation approach everywhere?
+
+  ToStream = (List@<A@> list) {
+    <@ S@>((S@) { S@; } end, (A@, (S@) { S@; }) { (S@) { S@; }; } put) {
+      (S@ 0) {
+        list.?(empty: end(0));
+        put(list.items.head, ToStream(list.items.tail, end, put), 0);
+      };
+    };
+  };
+
+If I know I'm always doing S@ to S@. I can generalize it to support different
+input and output types:
+
+  ToStream = (List@<A@> list) {
+    <@ S@, @ R@>((S@) { R@; } end, (A@, (S@) { R@; }) { (S@) { R@; }; } put) {
+      (S@ 0) {
+        list.?(empty: end(0));
+        put(list.items.head, ToStream(list.items.tail, end, put), 0);
+      };
+    };
+  };
+
+Now, how does this turn into a for loop? For example, if I want to sum all the
+elements of a stream of integers?
+
+Before I would have written something like:
+
+  Int@ sum, Int@ x := ForEach(list, Int|0);
+  Add(sum, x);
+
+Now I would be writing:
+
+  {
+    Int@ x, (Int@) { Int@; } continue := stream(Id);
+    (Int@ sum) {
+      continue(Add(sum, x));
+    };
+  }(Int|0);
+
+But I should be able to rewrite that as:
+
+  {
+    Int@ x, (Int@) { Int@; } continue, Int@ sum := stream(Id);
+    continue(Add(sum, x));
+  }(Int|0);
+
+And if I'm willing to order arguments so we have:
+
+<@ S@, @ R@>((S@) { R@; }, (A@, (S@) { R@; }, S@) { R@; }) { (S@) { R@; }; }
+<@ S@, @ R@>((S@) { R@; }, (A@, (S@) { R@; }, S@) { R@; }, S@) { R@; };
+<@ S@, @ R@>((S@) { R@; }, S@, (A@, S@, (S@) { R@; }) { R@; }) { R@; };
+
+Then I can write:
+
+  Int@ x, Int@ sum, (Int@) { Int@; } continue := stream(Id, Int|0);
+  continue(Add(sum, x));
+
+And to better match my previously proposed ordering:
+
+<@ S@, @ R@>((S@) { R@; }, S@, (S@, A@, (S@) { R@; }) { R@; }) { R@; };
+
+  Int@ sum, Int@ x, (Int@) { Int@; } continue := stream(Id, Int|0);
+  continue(Add(sum, x));
+
+Which is, if you'll remember, what I was hoping to do if I could combine
+ForEach and For to give me the choice of when to continue.
+
+More generally:
+
+  S@ sum, A@ x, (S@) { R@; } continue := stream(Id, Int|0);
+  continue(Add(sum, x));
+
+In other words, For is something like Stream(Id);
+
+Now this is a crazy type for sure. But say we have this Stream@ type, and we
+have helper functions For and ForEach. Then I start to write stuff like:
+
+  Int@ sum, Int@ x := ForEach(Elements(list), Int|0);
+  Add(sum, x);
+  
+And:
+
+  Int@ sum, Int@ x, (Int@) { Int@; } next := For(Elements(list), Int|0);
+  Eq(5, x).?(true: sum);
+  next(Add(sum, x));
+
+How does it look to construct streams with this type?
+
+<@ S@, @ R@>((S@) { R@; }, S@, (S@, A@, (S@) { R@; }) { R@; }) { R@; };
+
+How about we implement append?
+
+Append = (Stream@<A@> a, Stream@<A@> b) {
+  <@ S@, @ R@>((S@) { R@; } end, S@ s, (S@, A@, (S@) { R@; }) { R@; } put) {
+    (S@) { R@; } tail = (S@ s) {
+      b(end, s, put);
+    };
+
+    a(tail, s, put);
+  };
+};
+
+It's pretty painful.
+
+And I'm sure consuming it in /Std/Map% is going to be as painful as our
+previous implementation. But at least it will support breaking out early.
+
+My fear is I can't abstract things out if we require having the argument S@ to
+make sure we do things lazily.
+
+For example, if I hadn't reordered things:
+
+Append = (Stream@<A@> a, Stream@<A@> b) {
+  <@ S@, @ R@>((S@) { R@; } end, (A@, (S@) { R@; }) { (S@) { R@; }; } put) {
+    a(b(end, put), put);
+  };
+};
+
+---
+
+Here's my idea:
+* Replace Stream@ with my proposed For@ type:
+  <@ S@>(S@ s, (S@, A@, (S@) { S@; }) { S@; } body) { S@; }
+* Anyone using For now operates on the raw stream directly.
+* We provide a ForEach helper around a stream to do ForEach.
+* List, Map, etc. have functions to convert to streams. Essentially equivalent
+  to 'For' today, but shared with ToStream.
+
+I think it should be reasonable to construct streams this way, as long as we
+are willing to pass around S@ and body explicitly. I might want to define a
+helper type Body@<S@, A@>.
+
+What I think this will get me:
+* Much better performance.
+* Gets rid of the silly +(items, empty), continue, break.
+* Collapses Stream and For iteration into one thing.
+
+Let me give it a try. Yet another round. See how it feels.
+
+We can start by changing the type for For@. Then try stream after that.
+
+What name should I use for 'continue'? I want something short. Um...:
+* continue, next, go, then.
+
+  Int@ sum, Int@ x, (Int@) { Int@; } go := For(Elements(list), Int|0);
+  Eq(5, x).?(true: sum);
+  go(Add(sum, x));
+
+  Int@ sum, Int@ x, (Int@) { Int@; } loop := For(Elements(list), Int|0);
+  Eq(5, x).?(true: sum);
+  loop(Add(sum, x));
+
+  Int@ sum, Int@ x, (Int@) { Int@; } then := For(Elements(list), Int|0);
+  Eq(5, x).?(true: sum);
+  then(Add(sum, x));
+
+  Int@ sum, Int@ x, (Int@) { Int@; } rest := For(Elements(list), Int|0);
+  Eq(5, x).?(true: sum);
+  rest(Add(sum, x));
+
+  Int@ sum, Int@ x, (Int@) { Int@; } next := For(Elements(list), Int|0);
+  Eq(5, x).?(true: sum);
+  next(Add(sum, x));
+
+  Int@ sum, Int@ x, (Int@) { Int@; } finish := For(Elements(list), Int|0);
+  Eq(5, x).?(true: sum);
+  finish(Add(sum, x));
+
+  Int@ sum, Int@ x, (Int@) { Int@; } tail := For(Elements(list), Int|0);
+  Eq(5, x).?(true: sum);
+  tail(Add(sum, x));
+
+  Int@ sum, Int@ x, (Int@) { Int@; } for := For(Elements(list), Int|0);
+  Eq(5, x).?(true: sum);
+  for(Add(sum, x));
+
+Not sure. Let's use 'then' for now.
+
+Experience report:
+* To output a single value, pass Id as the function to the body. Or just
+  return 's' at the end?
+
+Hmm... It's not quite working the way I want for map traversal. How do we
+traverse over one child then the next?
+
+  <@ S@>(S@ s, (S@, A@, (S@) { S@; }) { S@; } body) { S@; }
+
+For(map.children.0) gives me a function of that type. I pass the initial
+state to start. But how do I give it the next thing to do? Like, how do I know
+if the body decided to skip the rest of the traversal? There's got to be a way
+to traverse inside...
+
+This is the same as append, right? I have two streams: the stream to iterate
+over the first child, and the stream to iterate over the second child. So how
+do I append? Let's try that directly.
+
+I'm tempted to write this, but I think it's wrong:
+
+  (Stream@<A@> a, Stream@<A@> b) {
+    <@ S@>(S@ s, (S@, A@, (S@) { S@; }) { S@; } body) {
+      b(a(s, body), body);
+    }
+  };
+    
+It's wrong because if a cuts out early, we shouldn't be traversing b at all.
+But how do I pass the continuation to the traversal of a that says what to do
+when you are done?
+
+I think I might need another argument. And now things are going to get messy
+again :(
+
+    <@ S@>(S@ s, (S@) { S@; } end, (S@, A@, (S@) { S@; }) { S@; } put) { S@; }
+
+This says:
+* I give you the loop state.
+* I tell you what to do next when you are done.
+* I tell you want to do next if you aren't done?
+
+So what's weird here is, if the stream is empty, I want to return s. Why do
+you want to give me a function to do more stuff over s?
+
+The problem is, I don't have a way of knowing based on the result of a if it
+cut out traversal early or not. I have to pass the recursive call and
+traversal of b somehow to a to do when it's done with its traversal.
+
+    <@ S@>(S@ s, (S@) { S@; } end, (S@, A@, (S@) { S@; }) { S@; } put) { S@; }
+
+This says:
+* Here is your current state. You need that.
+* If you are all done, call end with your final state. That will be passed on
+  to any subsequence iteration or traversal that's still pending.
+* If you have an element, call put with the current state and element, and
+  tell it what it should run to finish the traversal. If this is your last
+  element, just pass the end function. Otherwise, pass a modified end
+  function.
+
+I think that should work. Let me try it.
+
+Also, if we wanted, we could change the return type. It makes more sense to do
+now.
+
+  <@ S@>(S@ s, (S@) { R@; } end, (S@, A@, (S@) { R@; }) { R@; } put) { R@; }
+
+Naming wise...
+
+  <@ S@>(S@ s, (S@) { R@; } return, (S@, A@, (S@) { R@; }) { R@; } put) { R@; }
+
+Is this my for loop, or just the type of the body? No. Why am I calling the
+body 'put' now?
+
+Now that we have a return function, I can pass that instead of Id when you
+reach the last element. That's nice.
+
+Append would look like this:
+
+  (Stream@<A@> a, Stream@<A@> b) {
+    <@ S@>(S@ s, (S@) { R@; } return, (S@, A@, (S@) { R@; }) { R@; } put) {
+      a(s, (S@ s) { b(s, return, put); }, put);
+    }
+  };
+
+In this case it would be nice if the return function came last.
+
+  (Stream@<A@> a, Stream@<A@> b) {
+    <@ S@>(S@ s, (S@, A@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
+      S@ s := a(s, put);
+      b(s, put, return);
+    }
+  };
+
+That's maybe not as nice if I want to call this directly as a For function.
+But also probably not too bad?
+
+It's almost like I'm introducing another layer now. Stream@ you can build up.
+When you want to traverse, you want to convert to a For loop? And then that
+For loop is:
+
+  (Stream@<A@> a) {
+    <@ S@>(S@ s, (S@, A@, (S@) { S@; }) { S@; } body) {
+      a(s, body, Id);
+    }
+  };
+
+And ForEach is:
+
+  (Stream@<A@> a) {
+    <@ S@>(S@ s, (S@, A@) { S@; } body) {
+      S@ s, A@ x, (S@) { S@; } then := For(a, s);
+      then(body(s, x));
+    }
+  };
+
+You see now what's going on?
+* List@, Map@ are data structures holding values.
+* Stream@ is the type for constructing output sequences.
+* For@, ForEach@ are ways of traversing finalized output sequences.
+
+Maybe use 'then' for this (S@) { R@; } function.
+
+Question: Do I have to do (S@) { S@; } in For, or can I do (S@) { R@; }?
+
+    <@ S@>(S@ s, (S@, A@, (S@) { R@; }) { R@; } body) { R@; }
+
+Not unless I add that extra argument that Stream@ has. But then I could. And
+also then there would be no difference between Stream@ and For@.
+
+Okay. So should I try that signature for For@? But there is a difference. I
+want bind syntax to allow me to work with the body. What do I put for return?
+
+I suppose I'm thinking there are 3 levels of complexity for streams:
+1. Stream@ - fully general. You can construct and traverse however you like.
+2. For@ - Input type is output type. When you reach as far as you want, you
+          return that final state value as is.
+3. ForEach@ - Input type is output type. We always go all the way to the end.
+
+What does that mean for my in progress changes? Should we roll back the change
+to For@, and go straight for a change to Stream@?
+
+Ugh. Oh well. Let's give it a try.
+
+It's weird. The type for Stream@ is so complicated. But somehow, after listing
+it out, the body of the Stream@ functions are quite simple. For example:
+
+  <@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
+  Puts = <@ A@>(Stream@<A@> a, Lazy@<Stream@<A@>> b) {
+    <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } put, (S@) { R@; } then) {
+      S@ s := a(s, put);
+      S@ s := b(Unit, s, put);
+      then(s);
+    };
+  };
+
+Um... consuming this is going to be hard. Take /Std/Stream/List%.ToList for
+example. How am I supposed to produce a list?
+
+It's supposed to be easy, right?
+
+Ugh. So complicated.
+
+---
+
+Let's take another step back. What do I want here?
+
+Conceptually, the places where I use Stream@ are:
+* Building up output strings which I will then, most often, fully written out
+  to file IO or string or nowhere.
+ - In some cases, like pprof server, the data could be pretty long.
+ - In other cases, like for error messages, the data is usually pretty short.
+* Building up hashes that are then consumed by map on lookup. In theory we'd
+  like to partially consume the hash rather than have to consume it all.
+* Iterating over data structures, ranges of integers.
+ - Often times completely, but in some cases just partially.
+
+In terms of what I want to have:
+* I want it to be as easy as possible to build up a stream in a composable way.
+  Append should be really easy.
+* I want it to be easy and flexible to iterate over a stream of values.
+* I want it to be fast.
+
+To make it fast at runtime, I feel like it needs to be a direct traversal. You
+queue up a bunch of code to run to produce your sequence of values. And then
+all at once you collapse it. And then you throw it away.
+
+The most difficult part from a descriptive point of view is knowing when to
+put stop points in place where you have the chance to break out early. Too
+many stop points leads to unnecessary thunks. Too few stop points leads to
+unnecessary computation to ignore.
+
+Think about Data@ for Int@ for example. Normally Int@ is small. We want to
+just traverse directly start to finish. But there could be cases where the
+integer is really huge, like hundreds of thousands of bits long. Okay, not
+likely. But theoretically possible. So how do you split that up?
+
+In my dream world, there is a way to allow you to stop after every single
+element, and still have it be super fast to traverse.
+
+My current approach to Stream@ is super nice to work with from a coding point
+of view. It's a chain of thunks to get the next function. But it's slow.
+
+Maybe it's slow because we are creating pairs involving functions, so we can't
+easily pack it and end up doing a lot more allocations? Or maybe it's slow
+because somehow function values are escaping their scope and needing to be
+reallocaed.
+
+Is there some way I can restructure the existing stream to avoid that? Or a
+new approach I can take to how we do traversal?
+
+I know most of the cost is coming from my Map use case in my sat benchmark.
+That's also the most complicated consumption of a stream that I have. If I can
+easily consume a stream for that use case, we should be fine anywhere.
+
+The pattern I'm using is:
+* What to do if the stream is empty. Just return a result based on current
+  state.
+* If the stream isn't empty, update the state based on the next value, do a
+  recursive call, get back a result, and optionally process that result.
+
+I would like to take advantage of the fact that the recursive call is my own
+traversal. I don't need to change up the traversal. So if I were to write
+something like the Update function in the cleanest way I could, it would be
+something like:
+
+  onEmpty = (Map@<K@, V@> map) {
+    V@ value = with({
+      map.?(empty: Nothing<V@>);
+
+      # If you get a wrong tag access error here on map.entry, then your
+      # data type violates the prefix property.
+      Just(map.entry.value);
+    });
+
+    Map@(entry: Entry@(key, value));
+  };
+
+  onItem = (Map@<K@, V@> map, Bit@ x, (Map@<K@, V@>) { R@; } f) {
+    children = {
+      map.?(empty: @(0: Empty<K@, V@>, 1: Empty<K@, V@>));
+
+      # If map.children access fails with wrong tag, it means your data
+      # type didn't satisfy the prefix code requirement.
+      map.children;
+    };
+
+    Map@<K@, V@> child = f(x.?(0: children.0, 1: children.1), key, with);
+    x.?(
+      0: Map@(children: children.@(0: child)),
+      1: Map@(children: children.@(1: child)));
+  };
+
+  data(key)(onEmpty, onItem, map);
+
+Does this look familiar to you? It looks familiar to me. The type is:
+
+  <@ S@, @ R@>(
+    (S@) { R@; } onEmpty, 
+    (S@, A@, (S@) { R@; }) { R@; } onItem,
+    S@ s
+  ) { R@; }
+
+My claim is this should be easier to consume than my current stream. You saw
+above, the code is simpler. I don't have to extract out the item or the state,
+I get it passed directly as an argument. I don't have to test if it's empty or
+not, that's done for me elsewhere. I don't have to wrap in some data type or
+make structs of function values. I don't have to do a recursive call to
+myself; that's presumably wired up elsewhere.
+
+The downside, presumably, is we have to take care of all those things when we
+construct the Stream@.
+
+So let's talk about how to construct these things. Once again, Map@ is a great
+example, because it covers the empty, single value, and append cases.
+
+  ForEach = <@ K@, @ V@>(Map@<K@, V@> map) {
+    <@ S@, @ R@>((S@) { R@; } onEmpty, (S@, A@, (S@) { R@; }) { R@; } onItem, S@ s) {
+      map.?(empty: onEmpty(s));
+      map.?(entry: onItem(s, map.entry, onEmpty));
+
+      ForEach(map.children.0,
+        (S@ s) { ForEach(map.children.1, onEmpty, onItem); },
+        onItem, s);
+    };
+  };
+
+That's not so bad. Just annoying syntactically. Remember, we need to provide
+two different functions any time we want to traverse a stream. Based on the
+above, I feel like I want to put onEmpty last for constructing streams,
+because that will lead to natural function bind. The onItem function is not
+changing at all during construction: we just pass the same thing down
+everywhere. But onEmpty definitely does change during construction.
+
+We need the state argument to be mentioned explicitly. We need it to call
+onItem. More importantly, we need it to make sure we don't start traversing
+the rest of the data structure until we have the next state generated.
+
+For example, if I reordered arguments, I would could end up with:
+
+  ForEach = <@ K@, @ V@>(Map@<K@, V@> map) {
+    <@ S@, @ R@>((S@) { R@; } onEmpty, (A@, (S@) { R@; }, S@) { R@; } onItem) {
+      map.?(empty: onEmpty);
+      map.?(entry: onItem(map.entry, onEmpty));
+      ForEach(map.children.0,
+        ForEach(map.children.1, onEmpty, onItem),
+        onItem);
+    };
+  };
+
+No mention of s. But also, it traverse the entire map before calling the next
+onItem function to know if it needs to. Before knowing what the next state is.
+
+Updated proposal to put onEmpty last and S@ first:
+
+  <@ S@, @ R@>(
+    S@ s
+    (S@, A@, (S@) { R@; }) { R@; } onItem,
+    (S@) { R@; } onEmpty, 
+  ) { R@; }
+
+The claim is this should be efficient, give us exactly what we want, be
+straightforward to construct as long as I keep onEmpty and onItem in mind, and
+be straight forward to consume. With onEmpty as the last arg, it should work
+nice with bind syntax when composing. When consuming well want to provide
+onItem and onEmpty separately, without trying to use bind syntax.
+
+Okay? Let's try again. Now that I have a better understand of why this works,
+and, more importantly, why it ought to be easy to use.
+
+Experience this time around:
+* For Do and Map, I'm modifying onItem function instead of onEmpty.
+ - So maybe bind syntax could have gone the other way. But let's keep it
+   onEmpty right now. That feels better to me.
+* Same experience as before with /Std/Stream% on this attempt: the type is
+  super complicated, but everything in /Std/Stream% implements pretty easily.
+  Especially when I think of things in terms of onItem, onEmpty, and r.
+
+Now then, my implementation of get should be easy, right?
+
+For the fun of it, how would I rewrite the following to put both onItem and
+onEmpty in via bind syntax?
+
+  onItem = (Map@<K@, V@> map, Bit@ x, (Map@<K@, V@>) { Maybe@<V@>; } r) {
+    map.?(empty: Nothing<V@>);
+    r(x.?(0: map.children.0, 1: map.children.1));
+  };
+
+  onEmpty = (Map@<K@, V@> map) {
+    # If map.value access fails with wrong tag, it means your data type
+    # didn't satisfy the prefix code requirement.
+    map.?(empty: Nothing<V@>);
+    Just(map.entry.value);
+  };
+
+  (Map@<K@, V@> map, K@ key) {
+    data(key, map, onItem, onEmpty);
+  };
+
+Something like:
+
+  (Map@<K@, V@> map, K@ key) {
+    Map@<K@, V@> map := {
+      Map@<K@, V@> map, Bit@ x, (Map@<K@, V@>) { Maybe@<V@>; } r := data(key, map);
+      map.?(empty: Nothing<V@>);
+      r(x.?(0: map.children.0, 1: map.children.1));
+    };
+
+    # If map.value access fails with wrong tag, it means your data type
+    # didn't satisfy the prefix code requirement.
+    map.?(empty: Nothing<V@>);
+    Just(map.entry.value);
+  };
+
+That's pretty crazy. I wonder if it works. More generally, given a stream and
+initial state s:
+
+  S@ s := {
+    S@ s, A@ x, (S@) { R@; } r := stream(s);
+    # on item case ...
+  };
+  # on empty case ...
+
+That's kind of cool. Maybe see how well that works elsewhere too?
+
+That's like saying:
+
+  S@ s2 := {
+    S@ s1, A@ x, (S@) { R@; } r := stream(s0);
+    # on item case ...
+  };
+  # on empty case ...
+
+s0 is your initial state. You pass that to the stream. You process items with
+intermediate state s1 until you reach the end. That gets you a final state s2,
+which you then process to return the final result.
+
+Anyway, it's pretty concise, if nothing else. Maybe I'll get used to it.
+
+Yeah, this is pretty crazy. Let's see how well it works out. It seems to be
+doing fine for now. Especially with this new pattern for how to describe
+traversals with function bind syntax.
+
+Here's my ToList conversion. Does this make sense?
+
+  ToList = <@ A@>(Stream@<A@> stream) {
+    List@<A@> list := {
+      List@<A@> list, A@ x, (List@<A@>) { List@<A@>; } r := stream(Empty<A@>);
+      Items(x, r(list));
+    };
+    list;
+  };
+
+The state is the list built up so far. Um... actually, input state could be
+unit, right? This is all output?
+
+Does this make sense?
+
+  ToList = <@ A@>(Stream@<A@> stream) {
+    Unit@ _ := {
+      Unit@ s, A@ x, (Unit@) { List@<A@>; } r := stream(Unit);
+      Items(x, r(s));
+    };
+    Empty<A@>;
+  };
+
+There's no loop state we need to pass down. We traverse all the way to the
+end, return an empty list onEmpty, otherwise add x to the tail. Looks good to
+me.
+
+Here's my stdio io Output function. Notice that it too passes state as Unit@
+but returns M@<Unit@>. That's the value we get from separating S@ and R@
+types:
+
+  <<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@<Byte@>) { M@<Unit@>; }
+  Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@<Byte@> output) {
+    Unit@ _ := {
+      Unit@ _, Byte@ byte, (Unit@) { M@<Unit@>; } r := output(Unit);
+      Unit@ _ := m.do(io.run(PutByte(file, byte)));
+      r(Unit);
+    };
+    io.run(Flush(file));
+  };
+
+Yeah, so everything compiles now without issue using the new scheme. Nothing
+concerning in what I've seen.
+
+Note that a bunch of stuff uses the Lazy@ constructor apis that might be
+slower than needed. If performance doesn't improve as much as I'm hoping,
+consider porting over more stuff to the raw Stream@ type and see how that
+helps. Particularly with Int@ Data@ instances.
+
+This is good progress:
+
+Time: 3:46.03
+Memory: 80992
+
+I'm liking this Stream@ thing. Let's stick with it.

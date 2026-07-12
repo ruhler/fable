@@ -2,6 +2,11 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* In /Std/Map%.Replace - avoid re-allocating the map if nothing changed.
+* Remove Lazy@ based Stream@ construction?
+ - Better to use the raw stream type? Or only in performance sensitive cases?
+* Remove For API. Use the raw stream directly for those use cases?
+
 * Add tests for Set.For and Map.For.
 
 * Implement ForEachKey, ForEachValue, ForEachEntry for Map?

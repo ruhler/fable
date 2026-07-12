@@ -3,20 +3,20 @@
 
 Control@, For@, ForEach@ .= /Std/For%;
 Stream@ .= /Std/Stream%;
-Unit .= /Std/Unit%;
 
 # @func[For] Iterate over elements of a stream.
 #  @arg[@][A@] The type of element on the stream.
 #  @arg[Stream<A@>][stream] The stream to iterate over.
 #  @returns[For<A@>] A for loop iteration over the stream elements.
 <@ A@>(Stream@<A@>) { For@<A@>; }
-For = <@ A@>(Stream@<A@> stream) {
-  <@ S@>(S@ s, (S@, A@) { Control@<S@>; } body) {
-    stream.?(empty: s);
-    Control@<S@> c = body(s, stream.items.head);
+For = <@ A@>(Stream@<A@> stream)<@ S@>(S@ s, (S@, A@) { Control@<S@>; } body) {
+  S@ s := {
+    S@ s, A@ x, (S@) { S@; } r := stream(s);
+    Control@<S@> c = body(s, x);
     c.?(break: c.break);
-    For(stream.items.tail(Unit), c.continue, body);
+    r(c.continue);
   };
+  s;
 };
 
 # @func[ForEach] Iterate over elements of a stream.
@@ -24,12 +24,12 @@ For = <@ A@>(Stream@<A@> stream) {
 #  @arg[Stream<A@>][stream] The stream to iterate over.
 #  @returns[ForEach@<A@>] A foreach loop iteration over the stream elements.
 <@ A@>(Stream@<A@>) { ForEach@<A@>; }
-ForEach = <@ A@>(Stream@<A@> stream) {
-  <@ S@>(S@ s, (S@, A@) { S@; } body) {
-    stream.?(empty: s);
-    S@ next = body(s, stream.items.head);
-    ForEach(stream.items.tail(Unit), next, body);
+ForEach = <@ A@>(Stream@<A@> stream)<@ S@>(S@ s, (S@, A@) { S@; } body) {
+  S@ s := {
+    S@ s, A@ x, (S@) { S@; } r := stream(s);
+    r(body(s, x));
   };
+  s;
 };
 
 @(For, ForEach);

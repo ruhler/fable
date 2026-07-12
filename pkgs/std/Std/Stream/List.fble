@@ -33,8 +33,11 @@ Concat = <@ A@>(List@<Stream@<A@>> xs) {
 #  @returns[List@<A@>] The list of vales in the stream.
 <@ A@>(Stream@<A@>) { List@<A@>; }
 ToList = <@ A@>(Stream@<A@> stream) {
-  stream.?(empty: Empty<A@>);
-  Items(stream.items.head, ToList(stream.items.tail(Unit)));
+  Unit@ _ := {
+    Unit@ s, A@ x, (Unit@) { List@<A@>; } r := stream(Unit);
+    Items(x, r(s));
+  };
+  Empty<A@>;
 };
 
 @(ToStream, Concat, ToList);

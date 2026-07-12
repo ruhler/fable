@@ -17,8 +17,11 @@ Unit@, Unit .= /Std/Unit%;
 #  @returns[Unit@] Nothing interesting.
 <@ A@>(Stream@<A@>) { Unit@; }
 ToTest = <@ A@>(Stream@<A@> output) {
-  output.?(empty: Unit);
-  ToTest(output.items.tail(Unit));
+  Unit@ _ := {
+    Unit@ _, A@ _, (Unit@) { Unit@; } r := output(Unit);
+    r(Unit);
+  };
+  Unit;
 };
 
 # @func[TestOut] An Out@ for use in testing.
