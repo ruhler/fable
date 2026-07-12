@@ -9,6 +9,7 @@ IsZero .= /Std/Int/Sign%;
 Range .= /Std/Int/Stream%;
 List@, Items, List .= /Std/List%;
 Take .= /Std/List/Index%;
+For .= /Std/Stream%;
 
 Literal@, Clause@, Params@, Puzzle@ .= /SatGame/Puzzle%;
 Shuffle .= /Std/List/Random%;
@@ -80,17 +81,14 @@ Eval .= /Std/State/Pure%;
     Int@ num_free_vars = Sub(params.num_vars, params.num_literals_per_clause);
     Int@ clauses_per_variable = Div(Decr(Add(params.num_clauses, num_free_vars)), num_free_vars).q;
 
-    Puzzle@ puzzle := M.do(/Std/Stream/For%.ForEach(
-      Range(params.num_literals_per_clause, params.num_vars), M.return(/Std/List%.Empty<Clause@>),
+    Puzzle@ puzzle := M.do(For(Range(params.num_literals_per_clause, params.num_vars), M.return(/Std/List%.Empty<Clause@>),
       (M@<Puzzle@> mp, Int@ i) {
         Bool@ pos := M.do(/Std/Bool/Random%.Uniform(M, Rng));
         Literal@ var = Literal@(Get(vars, i).just, pos);
-        /Std/Stream/For%.ForEach(Range(Int|0, clauses_per_variable), mp,
-          (M@<Puzzle@> mp, Int@ _) {
-            Puzzle@ tail := M.do(mp);
-            Clause@ clause := M.do(GenClause(params, i, var));
-            M.return(Items(clause, tail));
-          });
+        M@<Puzzle@> mp, Int@ _ := For(Range(Int|0, clauses_per_variable), mp);
+        Puzzle@ tail := M.do(mp);
+        Clause@ clause := M.do(GenClause(params, i, var));
+        M.return(Items(clause, tail));
       }));
     Puzzle@ shuffled := M.do(Shuffle(M, Rng, puzzle));
     M.return(Take(shuffled, params.num_clauses));

@@ -4,7 +4,7 @@ Le, Max, Min .= /Std/Int/Cmp%;
 Int .= /Std/Int/Lit%;
 IsNegative .= /Std/Int/Sign%;
 Range .= /Std/Int/Stream%;
-ForEach .= /Std/Stream/For%;
+For .= /Std/Stream%;
 
 Drawing@, Color@, Point@, Blank, Over, Rect .= /App/Drawing%;
 
@@ -69,16 +69,16 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
     xc: Fixed@(a.x, 0));
   Point@ db = Point@(Sub(b.x, a.x), Sub(b.y, a.y));
   Point@ dc = Point@(Sub(c.x, a.x), Sub(c.y, a.y));
-  State@ bottom = ForEach(Range(a.y, b.y), initial, 
-    (State@ state, Int@ y) {
-      Int@ xmin = Min(state.xb.x, state.xc.x);
-      Int@ xmax = Max(state.xb.x, state.xc.x);
-      Fixed@ xb = Fixed(state.xb.x, Add(state.xb.r, db.x), db.y);
-      Fixed@ xc = Fixed(state.xc.x, Add(state.xc.r, dc.x), dc.y);
-      State@(
-        Over(state.drawing, Rect(xmin, y, Sub(xmax, xmin), 1, color)),
-        xb, xc);
-    });
+  State@ bottom = {
+    State@ state, Int@ y := For(Range(a.y, b.y), initial);
+    Int@ xmin = Min(state.xb.x, state.xc.x);
+    Int@ xmax = Max(state.xb.x, state.xc.x);
+    Fixed@ xb = Fixed(state.xb.x, Add(state.xb.r, db.x), db.y);
+    Fixed@ xc = Fixed(state.xc.x, Add(state.xc.r, dc.x), dc.y);
+    State@(
+      Over(state.drawing, Rect(xmin, y, Sub(xmax, xmin), 1, color)),
+      xb, xc);
+  };
 
   # Draw horizontal lines between line segments bc and ac starting from the
   # middle point b and going up to the top point c.
@@ -88,16 +88,16 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
     drawing: bottom.drawing,
     xb: Fixed@(b.x, 0),
     xc: bottom.xc);
-  State@ top = ForEach(Range(b.y, c.y), initial,
-    (State@ state, Int@ y) {
-      Int@ xmin = Min(state.xc.x, state.xb.x);
-      Int@ xmax = Max(state.xc.x, state.xb.x);
-      Fixed@ xc = Fixed(state.xc.x, Add(state.xc.r, dc.x), dc.y);
-      Fixed@ xb = Fixed(state.xb.x, Add(state.xb.r, db.x), db.y);
-      State@(
-        Over(state.drawing, Rect(xmin, y, Sub(xmax, xmin), 1, color)),
-        xb, xc);
-    });
+  State@ top = {
+    State@ state, Int@ y := For(Range(b.y, c.y), initial);
+    Int@ xmin = Min(state.xc.x, state.xb.x);
+    Int@ xmax = Max(state.xc.x, state.xb.x);
+    Fixed@ xc = Fixed(state.xc.x, Add(state.xc.r, dc.x), dc.y);
+    Fixed@ xb = Fixed(state.xb.x, Add(state.xb.r, db.x), db.y);
+    State@(
+      Over(state.drawing, Rect(xmin, y, Sub(xmax, xmin), 1, color)),
+      xb, xc);
+  };
   top.drawing;
 };
 

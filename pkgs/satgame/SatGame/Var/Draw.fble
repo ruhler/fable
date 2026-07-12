@@ -3,6 +3,7 @@ Bool@ .= /Std/Bool%;
 Int@, Add, Mul .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 Range .= /Std/Int/Stream%;
+For .= /Std/Stream%;
 
 Drawing@, Color@, Drawings, Rect, Blank, Translate .= /App/Drawing%;
 
@@ -20,8 +21,8 @@ Box = (Bool@ p, Color@ color) {
   };
   p.?(true: box);
 
-  Drawing@ d, Int@ x := /Std/Stream/For%.ForEach(Range(Int|0, Int|3), box);
-  Drawing@ e, Int@ y := /Std/Stream/For%.ForEach(Range(Int|0, Int|3), d);
+  Drawing@ d, Int@ x := For(Range(Int|0, Int|3), box);
+  Drawing@ e, Int@ y := For(Range(Int|0, Int|3), d);
   Drawings[e,
     Rect(Add(Mul(Int|2, x), Int|2), Add(Mul(Int|2, y), Int|2), Int|1, Int|1, color),
     Rect(Add(Mul(Int|2, x), Int|3), Add(Mul(Int|2, y), Int|3), Int|1, Int|1, color)];

@@ -1746,3 +1746,136 @@ So not as much impact as you might think. That's interesting.
 
 I wonder if the issue is me re-allocating when you do a removal that doesn't
 actually remove something. Worth trying. But not right now.
+
+---
+
+Where are we now? There's still cleanup left. What all is it?
+* Figure out how to deal with ForEach for List, Stream, Map, Set.
+* Remove /Std/For% entirely if I can or it makes sense.
+* Remove /Std/Stream/For% if it makes sense?
+* Decide what to do for /Std/Map%.Entries
+ - Reuse Entry@ type, or have a modified Stream@ type?
+* Move and rename /Std/Stream/List%.ToStream to something better.
+* Add tests for the new functions: Keys, Values, Entries.
+* Add Values function to /Std/Set%?
+
+The most significant question here is what to do with ForEach. Do I still want
+it? Do I want a single implementation on top of Stream that everyone shares,
+or a custom one per container type?
+
+How to implement it manually:
+
+
+  Drawn@ d, Int@ x := /Std/Stream/For%.ForEach(Range(xmin, xmax), drawn);
+  Drawn@ d, Int@ y := /Std/Stream/For%.ForEach(Range(ymin, ymax), d);
+  Put(d, Point@(x, y), drawing.rect.color);
+
+Becomes something like:...
+
+Okay. I don't even want to think about it. That suggests we definitely want a
+ForEach function people can call.
+
+Here's what it implements as:
+
+  <@ A@>(Stream@<A@>) { ForEach@<A@>; }
+  ForEach = <@ A@>(Stream@<A@> stream)<@ S@>(S@ s, (S@, A@) { S@; } body) {
+    S@ s := {
+      S@ s, A@ x, (S@) { S@; } r := stream(s);
+      r(body(s, x));
+    };
+    s;
+  };
+
+The key things we can factor out for all users:
+* We always call r. No need for user to have to care about that.
+* We always return the final state. No need for user to special case that.
+
+There's the performance question. I should be able to answer that right away
+by re-implementing ForEach on top of Stream and see if it makes any difference
+in benchmark performance.
+
+Here's where we are at now, for example:
+
+  Time: 3:33.12
+  Memory: 80984
+
+Let's try porting ForEach over for Map, Set, and List and see how the
+performance changes. I can be hacky for this experiment.
+
+Note that I need Map's Entries function to be a true Stream@ type if I want to
+reuse /Std/Stream/For%.ForEach on it.
+
+Hopefully performance isn't significantly impacted one way or another. Then I
+can move ForEach to /Std/Stream% and leave it there for everyone to use?
+
+Well, I rather have people calling ForEach(list) than ForEach(Values(list)) or
+ForEach(Stream(list)) everywhere, right?
+
+In which case, seems like it doesn't matter. Every data type who wants should
+expose an implementation. Internally they can reuse their own Stream@ if it's
+fast enough. Or just implement ForEach directly if it's not.
+
+For Map, do we want ForEachKey, ForEachValue alternatives though?
+
+Maybe I can rename ForEach to For? And then say:
+
+  ForEach(list)
+  For(Values(list))
+
+  ForEachKey(map)
+  For(Keys(map))
+
+So that it's not so hard to use.
+
+Time: 3:42.48
+Memory: 81116
+
+So there is a performance cost to this approach. Not too surprising. Good to
+know.
+
+Here's my proposal:
+* Move ForEach back into /Std/Stream, /Std/List.
+* Remove ForEach@ type? Or put into /Std/Stream%?
+* Remove /Std/For%, which is now empty. 
+* Remove /Std/Stream/For% and /Std/List/For% which are now empty.
+* Rename ForEach everywhere to 'For'.
+
+I don't know. I like ForEach better as a name. It reads much better.
+
+  ForEach(samples, Int|0) - we know we are iterating over samples.
+  For(samples, Int|0) - ... for samples? for each samples.
+  For(Values(samples), Int|0);
+  For(Each(samples), Int|0);
+  ForEach(samples).
+  For(Range(...), Int|0);
+
+That's interesting. The generic one could be For. We could call the conversion
+from list to stream Each. But we have a specialized ForEach?
+
+Then you could do:
+
+  For(Keys(map), Int|0):
+  For(Each(map), Int|0):
+  For(Values(map), Int|0):
+
+Note that 'Entries' is overloaded for map. I use it to construct a map from a
+list. So Each would be a better name for that function.
+
+  Unit@ _ := {
+    Unit@ _, Node@ key, Pos@ value, (Unit@) { Maybe@<Node@>; } r := Map.Entries(layout, Unit);
+    /Std/Int/Eq%.Eq(value.x, pos.x).?(false: r(Unit));
+    /Std/Int/Eq%.Eq(value.y, pos.y).?(false: r(Unit));
+    Just(key);
+  };
+  Nothing<Node@>;
+
+  Unit@ _ := {
+    Unit@ _, Entry@ entry, (Unit@) { Maybe@<Node@>; } r := Map.Entries(layout, Unit);
+    Node@ key, Pos@ value .= entry;
+    /Std/Int/Eq%.Eq(value.x, pos.x).?(false: r(Unit));
+    /Std/Int/Eq%.Eq(value.y, pos.y).?(false: r(Unit));
+    Just(key);
+  };
+  Nothing<Node@>;
+
+All good food for thought.

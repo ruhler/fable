@@ -11,6 +11,7 @@ UpTo .= /Std/Int/Random%;
 Range .= /Std/Int/Stream%;
 List@, Items, Empty .= /Std/List%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
+For .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 Drawing@, Blank, Over, Translate .= /App/Drawing%;
@@ -93,8 +94,8 @@ Set@ = Set.Set@;
 # AllAliens --
 #   The set of all aliens.
 Set@ AllAliens = {
-  Set@ set, Int@ row := /Std/Stream/For%.ForEach(Range(Int|0, NumRows), Set.Empty);
-  Set@ set, Int@ col := /Std/Stream/For%.ForEach(Range(Int|0, NumCols), set);
+  Set@ set, Int@ row := For(Range(Int|0, NumRows), Set.Empty);
+  Set@ set, Int@ col := For(Range(Int|0, NumCols), set);
   Set.Add(set, Alien@(row, col));
 };
 
@@ -291,7 +292,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
     # We launch bombs once all aliens have completed their move.
     aliens.next.?(just: M.return(bombs));
 
-    M@<Bombs@> mbombs, Int@ col := /Std/Stream/For%.ForEach(Range(Int|0, NumCols), M.return(bombs)); 
+    M@<Bombs@> mbombs, Int@ col := For(Range(Int|0, NumCols), M.return(bombs)); 
     Maybe@<Alien@> alien = Vanguard(aliens, col);
     alien.?(nothing: mbombs);
 

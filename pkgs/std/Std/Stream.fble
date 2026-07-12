@@ -1,6 +1,7 @@
 # @module[/Std/Stream%]
 #  Types and utilities for streaming data out.
 
+ForEach@ .= /Std/For%;
 Lazy@ .= /Std/Lazy%;
 Unit .= /Std/Unit%;
 
@@ -155,4 +156,17 @@ Map = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { B@; } f) {
   };
 };
 
-@(Stream@, End, Put, Puts, Return, Do, Map);
+# @func[For] Iterate over elements of a stream.
+#  @arg[@][A@] The type of element on the stream.
+#  @arg[Stream<A@>][stream] The stream to iterate over.
+#  @returns[ForEach@<A@>] A foreach loop iteration over the stream elements.
+<@ A@>(Stream@<A@>) { ForEach@<A@>; }
+For = <@ A@>(Stream@<A@> stream)<@ S@>(S@ s, (S@, A@) { S@; } body) {
+  S@ s := {
+    S@ s, A@ x, (S@) { S@; } r := stream(s);
+    r(body(s, x));
+  };
+  s;
+};
+
+@(Stream@, End, Put, Puts, Return, Do, Map, For);

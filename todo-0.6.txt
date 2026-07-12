@@ -7,7 +7,7 @@ Things to consider doing for the fble-0.6 release.
 
 * Do something about /Std/For%.
 * Move and rename /Std/Stream/List%.ToStream to something better
- - Items? Stream? Over? For? Elements?
+ - Items? Stream? Over? For? Elements? Each?
 
 * Add tests for /Std/Map%. Entries, Keys, Values.
 
@@ -15,13 +15,6 @@ Things to consider doing for the fble-0.6 release.
 
 * Remove Lazy@ based Stream@ construction?
  - Better to use the raw stream type? Or only in performance sensitive cases?
-
-* Remove For API. Use the raw stream directly for those use cases?
-
-* Add tests for Set.For and Map.For.
-
-* Implement ForEachKey, ForEachValue, ForEachEntry for Map?
- Or Keys, Values, Entries?
 
 * Clean up /Std/Char/Show% for unicode.
  - Don't keep switching between stream and list.
