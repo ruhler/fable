@@ -3,7 +3,7 @@
 
 Bool@, True, False, And .= /Std/Bool%;
 Data@, Bit@ .= /Std/Data%;
-ForEach@ .= /Std/For%;
+For@ .= /Std/For%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Stream@ .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
@@ -223,7 +223,7 @@ Values = <@ K@, @ V@>(Map@<K@, V@> map) {
 #  @arg[@][V@] The type of value.
 #  @arg[Map@<K@, V@>][map] The map to iterate over.
 #  @returns[For<Entry@<K@, V@>>] A foreach loop iteration over the map entries.
-<@ K@, @ V@>(Map@<K@, V@>) { ForEach@<Entry@<K@, V@>>; }
+<@ K@, @ V@>(Map@<K@, V@>) { For@<Entry@<K@, V@>>; }
 ForEach = <@ K@, @ V@>(Map@<K@, V@> map) {
   <@ S@>(S@ s, (S@, Entry@<K@, V@>) { S@; } body) {
     map.?(empty: s);

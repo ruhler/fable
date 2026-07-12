@@ -3,7 +3,7 @@
 
 Bool@, True, False .= /Std/Bool%;
 Data@ .= /Std/Data%;
-ForEach@ .= /Std/For%;
+For@ .= /Std/For%;
 Just, Nothing .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
 
@@ -60,7 +60,7 @@ Remove = <@ T@>(Data@<T@> data) {
 #  @arg[@][T@] The element type.
 #  @arg[Set@<T@>][set] The set to iterate over.
 #  @returns[ForEach<T@>] A foreach loop iteration over the set elements.
-<@ T@>(Set@<T@>) { ForEach@<T@>; }
+<@ T@>(Set@<T@>) { For@<T@>; }
 ForEach = <@ T@>(Set@<T@> set) {
   <@ S@>(S@ s, (S@, T@) { S@; } body) {
     S@ s, /Std/Map%.Entry@<T@, Unit@> e := /Std/Map%.ForEach(set, s);

@@ -1,9 +1,9 @@
 # @module[/Std/For%]
 #  For loops.
 
-# @type[ForEach@] Conventional type for foreach loop traversal.
-#  The foreach variant traverses over all elements. You can't break out early
-#  like you can with a for loop.
+# @type[For@] Conventional type for loop traversal.
+#  Traverses over all elements of some sequence. You can't break out early. If
+#  you want to break out early, use the Stream@ type instead.
 #
 #  @arg[@][A@] Type of element to iterate over.
 #  @arg[@][S@] Type used for the state of the loop.
@@ -12,6 +12,6 @@
 #   The body of the loop. Computes the next state of the loop given the
 #   current state and the next element.
 #  @returns[S@] The final state of the loop.
-ForEach@ = <@ A@> { <@ S@>(S@, (S@, A@) { S@; }) { S@; }; };
+For@ = <@ A@> { <@ S@>(S@, (S@, A@) { S@; }) { S@; }; };
 
-@(ForEach@);
+@(For@);
