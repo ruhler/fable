@@ -1,9 +1,9 @@
 
 Bool@, True, False .= /Std/Bool%;
-Break, Continue .= /Std/For%;
 List@, List .= /Std/List%;
-For, ForEach .= /Std/List/For%;
+ForEach .= /Std/List/For%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
+ToStream .= /Std/Stream/List%;
 Unit@, Unit .= /Std/Unit%;
 
 # The 9 symbols used in sudoku: 1 through 9.
@@ -299,11 +299,14 @@ SolveFrom = (Board@ board, List@<CellId@> mfrom) {
     nothing: {
       # We don't know the symbol for this cell yet. Try all possible
       # options until we've found a solution to the puzzle.
-      Maybe@<Board@> unsolved, Symbol@ s := For(Symbols, Nothing<Board@>);
-      cell(s).?(false: Continue(unsolved));
-      Maybe@<Board@> solved = SolveFrom(ApplyXS(board, Assign(from, s)), next);
-      solved.?(just: Break(solved));
-      Continue(unsolved);
+      Unit@ _ := {
+        Unit@ _, Symbol@ s, (Unit@) { Maybe@<Board@>; } r := ToStream(Symbols, Unit);
+        cell(s).?(false: r(Unit));
+        Maybe@<Board@> solved = SolveFrom(ApplyXS(board, Assign(from, s)), next);
+        solved.?(just: solved);
+        r(Unit);
+      };
+      Nothing<Board@>;
     });
 };
 

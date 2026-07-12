@@ -1,20 +1,8 @@
 # @module[/Std/List%]
 #  For loop traversal over list elements.
 
-Control@, For@, ForEach@ .= /Std/For%;
+ForEach@ .= /Std/For%;
 List@ .= /Std/List%;
-
-# @func[For] Iterate over elements of a list.
-#  @arg[@][A@] The type of element on the list.
-#  @arg[List@<A@>][list] The list to iterate over.
-#  @returns[For<A@>] A for loop iteration over the list elements.
-<@ A@>(List@<A@>) { For@<A@>; }
-For = <@ A@>(List@<A@> list)<@ S@>(S@ s, (S@, A@) { Control@<S@>; } body) {
-  list.?(empty: s);
-  Control@<S@> c = body(s, list.items.head);
-  c.?(break: c.break);
-  For(list.items.tail, c.continue, body);
-};
 
 # @func[ForEach] Iterate over elements of a list.
 #  @arg[@][A@] The type of element on the list.
@@ -26,4 +14,4 @@ ForEach = <@ A@>(List@<A@> list)<@ S@>(S@ s, (S@, A@) { S@; } body) {
   ForEach(list.items.tail, body(s, list.items.head), body);
 };
 
-@(For, ForEach);
+@(ForEach);

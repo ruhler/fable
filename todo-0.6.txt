@@ -3,6 +3,8 @@ Fble 0.6 TODO
 Things to consider doing for the fble-0.6 release.
 
 * Do something about /Std/For%.
+* Move and rename /Std/Stream/List%.ToStream to something better
+ - Items? Stream? Over? For? Elements?
 
 * In /Std/Map%.Replace - avoid re-allocating the map if nothing changed?
 
