@@ -1,6 +1,5 @@
 
 Bool@, True, False .= /Std/Bool%;
-Break, Continue .= /Std/For%;
 List@ .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
 Unit@, Unit .= /Std/Unit%;
@@ -8,7 +7,7 @@ Unit@, Unit .= /Std/Unit%;
 Addr@ .= /Hwdg/Addr%;
 Data@ .= /Hwdg/Data%;
 
-Map@, Entry@, Keys, For, ForEach, Put, Get,
+Map@, Entry@, Entries, Keys, ForEach, Put, Get,
 Empty .= /Std/Map%.Of(/Hwdg/Addr%.Data)<Data@>;
 
 Memory@ = Map@;
@@ -34,11 +33,14 @@ Disjoint = (Memory@ a, Memory@ b) {
 # Return true if the first memory contains the second.
 (Memory@, Memory@) { Bool@; }
 Contains = (Memory@ a, Memory@ b) {
-  Bool@ _, Entry@ e := For(b, True);
-  Maybe@<Data@> mva = Get(a, e.key);
-  mva.?(nothing: Break(False));
-  /Hwdg/Data/Eq%.Eq(e.value, mva.just).?(false: Break(False));
-  Continue(True);
+  Unit@ _ := {
+    Unit@ _, Addr@ addr, Data@ data, (Unit@) { Bool@; } r := Entries(b, Unit);
+    Maybe@<Data@> mva = Get(a, addr);
+    mva.?(nothing: False);
+    /Hwdg/Data/Eq%.Eq(data, mva.just).?(false: False);
+    r(Unit);
+  };
+  True;
 };
 
 # Memory literal. For example:

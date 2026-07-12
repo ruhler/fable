@@ -199,12 +199,14 @@ For = <@ K@, @ V@>(Map@<K@, V@> map) {
 #  @arg[@][K@] The type of key.
 #  @arg[@][V@] The type of value.
 #  @arg[Map@<K@, V@>][map] The map to iterate over.
-#  @returns[Stream@<Entry@<K@, V@>>] The stream of map entries.
-<@ K@, @ V@>(Map@<K@, V@>) { Stream@<Entry@<K@, V@>>; }
+#  @returns[Stream@<K@, V@>] The stream of map entries.
+#   Note this doesn't use the actual Stream@ type, but a modified one where
+#   the put function takes key and value as separate arguments.
+<@ K@, @ V@>(Map@<K@, V@>) { <@ S@>(S@)<@ R@>((S@, K@, V@, (S@) { R@; }) { R@; }, (S@) { R@; }) { R@; }; }
 Entries = <@ K@, @ V@>(Map@<K@, V@> map) {
-  <@ S@>(S@ s)<@ R@>((S@, Entry@<K@, V@>, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
+  <@ S@>(S@ s)<@ R@>((S@, K@, V@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
     map.?(empty: return(s));
-    map.?(entry: put(s, map.entry, return));
+    map.?(entry: put(s, map.entry.key, map.entry.value, return));
 
     S@ s := Entries(map.children.0, s, put);
     Entries(map.children.1, s, put, return);

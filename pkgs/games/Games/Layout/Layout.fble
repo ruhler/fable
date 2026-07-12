@@ -1,8 +1,6 @@
 
-Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
 FormatE .= /Std/Char/Ascii/Stream%;
-Break, Continue .= /Std/For%;
 Int@, Incr, Decr, Add, Sub, Neg, Mul, Shr .= /Std/Int%;
 Max, Min .= /Std/Int/Cmp%;
 Io@ .= /Std/Io%;
@@ -54,14 +52,13 @@ Cost = (Layout@ layout, List@<Edge@> edges) {
 (Layout@, Pos@) { Maybe@<Node@>; }
 NodeAt = (Layout@ layout, Pos@ pos) {
   # TODO: More efficient mapping from position to node?
-  Maybe@<Node@> looking, Map.Entry@ e := Map.For(layout, Nothing<Node@>);
-  Bool@ match = {
-    /Std/Int/Eq%.Eq(e.value.x, pos.x).?(false: False);
-    /Std/Int/Eq%.Eq(e.value.y, pos.y).?(false: False);
-    True;
+  Unit@ _ := {
+    Unit@ _, Node@ key, Pos@ value, (Unit@) { Maybe@<Node@>; } r := Map.Entries(layout, Unit);
+    /Std/Int/Eq%.Eq(value.x, pos.x).?(false: r(Unit));
+    /Std/Int/Eq%.Eq(value.y, pos.y).?(false: r(Unit));
+    Just(key);
   };
-  match.?(true: Break(Just(e.key)));
-  Continue(looking);
+  Nothing<Node@>;
 };
 
 # Swap the position of two nodes in the layout.

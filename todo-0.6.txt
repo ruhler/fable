@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Is it a bad idea to have /Std/Map%.Entries not use Stream@ type?
+ - Should we provide a variation that does?
+
 * Do something about /Std/For%.
 * Move and rename /Std/Stream/List%.ToStream to something better
  - Items? Stream? Over? For? Elements?
