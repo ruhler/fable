@@ -3,11 +3,12 @@ Bool@, True, False .= /Std/Bool%;
 Break, Continue .= /Std/For%;
 List@ .= /Std/List%;
 Maybe@ .= /Std/Maybe%;
+Unit@, Unit .= /Std/Unit%;
 
 Addr@ .= /Hwdg/Addr%;
 Data@ .= /Hwdg/Data%;
 
-Map@, Entry@, For, ForEach, Put, Get,
+Map@, Entry@, Keys, For, ForEach, Put, Get,
 Empty .= /Std/Map%.Of(/Hwdg/Addr%.Data)<Data@>;
 
 Memory@ = Map@;
@@ -22,9 +23,12 @@ Override = (Memory@ m, Memory@ v) {
 # Return true if the two memories have no addresses in common.
 (Memory@, Memory@) { Bool@; }
 Disjoint = (Memory@ a, Memory@ b) {
-  Bool@ _, Entry@ e := For(a, True);
-  Get(b, e.key).?(just: Break(False));
-  Continue(True);
+  Unit@ _ := {
+    Unit@ _, Addr@ addr, (Unit@) { Bool@; } r := Keys(a, Unit);
+    Get(b, addr).?(just: False);
+    r(Unit);
+  };
+  True;
 };
 
 # Return true if the first memory contains the second.

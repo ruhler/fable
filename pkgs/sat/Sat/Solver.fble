@@ -1,7 +1,6 @@
 
 Bool@, True, False, Not .= /Std/Bool%;
 Format, String .= /Std/Char/Ascii/Stream%;
-Break .= /Std/For%;
 Incr .= /Std/Int%;
 Int .= /Std/Int/Lit%;
 List@, List, Empty, Items, Append .= /Std/List%;
@@ -388,8 +387,11 @@ Solve = {
 
   # Pick some variable that exists in the given vars map.
   (Vars@) { Maybe@<VarId@>; } PickSomeVar = (Vars@ vars) {
-    Maybe@<VarId@> _, Vars.Entry@ e := Vars.For(vars, Nothing<VarId@>);
-    Break(Just(e.key));
+    Unit@ _ := {
+      Unit@ _, VarId@ var, (Unit@) { Maybe@<VarId@>; } _ := Vars.Keys(vars, Unit);
+      Just(var);
+    };
+    Nothing<VarId@>;
   };
 
   (Solver@) { SearchResult@; } Unsat = (Solver@ s) {

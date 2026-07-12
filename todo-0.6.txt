@@ -6,6 +6,8 @@ Things to consider doing for the fble-0.6 release.
 * Move and rename /Std/Stream/List%.ToStream to something better
  - Items? Stream? Over? For? Elements?
 
+* Add tests for /Std/Map%. Entries, Keys, Values.
+
 * In /Std/Map%.Replace - avoid re-allocating the map if nothing changed?
 
 * Remove Lazy@ based Stream@ construction?
