@@ -2,10 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* rename onItem and onEmpty to item and empty?
- - Or item and end?
- - Or item and finish?
-
 * In /Std/Map%.Replace - avoid re-allocating the map if nothing changed?
 
 * Remove Lazy@ based Stream@ construction?

@@ -9,21 +9,21 @@ Int@ .= /Std/Int%;
 #  @returns[Stream@<Bit@>] The stream of bits describing the Int@.
 Data@<Int@>
 Data = (Int@ x) {
-  <@ S@>(S@ s)<@ R@>((S@, Bit@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+  <@ S@>(S@ s)<@ R@>((S@, Bit@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
     x.?(
       n: {
-        S@ s := onItem(s, 0);
-        S@ s := onItem(s, 0);
-        /Std/Int/IntP/Data%.DataR(x.n, s, onItem, onEmpty);
+        S@ s := put(s, 0);
+        S@ s := put(s, 0);
+        /Std/Int/IntP/Data%.DataR(x.n, s, put, return);
       },
       0: {
-        S@ s := onItem(s, 0);
-        S@ s := onItem(s, 1);
-        onEmpty(s);
+        S@ s := put(s, 0);
+        S@ s := put(s, 1);
+        return(s);
       },
       p: {
-        S@ s := onItem(s, 1);
-        /Std/Int/IntP/Data%.Data(x.p, s, onItem, onEmpty);
+        S@ s := put(s, 1);
+        /Std/Int/IntP/Data%.Data(x.p, s, put, return);
       });
   };
 };

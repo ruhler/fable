@@ -31,19 +31,19 @@ Data@<IntP@> Data = {
   # using a unary encoding: 0, 10, 110, 1110, ...
   (IntP@) { Stream@<Bit@>; }
   NumBits = (IntP@ x) {
-    <@ S@>(S@ s)<@ R@>((S@, Bit@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+    <@ S@>(S@ s)<@ R@>((S@, Bit@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
       x.?(
         1: {
-          S@ s := onItem(s, 0);
-          onEmpty(s);
+          S@ s := put(s, 0);
+          return(s);
         },
         2p0: {
-          S@ s := onItem(s, 1);
-          NumBits(x.2p0, s, onItem, onEmpty);
+          S@ s := put(s, 1);
+          NumBits(x.2p0, s, put, return);
         },
         2p1: {
-          S@ s := onItem(s, 1);
-          NumBits(x.2p1, s, onItem, onEmpty);
+          S@ s := put(s, 1);
+          NumBits(x.2p1, s, put, return);
         });
     };
   };
@@ -52,27 +52,27 @@ Data@<IntP@> Data = {
   # significant bit.
   (IntP@) { Stream@<Bit@>; }
   RawBits = (IntP@ x) {
-    <@ S@>(S@ s)<@ R@>((S@, Bit@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+    <@ S@>(S@ s)<@ R@>((S@, Bit@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
       x.?(
-        1: onEmpty(s),
+        1: return(s),
         2p0: {
-          S@ s := RawBits(x.2p0, s, onItem);
-          S@ s := onItem(s, 0);
-          onEmpty(s);
+          S@ s := RawBits(x.2p0, s, put);
+          S@ s := put(s, 0);
+          return(s);
         },
         2p1: {
-          S@ s := RawBits(x.2p1, s, onItem);
-          S@ s := onItem(s, 1);
-          onEmpty(s);
+          S@ s := RawBits(x.2p1, s, put);
+          S@ s := put(s, 1);
+          return(s);
         });
     };
   };
 
   (IntP@ x) {
-    <@ S@>(S@ s)<@ R@>((S@, Bit@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
-      S@ s := NumBits(x, s, onItem);
-      S@ s := RawBits(x, s, onItem);
-      onEmpty(s);
+    <@ S@>(S@ s)<@ R@>((S@, Bit@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
+      S@ s := NumBits(x, s, put);
+      S@ s := RawBits(x, s, put);
+      return(s);
     };
   };
 };

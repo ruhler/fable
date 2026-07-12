@@ -13,8 +13,8 @@ Unit .= /Std/Unit%;
 #  @arg[@][A@] The type of element on the stream.
 #  @arg[@][S@] The traversal state type.
 #  @arg[S@][s] The traversal state.
-#  @arg[(S@, A@, (S@) { R@; }) { R@; }][onItem]
-#   Function called for the next item in the stream.
+#  @arg[(S@, A@, (S@) { R@; }) { R@; }][put]
+#   Function called with the next item in the stream.
 #
 #   @arg[S@][s] The traversal state.
 #   @arg[A@][x] The next item in the stream.
@@ -23,7 +23,7 @@ Unit .= /Std/Unit%;
 #    You can call this to continue traversing the stream, or ignore it to
 #    return a value early without traversing any more of the stream.
 #   @returns[R@] The final result of traversal.
-#  @arg[(S@) { R@; }][onEmpty]
+#  @arg[(S@) { R@; }][return]
 #   Function called when the end of the stream is reached.
 #
 #   @arg[S@][s] The traversal state.
@@ -31,16 +31,16 @@ Unit .= /Std/Unit%;
 #  @returns The final result of traversal.
 #
 #  If you want to be clever when traversing a stream, you can use function
-#  bind syntax to provide implementations for onItem and onEmpty. Instead of:
+#  bind syntax to provide implementations for put and return. Instead of:
 #
 #  @code[fble] @
-#   onItem = (S@ s, A@ x, (S@) { R@; } r) {
+#   put = (S@ s, A@ x, (S@) { R@; } r) {
 #     # on item code here ...
 #   };
-#   onEmpty = (S@ s) {
-#     # on empty code here ...
+#   return = (S@ s) {
+#     # return code here ...
 #   };
-#   stream(s, onItem, onEmpty);
+#   stream(s, put, return);
 #
 #  You could write:
 #   
@@ -62,8 +62,8 @@ Stream@ = <@ A@> {
 #
 #  Also known as an empty stream.
 Stream@ End = <@ A@> {
-  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } _onItem, (S@) { R@; } onEmpty) {
-    onEmpty(s);
+  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } _onItem, (S@) { R@; } return) {
+    return(s);
   };
 };
 
@@ -84,9 +84,9 @@ Stream@ End = <@ A@> {
 #   End<Int@>;
 <@ A@>(A@, Lazy@<Stream@<A@>>) { Stream@<A@>; }
 Put = <@ A@>(A@ head, Lazy@<Stream@<A@>> tail) {
-  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
-    S@ s := onItem(s, head);
-    tail(Unit, s, onItem, onEmpty);
+  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
+    S@ s := put(s, head);
+    tail(Unit, s, put, return);
   };
 };
 
@@ -100,9 +100,9 @@ Put = <@ A@>(A@ head, Lazy@<Stream@<A@>> tail) {
 #   @a[tail].
 <@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
 Puts = <@ A@>(Stream@<A@> a, Lazy@<Stream@<A@>> b) {
-  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
-    S@ s := a(s, onItem);
-    b(Unit, s, onItem, onEmpty);
+  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
+    S@ s := a(s, put);
+    b(Unit, s, put, return);
   };
 };
 
@@ -112,8 +112,8 @@ Puts = <@ A@>(Stream@<A@> a, Lazy@<Stream@<A@>> b) {
 #  @returns[Stream@<A@>] A stream with the single given item.
 <@ A@>(A@) { Stream@<A@>; }
 Return = <@ A@>(A@ x) {
-  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
-    onItem(s, x, onEmpty);
+  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
+    put(s, x, return);
   };
 };
 
@@ -129,12 +129,12 @@ Return = <@ A@>(A@ x) {
 #   The list of elements f(a_i) for each a_i in the input stream.
 <@ A@>(Stream@<A@>)<@ B@>((A@) { Stream@<B@>; }) { Stream@<B@>; }
 Do = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { Stream@<B@>; } f) {
-  <@ S@>(S@ s)<@ R@>((S@, B@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+  <@ S@>(S@ s)<@ R@>((S@, B@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
     S@ s := {
       S@ s, A@ a, (S@) { R@; } r := ma(s);
-      f(a, s, onItem, r);
+      f(a, s, put, r);
     };
-    onEmpty(s);
+    return(s);
   };
 };
 
@@ -146,12 +146,12 @@ Do = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { Stream@<B@>; } f) {
 #  @return[Stream@<B@>] A new stream that outputs the target output type.
 <@ A@>(Stream@<A@>)<@ B@>((A@) { B@; }) { Stream@<B@>; }
 Map = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { B@; } f) {
-  <@ S@>(S@ s)<@ R@>((S@, B@, (S@) { R@; }) { R@; } onItem, (S@) { R@; } onEmpty) {
+  <@ S@>(S@ s)<@ R@>((S@, B@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
     S@ s := {
       S@ s, A@ a, (S@) { R@; } r := ma(s);
-      onItem(s, f(a), r);
+      put(s, f(a), r);
     };
-    onEmpty(s);
+    return(s);
   };
 };
 
