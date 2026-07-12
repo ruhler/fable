@@ -3,7 +3,7 @@
 
 Bool@, True, False, And .= /Std/Bool%;
 Data@, Bit@ .= /Std/Data%;
-Control@, Break, Continue, For@, ForEach@ .= /Std/For%;
+ForEach@ .= /Std/For%;
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Stream@ .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
@@ -166,33 +166,6 @@ Replace = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, (V@) { Maybe@<V
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
 Remove = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
   Replace(data, map, key, (V@ _) { Nothing<V@>; });
-};
-
-# @func[For] Iterate over entries of a map.
-#  @arg[@][K@] The type of key.
-#  @arg[@][V@] The type of value.
-#  @arg[Map@<K@, V@>][map] The map to iterate over.
-#  @returns[For<Entry@<K@, V@>>] A for loop iteration over the map entries.
-<@ K@, @ V@>(Map@<K@, V@>) { For@<Entry@<K@, V@>>; }
-For = <@ K@, @ V@>(Map@<K@, V@> map) {
-  <@ S@>(S@ s, (S@, Entry@<K@, V@>) { Control@<S@>; } body) {
-    map.?(empty: s);
-    map.?(entry: {
-      Control@<S@> c = body(s, map.entry);
-      c.?(break: c.break);
-      For(map, c.continue, body);
-    });
-
-    Control@<S@> c = For(map.children.0, Continue(s),
-      (Control@<S@> s, Entry@<K@, V@> e) {
-        Control@<S@> c = body(s.continue, e);
-        c.?(break: Break(c));
-        Continue(c);
-      });
-
-    c.?(break: c.break);
-    For(map.children.1, c.continue, body);
-  };
 };
 
 # @func[Entries] Iterate over entries of a map.
@@ -447,7 +420,6 @@ Of = <@ K@>(Data@<K@> data)<@ V@> {
     Entries: Entries<K@, V@>,
     Keys: Keys<K@, V@>,
     Values: Values<K@, V@>,
-    For: For<K@, V@>,
     ForEach: ForEach<K@, V@>,
     ReplaceAll: ReplaceAll<K@, V@>,
     Map: Map<K@, V@>,
@@ -463,5 +435,5 @@ Of = <@ K@>(Data@<K@> data)<@ V@> {
   Entry@, Map@,
   Empty, IsEmpty, Get, Update, Put, Remove, Replace,
   Entries, Keys, Values,
-  For, ForEach, ReplaceAll, Map, Keep, Omit, Meet, Join, Diff, Of
+  ForEach, ReplaceAll, Map, Keep, Omit, Meet, Join, Diff, Of
 );

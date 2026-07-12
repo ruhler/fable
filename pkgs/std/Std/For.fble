@@ -1,40 +1,6 @@
 # @module[/Std/For%]
 #  For loops.
 
-# @type[Control@] Whether to break or continue traversal.
-#  @arg[@][S@] The type of the state of the loop.
-#  @field[S@][continue] Continue traversing the loop with given state.
-#  @field[S@][break] Break out of the loop traversal with this final state.
-Control@ = <@ S@> { +(S@ continue, S@ break); };
-
-# @func[Continue] Indicate that loop traversal should continue.
-#  @arg[@][S@] The type of the state of the loop.
-#  @arg[S@][s] The state to use for the next iteration of the loop.
-#  @returns[Control@<S@>] A loop control indicating traversal should continue.
-<@ S@>(S@) { Control@<S@>; }
-Continue = <@ S@>(S@ s) {
-  Control@(continue: s);
-};
-
-# @func[Break] Indicate that loop traversal should end.
-#  @arg[@][S@] The type of the state of the loop.
-#  @arg[S@][s] The final state of the loop.
-#  @returns[Control@<S@>] A loop control indicating traversal should end.
-<@ S@>(S@) { Control@<S@>; }
-Break = <@ S@>(S@ s) {
-  Control@(break: s);
-};
-
-# @type[For@] Conventional type for for loop traversal.
-#  @arg[@][A@] Type of element to iterate over.
-#  @arg[@][S@] Type used for the state of the loop.
-#  @arg[S@][s] The initial state of the loop.
-#  @arg[(S@, A@) { Control@<S@>; }][body]
-#   The body of the loop. Says what to do next given the current state of the
-#   loop and the next element.
-#  @returns[S@] The final state of the loop.
-For@ = <@ A@> { <@ S@>(S@, (S@, A@) { Control@<S@>; }) { S@; }; };
-
 # @type[ForEach@] Conventional type for foreach loop traversal.
 #  The foreach variant traverses over all elements. You can't break out early
 #  like you can with a for loop.
@@ -48,4 +14,4 @@ For@ = <@ A@> { <@ S@>(S@, (S@, A@) { Control@<S@>; }) { S@; }; };
 #  @returns[S@] The final state of the loop.
 ForEach@ = <@ A@> { <@ S@>(S@, (S@, A@) { S@; }) { S@; }; };
 
-@(Control@, Continue, Break, For@, ForEach@);
+@(ForEach@);
