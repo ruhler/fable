@@ -1,20 +1,18 @@
 # @module[/Std/Char/Show%]
 #  The Show@ instance for Char@.
 
+And .= /Std/Bool%;
 Char@ .= /Std/Char%;
-Char, Str .= /Std/Char/Ascii%;
+Str .= /Std/Char/Ascii%;
 Format .= /Std/Char/Ascii/Stream%;
-Int@ .= /Std/Int%;
+Int@, Incr .= /Std/Int%;
 Ge .= /Std/Int/Cmp%;
 QR@, Div .= /Std/Int/Div%;
 Int .= /Std/Int/Lit%;
 IsZero .= /Std/Int/Sign%;
-Items .= /Std/List%;
-Get, Length .= /Std/List/Index%;
+Get .= /Std/List/Index%;
 Show@ .= /Std/Show%;
-End, Puts, Return .= /Std/Stream%;
-String, ToString .= /Std/Stream/String%;
-String@ .= /Std/String%;
+Stream@, End, Puts, Return .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # @func[Show] Show a Char@ value.
@@ -34,19 +32,22 @@ Show@<Char@> Unicode = {
     Return(Get(Str|0123456789ABCDEF, x));
   };
 
-  Show@<Int@> Digits = (Int@ x) {
+  # n is number of digits shown so far.
+  # x is the number to show.
+  # Pads to show at least 4 digits.
+  (Int@, Int@) { Stream@<Char@>; }
+  Digits = (Int@ n, Int@ x) {
     QR@ qr = Div(x, Int|16);
-    Unit@ _ := Puts(IsZero(qr.q).?(true: End<Char@>, : Digits(qr.q)));
+    Stream@<Char@> tail = {
+      And(IsZero(qr.q), Ge(n, Int|3)).?(true: End<Char@>);
+      Digits(Incr(n), qr.q);
+    };
+    Unit@ _ := Puts(tail);
     Digit(qr.r);
   };
 
-  (String@) { String@; } Pad = (String@ x) {
-    Ge(Length(x), Int|4).?(true: x);
-    Pad(Items(Char|0, x));
-  };
-
   (Char@ c) {
-    Format|'U+%s'[String(Pad(ToString(Digits(c.pos))))];
+    Format|'U+%s'[Digits(Int|0, c.pos)];
   };
 };
 

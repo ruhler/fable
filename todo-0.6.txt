@@ -2,9 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Clean up /Std/Char/Show% for unicode.
- - Don't keep switching between stream and list.
-
 * It's hard to find where fble functions live
  - Anything I can do about that?
 

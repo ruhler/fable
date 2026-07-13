@@ -4,6 +4,8 @@ Things to consider doing for the fble-0.7 release.
 
 * Make programs run twice as fast.
  - Use native stack for stack allocations.
+ - Arrange for tail call args to end up at their final destination
+   Rather than have to be copied via tail call arg?
  - Return stack allocated value directly instead of gc reallocating if it
    lives on caller's stack frame?
  - Inline FbleCall into aarch64 backend.
@@ -14,6 +16,8 @@ Things to consider doing for the fble-0.7 release.
  - Something to reduce overhead associated with streams.
    See thoughts/fble-0.6/stdlib.map.txt for analysis and discussion.
    See thoughts/fble-0.6/stdlib.stream.txt for performance costs of Stream@.
+   For example, changing Data@<Int@> and Data@<IntP@> to use Put/End instead
+   of s/put/return.
 
 * Reimplement fbld in rust?
 
