@@ -131,8 +131,6 @@ Put = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
 #   in the original map, the original map is returned unmodified.
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (V@) { Maybe@<V@>; }) { Map@<K@, V@>; }
 Replace = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, (V@) { Maybe@<V@>; } replace) {
-  # TODO: Avoid re-allocating the map if nothing changes.
-  # Assuming it makes a different performance wise.
   Map@<K@, V@> map := {
     Map@<K@, V@> map, Bit@ x, (Map@<K@, V@>) { Map@<K@, V@>; } r := data(key, map);
     map.?(empty: map);

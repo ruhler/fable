@@ -1899,3 +1899,14 @@ Some lingering minor questions:
   if nothing was removed?
  - Seems worth a try. See how it impacts performance.
 
+Latest perf numbers:
+
+Time: 3:32.15
+Memory: 80988
+
+After adding the Replace optimization:
+
+Time: 3:38.58
+Memory: 80968
+
+So, not worth it.

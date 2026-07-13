@@ -5,6 +5,7 @@ Bool@, True, False .= /Std/Bool%;
 Data@ .= /Std/Data%;
 For@ .= /Std/For%;
 Just, Nothing .= /Std/Maybe%;
+Stream@ .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
 # @type[Set@] A set of elements.
@@ -54,6 +55,15 @@ Add = <@ T@>(Data@<T@> data, Set@<T@> set, T@ element) {
 <@ T@>(Data@<T@>, Set@<T@>, T@) { Set@<T@>; }
 Remove = <@ T@>(Data@<T@> data) {
   /Std/Map%.Remove(data)<Unit@>;
+};
+
+# @func[Each] Visit each element of a set as a stream.
+#  @arg[@][A@] The type of element in the set.
+#  @arg[Set@<A@>][set] The set to convert.
+#  @returns[Stream@<A@>] A stream of the values in the set.
+<@ A@>(Set@<A@>) { Stream@<A@>; }
+Each = <@ A@>(Set@<A@> set) {
+  /Std/Map%.Keys(set);
 };
 
 # @func[ForEach] Iterate over values of a set.
@@ -139,6 +149,7 @@ Of = <@ T@>(Data@<T@> data) {
     Has: Has(data),
     Add: Add(data),
     Remove: Remove(data),
+    Each: Each<T@>,
     ForEach: ForEach<T@>,
     And: And<T@>,
     Or: Or<T@>,
@@ -148,5 +159,5 @@ Of = <@ T@>(Data@<T@> data) {
   );
 };
 
-@(Set@, Empty, IsEmpty, Has, Add, Remove, ForEach,
+@(Set@, Empty, IsEmpty, Has, Add, Remove, Each, ForEach,
   And, Or, Diff, Keep, Omit, Of);

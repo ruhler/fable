@@ -2,18 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Implement /Std/Set%.Each.
-* Test /Std/Map% Each, Keys, Values and /Std/Set% Each.
-
-* Do something about /Std/For%.
-* Move /Std/Stream/List%.Each to somewhere nicer?
-  /Std/List%.Each? /Std/List/Stream%.Each?
-
-* In /Std/Map%.Replace - avoid re-allocating the map if nothing changed?
-
-* Remove Lazy@ based Stream@ construction?
- - Better to use the raw stream type? Or only in performance sensitive cases?
-
 * Clean up /Std/Char/Show% for unicode.
  - Don't keep switching between stream and list.
 
@@ -21,9 +9,6 @@ Things to consider doing for the fble-0.6 release.
  - Anything I can do about that?
 
 Standard Library:
-* Should we have a generic Container interface?
- - As a way to standardize ForEach and perhaps other loop constructs across
-   all containers? Would that add anything of value?
 * Add function to show an integer base 16? Base 2? Base anything?
 
 Tutorials:

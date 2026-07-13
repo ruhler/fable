@@ -25,7 +25,7 @@ Data@<Int@> Data = (Int@ x) {
 };
 
 Map@, Entry@, Value@, Key, IsEmpty, Get, Put, Update, Remove, Replace,
-ForEach, ReplaceAll, Map, Keep, Omit,
+Each, Keys, Values, ForEach, ReplaceAll, Map, Keep, Omit,
 Meet, Join, Diff .= /Std/Map%.Of(Data)<Bool@>;
 Entries .= /Std/Map/List%.Of(Key)<Value@>;
 
@@ -216,6 +216,38 @@ Test@ Tests = TestSuite|Map[
       AssertEquals(Eq, Show, wnt, got);
     })
   ],
+
+  Test|Each({
+    Unit@ _ := Lazy;
+    Map@ map = Entries[Entry@(Int|0, True), Entry@(Int|1, False), Entry@(Int|2, True)];
+    Stream@<Char@> got = {
+      Entry@ e := /Std/Stream%.Do(Each(map));
+      Format|'%s:%s,'[
+        /Std/Int/Show%.Show(e.key),
+        /Std/Bool/Show%.Show(e.value)];
+    };
+    AssertStream|'0:True,1:False,2:True,'(got);
+  }),
+
+  Test|Keys({
+    Unit@ _ := Lazy;
+    Map@ map = Entries[Entry@(Int|0, True), Entry@(Int|1, False), Entry@(Int|2, True)];
+    Stream@<Char@> got = {
+      Int@ key := /Std/Stream%.Do(Keys(map));
+      Format|'%s,'[/Std/Int/Show%.Show(key)];
+    };
+    AssertStream|'0,1,2,'(got);
+  }),
+
+  Test|Values({
+    Unit@ _ := Lazy;
+    Map@ map = Entries[Entry@(Int|0, True), Entry@(Int|1, False), Entry@(Int|2, True)];
+    Stream@<Char@> got = {
+      Bool@ value := /Std/Stream%.Do(Values(map));
+      Format|'%s,'[/Std/Bool/Show%.Show(value)];
+    };
+    AssertStream|'True,False,True,'(got);
+  }),
 
   Test|ForEach({
     Unit@ _ := Lazy;
