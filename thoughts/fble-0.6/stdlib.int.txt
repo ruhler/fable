@@ -941,3 +941,73 @@ It's a little annoying dealing with the name conflict between Lit%.Int and
 Parse%.Int. I can use I, Int, or Int, ParseInt if needed. But is there not
 some better choice of name?
 
+---
+
+* Add function to show an integer base 16? Base 2? Base anything?
+
+Yes. Certainly I'll want Hex. Not sure about octal or binary. What can we
+parse?
+
+We can parse Int or Radix, where radix is in the range [2, 36]. Maybe I also
+want to define Hex, Oct, Bin. But also, for hex and radix, a way to chose
+between upper and lower alphabets.
+
+* C has printf with %x versus %X.
+* C++ has std::hex, std::dec, std::oct
+  With std::uppercase/std::nouppercase to say whether to use uppercase or not.
+* Java has toHexString
+  Call toUpperCase on the result if you want uppercase.
+* go has format x versus X.
+
+Want I want are 4 functions. I just need a good name for them:
+* HexUpper HexLower RadixUpper RadixLower
+
+Brainstorm:
+* Hex HeX Radix RadiX - feels hacky.
+* Hex(Lower) Hex(Upper) Radix(Lower) Radix(Upper) - feels tedious.
+* Hex hex Radix radix
+* Hex.Lower Hex.Upper Radix.Lower Radix.Upper
+* Lower.Hex Lower.Radix Upper.Hex Upper.Radix?
+
+The last one is intriguing. Maybe we have:
+* Show - decimal.
+* Hex - hex, lower
+* Radix - radix, lower
+* Upper.Hex - hex, upper
+* Upper.Radix - radix, upper.
+
+Sounds decent to me? Or is it too hard to import uppercase hex on its own?
+
+  Hex .= /Std/Int/Show%.Upper;
+
+That's not too hard.
+
+Do I want /Std/Int/Show%.Lower too then, and put things under that? Doesn't
+that sound better than defaulting to lower?
+
+Or I could define:
+  Radix(Int@ radix, String@ alphabet, Int@ n);
+
+Where alphabet is "0123456789ABCDEF"...
+
+But hey, I can just pass alphabet in this case, you can infer the radix.
+
+That's a cool idea. Then we have:
+Hex = Radix("0123456789ABCDEF");
+Hex = Radix("0123456789abcdef");
+
+So that gets rid of the question for Radix. Do I still want namespaces for
+Upper/Lower?
+
+But there are only two meaningful strings, right? I don't know. I think it's
+better to do math and have Upper and Lower as options.
+
+Upper: Hex, Radix
+Lower: Hex, Radix
+
+No generic Hex or Radix.
+
+Let's go with that.
+
+Show can reuse Lower.Radix.
+

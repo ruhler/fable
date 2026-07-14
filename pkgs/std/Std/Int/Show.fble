@@ -1,40 +1,81 @@
 # @module[/Std/Int/Show%]
 #  The Show@ instance for Int@.
 
-Char@ .= /Std/Char%;
-Str .= /Std/Char/Ascii%;
+Char@, Char, Pos .= /Std/Char%;
+Ascii .= /Std/Char/Ascii%;
 Format, String .= /Std/Char/Ascii/Stream%;
-Int@, Neg .= /Std/Int%;
+Int@, Add, Sub, Neg .= /Std/Int%;
+Le .= /Std/Int/Cmp%;
 Int .= /Std/Int/Lit%;
 Sgn .= /Std/Int/Sign%;
 QR@, Div .= /Std/Int/Div%;
-Get .= /Std/List/Index%;
 Show@ .= /Std/Show%;
 End, Puts, Return .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
-Int@ 10 = Int|10;
+# arg[Char@][a]
+#  The character value to use for digits starting at value 10.
+Impl = (Char@ a) {
+  # Offset to add to an int value in the range [10-32] to map it to the
+  # unicode code point for the character starting at a.
+  Int@ offset = Sub(Pos(a), Int|10);
 
-# Show an int value in the range [0-9].
-Show@<Int@> Digit = (Int@ x) {
-  Return(Get(Str|0123456789, x));
+  # Convert int value in range [0-32] to ['0'-'9', a-z].
+  # Behavior is undefined if the value is out of range.
+  #  arg[Int@][x] The int value to show.
+  (Int@) { Char@; }
+  Digit = (Int@ x) {
+    Le(x, Int|9).?(true: Char(Add(x, Int|48)));
+    Char(Add(x, offset));
+  };
+
+  # Show a positive int value in given radix.
+  (Int@) { Show@<Int@>; }
+  Positive = (Int@ radix, Int@ x) {
+    QR@ qr = Div(x, radix);
+    Unit@ _ := Puts(qr.q.?(0: End<Char@>, : Positive(radix, qr.q)));
+    Return(Digit(qr.r));
+  };
+
+  # @func[Radix] Show an Int@ value using the given radix.
+  #  @arg[Int@][radix]
+  #   The radix to use when showing the int, in the range [0, 32].
+  #  @arg[Int@][x] The value to show.
+  #  @returns[Stream@<Char@>] Output that shows the value.
+  (Int@) { Show@<Int@>; } Radix = (Int@ radix, Int@ x) {
+    Sgn(x).?(
+      '-': Format|'-%s'[Positive(radix, Neg(x))],
+      '0': String|0,
+      '+': Positive(radix, x));
+  };
+
+  # @func[Hex] Show an Int@ value in hex.
+  #  @arg[Int@][x] The value to show.
+  #  @returns[Stream@<Char@>] Output that shows the value.
+  Show@<Int@> Hex = Radix(Int|16);
+
+  @(Radix, Hex);
 };
 
-# Show a positive integer.
-Show@<Int@> Positive = (Int@ x) {
-  QR@ qr = Div(x, 10);
-  Unit@ _ := Puts(qr.q.?(0: End<Char@>, : Positive(qr.q)));
-  Digit(qr.r);
-};
+# Instances of Radix and Hex the show using lowercase letters a-z.
+Lower = Impl(Ascii.a);
+
+# Instances of Radix and Hex the show using uppercase letters a-z.
+Upper = Impl(Ascii.A);
 
 # @func[Show] Show an Int@ value.
 #  @arg[Int@][x] The value to show.
 #  @returns[Stream@<Char@>] Output that shows the value.
-Show@<Int@> Show = (Int@ x) {
-  Sgn(x).?(
-    '-': Format|'-%s'[Positive(Neg(x))],
-    '0': String|0,
-    '+': Positive(x));
-};
+Show@<Int@> Show = Lower.Radix(Int|10);
 
-@(Show);
+# @func[Show] Show an Int@ value in octal
+#  @arg[Int@][x] The value to show.
+#  @returns[Stream@<Char@>] Output that shows the value.
+Show@<Int@> Oct = Lower.Radix(Int|8);
+
+# @func[Show] Show an Int@ value in binary
+#  @arg[Int@][x] The value to show.
+#  @returns[Stream@<Char@>] Output that shows the value.
+Show@<Int@> Bin = Lower.Radix(Int|2);
+
+@(Upper, Lower, Show, Oct, Bin);

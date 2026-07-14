@@ -2,11 +2,14 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Implement tests for /Std/Int/Show%.
+  Lower.Radix
+  Upper.Radix
+  Bin, Oct
+
 * It's hard to find where fble functions live
  - Anything I can do about that?
 
-Standard Library:
-* Add function to show an integer base 16? Base 2? Base anything?
 
 Tutorials:
 * Add left side menu to generated website for tutorials?

@@ -1,23 +1,43 @@
 
 Ascii@, OnAscii .= /Std/Char/Ascii%;
 Int@, Neg .= /Std/Int%;
-Int .= /Std/Int/Lit%;
+Int, Hex .= /Std/Int/Lit%;
+Show = /Std/Int/Show%;
 List@ .= /Std/List%;
+Show@ .= /Std/Show%;
 AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
 Test@ .= /Std/Test%;
 Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
 Unit@ .= /Std/Unit%;
 
-(List@<Ascii@>, List@<Ascii@>, Int@) { Test@; }
-TestShow = (List@<Ascii@> name, List@<Ascii@> expected, Int@ value) {
-  Test(name, (Unit@ _) { AssertStream(expected, /Std/Int/Show%.Show(value)); });
+(List@<Ascii@>, List@<Ascii@>, Show@<Int@>, Int@) { Test@; }
+TestShow = (List@<Ascii@> name, List@<Ascii@> expected, Show@<Int@> show, Int@ value) {
+  Test(name, (Unit@ _) { AssertStream(expected, show(value)); });
 };
 
-Test@ Tests = TestSuite|'Show'[
-  TestShow|P|1029384756(Int|1029384756),
-  TestShow|N|'-1029384756'(Neg(Int|1029384756)),
-  TestShow|0|0(Int|0)
+Test@ Tests = TestSuite|Show[
+  TestSuite|Show[
+    TestShow|P|1029384756(Show.Show, Int|1029384756),
+    TestShow|N|'-1029384756'(Show.Show, Neg(Int|1029384756)),
+    TestShow|0|0(Show.Show, Int|0)
+  ],
+
+  TestSuite|Upper[
+    TestSuite|Hex[
+      TestShow|P|10ABCDEF2345(Show.Upper.Hex, Hex|10abcdef2345),
+      TestShow|N|'-10ABCDEF2345'(Show.Upper.Hex, Neg(Hex|10abcdef2345)),
+      TestShow|0|0(Show.Upper.Hex, Hex|0)
+    ]
+  ],
+
+  TestSuite|Lower[
+    TestSuite|Hex[
+      TestShow|P|10abcdef2345(Show.Lower.Hex, Hex|10abcdef2345),
+      TestShow|N|'-10abcdef2345'(Show.Lower.Hex, Neg(Hex|10abcdef2345)),
+      TestShow|0|0(Show.Upper.Hex, Hex|0)
+    ]
+  ]
 ];
 
 @(Tests);
