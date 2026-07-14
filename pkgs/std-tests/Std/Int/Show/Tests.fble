@@ -17,13 +17,13 @@ TestShow = (List@<Ascii@> name, List@<Ascii@> expected, Show@<Int@> show, Int@ v
 };
 
 Test@ Tests = TestSuite|Show[
-  TestSuite|Show[
-    TestShow|P|1029384756(Show.Show, Int|1029384756),
-    TestShow|N|'-1029384756'(Show.Show, Neg(Int|1029384756)),
-    TestShow|0|0(Show.Show, Int|0)
-  ],
-
   TestSuite|Upper[
+    TestSuite|Radix[
+      TestShow|P|JIK(Show.Upper.Radix(Int|25), Int|12345),
+      TestShow|N|'-JIK'(Show.Upper.Radix(Int|25), Neg(Int|12345)),
+      TestShow|0|0(Show.Upper.Radix(Int|25), Hex|0)
+    ],
+
     TestSuite|Hex[
       TestShow|P|10ABCDEF2345(Show.Upper.Hex, Hex|10abcdef2345),
       TestShow|N|'-10ABCDEF2345'(Show.Upper.Hex, Neg(Hex|10abcdef2345)),
@@ -32,11 +32,35 @@ Test@ Tests = TestSuite|Show[
   ],
 
   TestSuite|Lower[
+    TestSuite|Radix[
+      TestShow|P|jik(Show.Lower.Radix(Int|25), Int|12345),
+      TestShow|N|'-jik'(Show.Lower.Radix(Int|25), Neg(Int|12345)),
+      TestShow|0|0(Show.Lower.Radix(Int|25), Hex|0)
+    ],
+
     TestSuite|Hex[
       TestShow|P|10abcdef2345(Show.Lower.Hex, Hex|10abcdef2345),
       TestShow|N|'-10abcdef2345'(Show.Lower.Hex, Neg(Hex|10abcdef2345)),
-      TestShow|0|0(Show.Upper.Hex, Hex|0)
+      TestShow|0|0(Show.Lower.Hex, Hex|0)
     ]
+  ],
+
+  TestSuite|Show[
+    TestShow|P|1029384756(Show.Show, Int|1029384756),
+    TestShow|N|'-1029384756'(Show.Show, Neg(Int|1029384756)),
+    TestShow|0|0(Show.Show, Int|0)
+  ],
+
+  TestSuite|Oct[
+    TestShow|P|30071(Show.Oct, Int|12345),
+    TestShow|N|'-30071'(Show.Oct, Neg(Int|12345)),
+    TestShow|0|0(Show.Oct, Int|0)
+  ],
+
+  TestSuite|Bin[
+    TestShow|P|10011010010(Show.Bin, Int|1234),
+    TestShow|N|'-10011010010'(Show.Bin, Neg(Int|1234)),
+    TestShow|0|0(Show.Bin, Int|0)
   ]
 ];
 

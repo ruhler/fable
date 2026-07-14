@@ -2,14 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Implement tests for /Std/Int/Show%.
-  Lower.Radix
-  Upper.Radix
-  Bin, Oct
-
 * It's hard to find where fble functions live
  - Anything I can do about that?
-
 
 Tutorials:
 * Add left side menu to generated website for tutorials?
