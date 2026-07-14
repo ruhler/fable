@@ -9,12 +9,16 @@ Stream@, Puts .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # @func[Show] Show a Map@ value.
+#  Sample output from showing a map:
+#
+#  @code[txt] @
+#   { 2 => False; 3 => True; }
+#
 #  @arg[@][K@] The key type.
 #  @arg[Show@<K@>][show_key] How to show a key.
 #  @arg[@][V@] The value type.
 #  @arg[Show@<V@>][show_value] How to show a value.
-#  @arg[Map@<K@, V@>][map] The map to show.
-#  @returns[Stream@] Output that shows the contents of the map.
+#  @returns[Show@<Map@<K@, V@>>] How to show a map.
 <@ K@>(Show@<K@>)<@ V@>(Show@<V@>) { Show@<Map@<K@, V@>>; }
 Show = <@ K@>(Show@<K@> show_key)<@ V@>(Show@<V@> show_value, Map@<K@, V@> map) {
   Unit@ _ := Puts(ForEach(map, String|'{ ',

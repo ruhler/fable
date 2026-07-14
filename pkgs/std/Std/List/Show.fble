@@ -33,10 +33,15 @@ Tail = <@ T@>(Show@<T@> show, List@<T@> list) {
 #  @code[fble] @
 #   /Std/List/Show%.Show(/Std/Bool/Show%.Show, List[True, False, False]);
 #
+#  Shows:
+#
+#  @code[txt] @
+#   [True, False, False]
+#
 #  @arg[@][T@] The type of element on the list.
 #  @arg[Show@<T@>][show] How to show an element of the list.
 #  @arg[List@<T@>][list] The list to show.
-#  @returns[Stream@] Output that shows the contents of the list.
+#  @returns[Stream@] The shown contents of the list.
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 Show = <@ T@>(Show@<T@> show, List@<T@> list) {
   list.?(empty: String|'[]');

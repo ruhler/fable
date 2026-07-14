@@ -17,16 +17,17 @@ Unit@ .= /Std/Unit%;
 
 # @func[Show] Show a Char@ value.
 #  @arg[Char@][x] The value to show.
-#  @returns[Stream@] Output that shows the value.
+#  @returns[Stream@] The shown value.
 Show@<Char@> Show = (Char@ x) {
   /Std/String/Show%.Show[x];
 };
 
 # @func[Unicode] Show a Char@ value in unicode U+ notation.
 #  @arg[Char@][x] The character to show.
-#  @returns[Stream@]
-#   Output that shows the character in U+ notation: upper case hex with
-#   minimum number of leading zeroes needed to have at least 4 hex digits.
+#  @returns[Stream@<Char@>]
+#   Stream of characters represnting the input character in U+ notation: upper
+#   case hex with minimum number of leading zeroes needed to have at least 4
+#   hex digits.
 Show@<Char@> Unicode = {
   Show@<Int@> Digit = (Int@ x) {
     Return(Get(Str|0123456789ABCDEF, x));

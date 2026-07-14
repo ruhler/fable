@@ -10,7 +10,8 @@ Stream@ .= /Std/Stream%;
 #
 #  @arg[@][T@] The type that implements the interface.
 #  @arg[T@][x] The value to show.
-#  @returns[Stream@<Char@>] A computation to output the value in human readable form.
+#  @returns[Stream@<Char@>]
+#   The value represented as a stream of characters.
 Show@ = <@ T@>(T@) { Stream@<Char@>; };
 
 @(Show@);

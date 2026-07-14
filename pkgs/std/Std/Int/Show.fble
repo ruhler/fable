@@ -37,11 +37,11 @@ Impl = (Char@ a) {
     Return(Digit(qr.r));
   };
 
-  # @func[Radix] Show an Int@ value using the given radix.
+  # @func[Radix] Show an Int@ value in the given radix.
   #  @arg[Int@][radix]
   #   The radix to use when showing the int, in the range [0, 32].
   #  @arg[Int@][x] The value to show.
-  #  @returns[Stream@<Char@>] Output that shows the value.
+  #  @returns[Stream@<Char@>] The shown value.
   (Int@) { Show@<Int@>; } Radix = (Int@ radix, Int@ x) {
     Sgn(x).?(
       '-': Format|'-%s'[Positive(radix, Neg(x))],
@@ -51,7 +51,7 @@ Impl = (Char@ a) {
 
   # @func[Hex] Show an Int@ value in hex.
   #  @arg[Int@][x] The value to show.
-  #  @returns[Stream@<Char@>] Output that shows the value.
+  #  @returns[Stream@<Char@>] The shown value.
   Show@<Int@> Hex = Radix(Int|16);
 
   @(Radix, Hex);
@@ -65,17 +65,17 @@ Upper = Impl(Ascii.A);
 
 # @func[Show] Show an Int@ value.
 #  @arg[Int@][x] The value to show.
-#  @returns[Stream@<Char@>] Output that shows the value.
+#  @returns[Stream@<Char@>] The shown value.
 Show@<Int@> Show = Lower.Radix(Int|10);
 
 # @func[Show] Show an Int@ value in octal
 #  @arg[Int@][x] The value to show.
-#  @returns[Stream@<Char@>] Output that shows the value.
+#  @returns[Stream@<Char@>] The shown value.
 Show@<Int@> Oct = Lower.Radix(Int|8);
 
 # @func[Show] Show an Int@ value in binary
 #  @arg[Int@][x] The value to show.
-#  @returns[Stream@<Char@>] Output that shows the value.
+#  @returns[Stream@<Char@>] The shown value.
 Show@<Int@> Bin = Lower.Radix(Int|2);
 
 @(Upper, Lower, Show, Oct, Bin);

@@ -15,7 +15,7 @@ Unit@ .= /Std/Unit%;
 
 # @func[String] Output a string.
 #  @arg[String@][str] The string to output.
-#  @returns[Output] A computation that outputs the string.
+#  @returns[Stream@<Char@>] The stream of characters in the string.
 (String@) { Stream@<Char@>; }
 String = (String@ s) {
   Each(s);

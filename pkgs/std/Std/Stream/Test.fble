@@ -12,13 +12,13 @@ Unit@, Unit .= /Std/Unit%;
 #  normal execution, use /Std/Stream/Null% instead, which ignores the entire
 #  Stream@ in the first place.
 #
-#  @arg[A@] The type of value to output.
-#  @arg[Stream@<A@>] The output to perform.
+#  @arg[@][A@] The type of value being streamed.
+#  @arg[Stream@<A@>][stream] The stream of values to go through.
 #  @returns[Unit@] Nothing interesting.
 <@ A@>(Stream@<A@>) { Unit@; }
-ToTest = <@ A@>(Stream@<A@> output) {
+ToTest = <@ A@>(Stream@<A@> stream) {
   Unit@ _ := {
-    Unit@ _, A@ _, (Unit@) { Unit@; } r := output(Unit);
+    Unit@ _, A@ _, (Unit@) { Unit@; } r := stream(Unit);
     r(Unit);
   };
   Unit;

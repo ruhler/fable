@@ -11,7 +11,7 @@ Unit@, Unit .= /Std/Unit%;
 #  output.
 #
 #  @arg[A@] The type of value to output.
-#  @arg[Stream@<A@>] The output to perform.
+#  @arg[Stream@<A@>] The stream of values to ignore.
 #  @returns[Unit@] Nothing interesting.
 <@ A@>(Stream@<A@>) { Unit@; }
 ToNull = <@ A@>(Stream@<A@> _) {

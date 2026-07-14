@@ -9,10 +9,15 @@ Stream@, Puts .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # @func[Show] Show a Set@ value.
+#  For example:
+#
+#  @code[txt] @
+#   { 1; 2; 3; }
+#
 #  @arg[@][T@] The element type.
 #  @arg[Show@<T@>][show] How to show an element.
 #  @arg[Set@<T@>][set] The set to show.
-#  @returns[Stream@] Output that shows the contents of the map.
+#  @returns[Stream@] The shown contents of the set.
 <@ T@>(Show@<T@>) { Show@<Set@<T@>>; }
 Show = <@ T@>(Show@<T@> show, Set@<T@> set) {
   Unit@ _ := Puts(ForEach(set, String|'{ ',

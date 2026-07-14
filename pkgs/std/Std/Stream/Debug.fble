@@ -14,7 +14,7 @@ Unit@, Unit .= /Std/Unit%;
 #  The destination is a platform implementation dependent debug output stream.
 #  This is inteded to be used for printf style debugging only.
 #
-#  @arg[Stream@<Char@>] The output to perform.
+#  @arg[Stream@<Char@>] The stream of characters to output to debug.
 #  @returns[Unit@] Nothing interesting.
 (Stream@<Char@>) { Unit@; }
 ToDebug = (Stream@<Char@> output) {

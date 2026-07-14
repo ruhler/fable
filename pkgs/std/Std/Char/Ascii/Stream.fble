@@ -9,7 +9,7 @@ Stream@ .= /Std/Stream%;
 
 # @func[String] Output a string.
 #  @arg[List<Ascii@>][str] The string to output.
-#  @returns[Stream@<Char@>] The computation to output the string.
+#  @returns[Stream@<Char@>] The input string as a stream of characters.
 (List@<Ascii@>) { Stream@<Char@>; }
 String = StrLit(ToChar, /Std/Stream/String%.String);
 
@@ -22,7 +22,8 @@ String = StrLit(ToChar, /Std/Stream/String%.String);
 #   Stream@<Char@> out = StringE|'hello\nworld\n';
 #
 #  @arg[List<Ascii@>][str] The string to output.
-#  @returns[Stream@<Char@>] The computation to output the string.
+#  @returns[Stream@<Char@>]
+#   The stream of characters for the escaped input string.
 (List@<Ascii@>) { Stream@<Char@>; }
 StringE = (List@<Ascii@> str) {
   /Std/Stream/String%.String(StrE(str));
