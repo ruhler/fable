@@ -147,6 +147,8 @@ Decode = <<@>@ M@>(Monad@<M@> m, In@<Byte@, M@> in) {
   m.return(Just(Char(v)));
 };
 
+# @value[Utf8] Utf8 encoder.
+#  @type[Encoding@]
 Encoding@ Utf8 = Encoding@(Encode, Decode);
 
 Stdin, Stdout, Stderr, Read, Write, Append .= /Std/Io/File/Char%.Of(Utf8, Text);
