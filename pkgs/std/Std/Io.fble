@@ -1,5 +1,28 @@
 # @module[/Std/Io%]
 #  Types for running computations that interact with the outside world.
+#
+#  The @l{External@} type is used for computations that can only be run from
+#  an @l{Io@} monadic context. In practice @l{External@} is used for
+#  code that can only be run by native code via the foreign function
+#  interface, with the @l{Io@} monad used to force a well defined global
+#  ordering for the @l{External@} computations. You can get an instance of
+#  @l{Io} from fble main functions such as @l{/Std/Io/Cli%.Main@}.
+#
+#  Foreign functions are the primary use case for @l{External@} and should
+#  almost always use the @l{External@} type:
+#
+#  @code[fble] @
+#   # FFI for C99 getenv function.
+#   (String@) { External@<Maybe@<String@>>; } GetVar;
+#
+#  You will have access to an instance of @l{Io@} from the
+#  @l{/Std/Io/Cli%.Main@} function that you can use to call these foreign
+#  functions:
+#
+#  @code[fble] @
+#   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+#     Maybe@<String@> value := m.do(GetVar(m, io, Str|'HOME'));
+#     ...
 
 Unit@ .= /Std/Unit%;
 
@@ -19,11 +42,13 @@ External@ = <@ A@> {
 #  an abstract monadic type M@ that globally sequences all side effects.
 #
 #  @arg[<@>@][M@] The monadic type for use with the interface.
-#  @field[<@ A@>(External@<A@>) { M@<A@>;}][run]
+#  @field[<@ A@>(External@<A@>) { M@<A@>; }][run]
 #   Converts an external computation to a computation in the monad M@
 #   associated with the Io@ interface.
-Io@ = <<@>@ M@> { *(
-  <@ A@>(External@<A@>) { M@<A@>; } run
-); };
+#
+#   @arg[@][A@] The result type of the computation.
+#   @arg[External@<A@>][computation] The external computation to run.
+#   @returns[M@<A@>] A way to run the computation in the context of monad @l{M@}.
+Io@ = <<@>@ M@> { *(<@ A@>(External@<A@>) { M@<A@>; } run); };
  
 @(External@, Io@);

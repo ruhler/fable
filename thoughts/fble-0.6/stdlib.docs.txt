@@ -1,0 +1,184 @@
+How to document standard library?
+
+Fbld doc comments aren't up to snuff, and I'm not going to bring them up to
+snuff this late in the release.
+
+But I might consider going through and rewriting all the existing doc
+comments.
+
+Here are accumulated concerns so far:
+
+* It's hard to find where fble functions live
+ - Anything I can do about that?
+* A lot of the /Std/* documentation isn't very helpful.
+  Consider rewriting it to be an explanation for how to use the functions
+  instead of a description of what they are.
+* Figure out how to properly document List@ type
+ - Mix of poly, struct, and union all in one.
+* How to document a poly? @func? @value?
+* How to document methods of interface structs?
+* How to document an interface function type, like Eq@?
+* /Std/List/Eq% docs could be more precise and include examples.
+* How to document internal functions, e.g. /Std/List/Sort%.Insert?
+  Make sure this doesn't get shown in reference documentation.
+  e.g. /Std/Int/Lit% internal helper functions.
+* Should I add @example as a doc comment field? Seems useful?
+
+If I were to do the sadly large undertaking of rewriting all the docs, how
+would I approach it?
+* Write the documentation as an explanation for how to use the functions.
+* For list data type, and other things where I have a complex field:
+ - Nest the doc comment things. For example:
+  #  @field[@][items] A non-empty list.
+  #   @field[T@][head] The first item in a non-empty list.
+  #   @field[List@<T@>][tail]
+  #    Everything after the first item in a non-empty list.
+* For poly we can use @func or @value. Whichever is most useful.
+* For methods of struct, nest @arg, etc. under @field.
+* For internal functions, let's properly document, but add an @private tag
+  somewhere.
+* Is @example useful? I'm not sure. I can use @code if I want.
+
+Basically, high level, don't worry about formalizing things with fbld. Worry
+about having the right content in the source code for human readers. We can
+worry about content for machine readers later.
+
+This will be useful. I think it's worth trying. See how far I get. The more
+consistency, clarity, etc. I can get with the documentation, the better.
+
+* How to reference other documentation?
+ I could add an @see tag. @private and @see can be mostly ignored for now in
+ generated content.
+
+
+Remember key thing is to describe clearly how to use a module, type, or
+function. Give examples. Try to do that everywhere. Think of the documentation
+as like a tutorial for how to use. Let's see how far that gets us or if I get
+stuck.
+
+Here's our list of modules to document. Have fun!
+
+[DONE] pkgs/std/Std/Unit.fble
+[DONE] pkgs/std/Std/Io.fble
+[DONE] pkgs/std/Std/Int/IntP.fble
+
+
+
+pkgs/std/Std/Show.fble
+pkgs/std/Std/Map/Show.fble
+pkgs/std/Std/Map/Eq.fble
+pkgs/std/Std/Map/List.fble
+pkgs/std/Std/State/Pure.fble
+pkgs/std/Std/Monad.fble
+pkgs/std/Std/Bool/Show.fble
+pkgs/std/Std/Bool/Data.fble
+pkgs/std/Std/Bool/Assert.fble
+pkgs/std/Std/Bool/Eq.fble
+pkgs/std/Std/Bool/Random.fble
+pkgs/std/Std/Bool/Cmp.fble
+pkgs/std/Std/Map.fble
+pkgs/std/Std/Data.fble
+pkgs/std/Std/String.fble
+pkgs/std/Std/Char.fble
+pkgs/std/Std/Int/Lit.fble
+pkgs/std/Std/Int/Show.fble
+pkgs/std/Std/Int/Data.fble
+pkgs/std/Std/Int/IntP/Data.fble
+pkgs/std/Std/Int/IntP/Eq.fble
+pkgs/std/Std/Int/IntP/Div.fble
+pkgs/std/Std/Int/IntP/Cmp.fble
+pkgs/std/Std/Int/Stream.fble
+pkgs/std/Std/Int/Eq.fble
+pkgs/std/Std/Int/Div.fble
+pkgs/std/Std/Int/Random.fble
+pkgs/std/Std/Int/Sign.fble
+pkgs/std/Std/Int/Sqrt.fble
+pkgs/std/Std/Int/Cmp.fble
+pkgs/std/Std/Int/Parse.fble
+pkgs/std/Std/Set.fble
+pkgs/std/Std/State.fble
+pkgs/std/Std/Char/Lit.fble
+pkgs/std/Std/Char/Show.fble
+pkgs/std/Std/Char/Data.fble
+pkgs/std/Std/Char/Ascii/Stream.fble
+pkgs/std/Std/Char/Ascii/Type.fble
+pkgs/std/Std/Char/Eq.fble
+pkgs/std/Std/Char/Ascii.fble
+pkgs/std/Std/Char/Cmp.fble
+pkgs/std/Std/Lazy.fble
+pkgs/std/Std/Unit/Show.fble
+pkgs/std/Std/Unit/Data.fble
+pkgs/std/Std/Unit/Eq.fble
+pkgs/std/Std/Unit/Cmp.fble
+pkgs/std/Std/Random/Lcg.fble
+pkgs/std/Std/Random/Prng.fble
+pkgs/std/Std/Random/Prng/Assert.fble
+pkgs/std/Std/Random/Prng/Pure.fble
+pkgs/std/Std/Random/Rng.fble
+pkgs/std/Std/Random/Lfsr.fble
+pkgs/std/Std/Bool.fble
+pkgs/std/Std/Test/Run.fble
+pkgs/std/Std/Test/Cli.fble
+pkgs/std/Std/Stream.fble
+pkgs/std/Std/Eq/Assert.fble
+pkgs/std/Std/Maybe/Show.fble
+pkgs/std/Std/Maybe/Data.fble
+pkgs/std/Std/Maybe/Eq.fble
+pkgs/std/Std/Maybe/Cmp.fble
+pkgs/std/Std/Undef.fble
+pkgs/std/Std/List/Show.fble
+pkgs/std/Std/List/Data.fble
+pkgs/std/Std/List/Sort.fble
+pkgs/std/Std/List/Search.fble
+pkgs/std/Std/List/Eq.fble
+pkgs/std/Std/List/Maybe.fble
+pkgs/std/Std/List/Index.fble
+pkgs/std/Std/List/Random.fble
+pkgs/std/Std/List/Count.fble
+pkgs/std/Std/List/Cmp.fble
+pkgs/std/Std/Func.fble
+pkgs/std/Std/Cmp/Show.fble
+pkgs/std/Std/Cmp/Data.fble
+pkgs/std/Std/Cmp/Eq.fble
+pkgs/std/Std/Cmp/Cmp.fble
+pkgs/std/Std/Eq.fble
+pkgs/std/Std/Maybe.fble
+pkgs/std/Std/For.fble
+pkgs/std/Std/Set/Show.fble
+pkgs/std/Std/Set/Eq.fble
+pkgs/std/Std/Set/List.fble
+pkgs/std/Std/List.fble
+pkgs/std/Std/Io/Env.fble
+pkgs/std/Std/Io/Cli/Print.fble
+pkgs/std/Std/Io/Cli/Demo.fble
+pkgs/std/Std/Io/File/Byte.fble
+pkgs/std/Std/Io/File/Char.fble
+pkgs/std/Std/Io/File/Mode.fble
+pkgs/std/Std/Io/File/Utf8.fble
+pkgs/std/Std/Io/Cli.fble
+pkgs/std/Std/Cmp.fble
+pkgs/std/Std/String/Show.fble
+pkgs/std/Std/String/Data.fble
+pkgs/std/Std/String/Eq.fble
+pkgs/std/Std/String/Escape.fble
+pkgs/std/Std/String/Lines.fble
+pkgs/std/Std/String/Cmp.fble
+pkgs/std/Std/Stream/String.fble
+pkgs/std/Std/Stream/Null.fble
+pkgs/std/Std/Stream/State.fble
+pkgs/std/Std/Stream/Debug.fble
+pkgs/std/Std/Stream/Out.fble
+pkgs/std/Std/Stream/List.fble
+pkgs/std/Std/Stream/In.fble
+pkgs/std/Std/Stream/String/Assert.fble
+pkgs/std/Std/Stream/Test.fble
+pkgs/std/Std/Int.fble
+pkgs/std/Std/Test.fble
+
+Question:
+* When do I put stuff in the module comment compared to the comment for a
+  specific function or type?
+
+The module comment doesn't have the details of the functions defined yet, but
+we could say it has some summary info for everything, so you can talk about
+interactions between different functions?

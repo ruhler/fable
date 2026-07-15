@@ -8,6 +8,15 @@
 #
 #  @code[fble] @
 #   Bool@ = +(Unit@ true, Unit@ false);
+#
+#  Because values of the @l{Unit@} type don't contain any information on their
+#  own, it's common to name variables of @l{Unit@} type @l{_} when used as
+#  function arguments. This is often seen in function bind syntax. For
+#  example:
+#
+#  @code[fble] @
+#   Unit@ _ := Puts(StringE|'hello, world\n');
+#   ...
 Unit@ = *();
 
 # @value[Unit] The single inhabitant of the @l{Unit@} type.

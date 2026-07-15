@@ -1,7 +1,8 @@
 # @module[/Std/Int/IntP%]
-#  Positive unbounded integers
+#  @private Module for internal use only.
 #
-#  This module is for internal use only.
+#  Implementation of positive variable width integers used by the public
+#  facing @l{Int@} type.
 
 Unit@, Unit .= /Std/Unit%;
 
