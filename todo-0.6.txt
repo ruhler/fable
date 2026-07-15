@@ -2,9 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Use math instead of list search for /Std/Char/Show%?
- - Or somehow reuse /Std/Int/Show%.Hex?
-
 * Document /Std/Io/File/Utf8 module.
 
 * It's hard to find where fble functions live

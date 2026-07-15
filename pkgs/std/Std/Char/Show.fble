@@ -2,15 +2,14 @@
 #  The Show@ instance for Char@.
 
 And .= /Std/Bool%;
-Char@ .= /Std/Char%;
-Str .= /Std/Char/Ascii%;
+Char@, Char, Pos .= /Std/Char%;
+Ascii .= /Std/Char/Ascii%;
 Format .= /Std/Char/Ascii/Stream%;
-Int@, Incr .= /Std/Int%;
-Ge .= /Std/Int/Cmp%;
+Int@, Add, Sub, Incr .= /Std/Int%;
+Le, Ge .= /Std/Int/Cmp%;
 QR@, Div .= /Std/Int/Div%;
 Int .= /Std/Int/Lit%;
 IsZero .= /Std/Int/Sign%;
-Get .= /Std/List/Index%;
 Show@ .= /Std/Show%;
 Stream@, End, Puts, Return .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
@@ -29,8 +28,11 @@ Show@<Char@> Show = (Char@ x) {
 #   case hex with minimum number of leading zeroes needed to have at least 4
 #   hex digits.
 Show@<Char@> Unicode = {
-  Show@<Int@> Digit = (Int@ x) {
-    Return(Get(Str|0123456789ABCDEF, x));
+  Int@ offset = Sub(Pos(Ascii.A), Int|10);
+
+  (Int@) { Char@; } Digit = (Int@ x) {
+    Le(x, Int|9).?(true: Char(Add(x, Int|48)));
+    Char(Add(x, offset));
   };
 
   # n is number of digits shown so far.
@@ -44,7 +46,7 @@ Show@<Char@> Unicode = {
       Digits(Incr(n), qr.q);
     };
     Unit@ _ := Puts(tail);
-    Digit(qr.r);
+    Return(Digit(qr.r));
   };
 
   (Char@ c) {
