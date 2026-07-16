@@ -61,10 +61,15 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Unit.fble
 [DONE] pkgs/std/Std/Io.fble
 [DONE] pkgs/std/Std/Int/IntP.fble
+[DONE] pkgs/std/Std/Undef.fble
+[DONE] pkgs/std/Std/Lazy.fble
 
-
-
+pkgs/std/Std/For.fble
+pkgs/std/Std/Stream.fble
+pkgs/std/Std/Int.fble
+pkgs/std/Std/Char.fble
 pkgs/std/Std/Show.fble
+
 pkgs/std/Std/Map/Show.fble
 pkgs/std/Std/Map/Eq.fble
 pkgs/std/Std/Map/List.fble
@@ -79,7 +84,6 @@ pkgs/std/Std/Bool/Cmp.fble
 pkgs/std/Std/Map.fble
 pkgs/std/Std/Data.fble
 pkgs/std/Std/String.fble
-pkgs/std/Std/Char.fble
 pkgs/std/Std/Int/Lit.fble
 pkgs/std/Std/Int/Show.fble
 pkgs/std/Std/Int/Data.fble
@@ -105,7 +109,6 @@ pkgs/std/Std/Char/Ascii/Type.fble
 pkgs/std/Std/Char/Eq.fble
 pkgs/std/Std/Char/Ascii.fble
 pkgs/std/Std/Char/Cmp.fble
-pkgs/std/Std/Lazy.fble
 pkgs/std/Std/Unit/Show.fble
 pkgs/std/Std/Unit/Data.fble
 pkgs/std/Std/Unit/Eq.fble
@@ -119,13 +122,11 @@ pkgs/std/Std/Random/Lfsr.fble
 pkgs/std/Std/Bool.fble
 pkgs/std/Std/Test/Run.fble
 pkgs/std/Std/Test/Cli.fble
-pkgs/std/Std/Stream.fble
 pkgs/std/Std/Eq/Assert.fble
 pkgs/std/Std/Maybe/Show.fble
 pkgs/std/Std/Maybe/Data.fble
 pkgs/std/Std/Maybe/Eq.fble
 pkgs/std/Std/Maybe/Cmp.fble
-pkgs/std/Std/Undef.fble
 pkgs/std/Std/List/Show.fble
 pkgs/std/Std/List/Data.fble
 pkgs/std/Std/List/Sort.fble
@@ -143,7 +144,6 @@ pkgs/std/Std/Cmp/Eq.fble
 pkgs/std/Std/Cmp/Cmp.fble
 pkgs/std/Std/Eq.fble
 pkgs/std/Std/Maybe.fble
-pkgs/std/Std/For.fble
 pkgs/std/Std/Set/Show.fble
 pkgs/std/Std/Set/Eq.fble
 pkgs/std/Std/Set/List.fble
@@ -172,7 +172,6 @@ pkgs/std/Std/Stream/List.fble
 pkgs/std/Std/Stream/In.fble
 pkgs/std/Std/Stream/String/Assert.fble
 pkgs/std/Std/Stream/Test.fble
-pkgs/std/Std/Int.fble
 pkgs/std/Std/Test.fble
 
 Question:
@@ -182,3 +181,38 @@ Question:
 The module comment doesn't have the details of the functions defined yet, but
 we could say it has some summary info for everything, so you can talk about
 interactions between different functions?
+
+---
+
+* It's hard to find where fble functions live
+
+This is exacerbated by heavy use of submodules in fble. Submodules are used
+for:
+* Breaking false recursive cycles between modules.
+  e.g. Char -> Int -> Show -> Char
+  vs.  /Std/Char% -> /Std/Int%, /Std/Int/Show% -> /Std/Char%
+* Name conflict resolution. 
+  e.g. /Std/Int%.Show versus /Std/Int/IntP%.Show.
+* Avoiding pulling in false dependencies.
+  Though I'm not sure how much this actually works in practice.
+
+I think submodules are here to stay. The way to help with finding where fble
+functions live in that case is:
+* A search engine for functions, if/when fble goes mainstream.
+* Man pages generated for functions that say what module they live in.
+* An stdlib html doc that includes a summary of all the modules and the
+  functions implemented inside.
+
+I'm not going to worry about a search engine or man pages today. I think it's
+worth trying to produce an stdlib doc from the doc comments, but I don't want
+to get slogged down dealing with fbld issues this release. So let's try it,
+see how far we can easily get, and as soon as it starts getting too
+complicated, punt to a future release.
+
+Where I think we'll run into trouble with fbld here:
+* Make sure things like @field, @arg can take @field and @arg in their
+  descriptions. This should be okay I think.
+* Upper.Radix and Lower.Radix can't distinguish between Upper and Lower. The
+  doc comments just have 'Radix' as the name.
+  - So to start, just list everything, don't try to interpret the names?
+

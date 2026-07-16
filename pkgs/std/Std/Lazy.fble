@@ -1,14 +1,49 @@
 # @module[/Std/Lazy%]
-#  Type and utilities for on-demand execution.
+#  This module provides a @l{Lazy@} type which is essentially a zero argument
+#  function that evaluates and returns a result when called. In practice,
+#  because fble doesn't allow zero argument functions, it is implemented as a
+#  function with a single @l{Unit@} argument that is otherwise ignored.
+#
+#  The @l{Lazy@} type is useful for when you want to pass around a computation
+#  for a value, while providing explicit control to the user over when the
+#  computation is run. For example, unit tests are described as @l{Lazy@} test
+#  results and passed to the test runner. The test runner then has full
+#  control over when to run the code for the test and can output diagnostics
+#  before and after so you know what test is failing if the code under test
+#  hangs for a particular test.
+#
+#  You can define and interact with @l{Lazy@} values using normal function
+#  syntax:
+#
+#  @code[fble] @
+#   Lazy@<Int@> fib1000 = (Unit@) {
+#     Fibonacci(1000);
+#   };
+#
+#   Int@ result = fib1000(Unit);
+#
+#  Or you can use the helper functions provided in this module:
+#
+#  @code[fble] @
+#   Lazy@<Int@> fib1000 = {
+#     Unit@ _ := Lazy;
+#     Fibonacci(1000);
+#   };
+#
+#   Int@ result = Run(fib1000);
 
 Unit@, Unit .= /Std/Unit%;
 
 # @type[Lazy@] Type of values that can be computed on demand.
+#  @arg[@][A@] The type of value to compute.
+#  @arg[Unit@][_]
+#   An unused argument to the function to call to compute the value.
+#  @returns[A@] The computed value.
 Lazy@ = <@ A@>(Unit@) { A@; };
 
-# @func[Lazy] Construct a lazy computation.
+# @func[Lazy] Constructs a lazy computation.
 #  This is a convenience function intended for constructing lazy values with
-#  bind syntax. For example:
+#  function bind syntax. For example:
 #
 #  @code[fble] @
 #   Lazy@ lazy = {
@@ -23,6 +58,16 @@ Lazy@ = <@ A@>(Unit@) { A@; };
 Lazy = <@ A@>((Unit@) { A@; } lazy) { lazy; };
 
 # @func[Return] Monadic return function for lazy computations.
+#  This is useful for building up chains of lazily computed values. For
+#  example:
+#
+#  @code[fble] @
+#   Lazy@<Int@> lx = ...;
+#   Lazy@<Int@> ly = {
+#     Int@ x := Do(lx);
+#     Return(Factorial(x));
+#   };
+#
 #  @arg[@][A@] Type of value to compute.
 #  @arg[A@][x] The already computed value.
 #  @returns[Lazy@<A@>] Lazy computation to return the already computed value.
@@ -32,20 +77,34 @@ Return = <@ A@>(A@ x, Unit@ _) {
 };
 
 # @func[Do] Monadic do for Lazy@ type.
+#  This is useful for building up chains of lazily computed values. For
+#  example:
+#
+#  @code[fble] @
+#   Lazy@<Int@> lx = ...;
+#   Lazy@<Int@> ly = {
+#     Int@ x := Do(lx);
+#     Return(Factorial(x));
+#   };
+#
 #  @arg[@][A@] The type of value.
-#  @arg[Lazy@<A@>][maybe] The argument.
+#  @arg[Lazy@<A@>][ma] The argument.
 #  @arg[@][B@] The result type.
 #  @arg[(A@) { Lazy@<B@>; }][f] The function to apply.
 #  @returns[Lazy@<B@>]
-#   Lazy computation for applying f to the computed value of a.
+#   Lazy computation for applying f to the computed value of ma.
 <@ A@>(Lazy@<A@>)<@ B@>((A@) { Lazy@<B@>; }) { Lazy@<B@>; }
-Do = <@ A@>(Lazy@<A@> a)<@ B@>((A@) { Lazy@<B@>; } f, Unit@ u) {
-  f(a(u), u);
+Do = <@ A@>(Lazy@<A@> ma)<@ B@>((A@) { Lazy@<B@>; } f, Unit@ u) {
+  f(ma(u), u);
 };
 
-# @func[Run] Run a lazy computation.
+# @func[Run] Runs a lazy computation.
+#  Note that if you run the same lazy computation multiple times, the result
+#  value will be recomputed every time you run it. You probably don't want to
+#  do that.
+#
 #  @arg[@][A@] The type of value to compute.
-#  @arg[Lazy@<A@>][lazy] The compuationt to run.
+#  @arg[Lazy@<A@>][lazy] The computation to run.
 #  @returns[A@] The result of the computation.
 <@ A@>(Lazy@<A@>) { A@; }
 Run = <@ A@>(Lazy@<A@> lazy) {

@@ -1,6 +1,5 @@
 # @module[/Std/Undef%]
-#  Provides a standard and convenient way to explicitly express undefined
-#  behavior in code.
+#  Provides a standard way to explicitly express undefined behavior in code.
 #
 #  For example, imagine you are implementing integer division and need to do
 #  something in case of divide by zero, but the specification for that case is
@@ -14,18 +13,17 @@
 #  @l{undef} field of @l{Undef}, the program will crash with an undefined
 #  struct access error.
 #
-#  Here are two ways you can use /Std/Undef% to explicitly express undefined
-#  behavior in your code, using the divide by zero case as an example.
-#
-#  You can directly access the @l{undef} field. The type argument for the
-#  field is the type of value to produce to satisfy the compiler. For example:
+#  One way to use @l{/Std/Undef%} to explicitly express undefined behavior is
+#  to directly access the @l{undef} field. The type argument for the field is
+#  the type of value to produce to satisfy the compiler. For example:
 #
 #  @code[fble@]
+#   # Divide by zero is undefined.
 #   divisor.?(0: /Std/Undef%.Undef.undef<Int@>)
 #
-#  You can define a named undefined value, typically at module level scope,
-#  where the name serves to document what about the behavior is undefined. For
-#  example:
+#  Another approach is to define a named undefined value, typically at module
+#  level scope, where the name serves to document what about the behavior is
+#  undefined. For example:
 #
 #  @code[fble@]
 #   DivideByZero = /Std/Undef%.Undef;
