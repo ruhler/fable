@@ -1,9 +1,9 @@
 # @module[/Std/For%]
-#  For loops.
+#  The @l{For@} type describing conventional loop traversal.
 
 # @type[For@] Conventional type for loop traversal.
-#  Traverses over all elements of some sequence. You can't break out early. If
-#  you want to break out early, use the Stream@ type instead.
+#  Traverses over all elements of some sequence. You can't break out of the
+#  loop early. If you want to break out early, use the Stream@ type instead.
 #
 #  @arg[@][A@] Type of element to iterate over.
 #  @arg[@][S@] Type used for the state of the loop.
@@ -20,13 +20,43 @@
 #     s = body(s, x)
 #   return s;
 #
-#  For example, to sum integers in a list, you could write something like:
+#  For example, to count the number of True values in a list, you could write
+#  something like:
 #
 #  @code[fble] @
-#   Int@ final_sum = {
-#     Int@ sum, Int@ x := For(xs, Int|0);
-#     Add(sum, x);
+#   For@<Bool@> for = ForEach(List[True, True, False, True, False, False]);
+#   Int@ num_true = for(0,
+#     (Int@ count, Bool@ x) {
+#       x.?(true: Incr(count), false: count);
+#     });
+#
+#  Normally we would pass the initial loop state and body function as
+#  additional arguments to functions like @l{ForEach} that return type
+#  @l{For@}. When the for loop comes at the end of a statement block,
+#  it's also convenient to use function bind syntax. For example:
+#
+#  @code[fble] @
+#   List@<Bool@> bools = List[True, True, False, True, False, False];
+#   Int@ num_true = {
+#     Int@ count, Bool@ x := ForEach(bools, 0);
+#     x.?(true: Incr(count));
+#     count;
 #   };
+#
+#  Various data types have support for using @l{For@} loops, including lists,
+#  maps, sets, and streams. We use the name @l{For} for iterating over streams
+#  because it's usually fairly obvious the stream is an iteration of elements.
+#  We use the name @l{ForEach} for lists, maps, and sets so it's more obvious
+#  that the intention is to iterate over elements of the data type. For
+#  example:
+#
+#  @code[fble] @
+#   For(Range(low, high), ...);
+#   For(Keys(map), ...);
+#   For(Each(map), ...);
+#   For(Each(list), ...);
+#   ForEach(map, ...);
+#   ForEach(list, ...);
 For@ = <@ A@> { <@ S@>(S@, (S@, A@) { S@; }) { S@; }; };
 
 @(For@);

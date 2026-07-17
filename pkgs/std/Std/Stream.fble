@@ -1,11 +1,11 @@
 # @module[/Std/Stream%]
-#  Types and utilities for streaming data out.
+#  The Stream@ type, for streaming a sequence of values.
 
 For@ .= /Std/For%;
 Lazy@ .= /Std/Lazy%;
 Unit .= /Std/Unit%;
 
-# @type[Stream] A stream of elements for traversal.
+# @type[Stream@] A stream of elements for traversal.
 #  Elements are traversed from the beginning of the stream. You can traverse
 #  through all the elements of the stream, or you can break out of the
 #  traversal early. Later elements of the stream are not computed until/unless
@@ -31,26 +31,59 @@ Unit .= /Std/Unit%;
 #   @returns[R@] The final result of traversal.
 #  @returns The final result of traversal.
 #
-#  If you want to be clever when traversing a stream, you can use function
-#  bind syntax to provide implementations for put and return. Instead of:
+#  Here's an example of how you could produce a stream of boolean values
+#  @l{True}, @l{True}, @l{False} using the raw @l{Stream@} type, though
+#  often it's easier to use the @l{Put}, @l{End}, and @l{Return} helper
+#  functions:
 #
 #  @code[fble] @
-#   put = (S@ s, A@ x, (S@) { R@; } r) {
-#     # on item code here ...
-#   };
-#   return = (S@ s) {
-#     # return code here ...
-#   };
-#   stream(s, put, return);
+#   Stream@<Bool@> bools = 
+#     <@ S@>(S@ s)<@ R@>((S@, Bool@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
+#       S@ s := put(s, True);
+#       S@ s := put(s, True);
+#       S@ s := put(s, False);
+#       return(s);
+#     };
 #
-#  You could write:
-#   
+#  To traverse over the elements of a stream, you supply the put and return
+#  functions as arguments to the stream value. For example, to test if the
+#  number of @l{True} values in a stream before the first @l{False} value is
+#  odd or even:
+#
 #  @code[fble] @
-#   S@ s := {
-#     S@ s, A@ x, (S@) { R@; } r := stream(s);
-#     # on item code here ...
+#   S@ = Int@;      # Count of true values at front of stream.
+#   R@ = Bool@;     # Whether that count is odd or even.
+#   put = (S@ count, Bool@ x, (S@) { R@; } r) {
+#     x.?(true: r(Incr(count)));
+#     count;
 #   };
-#   # on empty code here ...
+#   return = (S@ final_count) {
+#     Eq(1, Mod(final_count, 2));
+#   };
+#
+#   Stream@<Bool@> bools = ...;
+#   Bool@ starts_with_odd_number_of_trues = bools(0, put, return);
+#
+#  To cut down on the boiler plate of defining and passing these functions, we
+#  often make use of bind syntax to traverse over elements of the stream.
+#  Here's the same example as above expressed using function bind syntax:
+#
+#  @code[fble] @
+#   Stream@<Bool@> bools = ...;
+#   Bool@ starts_with_odd_number_of_trues = {
+#     Bool@ final_count := {
+#       Int@ count, Bool@ x, (Int@) { Bool@; } r := bools(0);
+#       x.?(true: r(Incr(count)));
+#       count;
+#     };
+#     Eq(1, Mod(final_count, 2));
+#   };
+#
+#  Notice that we only call the function @l{r} if we want to continue
+#  traversing through the next elements of the stream. To break out early, we
+#  are directly returning @l{count} from the @l{put} function. This way you
+#  can avoid having to evaluate the entire stream if you only care about some
+#  of the elements at the front.
 Stream@ = <@ A@> { 
   <@ S@>(S@)<@ R@>(
     (S@, A@, (S@) { R@; }) { R@; },
@@ -63,7 +96,7 @@ Stream@ = <@ A@> {
 #
 #  Also known as an empty stream.
 Stream@ End = <@ A@> {
-  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } _onItem, (S@) { R@; } return) {
+  <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } _put, (S@) { R@; } return) {
     return(s);
   };
 };

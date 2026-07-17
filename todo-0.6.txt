@@ -2,14 +2,13 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* It's hard to find where fble functions live
- - Anything I can do about that?
-
 Tutorials:
 * Add left side menu to generated website for tutorials?
 * Write a poker solitaire tutorial outside the repo?
 
 Documentation:
+* It's hard to find where fble functions live
+ - Anything I can do about that?
 * A lot of the /Std/* documentation isn't very helpful.
   Consider rewriting it to be an explanation for how to use the functions
   instead of a description of what they are.
