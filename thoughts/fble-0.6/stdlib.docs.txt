@@ -64,8 +64,8 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Undef.fble
 [DONE] pkgs/std/Std/Lazy.fble
 [DONE] pkgs/std/Std/For.fble
+[DONE] pkgs/std/Std/Stream.fble
 
-pkgs/std/Std/Stream.fble
 pkgs/std/Std/Int.fble
 pkgs/std/Std/Char.fble
 pkgs/std/Std/Show.fble
@@ -216,3 +216,58 @@ Where I think we'll run into trouble with fbld here:
   doc comments just have 'Radix' as the name.
   - So to start, just list everything, don't try to interpret the names?
 
+---
+
+I need to come up with a clear convention for documenting internal things. I
+want to be able to document them, for internal consumers. But how do we
+specify who the documentation is relevant for?
+
+For example, Int@ type:
+* The Int@ type is for everyone.
+* The fields are for anyone under /Std/Int/
+* The N function helper is only for /Std/Int% specifically.
+
+I can have a single @private or @hide. But that's just a single bit. It
+doesn't say who it's private to. We can't distinguish between module level,
+package level, and global visibility that way.
+
+If I generate stdlib docs... do I want to ...
+
+Maybe we say it this way:
+* Public is for anyone using the standard library.
+* Internal/private/hide is for anyone implementing the standard library.
+
+Implementers see full details of internal functions, even if they can't be
+used. That's for the implementer to figure out. Users see none of the internal
+stuff.
+
+But if the library gets big enough that we want to hide internal stuff from
+other developers of the same big library?
+
+I guess the real difference is 'user' versus 'developer' docs. What if I add a
+doc comment tag @dev, which says the following documentation is for
+developers? Then I could do something like:
+
+# @type[Int@] The integer type.
+#  Represents an arbitrarily sized signed integer.
+#
+# @dev @field[IntP@][n] ...
+# @dev @field[IntP@][p]
+#  ...
+
+# @dev @func[...] ...
+
+I suppose what I want is a tag @dev that I put in front of any other doc
+entity, and it turns into that same entity? Not sure how that works out from
+an fbld language point of view.
+
+# @dev @field[IntP@][n] ...
+# @dev
+#  @field[IntP@][p]
+#   ...
+
+# @dev
+#  @func[...] ...
+
+Maybe best to start would be @dev takes an argument which is a block, and we
+have to indent the developer docs. Let's try that and see how it feels.

@@ -91,31 +91,44 @@ Stream@ = <@ A@> {
   ) { R@; };
 };
 
-# @value[End] The end of a stream.
-#  @type[Stream@]
+# @func[End] Indicate the end of a stream.
+#  @arg[@][A@] The type of element on the stream.
+#  @returns[Stream@<A@>] An empty stream.
 #
-#  Also known as an empty stream.
+#  Used in construction of streams. For example, to construct a stream with
+#  values @l{1}, @l{2}, then @l{3}:
+#
+#  @code[fble] @
+#   Stream@<Int@> stream = {
+#     Unit@ _ := Put(1);
+#     Unit@ _ := Put(2);
+#     Unit@ _ := Put(3);
+#     End<Int@>;
+#   };
 Stream@ End = <@ A@> {
   <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } _put, (S@) { R@; } return) {
     return(s);
   };
 };
 
-# @func[Put] Outputs a value to a stream.
+# @func[Put] Constructs a stream with at least one value.
 #  @arg[@][A@] The type of items on the stream.
-#  @arg[A@][head] A value to put to the stream.
+#  @arg[A@][head] The first value to put on the stream.
 #  @arg[Lazy@<Stream@<A@>>][tail]
-#   A function to compute the rest of the stream.
+#   A function to compute the rest of the values of the stream.
 #  @returns[Stream@<A@>]
-#   A stream with @a[head] as the first value, followed by @a[tail].
+#   A stream with @a[head] as the first value, followed by all the elements of
+#   @a[tail].
 #
 #  Typically this is called using function bind syntax. For example:
 #
 #  @code[fble] @
-#   Unit@ _ := Put(1);
-#   Unit@ _ := Put(2);
-#   Unit@ _ := Put(3);
-#   End<Int@>;
+#   Stream@<Int@> stream = {
+#     Unit@ _ := Put(1);
+#     Unit@ _ := Put(2);
+#     Unit@ _ := Put(3);
+#     End<Int@>;
+#   };
 <@ A@>(A@, Lazy@<Stream@<A@>>) { Stream@<A@>; }
 Put = <@ A@>(A@ head, Lazy@<Stream@<A@>> tail) {
   <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
@@ -126,12 +139,24 @@ Put = <@ A@>(A@ head, Lazy@<Stream@<A@>> tail) {
 
 # @func[Puts] Outputs a stream of values to a stream.
 #  @arg[@][A@] The type of items on the stream.
-#  @arg[Stream@<A@>][a] A stream of values to add to the stream.
+#  @arg[Stream@<A@>][a]
+#   A stream of values to add to the front of the stream.
 #  @arg[Lazy@<Stream@<A@>>][tail]
 #   A function to compute the rest of the stream.
 #  @returns[Stream@<A@>]
-#   A stream with all values from the given stream followed by followed by
-#   @a[tail].
+#   A stream with all values from the given stream followed by all the values
+#   from the @a[tail] stream.
+#
+#  This is like @l{Put}, but puts multiple values at once. Used for appendin a
+#  stream to another stream. For example, to append two streams @l{a} and
+#  @l{b}:
+#
+#  @code[fble] @
+#   Stream@<Int@> appended = {
+#     Unit@ _ := Puts(a);
+#     Unit@ _ := Puts(b);
+#     End<Int@>;
+#   };
 <@ A@>(Stream@<A@>, Lazy@<Stream@<A@>>) { Stream@<A@>; }
 Puts = <@ A@>(Stream@<A@> a, Lazy@<Stream@<A@>> b) {
   <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
@@ -140,10 +165,21 @@ Puts = <@ A@>(Stream@<A@> a, Lazy@<Stream@<A@>> b) {
   };
 };
 
-# @func[Return] Monadic Return for streams.
+# @func[Return] Constructs a stream with a single element.
+#  This is a monadic return function for the @l{Stream@} type.
+#
 #  @arg[@][A@] The type of item on the stream.
-#  @arg[A@][x] The value to return.
-#  @returns[Stream@<A@>] A stream with the single given item.
+#  @arg[A@][x] The single element to put on the stream.
+#  @returns[Stream@<A@>] A stream with the single given element.
+#
+#  For example, to construct the stream of values @l{1}, @l{2}, @l{3}:
+#
+#  @code[fble] @
+#   Stream@<Int@> stream = {
+#     Unit@ _ := Put(1);
+#     Unit@ _ := Put(2);
+#     Return(3);
+#   };
 <@ A@>(A@) { Stream@<A@>; }
 Return = <@ A@>(A@ x) {
   <@ S@>(S@ s)<@ R@>((S@, A@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
@@ -151,7 +187,7 @@ Return = <@ A@>(A@ x) {
   };
 };
 
-# @func[Do] Monadic Do for streams.
+# @func[Do] Monadic do for streams.
 #  Applies a function to every element of a stream and streams out the
 #  results.
 #
@@ -161,6 +197,17 @@ Return = <@ A@>(A@ x) {
 #  @arg[(A@) { Stream<B@>; }][f] The function to apply.
 #  @returns[Stream<B@>]
 #   The list of elements f(a_i) for each a_i in the input stream.
+#
+#  For example, to produce a stream of pairs (x, y) with x ranging from 0 to 3
+#  and y ranging from 0 to 4, in the order (0, 0), (0, 1), (0, 2), ...
+#
+#  @code[fble] @
+#   Range .= /Std/Int/Stream%;
+#   Stream@<*(Int@ x, Int@ y)> pairs = {
+#     Int@ x := Do(Range(0, 3));
+#     Int@ y := Do(Range(0, 4));
+#     Return(@(x, y));
+#   };
 <@ A@>(Stream@<A@>)<@ B@>((A@) { Stream@<B@>; }) { Stream@<B@>; }
 Do = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { Stream@<B@>; } f) {
   <@ S@>(S@ s)<@ R@>((S@, B@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
@@ -172,12 +219,31 @@ Do = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { Stream@<B@>; } f) {
   };
 };
 
-# @func[Map] Map a function over the elements of a stream.
-#  @arg[@][A@] The output type of the original stream.
+# @func[Map] Applies a function to each element of the stream.
+#  @arg[@][A@] The element type of the original stream.
 #  @arg[Stream@<A@>][stream] The original stream.
-#  @arg[@][B@] The output type of the new stream.
-#  @arg[(A@) { B@; }][f] Function to convert output values.
-#  @return[Stream@<B@>] A new stream that outputs the target output type.
+#  @arg[@][B@] The element type of the new stream.
+#  @arg[(A@) { B@; }][f] Function to convert elements.
+#  @return[Stream@<B@>]
+#   The original stream with the function @l{f} applied to each element.
+#
+#  For example, to extra the @l{x} coordinates from a stream of pairs:
+#
+#  @code[fble] @
+#   Pair@ = *(Int@ x, Int@ y);
+#   GetX = (Pair@ pair) { pair.x; };
+#   Stream@<Pair@> pairs = ...;
+#   Stream@<Int@> xs = Map(pairs, GetX);
+#
+#  Or using function bind syntax:
+#
+#  @code[fble] @
+#   Pair@ = *(Int@ x, Int@ y);
+#   Stream@<Pair@> pairs = ...;
+#   Stream@<Int@> xs = {
+#     Pair@ pair := Map(pairs);
+#     pair.x;
+#   };
 <@ A@>(Stream@<A@>)<@ B@>((A@) { B@; }) { Stream@<B@>; }
 Map = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { B@; } f) {
   <@ S@>(S@ s)<@ R@>((S@, B@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
@@ -193,6 +259,17 @@ Map = <@ A@>(Stream@<A@> ma)<@ B@>((A@) { B@; } f) {
 #  @arg[@][A@] The type of element on the stream.
 #  @arg[Stream<A@>][stream] The stream to iterate over.
 #  @returns[For@<A@>] A for loop iteration over the stream elements.
+#
+#  For example, to sum the elements of an integer stream:
+#
+#  @code[fble] @
+#   Stream@<Int@> values = ...;
+#   Int@ final_sum = {
+#     Int@ sum, Int@ x := For(values);
+#     Add(sum, x);
+#   };
+#
+#  See @l{/Std/For%.For@} for more about the @l{For@} type.
 <@ A@>(Stream@<A@>) { For@<A@>; }
 For = <@ A@>(Stream@<A@> stream)<@ S@>(S@ s, (S@, A@) { S@; } body) {
   S@ s := {

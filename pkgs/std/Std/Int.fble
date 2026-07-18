@@ -1,20 +1,56 @@
 # @module[/Std/Int%]
-#  Signed unbounded integer type and basic operations.
+#  Defines the standard integer type @l{Int@}, which represents signed
+#  integers of arbitrary size.
+#
+#  The @l{/Std/Int%} module defines the @l{Int@} type and basic arithmetic
+#  operations for addition, subtraction, multiplication, and some bitwise
+#  shift operations. Additional functionality for @l{Int@} is provided in
+#  submodules:
+#
+#  @def[@l{/Std/Int/Lit%}] Integer literals
+#  @def[@l{/Std/Int/Show%}] Converting integers to strings
+#  @def[@l{/Std/Int/Data%}] Support for integers as keys in maps
+#  @def[@l{/Std/Int/Stream%}] Producing streams of integer values
+#  @def[@l{/Std/Int/Eq%}] Testing integers for equality
+#  @def[@l{/Std/Int/Div%}] Division and modulo operators
+#  @def[@l{/Std/Int/Random%}] Generating random integers
+#  @def[@l{/Std/Int/Sign%}] Testing the sign of an integer
+#  @def[@l{/Std/Int/Sqrt%}] Integer square root
+#  @def[@l{/Std/Int/Cmp%}] Integer comparison operators
+#  @def[@l{/Std/Int/Parse%}] Converting integers from strings
 
 IntP = /Std/Int/IntP%;
 IntP@, AddP(.Add), MulP(.Mul), Exp2P(.Exp2) .= IntP;
 Unit@, Unit .= /Std/Unit%;
 
 # @type[Int@] The integer type.
-#  A type for abitrarily sized signed integers.
-Int@ = +(
-  IntP@ n,   # Negative integers
-  Unit@ 0,
-  IntP@ p    # Positive integers
-).%(@/Std/Int%);
+#  Represents an arbitrarily sized signed integer.
+#
+#  The @l{Int@} type should be treated as an abstract type, with a private
+#  internal representation.
+#
+#  Example use:
+#
+#  @code[fble] @
+#   Int .= /Std/Int/Lit%;
+#   Int@ five = Int|5;
+#
+#  @dev
+#   @field[IntP@][n] A negative integer.
+#   @field[Unit@][0] The value zero.
+#   @field[IntP@][p] A positive integer.
+Int@ = +(IntP@ n, Unit@ 0, IntP@ p).%(@/Std/Int%);
 
-# Helper functions for constructing positive and negative integers.
+# @dev
+#  @func[N] Constructs a negative integer.
+#   @arg[IntP][x] The (positive) number to make negative.
+#   @returns[Int@] The constructed negative integer.
 (IntP@) { Int@; } N = (IntP@ x) { Int@(n: x); };
+
+# @dev
+#  @func[P] Constructs a positive integer.
+#   @arg[IntP][x] The (positive) number to make an integer.
+#   @returns[Int@] The constructed positive integer.
 (IntP@) { Int@; } P = (IntP@ x) { Int@(p: x); };
 
 # @value[0] The value 0.
@@ -25,51 +61,72 @@ Int@ 0 = Int@(0: Unit);
 #  @type[Int@]
 Int@ 1 = P(IntP.1);
 
-# @func[Incr] Increment. a + 1.
+# @func[Incr] Increments an integer.
 #  @arg[Int@][a] The operand.
 #  @returns[Int@] One greater than the operand.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Int@ five = Incr(Int|4);
 (Int@) { Int@; } Incr = (Int@ a) {
   a.?(0: P(IntP.1), p: P(IntP.Incr(a.p)));
   a.n.?(1: 0);
   N(IntP.Decr(a.n));
 };
 
-# @func[Decr] Decrement. a - 1.
+# @func[Decr] Decrements an integer.
 #  @arg[Int@][a] The operand.
 #  @returns[Int@] One less than the operand.
+#
+#  For example:
+#  
+#  @code[fble] @
+#   Int@ four = Decr(Int|5);
 (Int@) { Int@; } Decr = (Int@ a) {
   a.?(n: N(IntP.Incr(a.n)), 0: N(IntP.1));
   a.p.?(1: 0);
   P(IntP.Decr(a.p));
 };
 
-# @func[Mul2] Double function. a * 2.
+# @func[Mul2] Doubles the value of an integer.
 #  @arg[Int@][a] The operand.
 #  @returns[Int@] Two times the operand.
+#
+#  @code[fble] @
+#   Int@ six = Mul2(Int|3);
 (Int@) { Int@; } Mul2 = (Int@ a) {
   a.?(n: N(IntP@(2p0: a.n)), 0: a, p: P(IntP@(2p0: a.p)));
 };
 
-# Helper function to subtract two positive integers, the result of which may
-# not be positive.
-(IntP@, IntP@) { Int@; } SubP = (IntP@ a, IntP@ b) {
-  a.?(1: {
-         b.?(1: 0);
-         N(IntP.Decr(b));
-       },
-       2p0: b.?(1: P(IntP.Decr(a)),
-                2p0: Mul2(SubP(a.2p0, b.2p0)),
-                2p1: Decr(Mul2(SubP(a.2p0, b.2p1)))),
-       2p1: b.?(1: P(IntP.Decr(a)),
-                2p0: Incr(Mul2(SubP(a.2p1, b.2p0))),
-                2p1: Mul2(SubP(a.2p1, b.2p1))));
+# @dev
+#  @func[SubP] Subtracts two positive integers.
+#   @arg[IntP@][a] The first operand.
+#   @arg[IntP@][b] The second operand.
+#   @returns[Int@] The difference between the first and second operands.
+#
+#   The second operand may be greater than or equal to the first operand, in
+#   which case the returned value will be a negative number or zero.
+(IntP@, IntP@) { Int@; }
+SubP = (IntP@ a, IntP@ b) {
+  a.?(1: b.?(1: 0, : N(IntP.Decr(b))),
+      2p0: b.?(1: P(IntP.Decr(a)),
+               2p0: Mul2(SubP(a.2p0, b.2p0)),
+               2p1: Decr(Mul2(SubP(a.2p0, b.2p1)))),
+      2p1: b.?(1: P(IntP.Decr(a)),
+               2p0: Incr(Mul2(SubP(a.2p1, b.2p0))),
+               2p1: Mul2(SubP(a.2p1, b.2p1))));
 };
 
-# @func[Add] Integer addition. a + b.
+# @func[Add] Adds two integers.
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Int@] The sum of the two operands.
-(Int@, Int@) { Int@; } Add = (Int@ a, Int@ b) {
+#
+#  @code[fble] @
+#   Int@ five = Add(Int|3, Int|2);
+(Int@, Int@) { Int@; }
+Add = (Int@ a, Int@ b) {
   a.?(n: b.?(n: N(AddP(a.n, b.n)),
              0: a,
              p: SubP(b.p, a.n)),
@@ -79,18 +136,26 @@ Int@ 1 = P(IntP.1);
               p: P(AddP(a.p, b.p))));
 };
 
-# @func[Neg] Integer negation. -a.
+# @func[Neg] Negates an integer.
 #  @arg[Int@][a] The operand.
 #  @returns[Int@] The additive inverse of the operand.
-(Int@) { Int@; } Neg = (Int@ a) {
+#
+#  @code[fble] @
+#   Int@ minus_four = Neg(Int|4);
+(Int@) { Int@; }
+Neg = (Int@ a) {
   a.?(n: P(a.n), 0: a, p: N(a.p));
 };
 
-# @func[Sub] Integer subtraction. a - b.
+# @func[Sub] Integer subtraction.
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Int@] The difference between the two operands.
-(Int@, Int@) { Int@; } Sub = (Int@ a, Int@ b) {
+#
+#  @code[fble] @
+#   Int@ five = Sub(Int|8, Int|3);
+(Int@, Int@) { Int@; }
+Sub = (Int@ a, Int@ b) {
   # a - b = a + (-b)
   Add(a, Neg(b));
 };
@@ -99,7 +164,8 @@ Int@ 1 = P(IntP.1);
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Int@] The product of the operands.
-(Int@, Int@) { Int@; } Mul = (Int@ a, Int@ b) {
+(Int@, Int@) { Int@; }
+Mul = (Int@ a, Int@ b) {
   a.?(
     n: b.?(n: P(MulP(a.n, b.n)),
            0: 0,
@@ -115,7 +181,8 @@ Int@ 1 = P(IntP.1);
 #
 #  @arg[Int@][a] The operand.
 #  @returns[Int@] Two to the power of @a[a].
-(Int@) { Int@; } Exp2 = (Int@ a) {
+(Int@) { Int@; }
+Exp2 = (Int@ a) {
   a.?(0: 1, p: P(Exp2P(a.p)));
   /Std/Undef%.Undef.undef<Int@>;
 };
@@ -126,7 +193,8 @@ Int@ 1 = P(IntP.1);
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Int@] The first operand raised to the power of the second operand.
-(Int@, Int@) { Int@; } Exp = (Int@ a, Int@ b) {
+(Int@, Int@) { Int@; }
+Exp = (Int@ a, Int@ b) {
   b.?(n: /Std/Undef%.Undef.undef<Int@>);
   b.?(0: 1);
 
@@ -150,7 +218,8 @@ Shl = (Int@ a, Int@ b) {
 };
 
 # a >> 1
-(Int@) { Int@; } Shr1 = (Int@ a) {
+(Int@) { Int@; }
+Shr1 = (Int@ a) {
   a.?(
     n: a.n.?(1: 0, 2p0: N(a.n.2p0), 2p1: N(a.n.2p1)),
     0: 0,
@@ -170,7 +239,8 @@ Shl = (Int@ a, Int@ b) {
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Int@] a / 2^b.
-(Int@, Int@) { Int@; } Shr = (Int@ a, Int@ b) {
+(Int@, Int@) { Int@; }
+Shr = (Int@ a, Int@ b) {
   b.?(n: /Std/Undef%.Undef.undef<Int@>);
   b.?(0: a);
   Shr(Shr1(a), Decr(b));
