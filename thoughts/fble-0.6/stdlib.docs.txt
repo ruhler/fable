@@ -67,23 +67,15 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Stream.fble
 [DONE] pkgs/std/Std/Int.fble
 [DONE] pkgs/std/Std/Char.fble
+[DONE] pkgs/std/Std/Show.fble
 
-pkgs/std/Std/Show.fble
-
-pkgs/std/Std/Map/Show.fble
-pkgs/std/Std/Map/Eq.fble
-pkgs/std/Std/Map/List.fble
-pkgs/std/Std/State/Pure.fble
-pkgs/std/Std/Monad.fble
 pkgs/std/Std/Bool/Show.fble
 pkgs/std/Std/Bool/Data.fble
 pkgs/std/Std/Bool/Assert.fble
 pkgs/std/Std/Bool/Eq.fble
 pkgs/std/Std/Bool/Random.fble
 pkgs/std/Std/Bool/Cmp.fble
-pkgs/std/Std/Map.fble
-pkgs/std/Std/Data.fble
-pkgs/std/Std/String.fble
+
 pkgs/std/Std/Int/Lit.fble
 pkgs/std/Std/Int/Show.fble
 pkgs/std/Std/Int/Data.fble
@@ -99,8 +91,17 @@ pkgs/std/Std/Int/Sign.fble
 pkgs/std/Std/Int/Sqrt.fble
 pkgs/std/Std/Int/Cmp.fble
 pkgs/std/Std/Int/Parse.fble
-pkgs/std/Std/Set.fble
-pkgs/std/Std/State.fble
+
+pkgs/std/Std/Stream/String.fble
+pkgs/std/Std/Stream/Null.fble
+pkgs/std/Std/Stream/State.fble
+pkgs/std/Std/Stream/Debug.fble
+pkgs/std/Std/Stream/Out.fble
+pkgs/std/Std/Stream/List.fble
+pkgs/std/Std/Stream/In.fble
+pkgs/std/Std/Stream/String/Assert.fble
+pkgs/std/Std/Stream/Test.fble
+
 pkgs/std/Std/Char/Lit.fble
 pkgs/std/Std/Char/Show.fble
 pkgs/std/Std/Char/Data.fble
@@ -109,6 +110,17 @@ pkgs/std/Std/Char/Ascii/Type.fble
 pkgs/std/Std/Char/Eq.fble
 pkgs/std/Std/Char/Ascii.fble
 pkgs/std/Std/Char/Cmp.fble
+
+pkgs/std/Std/Map/Show.fble
+pkgs/std/Std/Map/Eq.fble
+pkgs/std/Std/Map/List.fble
+pkgs/std/Std/State/Pure.fble
+pkgs/std/Std/Monad.fble
+pkgs/std/Std/Map.fble
+pkgs/std/Std/Data.fble
+pkgs/std/Std/String.fble
+pkgs/std/Std/Set.fble
+pkgs/std/Std/State.fble
 pkgs/std/Std/Unit/Show.fble
 pkgs/std/Std/Unit/Data.fble
 pkgs/std/Std/Unit/Eq.fble
@@ -163,15 +175,6 @@ pkgs/std/Std/String/Eq.fble
 pkgs/std/Std/String/Escape.fble
 pkgs/std/Std/String/Lines.fble
 pkgs/std/Std/String/Cmp.fble
-pkgs/std/Std/Stream/String.fble
-pkgs/std/Std/Stream/Null.fble
-pkgs/std/Std/Stream/State.fble
-pkgs/std/Std/Stream/Debug.fble
-pkgs/std/Std/Stream/Out.fble
-pkgs/std/Std/Stream/List.fble
-pkgs/std/Std/Stream/In.fble
-pkgs/std/Std/Stream/String/Assert.fble
-pkgs/std/Std/Stream/Test.fble
 pkgs/std/Std/Test.fble
 
 Question:
@@ -271,3 +274,16 @@ an fbld language point of view.
 
 Maybe best to start would be @dev takes an argument which is a block, and we
 have to indent the developer docs. Let's try that and see how it feels.
+
+---
+
+How to summarize the todos related to documentation for this release?
+
+* Clean up all the std lib documentation.
+ - aka, finish going through the list above.
+* Try generating docs for stdlib documentation
+ - A summary of all modules/functions
+ - A detail of all modules/functions
+
+Sounds like a good summary. Now that I feel like I know the approach I want to
+take to document all the weird nested things that show up in fble.

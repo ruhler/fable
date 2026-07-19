@@ -44,9 +44,32 @@ Things to consider doing for the fble-0.7 release.
 * Figure out a real solution to error handling in general?
  - Examples to consider: file read/write, parsing an int.
 
+* Be able to typecheck body of a let where the variables aren't all well
+  typed, to get more error messages at once.
+
 * Optimize C and interpreter backends like we did aarch64?
   By inlining logic to access fble values instead of calling library
   functions.
+
+* Revamp program/module loading
+ - see thoughts/fble-0.5/modular_compilation.txt for the design.
+ - goal is to allow precompiled modules to depend on interpreted modules,
+   validate types as required at link time, and avoid recompiling
+   the implementation (rather than just the type) of a module you depend on.
+ - see thoughts/fble-0.5/modular_compilation.txt for additional context.
+ - clarify the spec with respect to builtins referring to other builtins and
+   the recursive module requirements in case of difference between builtins,
+   .fble files, and header files.
+ - Add tests for:
+   a. Try to compile a builtin module.
+   b. builtin A -> builtin B, .fble C -> builtin B.
+   c. builtin A, A.fble.@ -> B.fble, B.fble -> /C%,
+      C.fble has bugs, C.fble.@ doesn't. This should not fail to execute.
+ - consider separating the FbleModule* for execution and for type for a given
+   module path.
+ - Add option for loading modules from .so files?
+ - have fble-cli check that the function has the right type?
+ - load minimum dependencies needed for type checking when possible?
 
 * Design a package management / versioning scheme?
  - see thoughts/fble-0.5/modular_compilation.txt for context.

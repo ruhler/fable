@@ -7,56 +7,26 @@ Tutorials:
 * Write a poker solitaire tutorial outside the repo?
 
 Documentation:
+* Finish going through clean up of all the std lib documentation.
+* Try generating docs for stdlib documentation
+ - A summary of all modules/functions
+ - A detail of all modules/functions
 * Mark /Std/Int/IntP% docs as @dev?
 * Summarize submodules of /Std/Stream% in the /Std/Stream% documentation?
-* It's hard to find where fble functions live
- - Anything I can do about that?
-* A lot of the /Std/* documentation isn't very helpful.
-  Consider rewriting it to be an explanation for how to use the functions
-  instead of a description of what they are.
-* Figure out how to properly document List@ type
- - Mix of poly, struct, and union all in one.
-* How to document a poly? @func? @value?
-* How to document methods of interface structs?
-* How to document an interface function type, like Eq@?
-* /Std/List/Eq% docs could be more precise and include examples.
-* How to document internal functions, e.g. /Std/List/Sort%.Insert?
-  Make sure this doesn't get shown in reference documentation.
-  e.g. /Std/Int/Lit% internal helper functions.
-* Should I add @example as a doc comment field? Seems useful?
 
 Other:
 
 * Update all the sample apps for latest features, styles, idioms.
 
-* Figure out why we see the same errors reported many times when we build.
- - And fix it.
-* Add -t option to compiler to pass expected type of main
+* Add -t typecheck option to fble-compile
+ - You pass the path of a module with the same type expected for the module
+   being compiled.
  - Use it in fble-cli and fble-app for better type checking.
-* Be able to typecheck body of a let where the variables aren't all well
-  typed, to get more error messages at once.
 
 * Revamp the standard library.
  - Test and document (and tutorialize?) all functions.
  - Implement rosettacode.org tasks under pkgs/rosetta to test it out.
 
-* Clean up program loading
- - see thoughts/fble-0.5/modular_compilation.txt for context.
- - Clarify the spec with respect to builtins referring to other builtins and
-   the recursive module requirements in case of difference between builtins,
-   .fble files, and header files.
- - Add tests for:
-   a. Try to compile a builtin module.
-   b. builtin A -> builtin B, .fble C -> builtin B.
-   c. builtin A, A.fble.@ -> B.fble, B.fble -> /C%,
-      C.fble has bugs, C.fble.@ doesn't. This should not fail to execute.
- - Update the implementation to pass the tests.
- - Consider separating the FbleModule* for execution and for type for a given
-   module path.
- - Add option for loading modules from .so files?
- - Have fble-cli check that the function has the right type?
- - Load minimum dependencies needed for type checking when possible?
-  
 * Implement deflate algorithm.
  - Change --profile to produce gzip compressed profiles (doesn't need to be
    compressed yet, can use uncompressed blocks).
