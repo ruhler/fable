@@ -7,6 +7,7 @@ Tutorials:
 * Write a poker solitaire tutorial outside the repo?
 
 Documentation:
+* Mark /Std/Int/IntP% docs as @dev?
 * It's hard to find where fble functions live
  - Anything I can do about that?
 * A lot of the /Std/* documentation isn't very helpful.

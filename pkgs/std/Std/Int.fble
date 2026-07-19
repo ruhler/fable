@@ -160,10 +160,13 @@ Sub = (Int@ a, Int@ b) {
   Add(a, Neg(b));
 };
 
-# @func[Mul] Integer multiplication. a * b.
+# @func[Mul] Multiplies two integers.
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Int@] The product of the operands.
+#
+#  @code[fble] @
+#   Int@ eight = Mul(Int|2, Int|4);
 (Int@, Int@) { Int@; }
 Mul = (Int@ a, Int@ b) {
   a.?(
@@ -176,23 +179,29 @@ Mul = (Int@ a, Int@ b) {
             p: P(MulP(a.p, b.p))));
 };
 
-# @func[Exp2] Base-2 exponentiation. 2^a
+# @func[Exp2] Base-2 exponentiation.
 #  Behavior is undefined if @a[a] is negative.
 #
 #  @arg[Int@][a] The operand.
 #  @returns[Int@] Two to the power of @a[a].
+#
+#  @code[fble] @
+#   Int@ eight = Exp2(Int|3);
 (Int@) { Int@; }
 Exp2 = (Int@ a) {
   a.?(0: 1, p: P(Exp2P(a.p)));
   /Std/Undef%.Undef.undef<Int@>;
 };
 
-# @func[Exp] Exponentiation. a^b
-#  Behavior is undefeind if @a[b] is negative.
+# @func[Exp] Exponentiation.
+#  Behavior is undefined if @a[b] is negative.
 #
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Int@] The first operand raised to the power of the second operand.
+#
+#  @code[fble] @
+#   Int@ sixty_four = Exp(Int|4, Int|3);
 (Int@, Int@) { Int@; }
 Exp = (Int@ a, Int@ b) {
   b.?(n: /Std/Undef%.Undef.undef<Int@>);
@@ -201,23 +210,33 @@ Exp = (Int@ a, Int@ b) {
   Mul(a, Exp(a, Decr(b)));
 };
 
-# @func[Shl] Left shift. a << b, or a * 2^b.
+# @func[Shl] Left shift.
 #  We aren't using fixed width integers or specifying their internal
 #  implementation, but it's still useful to use the notation for left shift
 #  from fixed-width binary representations of integers to refer to this
 #  operation.
+#
+#  Multiplies a by 2^b.
 #
 #  Behavior is undefined if @a[b] is negative.
 #
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Int@] a * 2^b.
+#
+#  @code[fble] @
+#   Int@ 28 = Shl(Int|7, Int|2);
 (Int@, Int@) { Int@; }
 Shl = (Int@ a, Int@ b) {
   Mul(a, Exp2(b));
 };
 
-# a >> 1
+# @dev
+#  @func[Shr1] Shift right by one.
+#   Also the same as division by two.
+#
+#   @arg[Int@][a] the operand.
+#   @returns[Int@] a >> 1
 (Int@) { Int@; }
 Shr1 = (Int@ a) {
   a.?(
@@ -226,7 +245,7 @@ Shr1 = (Int@ a) {
     p: a.p.?(1: 0, 2p0: P(a.p.2p0), 2p1: P(a.p.2p1)));
 };
 
-# @func[Shr] Right shift. a >> b. a / 2^b.
+# @func[Shr] Right shift.
 #  We aren't using fixed width integers or specifying their internal
 #  implementation, but it's still useful to use the notation for right shift
 #  from fixed-width binary representations of integers to refer to this
@@ -239,6 +258,9 @@ Shr1 = (Int@ a) {
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Int@] a / 2^b.
+#
+#  @code[fble] @
+#   Int@ 3 = Shr(Int|15, Int|2);
 (Int@, Int@) { Int@; }
 Shr = (Int@ a, Int@ b) {
   b.?(n: /Std/Undef%.Undef.undef<Int@>);
