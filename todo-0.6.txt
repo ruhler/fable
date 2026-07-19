@@ -8,6 +8,7 @@ Tutorials:
 
 Documentation:
 * Mark /Std/Int/IntP% docs as @dev?
+* Summarize submodules of /Std/Stream% in the /Std/Stream% documentation?
 * It's hard to find where fble functions live
  - Anything I can do about that?
 * A lot of the /Std/* documentation isn't very helpful.

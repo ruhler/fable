@@ -66,8 +66,8 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/For.fble
 [DONE] pkgs/std/Std/Stream.fble
 [DONE] pkgs/std/Std/Int.fble
+[DONE] pkgs/std/Std/Char.fble
 
-pkgs/std/Std/Char.fble
 pkgs/std/Std/Show.fble
 
 pkgs/std/Std/Map/Show.fble

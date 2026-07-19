@@ -7,17 +7,17 @@
 #  shift operations. Additional functionality for @l{Int@} is provided in
 #  submodules:
 #
-#  @def[@l{/Std/Int/Lit%}] Integer literals
-#  @def[@l{/Std/Int/Show%}] Converting integers to strings
+#  @def[@l{/Std/Int/Cmp%}] Integer comparison operators
 #  @def[@l{/Std/Int/Data%}] Support for integers as keys in maps
-#  @def[@l{/Std/Int/Stream%}] Producing streams of integer values
-#  @def[@l{/Std/Int/Eq%}] Testing integers for equality
 #  @def[@l{/Std/Int/Div%}] Division and modulo operators
+#  @def[@l{/Std/Int/Eq%}] Testing integers for equality
+#  @def[@l{/Std/Int/Lit%}] Integer literals
+#  @def[@l{/Std/Int/Parse%}] Converting integers from strings
 #  @def[@l{/Std/Int/Random%}] Generating random integers
+#  @def[@l{/Std/Int/Show%}] Converting integers to strings
 #  @def[@l{/Std/Int/Sign%}] Testing the sign of an integer
 #  @def[@l{/Std/Int/Sqrt%}] Integer square root
-#  @def[@l{/Std/Int/Cmp%}] Integer comparison operators
-#  @def[@l{/Std/Int/Parse%}] Converting integers from strings
+#  @def[@l{/Std/Int/Stream%}] Producing streams of integer values
 
 IntP = /Std/Int/IntP%;
 IntP@, AddP(.Add), MulP(.Mul), Exp2P(.Exp2) .= IntP;

@@ -1,22 +1,70 @@
 # @module[/Std/Char%]
-#  The character type.
+#  Defines the standard character type @l{Char@}, which represents a single
+#  Unicode code point.
+#
+#  The @l{/Std/Char%} module defines the @l{Char@} type and conversions to and
+#  from Unicode code points represented as @l{Int@}. Additional functionality
+#  for @l{Char@} is provided in submodules:
+#
+#  @def[@l{/Std/Char/Ascii%}] ASCII character and string literals
+#  @def[@l{/Std/Char/Ascii/Stream%}]
+#   Format functions that work with ASCII string literals
+#  @def[@l{/Std/Char/Ascii/Type%}] ASCII character classification
+#  @def[@l{/Std/Char/Cmp%}] Character comparison operators
+#  @def[@l{/Std/Char/Data%}] Support for characters as keys in maps
+#  @def[@l{/Std/Char/Eq%}] Testing characters for equality
+#  @def[@l{/Std/Char/Lit%}] Character set agnostic character literal support
+#  @def[@l{/Std/Char/Show%}] Formatted output of characters
+#
+#  There are a number of ways to construct characters depending on your needs.
+#  You can use the raw @l{Char} constructor provided in this module:
+#
+#  @code[fble] @
+#   Char@ a = Char(Int|97);
+#
+#  You can use pre-constructed ASCII characters from the @l{/Std/Char/Ascii%}
+#  module:
+#
+#  @code[fble] @
+#   Ascii .= /Std/Char/Ascii%;
+#   Char@ a = Ascii.'a';
+#
+#  You can use the ascii @l{Char} literal function:
+#
+#  @code[fble] @
+#   Char .= /Std/Char/Ascii%;
+#   Char@ a = Char|'a'; 
+#
+#  You can use Unicode character literals from @l{/Std/Char/Lit%}:
+#
+#  @code[fble] @
+#   Char@ a = U|0061;
+#
+#  The library provides direct support for using the ASCII character set in
+#  character and string literals via the @l{/Std/Char/Ascii%} modules. It's
+#  possible to define similar support for any character set you can express in
+#  fble source code. See the @l{/Std/Char/Lit%} module for more details on how
+#  to define and work with your own character sets.
 
 Int@ .= /Std/Int%;
 
 # @type[Char@] The character type.
-#  The character type corresponds to unicode code points.
+#  A character corresponds to a single Unicode code point.
+#
+#  @dev
+#   @field[Int@][pos] The Unicode code point of the character.
 Char@ = *(Int@ pos).%(@/Std/Char%);
 
-# @func[Char] Construct a character from a unicode code point.
-#  @arg[Int@][pos] The unicode code point of the character to construct.
-#  @returns[Char@] A character with the given unicode code point.
+# @func[Char] Construct a character from a Unicode code point.
+#  @arg[Int@][pos] The Unicode code point of the character to construct.
+#  @returns[Char@] A character with the given Unicode code point.
 (Int@) { Char@; } Char = (Int@ pos) {
   @(pos);
 };
 
-# @func[Pos] Gets the unicode code point of a character.
+# @func[Pos] Gets the Unicode code point of a character.
 #  @arg[Char@][c] The character to get the code point of.
-#  @returns[Int@] The unicode code point of the given character.
+#  @returns[Int@] The Unicode code point of the given character.
 (Char@) { Int@; } Pos = (Char@ c) {
   c.pos;
 };

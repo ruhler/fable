@@ -1,5 +1,10 @@
 # @module[/Std/Show%]
 #  Interface for showing data in human readable form.
+#
+#  The @l{Show@} interface specifies how to convert a value to a human
+#  readable stream of characters. It's typically used for testing and
+#  debugging. See @l{/Std/Stream%} for ways to compose and consume values
+#  shown this way.
 
 Char@ .= /Std/Char%;
 Stream@ .= /Std/Stream%;
@@ -12,6 +17,39 @@ Stream@ .= /Std/Stream%;
 #  @arg[T@][x] The value to show.
 #  @returns[Stream@<Char@>]
 #   The value represented as a stream of characters.
+#
+#  For example, to define an instance of Show@ for a pair of integers:
+#
+#  @code[fble] @
+#   Format .= /Std/Char/Ascii/Stream%;
+#
+#   Pair@ = *(Int@ x, Int@ y);
+#
+#   Show@<Pair@> ShowPair = (Pair@ pair) {
+#    Format|'(%s, %s)'[
+#     /Std/Int/Show%.Show(pair.x),
+#     /Std/Int/Show%.Show(pair.y)];
+#   };
+#
+#  You could then output a pair to a string using:
+#
+#  @code[fble] @
+#   ToString .= /Std/Stream/String%;
+#
+#   Pair@ pair = ...;
+#   String@ shown = ToString(ShowPair(pair));
+#
+#  We commonly define the instance of @l{Show@} for a type in a separate
+#  @l{Show%} submodule with the name @l{Show} for the instance. Sometimes it's
+#  also convenient to define multiple different instances of @l{Show@} in the
+#  same @l{Show%} submodule deriving the name of the instance from the name of
+#  the type being shown.
+#
+#  The standard library defines instances of @l{Show@} for most core data
+#  types, for example in @l{/Std/Int/Show%}, @l{/Std/Bool/Show%}, and
+#  @l{/Std/List/Show%}. The @l{/Std/Test%} unit test framework relies on
+#  having instances of @l{Show@} for producing meaningful failure messages
+#  in assertions.
 Show@ = <@ T@>(T@) { Stream@<Char@>; };
 
 @(Show@);
