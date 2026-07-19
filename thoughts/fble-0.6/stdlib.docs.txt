@@ -68,8 +68,8 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Int.fble
 [DONE] pkgs/std/Std/Char.fble
 [DONE] pkgs/std/Std/Show.fble
+[DONE] pkgs/std/Std/Bool/Show.fble
 
-pkgs/std/Std/Bool/Show.fble
 pkgs/std/Std/Bool/Data.fble
 pkgs/std/Std/Bool/Assert.fble
 pkgs/std/Std/Bool/Eq.fble

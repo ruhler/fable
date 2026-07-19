@@ -117,3 +117,6 @@ Things to consider doing for the fble-0.7 release.
  - That works on all backends.
  - That supports single step through code.
  - That supports field access.
+
+* Implement deflate algorithm.
+ - Update fble-pprof to support compressed profiles.

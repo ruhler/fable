@@ -2,9 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-Tutorials:
-* Add left side menu to generated website for tutorials?
-* Write a poker solitaire tutorial outside the repo?
+* The /Std/Stream/String% module is weird in what it defines.
+ - Should it be reorganized some other way?
 
 Documentation:
 * Finish going through clean up of all the std lib documentation.
@@ -12,9 +11,10 @@ Documentation:
  - A summary of all modules/functions
  - A detail of all modules/functions
 * Mark /Std/Int/IntP% docs as @dev?
-* Summarize submodules of /Std/Stream% in the /Std/Stream% documentation?
 
-Other:
+Tutorials:
+* Add left side menu to generated website for tutorials?
+* Write a poker solitaire tutorial outside the repo?
 
 * Update all the sample apps for latest features, styles, idioms.
 
@@ -27,10 +27,11 @@ Other:
  - Test and document (and tutorialize?) all functions.
  - Implement rosettacode.org tasks under pkgs/rosetta to test it out.
 
-* Implement deflate algorithm.
- - Change --profile to produce gzip compressed profiles (doesn't need to be
-   compressed yet, can use uncompressed blocks).
- - Change fble-pprof to decompress profiles.
+* Switch to gzip format for pprof files?
+ - Change --profile to produce gzip compressed profiles, using uncompressed
+   blocks for now.
+ - Change fble-pprof to decompress profiles, assuming uncompressed blocks for
+   now.
 
 * Figure out a way to test foreign function not found?
  - Interpreted gives runtime error.

@@ -1144,3 +1144,32 @@ Becomes...
   };
 
   ??
+
+---
+
+* Implement deflate algorithm.
+ - Change --profile to produce gzip compressed profiles (doesn't need to be
+   compressed yet, can use uncompressed blocks).
+ - Change fble-pprof to decompress profiles.
+
+Let's be real, this late in the release cycle, I'm not going to try and figure
+out the layers of prefix trees involved in deflate.
+
+If I'm going to do anything here, it would be to switch to gzip compressed
+format for fble-pprof using uncompressed blocks, and only supporting decoding
+of uncompressed blocks.
+
+The benefits of that would be:
+* fble-pprof now produces a standard pprof profile that works better without
+  other tools.
+* We make some forward progress on this todo item without taking on too much
+  for this release.
+
+The downside of fble-pprof producing uncompressed gzip is it's less obvious
+that it is producing very poorly compressed profiles, and it's one more step
+of effort to recompress.
+
+Can gzip recompress an already compressed file?
+
+Doesn't look like it. Presumably you just pipe gunzip back into gzip?
+

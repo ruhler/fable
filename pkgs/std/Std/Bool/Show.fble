@@ -7,7 +7,19 @@ Show@ .= /Std/Show%;
 
 # @func[Show] Show a Bool@ value.
 #  @arg[Bool@][x] The value to show.
-#  @returns[Stream@<Char@>] The value shown as "True" or "False".
+#  @returns[Stream@<Char@>] The value shown as @l{True} or @l{False}.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Stream@<Char@> output = Format|'This bool value is: %s'[
+#     /Std/Bool/Show%.Show(True)
+#   ];
+#
+#  Would output:
+#
+#  @code[txt] @
+#   This bool value is: True
 Show@<Bool@> Show = (Bool@ x) {
   x.?(true: String|True, false: String|False);
 };

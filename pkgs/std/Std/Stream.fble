@@ -1,5 +1,20 @@
 # @module[/Std/Stream%]
-#  The Stream@ type, for streaming a sequence of values.
+#  Defines the @l{Stream@} type for producing and traversing streams of values
+#  that are computed as you go.
+#
+#  The @l{/Std/Stream%} module defines the @l{Stream@} type and basic
+#  utilities for constructing and iterating over streams. Additional
+#  functionality fo @l{Stream@} is provided in submodules:
+#
+#  @def[@l{/Std/Stream/Debug%}] Debug output streams
+#  @def[@l{/Std/Stream/In%}] Monadic input streams
+#  @def[@l{/Std/Stream/List%}] Conversion between lists and streams
+#  @def[@l{/Std/Stream/Null%}] Null output streams
+#  @def[@l{/Std/Stream/Out%}] Monadic output streams
+#  @def[@l{/Std/Stream/State%}] IO streams to and from pure state monads
+#  @def[@l{/Std/Stream/String/Assert%}] Test assertions for streams
+#  @def[@l{/Std/Stream/String%}] Conversions between strings and streams
+#  @def[@l{/Std/Stream/Test%}] Test output streams.
 
 For@ .= /Std/For%;
 Lazy@ .= /Std/Lazy%;
