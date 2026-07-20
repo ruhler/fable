@@ -396,3 +396,15 @@ Thus, let's split into two parts:
 I can see how far I can get with -t in this release before giving up and
 punting to the next release.
 
+---
+
+How would I implement -t?
+
+* FbleLoadForModuleCompilation needs an extra argument to know to load two
+  things now instead of just one.
+* FbleCompileModule needs to know to check against the extra loaded module.
+
+Sounds pretty complicated, and likely to change if I change how I load
+programs? Or maybe I want to redesign how I load programs for this use case
+and the other use case at the same time?
+

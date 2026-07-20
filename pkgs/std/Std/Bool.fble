@@ -1,5 +1,21 @@
 # @module[/Std/Bool%]
-#  The boolean type and utilities.
+#  Defines the @l{Bool@} type and basic boolean arithmetic operations.
+#
+#  The @l{Bool@} type has two values: @l{True} and @l{False}. Use the field
+#  names @l{.true} and @l{.false} in conditional expressions. For example:
+#
+#  @code[fble] @
+#   Bool@ p = IsNegative(x);
+#   p.?(true: Neg(x), false: x);
+#
+#  Additional functionality involving booleans is available from submodules:
+#
+#  @def[@l{/Std/Bool/Show%}] Converting booleans to strings
+#  @def[@l{/Std/Bool/Data%}] Support for booleans as keys in maps
+#  @def[@l{/Std/Bool/Assert%}] Basic test assertions
+#  @def[@l{/Std/Bool/Eq%}] Testing booleans for equality
+#  @def[@l{/Std/Bool/Random%}] Generating random booleans
+#  @def[@l{/Std/Bool/Cmp%}] Boolean comparison operators
 
 Unit@, Unit .= /Std/Unit%;
 
@@ -10,37 +26,75 @@ Bool@ = +(Unit@ true, Unit@ false);
 
 # @value[True] The true value of the boolean type.
 #  @type[Bool@]
+#
+#  @code[fble] @
+#   Bool@ green_is_green = True;
 Bool@ True = Bool@(true: Unit);
 
 # @value[False] The false value of the boolean type.
 #  @type[Bool@]
+#
+#  @code[fble] @
+#   Bool@ green_is_blue = False;
 Bool@ False = Bool@(false: Unit);
 
-# @func[Not] Logical not. ¬a
+# @func[Not] Logical not.
 #  @arg[Bool@][a] The argument to the function.
 #  @returns[Bool@] True if the argument is False, False otherwise.
+#
+#  @code[fble] @
+#   Bool@ green_is_blue = Not(True);
 (Bool@) { Bool@; } Not = (Bool@ a) {
   a.?(true: False, false: True);
 };
 
-# @func[And] Logical AND. Conjunction. a ∧ b
+# @func[And] Logical AND.
 #  @arg[Bool@][a] The first operand
 #  @arg[Bool@][b] The second operand.
 #  @returns[Bool@] True if both arguments are True, False otherwise.
 #
 #  This is not a short circuiting AND operation. Both arguments are evaluated
 #  fully when applying this function.
+#
+#  @code[fble] @
+#   Bool@ passed = And(x_passed, y_passed);
+#
+#  For a short circuiting version, or to take the logical and of more than two
+#  operands, it's often more convenient to write a chain of select statements
+#  instead:
+#
+#  @code[fble] @
+#   Bool@ passed = {
+#     x_passed.?(false: False);
+#     y_passed.?(false: False);
+#     True;
+#   };
 (Bool@, Bool@) { Bool@; } And = (Bool@ a, Bool@ b) {
   a.?(true: b, false: False);
 };
 
-# @func[Or] Logical OR. Disjunction. a ∨ b
+# @func[Or] Logical OR.
 #  @arg[Bool@][a] The first operand
 #  @arg[Bool@][b] The second operand.
 #  @returns[Bool@] True if either argument is True,  False otherwise.
 #
 #  This is not a short circuiting OR operation. Both arguments are evaluated
 #  fully when applying this function.
+#
+#  @code[fble] @
+#   Bool@ failed = Or(x_failed, y_failed);
+#
+#  For a short circuiting version, or to take the logical or of more than two
+#  operands, it's often more convenient to write a chain of select statements
+#  instead:
+#
+#  @code[fble] @
+#   Bool@ failed = {
+#     x_failed.?(true: True);
+#     y_failed.?(true: True);
+#     False;
+#   };
+#
 (Bool@, Bool@) { Bool@; } Or = (Bool@ a, Bool@ b) {
   a.?(true: True, false: b);
 };
@@ -49,6 +103,9 @@ Bool@ False = Bool@(false: Unit);
 #  @arg[Bool@][a] The first operand
 #  @arg[Bool@][b] The second operand.
 #  @returns[Bool@] True if exactly one of the arguments is True, False otherwise.
+#
+#  @code[fble] @
+#   Bool@ one_is_true = Xor(x_is_true, y_is_true);
 (Bool@, Bool@) { Bool@; } Xor = (Bool@ a, Bool@ b) {
   a.?(true: Not(b), false: b);
 };

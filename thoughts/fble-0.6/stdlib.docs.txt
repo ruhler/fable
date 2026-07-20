@@ -69,6 +69,7 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Char.fble
 [DONE] pkgs/std/Std/Show.fble
 [DONE] pkgs/std/Std/Bool/Show.fble
+[DONE] pkgs/std/Std/Bool.fble
 
 pkgs/std/Std/Bool/Data.fble
 pkgs/std/Std/Bool/Assert.fble
@@ -131,7 +132,6 @@ pkgs/std/Std/Random/Prng/Assert.fble
 pkgs/std/Std/Random/Prng/Pure.fble
 pkgs/std/Std/Random/Rng.fble
 pkgs/std/Std/Random/Lfsr.fble
-pkgs/std/Std/Bool.fble
 pkgs/std/Std/Test/Run.fble
 pkgs/std/Std/Test/Cli.fble
 pkgs/std/Std/Eq/Assert.fble
