@@ -71,6 +71,11 @@ Things to consider doing for the fble-0.7 release.
  - have fble-cli check that the function has the right type?
  - load minimum dependencies needed for type checking when possible?
 
+* Add --typecheck option to fble-compile
+ - You pass the path of a module with the same type expected for the module
+   being compiled.
+ - Use it in fble-cli and fble-app for better type checking.
+
 * Design a package management / versioning scheme?
  - see thoughts/fble-0.5/modular_compilation.txt for context.
 
@@ -119,4 +124,6 @@ Things to consider doing for the fble-0.7 release.
  - That supports field access.
 
 * Implement deflate algorithm.
+ - Switch to gzip format for pprof files.
  - Update fble-pprof to support compressed profiles.
+ - Can use uncompressed blocks to start for --profile and fble-pprof.

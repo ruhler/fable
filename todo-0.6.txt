@@ -18,20 +18,9 @@ Tutorials:
 
 * Update all the sample apps for latest features, styles, idioms.
 
-* Add -t typecheck option to fble-compile
- - You pass the path of a module with the same type expected for the module
-   being compiled.
- - Use it in fble-cli and fble-app for better type checking.
-
 * Revamp the standard library.
  - Test and document (and tutorialize?) all functions.
  - Implement rosettacode.org tasks under pkgs/rosetta to test it out.
-
-* Switch to gzip format for pprof files?
- - Change --profile to produce gzip compressed profiles, using uncompressed
-   blocks for now.
- - Change fble-pprof to decompress profiles, assuming uncompressed blocks for
-   now.
 
 * Figure out a way to test foreign function not found?
  - Interpreted gives runtime error.

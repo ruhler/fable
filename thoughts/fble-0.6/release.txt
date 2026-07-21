@@ -1173,3 +1173,14 @@ Can gzip recompress an already compressed file?
 
 Doesn't look like it. Presumably you just pipe gunzip back into gzip?
 
+---
+
+Let's be honest. I want to get this release out. It's no time for taking on
+new work. The following todo items should be punted, because they are entirely
+new work not tied to any work done so far this release, and likely to create
+more work rather than help clean up or otherwise wind down the release:
+* Switch to gzip format for pprof files.
+* Add -t typecheck option to fble-compile.
+
+Let's punt those.
+

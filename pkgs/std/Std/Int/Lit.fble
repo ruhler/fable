@@ -1,5 +1,47 @@
 # @module[/Std/Int/Lit%]
-#  Integer literals.
+#  The @l{/Std/Int/Lit%} defines functions for integer literals.
+#
+#  The @l{Int} function is most widely used, for decimal integer literals. For
+#  example:
+#
+#  @code[fble] @
+#   Int@ year = Int|2026;
+#
+#  The module also provides @l{Bin}, @l{Oct}, and @{Hex} functions for binary,
+#  octal, and hex literals respectively.
+#
+#  Any number of leading 0 digits are allowed. For hex literals, lowercase 'a'
+#  through 'f' and upper case 'A' through 'F' are both allowed. The character
+#  '_' can be used arbitrarily as a separator wherever you like in the
+#  literal.
+#
+#  Some examples:
+#
+#  @code[fble] @
+#   Int@ year = Bin|0111_1110_1010;
+#   Int@ year = Oct|3752;
+#   Int@ year = Hex|00_00_07_EA;
+#
+#  If you are concerned about performance, consider factoring out application
+#  of the literal to an outer scope so that the literal function is only
+#  called once. For example, instead of:
+#
+#  @code[fble] @
+#   (Int@) { Int@; }
+#   HotFunction = (Int@ x) {
+#     Add(x, Int|123456789);
+#   };
+#
+#  The function will likely be a little faster to run if written as:
+#
+#  @code[fble] @
+#   (Int@) { Int@; }
+#   HotFunction = {
+#     Int@ 123456789 = Int|123456789
+#     (Int@ x) {
+#       Add(x, 123456789);
+#     };
+#   };
 
 Int@, Add, Mul, Incr, 0, 1 .= /Std/Int%;
 List@ .= /Std/List%;
@@ -21,54 +63,87 @@ Int@ 14 = Incr(13);
 Int@ 15 = Incr(14);
 Int@ 16 = Incr(15);
 
-# Binary digits.
+# @dev
+#  @type[Bin@] Binary digits.
+#   The fields are self explanatory.
 Bin@ = +(Unit@ 0, Unit@ 1);
 
-# Octal digits.
+# @dev
+#  @type[Oct@] Octal digits.
+#   The fields are self explanatory.
 Oct@ = +(
   Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3,
   Unit@ 4, Unit@ 5, Unit@ 6, Unit@ 7
 );
 
-# Decimal digits.
+# @dev
+#  @type[Dec@] Decimal digits
+#   Reuses the @l{Oct@} type for digits 0 through 7 and adds separate fields
+#   for digits 8 and 9.
 Dec@ = +(Oct@ oct, Unit@ 8, Unit@ 9);
 
-# Hex digits.
+# @dev
+#  @type[Hex@] Hex digits.
+#   Reuses the @l{Dec@} type for digits 0 through 9 and adds separate fields
+#   for digits a through f and A through F.
 Hex@ = +(Dec@ dec, 
   Unit@ a, Unit@ b, Unit@ c, Unit@ d, Unit@ e, Unit@ f,
   Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E, Unit@ F
 );
 
-# Adds '_' as a separator to a digits type.
+# @dev
+#  @type[Sep@] Type to add @l{_} separator to a given set of digits.
+#   @arg[@][T@] The type of the input set of digits.
+#   @field[T@][t] The set of raw digits.
+#   @field[Unit@][_] The added @l{_} separator.
 Sep@ = <@ T@> { +(T@ t, Unit@ _); };
 
-# Converts binary to Int@.
+# @dev
+#  @func[FromBin] Converts binary digits to Int@.
+#   @arg[Bin@][x] A binary digit.
+#   @returns[Int@] The @l{Int@} value of the digit.
 (Bin@) { Int@; } FromBin = (Bin@ x) {
   x.?('0': 0, '1': 1);
 };
 
-# Converts octal to Int@.
+# @dev
+#  @func[FromOct] Converts octal digits to Int@.
+#   @arg[Oct@][x] An octal digit.
+#   @returns[Int@] The @l{Int@} value of the digit.
 (Oct@) { Int@; } FromOct = (Oct@ x) {
   x.?('0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7);
 };
 
-# Converts decimal to Int@.
+# @dev
+#  @func[FromDec] Converts decimal digits to Int@.
+#   @arg[Dec@][x] An decimal digit.
+#   @returns[Int@] The @l{Int@} value of the digit.
 (Dec@) { Int@; } FromDec = (Dec@ x) {
   x.?(oct: FromOct(x.oct), '8': 8, '9': 9);
 };
 
-# Converts hex to Int@.
+# @dev
+#  @func[FromHex] Converts hexadecimal digits to Int@.
+#   @arg[Hex@][x] An exadecimal digit.
+#   @returns[Int@] The @l{Int@} value of the digit.
 (Hex@) { Int@; } FromHex = (Hex@ x) {
   x.?(dec: FromDec(x.dec),
     'a': 10, 'b': 11, 'c': 12, 'd': 13, 'e': 14, 'f': 15,
     'A': 10, 'B': 11, 'C': 12, 'D': 13, 'E': 14, 'F': 15);
 };
 
-# Helper for constructing integer literals.
-#  toInt - converts a single digit to its Int@ value.
-#  radix - the radix of the literal.
-#  x - the integer that's been constructed so far from the literal string.
-#  str - the remainder of the literal string.
+# @dev
+#  @func[Literal] Helper for defining integer literal functions.
+#   @arg[@][T@] The raw digit type.
+#   @arg[(T@) { Int@; }][toInt] Function to convert a digit to its Int@ value.
+#    @arg[T@][digit] The digit to convert.
+#    @returns[Int@] The integer value of the digit.
+#   @arg[Int@][radix] The radix of the literal.
+#   @arg[Int@][x] Value corresponding to the digits processed so far.
+#   @arg[List@<Sep@<T@>>][str]
+#    The remaining digits to process, which may include @l{_} separator
+#    characters.
+#   @returns[Int@] The parsed integer value.
 <@ T@>((T@) { Int@; }, Int@, Int@, List@<Sep@<T@>>) { Int@; }
 Literal = <@ T@>((T@) { Int@; } toInt, Int@ radix, Int@ x, List@<Sep@<T@>> str) {
   str.?(empty: x);
@@ -77,15 +152,55 @@ Literal = <@ T@>((T@) { Int@; } toInt, Int@ radix, Int@ x, List@<Sep@<T@>> str) 
 };
 
 # @type[BinLit@] Type for binary integer literal strings.
+#  Supports @l{_} separators.
+#
+#  You can use this type for custom literal functions that share syntax with
+#  binary literals. For example, to implement a direct literal for negative
+#  binary digits:
+#
+#  @code[fble] @
+#   (BinLit@) { Int@; } NegBin = (BinLit@ bits) {
+#     Neg(Bin(bits));
+#   };
 BinLit@ = List@<Sep@<Bin@>>;
 
 # @type[OctLit@] Type for octal integer literal strings.
+#  Supports @l{_} separators.
+#
+#  You can use this type for custom literal functions that share syntax with
+#  octal literals. For example, to implement a direct literal for negative
+#  octal digits:
+#
+#  @code[fble] @
+#   (OctLit@) { Int@; } NegOct = (OctLit@ digits) {
+#     Neg(Oct(digits));
+#   };
 OctLit@ = List@<Sep@<Oct@>>;
 
 # @type[IntLit@] Type for decimal integer literal strings.
+#  Supports @l{_} separators.
+#
+#  You can use this type for custom literal functions that share syntax with
+#  decimal literals. For example, to implement a direct literal for negative
+#  decimal digits:
+#
+#  @code[fble] @
+#   (DecLit@) { Int@; } NegDec = (DecLit@ digits) {
+#     Neg(Dec(digits));
+#   };
 IntLit@ = List@<Sep@<Dec@>>;
 
 # @type[HexLit@] Type for hexadecimal integer literal strings.
+#  Supports @l{_} separators.
+#
+#  You can use this type for custom literal functions that share syntax with
+#  hexadecimal literals. For example, to implement a direct literal for
+#  negative hexadecimal digits:
+#
+#  @code[fble] @
+#   (HexLit@) { Int@; } NegHex = (HexLit@ digits) {
+#     Neg(Hex(digits));
+#   };
 HexLit@ = List@<Sep@<Hex@>>;
 
 # @func[Bin] Binary integer literal
@@ -97,9 +212,8 @@ HexLit@ = List@<Sep@<Hex@>>;
 #  @code[fble]
 #   Int@ 151 = Bin|1001_0111;
 #
-#  @arg[List@<Sep@<Bin@>>][str] The literal string.
+#  @arg[BinLit@][str] The literal string.
 #  @returns[Int@] The parsed integer value.
-#  @sideeffects None
 (BinLit@) { Int@; } Bin = Literal(FromBin, 2, 0);
 
 # @func[Oct] Octal integer literal
@@ -111,9 +225,8 @@ HexLit@ = List@<Sep@<Hex@>>;
 #  @code[fble]
 #   Int@ 151 = Oct|227;
 #
-#  @arg[List@<Sep@<Oct@>>][str] The literal string.
+#  @arg[OctLit@][str] The literal string.
 #  @returns[Int@] The parsed integer value.
-#  @sideeffects None
 (OctLit@) { Int@; } Oct = Literal(FromOct, 8, 0);
 
 # @func[Int] Decimal integer literal
@@ -125,9 +238,8 @@ HexLit@ = List@<Sep@<Hex@>>;
 #  @code[fble]
 #   Int@ 151 = Int|151;
 #
-#  @arg[List@<Sep@<Dec@>>][str] The literal string.
+#  @arg[IntLit@][str] The literal string.
 #  @returns[Int@] The parsed integer value.
-#  @sideeffects None
 (IntLit@) { Int@; } Int = Literal(FromDec, 10, 0);
 
 # @func[Hex] Hexadecimal integer literal
@@ -140,9 +252,8 @@ HexLit@ = List@<Sep@<Hex@>>;
 #  @code[fble]
 #   Int@ 151 = Hex|00_97;
 #
-#  @arg[List@<Sep@<Hex@>>][str] The literal string.
+#  @arg[HexLit@][str] The literal string.
 #  @returns[Int@] The parsed integer value.
-#  @sideeffects None
 (HexLit@) { Int@; } Hex = Literal(FromHex, 16, 0);
 
 @(BinLit@, OctLit@, IntLit@, HexLit@, Bin, Oct, Int, Hex);
