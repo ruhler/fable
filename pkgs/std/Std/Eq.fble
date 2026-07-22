@@ -1,21 +1,72 @@
 # @module[/Std/Eq%]
 #  Defines the Eq@ interface for comparing two objects for equality.
+#
+#  Additional functionality for @l{Eq@} is provided in submodules:
+#
+#  @def[@l{/Std/Eq/Assert%}] Test assertions based on equality.
 
 Bool@, Not .= /Std/Bool%;
 
-# @type[Eq@] Compare two values for equality.
+# @type[Eq@] Interface for compare two values for equality.
 #  @arg[@][T@] The type of values to compare.
 #  @arg[T@][a] The first operand.
 #  @arg[T@][b] The second operand.
 #  @returns[Bool@] True if the operands are equal, false otherwise.
+#
+#  The @l{AssertEquals} function from the @l{/Std/Eq/Assert%} module provides
+#  a good example for how to use the @l{Eq@} interface to test if two values
+#  of a generic type are equal:
+#
+#  @code[fble] @
+#   <@ T@>(Eq@<T@>, Show@<T@>, T@, T@) { TestResult@; }
+#   AssertEquals = <@ T@>(Eq@<T@> eq, Show@<T@> show, T@ expected, T@ actual) {
+#     eq(expected, actual).?(true: Pass);
+#     Fail(Format|'Expected %s, but got %s'[show(expected), show(actual)]);
+#   };
+#
+#  Here's an example of how to implement an instance of @l{Eq@} for a pair of
+#  integers:
+#
+#  @code[fble] @
+#   Pair@ = *(Int@ x, Int@ y);
+#   Eq@<Pair@> EqPair = (Pair@ a, Pair@ b) {
+#     /Std/Int/Eq%.Eq(a.x, b.x).?(false: False);
+#     /Std/Int/Eq%.Eq(a.y, b.y).?(false: False);
+#     True;
+#   };
+#
+#  We commonly define the instance of @l{Eq@} for a type in a separate
+#  @l{Eq%} submodule with the name @l{Eq} for the instance. Sometimes it's
+#  also convenient to define multiple different instances of @l{Eq@} in the
+#  same @l{Eq%} submodule deriving the name of the instance from the name of
+#  the type being shown.
+#
+#  The standard library defines instances of @l{Eq@} for most core data
+#  types, for example in @l{/Std/Int/Eq@}, @l{/Std/Bool/Eq@}, and
+#  @l{/Std/List/Eq@}.
 Eq@ = <@ T@>(T@, T@) { Bool@; };
 
-# @func[Eq] Return standard equality operators.
+# @func[Eq] Defines standard equality operators.
 #  @arg[@][T@] The type of values to compare.
-#  @arg[Eq@<T@>][eq] equality instance.
+#  @arg[Eq@<T@>][eq] The definition of equality to use for @l{T@}.
+#
+#  Provides a convenient way to define functions @l{Eq} and @l{Ne} for a type
+#  that implements @l{Eq@}. Typical this would be used as part of a struct
+#  import statement:
+#
+#  @code[fble] @
+#   Eq, Ne .= /Std/Eq%.Eq(EqPair);
 Eq = <@ T@>(Eq@<T@> eq) {
+  # @func[Eq] Test if two values are equal.
+  #  @arg[T@][a] The first operand.
+  #  @arg[T@][b] The second operand.
+  #  @returns[Bool@] True if the operands are equal, false otherwise.
   (T@, T@) { Bool@; } Eq = eq;
 
+  # @func[Eq] Test if two values are unequal.
+  #  @arg[T@][a] The first operand.
+  #  @arg[T@][b] The second operand.
+  #  @returns[Bool@] True if the operands are not equal, false otherwise.
   (T@, T@) { Bool@; } Ne = (T@ a, T@ b) {
     Not(eq(a, b));
   };

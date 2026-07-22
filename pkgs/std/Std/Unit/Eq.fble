@@ -9,6 +9,8 @@ Unit@ .= /Std/Unit%;
 #  @arg[Unit@][a] The first operand.
 #  @arg[Unit@][b] The second operand.
 #  @returns[Bool@] True, because all Unit@ values are equal.
+#
+#  See also @l{/Std/Eq%.Eq@}.
 Eq@<Unit@> Eq = (Unit@ _a, Unit@ _b) {
   True;
 };

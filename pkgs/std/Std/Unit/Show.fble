@@ -7,8 +7,20 @@ Unit@ .= /Std/Unit%;
 
 # @func[Show] Show a Unit@ value.
 #  @arg[Unit@][x] The value to show.
-#  @returns[Stream@<Char@>] The shown value 'Unit'.
-Show@<Unit@> Show = (Unit@ _) {
+#  @returns[Stream@<Char@>] The shown value @l{Unit}.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Stream@<Char@> output = Format|'This unit value is: %s'[
+#     /Std/Unit/Show%.Show(Unit)
+#   ];
+#
+#  Would output:
+#
+#  @code[txt] @
+#   This unit value is: Unit
+Show@<Unit@> Show = (Unit@ _x) {
   String|Unit;
 };
 

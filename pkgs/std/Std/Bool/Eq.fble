@@ -8,6 +8,8 @@ Eq@ .= /Std/Eq%;
 #  @arg[Bool@][a] The first operand.
 #  @arg[Bool@][b] The second operand.
 #  @returns[Bool@] True if the operands are equal, false otherwise.
+#
+#  See also @l{/Std/Eq%.Eq@}.
 Eq@<Bool@> Eq = (Bool@ a, Bool@ b) {
   a.?(true: b);
   b.?(true: a);

@@ -71,10 +71,13 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Bool/Show.fble
 [DONE] pkgs/std/Std/Bool.fble
 [DONE] pkgs/std/Std/Int/Lit.fble
+[DONE] pkgs/std/Std/Eq.fble
+[DONE] pkgs/std/Std/Bool/Eq.fble
+[DONE] pkgs/std/Std/Unit/Eq.fble
+[DONE] pkgs/std/Std/Unit/Show.fble
 
 pkgs/std/Std/Bool/Data.fble
 pkgs/std/Std/Bool/Assert.fble
-pkgs/std/Std/Bool/Eq.fble
 pkgs/std/Std/Bool/Random.fble
 pkgs/std/Std/Bool/Cmp.fble
 
@@ -122,9 +125,7 @@ pkgs/std/Std/Data.fble
 pkgs/std/Std/String.fble
 pkgs/std/Std/Set.fble
 pkgs/std/Std/State.fble
-pkgs/std/Std/Unit/Show.fble
 pkgs/std/Std/Unit/Data.fble
-pkgs/std/Std/Unit/Eq.fble
 pkgs/std/Std/Unit/Cmp.fble
 pkgs/std/Std/Random/Lcg.fble
 pkgs/std/Std/Random/Prng.fble
@@ -154,7 +155,6 @@ pkgs/std/Std/Cmp/Show.fble
 pkgs/std/Std/Cmp/Data.fble
 pkgs/std/Std/Cmp/Eq.fble
 pkgs/std/Std/Cmp/Cmp.fble
-pkgs/std/Std/Eq.fble
 pkgs/std/Std/Maybe.fble
 pkgs/std/Std/Set/Show.fble
 pkgs/std/Std/Set/Eq.fble

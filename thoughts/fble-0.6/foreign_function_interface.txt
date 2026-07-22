@@ -1164,3 +1164,33 @@ Foo@;
 
 Let's just not allow this case. In the spec, and at the language level.
 
+---
+
+* Figure out a way to test foreign function not found?
+
+The challenge today is that you get a runtime error if using the interpreter,
+and a linker error when using the compiler.
+
+One option is to add a new kind of spec test that catches error. Maybe I can
+come up with a string to match against. But maybe we also get completely
+different error messages?
+
+Isn't it bad not to have a standard error message for foreign function not
+found?
+
+But this brings us to a more general issue with compiled code. The aarch64 and
+C backends assume any modules you depend on will also be compiled, so they try
+to link directly. If we clean up program loading, it may be the case that a
+module you depend on is interpreted, so you can't link it directly.
+
+Similar to foreign function interface. If you assume it's provided via native
+code, you get a different error than if you get it via runtime. The
+difference is with compiled modules, for spec tests, we try to compile
+everything, so we wouldn't get far enough to try and link before discovering
+an error. With foreign function, we have no obvious error to give before the
+link error that shows we are missing the implementation of the function.
+
+I could defer the error to runtime always. That would be easier to test in our
+existing framework and give consistent behavior. But it means we have to wait
+until runtime to see the error that I would much rather have at compile time.
+
