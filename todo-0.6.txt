@@ -5,6 +5,10 @@ Things to consider doing for the fble-0.6 release.
 * The /Std/Stream/String% module is weird in what it defines.
  - Should it be reorganized some other way?
 
+* Define sample makefiles for people who want to build compiled programs?
+ - Integrate it into a tutorial somewhere?
+ - Maybe as part of the modules tutorial or shortly thereafter?
+
 Documentation:
 * Finish going through clean up of all the std lib documentation.
 * Try generating docs for stdlib documentation

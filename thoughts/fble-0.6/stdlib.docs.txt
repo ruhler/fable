@@ -75,6 +75,7 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Bool/Eq.fble
 [DONE] pkgs/std/Std/Unit/Eq.fble
 [DONE] pkgs/std/Std/Unit/Show.fble
+[DONE] pkgs/std/Std/Cmp.fble
 
 pkgs/std/Std/Bool/Data.fble
 pkgs/std/Std/Bool/Assert.fble
@@ -168,7 +169,6 @@ pkgs/std/Std/Io/File/Char.fble
 pkgs/std/Std/Io/File/Mode.fble
 pkgs/std/Std/Io/File/Utf8.fble
 pkgs/std/Std/Io/Cli.fble
-pkgs/std/Std/Cmp.fble
 pkgs/std/Std/String/Show.fble
 pkgs/std/Std/String/Data.fble
 pkgs/std/Std/String/Eq.fble

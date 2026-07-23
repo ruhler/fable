@@ -1,5 +1,13 @@
 # @module[/Std/Cmp%]
 #  Defines the Cmp@ interface for comparing two objects.
+#
+#  Additional functionality for the @l{Compared@} data type defined here is
+#  provided in submodules:
+#
+#  @def[@l{/Std/Cmp/Cmp%}] Instance of @l{Cmp@} for @l{Compared@}
+#  @def[@l{/Std/Cmp/Data%}] Instance of @l{Data@} for @l{Compared@}
+#  @def[@l{/Std/Cmp/Eq%}] Instance of @l{Eq@} for @l{Compared@}
+#  @def[@l{/Std/Cmp/Show%}] Instance of @l{Show@} for @l{Compared@}
 
 Bool@, True, False .= /Std/Bool%;
 Unit@, Unit .= /Std/Unit%;
@@ -12,14 +20,23 @@ Compared@ = +(Unit@ less, Unit@ equal, Unit@ greater);
 
 # @value[Less] The less compared value.
 #  @type[Compared@]
+#
+#  @code[fble] @
+#   Compared@ 2_versus_5 = Less;
 Compared@ Less = Compared@(less: Unit);
 
 # @value[Less] The equal compared value.
 #  @type[Compared@]
+#
+#  @code[fble] @
+#   Compared@ 2_versus_2 = Equal;
 Compared@ Equal = Compared@(equal: Unit);
 
 # @value[Less] The greater compared value.
 #  @type[Compared@]
+#
+#  @code[fble] @
+#   Compared@ 2_versus_2 = Greater;
 Compared@ Greater = Compared@(greater: Unit);
 
 # @type[Cmp@] Standard interface for types supporting comparison.
@@ -27,9 +44,46 @@ Compared@ Greater = Compared@(greater: Unit);
 #  @arg[T@][a] The first value to compare.
 #  @arg[T@][b] The second value to compare.
 #  @returns[Compared@] The result of comparison.
+#
+#  Implementing the @l{Cmp@} interface for your data type gives easy access to
+#  standard comparison functions @l{Lt}, @l{Le}, @l{Gt}, @l{Ge} and others via
+#  the @l{Cmp} function. It also allows your data type to be sorted on lists
+#  and used with other future data types that work based on comparison of
+#  values.
+#
+#  For example, here's how a sorted insert function for lists looks when given
+#  a @l{Cmp@} instance:
+#
+#  @code[fble] @
+#   <@ T@>(Cmp@<T@>, T@, List@<T@>) { List@<T@>; }
+#   Insert = <@ T@>(Cmp@<T@> cmp, T@ item, List@<T@> list) {
+#     list.?(empty: Items(item, Empty<T@>));
+#     cmp(item, list.items.head).?(greater: {
+#       Items(list.items.head, Insert(cmp, item, list.items.tail));
+#     });
+#     Items(item, list);
+#   };
+#
+#  Here's how you could implement @l{Cmp@} for a pair of integers:
+#
+#  @code[fble] @
+#   Pair@ = *(Int@ x, Int@ y);
+#   Cmp@<Pair@> CmpPair = (Pair@ a, Pair@ b) {
+#     /Std/Int/Cmp%.Cmp(a.x, b.x).?(less: Less, greater: Greater);
+#     /Std/Int/Cmp%.Cmp(a.y, b.y);
+#   };
+#
+#  We commonly define the instance of @l{Cmp@} for a type in a separate
+#  @l{Cmp%} submodule with the name @l{Cmp} for the instance.
+#
+#  The standard library defines instances of @l{Cmp@} for many data
+#  types, for example in @l{/Std/Int/Cmp@}, @l{/Std/Bool/Cmp@}, and
+#  @l{/Std/List/Cmp@}.
 Cmp@ = <@ T@>(T@, T@) { Compared@; };
 
 # @func[Eq] Equality operator.
+#  Generic implementation of @l{Eq@} given a @l{Cmp@} instance.
+#
 #  Note: This generic implementation of equality based on the Cmp@ interface
 #  is likely not as efficient an implementation as you could get from a direct
 #  implementation of the Eq@ interface. Consider using or providing a direct
@@ -40,6 +94,16 @@ Cmp@ = <@ T@>(T@, T@) { Compared@; };
 #  @arg[T@][a] The first operand.
 #  @arg[T@][b] The second operand.
 #  @returns[Bool@] True if a is equal to b, false otherwise.
+#
+#  Note that the type is the same as @l{<@ T@>(Cmp@<T@>) { Eq@<T@>; }}. For
+#  example, to define an instance of @l{Eq@<Pair@>}, you could do:
+#
+#  @code[fble] @
+#   Eq@<Pair@> Eq = /Std/Cmp%.Eq(CmpPair);
+#
+#  Typically users will access the @l{Eq} function via the @l{Cmp} function,
+#  which gives a set of comparison functions for an instance of @l{Cmp@}
+#  all at once instead of just one. See @l{Cmp} for examples.
 <@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
 Eq = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
   cmp(a, b).?(equal: True, : False);
@@ -57,6 +121,10 @@ Eq = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
 #  @arg[T@][a] The first operand.
 #  @arg[T@][b] The second operand.
 #  @returns[Bool@] True if a is not equal to b, false otherwise.
+#
+#  Typically users will access the @l{Ne} function via the @l{Cmp} function,
+#  which gives a set of comparison functions for an instance of @l{Cmp@}
+#  all at once instead of just one. See @l{Cmp} for examples.
 <@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
 Ne = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
   cmp(a, b).?(equal: False, : True);
@@ -68,6 +136,10 @@ Ne = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
 #  @arg[T@][a] The first operand.
 #  @arg[T@][b] The second operand.
 #  @returns[Bool@] True if a is less than b, false otherwise.
+#
+#  Typically users will access the @l{Lt} function via the @l{Cmp} function,
+#  which gives a set of comparison functions for an instance of @l{Cmp@}
+#  all at once instead of just one. See @l{Cmp} for examples.
 <@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
 Lt = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
   cmp(a, b).?(less: True, : False);
@@ -79,6 +151,10 @@ Lt = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
 #  @arg[T@][a] The first operand.
 #  @arg[T@][b] The second operand.
 #  @returns[Bool@] True if a is less than or equal to b, false otherwise.
+#
+#  Typically users will access the @l{Le} function via the @l{Cmp} function,
+#  which gives a set of comparison functions for an instance of @l{Cmp@}
+#  all at once instead of just one. See @l{Cmp} for examples.
 <@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
 Le = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
   cmp(a, b).?(greater: False, : True);
@@ -90,6 +166,10 @@ Le = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
 #  @arg[T@][a] The first operand.
 #  @arg[T@][b] The second operand.
 #  @returns[Bool@] True if a is greater than b, false otherwise.
+#
+#  Typically users will access the @l{Gt} function via the @l{Cmp} function,
+#  which gives a set of comparison functions for an instance of @l{Cmp@}
+#  all at once instead of just one. See @l{Cmp} for examples.
 <@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
 Gt = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
   cmp(a, b).?(greater: True, : False);
@@ -101,6 +181,10 @@ Gt = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
 #  @arg[T@][a] The first operand.
 #  @arg[T@][b] The second operand.
 #  @returns[Bool@] True if a is greater than or equal to b, false otherwise.
+#
+#  Typically users will access the @l{Ge} function via the @l{Cmp} function,
+#  which gives a set of comparison functions for an instance of @l{Cmp@}
+#  all at once instead of just one. See @l{Cmp} for examples.
 <@ T@>(Cmp@<T@>, T@, T@) { Bool@; }
 Ge = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
   cmp(a, b).?(less: False, : True);
@@ -113,6 +197,10 @@ Ge = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
 #  @arg[T@][hi] The inclusive high end of the range.
 #  @arg[T@][x] The value to check.
 #  @returns[Bool@] True if x is in the interval [lo, hi].
+#
+#  Typically users will access the @l{InRange} function via the @l{Cmp}
+#  function, which gives a set of comparison functions for an instance of
+#  @l{Cmp@} all at once instead of just one. See @l{Cmp} for examples.
 <@ T@>(Cmp@<T@>, T@, T@, T@) { Bool@; }
 InRange = <@ T@>(Cmp@<T@> cmp, T@ lo, T@ hi, T@ x) {
   Le(cmp, lo, x).?(false: False);
@@ -126,6 +214,10 @@ InRange = <@ T@>(Cmp@<T@> cmp, T@ lo, T@ hi, T@ x) {
 #  @arg[T@][a] The first operand.
 #  @arg[T@][b] The second operand.
 #  @returns[T@] The smaller of a and b.
+#
+#  Typically users will access the @l{Min} function via the @l{Cmp} function,
+#  which gives a set of comparison functions for an instance of @l{Cmp@} all
+#  at once instead of just one. See @l{Cmp} for examples.
 <@ T@>(Cmp@<T@>, T@, T@) { T@; }
 Min = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
   cmp(a, b).?(less: a, : b);
@@ -137,15 +229,52 @@ Min = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
 #  @arg[T@][a] The first operand.
 #  @arg[T@][b] The second operand.
 #  @returns[T@] The greater of a and b.
+#
+#  Typically users will access the @l{Max} function via the @l{Cmp} function,
+#  which gives a set of comparison functions for an instance of @l{Cmp@} all
+#  at once instead of just one. See @l{Cmp} for examples.
 <@ T@>(Cmp@<T@>, T@, T@) { T@; }
 Max = <@ T@>(Cmp@<T@> cmp, T@ a, T@ b) {
   cmp(a, b).?(greater: a, : b);
 };
 
-# @func[Cmp] Collection of comparison operators for a given type.
+# @func[Cmp] Collection of comparison operators for a given @l{Cmp@} instance.
 #  @arg[@][T@] The type of values to compare.
 #  @arg[Cmp@<T>][cmp] The compare instance to use.
 #  @returns[...] Comparison operators for the given type.
+#
+#  For example, assuming you have an implementation of @l{Cmp@} for a Pair@
+#  type called @l{CmpPair}, you can define and import a collection of
+#  comparison operations using a struct import statement:
+#
+#  @code[fble] @
+#   Pair@ = *(Int@ x, Int@ y);
+#
+#   Cmp@<Pair@> CmpPair = (Pair@ a, Pair@ b) {
+#     /Std/Int/Cmp%.Cmp(a.x, b.x).?(less: Less, greater: Greater);
+#     /Std/Int/Cmp%.Cmp(a.y, b.y);
+#   };
+#
+#   Eq, Ne, Lt, Le, Gt, Ge, InRange, Min, Max .= /Std/Cmp%.Cmp(CmpPair);
+#
+#  At which point you can then proceed to call @l{Eq}, @l{Ne}, etc functions
+#  directly on pairs:
+#
+#  @code[fble] @
+#   Pair@ a = Pair@(0, 0);
+#   Pair@ b = Pair@(2, 5);
+#
+#   Bool@ lt_result = Lt(a, b);
+#   Pair@ min = Min(a, b);
+#   Pair@ max = Max(a, b);
+#
+#  You can use this to easily define your own @l{Cmp%} module analogous to
+#  @l{/Std/Int/Cmp%} and @l{/Std/Char/Cmp%} by re-exporting the functions
+#  defined here:
+#
+#  @code[fble] @
+#   Lt, Le, Gt, Ge, InRange, Min, Max .= /Std/Cmp%.Cmp(Cmp);
+#   @(Cmp, Lt, Le, Gt, Ge, InRange, Min, Max);
 Cmp = <@ T@>(Cmp@<T@> cmp) {
   @(Cmp: cmp,
     Eq: Eq(cmp), Ne: Ne(cmp),
