@@ -1,11 +1,21 @@
 # @module[/Std/String/Cmp%]
-#  The Cmp@ instance for String@.
+#  The @l{Cmp@} instance for @l{String@}.
+#
+#  Provides string comparison based on lexicographical ordering of strings
+#  based on the integer order of the underlying unicode points of characters.
+#  Note that this does not, in general, correspond to the conventional string
+#  collation orders of written languages. 
+#
+#  See @l{/Std/Cmp%.Cmp@} for more about the @l{Cmp@} interface and how to use
+#  it.
 
 Cmp@ .= /Std/Cmp%;
 String@ .= /Std/String%;
 
-# @value[Cmp] Comparison for strings.
-#  @type[Cmp@<String@>]
+# @func[Cmp] The string comparison operation.
+#  @arg[String@][a] The first operand.
+#  @arg[String@][b] The second operand.
+#  @returns[Compared@] The result of comparing a to b.
 Cmp@<String@> Cmp = /Std/List/Cmp%.Cmp(/Std/Char/Cmp%.Cmp);
 
 @(Cmp);

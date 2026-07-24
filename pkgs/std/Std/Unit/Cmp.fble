@@ -1,13 +1,21 @@
 # @module[/Std/Unit/Cmp%]
-#  The Cmp@ instance for Unit@.
+#  The @l{Cmp@} instance for @l{Unit@}.
+#
+#  All @l{Unit@} values are equal, so this isn't a very interesting
+#  implementation. Provided for sake of completeness.
+#
+#  See @l{/Std/Cmp%.Cmp@} for more about the @l{Cmp@} interface and how to use
+#  it.
 
 Unit@ .= /Std/Unit%;
 Cmp@, Equal .= /Std/Cmp%;
 
-# @value[Cmp] The Cmp@ instance for Unit@.
-#  @type[Cmp@<Unit@>]
+# @func[Cmp] The unit comparison operation.
+#  @arg[Unit@][a] The first operand.
+#  @arg[Unit@][b] The second operand.
+#  @returns[Compared@] Equal.
 Cmp@<Unit@>
-Cmp = (Unit@ _, Unit@ _) {
+Cmp = (Unit@ _a, Unit@ _b) {
   Equal;
 };
 

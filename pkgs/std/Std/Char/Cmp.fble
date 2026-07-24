@@ -1,17 +1,36 @@
 # @module[/Std/Char/Cmp%]
-#  The Cmp@ instance for Char@.
+#  The @l{Cmp@} instance for @l{Char@}.
+#
+#  Useful both as a building block for implementing @l{Cmp@} for more complex
+#  data types involving character fields, and for character comparison
+#  operations @l{Le}, @l{Lt}, @l{Ge}, @l{Gt}, @l{Min}, @l{Max}, etc.
+#
+#  Character ordering is defined by the integer order of the underlying
+#  unicode code point. Note that this does not, in general, correspond to the
+#  conventional string collation orders of written languages.
+#
+#  See @l{/Std/Cmp%.Cmp@} for more about the @l{Cmp@} interface and how to use
+#  it.
 
 Char@, Pos .= /Std/Char%;
 Cmp@ .= /Std/Cmp%;
 On .= /Std/Func%;
 
-# @value[Cmp] The Cmp@ instance for Char@.
-#  @type[Cmp@<Char@>]
-#
-#  Characters are ordered by their unicode code point.
+# @func[Cmp] The character comparison operation.
+#  @arg[Char@][a] The first operand.
+#  @arg[Char@][b] The second operand.
+#  @returns[Compared@] The result of comparing a to b.
 Cmp@<Char@> Cmp = On(/Std/Int/Cmp%.Cmp, Pos);
 
-# Standard comparison operations.
+# @values[Lt, Le, Gt, Ge, InRange, Min, Max] Standard comparison operations.
+#  See @l{/Std/Cmp%} for details on the comparison operations, which are
+#  specialized here for the @l{Char@} type.
+#
+#  For example:
+#
+#  @code[fble] @
+#   InRange(Ascii.0, Ascii.9, x).?(true: String|'The character is a digit');
+#   String|'The character is not a digit';
 Lt, Le, Gt, Ge, InRange, Min, Max .= /Std/Cmp%.Cmp(Cmp);
 
 @(Cmp, Lt, Le, Gt, Ge, InRange, Min, Max);

@@ -1,13 +1,31 @@
 # @module[/Std/Bool/Cmp%]
-#  The Cmp@ instance for Bool@.
+#  The @l{Cmp@} instance for @l{Bool@}.
+#
+#  Mostly useful as a building block for implementing @l{Cmp@} for more
+#  complex data types involving boolean fields.
+#
+#  The value @l{False} is treated as less than @l{True}.
+#
+#  See @l{/Std/Cmp%.Cmp@} for more about the @l{Cmp@} interface and how to use
+#  it.
 
 Bool@ .= /Std/Bool%;
 Cmp@, Less, Greater, Equal .= /Std/Cmp%;
 
-# @value[Cmp] The Cmp@ instance for Bool@.
-#  @type[Cmp@<Bool@>]
+# @func[Cmp] The boolean comparison operation.
+#  @arg[Bool@][a] The first operand.
+#  @arg[Bool@][b] The second operand.
+#  @returns[Compared@] The result of comparing a to b.
 #
-#  We use the order false < true.
+#  For example:
+#
+#  @code[fble] @
+#   /Std/List/Sort%.Sort(Cmp)[True, False, False, False, True]
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[False, False, False, True, True]
 Cmp@<Bool@>
 Cmp = (Bool@ a, Bool@ b) {
   a.?(

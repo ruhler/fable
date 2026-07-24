@@ -2,6 +2,10 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* The Cmp@ interface feels not much used
+ - Am I defining it some places that I'm not using it?
+ - When should I provide Le, Ge, etc. and when not?
+
 * The /Std/Stream/String% module is weird in what it defines.
  - Should it be reorganized some other way?
 
