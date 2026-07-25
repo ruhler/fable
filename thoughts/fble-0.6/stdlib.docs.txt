@@ -80,8 +80,7 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Int/Cmp.fble
 [DONE] pkgs/std/Std/Unit/Cmp.fble
 [DONE] pkgs/std/Std/Char/Cmp.fble
-
-pkgs/std/Std/String/Cmp.fble
+[DONE] pkgs/std/Std/String/Cmp.fble
 
 pkgs/std/Std/Bool/Data.fble
 pkgs/std/Std/Bool/Assert.fble

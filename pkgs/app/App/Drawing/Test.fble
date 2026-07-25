@@ -1,11 +1,10 @@
 
 Bool@, True, False .= /Std/Bool%;
 Format .= /Std/Char/Ascii/Stream%;
-Cmp@, Compared@ .= /Std/Cmp%;
 Data@, Struct .= /Std/Data%;
 Eq@ .= /Std/Eq%;
 Int@, Add, Mul .= /Std/Int%;
-Cmp, Lt .= /Std/Int/Cmp%;
+Lt .= /Std/Int/Cmp%;
 Eq .= /Std/Int/Eq%;
 Int .= /Std/Int/Lit%;
 List@ .= /Std/List%;
@@ -25,11 +24,6 @@ Drawing@, Color@, Point@ .= /App/Drawing%;
   Lt(a.x, b.x).?(true: True);
   Lt(b.x, a.x).?(true: False);
   Lt(a.y, b.y);
-};
-
-Cmp@<Point@> OrdPoint = (Point@ a, Point@ b) {
-  Compared@ r = Cmp(a.x, b.x);
-  r.?(equal: Cmp(a.y, b.y), : r);
 };
 
 Data@<Point@> DataPoint = (Point@ a) {
@@ -124,5 +118,5 @@ AssertEquals = (Drawn@ expected, Drawn@ actual) {
 };
 
 @(Drawn@, Pixel@,
-  Draw, Drawn, ShowColor, EqColor, LtPoint, OrdPoint, DataPoint, AssertEquals);
+  Draw, Drawn, ShowColor, EqColor, LtPoint, DataPoint, AssertEquals);
 
