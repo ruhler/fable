@@ -2,6 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Should Tail and Init of empty lists be empty lists instead of undefined?
+
 * The Cmp@ interface feels not much used
  - When should I provide Le, Ge, etc. and when not?
 

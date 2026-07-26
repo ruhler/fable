@@ -1,5 +1,62 @@
 # @module[/Std/List%]
-#  List type and basic operations.
+#  Defines the @l{List@} type and basic operations.
+#
+#  A @l{List@} is a singly linked list of elements parameterized by the
+#  element type @l{T@}. Conceptually a list is either empty, or has a head
+#  element followed by a tail list. We use the @l{Items} constructor for the
+#  case where a list has at least one element.
+#
+#  The list type satisfies the fble language requirement for list
+#  literals, which means you can pass list arguments via list literals. For
+#  example, a function that takes a list as an argument could be called
+#  normally as:
+#
+#  @code[fble] @
+#   List@<Int@> mylist = ...;
+#   f(mylist);
+#
+#  Or with list literals as:
+#
+#  @code[fble] @
+#   f[Int|1, x, Int|3];
+#
+#  List literals can also be used if more function arguments are expected,
+#  before or after the list. For example:
+#
+#  @code[fble] @
+#   f(Int|5, mylist, True);
+#
+#  Could be called as:
+#
+#  @code[fble] @
+#   f(Int|5)[Int|1, x, Int|3](True)
+#
+#  The @l{/Std/List%} module defines the @l{List@} type along with functions
+#  for constructing and traversing lists. Additional functionality for
+#  @l{List@} is provided in submodules:
+#
+#  @def[{/Std/List/Cmp%}]
+#   Instance of @l{Cmp@} for @l{List@}
+#  @def[{/Std/List/Count%}]
+#   Counts elements on the list satisfying a property.
+#  @def[{/Std/List/Data%}]
+#   Instance of @l{Data@} for use of @l{List@} in map keys.
+#  @def[{/Std/List/Eq%}]
+#   Instance of @l{Eq@} for @l{List@}, along with functions for testing and
+#   accessing sublists based on element equality.
+#  @def[{/Std/List/Index%}]
+#   Functions for getting the length of a list and accessing list elements by
+#   index.
+#  @def[{/Std/List/Maybe%}]
+#   Conversions between @l{List@} and @l{Maybe@}.
+#  @def[{/Std/List/Random%}]
+#   Random shuffling of lists.
+#  @def[{/Std/List/Search%}]
+#   Functions for finding and filtering elements based on generic predicates.
+#  @def[{/Std/List/Show%}]
+#   Outputting lists in human readable form.
+#  @def[{/Std/List/Sort%}]
+#   Sorting lists.
 
 For@ .= /Std/For%;
 Unit@, Unit .= /Std/Unit%;
@@ -9,13 +66,27 @@ Unit@, Unit .= /Std/Unit%;
 #  element, linear access to later elements in the list.
 #
 #  @arg[@][T@] The type of element on the list.
+#  @field[@][items]
+#   A non-empty list.
 #
-#  @field[T@][head] The first item in a non-empty list.
-#  @field[List@<T@>][tail]
-#   Everything after the first item in a non-empty list.
+#   @field[T@][head] The first item in the list.
+#   @field[List@<T@>][tail] Everything after the first item in the list.
 #
-#  @field[@][items] A non-empty list.
-#  @field[Unit@][empty] An empty list.
+#  @field[Unit@][empty] A list with no items.
+#
+#  See the @l{List} function for a convenient way of constructing lists. It's
+#  common to access the list fields directly when traversing lists. For
+#  example, here's one way to sum the elements of a list of integers:
+#
+#  @code[fble] @
+#   (List@<Int@>) { Int@; }
+#   Sum = (List@<Int@> list) {
+#     list.?(empty: 0);
+#
+#     Int@ head = list.items.head;
+#     List@<Int@> tail = list.items.tail;
+#     Add(head, Sum(tail));
+#   };
 List@ = <@ T@> {
   L@ = +(*(T@ head, L@ tail) items, Unit@ empty);
   L@;
@@ -23,10 +94,10 @@ List@ = <@ T@> {
 
 # @func[List] The list literal.
 #  The identity function on lists, which can be used for list literals. For
-#  example:
+#  example, to construct a list with elements a, 4, and f(2):
 #
 #  @code[fble] @
-#   List@<ABC@> x = List[A, B, A, C];
+#   List@<Int@> x = List[a, Int|4, f(Int|2)];
 #
 #  @arg[@][T@] The type of element on the list.
 #  @arg[List@<T@>][list] The contents of the list.
@@ -36,13 +107,25 @@ List = <@ T@>(List@<T@> list) {
   list;
 };
 
-# @func[Items] Prepend an item to a list.
+# @func[Items] Constructs a non-empty list.
 #  @arg[@][T@] The type of element on the list.
-#  @arg[T@][head] The element to prepend to the list.
-#  @arg[List@<T@>][tail] The list to prepend the element to.
+#  @arg[T@][head] The first element of the list.
+#  @arg[List@<T@>][tail] The remaining elements of the list.
 #  @returns[List@<T>]
 #   A new list consisting of the element @a[head] followed by the elements
 #   from the list @a[tail].
+#
+#  For example, to construct a list of integers from lo to hi:
+#
+#  @code[fble] @
+#   (Int@, Int@) { List@<Int@>; }
+#   Range = (Int@ lo, Int@ hi) {
+#    Eq(lo, hi).?(true: Empty<Int@>);
+#    Items(lo, Range(Incr(lo), hi));
+#   };
+#
+#  An explicit type is not required when calling @l{Items} because the element
+#  type can be inferred from the first argument.
 <@ T@>(T@, List@<T@>) { List@<T@>; }
 Items = <@ T@>(T@ head, List@<T@> tail) {
   List@(items: @(head, tail));
@@ -52,10 +135,17 @@ Items = <@ T@>(T@ head, List@<T@> tail) {
 #  @arg[@][T@] The type of element of the list.
 #  @returns[List@<T@>] An empty list.
 #
-#  Example:
+#  For example, to construct a list of integers from lo to hi:
 #
 #  @code[fble] @
-#   List@<Foo@> empty = Empty<Foo@>;
+#   (Int@, Int@) { List@<Int@>; }
+#   Range = (Int@ lo, Int@ hi) {
+#    Eq(lo, hi).?(true: Empty<Int@>);
+#    Items(lo, Range(Incr(lo), hi));
+#   };
+#
+#  You must provide the list element type explicitly with @l{Empty}, because
+#  the element type cannot be inferred otherwise.
 List@ Empty = <@ T@> {
   List@<T@>(empty: Unit);
 };
@@ -87,9 +177,17 @@ Append = <@ T@>(List@<T@> a, List@<T@> b) {
 #  Example:
 #
 #  @code[fble] @
-#   List@<Planet@> terrestrial = List[Mercury, Venus, Earth, Mars];
-#   List@<Planet@> giant = List[Jupiter, Saturn, Uranus, Neptune];
-#   List@<Planet@> planets = Concat(List[terrestrial, giant]);
+#   List@<Char@> space = List[tab, space, newline];
+#   List@<Char@> digit = List[0, 1, 2];
+#   List@<Char@> alpha = List[a, b, c];
+#   List@<Char@> chars = Concat(List[space, digit, alpha]);
+#
+#  The previous example uses the @l{List} function to pass the list to
+#  @l{Concat} for clarity. Normally we would call @l{Concat} itself using list
+#  literal syntax for cases like this:
+#
+#  @code[fble] @
+#   List@<Char@> chars = Concat[space, digit, alpha];
 <@ T@>(List@<List@<T@>>) { List@<T@>; }
 Concat = <@ T@>(List@<List@<T@>> lists) {
   lists.?(empty: Empty<T@>);
@@ -101,6 +199,15 @@ Concat = <@ T@>(List@<List@<T@>> lists) {
 #  @arg[List@<List@<T@>>][lists] The list of lists to join.
 #  @arg[List@<T@>][separator] Separator to put between the joined lists.
 #  @returns[List@<T@>] The joined list.
+#
+#  This is most often used to join strings, which are lists of characters. For
+#  example:
+#
+#  @code[fble] @
+#   List@<List@<Char@>> days = List[Str|'Monday', Str|'Tuesday', Str|'Wednesday'];
+#   List@<Char@> joined = Join(days, Str|', ');
+#
+#  Which produces a string equivalent to @l{Str|'Monday, Tuesday, Wednesday'};
 <@ T@>(List@<List@<T@>>, List@<T@>) { List@<T@>; }
 Join = <@ T@>(List@<List@<T@>> lists, List@<T@> separator) {
   lists.?(empty: Empty<T@>);
@@ -113,6 +220,28 @@ Join = <@ T@>(List@<List@<T@>> lists, List@<T@> separator) {
 #  @arg[List@<T@>][list] The list to get the first element of.
 #  @returns[T@] The first element on the list.
 #  @sideeffects Behavior is undefined if the list is empty.
+#
+#  You should always check the list is not empty before calling the @l{Head}
+#  function. For example:
+#
+#  @code[fble] @
+#   (List@<Int@>) { Int@; }
+#   Sum = (List@<Int@> list) {
+#     list.?(empty: 0);
+#     Add(Head(list), Sum(Tail(list)));
+#   };
+#
+#  Often it is as convenient to access the @l{head} field directly:
+#
+#  @code[fble] @
+#   (List@<Int@>) { Int@; }
+#   Sum = (List@<Int@> list) {
+#     list.?(empty: 0);
+#     Add(list.items.head, Sum(list.items.tail));
+#   };
+#
+#  See @l{/Std/List/Maybe%.Head} for a way to access the first element without
+#  having to check if the list is empty before hand.
 <@ T@>(List@<T@>) { T@; }
 Head = <@ T@>(List@<T@> list) {
   list.items.head;
@@ -123,6 +252,25 @@ Head = <@ T@>(List@<T@> list) {
 #  @arg[List@<T@>][list] The list to get all but the first element of.
 #  @returns[List@<T@>] All but the first element in the list.
 #  @sideeffects Behavior is undefined if the list is empty.
+#
+#  You should always check the list is not empty before calling the @l{Tail}
+#  function. For example:
+#
+#  @code[fble] @
+#   (List@<Int@>) { Int@; }
+#   Sum = (List@<Int@> list) {
+#     list.?(empty: 0);
+#     Add(Head(list), Sum(Tail(list)));
+#   };
+#
+#  Often it is as convenient to access the @l{tail} field directly:
+#
+#  @code[fble] @
+#   (List@<Int@>) { Int@; }
+#   Sum = (List@<Int@> list) {
+#     list.?(empty: 0);
+#     Add(list.items.head, Sum(list.items.tail));
+#   };
 <@ T@>(List@<T@>) { List@<T@>; }
 Tail = <@ T@>(List@<T@> list) {
   list.items.tail;
@@ -133,6 +281,16 @@ Tail = <@ T@>(List@<T@> list) {
 #  @arg[List@<T@>][list] The list to get the last element of.
 #  @returns[T@] The last element in the list.
 #  @sideeffects Behavior is undefined if the list is empty.
+#
+#  For example:
+#
+#  @code[fble] @
+#   List@<String@> path = List[Str|usr, Str|bin, Str|cat];
+#   String@ filename = Last(path);
+#
+#  You should always check the list is not empty before calling the @l{Last}
+#  function. See @l{/Std/List/Maybe%.Last} for a way to access the last
+#  element without having to check if the list is empty before hand.
 <@ T@>(List@<T@>) { T@; }
 Last = <@ T@>(List@<T@> list) {
   list.items.tail.?(empty: list.items.head);
@@ -144,6 +302,20 @@ Last = <@ T@>(List@<T@> list) {
 #  @arg[List@<T@>][list] The list to get the all but the last element of.
 #  @returns[List@<T@>] All but the last element of the list.
 #  @sideeffects Behavior is undefined if the list is empty.
+#
+#  For example:
+#
+#  @code[fble] @
+#   List@<String@> path = List[Str|usr, Str|bin, Str|cat];
+#   List@<String@> dir = Init(path);
+#
+#  Would produce a list equivalent to:
+#
+#  @code[fble] @
+#   List@<String@> dir = List[Str|usr, Str|bin];
+#
+#  You should always check the list is not empty before calling the @l{Init}
+#  function.
 <@ T@>(List@<T@>) { List@<T@>; }
 Init = <@ T@>(List@<T@> list) {
   list.items.tail.?(empty: Empty<T@>);
@@ -157,6 +329,25 @@ Init = <@ T@>(List@<T@> list) {
 #  @arg[(A@) { B@; }][f] The function to apply.
 #  @returns[List@<B@>]
 #   The list of elements f(a_i) for each a_i in the input list.
+#
+#  For example, to take the square of each value of a list of integers:
+#
+#  @code[fble] @
+#   List@<Int@> values = List[Int|1, Int|2, Int|3];
+#   List@<Int@> squares = Map(values, Square);
+#
+#  Which would give the list @l{List[Int|1, Int|4, Int|9]};
+#
+#  Sometimes it's convenient to use function bind syntax. For example, the
+#  example above could be rewritten with the @l{Square} function implemented
+#  directly via bind syntax:
+#
+#  @code[fble] @
+#   List@<Int@> values = List[Int|1, Int|2, Int|3];
+#   List@<Int@> squares = {
+#    Int@ x := Map(values);
+#    Mul(x, x);
+#   };
 <@ A@>(List@<A@>)<@ B@>((A@) { B@; }) { List@<B@>; }
 Map = <@ A@>(List@<A@> list)<@ B@>((A@) { B@; } f) {
   list.?(empty: Empty<B@>);
@@ -173,6 +364,25 @@ Map = <@ A@>(List@<A@> list)<@ B@>((A@) { B@; } f) {
 #  @arg[(A@) { List@<B@>; }][f] The function to apply.
 #  @returns[List@<B@>]
 #   The list of elements f(a_i) for each a_i in the input list.
+#
+#  It's most convenient to call @l{Do} using function bind syntax. For
+#  example, to produce a list of coordinates in a 2 by 3 rectangular region:
+#
+#  @code[fble] @
+#   Pair@ = *(Int@ x, Int@ y);
+#   List@<Pair@> pairs = {
+#     Int@ row := Do(Range(0, 2));
+#     Int@ col := Do(Range(0, 3));
+#     List[Pair@(col, row)];
+#   };
+#
+#  Which produces the list:
+#
+#  @code[fble] @
+#   List@<Pair@> pairs = List[
+#     Pair@(0, 0), Pair@(1, 0), Pair@(2, 0), Pair@(3, 0),
+#     Pair@(0, 1), Pair@(1, 1), Pair@(2, 1), Pair@(3, 1),
+#     Pair@(0, 2), Pair@(1, 2), Pair@(2, 2), Pair@(3, 2)];
 <@ A@>(List@<A@>)<@ B@>((A@) { List@<B@>; }) { List@<B@>; }
 Do = <@ A@>(List@<A@> list)<@ B@>((A@) { List@<B@>; } f) {
   Concat(Map(list, f));
@@ -182,6 +392,25 @@ Do = <@ A@>(List@<A@> list)<@ B@>((A@) { List@<B@>; } f) {
 #  @arg[@][A@] The type of element on the list.
 #  @arg[List@<A@>][list] The list to iterate over.
 #  @returns[For@<A@>] A for loop iteration over the list elements.
+#
+#  For example, to sum the integers on a list using @l{ForEach}:
+#
+#  @code[fble] @
+#   List@<Int@> values = List[1, 2, 3, 4, 5];
+#   Int@ sum = ForEach(values, 0, Add);
+#
+#  Often it is convenient to use function bind syntax. For example, to compute
+#  the sum of squares of elements on a list:
+#
+#  @code[fble] @
+#   List@<Int@> values = List[1, 2, 3, 4, 5];
+#   Int@ final_sum = {
+#     Int@ running_sum, Int@ x := ForEach(values, 0);
+#     Add(running_sum, Mul(x, x));
+#   };
+#
+#  See @l{/Std/For%.For@} for more explanation and  examples of how to use the
+#  @l{For@} type.
 <@ A@>(List@<A@>) { For@<A@>; }
 ForEach = <@ A@>(List@<A@> list)<@ S@>(S@ s, (S@, A@) { S@; } body) {
   list.?(empty: s);
@@ -192,6 +421,12 @@ ForEach = <@ A@>(List@<A@> list)<@ S@>(S@ s, (S@, A@) { S@; } body) {
 #  @arg[@][T@] The type of element on the list.
 #  @arg[List@<T@>][list] The list to reverse.
 #  @returns[List@<T@>] The elements of the given list in reverse order.
+#
+#  For example, the following two lists are equivalent:
+#
+#  @code[fble] @
+#   List@<Int@> first = List[5, 4, 3, 2, 1];
+#   List@<Int@> second = Reverse[1, 2, 3, 4, 5];
 <@ T@>(List@<T@>) { List@<T@>; }
 Reverse = <@ T@>(List@<T@> list) {
   List@<T@> l, T@ x := ForEach(list, Empty<T@>);
