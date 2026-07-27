@@ -1,5 +1,5 @@
 # @module[/Std/String/Show%]
-#  The Show@ instance for String@.
+#  The @l{Show@} instance for @l{String@}.
 
 Char@ .= /Std/Char%;
 FormatE .= /Std/Char/Ascii/Stream%;
@@ -12,7 +12,15 @@ Unit@ .= /Std/Unit%;
 
 Char@ single_quote = U|27;
 
-# Show the characters of a string value, without the surrounding quotes.
+# @dev
+#  @func[Chars] Shows the characters of a string without surrounding quotes.
+#   Performs escaping of single quotes by replacing them with double single
+#   quotes. For example, the string with the five characters @l{don't} is
+#   shown as a sequence of 6 characters: @l{don''t}.
+#
+#   @arg[String@][x] The string to show.
+#   @return[Stream@<Char@>]
+#    The characters of the string without surrounding quotes.
 Show@<String@> Chars = (String@ s) {
   s.?(empty: End<Char@>);
 
@@ -25,8 +33,24 @@ Show@<String@> Chars = (String@ s) {
 };
 
 # @func[Show] Show a String@ value.
+#  The value is shown with surrounding single quotes added and escaping of
+#  single quotes inside the string. For example, the five character string
+#  @l{don't} is output as a sequence of 8 characters: @l{'don''t'}.
+#
 #  @arg[String@][x] The value to show.
 #  @returns[Stream@<Char@>] The shown string value, e.g. @l{'hello'}.
+#
+#  The code:
+#
+#  @code[fble] @
+#   Stream@<Char@> output = Format|'This string value is: %s'[
+#     /Std/String/Show%.Show(Str|hello)
+#   ];
+#
+#  Would output:
+#
+#  @code[txt] @
+#   This string value is: 'hello'
 Show@<String@> Show = (String@ s) {
   FormatE|'\q%s\q'[Chars(s)];
 };

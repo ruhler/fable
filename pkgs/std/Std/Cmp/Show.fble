@@ -1,12 +1,27 @@
 # @module[/Std/Cmp/Show%]
-#  The Show@ instance for Compared@.
+#  The @l{Show@} instance for @l{Compared@}.
 
 String .= /Std/Char/Ascii/Stream%;
 Compared@ .= /Std/Cmp%;
 Show@ .= /Std/Show%;
 
-# @value[Show] Show@ instance for Compared@.
-#  @type[Show@<Compared@>]
+# @func[Show] Show a @l{Compared@} value.
+#  @arg[Compared@][x] The value to show.
+#  @returns[Stream@<Char@>]
+#   The value shown as @l{Less}, @l{Equal}, or @l{Greater}.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Stream@<Char@> output = Format|'This compared value is: %s'[
+#     /Std/Cmp/Show%.Show(Greater)
+#   ];
+#
+#  Would output:
+#
+#  @code[txt] @
+#   This compared value is: Greater
+#
 Show@<Compared@>
 Show = (Compared@ a) {
   a.?(less: String|Less, equal: String|Equal, greater: String|Greater);

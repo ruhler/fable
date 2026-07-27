@@ -82,11 +82,16 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Char/Cmp.fble
 [DONE] pkgs/std/Std/String/Cmp.fble
 [DONE] pkgs/std/Std/List.fble
+[DONE] pkgs/std/Std/List/Show.fble
+[DONE] pkgs/std/Std/Cmp/Show.fble
+[DONE] pkgs/std/Std/String/Show.fble
+[DONE] pkgs/std/Std/Char/Show.fble
+
+pkgs/std/Std/Int/Show.fble
 
 pkgs/std/Std/Bool/Data.fble
 pkgs/std/Std/Bool/Assert.fble
 pkgs/std/Std/Bool/Random.fble
-pkgs/std/Std/Int/Show.fble
 pkgs/std/Std/Int/Data.fble
 pkgs/std/Std/Int/IntP/Data.fble
 pkgs/std/Std/Int/IntP/Eq.fble
@@ -109,7 +114,6 @@ pkgs/std/Std/Stream/In.fble
 pkgs/std/Std/Stream/String/Assert.fble
 pkgs/std/Std/Stream/Test.fble
 pkgs/std/Std/Char/Lit.fble
-pkgs/std/Std/Char/Show.fble
 pkgs/std/Std/Char/Data.fble
 pkgs/std/Std/Char/Ascii/Stream.fble
 pkgs/std/Std/Char/Ascii/Type.fble
@@ -139,7 +143,6 @@ pkgs/std/Std/Maybe/Show.fble
 pkgs/std/Std/Maybe/Data.fble
 pkgs/std/Std/Maybe/Eq.fble
 pkgs/std/Std/Maybe/Cmp.fble
-pkgs/std/Std/List/Show.fble
 pkgs/std/Std/List/Data.fble
 pkgs/std/Std/List/Sort.fble
 pkgs/std/Std/List/Search.fble
@@ -150,7 +153,6 @@ pkgs/std/Std/List/Random.fble
 pkgs/std/Std/List/Count.fble
 pkgs/std/Std/List/Cmp.fble
 pkgs/std/Std/Func.fble
-pkgs/std/Std/Cmp/Show.fble
 pkgs/std/Std/Cmp/Data.fble
 pkgs/std/Std/Cmp/Eq.fble
 pkgs/std/Std/Cmp/Cmp.fble
@@ -166,7 +168,6 @@ pkgs/std/Std/Io/File/Char.fble
 pkgs/std/Std/Io/File/Mode.fble
 pkgs/std/Std/Io/File/Utf8.fble
 pkgs/std/Std/Io/Cli.fble
-pkgs/std/Std/String/Show.fble
 pkgs/std/Std/String/Data.fble
 pkgs/std/Std/String/Eq.fble
 pkgs/std/Std/String/Escape.fble

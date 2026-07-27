@@ -1,5 +1,5 @@
 # @module[/Std/Char/Show%]
-#  The Show@ instance for Char@.
+#  The @l{Show@} instance for @l{Char@}.
 
 And .= /Std/Bool%;
 Char@, Char, Pos .= /Std/Char%;
@@ -15,18 +15,47 @@ Stream@, End, Puts, Return .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # @func[Show] Show a Char@ value.
+#  The value is shown in single quotes. If the character is a single quote,
+#  it's shown using four single quotes: @l{''''}, which is consistent with how
+#  a string with a single single quote character is shown.
+#
 #  @arg[Char@][x] The value to show.
 #  @returns[Stream@] The shown value.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Stream@<Char@> output = Format|'This character value is: %s'[
+#     /Std/Char/Show%.Show(Ascii.a)
+#   ];
+#
+#  Would output:
+#
+#  @code[txt] @
+#   This character value is: 'a'
 Show@<Char@> Show = (Char@ x) {
   /Std/String/Show%.Show[x];
 };
 
 # @func[Unicode] Show a Char@ value in unicode U+ notation.
+#  The character's unicode code point is shown using unicode U+ notation:
+#  upper case hex with minimum number of leading zeroes needed to have at
+#  least 4 hex digits.
+#
 #  @arg[Char@][x] The character to show.
-#  @returns[Stream@<Char@>]
-#   Stream of characters represnting the input character in U+ notation: upper
-#   case hex with minimum number of leading zeroes needed to have at least 4
-#   hex digits.
+#  @returns[Stream@<Char@>] The shown character value.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Stream@<Char@> output = Format|'This character value is: %s'[
+#     /Std/Char/Show%.Unicode(Ascii.a)
+#   ];
+#
+#  Would output:
+#
+#  @code[txt] @
+#   This character value is: U+0061
 Show@<Char@> Unicode = {
   Int@ offset = Sub(Pos(Ascii.A), Int|10);
 

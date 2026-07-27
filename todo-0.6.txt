@@ -2,6 +2,14 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Should string show not show surrounding quotes if there is no punctuation?
+ - Like, is the idea it is formatted as an fble word? Then we should be able
+   to output things like hello without surrounding quotes, right?
+
+* Decide when I should use @l{...} around type names or not in doc comments.
+ - For example /Std/Cmp/Show% uses it around @l{Compared@}, but not in arg
+   types?
+
 * Should Tail and Init of empty lists be empty lists instead of undefined?
 
 * The Cmp@ interface feels not much used

@@ -1,5 +1,5 @@
 # @module[/Std/List/Show%]
-#  The Show@ instance for List@.
+#  The @l{Show@} instance for @l{List@}.
 
 String, Format .= /Std/Char/Ascii/Stream%;
 List@ .= /Std/List%;
@@ -7,19 +7,19 @@ Show@ .= /Std/Show%;
 Puts .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
-# Tail --
-#   Shows the tail part of a list.
+# @dev
+#  @func[Tail] Shows the tail part of a list.
+#   Shows list contents assuming some elements of a bigger list have already
+#   been shown.
 #
-# Type Parameters:
-#   T@ - The type of elements on the list.
+#   For examle, the list @l{List[1, 2, 3]} is shown as @l{", 1, 2, 3]"}.
 #
-# Arguments:
-#   show - How to show an element of the list.
-#   list - The list to show.
-#
-# Returns:
-#   A string representation of the tail of the list. For example, the list 
-#   [1, 2, 3] is shown as ", 1, 2, 3]"
+#   @arg[@][T@] The type of elements on the list.
+#   @arg[Show@<T@>][show] How to show an element of the list.
+#   @arg[List@<T@>][list] The list to show.
+#   @returns[Stream@<Char@>]
+#    A string representation of the tail of a list. For example, the list
+#    @l{[1, 2, 3]} is shown as @l{", 1, 2, 3]"}.
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 Tail = <@ T@>(Show@<T@> show, List@<T@> list) {
   list.?(empty: String|']');
@@ -28,20 +28,20 @@ Tail = <@ T@>(Show@<T@> show, List@<T@> list) {
 };
 
 # @func[Show] Show a List@ value.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Show@<T@>][show] How to show an element of the list.
+#  @arg[List@<T@>][list] The list to show.
+#  @returns[Stream@<Char@>] A human readable representation of the list.
+#
 #  For example:
 #
 #  @code[fble] @
 #   /Std/List/Show%.Show(/Std/Bool/Show%.Show, List[True, False, False]);
 #
-#  Shows:
+#  Shows as:
 #
 #  @code[txt] @
 #   [True, False, False]
-#
-#  @arg[@][T@] The type of element on the list.
-#  @arg[Show@<T@>][show] How to show an element of the list.
-#  @arg[List@<T@>][list] The list to show.
-#  @returns[Stream@] The shown contents of the list.
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 Show = <@ T@>(Show@<T@> show, List@<T@> list) {
   list.?(empty: String|'[]');

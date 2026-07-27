@@ -1,11 +1,11 @@
 # @module[/Std/Bool/Show%]
-#  The Show@ instance for Bool@.
+#  The @l{Show@} instance for @l{Bool@}.
 
 Bool@ .= /Std/Bool%;
 String .= /Std/Char/Ascii/Stream%;
 Show@ .= /Std/Show%;
 
-# @func[Show] Show a Bool@ value.
+# @func[Show] Show a @l{Bool@} value.
 #  @arg[Bool@][x] The value to show.
 #  @returns[Stream@<Char@>] The value shown as @l{True} or @l{False}.
 #
