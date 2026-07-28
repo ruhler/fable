@@ -4,12 +4,13 @@
 Cmp@ .= /Std/Cmp%;
 List@, Empty, Items .= /Std/List%;
 
-# @func[Insert] Insert an element into a sorted list.
-#  @arg[@][T@] The type of element on the list.
-#  @arg[Cmp@<T@>][cmp] Function to compare two elements of the list.
-#  @arg[T@][item] The item to insert.
-#  @arg[List@<T@>][list] The list to insert it into.
-#  @returns[List@<T@>] The list with the item inserted into the sorted location.
+# @dev
+#  @func[Insert] Insert an element into a sorted list.
+#   @arg[@][T@] The type of element on the list.
+#   @arg[Cmp@<T@>][cmp] Function to compare two elements of the list.
+#   @arg[T@][item] The item to insert.
+#   @arg[List@<T@>][list] The list to insert it into.
+#   @returns[List@<T@>] The list with the item inserted into the sorted location.
 <@ T@>(Cmp@<T@>, T@, List@<T@>) { List@<T@>; }
 Insert = <@ T@>(Cmp@<T@> cmp, T@ item, List@<T@> list) {
   list.?(empty: Items(item, Empty<T@>));
@@ -24,6 +25,21 @@ Insert = <@ T@>(Cmp@<T@> cmp, T@ item, List@<T@> list) {
 #  @arg[Cmp@<T@>][cmp] Function to compare two elements of the list.
 #  @arg[List@<T@>][list] The list to sort.
 #  @returns[List@<T@>] The elements of the list in increasing sorted order.
+#
+#  For example, to sort a list of integers:
+#
+#  @code[fble] @
+#   List@<Int@> list = List[Int|2, Int|0, Int|4, Neg(Int|3)];
+#   List@<Int@> sorted = Sort(/Std/Int/Cmp%.Cmp, list);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List@<Int@> sorted = List[Neg(Int|3), Int|0, Int|2, Int|4];
+#
+#  This sort routine is currently implemented as an O(n^2) insertion sort, but
+#  may be reimplemented as a more efficient O(n log(n)) sort sometime in the
+#  future.
 <@ T@>(Cmp@<T@>, List@<T@>) { List@<T@>; }
 Sort = <@ T@>(Cmp@<T@> cmp, List@<T@> list) {
   list.?(empty: list);

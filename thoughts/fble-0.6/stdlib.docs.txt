@@ -87,6 +87,13 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/String/Show.fble
 [DONE] pkgs/std/Std/Char/Show.fble
 [DONE] pkgs/std/Std/Int/Show.fble
+[DONE] pkgs/std/Std/List/Count.fble
+[DONE] pkgs/std/Std/List/Sort.fble
+
+pkgs/std/Std/List/Search.fble
+pkgs/std/Std/List/Eq.fble
+pkgs/std/Std/List/Cmp.fble
+pkgs/std/Std/List/Index.fble
 
 pkgs/std/Std/Bool/Data.fble
 pkgs/std/Std/Bool/Assert.fble
@@ -143,14 +150,8 @@ pkgs/std/Std/Maybe/Data.fble
 pkgs/std/Std/Maybe/Eq.fble
 pkgs/std/Std/Maybe/Cmp.fble
 pkgs/std/Std/List/Data.fble
-pkgs/std/Std/List/Sort.fble
-pkgs/std/Std/List/Search.fble
-pkgs/std/Std/List/Eq.fble
 pkgs/std/Std/List/Maybe.fble
-pkgs/std/Std/List/Index.fble
 pkgs/std/Std/List/Random.fble
-pkgs/std/Std/List/Count.fble
-pkgs/std/Std/List/Cmp.fble
 pkgs/std/Std/Func.fble
 pkgs/std/Std/Cmp/Data.fble
 pkgs/std/Std/Cmp/Eq.fble

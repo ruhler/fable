@@ -1,5 +1,5 @@
 # @module[/Std/List/Count%]
-#  Utilities for counting elements of a list that satisfy a given condition.
+#  Utility for counting elements of a list that satisfy a given condition.
 #
 #  This is kept separate from @l{/Std/List/Search%} because it has an extra
 #  dependency on @l{Int@}.
@@ -13,6 +13,26 @@ List@ .= /Std/List%;
 #  @arg[List@<T@>][list] The list to check.
 #  @arg[(T@) { Bool@; }][p] The condition to check for.
 #  @returns[Int@] The number of elements on the list satisfying the condition.
+#
+#  For example, to count the number of odd integers on a list of integers:
+#
+#  @code[fble] @
+#   List@<Int@> list = ...;
+#   Int@ num_odd = Count(list, IsOdd);
+#
+#  Sometimes it is convenient to use function bind syntax to pass the
+#  predicate. The example above could be written using function bind syntax as
+#  follows:
+#
+#  @code[fble] @
+#   List@<Int@> list = ...;
+#   Int@ num_odd = {
+#     Int@ x := Count(list);
+#     Eq(0, Mod(x, 2));
+#   };
+#
+#  If you are only interested in the length of the list, use the
+#  @l{/Std/List/Index%.Length} function.
 <@ T@>(List@<T@>, (T@) { Bool@; }) { Int@; }
 Count = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   list.?(empty: 0);

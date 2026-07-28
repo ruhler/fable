@@ -2,6 +2,14 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Should /Std/List/Sort% take Cmp@ as the last argument?
+ - For better integration with function bind syntax?
+
+* Change /Std/List/Sort%.Sort to merge sort?
+
+* Should /Std/List/Count% be merged with /Std/List/Index%?
+ - They have the same sets of dependencies?
+
 * Should string show not show surrounding quotes if there is no punctuation?
  - Like, is the idea it is formatted as an fble word? Then we should be able
    to output things like hello without surrounding quotes, right?
