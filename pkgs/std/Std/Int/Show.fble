@@ -1,5 +1,6 @@
 # @module[/Std/Int/Show%]
-#  The Show@ instance for Int@.
+#  The @l{Show@} instance for @l{Int@} and other radix conversions for
+#  integers.
 
 Char@, Char, Pos .= /Std/Char%;
 Ascii .= /Std/Char/Ascii%;
@@ -13,23 +14,39 @@ Show@ .= /Std/Show%;
 End, Puts, Return .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
-# arg[Char@][a]
-#  The character value to use for digits starting at value 10.
+# @dev
+#  @func[Impl] Case-generic implementions of radix and hex conversions.
+#   @arg[Char@][a]
+#    The character value to use for digits starting at value 10. Pass the
+#    lowercase character 'a' for lowercase conversions, and uppercase
+#    character 'A' for uppercase conversions.
+#   @returns[...] How to show an integer in hex and arbitrary radix.
 Impl = (Char@ a) {
   # Offset to add to an int value in the range [10-32] to map it to the
   # unicode code point for the character starting at a.
   Int@ offset = Sub(Pos(a), Int|10);
 
-  # Convert int value in range [0-32] to ['0'-'9', a-z].
-  # Behavior is undefined if the value is out of range.
-  #  arg[Int@][x] The int value to show.
+  # @dev
+  #  @func[Digit] Converts an int value in range [0-32) to ['0'-'9', 'a'-'z'].
+  #   Behavior is undefined if the value is out of range.
+  #
+  #   @arg[Int@][x] The int value to show.
+  #   @returns[Char@] The character representing that int value.
   (Int@) { Char@; }
   Digit = (Int@ x) {
     Le(x, Int|9).?(true: Char(Add(x, Int|48)));
     Char(Add(x, offset));
   };
 
-  # Show a positive int value in given radix.
+  # @dev
+  #  @func[Positive] Shows a positive integer value in the given radix.
+  #   @arg[Int@][radix] The radix to show the value in, in range [0-32].
+  #   @arg[Int@][x] The positive integer value to show.
+  #   @returns[Stream@<Char@>]
+  #    The sequence of characters representing the integer in the given radix.
+  #
+  #   Behavior is undefined if the radix is out of range or the value to show
+  #   is non-negative. Nothing is shown for value integer value 0.
   (Int@) { Show@<Int@>; }
   Positive = (Int@ radix, Int@ x) {
     QR@ qr = Div(x, radix);
@@ -42,6 +59,18 @@ Impl = (Char@ a) {
   #   The radix to use when showing the int, in the range [0, 32].
   #  @arg[Int@][x] The value to show.
   #  @returns[Stream@<Char@>] The shown value.
+  #
+  #  For example:
+  #
+  #  @code[fble] @
+  #   Stream@<Char@> output = Format|'This int value is: hex %s'[
+  #     Radix(Int|16, Int|134)
+  #   ];
+  #
+  #  Would output:
+  #  
+  #  @code[txt] @
+  #   This int value is: hex 86
   (Int@) { Show@<Int@>; } Radix = (Int@ radix, Int@ x) {
     Sgn(x).?(
       '-': Format|'-%s'[Positive(radix, Neg(x))],
@@ -52,30 +81,78 @@ Impl = (Char@ a) {
   # @func[Hex] Show an Int@ value in hex.
   #  @arg[Int@][x] The value to show.
   #  @returns[Stream@<Char@>] The shown value.
+  #
+  #  For example:
+  #
+  #  @code[fble] @
+  #   Stream@<Char@> output = Format|'This int value is: hex %s'[
+  #     Hex(Int|134)
+  #   ];
+  #
+  #  Would output:
+  #  
+  #  @code[txt] @
+  #   This int value is: hex 86
   Show@<Int@> Hex = Radix(Int|16);
 
   @(Radix, Hex);
 };
 
-# Instances of Radix and Hex the show using lowercase letters a-z.
+# @value[Lower] Radix and Hex functions using lowercase letters a-z.
 Lower = Impl(Ascii.a);
 
-# Instances of Radix and Hex the show using uppercase letters a-z.
+# @value[Upper] Radix and Hex functions using uppercase letters A-Z.
 Upper = Impl(Ascii.A);
 
 # @func[Show] Show an Int@ value.
 #  @arg[Int@][x] The value to show.
 #  @returns[Stream@<Char@>] The shown value.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Stream@<Char@> output = Format|'This int value is: %s'[
+#     /Std/Int/Show%.Show(Int|134)
+#   ];
+#
+#  Would output:
+#  
+#  @code[txt] @
+#   This int value is: 134
 Show@<Int@> Show = Lower.Radix(Int|10);
 
 # @func[Show] Show an Int@ value in octal
 #  @arg[Int@][x] The value to show.
 #  @returns[Stream@<Char@>] The shown value.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Stream@<Char@> output = Format|'This int value is: octal %s'[
+#     /Std/Int/Show%.Show(Int|134)
+#   ];
+#
+#  Would output:
+#  
+#  @code[txt] @
+#   This int value is: octal 206
 Show@<Int@> Oct = Lower.Radix(Int|8);
 
 # @func[Show] Show an Int@ value in binary
 #  @arg[Int@][x] The value to show.
 #  @returns[Stream@<Char@>] The shown value.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Stream@<Char@> output = Format|'This int value is: binary %s'[
+#     /Std/Int/Show%.Show(Int|134)
+#   ];
+#
+#  Would output:
+#  
+#  @code[txt] @
+#   This int value is: binary 10000110
 Show@<Int@> Bin = Lower.Radix(Int|2);
 
 @(Upper, Lower, Show, Oct, Bin);
