@@ -1,5 +1,5 @@
 # @module[/Std/List/Eq%]
-#  Utilities for working with list equality and sublists.
+#  The Eq@ instance for Bool@ and utilities for working with sublists.
 
 Bool@, True, False .= /Std/Bool%;
 Eq@ .= /Std/Eq%;
@@ -9,6 +9,27 @@ List@, List, Items, Empty, Concat .= /Std/List%;
 #  @arg[@][T@] The type of element on the list.
 #  @arg[List@<T@>][list] The list to check.
 #  @returns[Bool@] True if the list is non-empty, false otherwise.
+#
+#  Normally it's easier to check the @l{items} field directly. The
+#  @l{HasItems} function is provided for completeness and for use where
+#  function arguments are expected.
+#
+#  For example, to access the head element of a list or provide a default:
+#
+#  @code[fble] @
+#   <@ A@>(List@<A@>, A@) { A@; }
+#   SafeHead = <@ A@>(List@<A@> list, A@ default) {
+#     HasItems(list).?(true: Head(list), false: default);
+#   };
+#
+#  But normally we would implement this with direct field access:
+#
+#  @code[fble] @
+#   <@ A@>(List@<A@>, A@) { A@; }
+#   SafeHead = <@ A@>(List@<A@> list, A@ default) {
+#     list.?(items: list.items.head);
+#     default;
+#   };
 <@ T@>(List@<T@>) { Bool@; }
 HasItems = <@ T@>(List@<T@> list) {
   list.?(items: True);
@@ -19,18 +40,52 @@ HasItems = <@ T@>(List@<T@> list) {
 #  @arg[@][T@] The type of element on the list.
 #  @arg[List@<T@>][list] The list to check.
 #  @returns[Bool@] True if the list is empty, false otherwise.
+#
+#  Normally it's easier to check the @l{empty} field directly. The
+#  @l{IsEmpty} function is provided for completeness and for use where
+#  function arguments are expected.
+#
+#  For example, to access the head element of a list or provide a default:
+#
+#  @code[fble] @
+#   <@ A@>(List@<A@>, A@) { A@; }
+#   SafeHead = <@ A@>(List@<A@> list, A@ default) {
+#     IsEmpty(list).?(true: default, false: Head(list));
+#   };
+#
+#  But normally we would implement this with direct field access:
+#
+#  @code[fble] @
+#   <@ A@>(List@<A@>, A@) { A@; }
+#   SafeHead = <@ A@>(List@<A@> list, A@ default) {
+#     list.?(empty: default);
+#     list.items.head;
+#   };
 <@ T@>(List@<T@>) { Bool@; }
 IsEmpty = <@ T@>(List@<T@> list) {
   list.?(empty: True);
   False;
 };
 
-# @func[Eq] Check if two lists are equal.
+# @func[Eq] Checks if two lists are equal.
+#  This gives you an @l{Eq@} instance for list given an @l{Eq@} instance for
+#  elements of the list.
+#
 #  @arg[@][T@] The type of element on the list.
 #  @arg[Eq@<T@>][eq] List element equality.
 #  @arg[List@<T@>][a] The first list.
 #  @arg[List@<T@>][b] The second list.
 #  @returns[Bool@] True if the lists are equal, false otherwise.
+#
+#  For example, to check if two integer lists are equal:
+#
+#  @code[fble] @
+#   Eq@<List@<Int@>> Eq = /Std/List/Eq%.Eq(/Std/Int/Eq%.Eq);
+#   List@<Int@> a = ...;
+#   List@<Int@> b = ...;
+#   Bool@ equal = Eq(a, b);
+#
+#  See @l{/Std/Eq%} for more about the @l{Eq@} interface.
 <@ T@>(Eq@<T@>) { Eq@<List@<T@>>; }
 Eq = <@ T@>(Eq@<T@> eq, List@<T@> a, List@<T@> b) {
   a.?(empty: b.?(empty: True, : False));
@@ -39,13 +94,23 @@ Eq = <@ T@>(Eq@<T@> eq, List@<T@> a, List@<T@> b) {
   Eq(eq, a.items.tail, b.items.tail);
 };
 
-# @func[StartsWith] Check if a list starts with a given prefix.
+# @func[StartsWith] Checks if a list starts with a given prefix.
 #  @arg[@][T@] The type of element on the list.
 #  @arg[Eq@<T@>][eq] List element equality.
 #  @arg[List@<T@>][list] The list to check.
 #  @arg[List@<T@>][prefix] The prefix to check for.
 #  @returns[Bool@]
 #   True if the list begins with the given prefix. False otherwise.
+#
+#  The following would return @l{True}:
+#
+#  @code[fble] @
+#   StartsWith(/Std/Int/Eq%.Eq, List[1, 2, 3, 4, 5], List[1, 2, 3]);
+#
+#  And the following would return @l{False}:
+#
+#  @code[fble] @
+#   StartsWith(/Std/Int/Eq%.Eq, List[1, 2, 3, 4, 5], List[3, 2, 1]);
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Bool@; }
 StartsWith = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
   prefix.?(empty: True);
@@ -61,6 +126,16 @@ StartsWith = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
 #  @arg[List@<T@>][suffix] The suffix to check for.
 #  @returns[Bool@]
 #   True if the list ends with the given suffix. False otherwise.
+#
+#  The following would return @l{True}:
+#
+#  @code[fble] @
+#   EndsWith(/Std/Int/Eq%.Eq, List[1, 2, 3, 4, 5], List[3, 4, 5]);
+#
+#  And the following would return @l{False}:
+#
+#  @code[fble] @
+#   EndsWith(/Std/Int/Eq%.Eq, List[1, 2, 3, 4, 5], List[3, 2, 1]);
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Bool@; }
 EndsWith = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> suffix) {
   Eq(eq, list, suffix).?(true: True);
@@ -75,6 +150,16 @@ EndsWith = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> suffix) {
 #  @arg[List@<T@>][sublist] The sublist to check for.
 #  @returns[Bool@]
 #   True if the list contains the given suffix. False otherwise.
+#
+#  The following would return @l{True}:
+#
+#  @code[fble] @
+#   Contains(/Std/Int/Eq%.Eq, List[1, 2, 3, 4, 5], List[3, 4]);
+#
+#  And the following would return @l{False}:
+#
+#  @code[fble] @
+#   Contains(/Std/Int/Eq%.Eq, List[1, 2, 3, 4, 5], List[4, 3]);
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Bool@; }
 Contains = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
   StartsWith(eq, list, sublist).?(true: True);
@@ -90,6 +175,16 @@ Contains = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
 #  @returns[List@<T@>]
 #   The elements of the list following the given prefix. The complete list if
 #   it does not start with the given prefix.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Skip(/Std/Int/Eq%.Eq, List[1, 2, 3, 4, 5], List[1, 2]);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[3, 4, 5];
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
 Skip = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
   (List@<T@>, List@<T@>) { List@<T@>; }
@@ -110,6 +205,16 @@ Skip = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
 #  @returns[List@<T@>]
 #   The elements of the list without the given suffix. The complete list if
 #   it does not end with the given suffix.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Trim(/Std/Int/Eq%.Eq, List[1, 2, 3, 4, 5], List[4, 5]);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[1, 2, 3];
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
 Trim = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> suffix) {
   Eq(eq, list, suffix).?(true: Empty<T@>);
@@ -125,6 +230,16 @@ Trim = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> suffix) {
 #  @returns[List@<T@>]
 #   The elements of the list without the sublist prefix and sublist suffix
 #   removed if present.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Strip(/Std/Int/Eq%.Eq, List[0, 1, 2, 3, 0, 1, 4, 5, 0, 1], List[0, 1]);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[2, 3, 0, 1, 4, 5];
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
 Strip = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
   Trim(eq, Skip(eq, list, sublist), sublist);
