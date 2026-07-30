@@ -89,10 +89,10 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Int/Show.fble
 [DONE] pkgs/std/Std/List/Count.fble
 [DONE] pkgs/std/Std/List/Sort.fble
+[DONE] pkgs/std/Std/List/Eq.fble
+[DONE] pkgs/std/Std/List/Cmp.fble
 
 pkgs/std/Std/List/Search.fble
-pkgs/std/Std/List/Eq.fble
-pkgs/std/Std/List/Cmp.fble
 pkgs/std/Std/List/Index.fble
 pkgs/std/Std/Bool/Data.fble
 pkgs/std/Std/Bool/Assert.fble

@@ -1,5 +1,5 @@
 # @module[/Std/List/Cmp%]
-#  The Cmp@ instance for List@.
+#  The @l{Cmp@} instance for @l{List@}.
 
 Cmp@, Compared@, Less, Equal, Greater .= /Std/Cmp%;
 List@ .= /Std/List%;
@@ -8,6 +8,22 @@ List@ .= /Std/List%;
 #  @arg[@][A@] The type of element on the list.
 #  @arg[Cmp@<A@>][cmp] How to compare list elements.
 #  @returns[Cmp@<List@<A@>>] How to compare lists.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Cmp(/Std/Int/Cmp%.Cmp, List[1, 2, 4, 3, 2], List[1, 2, 3, 4, 5]);
+#
+#  Would return @l{Greater}, because the third element of the first list is
+#  greater than the third element of the second list.
+#
+#  And:
+#
+#  @code[fble] @
+#   Cmp(/Std/Int/Cmp%.Cmp, List[1, 2], List[1, 2, 3, 4, 5]);
+#
+#  Would return @l{Less} because the elements in the first list equal the
+#  corresponding elements in the second list, but the first list is shorter.
 <@ A@>(Cmp@<A@>) { Cmp@<List@<A@>>; }
 Cmp = <@ A@>(Cmp@<A@> cmp) {
   Cmp@<List@<A@>>
