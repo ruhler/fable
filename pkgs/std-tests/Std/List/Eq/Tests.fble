@@ -242,30 +242,52 @@ Test@ Tests = TestSuite|Eq[
   ],
 
   TestSuite|Break[
-    Test|span({
+    Test|Span({
       Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|ABC;
       List@<Elem@> got = Break(Eq, Elems|ABCADBE, Elems|AD).span;
       AssertEquals(Eqs, Shows, wnt, got);
     }),
 
-    Test|tail({
+    Test|Tail({
       Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|ADBE;
       List@<Elem@> got = Break(Eq, Elems|ABCADBE, Elems|AD).tail;
       AssertEquals(Eqs, Shows, wnt, got);
+    }),
+
+    Test|Full({
+      # Verify the full list goes into the span if we don't find the sublist.
+      Unit@ _ := Lazy;
+      List@<Elem@> wnt = Elems|ABCAEBE;
+      List@<Elem@> got = Break(Eq, Elems|ABCAEBE, Elems|AD).span;
+      AssertEquals(Eqs, Shows, wnt, got);
     })
   ],
 
-  Test|Split({
-    Unit@ _ := Lazy;
-    List@<List@<Elem@>> wnt = List[Elems|A, Elems|DE, Elems|A, Elems|''];
-    List@<List@<Elem@>> got = Split(Eq, Elems|ABCDEBCABC, Elems|BC);
-    AssertEquals(
-      /Std/List/Eq%.Eq(Eqs),
-      /Std/List/Show%.Show(Shows),
-      wnt, got);
-  }),
+  TestSuite|Split[
+    Test|Basic({
+      Unit@ _ := Lazy;
+      List@<List@<Elem@>> wnt = List[Elems|A, Elems|DE, Elems|A, Elems|''];
+      List@<List@<Elem@>> got = Split(Eq, Elems|ABCDEBCABC, Elems|BC);
+      AssertEquals(
+        /Std/List/Eq%.Eq(Eqs),
+        /Std/List/Show%.Show(Shows),
+        wnt, got);
+    }),
+
+    Test|Prefix({
+      # Verify the result starts with the empty list if the delimeter is a
+      # prefix of the list.
+      Unit@ _ := Lazy;
+      List@<List@<Elem@>> wnt = List[Elems|'', Elems|A, Elems|DE];
+      List@<List@<Elem@>> got = Split(Eq, Elems|BCABCDE, Elems|BC);
+      AssertEquals(
+        /Std/List/Eq%.Eq(Eqs),
+        /Std/List/Show%.Show(Shows),
+        wnt, got);
+    })
+  ],
 
   Test|Replace({
     Unit@ _ := Lazy;

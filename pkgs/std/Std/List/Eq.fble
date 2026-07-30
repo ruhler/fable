@@ -246,6 +246,9 @@ Strip = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
 };
 
 # @func[Search] Finds the longest suffix of a list with the given prefix.
+#  This searches for the first occurence of a particular sublist within a
+#  list.
+#
 #  @arg[@][T@] The type of element on the list.
 #  @arg[Eq@<T@>][eq] List element equality.
 #  @arg[List@<T@>][list] The list to check.
@@ -253,6 +256,16 @@ Strip = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
 #  @returns[List@<T@>]
 #   The longest suffix of the list that starts with the given prefix, or an
 #   empty list if the prefix is not found anywhere in the list.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Search(/Std/Int/Eq%.Eq, List[2, 3, 0, 1, 4, 5, 0, 1, 6, 7], List[0, 1]);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[0, 1, 4, 5, 0, 1, 6, 7];
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
 Search = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
   list.?(empty: list);
@@ -261,6 +274,9 @@ Search = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
 };
 
 # @func[SearchR] Finds the shortest suffix of a list with the given prefix.
+#  This searches in reverse for a particular sublist within a list, returning
+#  the last occurence of the sublist in the list.
+#
 #  @arg[@][T@] The type of element on the list.
 #  @arg[Eq@<T@>][eq] List element equality.
 #  @arg[List@<T@>][list] The list to check.
@@ -268,6 +284,16 @@ Search = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
 #  @returns[List@<T@>]
 #   The shortest suffix of the list that starts with the given prefix, or an
 #   empty list if the prefix is not found anywhere in the list.
+#
+#  For example:
+#
+#  @code[fble] @
+#   SearchR(/Std/Int/Eq%.Eq, List[2, 3, 0, 1, 4, 5, 0, 1, 6, 7], List[0, 1]);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[0, 1, 6, 7];
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
 SearchR = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
   prefix.?(empty: Empty<T@>);
@@ -279,6 +305,8 @@ SearchR = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
 };
 
 # @func[Until] Takes elements from the list until a sublist is found.
+#  Removes the sublist and anything after it from the list.
+#  
 #  @arg[@][T@] The type of element on the list.
 #  @arg[Eq@<T@>][eq] List element equality.
 #  @arg[List@<T@>][list] The list to take elements from.
@@ -286,6 +314,16 @@ SearchR = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
 #  @returns[List@<T@>]
 #   The prefix of the list up to but not including elements from the first
 #   occurence of the sublist in the list.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Until(/Std/Int/Eq%.Eq, List[2, 3, 0, 1, 4, 5, 0, 1, 6, 7], List[0, 1]);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[2, 3];
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
 Until = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
   list.?(empty: list);
@@ -293,9 +331,7 @@ Until = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
   Items(list.items.head, Until(eq, list.items.tail, sublist));
 };
 
-# @struct[Span@]
-#  The return type of the @l{Break} function.
-#
+# @struct[Span@] The return type of the @l{Break} function.
 #  @field[List@<T@>][span] A prefix of a list.
 #  @field[List@<T@>][tail] The remainder of the list.
 Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
@@ -308,6 +344,28 @@ Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
 #  @returns[Span@<T@>]
 #   The elements of the list up to the first occurrence of the given sublist,
 #   followed by the remainder of the list with sublist included.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Break(/Std/Int/Eq%.Eq, List[2, 3, 0, 1, 4, 5, 0, 1, 6, 7], List[0, 1]);
+#
+#  Would return a span @l{List[2, 3]} and tail @l{List[0, 1, 4, 5, 0, 1, 6, 7]}.
+#
+#  The return value can be accessed as a normal struct:
+#
+#  @code[fble] @
+#   Span@<Int@> result = Break(...);
+#   List@<Int@> span = result.span;
+#   List@<Int@> tail = result.tail;
+#
+#  You can also use struct import to access the result:
+#
+#  @code[fble] @
+#   List@<Int@> span, List@<Int@> tail .= Break(...);
+#
+#  If the sublist is not found in the list, the entire list is returned in the
+#  @l{span} field of the result.
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Span@<T@>; }
 Break = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
   StartsWith(eq, list, sublist).?(true: Span@(Empty<T@>, list));
@@ -324,6 +382,29 @@ Break = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
 #  @returns[List@<List@<T@>>]
 #   Split the list into a sequence of lists using the delim sequence as the
 #   delimiter.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Split(/Std/Int/Eq%.Eq, List[2, 3, 0, 1, 4, 5, 0, 1, 6, 7], List[0, 1]);
+#
+#  Would return a list of lists equivalent to:
+#
+#  @code[fble] @
+#   List[List[2, 3], List[4, 5], List[1, 6, 7]]
+#
+#  Occurences of the delimeter at the front and end of the list result in
+#  empty list elements. For example:
+#
+#  @code[fble] @
+#   Split(/Std/Int/Eq%.Eq,
+#     List[0, 1, 2, 3, 0, 1, 4, 5, 0, 1, 6, 7, 0, 1],
+#     List[0, 1]);
+#
+#  Would return a list of lists equivalent to:
+#
+#  @code[fble] @
+#   List[List[], List[2, 3], List[4, 5], List[1, 6, 7], List[]]
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<List@<T@>>; }
 Split = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> delim) {
   Span@<T@> span = Break(eq, list, delim);
@@ -339,6 +420,18 @@ Split = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> delim) {
 #  @arg[List@<T@>][to] The value to put in place of the sublist.
 #  @returns[List@>]
 #   Replaces all occurrence of @a[from] in @a[list] with @a[to].
+#
+#  For example:
+#
+#  @code[fble] @
+#   Replace(/Std/Int/Eq%.Eq,
+#     List[2, 3, 0, 1, 4, 5, 0, 1, 6, 7],
+#     List[0, 1], List[8, 9, 10]);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[2, 3, 8, 9, 10, 4, 5, 8, 9, 10, 6, 7]
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
 Replace = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> from, List@<T@> to) {
   Span@<T@> span = Break(eq, list, from);
