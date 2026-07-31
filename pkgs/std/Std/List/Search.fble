@@ -29,6 +29,16 @@ Any = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
 #  @arg[List@<T@>][list] The list to check.
 #  @arg[(T@) { Bool@; }][p] The condition to check for.
 #  @returns[List@<T>] All elements on the list that satisfy the condition.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Keep(List[1, 2, 3, 4, 5], IsOdd);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[1, 3, 5];
 <@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
 Keep = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   list.?(empty: list);
@@ -43,6 +53,16 @@ Keep = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
 #  @arg[(T@) { Bool@; }][p] The condition to check for.
 #  @returns[List@<T>]
 #   All elements on the list except those that satisfy the condition.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Omit(List[1, 2, 3, 4, 5], IsOdd);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[2, 4];
 <@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
 Omit = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   list.?(empty: list);
@@ -88,6 +108,16 @@ Split = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
 #  @returns[List@<T@>]
 #   The longest suffix of the list whose first element satisfies the given
 #   condition, or an empty list if no element satisfies the condition.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Search(List[1, 2, 3, 4, 5], IsEven);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[2, 3, 4, 5];
 <@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
 Search = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   list.?(empty: list);
@@ -102,6 +132,16 @@ Search = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
 #  @returns[List@<T@>]
 #   The shortest suffix of the list whose first element satisfies the given
 #   condition, or an empty list if no element satisfies the condition.
+#
+#  For example:
+#
+#  @code[fble] @
+#   SearchR(List[1, 2, 3, 4, 5], IsEven);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[4, 5];
 <@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
 SearchR = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   list.?(empty: list);
@@ -118,6 +158,16 @@ SearchR = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
 #  @return[List@<T@>]
 #   The longest suffix of the list that begins with an element which does not
 #   satisfy the given condition.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Skip(List[0, 2, 3, 4, 5], IsEven);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[3, 4, 5];
 <@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
 Skip = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   list.?(empty: list);
@@ -132,6 +182,16 @@ Skip = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
 #  @return[List@<T@>]
 #   The longest prefix of the list containing no elements satisfying the given
 #   condition.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Until(List[0, 2, 3, 4, 5], IsOdd);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[0, 2];
 <@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
 Until = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   list.?(empty: list);
@@ -146,6 +206,16 @@ Until = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
 #  @return[List@<T@>]
 #   The longest prefix of the list containing only elements satisfying the
 #   given condition.
+#
+#  For example:
+#
+#  @code[fble] @
+#   While(List[0, 2, 3, 4, 5], IsEven);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[0, 2];
 <@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
 While = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   list.?(empty: list);
@@ -160,6 +230,16 @@ While = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
 #  @return[List@<T@>]
 #   The longest prefix of the list ending an an element that does not satisfy
 #   the given condition.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Trim(List[1, 2, 3, 4, 6], IsEven);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[1, 2, 3];
 <@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
 Trim = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   list.?(empty: list);
@@ -176,6 +256,16 @@ Trim = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
 #  @return[List@<T@>]
 #   The longest sublist of the list starting and ending in elements that do
 #   not satisfy the given condition.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Strip(List[0, 2, 3, 4, 5, 6, 8], IsEven);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[3, 4, 5];
 <@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
 Strip = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   Skip(Trim(list, p), p);
@@ -195,6 +285,30 @@ Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
 #  @returns[Span@]
 #   The longest prefix of the list containing only elements that satisfy the
 #   condition, along with the remainder of the list.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Strip(List[0, 2, 3, 4, 5], IsEven);
+#
+#  Would return span @l{List[0, 2]} and tail @l{List[3, 4, 5]}.
+#
+#  The return value can be accessed as a normal struct:
+#
+#  @code[fble] @
+#   Span@<Int@> result = Span(...);
+#   List@<Int@> span = result.span;
+#   List@<Int@> tail = result.tail;
+#
+#  You can also use struct import to access the result:
+#
+#  @code[fble] @
+#   List@<Int@> span, List@<Int@> tail .= Span(...);
+#
+#  If all elements of the list satisfy the condition, the entire list will be
+#  returned in the @l{span} field of the result. If no elements of the list
+#  satisfy the condition, the entire list will be returned in the @l{tail}
+#  field of the result.
 <@ T@>(List@<T@>, (T@) { Bool@; }) { Span@<T@>; }
 Span = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   list.?(empty: Span@(Empty<T@>, Empty<T@>));
@@ -210,6 +324,30 @@ Span = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
 #  @returns[Span@]
 #   The longest prefix of the list containing only elements that don't satisfy
 #   the condition, along with the remainder of the list.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Break(List[0, 2, 3, 4, 5], IsOdd);
+#
+#  Would return span @l{List[0, 2]} and tail @l{List[3, 4, 5]}.
+#
+#  The return value can be accessed as a normal struct:
+#
+#  @code[fble] @
+#   Span@<Int@> result = Break(...);
+#   List@<Int@> span = result.span;
+#   List@<Int@> tail = result.tail;
+#
+#  You can also use struct import to access the result:
+#
+#  @code[fble] @
+#   List@<Int@> span, List@<Int@> tail .= Break(...);
+#
+#  If no elements of the list satisfy the condition, the entire list will be
+#  returned in the @l{span} field of the result. If all elements of the list
+#  satisfy the condition, the entire list will be returned in the @l{tail}
+#  field of the result.
 <@ T@>(List@<T@>, (T@) { Bool@; }) { Span@<T@>; }
 Break = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
   list.?(empty: Span@(Empty<T@>, Empty<T@>));

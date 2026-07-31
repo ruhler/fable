@@ -11,7 +11,7 @@ Test = OnAscii(/Std/Test%.Test);
 TestSuite = OnAscii(/Std/Test%.TestSuite);
 Unit@ .= /Std/Unit%;
 
-Elem@, Elem, Elems, Eq, Ge, Eqs, Shows .= /Std/List/Tests/Elem%;
+Elem@, Elem, Elems, Eq, Ne, Ge, Eqs, Shows .= /Std/List/Tests/Elem%;
 
 Test@ Tests = TestSuite|Search[
   TestSuite|Any[
@@ -112,33 +112,61 @@ Test@ Tests = TestSuite|Search[
   }),
 
   TestSuite|Span[
-    Test|span({
+    Test|Span({
       Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|AB;
       List@<Elem@> got = Span(Elems|ABCADBE, Ge(Elem.B)).span;
       AssertEquals(Eqs, Shows, wnt, got);
     }),
 
-    Test|tail({
+    Test|Tail({
       Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|CADBE;
       List@<Elem@> got = Span(Elems|ABCADBE, Ge(Elem.B)).tail;
+      AssertEquals(Eqs, Shows, wnt, got);
+    }),
+
+    Test|None({
+      Unit@ _ := Lazy;
+      List@<Elem@> wnt = Elems|CADBC;
+      List@<Elem@> got = Span(Elems|CADBC, Eq(Elem.E)).tail;
+      AssertEquals(Eqs, Shows, wnt, got);
+    }),
+
+    Test|All({
+      Unit@ _ := Lazy;
+      List@<Elem@> wnt = Elems|CADBC;
+      List@<Elem@> got = Span(Elems|CADBC, Ne(Elem.E)).span;
       AssertEquals(Eqs, Shows, wnt, got);
     })
   ],
 
   TestSuite|Break[
-    Test|span({
+    Test|Span({
       Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|AB;
       List@<Elem@> got = Break(Elems|ABCADBE, Eq(Elem.C)).span;
       AssertEquals(Eqs, Shows, wnt, got);
     }),
 
-    Test|tail({
+    Test|Tail({
       Unit@ _ := Lazy;
       List@<Elem@> wnt = Elems|CADBE;
       List@<Elem@> got = Break(Elems|ABCADBE, Eq(Elem.C)).tail;
+      AssertEquals(Eqs, Shows, wnt, got);
+    }),
+
+    Test|None({
+      Unit@ _ := Lazy;
+      List@<Elem@> wnt = Elems|CADBC;
+      List@<Elem@> got = Break(Elems|CADBC, Eq(Elem.E)).span;
+      AssertEquals(Eqs, Shows, wnt, got);
+    }),
+
+    Test|All({
+      Unit@ _ := Lazy;
+      List@<Elem@> wnt = Elems|CADBC;
+      List@<Elem@> got = Break(Elems|CADBC, Ne(Elem.E)).tail;
       AssertEquals(Eqs, Shows, wnt, got);
     })
   ]

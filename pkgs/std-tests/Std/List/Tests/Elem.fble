@@ -1,7 +1,7 @@
 # @module[/Std/List/Tests/Elem%]
 #  Element type for use in list tests.
 
-Bool@, True, False .= /Std/Bool%;
+Bool@, True, False, Not .= /Std/Bool%;
 String .= /Std/Char/Ascii/Stream%;
 Cmp@, Less, Equal, Greater .= /Std/Cmp%;
 Eq@ .= /Std/Eq%;
@@ -53,7 +53,11 @@ Eq@<Elem@> Eq = (Elem@ a, Elem@ b) {
       E: b.?(E: True, : False));
 };
 
+Eq@<Elem@> Ne = (Elem@ a, Elem@ b) {
+  Not(Eq(a, b));
+};
+
 Eq@<List@<Elem@>> Eqs = /Std/List/Eq%.Eq(Eq);
 Show@<List@<Elem@>> Shows = /Std/List/Show%.Show(Show);
 
-@(Elem@, Elem, Elems, Show, Cmp, Le, Ge, Eq, Eqs, Shows);
+@(Elem@, Elem, Elems, Show, Cmp, Le, Ge, Eq, Ne, Eqs, Shows);
