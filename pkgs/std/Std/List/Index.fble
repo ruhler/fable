@@ -6,10 +6,13 @@ Le .= /Std/Int/Cmp%;
 IsZero .= /Std/Int/Sign%;
 List@, Items, Empty .= /Std/List%;
 
-# @func[Length] Returns the length of a list.
+# @func[Length] Returns the number of items on a list.
 #  @arg[@][T@] The type of element on the list.
 #  @arg[List@<T@>][list] The list to get the length of.
-#  @returns[Int@] The length of the list.
+#  @returns[Int@] The number of items on the list.
+#
+#  @code[fble] @
+#   Int@ three = Length(List[4, 5, 6]);
 <@ T@>(List@<T@>) { Int@; }
 Length = <@ T@>(List@<T@> list) {
   list.?(empty: 0);
@@ -25,6 +28,9 @@ Length = <@ T@>(List@<T@> list) {
 #  @returns[T@] The element of the list at the given index.
 #  @sideeffects
 #   Behavior is undefined if there is no element at the given index.
+#
+#  @code[fble] @
+#   Int@ three = Get(List[5, 4, 3, 2, 1], 2);
 <@ T@>(List@<T@>, Int@) { T@; }
 Get = <@ T@>(List@<T@> list, Int@ index) {
   IsZero(index).?(true: list.items.head);
@@ -42,6 +48,16 @@ Get = <@ T@>(List@<T@> list, Int@ index) {
 #  @returns[List@<T@>] The list with the given element set to the given value.
 #  @sideeffects
 #   Behavior is undefined if there is no element at the given index.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Set(List[5, 4, 3, 2, 1], 2, 7);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[5, 4, 7, 2, 1];
 <@ T@>(List@<T@>, Int@, T@) { List@<T@>; }
 Set = <@ T@>(List@<T@> list, Int@ index, T@ value) {
   IsZero(index).?(true: Items(value, list.items.tail));
@@ -55,6 +71,16 @@ Set = <@ T@>(List@<T@> list, Int@ index, T@ value) {
 #  @returns[List@<T@>]
 #   The first @a[count] elements from the list. Returns fewer than @a[count]
 #   elements if there are less than @a[count] elements in the original list.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Take(List[5, 4, 3, 2, 1], 2);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[5, 4];
 <@ T@>(List@<T@>, Int@) { List@<T@>; }
 Take = <@ T@>(List@<T@> list, Int@ count) {
   Le(count, 0).?(true: Empty<T@>);
@@ -69,6 +95,16 @@ Take = <@ T@>(List@<T@> list, Int@ count) {
 #  @returns[List@<T@>]
 #   All but the first @a[count] elements on the list. Returns an empty list
 #   if the original list has fewer than @a[count] elements.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Drop(List[5, 4, 3, 2, 1], 2);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[3, 2, 1];
 <@ T@>(List@<T@>, Int@) { List@<T@>; }
 Drop = <@ T@>(List@<T@> list, Int@ count) {
   Le(count, 0).?(true: list);
@@ -87,6 +123,16 @@ Drop = <@ T@>(List@<T@> list, Int@ count) {
 #   The returned list may be shorter than @a[len] if sublist range goes past
 #   the end of the list. Returns an empty list if the initial index is past
 #   the end of the list.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Range(List[6, 5, 4, 3, 2, 1, 0], 2, 3);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[4, 3, 2];
 <@ T@>(List@<T@>, Int@, Int@) { List@<T@>; }
 Range = <@ T@>(List@<T@> list, Int@ index, Int@ len) {
   Take(Drop(list, index), len);
@@ -107,6 +153,28 @@ Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
 #   The span of items up to but not including the element at the given index,
 #   followed by the rest of the items on the list. If the index is past the
 #   end of the list, the initial span will include the entire list.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Span(List[5, 4, 3, 2, 1], 2);
+#
+#  Would return a span @l{List[5, 4]} and tail @l{List[3, 2, 1]}.
+#
+#  The return value can be accessed as a normal struct:
+#
+#  @code[fble] @
+#   Span@<Int@> result = Span(...);
+#   List@<Int@> span = result.span;
+#   List@<Int@> tail = result.tail;
+#
+#  You can also use struct import to access the result:
+#
+#  @code[fble] @
+#   List@<Int@> span, List@<Int@> tail .= Span(...);
+#
+#  If the index goes past the length of the list, the entire list is returned
+#  in the @l{span} field of the result.
 <@ T@>(List@<T@>, Int@) { Span@<T@>; }
 Span = <@ T@>(List@<T@> list, Int@ index) {
   Le(index, 0).?(true: Span@(Empty<T@>, list));

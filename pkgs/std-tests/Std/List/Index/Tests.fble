@@ -57,17 +57,24 @@ Test@ Tests = TestSuite|Index[
   }),
 
   TestSuite|Span[
-    Test|span({
+    Test|Span({
       Unit@ _ := Lazy;
       List@<Elem@> got = Span(Elems|ABCDE, Int|2).span;
       List@<Elem@> wnt = Elems|AB;
       AssertEquals(Eqs, Shows, wnt, got);
     }),
 
-    Test|tail({
+    Test|Tail({
       Unit@ _ := Lazy;
       List@<Elem@> got = Span(Elems|ABCDE, Int|2).tail;
       List@<Elem@> wnt = Elems|CDE;
+      AssertEquals(Eqs, Shows, wnt, got);
+    }),
+
+    Test|Full({
+      Unit@ _ := Lazy;
+      List@<Elem@> got = Span(Elems|ABCDE, Int|7).span;
+      List@<Elem@> wnt = Elems|ABCDE;
       AssertEquals(Eqs, Shows, wnt, got);
     })
   ]

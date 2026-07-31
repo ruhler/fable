@@ -2,6 +2,10 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* /Std/LIst/Index%.Range feels like a weird name for that function.
+ - Should it be sub, or sublist?
+ - Should it take start and end instead of start and length?
+
 * Should /Std/List/Sort% take Cmp@ as the last argument?
  - For better integration with function bind syntax?
 

@@ -91,9 +91,9 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/List/Sort.fble
 [DONE] pkgs/std/Std/List/Eq.fble
 [DONE] pkgs/std/Std/List/Cmp.fble
+[DONE] pkgs/std/Std/List/Index.fble
 
 pkgs/std/Std/List/Search.fble
-pkgs/std/Std/List/Index.fble
 pkgs/std/Std/Bool/Data.fble
 pkgs/std/Std/Bool/Assert.fble
 pkgs/std/Std/Bool/Random.fble
