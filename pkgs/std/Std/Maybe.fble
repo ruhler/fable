@@ -1,6 +1,38 @@
 # @module[/Std/Maybe%]
-#  Maybe type and basic operations.
+#  Defines the @l{Maybe@} type, which represents an optional value.
+#
+#  The constructor @l{Nothing} is used if no value is present. The constructor
+#  @l{Just} is used when a value is present.
+#
+#  For example, here's how to return the first element of a list if present:
+#
+#  @code[fble] @
+#   <@ A@>(List@<A@>) { Maybe@<A@>; }
+#   Head = <@ A@>(List@<A@> list) {
+#     list.?(empty: Nothing<A@>);
+#     Just(list.items.head);
+#   };
+#
+#  And here's how to access the value from a maybe type, returning a default
+#  value if there is no value present:
+#
+#  @code[fble] @
+#   <@ T@>(T@, Maybe@<T@>) { T@; }
+#   Default = <@ T@>(T@ default, Maybe@<T@> maybe) {
+#     maybe.?(just: maybe.just);
+#     default;
+#   };
+#   
+#  The @l{/Std/Maybe%} module defines basic operations for constructing and
+#  accessing @l{Maybe@} values. Additional functionality is provided in
+#  submodules:
+#
+#  @def[@l{/Std/Maybe/Cmp%}] Comparison of maybe values
+#  @def[@l{/Std/Maybe/Data%}] Support for maybe values as keys in maps
+#  @def[@l{/Std/Maybe/Eq%}] Equality of maybe values
+#  @def[@l{/Std/Maybe/Show%}] Converting maybe values to strings
 
+For@ .= /Std/For%;
 Unit@, Unit .= /Std/Unit%;
 
 # @type[Maybe@] An optional value.
@@ -40,6 +72,13 @@ Maybe@ Nothing = <@ T@> {
 #  @arg[T@][default] The default value.
 #  @arg[Maybe@<T@>][maybe] The Maybe@ to get the value from.
 #  @returns[T@] The value of the Maybe@ if present, else the default value.
+#
+#  For example, here's how to get the value from a maybe integer, defaulting
+#  to zero if there is no value present:
+#
+#  @code[fble] @
+#   Maybe@<Int@> mx = ...;
+#   Int@ x = Default(Int|0, mx);
 <@ T@>(T@, Maybe@<T@>) { T@; }
 Default = <@ T@>(T@ default, Maybe@<T@> maybe) {
   maybe.?(just: maybe.just);
@@ -53,33 +92,56 @@ Default = <@ T@>(T@ default, Maybe@<T@> maybe) {
 #  @arg[Maybe@<T@>][maybe] The Maybe@ to get the value from.
 #  @returns[T@] The value of the Maybe@.
 #  @sideeffects Behavior is undefined if no value is present.
+#
+#  This should only be used if you know for sure that there is a value
+#  present. Otherwise your program will crash.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Maybe@<Int@> mx = ...;
+#   mx.?(nothing: Int|0);
+#   JustGet(mx);
+#
+#  This function is provided for completeness. Normally you would access the
+#  @l{just} field directly:
+#
+#  @code[fble] @
+#   Maybe@<Int@> mx = ...;
+#   mx.?(nothing: Int|0);
+#   mx.just;
 <@ T@>(Maybe@<T@>) { T@; }
 JustGet = <@ T@>(Maybe@<T@> maybe) {
   maybe.just;
 };
 
 # @func[ForEach] Iterate over the element of a maybe.
-#  Analogous to /Std/List%.ForEach when treating Maybe@ as a list of no more
-#  than one element. See /Std/List%.ForEach for more information.
+#  You can think of @l{Maybe@<T@>} as a list of no more than one elements. The
+#  @l{ForEach} function provides standard @l{For@} loop iteration over that at
+#  most one element.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Maybe@<Int@> mx = ...;
+#   Int@ sum = ForEach(mx, 0, Add);
+#
+#  See @l{/Std/For%.For@} for more explanation and  examples of how to use the
+#  @l{For@} type.
 #
 #  @arg[@][A@] The type of element.
 #  @arg[Maybe@<A@>][maybe] The Maybe@ to iterate over.
 #  @arg[@][B@] The type of data to return.
-#  @arg[B@][base] The value to return for an empty Maybe@.
-#  @arg[(A@, B@) { B@; }][body]
-#   A function to update the value to return given the next element.
-#  @returns[B@]
-#   The result of applying the body consecutively to the base value, once for
-#   each element in the maybe.
-<@ A@>(Maybe@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
-ForEach = <@ A@>(Maybe@<A@> maybe)<@ B@>(B@ base, (A@, B@) { B@; } body) {
-  maybe.?(nothing: base);
-  body(maybe.just, base);
+#  @arg[For@<A@>] A for loop iteration over the optional value.
+<@ A@>(Maybe@<A@>) { For@<A@>; }
+ForEach = <@ A@>(Maybe@<A@> maybe)<@ S@>(S@ s, (S@, A@) { S@; } body) {
+  maybe.?(nothing: s);
+  body(s, maybe.just);
 };
 
-# @func[Map] Applies a function to every element of the maybe.
-#  Analogous to /Std/List%.Map when treating Maybe@ as a list of no more
-#  than one element. See /Std/List%.Map for more information.
+# @func[Map] Applies a function to the value if present.
+#  This is analogous to /Std/List%.Map when treating Maybe@ as a list of at
+#  most one element. See /Std/List%.Map for more information.
 #
 #  @arg[@][A@] The type of value.
 #  @arg[Maybe@<A@>][maybe] The Maybe@ to map over.
@@ -88,6 +150,22 @@ ForEach = <@ A@>(Maybe@<A@> maybe)<@ B@>(B@ base, (A@, B@) { B@; } body) {
 #  @returns[Maybe@<B@>]
 #   The result of applying f to the argument value. Nothing if no argument
 #   value is present.
+#
+#  For example, to increment the value of a maybe:
+#
+#  @code[fble] @
+#   Maybe@<Int@> mx = ...;
+#   Maybe@<Int@> my = Map(mx, Incr);
+#
+#  This can also be used with function bind syntax. For example, to square the
+#  value of a maybe:
+#
+#  @code[fble] @
+#   Maybe@<Int@> mx = ...;
+#   Maybe@<Int@> my = {
+#     Int@ x := Map(mx);
+#     Mul(x, x);
+#   };
 <@ A@>(Maybe@<A@>)<@ B@>((A@) { B@; }) { Maybe@<B@>; }
 Map = <@ A@>(Maybe@<A@> m)<@ B@>((A@) { B@; } f) {
   m.?(nothing: Nothing<B@>);
@@ -95,7 +173,8 @@ Map = <@ A@>(Maybe@<A@> m)<@ B@>((A@) { B@; } f) {
 };
 
 # @func[Do] Monadic do for Maybe@ type.
-#  Applies the function if the argument value is present.
+#  Applies the function if the argument value is present, returning an
+#  optional result.
 #
 #  @arg[@][A@] The type of value.
 #  @arg[Maybe@<A@>][maybe] The argument.
@@ -104,6 +183,20 @@ Map = <@ A@>(Maybe@<A@> m)<@ B@>((A@) { B@; } f) {
 #  @returns[Maybe@<B@>]
 #   The result of applying f if the argument is present.
 #   Nothing if the argument is not present.
+#
+#  It's most convenient to call @l{Do} using function bind syntax. For
+#  example, to perform a sequence of operations where some operations 
+#  may "fail":
+#
+#  @code[fble] @
+#   Maybe@<Int@> result = {
+#     Int@ x := Do(Head(possibly_empty_list));
+#     Int@ y := Do(Head(other_possibly_empty_list));
+#     Add(x, y);
+#   };
+#
+#  Which returns the sum of @l{x} and @l{y} if both lists are non-empty, or
+#  @l{Nothing} if one or more of the lists are empty.
 <@ A@>(Maybe@<A@>)<@ B@>((A@) { Maybe@<B@>; }) { Maybe@<B@>; }
 Do = <@ A@>(Maybe@<A@> m)<@ B@>((A@) { Maybe@<B@>; } f) {
   m.?(nothing: Nothing<B@>);

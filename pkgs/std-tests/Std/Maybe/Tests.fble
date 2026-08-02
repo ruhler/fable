@@ -56,7 +56,7 @@ Test@ Tests = TestSuite|Maybe[
       Unit@ _ := Lazy;
       String@ wnt = Str|ABCD; 
       String@ got = ForEach(Just(Str|AB), Str|CD,
-        (String@ str, String@ base) { Append(str, base); });
+        (String@ base, String@ str) { Append(str, base); });
       AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
     }),
 
@@ -64,7 +64,7 @@ Test@ Tests = TestSuite|Maybe[
       Unit@ _ := Lazy;
       String@ wnt = Str|Default; 
       String@ got = ForEach(Nothing<String@>, Str|Default,
-        (String@ str, String@ _) { str; });
+        (String@ _, String@ str) { str; });
       AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
     })
   ],
