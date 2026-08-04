@@ -5,10 +5,13 @@ True, False .= /Std/Bool%;
 Compared@ .= /Std/Cmp%;
 Eq@ .= /Std/Eq%;
 
-# @value[Eq] Eq@ instance for Compared@.
-#  @type[Eq@<Compared@>]
-Eq@<Compared@>
-Eq = (Compared@ a, Compared@ b) {
+# @func[Eq] Check two @l{Compared@} for equality.
+#  @arg[Compared@@][a] The first operand.
+#  @arg[Compared@@][b] The second operand.
+#  @returns[Bool@] True if the operands are equal, false otherwise.
+#
+#  See also @l{/Std/Eq%.Eq@}.
+Eq@<Compared@> Eq = (Compared@ a, Compared@ b) {
   a.?(
     less: b.?(less: True, : False),
     equal: b.?(equal: True, : False),

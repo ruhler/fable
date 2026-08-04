@@ -2,7 +2,7 @@
 #  The Cmp@ instance for Maybe@.
 #
 #  Useful as a building block for implementing @l{Cmp@} for more complex data
-#  types involving boolean fields.
+#  types involving maybe fields.
 #
 #  The value @l{Nothing} is treated as less than @l{Just} anything.
 #

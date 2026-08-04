@@ -98,6 +98,8 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Maybe/Show.fble
 [DONE] pkgs/std/Std/Maybe/Cmp.fble
 [DONE] pkgs/std/Std/List/Maybe.fble
+[DONE] pkgs/std/Std/Cmp/Eq.fble
+[DONE] pkgs/std/Std/Cmp/Cmp.fble
 
 pkgs/std/Std/Maybe/Data.fble
 pkgs/std/Std/Bool/Data.fble
@@ -154,8 +156,6 @@ pkgs/std/Std/List/Data.fble
 pkgs/std/Std/List/Random.fble
 pkgs/std/Std/Func.fble
 pkgs/std/Std/Cmp/Data.fble
-pkgs/std/Std/Cmp/Eq.fble
-pkgs/std/Std/Cmp/Cmp.fble
 pkgs/std/Std/Set/Show.fble
 pkgs/std/Std/Set/Eq.fble
 pkgs/std/Std/Set/List.fble

@@ -20,12 +20,12 @@ Cmp@, Less, Greater, Equal .= /Std/Cmp%;
 #  For example:
 #
 #  @code[fble] @
-#   /Std/List/Sort%.Sort(Cmp)[True, False, False, False, True]
+#   /Std/List/Sort%.Sort(Cmp)[True, False, False, False, True];
 #
 #  Would return a list equivalent to:
 #
 #  @code[fble] @
-#   List[False, False, False, True, True]
+#   List[False, False, False, True, True];
 Cmp@<Bool@>
 Cmp = (Bool@ a, Bool@ b) {
   a.?(

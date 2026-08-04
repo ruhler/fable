@@ -1,14 +1,28 @@
 # @module[/Std/Cmp/Cmp%]
 #  The Cmp@ instance for Compared@.
+#
+#  The value @l{Less} is less than @l{Equal} which is less than @l{Greater}.
+#
+#  See @l{/Std/Cmp%.Cmp@} for more about the @l{Cmp@} interface and how to use
+#  it.
 
 Cmp@, Compared@, Less, Greater, Equal .= /Std/Cmp%;
 
-# @value[Cmp] The Cmp@ instance for Compared@.
-#  @type[Cmp@<Compared@>]
+# @func[Cmp] The comparison operation for @l{Compared@}.
+#  @arg[Compared@][a] The first operand.
+#  @arg[Compared@][b] The second operand.
+#  @returns[Compared@] The result of comparing a to b.
 #
-#  less < equal < greater
-Cmp@<Compared@>
-Cmp = (Compared@ a, Compared@ b) {
+#  For example:
+#
+#  @code[fble] @
+#   /Std/List/Sort%.Sort(Cmp)[Greater, Less, Equal];
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[Less, Equal, Greater];
+Cmp@<Compared@> Cmp = (Compared@ a, Compared@ b) {
   a.?(
     less: b.?(less: Equal, : Less),
     equal: b.?(less: Greater, equal: Equal, greater: Greater),
