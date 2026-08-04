@@ -94,11 +94,10 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/List/Index.fble
 [DONE] pkgs/std/Std/List/Search.fble
 [DONE] pkgs/std/Std/Maybe.fble
-
-pkgs/std/Std/Maybe/Show.fble
-pkgs/std/Std/Maybe/Eq.fble
-pkgs/std/Std/Maybe/Cmp.fble
-pkgs/std/Std/List/Maybe.fble
+[DONE] pkgs/std/Std/Maybe/Eq.fble
+[DONE] pkgs/std/Std/Maybe/Show.fble
+[DONE] pkgs/std/Std/Maybe/Cmp.fble
+[DONE] pkgs/std/Std/List/Maybe.fble
 
 pkgs/std/Std/Maybe/Data.fble
 pkgs/std/Std/Bool/Data.fble

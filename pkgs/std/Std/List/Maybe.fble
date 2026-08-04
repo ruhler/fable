@@ -9,6 +9,22 @@ Maybe@, Just, Nothing .= /Std/Maybe%;
 #  @arg[Maybe@<A@>][maybe] An optional value.
 #  @returns[List@<A@>]
 #   A single element list if a value is present. An empty list otherwise.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Maybe@<Int@> mx = Just(3);
+#   List(mx);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   /Std/List%.List[3];
+#
+#  Note that this function shares a name in common with the
+#  @l{/Std/List%.List} list literal function. Reference the function by
+#  explicit path or imported under a different name if needed to avoid name
+#  conflict with @l{/Std/List%.List}.
 <@ A@>(Maybe@<A@>) { List@<A@>; }
 List = <@ A@>(Maybe@<A@> maybe) {
   maybe.?(nothing: Empty<A@>);
@@ -20,6 +36,25 @@ List = <@ A@>(Maybe@<A@> maybe) {
 #  @arg[List@<A@>][list] The list to get the first element of.
 #  @returns[Maybe<A@>]
 #   The first element of the list. Nothing if the list is empty.
+#
+#  This can be used as a safer alternative to @l{/Std/List%.Head} that does
+#  not crash when the list is empty.
+#
+#  For example:
+#
+#  @code[fble] @
+#   List@<Int@> list = List[1, 2, 3];
+#   Head(list);
+#
+#  Would return a maybe equivalent to:
+#
+#  @code[fble] @
+#   Just(1);
+#
+#  Note that this function shares a name in common with the
+#  @l{/Std/List%.Head} function. Reference the function by explicit path or
+#  imported under a different name if needed to avoid name conflict with
+#  @l{/Std/List%.Head}.
 <@ A@>(List@<A@>) { Maybe@<A@>; }
 Head = <@ A@>(List@<A@> list) {
   list.?(empty: Nothing<A@>);
@@ -31,6 +66,25 @@ Head = <@ A@>(List@<A@> list) {
 #  @arg[List@<A@>][list] The list to get the last element of.
 #  @returns[Maybe<A@>]
 #   The last element of the list. Nothing if the list is empty.
+#
+#  This can be used as a safer alternative to @l{/Std/List%.Last} that does
+#  not crash when the list is empty.
+#
+#  For example:
+#
+#  @code[fble] @
+#   List@<Int@> list = List[1, 2, 3];
+#   Last(list);
+#
+#  Would return a maybe equivalent to:
+#
+#  @code[fble] @
+#   Just(3);
+#
+#  Note that this function shares a name in common with the
+#  @l{/Std/List%.Last} function. Reference the function by explicit path or
+#  imported under a different name if needed to avoid name conflict with
+#  @l{/Std/List%.Last}.
 <@ A@>(List@<A@>) { Maybe@<A@>; }
 Last = <@ A@>(List@<A@> list) {
   list.?(empty: Nothing<A@>);
@@ -42,6 +96,22 @@ Last = <@ A@>(List@<A@> list) {
 #  @arg[@][A@] The type of element.
 #  @arg[List@<Maybe@<A@>>][list] A list of optional values.
 #  @returns[List<A@>] The list of present values.
+#
+#  For example:
+#
+#  @code[fble] @
+#   List@<Maybe@<Int@>> ms = List[Nothing, Just(3), Just(4), Nothing, Just(5)];
+#   Concat(ms);
+#
+#  Would return a list equivalent to:
+#
+#  @code[fble] @
+#   List[3, 4, 5];
+#
+#  Note that this function shares a name in common with the
+#  @l{/Std/List%.Concat} function. Reference the function by explicit path or
+#  imported under a different name if needed to avoid name conflict with
+#  @l{/Std/List%.Concat}.
 <@ A@>(List@<Maybe@<A@>>) { List@<A@>; }
 Concat = <@ A@>(List@<Maybe@<A@>> xs) {
   xs.?(empty: Empty<A@>);

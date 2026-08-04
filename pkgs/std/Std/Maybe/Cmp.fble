@@ -1,5 +1,13 @@
 # @module[/Std/Maybe/Cmp%]
 #  The Cmp@ instance for Maybe@.
+#
+#  Useful as a building block for implementing @l{Cmp@} for more complex data
+#  types involving boolean fields.
+#
+#  The value @l{Nothing} is treated as less than @l{Just} anything.
+#
+#  See @l{/Std/Cmp%.Cmp@} for more about the @l{Cmp@} interface and how to use
+#  it.
 
 Cmp@, Less, Equal, Greater .= /Std/Cmp%;
 Maybe@ .= /Std/Maybe%;
@@ -8,6 +16,18 @@ Maybe@ .= /Std/Maybe%;
 #  @arg[@][A@] The type of element on the maybe.
 #  @arg[Cmp@<A@>][cmp] How to compare maybe elements.
 #  @returns[Cmp@<Maybe@<A@>>] How to compare maybes.
+#
+#  The value @l{Nothing} is treated as less than @l{Just} values.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Cmp(/Std/Int/Cmp%.Cmp, Just(4), Just(3));
+#
+#  Would return @l{Greater}, because the @l{4} is greater than @l{3}.
+#
+#  See @l{/Std/Cmp%.Cmp@} for more about the @l{Cmp@} interface and how to use
+#  it.
 <@ A@>(Cmp@<A@>) { Cmp@<Maybe@<A@>>; }
 Cmp = <@ A@>(Cmp@<A@> cmp, Maybe@<A@> a, Maybe@<A@> b) {
   a.?(nothing: b.?(just: Less, nothing: Equal));
