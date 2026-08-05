@@ -1,7 +1,8 @@
 # @module[/Std/Int/IntP/Cmp%]
-#  Comparison of positive integers.
+#  The @l{Cmp@} instance for positive integers.
 #
-#  This module is for internal use only.
+#  This module is for internal use only. See @l{/Std/Int/Cmp%} for the public
+#  interface for integer comparison.
 
 Cmp@, Compared@, Less, Equal, Greater .= /Std/Cmp%;
 IntP@ .= /Std/Int/IntP%;

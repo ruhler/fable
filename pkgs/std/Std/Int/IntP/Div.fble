@@ -1,7 +1,8 @@
 # @module[/Std/Int/IntP/Div%]
 #  Division of positive integers.
 #
-#  For internal use only.
+#  For internal use only. See the @l{/Std/Int/Div%} module for the public
+#  interface for integer division.
 
 Int@, Sub, 0, 1 .= /Std/Int%;
 IntP@ = /Std/Int/IntP%.IntP@;
@@ -34,47 +35,47 @@ QR@ = *(Int@ q, Int@ r);
   Int@(p: IntP@(2p1: x.p));
 };
 
-# @func[Div] Division.
+# @func[Div] Positive integer division.
+#  @arg[IntP@][a] The first operand.
+#  @arg[IntP@][b] The second operand.
+#  @returns[QR@] The quotient and remainder of division.
+#
 #  @code[txt] @
 #   a = b*q + r, r < b, where q = floor(a/b)
 #
 #  The remainder r has the same sign as the divisor b. Behavior is undefined
 #  if the divisor b is 0.
-#
-#  @arg[IntP@][a] The first operand.
-#  @arg[IntP@][b] The second operand.
-#  @returns[QR@] The quotient and remainder of division.
 (IntP@, IntP@) { QR@; } Div = (IntP@ a, IntP@ b) {
   b.?(1: @(q: IntP(a), r: 0),
       2p0: a.?(1: @(q: 0, r: IntP(a)),
                2p0: {
                  # (2a) = (2b)*q + (2r)
-                 QR@ qr = Div(a.2p0, b.2p0);
-                 @(q: qr.q, r: 2P0(qr.r));
+                 Int@ q, Int@ r .= Div(a.2p0, b.2p0);
+                 @(q, r: 2P0(r));
                },
                2p1: {
                  # (2a+1) = (2b)*q + (2r+1)
-                 QR@ qr = Div(a.2p1, b.2p0);
-                 @(q: qr.q, r: 2P1(qr.r));
+                 Int@ q, Int@ r .= Div(a.2p1, b.2p0);
+                 @(q, r: 2P1(r));
                }),
       2p1: a.?(1: @(q: 0, r: IntP(a)),
                2p0: {
-                 QR@ qr = Div(a.2p0, b);
-                 Int@ 2r = 2P0(qr.r);
+                 Int@ q, Int@ r .= Div(a.2p0, b);
+                 Int@ 2r = 2P0(r);
                  Int@ 2r_minus_b = Sub(2r, Int@(p: b));
                  2r_minus_b.?(
-                    n: @(q: 2P0(qr.q), r: 2r),
-                    0: @(q: 2P1(qr.q), r: 0),
-                    p: @(q: 2P1(qr.q), r: IntP(2r_minus_b.p)));
+                    n: @(q: 2P0(q), r: 2r),
+                    0: @(q: 2P1(q), r: 0),
+                    p: @(q: 2P1(q), r: IntP(2r_minus_b.p)));
                },
                2p1: {
-                 QR@ qr = Div(a.2p1, b);
-                 Int@ 2rp1 = 2P1(qr.r);
+                 Int@ q, Int@ r .= Div(a.2p1, b);
+                 Int@ 2rp1 = 2P1(r);
                  Int@ 2rp1_minus_b = Sub(2rp1, Int@(p: b));
                  2rp1_minus_b.?(
-                    n: @(q: 2P0(qr.q), r: 2rp1),
-                    0: @(q: 2P1(qr.q), r: 0),
-                    p: @(q: 2P1(qr.q), r: IntP(2rp1_minus_b.p)));
+                    n: @(q: 2P0(q), r: 2rp1),
+                    0: @(q: 2P1(q), r: 0),
+                    p: @(q: 2P1(q), r: IntP(2rp1_minus_b.p)));
                }));
 };
 

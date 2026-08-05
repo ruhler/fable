@@ -100,6 +100,29 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/List/Maybe.fble
 [DONE] pkgs/std/Std/Cmp/Eq.fble
 [DONE] pkgs/std/Std/Cmp/Cmp.fble
+[DONE] pkgs/std/Std/String.fble
+[DONE] pkgs/std/Std/Int/IntP/Eq.fble
+[DONE] pkgs/std/Std/Int/IntP/Div.fble
+[DONE] pkgs/std/Std/Int/IntP/Cmp.fble
+[DONE] pkgs/std/Std/Int/Stream.fble
+
+pkgs/std/Std/Int/Eq.fble
+pkgs/std/Std/Int/Div.fble
+pkgs/std/Std/Int/Sign.fble
+pkgs/std/Std/Int/Sqrt.fble
+pkgs/std/Std/Int/Parse.fble
+pkgs/std/Std/Stream/String.fble
+pkgs/std/Std/Stream/Null.fble
+pkgs/std/Std/Stream/List.fble
+pkgs/std/Std/Char/Lit.fble
+pkgs/std/Std/Char/Ascii/Stream.fble
+pkgs/std/Std/Char/Ascii/Type.fble
+pkgs/std/Std/Char/Eq.fble
+pkgs/std/Std/Char/Ascii.fble
+pkgs/std/Std/Func.fble
+pkgs/std/Std/String/Eq.fble
+pkgs/std/Std/String/Escape.fble
+pkgs/std/Std/String/Lines.fble
 
 pkgs/std/Std/Maybe/Data.fble
 pkgs/std/Std/Bool/Data.fble
@@ -107,31 +130,14 @@ pkgs/std/Std/Bool/Assert.fble
 pkgs/std/Std/Bool/Random.fble
 pkgs/std/Std/Int/Data.fble
 pkgs/std/Std/Int/IntP/Data.fble
-pkgs/std/Std/Int/IntP/Eq.fble
-pkgs/std/Std/Int/IntP/Div.fble
-pkgs/std/Std/Int/IntP/Cmp.fble
-pkgs/std/Std/Int/Stream.fble
-pkgs/std/Std/Int/Eq.fble
-pkgs/std/Std/Int/Div.fble
 pkgs/std/Std/Int/Random.fble
-pkgs/std/Std/Int/Sign.fble
-pkgs/std/Std/Int/Sqrt.fble
-pkgs/std/Std/Int/Parse.fble
-pkgs/std/Std/Stream/String.fble
-pkgs/std/Std/Stream/Null.fble
 pkgs/std/Std/Stream/State.fble
 pkgs/std/Std/Stream/Debug.fble
 pkgs/std/Std/Stream/Out.fble
-pkgs/std/Std/Stream/List.fble
 pkgs/std/Std/Stream/In.fble
 pkgs/std/Std/Stream/String/Assert.fble
 pkgs/std/Std/Stream/Test.fble
-pkgs/std/Std/Char/Lit.fble
 pkgs/std/Std/Char/Data.fble
-pkgs/std/Std/Char/Ascii/Stream.fble
-pkgs/std/Std/Char/Ascii/Type.fble
-pkgs/std/Std/Char/Eq.fble
-pkgs/std/Std/Char/Ascii.fble
 pkgs/std/Std/Map/Show.fble
 pkgs/std/Std/Map/Eq.fble
 pkgs/std/Std/Map/List.fble
@@ -139,7 +145,6 @@ pkgs/std/Std/State/Pure.fble
 pkgs/std/Std/Monad.fble
 pkgs/std/Std/Map.fble
 pkgs/std/Std/Data.fble
-pkgs/std/Std/String.fble
 pkgs/std/Std/Set.fble
 pkgs/std/Std/State.fble
 pkgs/std/Std/Unit/Data.fble
@@ -154,7 +159,6 @@ pkgs/std/Std/Test/Cli.fble
 pkgs/std/Std/Eq/Assert.fble
 pkgs/std/Std/List/Data.fble
 pkgs/std/Std/List/Random.fble
-pkgs/std/Std/Func.fble
 pkgs/std/Std/Cmp/Data.fble
 pkgs/std/Std/Set/Show.fble
 pkgs/std/Std/Set/Eq.fble
@@ -168,9 +172,6 @@ pkgs/std/Std/Io/File/Mode.fble
 pkgs/std/Std/Io/File/Utf8.fble
 pkgs/std/Std/Io/Cli.fble
 pkgs/std/Std/String/Data.fble
-pkgs/std/Std/String/Eq.fble
-pkgs/std/Std/String/Escape.fble
-pkgs/std/Std/String/Lines.fble
 pkgs/std/Std/Test.fble
 
 Question:

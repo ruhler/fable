@@ -1,16 +1,19 @@
 # @module[/Std/Int/IntP/Eq%]
-#  Equalities of positive integers.
+#  Instance of @l{Eq@} for positive integers.
 #
-#  This module is for internal use only.
+#  This module is for internal use only. See the @l{/Std/Int/Eq%} module for
+#  the public interface for integer equality.
 
 True, False .= /Std/Bool%;
 Eq@ .= /Std/Eq%;
 IntP@ .= /Std/Int/IntP%;
 
-# @func[Eq] The equals operator. a == b.
+# @func[Eq] Tests if two integers are equal.
 #  @arg[IntP@][a] The first operand.
 #  @arg[IntP@][b] The second operand.
 #  @returns[Bool@] True if the operands are equal, false otherwise.
+#
+#  See also @l{/Std/Eq%.Eq@}.
 Eq@<IntP@> Eq = (IntP@ a, IntP@ b) {
   a.?(1: b.?(1: True, 2p0: False, 2p1: False),
       2p0: b.?(1: False, 2p0: Eq(a.2p0, b.2p0), 2p1: False),

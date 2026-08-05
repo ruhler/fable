@@ -48,7 +48,7 @@ Documentation:
 * Try generating docs for stdlib documentation
  - A summary of all modules/functions
  - A detail of all modules/functions
-* Mark /Std/Int/IntP% docs as @dev?
+* Mark /Std/Int/IntP%, et all docs as @dev.
 
 Tutorials:
 * Add left side menu to generated website for tutorials?
