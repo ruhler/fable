@@ -13,11 +13,12 @@ String@ .= /Std/String%;
 Int@ 0 = Int|0;
 Int@ 10 = Int|10;
 
-# func[InRange] Tests if a character is in a given range.
-#  @arg[Char@][lo] The inclusive lower bound of the range.
-#  @arg[Char@][hi] The inclusive upper bound of the range.
-#  @arg[Char@][c] The character to check.
-#  @returns[Bool@] True if the character is in range [lo, hi].
+# @dev
+#  @func[InRange] Tests if a character is in a given range.
+#   @arg[Char@][lo] The inclusive lower bound of the range.
+#   @arg[Char@][hi] The inclusive upper bound of the range.
+#   @arg[Char@][c] The character to check.
+#   @returns[Bool@] True if the character is in range [lo, hi].
 (Char@, Char@, Char@) { Bool@; }
 InRange = (Char@ lo, Char@ hi, Char@ c) {
   Lt(c, lo).?(true: False);
@@ -25,11 +26,12 @@ InRange = (Char@ lo, Char@ hi, Char@ c) {
   True;
 };
 
-# func[Digit] Converts a digit to its corresponding integer value.
-#  @arg[Char@][digit] The digit to convert. [0-9a-zA-Z].
-#  @returns[Maybe@<Int@>]
-#   The integer value associated with the digit. For example, '9' has value 9,
-#   'c' has value 12. Returns Nothing if the character is not a valid digit.
+# @dev
+#  @func[Digit] Converts a digit to its corresponding integer value.
+#   @arg[Char@][digit] The digit to convert. [0-9a-zA-Z].
+#   @returns[Maybe@<Int@>]
+#    The integer value associated with the digit. For example, '9' has value 9,
+#    'c' has value 12. Returns Nothing if the character is not a valid digit.
 (Char@) { Maybe@<Int@>; }
 Digit = (Char@ c) {
   InRange(Char|0, Char|9, c).?(true: {
@@ -47,14 +49,15 @@ Digit = (Char@ c) {
   Nothing<Int@>;
 };
 
-# func[Digits] Converts a string of digits to an integer value.
-#  @arg[Int@][radix] The radix to use for conversion.
-#  @arg[Int@][parsed]
-#   The integer value of the most significant digits already parsed.
-#  @arg[String@][digits] The digits still to parse.
-#  @returns[Maybe@<Int@>]
-#   The integer value associated with the fully parsed string of digits.
-#   Nothing in case of invalid characters in the string.
+# @dev
+#  @func[Digits] Converts a string of digits to an integer value.
+#   @arg[Int@][radix] The radix to use for conversion.
+#   @arg[Int@][parsed]
+#    The integer value of the most significant digits already parsed.
+#   @arg[String@][digits] The digits still to parse.
+#   @returns[Maybe@<Int@>]
+#    The integer value associated with the fully parsed string of digits.
+#    Nothing in case of invalid characters in the string.
 (Int@, Int@, String@) { Maybe@<Int@>; }
 Digits = (Int@ radix, Int@ parsed, String@ digits) {
   digits.?(empty: Just(parsed));
@@ -72,6 +75,17 @@ Digits = (Int@ radix, Int@ parsed, String@ digits) {
 #  @arg[String@][string] The string to parse.
 #  @returns[Maybe@<Int@>]
 #   The parsed value. Nothing in case of invalid formatted the string.
+#
+#  For example, to parse 61 as a hex string and -61 as an octal string:
+#
+#  @code[fble] @
+#   Int@ 97 = Radix(Int|16, Str|'61').just;
+#   Int@ minus_49 = Radix(Int|8, Str|'-61').just;
+#
+#  Unlike the example above, the caller ought to check that the string
+#  successfully parsed and return something reasonable in case it failed to
+#  parse. The reasonable thing to do in that case will be application
+#  dependant.
 (Int@, String@) { Maybe@<Int@>; }
 Radix = (Int@ radix, String@ string) {
   string.?(empty: Nothing<Int@>);
@@ -93,6 +107,16 @@ Radix = (Int@ radix, String@ string) {
 #  @arg[String@][string] The string to parse.
 #  @returns[Maybe@<Int@>]
 #   The parsed value. Nothing in case of invalid formatted the string.
+#
+#  For example, to parse 61 as a decimal string:
+#
+#  @code[fble] @
+#   Int@ 61 = Radix(Int|16, Str|'61').just;
+#
+#  Unlike the example above, the caller ought to check that the string
+#  successfully parsed and return something reasonable in case it failed to
+#  parse. The reasonable thing to do in that case will be application
+#  dependant.
 (String@) { Maybe@<Int@>; } Int = Radix(10);
 
 @(Radix, Int);

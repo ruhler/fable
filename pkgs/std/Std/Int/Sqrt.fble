@@ -16,13 +16,40 @@ QR@ = *(Int@ q, Int@ r);
 /Std/Undef%.Undef@ Imaginary = /Std/Undef%.Undef;
 
 # @func[Sqrt] Integer square root.
+#  @arg[IntP@][a] The argument.
+#  @returns[QR@] The quotient and remainder of the square root.
+#
+#  Produces the quotient @l{q} and remainder @l{r} of integer square root
+#  @l{√a} such that:
+#
 #  @code[txt] @
 #   a = q*q + r, r < 2q + 1
 #
 #  Behavior is undefined if the argument is negative.
 #
-#  @arg[IntP@][a] The argument.
-#  @returns[QR@] The quotient and remainder of the square root.
+#  You can access the returned quotient and remainder fields directly from the
+#  returned struct value:
+#
+#  @code[fble] @
+#   QR@ qr = Sqrt(27);
+#   Format|'√(27) has quotient %s and remainder %s'[
+#     /Std/Int/Show%.Show(qr.q),
+#     /Std/Int/Show%.Show(qr.r)
+#   ];
+#
+#  You can also use struct import:
+#
+#  @code[fble] @
+#   Int@ q, Int@ r .= Sqrt(27);
+#   Format|'√(27) has quotient %s and remainder %s'[
+#     /Std/Int/Show%.Show(q),
+#     /Std/Int/Show%.Show(r)
+#   ];
+#
+#  In both examples above, the formatted output would be:
+#
+#  @code[txt] @
+#   √(27) has quotient 5 and remainder 2
 (Int@) { QR@; }
 Sqrt = (Int@ a) {
   a.?(n: Imaginary.undef<QR@>, 0: @(q: 0, r: 0));

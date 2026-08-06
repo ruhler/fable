@@ -12,7 +12,14 @@ QR@ = *(Int@ q, Int@ r);
 
 /Std/Undef%.Undef@ DivideByZero = /Std/Undef%.Undef;
 
-# @func[Div] Integer (floored) division.
+# @func[Div] Floored integer division.
+#  @arg[IntP@][a] The first operand.
+#  @arg[IntP@][b] The second operand.
+#  @returns[QR@] The quotient and remainder of division.
+#
+#  Produces the quotient @l{q} and remainder @l{r} of integer division
+#  @l{a/b} such that:
+#
 #  @code[txt] @
 #   a = b*q + r, r < b, where q = floor(a/b)
 #
@@ -22,9 +29,29 @@ QR@ = *(Int@ q, Int@ r);
 #
 #  Behavior is undefined if the divisor b is 0.
 #
-#  @arg[IntP@][a] The first operand.
-#  @arg[IntP@][b] The second operand.
-#  @returns[QR@] The quotient and remainder of division.
+#  You can access the returned quotient and remainder fields directly from the
+#  returned struct value:
+#
+#  @code[fble] @
+#   QR@ qr = Div(5, 3);
+#   Format|'5 / 3 has quotient %s and remainder %s'[
+#     /Std/Int/Show%.Show(qr.q),
+#     /Std/Int/Show%.Show(qr.r)
+#   ];
+#
+#  You can also use struct import:
+#
+#  @code[fble] @
+#   Int@ q, Int@ r .= Div(5, 3);
+#   Format|'5 / 3 has quotient %s and remainder %s'[
+#     /Std/Int/Show%.Show(q),
+#     /Std/Int/Show%.Show(r)
+#   ];
+#
+#  In both examples above, the formatted output would be:
+#
+#  @code[txt] @
+#   5 / 3 has quotient 1 and remainder 2
 (Int@, Int@) { QR@; } Div = (Int@ a, Int@ b) {
   b.?(
     n: {
@@ -45,20 +72,33 @@ QR@ = *(Int@ q, Int@ r);
       });
 };
 
-# @func[Quot] The quotient of integer (floored) division.
-#  @code[txt] @
-#   floor(a/b)
-#
-#  Behavior is undefined if the divisor b is 0.
-#
+# @func[Quot] The quotient of floored integer division.
 #  @arg[IntP@][a] The first operand.
 #  @arg[IntP@][b] The second operand.
 #  @returns[QR@] The quotient of floored division of a by b.
+#
+#  Computes the division a/b, ignoring the remainder. Uses floored division
+#  for consistency with the @l{Div} function, which means negative results
+#  round down.
+#
+#  Behavior is undefined if the divisor b is 0.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Int@ three = Quot(Int|11, Int|3);
+#   Int@ minus_four = Quot(Int|11, Neg(Int|3));
 (Int@, Int@) { Int@; } Quot = (Int@ a, Int@ b) {
   Div(a, b).q;
 };
 
-# @func[Mod] The modulus, or remainder of integer (floored) division.
+# @func[Mod] The modulus operation.
+#  @arg[IntP@][a] The first operand.
+#  @arg[IntP@][b] The second operand.
+#  @returns[QR@] The remainder @a[r] of floored division of a by b.
+#
+#  This is consistent with the remainder produced by the @l{Div} function:
+#
 #  @code[txt] @
 #   a = b*q + r, r < b, where q = floor(a/b)
 #
@@ -66,9 +106,11 @@ QR@ = *(Int@ q, Int@ r);
 #
 #  Behavior is undefined if the divisor b is 0.
 #
-#  @arg[IntP@][a] The first operand.
-#  @arg[IntP@][b] The second operand.
-#  @returns[QR@] The remainder @a[r] of floored division of a by b.
+#  For example:
+#
+#  @code[fble] @
+#   Int@ two = Quot(Int|11, Int|3);
+#   Int@ minus_one = Quot(Int|11, Neg(Int|3));
 (Int@, Int@) { Int@; } Mod = (Int@ a, Int@ b) {
   Div(a, b).r;
 };

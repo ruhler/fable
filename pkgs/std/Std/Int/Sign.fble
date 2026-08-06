@@ -12,42 +12,68 @@ Unit@, Unit .= /Std/Unit%;
 Sign@ = +(Unit@ '-', Unit@ '0', Unit@ '+');
 
 # @func[Sgn] Gets the sign of an integer.
-#  This can be handy for changing behavior depending on the sign of the
-#  integer. For example:
-#
-#  @code[fble] @
-#   Sgn(x).?(0: DivideByZero);
-#
 #  @arg[Int@][x] The integer to get the sign of.
 #  @returns[Sign@] The sign of the integer.
+#
+#  This can be handy for changing behavior depending on the sign of the
+#  integer. For example, the absolute value function could be implemented as:
+#
+#  @code[fble] @
+#   (Int@) { Int@; } Abs = (Int@ a) {
+#     Sgn(a).?('-': Neg(a));
+#     a;
+#   };
 (Int@) { Sign@; } Sgn = (Int@ x) {
   x.?(n: Sign@('-': Unit), 0: Sign@('0': Unit), p: Sign@('+': Unit));
 };
 
-# @func[IsZero] Tests if an integer is 0. x == 0.
+# @func[IsZero] Tests if an integer is 0.
 #  @arg[Int@][x] The integer to test.
 #  @returns[Bool@] True if the integer is 0, false otherwise.
+#
+#  For example:
+#  
+#  @code[fble] @
+#   (Int@) { Int@; } Factorial = (Int@ x) {
+#     IsZero(x).?(true: Int|1);
+#     Mul(x, Factorial(Decr(x)));
+#   };
 (Int@) { Bool@; } IsZero = (Int@ x) {
   x.?(0: True, : False);
 };
 
-# @func[IsNegative] Tests if an integer is negative. x < 0.
+# @func[IsNegative] Tests if an integer is negative.
 #  @arg[Int@][x] The integer to test.
 #  @returns[Bool@] True if the integer is less than 0, false otherwise.
+#
+#  For example, the absolute value function could be implemented as:
+#
+#  @code[fble] @
+#   (Int@) { Int@; } Abs = (Int@ a) {
+#     IsNegative(a).?(true: Neg(a));
+#     a;
+#   };
 (Int@) { Bool@; } IsNegative = (Int@ x) {
   x.?(n: True, : False);
 };
 
-# @func[IsPositive] Tests if an integer is positive. x > 0.
+# @func[IsPositive] Tests if an integer is positive.
 #  @arg[Int@][x] The integer to test.
 #  @returns[Bool@] True if the integer is greater than 0, false otherwise.
 (Int@) { Bool@; } IsPositive = (Int@ x) {
   x.?(p: True, : False);
 };
 
-# @func[Abs] Absolute value. |a|.
+# @func[Abs] Absolute value.
 #  @arg[Int@][a] The operand.
 #  @returns[Int@] The absolute value of the operand.
+#
+#  The result is a non-negative integer with the same magnitude as @a{a}. For
+#  example: 
+#
+#  @code[fble] @
+#   Int@ four = Abs(Int|4);
+#   Int@ five = Abs(Neg(Int|5));
 (Int@) { Int@; } Abs = (Int@ a) {
   a.?(n: Neg(a), : a);
 };

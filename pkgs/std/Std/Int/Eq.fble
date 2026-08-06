@@ -1,27 +1,40 @@
 # @module[/Std/Int/Eq%]
-#  Utilities around equality of integers.
+#  The Eq@ instance for Int@.
 
-Bool@, True, False, Not .= /Std/Bool%;
+Bool@, True, False .= /Std/Bool%;
+Eq@ .= /Std/Eq%;
 Int@ .= /Std/Int%;
 EqP(.Eq) .= /Std/Int/IntP/Eq%;
 
-# @func[Eq] Tests if two integers are equal.
+# @func[Eq] Check two integers for equality.
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Bool@] True if the operands are equal, false otherwise.
-(Int@, Int@) { Bool@; } Eq = (Int@ a, Int@ b) {
+#
+#  For example:
+#
+#  @code[fble] @
+#   Bool@ true = Eq(Int|3, Int|3);
+#   Bool@ false = Eq(Int|3, Int|4);
+#
+#  See also @l{/Std/Eq%.Eq@}.
+Eq@<Int@> Eq = (Int@ a, Int@ b) {
   a.?(
     n: b.?(n: EqP(a.n, b.n),  0: False, p: False),
     0: b.?(n: False, 0: True,  p: False),
     p: b.?(n: False, 0: False, p: EqP(a.p, b.p)));
 };
 
-# @func[Ne] Tests if two integers are unequal. a != b.
+# @func[Ne] Check if two integers are different
 #  @arg[Int@][a] The first operand.
 #  @arg[Int@][b] The second operand.
 #  @returns[Bool@] True if the operands are unequal, false otherwise.
-(Int@, Int@) { Bool@; } Ne = (Int@ a, Int@ b) {
-  Not(Eq(a, b));
-};
+#
+#  For example:
+#
+#  @code[fble] @
+#   Bool@ false = Ne(Int|3, Int|3);
+#   Bool@ true = Ne(Int|3, Int|4);
+(Int@, Int@) { Bool@; } Ne .= /Std/Eq%.Eq(Eq);
 
 @(Eq, Ne);
