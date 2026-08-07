@@ -7,8 +7,25 @@ Unit@, Unit .= /Std/Unit%;
 
 # @func[Each] Visit each element of a list as a stream.
 #  @arg[@][A@] The type of element on the list.
-#  @arg[List@<A@>][values] The list to convert.
-#  @returns[Stream@<A@>] A stream of the values in the list.
+#  @arg[List@<A@>][values] The list of elements to visit.
+#  @returns[Stream@<A@>] A stream of the values in the list in order.
+#
+#  For example, to output a couple of lists to a stream:
+#
+#  @code[fble] @
+#   List@<Int@> as = ...;
+#   List@<Int@> bs = ...;
+#   Stream@<Int@> output = {
+#     Unit@ _ := Puts(Each(as));
+#     Unit@ _ := Puts(Each(bs));
+#     End<Int@>;
+#   };
+#
+#  You can use the @l{Each} function to iterate over elements of a list as a
+#  stream, but it's normally easier to use the @l{/Std/List%.ForEach} function
+#  or directly traverse the list. The use of @l{Each} is more suited for
+#  functions that work with and are already expecting streams, or adding a
+#  list of elements into a stream.
 <@ A@>(List@<A@>) { Stream@<A@>; }
 Each = <@ A@>(List@<A@> values) {
   values.?(empty: End<A@>);
@@ -16,10 +33,28 @@ Each = <@ A@>(List@<A@> values) {
   Each(values.items.tail);
 };
 
-# @func[Concat] Output a sequence of computations.
-#  @arg[@][A@] The type of value to output.
-#  @arg[List@<Stream@<A@>>] The list of outputs to output.
-#  @returns[Output<A@>] A computation to output each give output in turn.
+# @func[Concat] Concatenates a list of streams together into a single stream.
+#  @arg[@][A@] The type of elements on the streams.
+#  @arg[List@<Stream@<A@>>] The list of streams to concatenate.
+#  @returns[Stream@<A@>] The elements of all the list of streams in order.
+#
+#  Example:
+#
+#  @code[fble] @
+#   Stream@<Int@> ranges = Concat[
+#     /Std/Int/Stream%.Range(Int|0, Int|3),
+#     /Std/Int/Stream%.Range(Int|100, Int|103),
+#     /Std/Int/Stream%.Range(Int|1000, Int|1003)
+#   ];
+#
+#  Which returns the stream of integers:
+#
+#  @code[txt] @
+#   0, 1, 2, 100, 101, 102, 1000, 1001, 1002.
+#
+#  Note that the @l{Concat} function has the same name as the similar
+#  @l{/Std/List%.Concat} function. Import the function under a qualified name
+#  if needed to avoid name conflicts.
 <@ A@>(List@<Stream@<A@>>) { Stream@<A@>; }
 Concat = <@ A@>(List@<Stream@<A@>> xs) {
   xs.?(empty: End<A@>);
@@ -31,6 +66,16 @@ Concat = <@ A@>(List@<Stream@<A@>> xs) {
 #  @arg[@][A@] The type of value to output.
 #  @arg[Stream@<A@>] The stream of values.
 #  @returns[List@<A@>] The list of vales in the stream.
+#
+#  For example:
+#
+#  @code[fble] @
+#   List@<Int@> ints = ToList(/Std/Int/Stream%.Range(Int|0, Int|5));
+#
+#  Returns a list equivalent to:
+#
+#  @code[fble] @
+#   List@<Int@> ints = List[Int|0, Int|1, Int|2, Int|3, Int|4];
 <@ A@>(Stream@<A@>) { List@<A@>; }
 ToList = <@ A@>(Stream@<A@> stream) {
   Unit@ _ := {

@@ -2,6 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* /Std/Stream/String% seems like a weird place for GetLine, GetText.
+
 * Decide when to use @l in documentation
  - /Std/List/Show%: The @l{Show@} instance for @l{List@}.
  - /Std/Maybe/Show%: The Show@ instance for Maybe@.

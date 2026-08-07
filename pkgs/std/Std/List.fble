@@ -410,7 +410,8 @@ Do = <@ A@>(List@<A@> list)<@ B@>((A@) { List@<B@>; } f) {
 #   };
 #
 #  See @l{/Std/For%.For@} for more explanation and  examples of how to use the
-#  @l{For@} type.
+#  @l{For@} type. See @l{/Std/Stream/List%} for additional ways of iterating
+#  over lists using streams.
 <@ A@>(List@<A@>) { For@<A@>; }
 ForEach = <@ A@>(List@<A@> list)<@ S@>(S@ s, (S@, A@) { S@; } body) {
   list.?(empty: s);

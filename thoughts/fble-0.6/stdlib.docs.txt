@@ -108,12 +108,10 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Int/Eq.fble
 [DONE] pkgs/std/Std/Int/Div.fble
 [DONE] pkgs/std/Std/Int/Sign.fble
-[DONE]pkgs/std/Std/Int/Sqrt.fble
+[DONE] pkgs/std/Std/Int/Sqrt.fble
 [DONE] pkgs/std/Std/Int/Parse.fble
+[DONE] pkgs/std/Std/Stream/List.fble
 
-pkgs/std/Std/Stream/String.fble
-pkgs/std/Std/Stream/Null.fble
-pkgs/std/Std/Stream/List.fble
 pkgs/std/Std/Char/Lit.fble
 pkgs/std/Std/Char/Ascii/Stream.fble
 pkgs/std/Std/Char/Ascii/Type.fble
@@ -135,6 +133,8 @@ pkgs/std/Std/Stream/State.fble
 pkgs/std/Std/Stream/Debug.fble
 pkgs/std/Std/Stream/Out.fble
 pkgs/std/Std/Stream/In.fble
+pkgs/std/Std/Stream/Null.fble
+pkgs/std/Std/Stream/String.fble
 pkgs/std/Std/Stream/String/Assert.fble
 pkgs/std/Std/Stream/Test.fble
 pkgs/std/Std/Char/Data.fble

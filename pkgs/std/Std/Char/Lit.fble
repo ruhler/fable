@@ -1,5 +1,51 @@
 # @module[/Std/Char/Lit%]
-#  Character and string literals.
+#  Provides an interface for character literals and string literals from
+#  arbitrary character sets, and ways of composing them together.
+#
+#  The standard library provides an implementation of character and string
+#  literals for the ASCII character set. If you want character and string
+#  literals from a different character set, such as greek symbols, you can
+#  define your own charater literal type, implement an instance of @l{ToChar@}
+#  for it, and then compose it with existing character sets like ASCII. That
+#  will allow you to write character and string literals that mix characters
+#  from the two character sets.
+#
+#  For example, to define a character set with just the characters 'a', 'b',
+#  and 'c':
+#
+#  @code[fble] @
+#   ABC@ = +(Unit@ a, Unit@ b, Unit@ c);
+#   ABC = @(a: U|61, b: U|62, c: U|63);
+#   ToChar@<ABC@> ToChar = (ABC@ c) {
+#     c.?(a: ABC.a, b: ABC.b, c: ABC.c);
+#   };
+#   (List@<ABC@>) { Char@; } Char = /Std/Char/Lit%.Char(ToChar);
+#   (List@<ABC@>) { String@; } Str = /Std/Char/Lit%.Str(ToChar);
+#
+#  You could then write character literals such as @l{Char|a} and string
+#  literals like @l{Str|abbaccba};
+#
+#  To define a character set with just the characters 'α', 'β', and 'γ':
+#
+#  @code[fble] @
+#   Greek@ = +(Unit@ α, Unit@ β, Unit@ γ);
+#   Greek = @(α: U|03B1, β: U|03B2, γ: U|03B3);
+#   ToChar@<Greek@> ToChar = (Greek@ c) {
+#     c.?(α: Greek.α, β: Greek.β, γ: Greek.γ);
+#   };
+#   (List@<Greek@>) { Char@; } Char = /Std/Char/Lit%.Char(ToChar);
+#   (List@<Greek@>) { String@; } Str = /Std/Char/Lit%.Str(ToChar);
+#
+#  Then you could write string literals like @l{Str|'αββα'};
+#
+#  Now that you have these two separate character sets, you can compose them
+#  into a single character set that supports character literals and string
+#  literals involving characters from either set:
+#
+#  @code[fble] @
+#   Str = /Std/Char/Lit%.Str(Compose(ABC.ToChar, Greek.ToChar));
+#
+#  And write string literals like @l{Str|'αbβa'}
 
 Char@, Unicode(.Char) .= /Std/Char%;
 HexLit@, Hex .= /Std/Int/Lit%;
