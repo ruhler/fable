@@ -54,6 +54,9 @@ String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 
 # @func[U] Unicode character literal.
+#  @arg[HexLit@][hex] Sequence of hex digits describing the character.
+#  @returns[Char@] The character value associated with that hex code point.
+#
 #  Example:
 #
 #  @code[fble]
@@ -61,35 +64,67 @@ Unit@ .= /Std/Unit%;
 #
 #  Supports upper and lowercase hex digits as well as '_' separators, just
 #  as in /Std/Int/Lit%.Hex;
-#
-#  @arg[HexLit@][hex] Sequence of hex digits describing the character.
-#  @returns[Char@] The character value associated with that hex code point.
 (HexLit@) { Char@; }
 U = (HexLit@ hex) {
   Unicode(Hex(hex));
 };
 
 # @type[ToChar@] Interface for types that can be converted to Char@.
+#  @arg[@][T@] The type to convert to Char@.
+#  @arg[T@][c] The character to convert.
+#  @return[Char@] The converted character.
+#
 #  Helpful for defining character and string literals of various different
 #  character sets.
+#
+#  For example, to define a character set with the characters 'a', 'b', and
+#  'c':
+#
+#  @code[fble] @
+#   ABC@ = +(Unit@ a, Unit@ b, Unit@ c);
+#   ABC = @(a: U|61, b: U|62, c: U|63);
+#   ToChar@<ABC@> ToChar = (ABC@ c) {
+#     c.?(a: ABC.a, b: ABC.b, c: ABC.c);
+#   };
+#   (List@<ABC@>) { Char@; } Char = /Std/Char/Lit%.Char(ToChar);
+#   (List@<ABC@>) { String@; } Str = /Std/Char/Lit%.Str(ToChar);
+#
+#  You could then write character literals such as @l{Char|a} and string
+#  literals like @l{Str|abbaccba};
 ToChar@ = <@ T@>(T@) { Char@; };
 
-# @type[Composed@] Composed character literal letter type.
+# @type[Composed@] Helper type for composing character literals.
+#  @arg[@][A@] A first set of literal letters.
+#  @arg[@][B@] A second set of literal letters.
+#  @returns[+(A@ a, B@ b)]
+#   The union of the two sets of literal letters.
+#
+#  For example, assuming types ABC@ and Greek@ defined as in the module level
+#  documentation for this module:
+#
+#  @code[fble] @
+#   AbcOrGreek@ = Composed@<ABC@, Greek@>;
+#   ToChar@<AbcOrGreek@> ToChar = Compose(ABC.ToChar, Greek.ToChar);
+#   (List@<AbcOrGreek@>) { String@; } Str = /Std/Char/Lit%.Str(ToChar);
+#   String@ str = Str|'αbβa';
 Composed@ = <@ A@, @ B@> { +(A@ a, B@ b); };
 
 # @func[Compose] Composes two character sets
-#  Example use:
-#
-#  @code[fble]
-#   % Str = /Std/Char/Lit%.Str(Compose(Ascii.ToChar, Greek.ToChar));
-#   String@ s = Str|'hello π';
-#
 #  @arg[@][A@] Letter type for the first character set.
 #  @arg[ToChar@<A@>][toCharA] ToChar@ implementation for first character set.
 #  @arg[@][B@] Letter type for the second character set.
 #  @arg[ToChar@<B@>][toCharB] ToChar@ implementation for second character set.
 #  @returns[ToChar@<Composed@<A@, B@>]
 #   ToChar@ implementation for composed character set.
+#
+#  For example, assuming types ABC@ and Greek@ defined as in the module level
+#  documentation for this module:
+#
+#  @code[fble] @
+#   AbcOrGreek@ = Composed@<ABC@, Greek@>;
+#   ToChar@<AbcOrGreek@> ToChar = Compose(ABC.ToChar, Greek.ToChar);
+#   (List@<AbcOrGreek@>) { String@; } Str = /Std/Char/Lit%.Str(ToChar);
+#   String@ str = Str|'αbβa';
 <@ A@>(ToChar@<A@>)<@ B@>(ToChar@<B@>) { ToChar@<Composed@<A@, B@>>; }
 Compose = <@ A@>(ToChar@<A@> toCharA)<@ B@>(ToChar@<B@> toCharB) {
   (Composed@<A@, B@> x) {
@@ -98,26 +133,38 @@ Compose = <@ A@>(ToChar@<A@> toCharA)<@ B@>(ToChar@<B@> toCharB) {
 };
 
 # @func[Str] String literal function.
+#  @arg[@][T@] The literal letter type.
+#  @arg[ToChar@<T@>][toChar] Function to convert letter to @l{Char@}.
+#  @arg[List@<T@>][str] The literal string.
+#  @returns[String@] A string value formed from the literal.
+#
 #  For any literal letter type @l{T@} that can be converted to @l{Char@} using
 #  a provided @l{toChar} function, this returns a string literal function for
 #  constructing strings.
 #
 #  For example:
 #
-#  @code[fble]
-#   (List@<Ascii@>) { String@; } Str = /Std/Char/Lit%.Str(AsciiToChar);
-#   String@ hello = Str|'hello, world';
+#  @code[fble] @
+#   ABC@ = +(Unit@ a, Unit@ b, Unit@ c);
+#   ABC = @(a: U|61, b: U|62, c: U|63);
+#   ToChar@<ABC@> ToChar = (ABC@ c) {
+#     c.?(a: ABC.a, b: ABC.b, c: ABC.c);
+#   };
+#   (List@<ABC@>) { String@; } Str = /Std/Char/Lit%.Str(ToChar);
 #
-#  @arg[@][T@] The literal letter type.
-#  @arg[ToChar@<T@>][toChar] Function to convert letter to @l{Char@}.
-#  @arg[List@<T@>][str] The literal string.
-#  @returns[String@] A string value formed from the literal.
+#   String@ str = Str|abbaccba;
 <@ T@>(ToChar@<T@>, List@<T@>) { String@; }
 Str = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
   /Std/List%.Map(str, toChar);
 };
 
 # @func[StrLit] Convert a String@ function to a string literal function.
+#  @arg[@][T@] The literal letter type.
+#  @arg[ToChar@<T@>][toChar] Function to convert letter to @l{Char@}.
+#  @arg[@][A@] The function return type.
+#  @arg[(String@) { A@; }][f] The function to provide a literal variation of.
+#  @returns[(List@<T@>) { A@; }] The literal variation of the given function.
+#
 #  For any literal letter type @l{T@} that can be converted to @l{Char@} using
 #  a provided @l{toChar} function, this returns a variation of the given
 #  function on strings that takes a string literal instead of String@ as the
@@ -126,27 +173,40 @@ Str = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
 #  For example:
 #
 #  @code[fble]
-#   (List@<Ascii@>) { String@; } Escape = /Std/String/Escape%.Escape(AsciiToChar);
+#   (List@<Ascii@>) { String@; } Escape = StrLit(Ascii.ToChar, /Std/String/Escape%.Escape);
 #   String@ hello = Escape|'hello, world\n';
 #
-#  @arg[@][T@] The literal letter type.
-#  @arg[ToChar@<T@>][toChar] Function to convert letter to @l{Char@}.
-#  @arg[@][A@] The function return type.
-#  @arg[(String@) { A@; }][f] The function to provide a literal variation of.
-#  @returns[(List@<T@>) { A@; }] The literal variation of the given function.
+#  See @l{/Std/Char/Ascii%.OnAscii} for example of how @l{StrLit} is used in
+#  practice.
 <@ T@>(ToChar@<T@>)<@ A@>((String@) { A@; }) { (List@<T@>) { A@; }; }
 StrLit = <@ T@>(ToChar@<T@> toChar)<@ A@>((String@) { A@; } f, List@<T@> str) {
   f(Str(toChar, str));
 };
 
-# @func[Char] Character literal helper.
-#  @arg[@][T@] Type of element used for literal letter.
-#  @arg[ToChar@<T@>][toChar] Function to convert letter to Char@.
-#  @arg[List@<T@>][str] A string literal.
+# @func[Char] Character literal function.
+#  @arg[@][T@] The literal letter type.
+#  @arg[ToChar@<T@>][toChar] Function to convert letter to @l{Char@}.
+#  @arg[List@<T@>][str] A single character string literal.
 #  @returns[Char@] The first character of the string literal.
 #  @sideeffects
 #   Behavior is undefined if there are more or less than one character in the
 #   literal.
+#
+#  For any literal letter type @l{T@} that can be converted to @l{Char@} using
+#  a provided @l{toChar} function, this returns a character literal function
+#  for constructing strings.
+#
+#  For example:
+#
+#  @code[fble] @
+#   ABC@ = +(Unit@ a, Unit@ b, Unit@ c);
+#   ABC = @(a: U|61, b: U|62, c: U|63);
+#   ToChar@<ABC@> ToChar = (ABC@ c) {
+#     c.?(a: ABC.a, b: ABC.b, c: ABC.c);
+#   };
+#   (List@<ABC@>) { Char@; } Char = /Std/Char/Lit%.Char(ToChar);
+#
+#   Char@ char = Char|b;
 <@ T@>(ToChar@<T@>, List@<T@>) { Char@; }
 Char = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
   # Assert length is 1

@@ -111,8 +111,8 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Int/Sqrt.fble
 [DONE] pkgs/std/Std/Int/Parse.fble
 [DONE] pkgs/std/Std/Stream/List.fble
+[DONE] pkgs/std/Std/Char/Lit.fble
 
-pkgs/std/Std/Char/Lit.fble
 pkgs/std/Std/Char/Ascii/Stream.fble
 pkgs/std/Std/Char/Ascii/Type.fble
 pkgs/std/Std/Char/Eq.fble
