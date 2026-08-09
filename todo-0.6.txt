@@ -2,6 +2,10 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* How to capitalize ascii?
+ - Ascii, ASCII, ascii?
+ - I don't do it consistently.
+
 * /Std/Stream/String% seems like a weird place for GetLine, GetText.
 
 * Decide when to use @l in documentation

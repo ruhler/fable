@@ -1,11 +1,15 @@
 # @module[/Std/Char/Ascii/Type%]
 #  Ascii character type classification.
 #
-#  Normally an application should use its own character classification, as
-#  per the spec of the application. These ascii character classification
-#  functions are for convenience in the rare case when your application's
-#  needs happen to correspond to ascii character classification as defined
-#  according to the C99 language spec.
+#  Normally an application should use its own character classification, to
+#  satisfy whatever particular requirements the application has for
+#  classifying characters. These ascii character classification functions are
+#  for convenience in the rare case when your application's needs happen to
+#  correspond to ascii character classification as defined according to the
+#  C99 language spec.
+#
+#  These functions return @l{False} for any @l{Char@} values that do not
+#  correspond to ASCII characters.
 
 Bool@, True, False .= /Std/Bool%;
 Char@ .= /Std/Char%;
@@ -37,11 +41,17 @@ U .= /Std/Char/Lit%;
 # @func[IsPrint] Checks for printable ascii characters.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is in U+0020-U+007E.
+#
+#  This includes normal characters and the space character. It doesn't include
+#  control characters or other whitespace characters like tab and form feed.
 (Char@) { Bool@; } IsPrint = InRange(U|0020, U|007E);
 
 # @func[IsGraph] Checks for graphic ascii characters.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is printable and not space.
+#
+#  This includes normal characters. It doesn't include control characters or
+#  whitespace.
 (Char@) { Bool@; } IsGraph = InRange(U|0021, U|007E);
 
 # @func[IsAlpha] Checks for alphabetic ascii characters.
@@ -81,18 +91,25 @@ U .= /Std/Char/Lit%;
   False;
 };
 
-# @func[IsSpace] Checks for a space ascii character.
+# @func[IsSpace] Checks for an ascii whitespace character.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is space or \t\n\v\f\r.
+#
+#  Includes the space character itself, and other whitespace characters like
+#  tab, newline, and form feed.
 (Char@) { Bool@; } IsSpace = (Char@ c) {
   Eq(Ascii.space, c).?(true: True);
   InRange(U|0009, U|000D, c).?(true: True);
   False;
 };
 
-# @func[IsPunct] Checks for a punctuation ascii character.
+# @func[IsPunct] Checks for an ascii punctuation character.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is printable but not alphanumeric.
+#
+#  This includes normal characters that aren't letters or numbers. It includes
+#  the space character. It does not include control characters or other
+#  whitespace characters like newline, tab, or form feed.
 (Char@) { Bool@; } IsPunct = (Char@ c) {
   IsAlNum(c).?(true: False);
   IsPrint(c);
