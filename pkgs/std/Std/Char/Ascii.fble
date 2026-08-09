@@ -1,5 +1,48 @@
 # @module[/Std/Char/Ascii%]
-#  Ascii character and string literals.
+#  Defines an ASCII character set and associated character and string
+#  literals.
+#
+#  The @l{/StdChar/Ascii%} module is most often used for @l{Char}, @l{Str},
+#  and @l{StrE} literal functions:
+#
+#  @code[fble] @
+#   Char, Str, StrE .= /Std/Char/Ascii%;
+#
+#   Char@ mychar = Char|a;
+#   String@ mystr = String|hello;
+#   String@ mystr2 = StringE|'use space (\q \q), not tab (\q\t\q)\n';
+#
+#  The @l{OnAscii} function is also useful to turn a function expecting
+#  a @l{String@} into functions that support string literals. For example,
+#  instead of writing:
+#
+#  @code[fble] @
+#   Str .= /Std/Char/Ascii%;
+#   Test .= /Std/Test%;
+#
+#   Test@ Tests = Test(Str|MyTest, {
+#     Unit@ _ := Lazy;
+#     Pass;
+#   });
+#
+#  You could write:
+#
+#  @code{fble} @
+#   OnAscii .= /Std/Char/Ascii%;
+#   Test = OnAscii(/Std/Test%.Test);
+#
+#   Test@ Tests = Test|MyTest({
+#     Unit@ _ := Lazy;
+#     Pass;
+#   });
+#
+#  Additional functionality for working with Ascii characters and strings is
+#  provided in submodules:
+#
+#  @def[{/Std/Char/Ascii/Stream%}]
+#   Ascii literal based string and format functions for outputting to streams.
+#  @def[{/Std/Char/Ascii/Type%}]
+#   Ascii character type classifications.
 
 Char@ .= /Std/Char%;
 ToChar@, U, StrLit .= /Std/Char/Lit%;
@@ -7,7 +50,27 @@ List@ .= /Std/List%;
 String@ .= /Std/String%;
 Unit@ .= /Std/Unit%;
 
-# @type[Ascii@] The ascii character letter type.
+# @type[Ascii@] The Ascii character letter type.
+#  Includes the Ascii characters you would write in a character or string
+#  literal. The primary use of this type is for specifying functions that
+#  accept ascii string literals, by using the type @l{List@<Ascii@>} in place
+#  of @l{String@}.
+#
+#  For example, a helper function for defining tests on unary boolean
+#  operations could be written and used like:
+#
+#  @code[fble] @
+#   (List@<Ascii@>, (Bool@) { Bool@; }, Bool@, Bool@) { Test@; }
+#   Unary = (List@<Ascii@> name, (Bool@) { Bool@; } f, Bool@ a, Bool@ z) {
+#     Test(Str(name), (Unit@ _) {
+#       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, z, f(a));
+#     });
+#   };
+#
+#   Test@ Tests = TestSuite|Not[
+#     Unary|T(Not, True, False),
+#     Unary|F(Not, False, True)
+#   ],
 Ascii@ = +(
   Unit@ '
 ',
@@ -38,6 +101,15 @@ Ascii@ = +(
 );
 
 # @value[Ascii] Ascii character values.
+#  Each field is of type @l{Char@}. For example, to directly refer to the
+#  character 'a' or '~', you could use:
+#
+#  @code[fble] @
+#   Char@ char = Ascii.a;
+#   Char@ char2 = Ascii.'~';
+#
+#  Also provides some convenient short hands for otherwise hard to distinguish
+#  space characters, like: @l{Ascii.nl}, @l{Ascii.tab}, @l{Ascii.cr}, etc.
 Ascii = @(
   nul: U|00, bel: U|07, bs: U|08,
   ht: U|09, tab: U|09, '	': U|09,
@@ -80,6 +152,14 @@ Ascii = @(
 # @func[Tochar] Convert an Ascii letter to a character.
 #  @arg[Ascii@][c] The ascii letter.
 #  @returns[Char@] The character value of the letter.
+#
+#  See @l{/Std/Char/Lit%} for more about the @l{ToChar@} interface. This
+#  allows the Ascii@ character set to be composed together with other
+#  character sets if desired. For example:
+#
+#  @code[fble]
+#   Str = /Std/Char/Lit%.Str(Compose(Ascii.ToChar, Greek.ToChar));
+#   String@ s = Str|'hello π';
 ToChar@<Ascii@> ToChar = (Ascii@ c) {
   c.?('
 ': Ascii.nl, '	': Ascii.tab, '': Ascii.cr, ' ': Ascii.' ',
@@ -114,45 +194,68 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 };
 
 # @func[Char] Ascii character literal.
-#  For example:
-#
-#  @code[fble] @
-#   Char@ c = Char|'c';
-#
 #  @arg[List@<Ascii@>][str] The literal string describing the character.
 #  @returns[Char@] The character value.
 #  @sideeffects
 #   Behavior is undefined if thre are more or less than one character in the
 #   literal.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Char@ c = Char|c;
+#   Char@ tilde = Char|'~';
 (List@<Ascii@>) { Char@; } Char = /Std/Char/Lit%.Char(ToChar);
 
 # @func[Str] An ascii string literal.
-#  Example use:
+#  @arg[List@<Ascii@>][str] The string literal.
+#  @returns[String@] The string value.
+#
+#  For example:
 #
 #  @code[fble] @
 #   String@ s = Str|'hello, world'
-#
-#  @arg[List@<Ascii@>][str] The string literal.
-#  @returns[String@] The string value.
 (List@<Ascii@>) { String@; } Str = /Std/Char/Lit%.Str(ToChar);
 
-# @func[OnAscii] Convert a string function to an ascii string function.
+# @func[OnAscii] Converts a string function to an ascii string function.
 #  @arg[@][A@] The return type of the function.
 #  @arg[(String@) { A@; }][func] The string function to convert.
 #  @returns[(List@<Ascii@>) { A@; }]
 #   The converted function that takes an ascii string argument instead.
+#
+#  For example, instead of writing:
+#
+#  @code[fble] @
+#   Str .= /Std/Char/Ascii%;
+#   Test .= /Std/Test%;
+#
+#   Test@ Tests = Test(Str|MyTest, {
+#     Unit@ _ := Lazy;
+#     Pass;
+#   });
+#
+#  You could write:
+#
+#  @code{fble} @
+#   OnAscii .= /Std/Char/Ascii%;
+#   Test = OnAscii(/Std/Test%.Test);
+#
+#   Test@ Tests = Test|MyTest({
+#     Unit@ _ := Lazy;
+#     Pass;
+#   });
 <@ A@>((String@) { A@; }, List@<Ascii@>) { A@; } OnAscii = StrLit(ToChar);
 
 # @func[Str] An ascii string literal supporting character escape sequences.
-#  Supports character sequences as in /Std/String/Escape%.Escape.
-#
-#  Example use:
-#
-#  @code[fble] @
-#   String@ s = StrE|'hello\nworld\n';
-#
 #  @arg[List@<Ascii@>][str] The string literal.
 #  @returns[String@] The string value.
+#
+#  Supports character sequences as in /Std/String/Escape%.Escape.
+#
+#  For example:
+#
+#  @code[fble] @
+#   String@ str = StrE|'hello\nworld\n';
 (List@<Ascii@>) { String@; } StrE = OnAscii(/Std/String/Escape%.Escape);
 
 # @func[OnAsciiE] Convert a string function to an escaped ascii string function.
@@ -161,6 +264,19 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 #  @returns[(List@<Ascii@>) { A@; }]
 #   The converted function that takes an ascii string argument with support
 #   for escape sequences instead.
+#
+#  For example, to turn the @l{AssertStream} assertion into something that
+#  takes a string literal argument:
+#
+#  @code[fble] @
+#   OnAsciiE .= /Std/Char/Ascii%;
+#   AssertStreamE = OnAsciiE(/Std/Stream/String/Assert%.AssertStream);
+#   Test|Lines({
+#     Unit@ _ := Lazy;
+#     AssertStreamE|'hello\nthere\nbye\n'(
+#       Lines[String|hello, String|there, String|bye]
+#     );
+#   });
 <@ A@>((String@) { A@; }, List@<Ascii@>) { A@; }
 OnAsciiE = <@ A@>((String@) { A@; } f, List@<Ascii@> a) {
   f(StrE(a));

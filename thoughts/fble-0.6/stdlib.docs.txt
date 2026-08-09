@@ -112,11 +112,11 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Int/Parse.fble
 [DONE] pkgs/std/Std/Stream/List.fble
 [DONE] pkgs/std/Std/Char/Lit.fble
+[DONE] pkgs/std/Std/Char/Ascii.fble
 
 pkgs/std/Std/Char/Ascii/Stream.fble
 pkgs/std/Std/Char/Ascii/Type.fble
 pkgs/std/Std/Char/Eq.fble
-pkgs/std/Std/Char/Ascii.fble
 pkgs/std/Std/Func.fble
 pkgs/std/Std/String/Eq.fble
 pkgs/std/Std/String/Escape.fble
