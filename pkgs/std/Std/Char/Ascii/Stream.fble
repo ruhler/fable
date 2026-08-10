@@ -1,54 +1,79 @@
 # @module[/Std/Char/Ascii/Stream%]
-#  Ascii string and formatting output.
+#  String and Format output functions that accept ascii string literals as
+#  arguments instead of String@. Useful any time you want to output a literal
+#  string or a variation on a literal string.
 
 Char@ .= /Std/Char%;
-Ascii@, ToChar, StrE .= /Std/Char/Ascii%;
-StrLit .= /Std/Char/Lit%;
+Ascii@, OnAscii, OnAsciiE .= /Std/Char/Ascii%;
 List@ .= /Std/List%;
 Stream@ .= /Std/Stream%;
 
-# @func[String] Output a string.
+# @func[String] Outputs an ascii string to a character stream.
 #  @arg[List<Ascii@>][str] The string to output.
-#  @returns[Stream@<Char@>] The input string as a stream of characters.
-(List@<Ascii@>) { Stream@<Char@>; }
-String = StrLit(ToChar, /Std/Stream/String%.String);
-
-# @func[String] Output a string with escape characters.
-#  Supports character sequences as in /Std/String/Escape%.Escape.
+#  @returns[Stream@<Char@>] A stream of characters from the given string.
 #
-#  Example use:
+#  For example, using the @l{String@} function to implement the @l{Show@}
+#  interface for @l{Bool@}:
 #
 #  @code[fble] @
-#   Stream@<Char@> out = StringE|'hello\nworld\n';
+#   (Bool@) { Stream@<Char@>>; } Show = (Bool@ x) {
+#     x.?(true: String|True, false: String|False);
+#   };
+(List@<Ascii@>) { Stream@<Char@>; }
+String = OnAscii(/Std/Stream/String%.String);
+
+# @func[String] Outputs an ascii string with escape characters.
+#  Supports character sequences as in /Std/String/Escape%.Escape.
 #
 #  @arg[List<Ascii@>][str] The string to output.
 #  @returns[Stream@<Char@>]
 #   The stream of characters for the escaped input string.
-(List@<Ascii@>) { Stream@<Char@>; }
-StringE = (List@<Ascii@> str) {
-  /Std/Stream/String%.String(StrE(str));
-};
-
-# @func[Format] Construct a formatted output.
-#  Provides printf like formatting, except the only supported format type is
-#  @l{%s}. More specifically, outputs the format string with @l{%%} replaced
-#  with @l{%} and @l{%s} replaced with the value of the next argument output.
 #
 #  For example:
 #
 #  @code[fble] @
-#   Stream@<Char@> out = Format|'a: %s, b: %s'[String|'hello', String|'there'];
+#   Stream@<Char@> out = StringE|'hello\nworld\n';
 #
+#  Would output the string:
+#
+#  @code[txt] @
+#   hello
+#   world
+(List@<Ascii@>) { Stream@<Char@>; }
+StringE = OnAsciiE(/Std/Stream/String%.String);
+
+# @func[Format] Construct a formatted output.
 #  @arg[List@<Ascii@>][fmt] The format specifier
 #  @arg[List@<Stream@<Char@>>[args] Format args.
 #  @return[Stream@<Char@>] The formatted output.
-(List@<Ascii@>, List@<Stream@<Char@>>) { Stream@<Char@>; }
-Format = StrLit(ToChar, /Std/Stream/String%.Format);
-
-# @func[FormatE] Construct a formatted output.
+#
 #  Provides printf like formatting, except the only supported format type is
 #  @l{%s}. More specifically, outputs the format string with @l{%%} replaced
-#  with @l{%} and @l{%s} replaced with the value of the next argument output.
+#  with @l{%} and @l{%s} replaced with the value of the next argument.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Stream@<Char@> out = Format|'a: %s, b: %s'[
+#     String|hello,
+#     /Std/Int/Show%.Show(Int|42)
+#   ];
+#
+#  Would output:
+#
+#  @code[txt] @
+#   a: hello, b: 42
+(List@<Ascii@>, List@<Stream@<Char@>>) { Stream@<Char@>; }
+Format = OnAscii(/Std/Stream/String%.Format);
+
+# @func[FormatE] Construct a formatted output with escape characters.
+#  @arg[List@<Ascii@>][fmt] The format specifier
+#  @arg[List@<Stream@<Char@>>[args] Format args.
+#  @return[Stream@<Char@>] The formatted output.
+#
+#  Provides printf like formatting, except the only supported format type is
+#  @l{%s}. More specifically, outputs the format string with @l{%%} replaced
+#  with @l{%} and @l{%s} replaced with the value of the next argument.
 #
 #  FormatE supports character sequences in the format string as in
 #  /Std/String/Escape%.Escape, which are evaluated before the format string is
@@ -59,12 +84,20 @@ Format = StrLit(ToChar, /Std/Stream/String%.Format);
 #  @code[fble] @
 #   Stream@<Char@> out = FormatE|'a: %s\nb: %s\n'[String|'hello', String|'there'];
 #
-#  @arg[List@<Ascii@>][fmt] The format specifier
-#  @arg[List@<Stream@<Char@>>[args] Format args.
-#  @return[Stream@<Char@>] The formatted output.
+#  For example:
+#
+#  @code[fble] @
+#   Stream@<Char@> out = Format|'a: %s\nb: %s\n'[
+#     String|hello,
+#     /Std/Int/Show%.Show(Int|42)
+#   ];
+#
+#  Would output:
+#
+#  @code[txt] @
+#   a: hello
+#   b: 42
 (List@<Ascii@>, List@<Stream@<Char@>>) { Stream@<Char@>; }
-FormatE = (List@<Ascii@> str, List@<Stream@<Char@>> args) {
-  /Std/Stream/String%.Format(StrE(str), args);
-};
+FormatE = OnAsciiE(/Std/Stream/String%.Format);
 
 @(String, StringE, Format, FormatE);
