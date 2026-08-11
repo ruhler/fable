@@ -1,10 +1,27 @@
 # @module[/Std/Func%]
 #  Utilities for working with functions.
+#
+#  Many of these functions can be specified as easily by writing a function
+#  value directly. Consider them provided for completeness.
 
 # @func[Id] The identity function.
 #  @arg[@][A@] The argument type.
 #  @arg[A@][x] The argument.
 #  @returns[A@] The argument as is.
+#
+#  Example:
+#
+#  @code[fble] @
+#   Int@ three = Id(Int|3);
+#
+#  Here's a slightly less contrived example, where the Id function is used to
+#  pass a test through as is unless a given condition is satisfied:
+#
+#  @code[fble] @
+#   (Bool@, Stream@<Char@>, Test@) { Test@; }
+#   SkipTestIf = (Bool@ if, Stream@<Char@> msg) {
+#     if.?(true: SkipTest(msg), false: /Std/Func%.Id<Test@>);
+#   };
 <@ A@>(A@) { A@; }
 Id = <@ A@>(A@ x) {
   x;
@@ -16,6 +33,15 @@ Id = <@ A@>(A@ x) {
 #  @arg[@][A@] The argument type.
 #  @returns[(A@) { B@; }]
 #   A function that ignores its argument and returns the constant @a{value};
+#
+#  Provided for completeness. There's probably some use case where it makes
+#  sense to have and use the @l{Const} function.
+#
+#  For example:
+#
+#  @code[fble] @
+#   (Int@) { Bool@; } p = Const(False);
+#   Bool@ false = p(Int|3);
 <@ B@>(B@)<@ A@>(A@) { B@; }
 Const = <@ B@>(B@ value)<@ A@>(A@ _) {
   value;
@@ -28,6 +54,11 @@ Const = <@ B@>(B@ value)<@ A@>(A@ _) {
 #  @arg[@][A@] The input type.
 #  @arg[(A@) { B@; }][g] The inner function.
 #  @returns[C@] A function that calls g then f.
+#
+#  For example, the function (x+1)^2 could be implemented as:
+#
+#  @code[fble] @
+#   (Int@) { Int@; } f = Compose(Mul2, Incr);
 <@ B@, @ C@>((B@) { C@; })<@ A@>((A@) { B@; }, A@) { C@; }
 Compose = <@ B@, @ C@>((B@) { C@; } f)<@ A@>((A@) { B@; } g, A@ x) {
   f(g(x));
@@ -40,6 +71,11 @@ Compose = <@ B@, @ C@>((B@) { C@; } f)<@ A@>((A@) { B@; } g, A@ x) {
 #  @arg[(A@, B@) { C@; }][f] The function to flip.
 #  @returns[(B@, A@) { C@; }]
 #   The function @l{f} with the order of its arguments reversed.
+#
+#  For example, the function x % 2 could be implemented as:
+#
+#  @code[fble] @
+#   (Int@) { Int@; } Mod2 = Flip(Mod, Int|2);
 <@ A@, @ B@, @ C@>((A@, B@) { C@; }, B@, A@) { C@; }
 Flip = <@ A@, @ B@, @ C@>((A@, B@) { C@; } f, B@ y, A@ x) {
   f(x, y);
@@ -51,17 +87,45 @@ Flip = <@ A@, @ B@, @ C@>((A@, B@) { C@; } f, B@ y, A@ x) {
 #  @arg[(A@) { B@; }][f] The function to apply.
 #  @arg[A@][x] The value to apply it to.
 #  @returns[B@] The result of apply the function to the argument.
+#
+#  Provided for completeness.
+#
+#  @code[fble] @
+#   Int@ three = Apply(Incr, Int|2);
+#
+#  One use case of @l{Apply} is to combine it with function bind syntax to
+#  modify an existing value without having to indent the code that's already
+#  there for that value. For example:
+#
+#  @code[fble] @
+#   Test@ test = {
+#    # Comment out the next line to re-enable the test.
+#    Unit@ _ := Apply(SkipTest|'debugging test for now');
+#    Test|T({
+#      Unit@ _ := Lazy;
+#      Map@ map = Entries[];
+#      Bool@ got = IsEmpty(map);
+#      Bool@ wnt = True;
+#      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+#    });
+#   };
 <@ A@, @ B@>((A@) { B@; }, A@) { B@; }
 Apply = <@ A@, @ B@>((A@) { B@; } f, A@ x) {
   f(x);
 };
 
-# @func[ApplyTo] Apply to a value a function.
+# @func[ApplyTo] Apply a function to a value, passing the value first.
 #  @arg[@][A@] The argument type.
 #  @arg[A@][x] The value to apply the function to.
 #  @arg[@][B@] The return type.
 #  @arg[(A@) { B@; }][f] The function to apply.
 #  @returns[B@] The result of apply the function to the argument.
+#
+#  Provided for completeness. There's probably some use case where it makes
+#  sense to have and use the @l{ApplyTo} function.
+#
+#  @code[fble] @
+#   Int@ three = ApplyTo(Int|2, Incr);
 <@ A@>(A@)<@ B@>((A@) { B@; }) { B@; }
 ApplyTo = <@ A@>(A@ x)<@ B@>((A@) { B@; } f) {
   f(x);
@@ -72,6 +136,15 @@ ApplyTo = <@ A@>(A@ x)<@ B@>((A@) { B@; } f) {
 #  @arg[(A@) { A@; }][f] The function to get the fixed point of.
 #  @returns[A@]
 #   The result of applying the function recursively to its own result.
+#
+#  For example, you could use this to implement an infinite list of threes,
+#  @l{List[3, 3, 3, 3, ...]}:
+#
+#  @code[fble] @
+#   List@<Int@> threes = {
+#     List@<Int@> list := Fix;
+#     Items(Int|3, list);
+#   };
 <@ A@>((A@) { A@; }) { A@; }
 Fix = <@ A@>((A@) { A@; } f) {
   A@ x = f(x);
@@ -86,6 +159,12 @@ Fix = <@ A@>((A@) { A@; } f) {
 #  @arg[(A@) { B@; }][f] The input transform function.
 #  @returns[(A@, A@) { C@; }]
 #   The binary function with input transform applied first.
+#
+#  For example, to implement @l{Cmp@} for @l{Char@} by calling integer
+#  @l{Cmp} on the underlying unicode code points of a character:
+#
+#  @code[fble] @
+#   Cmp@<Char@> Cmp = On(/Std/Int/Cmp%.Cmp, Pos);
 <@ B@, @ C@>((B@, B@) { C@; })<@ A@>((A@) { B@; }, A@, A@) { C@; }
 On = <@ B@, @ C@>((B@, B@) { C@; } bin)<@ A@>((A@) { B@; } f, A@ a, A@ b) {
   bin(f(a), f(b));

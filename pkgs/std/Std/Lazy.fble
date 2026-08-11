@@ -54,7 +54,7 @@ Lazy@ = <@ A@>(Unit@) { A@; };
 #  @arg[@][A@] The type of computed value.
 #  @arg[(Unit@) { A@; }][lazy] The computation to compute the value.
 #  @returns[Lazy@<A@>] The lazy value.
-<@ A@>((Unit@) { A@; }){ Lazy@<A@>; }
+<@ A@>((Unit@) { A@; }) { Lazy@<A@>; }
 Lazy = <@ A@>((Unit@) { A@; } lazy) { lazy; };
 
 # @func[Return] Monadic return function for lazy computations.

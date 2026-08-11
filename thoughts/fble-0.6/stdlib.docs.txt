@@ -116,8 +116,8 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Char/Ascii/Type.fble
 [DONE] pkgs/std/Std/Char/Eq.fble
 [DONE] pkgs/std/Std/Char/Ascii/Stream.fble
+[DONE] pkgs/std/Std/Func.fble
 
-pkgs/std/Std/Func.fble
 pkgs/std/Std/String/Eq.fble
 pkgs/std/Std/String/Escape.fble
 pkgs/std/Std/String/Lines.fble
