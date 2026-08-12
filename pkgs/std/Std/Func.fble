@@ -88,27 +88,12 @@ Flip = <@ A@, @ B@, @ C@>((A@, B@) { C@; } f, B@ y, A@ x) {
 #  @arg[A@][x] The value to apply it to.
 #  @returns[B@] The result of apply the function to the argument.
 #
-#  Provided for completeness.
+#  Provided for completeness. There's probably some use case where it makes
+#  sense to have and use the @l{Apply} function.
 #
 #  @code[fble] @
 #   Int@ three = Apply(Incr, Int|2);
 #
-#  One use case of @l{Apply} is to combine it with function bind syntax to
-#  modify an existing value without having to indent the code that's already
-#  there for that value. For example:
-#
-#  @code[fble] @
-#   Test@ test = {
-#    # Comment out the next line to re-enable the test.
-#    Unit@ _ := Apply(SkipTest|'debugging test for now');
-#    Test|T({
-#      Unit@ _ := Lazy;
-#      Map@ map = Entries[];
-#      Bool@ got = IsEmpty(map);
-#      Bool@ wnt = True;
-#      AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
-#    });
-#   };
 <@ A@, @ B@>((A@) { B@; }, A@) { B@; }
 Apply = <@ A@, @ B@>((A@) { B@; } f, A@ x) {
   f(x);
