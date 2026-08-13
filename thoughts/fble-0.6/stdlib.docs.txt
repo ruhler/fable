@@ -117,10 +117,15 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Char/Eq.fble
 [DONE] pkgs/std/Std/Char/Ascii/Stream.fble
 [DONE] pkgs/std/Std/Func.fble
+[DONE] pkgs/std/Std/String/Eq.fble
+[DONE] pkgs/std/Std/String/Escape.fble
+[DONE] pkgs/std/Std/String/Lines.fble
 
-pkgs/std/Std/String/Eq.fble
-pkgs/std/Std/String/Escape.fble
-pkgs/std/Std/String/Lines.fble
+
+pkgs/std/Std/Test.fble
+pkgs/std/Std/Stream/Out.fble
+pkgs/std/Std/Stream/In.fble
+pkgs/std/Std/Test/Run.fble
 
 pkgs/std/Std/Maybe/Data.fble
 pkgs/std/Std/Bool/Data.fble
@@ -131,8 +136,6 @@ pkgs/std/Std/Int/IntP/Data.fble
 pkgs/std/Std/Int/Random.fble
 pkgs/std/Std/Stream/State.fble
 pkgs/std/Std/Stream/Debug.fble
-pkgs/std/Std/Stream/Out.fble
-pkgs/std/Std/Stream/In.fble
 pkgs/std/Std/Stream/Null.fble
 pkgs/std/Std/Stream/String.fble
 pkgs/std/Std/Stream/String/Assert.fble
@@ -154,7 +157,6 @@ pkgs/std/Std/Random/Prng/Assert.fble
 pkgs/std/Std/Random/Prng/Pure.fble
 pkgs/std/Std/Random/Rng.fble
 pkgs/std/Std/Random/Lfsr.fble
-pkgs/std/Std/Test/Run.fble
 pkgs/std/Std/Test/Cli.fble
 pkgs/std/Std/Eq/Assert.fble
 pkgs/std/Std/List/Data.fble
@@ -172,7 +174,6 @@ pkgs/std/Std/Io/File/Mode.fble
 pkgs/std/Std/Io/File/Utf8.fble
 pkgs/std/Std/Io/Cli.fble
 pkgs/std/Std/String/Data.fble
-pkgs/std/Std/Test.fble
 
 Question:
 * When do I put stuff in the module comment compared to the comment for a

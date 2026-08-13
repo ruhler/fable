@@ -386,25 +386,25 @@ Break = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
 #  For example:
 #
 #  @code[fble] @
-#   Split(/Std/Int/Eq%.Eq, List[2, 3, 0, 1, 4, 5, 0, 1, 6, 7], List[0, 1]);
+#   Split(/Std/Int/Eq%.Eq, List[2, 3, 0, 1, 4, 5, 0, 1, 6, 7, 8], List[0, 1]);
 #
 #  Would return a list of lists equivalent to:
 #
 #  @code[fble] @
-#   List[List[2, 3], List[4, 5], List[1, 6, 7]]
+#   List[List[2, 3], List[4, 5], List[6, 7, 8]]
 #
-#  Occurences of the delimeter at the front and end of the list result in
+#  Occurrences of the delimiter at the front and end of the list result in
 #  empty list elements. For example:
 #
 #  @code[fble] @
 #   Split(/Std/Int/Eq%.Eq,
-#     List[0, 1, 2, 3, 0, 1, 4, 5, 0, 1, 6, 7, 0, 1],
+#     List[0, 1, 2, 3, 0, 1, 4, 5, 0, 1, 6, 7, 8, 0, 1],
 #     List[0, 1]);
 #
 #  Would return a list of lists equivalent to:
 #
 #  @code[fble] @
-#   List[List[], List[2, 3], List[4, 5], List[1, 6, 7], List[]]
+#   List[List[], List[2, 3], List[4, 5], List[6, 7, 8], List[]]
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<List@<T@>>; }
 Split = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> delim) {
   Span@<T@> span = Break(eq, list, delim);

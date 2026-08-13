@@ -10,20 +10,39 @@ String@ .= /Std/String%;
 
 # @value[Newline] The newline character.
 #  @type[Char@]
+#
+#  The fble standard library uses a single \n newline character to denote end
+#  of line.
 Char@ Newline = U|0A;
 
 # @func[IsNewline] Tests for the newline character.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@]
 #   True if the character to check is the newline character, false otherwise.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Bool@ true = IsNewline(CharE|'\n');
+#   Bool@ false = IsNewline(Char|x);
 (Char@) { Bool@; } IsNewline = /Std/Char/Eq%.Eq(Newline);
 
 # @func[Lines] Concatenate lines together into a single string.
+#  @arg[List@<String@>][strs] The lines to concatenate.
+#  @returns[String@] A single string with the concatenated lines.
+#
 #  Adds a newline after each string in the list and concatenates the results
 #  together.
 #
-#  @arg[List@<String@>][strs] The lines to concatenate.
-#  @returns[String@] A single string with the concatenated lines.
+#  For example:
+#  
+#  @code[fble] @
+#   Lines[Str|hello, Str|there, Str|you];
+#
+#  Would return a string equivalent to:
+#
+#  @code[fble] @
+#   StrE|'hello\nthere\nyou\n';
 (List@<String@>) { String@; } Lines = (List@<String@> strs) {
   strs.?(empty: Empty<Char@>);
   String@ tail = Lines(strs.items.tail);
@@ -33,6 +52,27 @@ Char@ Newline = U|0A;
 # @func[SplitLines] Split a string into lines.
 #  @arg[String@][str] The string to split.
 #  @returns[List@<String@>] The list of lines that make up the string.
+#
+#  The string is split around newlines and the newlines are removed. For
+#  example:
+#
+#  @code[fble] @
+#   SplitLines(StrE|'hello\nthere\nyou\n');
+#
+#  Would return a list of strings equivalent to:
+#
+#  @code[fble] @
+#   List[Str|hello, Str|there, Str|you];
+#
+#  Empty lines are split into empty strings. For example:
+#
+#  @code[fble] @
+#   SplitLines(StrE|'hello\n\nyou\n');
+#
+#  Would return a list of strings equivalent to:
+#
+#  @code[fble] @
+#   List[Str|hello, Str|'', Str|you];
 (String@) { List@<String@>; } SplitLines = (String@ str) {
   str.?(empty: Empty<String@>);
   Span@<Char@> span = Break(str, IsNewline);

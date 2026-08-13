@@ -1,21 +1,23 @@
 # @module[/Std/String/Escape%]
 #  Support for character escape sequences in strings.
+#
+#  Fble doesn't have built in character escape sequences. The @l{Escape}
+#  function provides equivalent functionality.
 
 Bool@, True, False .= /Std/Bool%;
 Char@, Char, Pos .= /Std/Char%;
+U .= /Std/Char/Lit%;
 Int@, Add, Sub, Mul .= /Std/Int%;
 Lt, Gt .= /Std/Int/Cmp%;
-HexLit@, Int, Hex .= /Std/Int/Lit%;
+Int .= /Std/Int/Lit%;
 Empty, Items .= /Std/List%;
 Span@, Break .= /Std/List/Search%;
 String@ .= /Std/String%;
 
-(HexLit@) { Char@; }
-U = (HexLit@ hex) {
-  Char(Hex(hex));
-};
-
 # func[Escape] Interpret escape sequences in the given string.
+#  @arg[String@][str] The string to process escape sequences in.
+#  @returns[String@] The string with processed escape sequences.
+#
 #  The following character escape sequences may appear in the string. These
 #  will be replaced with their corresponding character values.
 #
@@ -34,8 +36,34 @@ U = (HexLit@ hex) {
 # 
 #  Any other use of \ is undefined and reserved for future use.
 #
-#  @arg[String@][str] The string to process escape sequences in.
-#  @returns[String@] The given string with processed escape sequences.
+#  For example, @l{Str|'hello\n'} is a 7 character string with the last two
+#  characters backslash followed by n. @l{Escape(Str|'hello\n')} returns a 6
+#  character string with the last character a newline.
+#
+#  The @l{\u} escape sequence can be used to embed arbitrary unicode
+#  characters in the string by specifying their hex code points. Any number of
+#  hex digits may be specified after the @l{\u}. The semicolon is required to
+#  mark the end of the hex digits.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Escape(Str|'The symbol \u3c0; is greek small letter pi');
+#
+#  Which returns a string equivalent to:
+#
+#  @code[txt] @
+#   The symbol π is greek small letter pi
+#
+#  The @l{Escape} function operates on @l{String@} type. A common way to make
+#  use of @l{Escape} is via the @l{StrE}, @l{StringE}, @l{FormatE} functions
+#  from the @l{/Std/Char/Ascii%} and @l{/Std/Char/Ascii/Stream%} modules which
+#  provide string literal functions that process escape sequences. For
+#  example:
+#
+#  @code[fble] @
+#   String@ str = StrE|'The symbol \u3c0; is greek small letter pi';
+#   Stream@<Char@> output = FormatE|'a: %s\n, b: %s\n'[Show(a), Show(b)];
 (String@) { String@; }
 Escape = {
   Char@ '\' = U|5C;

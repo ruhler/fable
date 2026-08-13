@@ -13,6 +13,12 @@ String@ .= /Std/String%;
 #  @arg[String@][a] The first string.
 #  @arg[String@][b] The second string.
 #  @returns[Bool@] True if the string are equal, false otherwise.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Bool@ true = /Std/String/Eq%.Eq(Str|hello, Str|hello);
+#   Bool@ false = /Std/String/Eq%.Eq(Str|hello, Str|goodbye);
 Eq@<String@> Eq = /Std/List/Eq%.Eq(CharEq);
 
 # @func[StartsWith] Check if a string starts with a given prefix.
@@ -20,6 +26,12 @@ Eq@<String@> Eq = /Std/List/Eq%.Eq(CharEq);
 #  @arg[String@][prefix] The prefix to check for.
 #  @returns[Bool@]
 #   True if the string begins with the given prefix. False otherwise.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Bool@ true = StartsWith(Str|abcde, Str|abc);
+#   Bool@ false = StartsWith(Str|abcde, Str|cba);
 (String@, String@) { Bool@; } StartsWith = /Std/List/Eq%.StartsWith(CharEq);
 
 # @func[EndsWith] Check if a string ends with a given suffix
@@ -27,6 +39,12 @@ Eq@<String@> Eq = /Std/List/Eq%.Eq(CharEq);
 #  @arg[String@][suffix] The suffix to check for.
 #  @returns[Bool@]
 #   True if the string ends with the given suffix. False otherwise.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Bool@ true = EndsWith(Str|abcde, Str|cde);
+#   Bool@ false = EndsWith(Str|abcde, Str|cba);
 (String@, String@) { Bool@; } EndsWith = /Std/List/Eq%.EndsWith(CharEq);
 
 # @func[Contains] Check if a string contains the given substring.
@@ -34,6 +52,12 @@ Eq@<String@> Eq = /Std/List/Eq%.Eq(CharEq);
 #  @arg[String@][substring] The substring to check for.
 #  @returns[Bool@]
 #   True if the string contains the given suffix. False otherwise.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Bool@ true = Contains(Str|abcde, Str|cd);
+#   Bool@ false = Contains(Str|abcde, Str|dc);
 (String@, String@) { Bool@; } Contains = /Std/List/Eq%.Contains(CharEq);
 
 # @func[Skip] Skips past a prefix of the string.
@@ -42,6 +66,11 @@ Eq@<String@> Eq = /Std/List/Eq%.Eq(CharEq);
 #  @returns[String@]
 #   The elements of the string following the given prefix. The complete string
 #   if it does not start with the given prefix.
+#
+#  For example:
+#
+#  @code[fble] @
+#   String@ cde = Skip(Str|abcde, Str|ab);
 (String@, String@) { String@; } Skip = /Std/List/Eq%.Skip(CharEq);
 
 # @func[Trim] Removes a suffix from the end of a string.
@@ -50,6 +79,11 @@ Eq@<String@> Eq = /Std/List/Eq%.Eq(CharEq);
 #  @returns[String@]
 #   The elements of the string without the given suffix. The complete string if
 #   it does not end with the given suffix.
+#
+#  For example:
+#
+#  @code[fble] @
+#   String@ abc = Trim(Str|abcde, Str|de);
 (String@, String@) { String@; } Trim = /Std/List/Eq%.Trim(CharEq);
 
 # @func[Strip] Removes a substring from the front and end of a string.
@@ -58,6 +92,11 @@ Eq@<String@> Eq = /Std/List/Eq%.Eq(CharEq);
 #  @returns[String@]
 #   The elements of the string without the substring prefix and substring suffix
 #   removed if present.
+#
+#  For example:
+#
+#  @code[fble] @
+#   String@ cdabef = Strip(Str|abcdabefab, Str|ab);
 (String@, String@) { String@; } Strip = /Std/List/Eq%.Strip(CharEq);
 
 # @func[Search] Finds the longest suffix of a string with the given prefix.
@@ -66,6 +105,11 @@ Eq@<String@> Eq = /Std/List/Eq%.Eq(CharEq);
 #  @returns[String@]
 #   The longest suffix of the string that starts with the given prefix, or an
 #   empty string if the prefix is not found anywhere in the string.
+#
+#  For example:
+#
+#  @code[fble] @
+#   String@ abefabgh = Search(Str|cdabefabgh, Str|ab);
 (String@, String@) { String@; } Search = /Std/List/Eq%.Search(CharEq);
 
 # @func[SearchR] Finds the shortest suffix of a string with the given prefix.
@@ -74,6 +118,11 @@ Eq@<String@> Eq = /Std/List/Eq%.Eq(CharEq);
 #  @returns[String@]
 #   The shortest suffix of the string that starts with the given prefix, or an
 #   empty string if the prefix is not found anywhere in the string.
+#
+#  For example:
+#
+#  @code[fble] @
+#   String@ abgh = SearchR(Str|cdabefabgh, Str|ab);
 (String@, String@) { String@; } SearchR = /Std/List/Eq%.SearchR(CharEq);
 
 # @func[Until] Takes elements from the string until a substring is found.
@@ -82,6 +131,11 @@ Eq@<String@> Eq = /Std/List/Eq%.Eq(CharEq);
 #  @returns[String@]
 #   The prefix of the string up to but not including elements from the first
 #   occurence of the substring in the string.
+#
+#  For example:
+#
+#  @code[fble] @
+#   String@ cd = Until(Str|cdabefabgh, Str|ab);
 (String@, String@) { String@; } Until = /Std/List/Eq%.Until(CharEq);
 
 # @struct[Span@]
@@ -97,6 +151,28 @@ Span@ = /Std/List/Eq%.Span@<Char@>;
 #  @returns[Span@<T@>]
 #   The elements of the string up to the first occurrence of the given substring,
 #   followed by the remainder of the string with substring included.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Break(Str|cdabefabgh, Str|ab);
+#
+#  Would return a span @l{Str|cd} and tail @l{Str|abefabgh}.
+#
+#  The return value can be accessed as a normal struct:
+#
+#  @code[fble] @
+#   Span@ result = Break(...);
+#   String@ span = result.span;
+#   String@ tail = result.tail;
+#
+#  You can also use struct import to access the result:
+#
+#  @code[fble] @
+#   String@ span, String@ tail .= Break(...);
+#
+#  If the substring is not found in the string, the entire string is returned
+#  in the @l{span} field of the result.
 (String@, String@) { Span@; } Break = /Std/List/Eq%.Break(CharEq);
 
 # @func[Split] Splits a string around the given delimiter.
@@ -105,6 +181,27 @@ Span@ = /Std/List/Eq%.Span@<Char@>;
 #  @returns[String@]
 #   Split the string into a sequence of strings using the delim sequence as the
 #   delimiter.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Split(Str|cdabefabghi, Str|ab);
+#
+#  Would return a list of strings equivalent to:
+#
+#  @code[fble] @
+#   List[Str|cd, Str|ef, Str|ghi];
+#
+#  Occurrences of the delimiter at the front and end of the list result in
+#  empty strings. For example:
+#
+#  @code[fble] @
+#   Split(Str|abcdabefabghiab, Str|ab);
+#
+#  Would return a list of strings equivalent to:
+#
+#  @code[fble] @
+#   List[Str|'', Str|cd, Str|ef, Str|ghi, Str|''];
 (String@, String@) { List@<String@>; } Split = /Std/List/Eq%.Split(CharEq);
 
 # @func[Replace] Replaces occurrences of a substring in a string.
@@ -113,8 +210,12 @@ Span@ = /Std/List/Eq%.Span@<Char@>;
 #  @arg[String@][to] The value to put in place of the substring.
 #  @returns[String@]
 #   Replaces all occurrence of @a[from] in @a[string] with @a[to].
+#
+#  For example:
+#
+#  @code[fble] @
+#   String@ cdijkefijkgh = Replace(Str|cdabefabgh, Str|ab, Str|ijk);
 (String@, String@, String@) { String@; } Replace = /Std/List/Eq%.Replace(CharEq);
-
 
 @(Eq,
   StartsWith, EndsWith, Contains,
