@@ -2,8 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Should /Std/Stream/Out%.Map take the function last?
-
 * Add a note to String@ type when Stream@<Char@> is better
  - Namely, if it's going to be consumed once / output once, better to use
    Stream@<Char@>. Probably more efficient that way.

@@ -128,7 +128,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
   });
 
   InOut@<M@> ios = mios.just;
-  Out@<Char@, M@> os = /Std/Stream/Out%.Map(Pos, ios.out);
+  Out@<Char@, M@> os = /Std/Stream/Out%.Map(ios.out, Pos);
   Out@<Int@, M@> out := m.do(/Std/Io/File/Byte%.Stdout(m, io, Binary));
 
   Unit@ _ := m.do(os(S(args.message)));
