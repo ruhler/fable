@@ -5,7 +5,32 @@ Stream@ .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # @type[Out@] Monadic interface for outputting values to a stream.
-#  Puts the next values to output.
+#  @arg[@][A@] The type of values to output.
+#  @arg[<@>@][M@] The type of the monadic context to output the value in.
+#  @arg[Stream@<A@][out] A stream of values to output.
+#  @returns[M@<Unit@>] A monadic computation that outputs the stream of values.
+#
+#  A single call to the @l{Out@} function outputs everything in the given
+#  stream. For example, if writing to a file, this could be all the characters
+#  in a single line of text, a log message, or the entire contents of the
+#  file. We think of the output stream as being written atomically for some
+#  notion of atomic appropriate for the underlying monad. For files, for
+#  example, output will be flushed after every call to @l{Out@}, but may not
+#  be flushed in between elements of the input stream.
+#
+#  The @l{Out@} function can be called repeatedly to append additional items
+#  to the monadic context. For example, a file with 8 lines could be written
+#  with 8 calls to the @l{Out@} function, each passing the stream of
+#  characters for the corresponding line.
+#
+#  For example, using the @l{Main@} type from @l{/Std/Io/Cli%}:
+#
+#  @code[fble] @
+#   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+#   Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Stdout(m, io));
+#   Unit@ _ := m.do(out(StringE|'hello, world\n'));
+#   Unit@ _ := m.do(out(StringE|'goodbye\n'));
+#   m.return(Success);
 Out@ = <@ A@, <@>@ M@>(Stream@<A@>) { M@<Unit@>; };
 
 # @func[Map] Map a function over the elements of the output stream.
@@ -15,6 +40,14 @@ Out@ = <@ A@, <@>@ M@>(Stream@<A@>) { M@<Unit@>; };
 #  @arg[<@>@][M@] The monadic type.
 #  @arg[Out@<A@, M@>][out] The original Out@.
 #  @return[Out@<B@, M@>] A new Out@ that outputs the target output type.
+#
+#  For example, to write a sequence of boolean bits to an ascii file:
+#
+#  @code[fble] @
+#   Out@<Char@, M@> out = ...;
+#   Out@<Bool@, M@> bit_out = Map(
+#     (Bool@ bit) { bit.?(true: Char|'1', false: Char|'0'); }, out);
+#   Unit@ _ := m.do(bit_out(Each[True, True, False, False, False]));
 <@ A@, @ B@>((B@) { A@; })<<@>@ M@>(Out@<A@, M@>) { Out@<B@, M@>; }
 Map = <@ A@, @ B@>((B@) { A@; } f)<<@>@ M@>(Out@<A@, M@> out) {
   (Stream@<B@> stream) {

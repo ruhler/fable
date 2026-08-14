@@ -120,10 +120,10 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/String/Eq.fble
 [DONE] pkgs/std/Std/String/Escape.fble
 [DONE] pkgs/std/Std/String/Lines.fble
+[DONE] pkgs/std/Std/Stream/Out.fble
 
 
 pkgs/std/Std/Test.fble
-pkgs/std/Std/Stream/Out.fble
 pkgs/std/Std/Stream/In.fble
 pkgs/std/Std/Test/Run.fble
 
