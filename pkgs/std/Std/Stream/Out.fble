@@ -27,10 +27,11 @@ Unit@ .= /Std/Unit%;
 #
 #  @code[fble] @
 #   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-#   Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Stdout(m, io));
-#   Unit@ _ := m.do(out(StringE|'hello, world\n'));
-#   Unit@ _ := m.do(out(StringE|'goodbye\n'));
-#   m.return(Success);
+#     Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Stdout(m, io));
+#     Unit@ _ := m.do(out(StringE|'hello, world\n'));
+#     Unit@ _ := m.do(out(StringE|'goodbye\n'));
+#     m.return(Success);
+#   };
 Out@ = <@ A@, <@>@ M@>(Stream@<A@>) { M@<Unit@>; };
 
 # @func[Map] Map a function over the elements of the output stream.

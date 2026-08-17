@@ -1,24 +1,84 @@
 # @module[/Std/Stream/In%]
-#  Standard types for monadic input streaming of data.
+#  Defines the @l{In@} interface for monadic input streams.
 
 Maybe@, Just, Nothing .= /Std/Maybe%;
 Monad@ .= /Std/Monad%;
 
-# @type[In@] Monadic interface for getting from a stream of values.
-#  Get the next value from the stream. It returns Nothing if the end of the
-#  stream has been reached.
+# @type[In@] Interface for getting from a monadic stream of values.
+#  @arg[@][A@] The type of value to get from the stream.
+#  @arg[<@>@][M@] The type of the monadic context to get values from.
+#  @returns[M@<Maybe@<A@>>]
+#   A monadic computation that gets the next value, or Nothing of there are no
+#   values to get.
+#
+#  For example, here's an implementation of GetLine using the @l{In@}
+#  interface:
+#
+#  @code[fble] @
+#   <<@>@ M@>(Monad@<M@>, In@<Char@, M@>) { M@<String@>; }
+#   GetLine = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> in) {
+#     Maybe@<Char@> c := m.do(in);
+#     c.?(nothing: m.return(List<Char@>[]));
+#     IsNewline(c.just).?(true: m.return(List[c.just]));
+#
+#     String@ tail := m.do(GetLine(m, in));
+#     m.return(Items(c.just, tail));
+#   };
+#
+#  Here's an example of how that could be used, using the @l{Main@} type from
+#  @l{/Std/Io/Cli%}.
+#
+#  @code[fble] @
+#   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+#     In@<Char@, M@> in := m.do(/Std/Io/File/Utf8%.Stdin(m, io));
+#     String@ line := m.do(GetLine(m, in));
+#     line.?(empty: m.return(Failure));
+#     m.return(Success);
+#   };
+#
+#  Here's an example of how to implement the @l{In@} interface for a pure
+#  state monad:
+#
+#  @code[fble] @
+#   <<@>@ M@>(Monad@<M@>)<@ A@>(State@<List@<A@>, M@>) { In@<A@, M@>; }
+#   In = <<@>@ M@>(Monad@<M@> m)<@ A@>(State@<List@<A@>, M@> s) {
+#     List@<A@> xs := m.do(s.get);
+#     xs.?(empty: m.return(Nothing<A@>));
+#     Unit@ _ := m.do(s.put(xs.items.tail));
+#     m.return(Just(xs.items.head));
+#   };
 In@ = <@ A@, <@>@ M@> { M@<Maybe@<A@>>; };
 
 # @func[Map] Map a function over values of an input stream.
-#  @arg[@][A@] The input type of the original In@.
-#  @arg[@][B@] The input type of the new In@.
-#  @arg[(A@) { B@; }][f] Function to convert input values.
 #  @arg[<@>@][M@] The monadic type.
 #  @arg[Monad@<M@>][m] The monad implementation.
+#  @arg[@][A@] The input type of the original In@.
 #  @arg[In@<A@, M@>][In] The original In@.
+#  @arg[@][B@] The input type of the new In@.
+#  @arg[(A@) { B@; }][f] Function to convert input values.
 #  @return[In@<B@, M@>] A new In@ that inputs the target input type.
-<@ A@, @ B@>((A@) { B@; })<<@>@ M@>(Monad@<M@>, In@<A@, M@>) { In@<B@, M@>; }
-Map = <@ A@, @ B@>((A@) { B@; } f)<<@>@ M@>(Monad@<M@> m, In@<A@, M@> in) {
+#
+#  For example, to read a sequence of boolean bits as an ascii file:
+#
+#  @code[fble] @
+#   In@<Bool@, M@> in = ...;
+#   In@<Char@, M@> ascii_in = Map(in, (Bool@ bit) {
+#     bit.?(true: Char|'1', false: Char|'0');
+#   });
+#   Maybe@<Char@> mc := m.do(ascii_in);
+#
+#  It can be convenient to use function bind syntax to pass the function. The
+#  above example can also be written as:
+#
+#  @code[fble] @
+#   In@<Bool@, M@> in = ...;
+#   In@<Char@, M@> ascii_in = {
+#     Bool@ bit := Map(in);
+#     bit.?(true: Char|'1', false: Char|'0');
+#   };
+#   Maybe@<Char@> mc := m.do(ascii_in);
+<<@>@ M@>(Monad@<M@>)<@ A@>(In@<A@, M@>)<@ B@>((A@) { B@; }) { In@<B@, M@>; }
+Map = <<@>@ M@>(Monad@<M@> m)<@ A@>(In@<A@, M@> in)<@ B@>((A@) { B@; } f) {
   Maybe@<A@> ma := m.do(in);
   ma.?(nothing: m.return(Nothing<B@>));
   m.return(Just(f(ma.just)));
