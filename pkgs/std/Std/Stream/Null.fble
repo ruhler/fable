@@ -1,5 +1,7 @@
 # @module[/Std/Stream/Null%]
-#  An output channel that ignores all output.
+#  Provides support for outputting pure and monadic output streams to a null
+#  channel that ignores all output. Useful for working with functions that
+#  support output streams when you don't care about the output.
 
 Monad@ .= /Std/Monad%;
 Stream@ .= /Std/Stream%;
@@ -13,6 +15,20 @@ Unit@, Unit .= /Std/Unit%;
 #  @arg[A@] The type of value to output.
 #  @arg[Stream@<A@>] The stream of values to ignore.
 #  @returns[Unit@] Nothing interesting.
+#
+#  For example, this can be useful as a drop in replacement to disable debug
+#  output:
+#
+#  @code[fble] @
+#   #ToDebug = /Std/Stream/Debug%.ToDebug;
+#   ToDebug = /Std/Stream/Null%.ToNull;
+#
+#   Maybe@<Block@> mname = Blocks.Get(profile.blocks, block);
+#   Stream@<Char@> name = { 
+#     mname.?(just: /Std/Stream/String%.String(mname.just.name));
+#     Unit@ _ = ToDebug(Format|'block %s not found'[/Std/Int/Show%.Show(block)]);
+#     Format|'??%s??'[/Std/Int/Show%.Show(block)];
+#   };
 <@ A@>(Stream@<A@>) { Unit@; }
 ToNull = <@ A@>(Stream@<A@> _) {
   Unit;
@@ -25,6 +41,22 @@ ToNull = <@ A@>(Stream@<A@> _) {
 #  @arg[<@>@][M@] Monadic type to work with.
 #  @arg[Monad@<M@>][m] The monadic interface.
 #  @returns[Out@<M@>] The null output port.
+#
+#  For example, here's how you could use @l{NullOut} to create a benchmark out
+#  of something that normally outputs to the user:
+#
+#  @code[fble] @
+#   Test@ Bench = Test|Sat({
+#     Unit@ _ := Lazy;
+#     M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+#
+#     Out@<Char@, M@> null = NullOut<Char@>(M);
+#     M@<Exit@> go = /Sat/Main%.Main(M, /Std/Stream/State%.In(M, S), null, null);
+#     Exit@ got = Eval(go, /Sat/Bench/Input%);
+#     Exit@ wnt = Success;
+#     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+#   });
+#
 <@ A@, <@>@ M@>(Monad@<M@>) { Out@<A@, M@>; }
 NullOut = <@ A@, <@>@ M@>(Monad@<M@> m, Stream@<A@> _) {
   m.return(Unit);

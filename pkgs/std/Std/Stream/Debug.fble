@@ -1,6 +1,6 @@
 # @module[/Std/Stream/Debug%]
-#  An output channel that send output to a debug stream. For the purposes of
-#  printf style debugging of programs.
+#  Provides support for outputting pure and monadic output streams to a debug
+#  channel, for the purposes of printf style debugging of programs.
 
 Char@ .= /Std/Char%;
 Monad@ .= /Std/Monad%;
@@ -8,6 +8,17 @@ Stream@, For .= /Std/Stream%;
 Out@ .= /Std/Stream/Out%;
 Unit@, Unit .= /Std/Unit%;
 
+# @dev
+#  @func[PutChar] Outputs a character to the debug stream.
+#   @arg[Char@][c] The character to output.
+#   @returns[Unit@] Unit.
+#
+#   The character will be printed to the debug stream. It's implementation
+#   dependant where that debug stream stream goes. For example, it could be
+#   output to the standard error stream.
+#
+#   The implementation of PutChar must be provided as a foreign value in the
+#   platform.
 (Char@) { Unit@; } PutChar;
 
 # @func[ToDebug] Outputs to a debug a stream.
@@ -16,6 +27,30 @@ Unit@, Unit .= /Std/Unit%;
 #
 #  @arg[Stream@<Char@>] The stream of characters to output to debug.
 #  @returns[Unit@] Nothing interesting.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Maybe@<Block@> mname = Blocks.Get(profile.blocks, block);
+#   Stream@<Char@> name = { 
+#     mname.?(just: /Std/Stream/String%.String(mname.just.name));
+#     Unit@ _ = ToDebug(Format|'block %s not found'[/Std/Int/Show%.Show(block)]);
+#     Format|'??%s??'[/Std/Int/Show%.Show(block)];
+#   };
+#
+#  The /Std/Stream/Null%.ToNull function can be used as a drop in replacement
+#  to quickly silence debug output. For example:
+#
+#  @code[fble] @
+#   #ToDebug = /Std/Stream/Debug%.ToDebug;
+#   ToDebug = /Std/Stream/Null%.ToNull;
+#   ...
+#
+#  The @l{ToDebug} function doesn't have any way to enforce a global ordering
+#  of debug output, which can lead to garbled debug output or inconsistent
+#  ordering of debug output if there aren't other constraints on the program
+#  to enforce ordering. This function should only be used for debugging
+#  purposes.
 (Stream@<Char@>) { Unit@; }
 ToDebug = (Stream@<Char@> output) {
   Unit@ _, Char@ c := For(output, Unit);
@@ -23,9 +58,28 @@ ToDebug = (Stream@<Char@> output) {
 };
 
 # @func[DebugOut] An Out@ that sends to the debug output stream.
+#  The destination is a platform implementation dependent debug output stream.
+#  This is inteded to be used for printf style debugging only.
+#
 #  @arg[<@>@][M@] Monadic type to work with.
 #  @arg[Monad@<M@>][m] The monadic interface.
 #  @returns[Out@<Char@, M@>] The debug output port.
+#
+#  For example, here's how you could use @l{DebugOut} as a replacement for
+#  @l{NullOut} to temporarily debug a sat benchmark:
+#
+#  @code[fble] @
+#   Test@ Bench = Test|Sat({
+#     Unit@ _ := Lazy;
+#     M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+#
+#     #Out@<Char@, M@> out = NullOut<Char@>(M);
+#     Out@<Char@, M@> out = DebugOut(M);
+#     M@<Exit@> go = /Sat/Main%.Main(M, /Std/Stream/State%.In(M, S), out);
+#     Exit@ got = Eval(go, /Sat/Bench/Input%);
+#     Exit@ wnt = Success;
+#     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+#   });
 <<@>@ M@>(Monad@<M@>) { Out@<Char@, M@>; }
 DebugOut = <<@>@ M@>(Monad@<M@> m, Stream@<Char@> s) {
   m.return(ToDebug(s));
