@@ -1,5 +1,5 @@
 # @module[/Std/Stream/String%]
-#  Utilities for working with strings and text streams.
+#  Utilities for working with strings and character streams.
 
 Char@ .= /Std/Char%;
 U .= /Std/Char/Lit%;
@@ -13,9 +13,18 @@ String@ .= /Std/String%;
 IsNewline .= /Std/String/Lines%;
 Unit@ .= /Std/Unit%;
 
-# @func[String] Output a string.
+# @func[String] Output a string to a character stream.
 #  @arg[String@][str] The string to output.
 #  @returns[Stream@<Char@>] The stream of characters in the string.
+#
+#  For example:
+#
+#  @code[fble] @
+#   String@ msg = ...;
+#   Format|'The message is: %s'[String(msg)];
+#
+#  See also @l{/Std/Char/Ascii/Stream%.String} for a variation of this
+#  function that works with ascii string literals.
 (String@) { Stream@<Char@>; }
 String = (String@ s) {
   Each(s);
@@ -23,9 +32,21 @@ String = (String@ s) {
 
 # @func[Lines] Output a sequence of lines.
 #  @arg[List@<Stream@<Char@>>] A list of lines to output.
-#  @returns[Output]
-#   A computation to output each line in turn, adding a newline character
-#   after every one.
+#  @returns[Stream@<Char@>]
+#   The sequence of characters from each line in turn, with a newline
+#   character added at the end of every line.
+#
+#  For example, to generate some html code with line breaks in between
+#  elements:
+#
+#  @code[fble] @
+#   output(Lines[
+#     StringE|'<h1>Unsupported Request</h1>',
+#     StringE|'<h2>Request Info</h2>',
+#     FormatE|'Method: %s <br/>'[String(method)],
+#     FormatE|'Path: %s <br/>'[String(path)],
+#     FormatE|'Query: %s <br/>'[String(query)],
+#     FormatE|'Version: %s <br/>'[String(version)]]);
 (List@<Stream@<Char@>>) { Stream@<Char@>; }
 Lines = (List@<Stream@<Char@>> xs) {
   xs.?(empty: End<Char@>);
@@ -38,6 +59,16 @@ Lines = (List@<Stream@<Char@>> xs) {
 #  @arg[String@][sep] The separator to output between each given output.
 #  @arg[List@<Stream@<Char@>>][xs] The elements to output.
 #  @return[Stream@<Char@>] Outputs each element in turn, separated by @a[sep].
+#
+#  For example, to output a header row to a csv file:
+#
+#  @code[fble] @
+#   output(Join(Str|',')[String|Method, String|Path, String|Query]);
+#
+#  Which would output the string:
+#  
+#  @code[txt] @
+#   Method,Path,Query
 (String@, List@<Stream@<Char@>>) { Stream@<Char@>; }
 Join = (String@ sep, List@<Stream@<Char@>> xs) {
   xs.?(empty: End<Char@>);
@@ -50,19 +81,24 @@ Join = (String@ sep, List@<Stream@<Char@>> xs) {
 Char@ '%' = U|25;
 Char@ 's' = U|73;
 
-# @func[Format] Construct a formatted output.
+# @func[Format] Construct formatted output.
+#  @arg[String@][fmt] The format specifier
+#  @arg[List@<Stream@<Char@>>[args] Format args.
+#  @return[Stream@<Char@>] Formatted output.
+#
 #  Provides printf like formatting, except the only supported format type is
-#  @l{%s}. More specifically, outputs the format string with @l{%%} replaced
-#  with @l{%} and @l{%s} replaced with the value of the next argument output.
+#  @l{%s}. Specifically: outputs the format string with @l{%%} replaced
+#  with @l{%} and @l{%s} replaced with the value of the next argument.
 #
 #  For example:
 #
 #  @code[fble] @
-#   Stream@<Char@> out = Format|'a: %s, b: %s'[String|'hello', String|'there'];
+#   Stream@<Char@> out = Format(Str|'name: %s, age: %s')[
+#     String(name), /Std/Int/Show%.Show(age)
+#   ];
 #
-#  @arg[String@][fmt] The format specifier
-#  @arg[List@<Stream@<Char@>>[args] Format args.
-#  @return[Stream@<Char@>] The formatted output.
+#  See also @l{/Std/Char/Ascii/Stream%.Format} for a variation of this
+#  function that takes the format string as an ascii string literal.
 (String@, List@<Stream@<Char@>>) { Stream@<Char@>; }
 Format = (String@ fmt, List@<Stream@<Char@>> args) {
   fmt.?(empty: End<Char@>);
@@ -89,21 +125,38 @@ Format = (String@ fmt, List@<Stream@<Char@>> args) {
   Format(fmt.items.tail, args);
 };
 
-# @func[ToString] Output to a String@.
+# @func[ToString] Output a stream of characters to a String@.
 #  @arg[Stream@<Char@>] The output to render.
 #  @returns[String@] A string with the output characters.
+#
+#  For example:
+#
+#  @code[fble] @
+#   String@ str = ToString(/Std/Int/Show%.Show(Int|42));
 (Stream@<Char@>) { String@; }
 ToString = (Stream@<Char@> s) {
   ToList(s);
 };
 
-# @func[GetLine] Get the next line of input.
+# @func[GetLine] Get a line of input from a monadic input stream.
 #  @arg[<@>@][M@] The monadic stream type.
 #  @arg[Monad@<M@>][m] The monadic stream implementation.
 #  @arg[In<M@>][in] The input stream to read from.
 #  @returns[M@<String@>]
-#   Everything up to and including the next newline character from the given
-#   input. The empty string in case of end of input.
+#   A monadic computation that gets everything up to and including the next
+#   newline character from the given input. The empty string is returned in
+#   case of end of input.
+#
+#  For example:
+#
+#  @code[fble] @
+#   (In@<Char@, M@>) { M@<Unit@>; }
+#   Cat = (In@<Char@, M@> in) {
+#     String@ line := m.do(GetLine(m, in));
+#     line.?(empty: m.return(Unit));
+#     Unit@ _ := m.do(out(String(line)));
+#     Cat(in);
+#   };
 <<@>@ M@>(Monad@<M@>, In@<Char@, M@>) { M@<String@>; }
 GetLine = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> in) {
   Maybe@<Char@> c := m.do(in);
@@ -114,11 +167,18 @@ GetLine = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> in) {
   m.return(Items(c.just, tail));
 };
 
-# @func[GetText] Gets all the rest of the input stream.
+# @func[GetText] Gets all the rest of a monadic input stream.
 #  @arg[<@>@][M@] The monadic stream type.
 #  @arg[Monad@<M@>][m] The monadic stream implementation.
 #  @arg[In<M@>][in] The input stream to read from.
 #  @returns[M@<String@>] Everything left in the input stream.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Maybe@<In@<Char@, M@>> istream := m.do(read(Str|'foo.txt'));
+#   istream.?(nothing: m.return(Int|0));
+#   String@ text := m.do(GetText(m, istream.just));
 <<@>@ M@>(Monad@<M@>, In@<Char@, M@>) { M@<String@>; }
 GetText = <<@>@ M@>(Monad@<M@> m, In@<Char@, M@> in) {
   Maybe@<Char@> c := m.do(in);
