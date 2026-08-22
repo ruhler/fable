@@ -125,21 +125,22 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Stream/Debug.fble
 [DONE] pkgs/std/Std/Stream/Null.fble
 [DONE] pkgs/std/Std/Stream/String.fble
+[DONE] pkgs/std/Std/Test.fble
 
 
-pkgs/std/Std/Test.fble
 pkgs/std/Std/Test/Run.fble
+pkgs/std/Std/Eq/Assert.fble
+pkgs/std/Std/Bool/Assert.fble
+pkgs/std/Std/Stream/String/Assert.fble
+pkgs/std/Std/Stream/Test.fble
 
 pkgs/std/Std/Maybe/Data.fble
 pkgs/std/Std/Bool/Data.fble
-pkgs/std/Std/Bool/Assert.fble
 pkgs/std/Std/Bool/Random.fble
 pkgs/std/Std/Int/Data.fble
 pkgs/std/Std/Int/IntP/Data.fble
 pkgs/std/Std/Int/Random.fble
 pkgs/std/Std/Stream/State.fble
-pkgs/std/Std/Stream/String/Assert.fble
-pkgs/std/Std/Stream/Test.fble
 pkgs/std/Std/Char/Data.fble
 pkgs/std/Std/Map/Show.fble
 pkgs/std/Std/Map/Eq.fble
@@ -158,7 +159,6 @@ pkgs/std/Std/Random/Prng/Pure.fble
 pkgs/std/Std/Random/Rng.fble
 pkgs/std/Std/Random/Lfsr.fble
 pkgs/std/Std/Test/Cli.fble
-pkgs/std/Std/Eq/Assert.fble
 pkgs/std/Std/List/Data.fble
 pkgs/std/Std/List/Random.fble
 pkgs/std/Std/Cmp/Data.fble

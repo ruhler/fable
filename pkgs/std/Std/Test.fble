@@ -1,5 +1,153 @@
 # @module[/Std/Test%]
-#  Unit test framework.
+#  Defines a unit test framework for fble.
+#
+#  The framework provides the building blocks for defining assertions,
+#  individual test cases, and test suites.
+#
+#  An assertion produces a value of type TestResult@, which captures the
+#  result of a test or assertion: pass, fail, expected fail, or skipped. Test
+#  results can be constructed directly using functions like @l{Pass}, and
+#  @l{Fail} provided in this module, or via helper assertions like
+#  @l{/Std/Eq/Assert%.AssertEquals}.
+#
+#  An individual test case has type Test@. Each test has a name and a function
+#  that produces a TestResult@ when run. For example, the following individual
+#  test of the boolean @l{Not} function shows the convention for writing
+#  tests:
+#
+#  @code[fble] @
+#   Test = OnAscii(/Std/Test%.Test);
+#
+#   Test|Not({
+#     Unit@ _ := Lazy;
+#     Bool@ wnt = False;
+#     Bool@ got = Not(True);
+#     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#   });
+#
+#  In this case the name of the test is @l{Not}. Anything after the line
+#  @l{Unit@ _ := Lazy;} is run during the test. The @l{AssertEquals} function
+#  is used to check the computed result of @l{Not(True)} matches what is
+#  expected. @l{Eq@} and @l{Show@} instances for @l{Bool@} are provided as the
+#  first arguments to @l{AssertEquals} to tell it how to compare booleans and
+#  for use in error messages in case the assert fails.
+#
+#  An individual test case has a single assertion. To test for more than one
+#  thing, use a test suite.
+#
+#  A test suite also has type @l{Test@}, so that individual tests and test
+#  suites can be used interchangeably, and you can easily construct a
+#  hierarchy of test cases and test suites. Each test suite has a name and a
+#  list of tests in the suite.
+#
+#  For example, to test the result of the @l{Not} function on both @l{True}
+#  and @l{False} arguments, you could write the following:
+#
+#  @code[fble] @
+#   OnAscii .= /Std/Char/Ascii%;
+#   Test = OnAscii(/Std/Test%.Test);
+#   TestSuite = OnAscii(/Std/Test%.TestSuite);
+#
+#   Tests@ Tests = TestSuite|Not[
+#     Test|ArgIsTrue({
+#       Unit@ _ := Lazy;
+#       Bool@ wnt = False;
+#       Bool@ got = Not(True);
+#       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#     }),
+#
+#     Test|ArgIsFalse({
+#       Unit@ _ := Lazy;
+#       Bool@ wnt = True;
+#       Bool@ got = Not(False);
+#       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#     })
+#   ];
+#
+#   When a test suite is run, each individual test within the test suite will
+#   be run with the results collected together. The test suite passes if all
+#   individual tests pass, and fails otherwise. For reporting purposes, the
+#   names of individual tests are qualified by the test suite they are in. For
+#   example, the test names above will be reported as @l{Not.ArgIsTrue} and
+#   @l{Not.ArgIsFalse}.
+#
+#   By convention, tests for module such as @l{/Std/Bool%} are placed in a
+#   submodule named Tests, for example: @l{/Std/Bool/Tests%}. The module
+#   exports a value of type @l{Test@} with the suite of tests named for the
+#   module. Tests for submodules are included in the test suite for the
+#   module. For example, @l{/Std/Bool/Tests%} might look something like:
+#
+#   @code[fble] @
+#    Test@ Tests = TestSuite|Bool[
+#      Test|True({
+#        Unit@ _ := Lazy;
+#        True.?(true: Pass, false: Fail(String|'True is false'));
+#      }),
+#
+#      Test|False({
+#        Unit@ _ := Lazy;
+#        False.?(true: Fail(String|'False is true'), false: Pass);
+#      }),
+#
+#      TestSuite|Not[
+#        Test|True({
+#          Unit@ _ := Lazy;
+#          Bool@ wnt = False;
+#          Bool@ got = Not(True);
+#          AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#        }),
+#
+#        Test|False({
+#          Unit@ _ := Lazy;
+#          Bool@ wnt = True;
+#          Bool@ got = Not(False);
+#          AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#        })
+#      ],
+#
+#      /Std/Bool/Eq/Tests%.Tests,
+#      /Std/Bool/Show/Tests%.Tests
+#    ];
+#
+#    @(Tests);
+#
+#  All the tests for a package are conventionally collected together into a
+#  top level @l{Tests%} module, which uses @l{/Std/Test/Cli%} to make the
+#  tests runnable. For example, @l{/Std/Tests%} might look something like:
+#
+#  @code[fble] @
+#   Test@ Tests = TestSuite|Std[
+#     /Std/Bool/Tests%.Tests,
+#     /Std/Char/Tests%.Tests,
+#     /Std/Int/Tests%.Tests,
+#     /Std/Unit/Tests%.Tests
+#   ];
+#
+#   /Std/Test/Cli%.Run(Tests);
+#
+#  The tests can then be run using something like:
+#
+#  @code[shell] @
+#   $ fble-cli -p std -p std-tests -m /Std/Tests%
+#   @[Std.Bool.True]: @PASS
+#   @[Std.Bool.False]: @PASS
+#   @[Std.Bool.Not.True]: @PASS
+#   @[Std.Bool.Not.False]: @FAIL: Expected True, but got False
+#   @[Std.Bool.Eq.FF]: @PASS
+#   @[Std.Bool.Eq.FT]: @PASS
+#   @[Std.Bool.Eq.TF]: @PASS
+#   @[Std.Bool.Eq.TT]: @PASS
+#   @[Std.Bool.Show.True]: @PASS
+#   @[Std.Bool.Show.False]: @PASS
+#   @[Std.Char.Char]: @PASS
+#   @[Std.Char.Pos]: @PASS
+#   @[Std.Int.Incr.0]: @PASS
+#   @[Std.Int.Incr.P]: @PASS
+#   @[Std.Unit.Eq]: @PASS
+#   @[Std.Unit.Show]: @PASS
+#
+#  See the implementation of the std-tests package for example, which
+#  implements tests for the standard library using this testing framework.
 
 Bool@ .= /Std/Bool%;
 Char@ .= /Std/Char%;
@@ -16,9 +164,20 @@ Unit@, Unit .= /Std/Unit%;
 #  @field[Stream@<Char@>][fail] The test failed with given error message.
 #  @field[Unit@][expected_fail] The test was expected to fail and it did.
 #  @field[Stream@<Char@>][skip] The test was skipped, with explanation as to why.
+#
+#  Normally test results will be constructed by assertion functions. For
+#  example, here's an implementation of @l{AssertEquals} provided by
+#  @l{/Std/Eq/Assert%}:
+#
+#  @code[fble] @
+#   <@ T@>(Eq@<T@>, Show@<T@>, T@, T@) { TestResult@; }
+#   AssertEquals = <@ T@>(Eq@<T@> eq, Show@<T@> show, T@ expected, T@ actual) {
+#     eq(expected, actual).?(true: Pass);
+#     Fail(Format|'Expected %s, but got %s'[show(expected), show(actual)]);
+#   };
 TestResult@ = +(Unit@ pass, Stream@<Char@> fail, Unit@ expected_fail, Stream@<Char@> skip);
 
-# @struct[TestCase@] A test case.
+# @struct[TestCase@] An individual test case.
 #  @field[String@][name] The name of the test.
 #  @field[Lazy@<TestResult@>][test] The test code to run.
 TestCase@ = *(String@ name, Lazy@<TestResult@> test);
@@ -28,38 +187,67 @@ TestCase@ = *(String@ name, Lazy@<TestResult@> test);
 #  @field[List@<Test@>][tests] The tests in the test suite.
 TestSuite@ = *(String@ name, List@<Test@> tests),
 
-# @union[Test@] A test.
+# @union[Test@] A test or suite of tests.
 #  @field[TestCase@][case] An individual test case.
 #  @field[TestSuite@][suite] A suite of tests.
 Test@ = +(TestCase@ case, TestSuite@ suite);
 
 # @value[Pass] A passing test result.
 #  @type[TestResult@];
+#
+#  For example:
+#
+#  @code[fble] @
+#   Test|True({
+#     Unit@ _ := Lazy;
+#     True.?(true: Pass, false: Fail(String|'True is false'));
+#   }),
 TestResult@ Pass = TestResult@(pass: Unit);
 
 # @func[Fail] A failing test result.
 #  @arg[Stream@<Char@>][msg] Test failure message.
 #  @returns[TestResult@] A failing test result.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Test|True({
+#     Unit@ _ := Lazy;
+#     True.?(true: Pass, false: Fail(String|'True is false'));
+#   }),
 (Stream@<Char@>) { TestResult@; } Fail = (Stream@<Char@> msg) {
   TestResult@(fail: msg);
 };
 
 # @func[ExpectFails] Check a test result for an expected failure.
+#  @arg[String@][msg] Substring expected to be found in the error message.
+#  @arg[Lazy@<TestResult@>][result] The result that is expected to be failing.
+#  @returns[TestResult@] The result of checking for the expected failure.
+#
 #  Changes the test result to expected failure if the given test result is
 #  failing and msg is contained somewhere in the failure message.
 #
 #  The test result is passed lazily for convenience assuming the test result
 #  is being computed in a statement context. That way function bind syntax can
 #  be used to apply the expected failure to an existing test result
-#  computation without modifying the computation itself. For example:
+#  computation without modifying the computation itself.
+#
+#  For example, the following test results in an expect failure if the
+#  assertion fails with the given error message. The test will result in real
+#  failure if the assertion passes or fails with a different error:
 #
 #  @code[fble] @
-#   Unit@ _ := ExpectFails|', but got Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)';
-#   AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
+#   Test|'Moving Paddle Stationary Ball Collision'({
+#     # The paddle moves into a stationary ball.
+#     Unit@ _ := Lazy;
+#     Ball@ wnt = ...;
+#     Ball@ got = ...;
+#     Unit@ _ := ExpectFails|', but got Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)';
+#     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
+#   });
 #
-#  @arg[String@][msg] Substring expected to be found in the error message.
-#  @arg[Lazy@<TestResult@>][result] The result that is expected to be failing.
-#  @returns[TestResult@] The result of checking for the expected failure.
+#  You can comment out the line with ExpectFails to quickly test if the test
+#  is passing again and remove the line when the test is passing again.
 (String@, Lazy@<TestResult@>) { TestResult@; }
 ExpectFails = (String@ msg, Lazy@<TestResult@> result) {
   TestResult@ r = /Std/Lazy%.Run(result);
@@ -77,6 +265,36 @@ ExpectFails = (String@ msg, Lazy@<TestResult@> result) {
 # @func[Skip] A skipped test result.
 #  @arg[Stream@<Char@>][msg] Explanation for why the test was skipped.
 #  @returns[TestResult@] A skipped test result.
+#
+#  For example, to unconditionally skip a test during development by adding a
+#  single line of code to an existing test:
+#
+#  @code[fble] @
+#   Test|Not({
+#     Unit@ _ := Lazy;
+#     Bool@ wnt = False;
+#     Bool@ got = Not(True);
+#
+#     True.?(true: Skip|'Still working on this test right now.');
+#     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#   });
+#
+#  You can use a similar approach to skip a test based on a more interesting
+#  condition:
+#
+#  @code[fble] @
+#   Test|NegativeFactorial({
+#     Unit@ _ := Lazy;
+#     SupportsNegativeFactorial.?(false: Skip|'Not supported on this platform');
+#     Int@ got = Factorial(Neg(Int|3));
+#     Int@ wnt = ...;
+#     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, want, got);
+#   });
+#
+#  If the reason you want to skip the test is because it is currently failing
+#  and needs debug, then @l{ExpectFails} is better to use than @l{Skip}
+#  because it will notify you if the test starts failing a different way or
+#  starts passing again.
 (Stream@<Char@>) { TestResult@; }
 Skip = (Stream@<Char@> msg) {
   TestResult@(skip: msg);
@@ -87,6 +305,19 @@ Skip = (Stream@<Char@> msg) {
 #  @arg[Lazy@<TestResult@>][test]
 #   A function that returns the result of the test.
 #  @returns[Test@] The constructed test.
+#
+#  For example:
+#
+#  @code[fble] @
+#   OnAscii .= /Std/Char/Ascii%;
+#   Test = OnAscii(/Std/Test%.Test);
+#
+#   Test|Not({
+#     Unit@ _ := Lazy;
+#     Bool@ wnt = False;
+#     Bool@ got = Not(True);
+#     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#   });
 (String@, Lazy@<TestResult@>) { Test@; }
 Test = (String@ name, Lazy@<TestResult@> test) {
   Test@(case: TestCase@(name, test));
@@ -96,6 +327,19 @@ Test = (String@ name, Lazy@<TestResult@> test) {
 #  @arg[String@][name] The name of the test suite.
 #  @arg[List@<Test@>][tests] The list of tests in the test suite.
 #  @returns[Test@] The constructed test suite.
+#
+#  For example: 
+#
+#  @code[fble] @
+#   OnAscii .= /Std/Char/Ascii%;
+#   TestSuite = OnAscii(/Std/Test%.TestSuite);
+#
+#   Test@ Tests = TestSuite|Std[
+#     /Std/Bool/Tests%.Tests,
+#     /Std/Char/Tests%.Tests,
+#     /Std/Int/Tests%.Tests,
+#     /Std/Unit/Tests%.Tests
+#   ];
 (String@, List@<Test@>) { Test@; }
 TestSuite = (String@ name, List@<Test@> tests) {
   Test@(suite: TestSuite@(name, tests));
@@ -105,6 +349,19 @@ TestSuite = (String@ name, List@<Test@> tests) {
 #  @arg[Stream@<Char@>][msg] Explanation for why the test is skipped.
 #  @arg[Test@][test] The test or test suite to skip.
 #  @returns[Test@] A skipped test.
+#
+#  In contrast with the @l{Skip} function, this operates at the @l{Test@}
+#  level rather than the @l{TestResult@} level, which makes it easier to skip
+#  entire test suites. For example:
+#
+#  @code[fble] @
+#   Test@ Tests = TestSuite|Std[
+#     /Std/Bool/Tests%.Tests,
+#     SkipTest(String|'Skipping the char tests for now',
+#       /Std/Char/Tests%.Tests),
+#     /Std/Int/Tests%.Tests,
+#     /Std/Unit/Tests%.Tests
+#   ];
 (Stream@<Char@>, Test@) { Test@; }
 SkipTest = (Stream@<Char@> msg, Test@ test) {
   test.?(case: Test(test.case.name, (Unit@ _) { Skip(msg); }));
@@ -116,6 +373,15 @@ SkipTest = (Stream@<Char@> msg, Test@ test) {
 #  @arg[Stream@<Char@>][msg] Explanation for why the test is skipped.
 #  @arg[Test@][test] The test to skip.
 #  @returns[Test@] A skipped test.
+#
+#  @code[fble] @
+#   Test@ Tests = TestSuite|Std[
+#     /Std/Bool/Tests%.Tests,
+#     SkipTestIf(CharsNotSupported, String|'Characters are not supported',
+#       /Std/Char/Tests%.Tests),
+#     /Std/Int/Tests%.Tests,
+#     /Std/Unit/Tests%.Tests
+#   ];
 (Bool@, Stream@<Char@>, Test@) { Test@; }
 SkipTestIf = (Bool@ if, Stream@<Char@> msg) {
   if.?(true: SkipTest(msg), false: /Std/Func%.Id<Test@>);
@@ -126,6 +392,15 @@ SkipTestIf = (Bool@ if, Stream@<Char@> msg) {
 #  @arg[Stream@<Char@>][msg] Explanation for why the test is skipped.
 #  @arg[Test@][test] The test to skip.
 #  @returns[Test@] A skipped test.
+#
+#  @code[fble] @
+#   Test@ Tests = TestSuite|Std[
+#     /Std/Bool/Tests%.Tests,
+#     SkipTestUnless(CharsSupported, String|'Characters are not supported',
+#       /Std/Char/Tests%.Tests),
+#     /Std/Int/Tests%.Tests,
+#     /Std/Unit/Tests%.Tests
+#   ];
 (Bool@, Stream@<Char@>, Test@) { Test@; }
 SkipTestUnless = (Bool@ unless, Stream@<Char@> msg) {
   unless.?(true: /Std/Func%.Id<Test@>, false: SkipTest(msg));
