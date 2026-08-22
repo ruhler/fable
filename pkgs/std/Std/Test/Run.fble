@@ -1,5 +1,9 @@
 # @module[/Std/Test/Run%]
 #  Test runner for unit tests.
+#
+#  This provides a @l{Run} function for running tests in a generic monadic
+#  context. See @l{/Std/Test/Cli%.Run} for a command line interface to this
+#  test runner.
 
 Bool@, True, False, And .= /Std/Bool%;
 Char@ .= /Std/Char%;
@@ -21,6 +25,32 @@ Unit@, Unit .= /Std/Unit%;
 #  @arg[String@][prefix] Prefix to use for reported test names.
 #  @arg[Test@][test] The test or test suite to run.
 #  @returns[M@<Bool@>] True if all tests pass, false otherwise.
+#
+#  Most users will prefer @l{/Std/Test/Cli%.Run}, which provides a command
+#  line interface main program wrapper around this function.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Run(m, out, Str|'config_a', /Std/Bool/Tests%.Tests);
+#
+#  Which would output to the given @l{out} stream something like:
+#
+#  @code[txt] @
+#   @[config_a.Std.Bool.True]: @PASS
+#   @[config_a.Std.Bool.False]: @PASS
+#   @[config_a.Std.Bool.Not.True]: @PASS
+#   @[config_a.Std.Bool.Not.False]: @FAIL: Expected True, but got False
+#   @[config_a.Std.Bool.Eq.FF]: @PASS
+#   @[config_a.Std.Bool.Eq.FT]: @PASS
+#   @[config_a.Std.Bool.Eq.TF]: @PASS
+#   @[config_a.Std.Bool.Eq.TT]: @PASS
+#   @[config_a.Std.Bool.Show.True]: @PASS
+#   @[config_a.Std.Bool.Show.False]: @PASS
+#
+#  The tests are considered passing if all subtests either pass, fail as
+#  expected, or are skipped. The tests are considered failing if any one of
+#  the subtests (unexpectedly) fails.
 <<@>@ M@>(Monad@<M@>, Out@<Char@, M@>, String@, Test@) { M@<Bool@>; }
 Run = <<@>@ M@>(Monad@<M@> m, Out@<Char@, M@> out, String@ prefix, Test@ test) {
   test.?(

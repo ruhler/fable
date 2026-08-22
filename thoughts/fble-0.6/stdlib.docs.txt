@@ -126,9 +126,9 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Stream/Null.fble
 [DONE] pkgs/std/Std/Stream/String.fble
 [DONE] pkgs/std/Std/Test.fble
+[DONE] pkgs/std/Std/Test/Run.fble
 
 
-pkgs/std/Std/Test/Run.fble
 pkgs/std/Std/Eq/Assert.fble
 pkgs/std/Std/Bool/Assert.fble
 pkgs/std/Std/Stream/String/Assert.fble
