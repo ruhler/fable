@@ -56,7 +56,6 @@ ToNull = <@ A@>(Stream@<A@> _) {
 #     Exit@ wnt = Success;
 #     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
 #   });
-#
 <@ A@, <@>@ M@>(Monad@<M@>) { Out@<A@, M@>; }
 NullOut = <@ A@, <@>@ M@>(Monad@<M@> m, Stream@<A@> _) {
   m.return(Unit);

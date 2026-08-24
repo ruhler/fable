@@ -1,5 +1,5 @@
 # @module[/Std/Bool/Assert%]
-#  Boolean test assertions.
+#  Boolean assertions for unit testing.
 
 Bool@, True, False .= /Std/Bool%;
 AssertEquals .= /Std/Eq/Assert%;
@@ -10,6 +10,14 @@ TestResult@ .= /Std/Test%;
 #  @returns[TestResult@]
 #   A passing test result if the value is true. A failing test result
 #   otherwise.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Test|Empty({
+#     Unit@ _ := Lazy;
+#     AssertTrue(IsEmpty(Empty<Int@>));
+#   }),
 (Bool@) { TestResult@; }
 AssertTrue = AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, True);
 
@@ -18,6 +26,14 @@ AssertTrue = AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, True);
 #  @returns[TestResult@]
 #   A passing test result if the value is false. A failing test result
 #   otherwise.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Test|NotEmpty({
+#     Unit@ _ := Lazy;
+#     AssertFalse(IsEmpty(List[Int|3, Int|4]));
+#   }),
 (Bool@) { TestResult@; }
 AssertFalse = AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, False);
 

@@ -1,5 +1,5 @@
 # @module[/Std/Stream/String/Assert%]
-#  Test assertions related to text stream Stream@.
+#  Unit test assertion testing for expected stream output.
 
 Char@ .= /Std/Char%;
 AssertEquals .= /Std/Eq/Assert%;
@@ -14,6 +14,18 @@ TestResult@ .= /Std/Test%;
 #  @returns[TestResult@]
 #   A passing test result if the actual stream of characters matches what's
 #   expected. A failing test result otherwise.
+#
+#  For example:
+#
+#  @code[fble] @
+#   OnAscii .= /Std/Char/Ascii%;
+#   AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
+#   Show = /Std/List/Show%.Show(/Std/Int/Show%.Show);
+#
+#   Test|ShowList({
+#     Unit@ _ := Lazy;
+#     AssertStream|'[2, -12, 5]'(Show(List[Int|2, Neg(Int|12), Int|5]));
+#   });
 (String@, Stream@<Char@>) { TestResult@; }
 AssertStream = (String@ expected, Stream@<Char@> actual) {
   AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show,

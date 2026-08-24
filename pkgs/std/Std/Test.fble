@@ -22,7 +22,7 @@
 #     Unit@ _ := Lazy;
 #     Bool@ wnt = False;
 #     Bool@ got = Not(True);
-#     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
 #   });
 #
 #  In this case the name of the test is @l{Not}. Anything after the line
@@ -53,14 +53,14 @@
 #       Unit@ _ := Lazy;
 #       Bool@ wnt = False;
 #       Bool@ got = Not(True);
-#       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
 #     }),
 #
 #     Test|ArgIsFalse({
 #       Unit@ _ := Lazy;
 #       Bool@ wnt = True;
 #       Bool@ got = Not(False);
-#       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#       AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
 #     })
 #   ];
 #
@@ -94,14 +94,14 @@
 #          Unit@ _ := Lazy;
 #          Bool@ wnt = False;
 #          Bool@ got = Not(True);
-#          AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#          AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
 #        }),
 #
 #        Test|False({
 #          Unit@ _ := Lazy;
 #          Bool@ wnt = True;
 #          Bool@ got = Not(False);
-#          AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#          AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
 #        })
 #      ],
 #
@@ -243,7 +243,7 @@ TestResult@ Pass = TestResult@(pass: Unit);
 #     Ball@ wnt = ...;
 #     Ball@ got = ...;
 #     Unit@ _ := ExpectFails|', but got Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)';
-#     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
+#     AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, wnt, got);
 #   });
 #
 #  You can comment out the line with ExpectFails to quickly test if the test
@@ -276,7 +276,7 @@ ExpectFails = (String@ msg, Lazy@<TestResult@> result) {
 #     Bool@ got = Not(True);
 #
 #     True.?(true: Skip|'Still working on this test right now.');
-#     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
 #   });
 #
 #  You can use a similar approach to skip a test based on a more interesting
@@ -288,7 +288,7 @@ ExpectFails = (String@ msg, Lazy@<TestResult@> result) {
 #     SupportsNegativeFactorial.?(false: Skip|'Not supported on this platform');
 #     Int@ got = Factorial(Neg(Int|3));
 #     Int@ wnt = ...;
-#     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, want, got);
+#     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
 #   });
 #
 #  If the reason you want to skip the test is because it is currently failing
@@ -316,7 +316,7 @@ Skip = (Stream@<Char@> msg) {
 #     Unit@ _ := Lazy;
 #     Bool@ wnt = False;
 #     Bool@ got = Not(True);
-#     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, got, wnt);
+#     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
 #   });
 (String@, Lazy@<TestResult@>) { Test@; }
 Test = (String@ name, Lazy@<TestResult@> test) {

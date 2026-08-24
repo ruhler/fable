@@ -1,5 +1,5 @@
 # @module[/Std/Eq/Assert%]
-#  Equality based test assertions.
+#  Equality assertions for unit testing.
 
 Format .= /Std/Char/Ascii/Stream%;
 Eq@ .= /Std/Eq%;
@@ -15,6 +15,24 @@ TestResult@, Pass, Fail .= /Std/Test%;
 #  @returns[TestResult@]
 #   A passing test result if the two values are equal. A failing test result
 #   otherwise.
+#
+#  This assertion is used prevelantly in unit testing. For example:
+#
+#  @code[fble] @
+#   Test|Not({
+#     Unit@ _ := Lazy;
+#     Bool@ wnt = False;
+#     Bool@ got = Not(True);
+#     AssertEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, wnt, got);
+#   });
+#
+#  On failure, the assertion produces a failure message such as:
+#
+#  @code[txt] @
+#   @[Std.Bool.Not]: @FAIL: Expected True, but got False
+#
+#  It is not uncommon to implement @l{Eq@} and @l{Show@} instances for data
+#  types primarily for use with the @l{AssertEquals} function.
 <@ T@>(Eq@<T@>, Show@<T@>, T@, T@) { TestResult@; }
 AssertEquals = <@ T@>(Eq@<T@> eq, Show@<T@> show, T@ expected, T@ actual) {
   eq(expected, actual).?(true: Pass);
@@ -30,6 +48,14 @@ AssertEquals = <@ T@>(Eq@<T@> eq, Show@<T@> show, T@ expected, T@ actual) {
 #  @returns[TestResult@]
 #   A passing test result if the two values are unequal. A failing test result
 #   otherwise.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Test|Not({
+#     Unit@ _ := Lazy;
+#     AssertNotEquals(/Std/Bool/Eq%.Eq, /Std/Bool/Show%.Show, True, Not(True));
+#   });
 <@ T@>(Eq@<T@>, Show@<T@>, T@, T@) { TestResult@; }
 AssertNotEquals = <@ T@>(Eq@<T@> eq, Show@<T@> show, T@ unexpected, T@ actual) {
   eq(unexpected, actual).?(false: Pass);

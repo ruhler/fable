@@ -1,5 +1,6 @@
 # @module[/Std/Stream/Test%]
-#  An output channel for testing.
+#  Functions for testing output streams. These exercise the code for producing
+#  all the elements on the stream while ignoring the actual output values.
 
 Monad@ .= /Std/Monad%;
 Stream@ .= /Std/Stream%;
@@ -9,12 +10,17 @@ Unit@, Unit .= /Std/Unit%;
 # @func[ToTest] Stream values to a Unit@.
 #  This goes through the output value by value, ignoring the value seen.
 #  Useful for test cases and benchmarks. If you don't care about the output in
-#  normal execution, use /Std/Stream/Null% instead, which ignores the entire
-#  Stream@ in the first place.
+#  normal execution, use /Std/Stream/Null%.ToNull instead, which ignores the
+#  entire Stream@ in the first place.
 #
 #  @arg[@][A@] The type of value being streamed.
 #  @arg[Stream@<A@>][stream] The stream of values to go through.
 #  @returns[Unit@] Nothing interesting.
+#
+#  For unit testing purposes, consider using
+#  @l{/Std/Stream/String/Assert%.AssertStream} instead, which allows you to
+#  test the contents of the stream in addition to exercising the code to
+#  produce the contents of the stream.
 <@ A@>(Stream@<A@>) { Unit@; }
 ToTest = <@ A@>(Stream@<A@> stream) {
   Unit@ _ := {
@@ -34,6 +40,21 @@ ToTest = <@ A@>(Stream@<A@> stream) {
 #  @arg[<@>@][M@] Monadic type to work with.
 #  @arg[Monad@<M@>][m] The monadic interface.
 #  @returns[Out@<M@>] The test output port.
+#
+#  For example, here's how you could use @l{TestOut} to create a benchmark out
+#  of something that normally outputs to the user:
+#
+#  @code[fble] @
+#   Test@ Bench = Test|Sat({
+#     Unit@ _ := Lazy;
+#     M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+#
+#     Out@<Char@, M@> out = TestOut<Char@>(M);
+#     M@<Exit@> go = /Sat/Main%.Main(M, /Std/Stream/State%.In(M, S), out, out);
+#     Exit@ got = Eval(go, /Sat/Bench/Input%);
+#     Exit@ wnt = Success;
+#     AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);
+#   });
 <@ A@, <@>@ M@>(Monad@<M@>) { Out@<A@, M@>; }
 TestOut = <@ A@, <@>@ M@>(Monad@<M@> m, Stream@<A@> s) {
   m.return(ToTest(s));
