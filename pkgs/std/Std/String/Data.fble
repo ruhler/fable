@@ -4,8 +4,11 @@
 Data@ .= /Std/Data%;
 String@ .= /Std/String%;
 
-# @value[Data] The Data@ instance for String@.
-#  @type[Data@<String@>]
+# @func[Data] The Data@ instance for String@.
+#  @arg[String@][x] A value to convert to its corresponding data stream.
+#  @returns[Stream@<Bit@>] A stream of bits representing the data.
+#
+#  See also @l{/Std/Data%} and @l{/Std/Map%}.
 Data@<String@> Data = /Std/List/Data%.Data(/Std/Char/Data%.Data);
 
 @(Data);

@@ -8,6 +8,14 @@ Data@, Enum, Struct, Union .= /Std/Data%;
 #  @arg[@][A@] The type of element on the list.
 #  @arg[Data@<A@>][data] Data for list elements.
 #  @returns[Data@<List@<A@>>] Data for lists.
+#
+#  For example, to create a map with integer lists as keys:
+#
+#  @code[fble] @
+#   Data@<List@<Int@>> Data = /Std/List/Data%.Data(/Std/Int/Data%.Data);
+#   Map@, Empty, Put, Get .= /Std/Map%.Of(Data)<String@>;
+#
+#  See also @l{/Std/Data%} and @l{/Std/Map%}.
 <@ A@>(Data@<A@>) { Data@<List@<A@>>; }
 Data = <@ A@>(Data@<A@> data, List@<A@> x) {
   x.?(empty: Enum|0);

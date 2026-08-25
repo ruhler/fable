@@ -4,8 +4,14 @@
 Char@, Pos .= /Std/Char%;
 Data@ .= /Std/Data%;
 
-# @value[Data] The Data@ instance for Char@.
-#  @type[Data@<Char@>]
+# @func[Data] The Data@ instance for Char@.
+#  @arg[Char@][x] A value to convert to its corresponding data stream.
+#  @returns[Stream@<Bit@>] A stream of bits representing the data.
+#
+#  The data stream has order corresponding to the natural order of the
+#  underlying unicode code points of the characters.
+#
+#  See also @l{/Std/Data%} and @l{/Std/Map%}.
 Data@<Char@> Data = (Char@ x) {
   /Std/Int/Data%.Data(Pos(x));
 };

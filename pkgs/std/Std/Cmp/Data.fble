@@ -4,8 +4,13 @@
 Compared@ .= /Std/Cmp%;
 Data@, Enum .= /Std/Data%;
 
-# @value[Data] The Data@ instance for Compared@.
-#  @type[Data@<Compared@>]
+# @func[Data] The Data@ instance for Compared@.
+#  @arg[Compared@@][x] A value to convert to its corresponding data stream.
+#  @returns[Stream@<Bit@>] A stream of bits representing the data.
+#
+#  The data stream has the order less < equal < greater.
+#
+#  See also @l{/Std/Data%} and @l{/Std/Map%}.
 Data@<Compared@> Data = (Compared@ x) {
   # Pick order to match Cmp, which puts false < true.
   x.?(less: Enum|00, equal: Enum|01, greater: Enum|1);

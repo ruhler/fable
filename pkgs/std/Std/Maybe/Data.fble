@@ -8,6 +8,14 @@ Data@, Enum, Union .= /Std/Data%;
 #  @arg[@][A@] The type of element on the maybe.
 #  @arg[Data@<A@>][data] Data for maybe elements.
 #  @returns[Data@<Maybe@<A@>>] Data for maybes.
+#
+#  For example, to create a map with maybe integers as keys:
+#
+#  @code[fble] @
+#   Data@<Maybe@<Int@>> Data = /Std/Maybe/Data%.Data(/Std/Int/Data%.Data);
+#   Map@, Empty, Put, Get .= /Std/Map%.Of(Data)<String@>;
+#
+#  See also @l{/Std/Data%} and @l{/Std/Map%}.
 <@ A@>(Data@<A@>) { Data@<Maybe@<A@>>; }
 Data = <@ A@>(Data@<A@> data, Maybe@<A@> x) {
   x.?(nothing: Enum|0);

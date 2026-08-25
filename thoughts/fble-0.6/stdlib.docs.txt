@@ -131,26 +131,34 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Bool/Assert.fble
 [DONE] pkgs/std/Std/Stream/String/Assert.fble
 [DONE] pkgs/std/Std/Stream/Test.fble
+[DONE] pkgs/std/Std/Data.fble
+[DONE] pkgs/std/Std/Unit/Data.fble
+[DONE] pkgs/std/Std/Bool/Data.fble
+[DONE] pkgs/std/Std/Cmp/Data.fble
+[DONE] pkgs/std/Std/List/Data.fble
+[DONE] pkgs/std/Std/Maybe/Data.fble
+[DONE] pkgs/std/Std/Int/Data.fble
+[DONE] pkgs/std/Std/Int/IntP/Data.fble
+[DONE] pkgs/std/Std/Char/Data.fble
+[DONE] pkgs/std/Std/String/Data.fble
 
 
-pkgs/std/Std/Maybe/Data.fble
-pkgs/std/Std/Bool/Data.fble
-pkgs/std/Std/Bool/Random.fble
-pkgs/std/Std/Int/Data.fble
-pkgs/std/Std/Int/IntP/Data.fble
-pkgs/std/Std/Int/Random.fble
-pkgs/std/Std/Stream/State.fble
-pkgs/std/Std/Char/Data.fble
+
+pkgs/std/Std/Map.fble
 pkgs/std/Std/Map/Show.fble
 pkgs/std/Std/Map/Eq.fble
 pkgs/std/Std/Map/List.fble
+pkgs/std/Std/Set.fble
+pkgs/std/Std/Set/Show.fble
+pkgs/std/Std/Set/Eq.fble
+pkgs/std/Std/Set/List.fble
+
+pkgs/std/Std/Bool/Random.fble
+pkgs/std/Std/Int/Random.fble
+pkgs/std/Std/Stream/State.fble
 pkgs/std/Std/State/Pure.fble
 pkgs/std/Std/Monad.fble
-pkgs/std/Std/Map.fble
-pkgs/std/Std/Data.fble
-pkgs/std/Std/Set.fble
 pkgs/std/Std/State.fble
-pkgs/std/Std/Unit/Data.fble
 pkgs/std/Std/Random/Lcg.fble
 pkgs/std/Std/Random/Prng.fble
 pkgs/std/Std/Random/Prng/Assert.fble
@@ -158,12 +166,7 @@ pkgs/std/Std/Random/Prng/Pure.fble
 pkgs/std/Std/Random/Rng.fble
 pkgs/std/Std/Random/Lfsr.fble
 pkgs/std/Std/Test/Cli.fble
-pkgs/std/Std/List/Data.fble
 pkgs/std/Std/List/Random.fble
-pkgs/std/Std/Cmp/Data.fble
-pkgs/std/Std/Set/Show.fble
-pkgs/std/Std/Set/Eq.fble
-pkgs/std/Std/Set/List.fble
 pkgs/std/Std/Io/Env.fble
 pkgs/std/Std/Io/Cli/Print.fble
 pkgs/std/Std/Io/Cli/Demo.fble
@@ -172,7 +175,6 @@ pkgs/std/Std/Io/File/Char.fble
 pkgs/std/Std/Io/File/Mode.fble
 pkgs/std/Std/Io/File/Utf8.fble
 pkgs/std/Std/Io/Cli.fble
-pkgs/std/Std/String/Data.fble
 
 Question:
 * When do I put stuff in the module comment compared to the comment for a

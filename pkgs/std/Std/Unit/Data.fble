@@ -4,8 +4,11 @@
 Data@, Struct .= /Std/Data%;
 Unit@ .= /Std/Unit%;
 
-# @value[Data] The Data@ instance for Unit@.
-#  @type[Data@<Unit@>]
+# @func[Data] The Data@ instance for Unit@.
+#  @arg[Unit@][x] A value to convert to its corresponding data stream.
+#  @returns[Stream@<Bit@>] A stream of bits representing the data.
+#
+#  See also @l{/Std/Data%} and @l{/Std/Map%}.
 Data@<Unit@> Data = (Unit@ _) {
   Struct[];
 };

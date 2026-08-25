@@ -1,5 +1,18 @@
 # @module[/Std/Data%]
-#  Interface for pure data types.
+#  Defines the @l{Data@} interface, for types that can be represented as pure
+#  data in the form of a sequence of bits.
+#
+#  The main use for the @l{Data@} interface is for describing types that can
+#  be used as keys in a map, sort of like a hash implementation for types. In
+#  theory it could be used anywhere you want to operate generically on union,
+#  structs, and enum values.
+#
+#  An instance of @l{Data@} converts some type @l{T@} into a sequence of bits
+#  satisfying a prefix property. Helper functions are provided for defining
+#  instances of @l{Data@} for struct, enum, and union types.
+#
+#  The @l{Data@} interface produces a Stream@ of bits, which makes it possible
+#  to consume part of the stream without producing the entire stream.
 
 List@ .= /Std/List%;
 Stream@, End, Put, Puts .= /Std/Stream%;
@@ -19,9 +32,14 @@ Bit@ = +(Unit@ 0, Unit@ 1);
 1 = Bit@(1: Unit);
 
 # @type[Data@] An interface for pure data types.
+#  @arg[@][A@] The type implementing the interface.
+#  @arg[A@][x] A value to convert to its corresponding data stream.
+#  @returns[Stream@<Bit@>] A stream of bits representing the data.
+#
 #  A pure data type can be represented as a stream of bits. Implement the
 #  Data@ interface for your type to be able to use it as a key type for
-#  /Std/Map% or in /Std/Set%.
+#  /Std/Map% or in /Std/Set%. The lexicographical order of the bit sequence
+#  defines how keys will be ordered in a map or set.
 #
 #  To form a valid instance of Data@, the stream of bits produced for a data
 #  type must satisfy a prefix property: the generated stream for some value X
@@ -31,10 +49,6 @@ Bit@ = +(Unit@ 0, Unit@ 1);
 #
 #  Use the Struct, Enum, and Union helper functions to implement your instance
 #  of Data@.
-#
-#  @arg[@][A@] The type implementing the interface.
-#  @arg[A@][x] A value to convert to its corresponding data stream.
-#  @returns[Stream@<Bit@>] A stream of bits representing the data.
 Data@ = <@ A@>(A@) { Stream@<Bit@>; };
 
 # @func[Struct] Generates a bit stream for a struct type.
@@ -56,7 +70,7 @@ Struct = (List@<Stream@<Bit@>> fields) {
   Struct(fields.items.tail);
 };
 
-# @func[Enum] Generates a bit stream for an enum.
+# @func[Enum] Generates a bit stream for an enumerated type.
 #  @arg[List@<Bit@>][tag] A sequence of bits describing the tag.
 #  @returns[Stream@<Bit@>] A bit stream for the enum.
 #

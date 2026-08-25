@@ -1,18 +1,21 @@
 # @module[/Std/Int/IntP/Data%]
 #  The Data@ instance for IntP@.
 #
-#  This module is for internal use only.
+#  This module is for internal use only. See the @l{/Std/Int/Data%} module for
+#  the public interface for converting integers to data streams.
 
 Data@, Bit@, 0, 1 .= /Std/Data%;
 IntP@ .= /Std/Int/IntP%;
 Stream@, Map .= /Std/Stream%;
 
 # @func[Data] Convert an IntP@ to a data bit stream.
+#  @arg[IntP@][x] The integer to convert.
+#  @returns[Stream@<Bit@>] The stream of bits describing the IntP@.
+#
 #  The lexicographical order of the generated bit streams matches the natural
 #  order for integers.
 #
-#  @arg[IntP@][x] The integer to convert.
-#  @returns[Stream@<Bit@>] The stream of bits describing the IntP@.
+#  See also @l{/Std/Data%} and @l{/Std/Map%}.
 Data@<IntP@> Data = {
   # Encode our integer as unary number N followed by N bits describing the
   # actual integer value without the leading most significant bit. So:
@@ -78,11 +81,14 @@ Data@<IntP@> Data = {
 };
 
 # @func[DataR] Convert an IntP@ to a reverse ordered data bit stream.
+#  @arg[IntP@][x] The integer to convert.
+#  @returns[Stream@<Bit@>] The stream of bits describing the IntP@.
+#
 #  The lexicographical order of the generated bit streams is the reverse of
 #  the natural order for integers.
 #
-#  @arg[IntP@][x] The integer to convert.
-#  @returns[Stream@<Bit@>] The stream of bits describing the IntP@.
+#  Useful for implementing data streams of negative integers in the expected
+#  order.
 Data@<IntP@> DataR = (IntP@ x) {
   # Same encoding as forward, but flip the bits 0 to 1 and 1 to 0 so it comes
   # out in the opposite order.
