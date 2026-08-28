@@ -1,5 +1,21 @@
 # @module[/Std/Map%]
-#  Map type and basic operations.
+#  Implementation of a key value map that works with any key type with a
+#  @l{/Std/Data%.Data@} instance.
+#
+#  Insert and lookup are O(N) in the data length of the key. Iteration
+#  traverse keys in the order defined by the @l{Data@} instance for the key.
+#
+#  The typical way to use a map is to use struct import on the result of the
+#  @l{Of} function, which provides types and functions specialized for the
+#  given key type, data instance of key, and value type. For example, to map
+#  from @l{String@} to @l{Int@}:
+#
+#  @code[fble] @
+#   Map@, Empty, Put, Get .= /Std/Map%.Of(/Std/String/Data%.Data)<Int@>;
+#
+#   Map@ m = Put(Empty, Str|'answer', Int|42);
+#   Map@ n = Put(m, Str|'question', Int|7);
+#   Maybe@<Int@> answer = Get(n, Str|'answer');
 
 Bool@, True, False, And .= /Std/Bool%;
 Data@, Bit@ .= /Std/Data%;
@@ -8,10 +24,33 @@ Maybe@, Just, Nothing .= /Std/Maybe%;
 Stream@ .= /Std/Stream%;
 Unit@, Unit .= /Std/Unit%;
 
+# @type[Entry@] A single key value entry in a map.
+#  @arg[@][Key@] The type of key.
+#  @arg[@][Value@] The type of value.
+#  @field[Key@][key] The key.
+#  @field[Value@][value] The value.
 Entry@ = <@ Key@, @ Value@> { *(Key@ key, Value@ value); };
 
 # @type[Map@] A mapping from keys to values.
 #  Supporting any key type Key@ that implements Data@<Key@>.
+#
+#  @dev
+#   The Data@ type gives us a sequence of bits which we use as the underlying
+#   key for values. A map is a binary tree with values at the leaf nodes,
+#   where the sequence of bits associated with the key describes the path from
+#   the root to the leaf. The bit stream for a key is assumed to satisfy the
+#   prefix property, which ensures the bit stream you get always points to a
+#   leaf node with a value and not an internal node.
+#
+#   @field[Unit@][empty] The empty map.
+#   @field[Entry<Key@, Value@>][entry]
+#    A map with a single entry for the empty data prefix. Also known as a
+#    leaf node.
+#   @field[*(M@ 0, M@ 1)][children]
+#    Child maps for prefix starting with 0 and 1 respectively.
+#
+#   The empty map is always represented using the @l{empty} constructor. The
+#   @l{children} constructor must not be used if both children are empty.
 Map@ = <@ Key@, @ Value@> {
   M@ = +(Unit@ empty, Entry@<Key@, Value@> entry, *(M@ 0, M@ 1) children).%(@/Std/Map%);
   M@;
@@ -21,6 +60,14 @@ Map@ = <@ Key@, @ Value@> {
 #  @arg[@][K@] The type of key.
 #  @arg[@][V@] The type of value.
 #  @returns[Map@<K@, V@>] An empty map.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Map@, Empty, Put, Get .= /Std/Map%.Of(/Std/String/Data%.Data)<Int@>;
+#
+#   Map@ map = Empty;
+#   Maybe@<Int@> mx = Get(map, Str|'answer'); # Nothing
 Map@ Empty = <@ K@, @ V@> {
   Map@<K@, V@>(empty: Unit);
 };
@@ -30,6 +77,14 @@ Map@ Empty = <@ K@, @ V@> {
 #  @arg[@][V@] The type of value.
 #  @arg[Map@<K@, V@>][map] The map to check.
 #  @returns[Bool@] True if the map is empty. False otherwise.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Map@, Empty, Put, Get .= /Std/Map%.Of(/Std/String/Data%.Data)<Int@>;
+#
+#   Bool@ true = IsEmpty(Empty);
+#   Bool@ false = IsEmpty(Put(Empty, Str|'answer', Int|42));
 <@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
 IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
   map.?(empty: True);
@@ -45,6 +100,19 @@ IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
 #  @returns[Maybe@<V@>]
 #   The value in the map associated with the given key if present. Nothing
 #   otherwise.
+#
+#  Runtime complexity is O(N) in the length of the data bit stream for the
+#  key. Behavior is undefined if the @l{Data@} instances doesn't satisfy the
+#  prefix property (see @l{/Std/Data%}).
+#
+#  For example:
+#
+#  @code[fble] @
+#   Map@, Empty, Put, Get .= /Std/Map%.Of(/Std/String/Data%.Data)<Int@>;
+#
+#   Map@ m = Put(Empty, Str|'answer', Int|42);
+#   Map@ n = Put(m, Str|'question', Int|7);
+#   Maybe@<Int@> answer = Get(n, Str|'answer'); # Just(42);
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
 Get = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
   Map@<K@, V@> map := {
@@ -72,6 +140,25 @@ Get = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
 #   determine the ultimate value to insert. Otherwise Nothing will be passed
 #   to this function to determine the value to insert.
 #  @return[Map@<K@, V@>] The map with the updated value.
+#
+#  Runtime complexity is O(N) in the length of the data bit stream for the
+#  key, plus the cost of calling the @l{with} function. Behavior is undefined
+#  if the @l{Data@} instances doesn't satisfy the prefix property (see
+#  @l{/Std/Data%}).
+#
+#  For example, to increment a value in a map or insert value 1:
+#
+#  @code[fble] @
+#   Map@, Empty, Put, Get, Update .= /Std/Map%.Of(/Std/String/Data%.Data)<Int@>;
+#
+#   Map@ m = Put(Empty, Str|'answer', Int|42);
+#   Map@ n = {
+#     Maybe@<Int@> mx := Update(m, Str|'answer');
+#     mx.?(nothing: Int|1);
+#     Incr(mx.just);
+#   };
+#
+#   Maybe@<Int@> answer = Get(n, Str|'answer'); # Just(43);
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>) { V@; }) { Map@<K@, V@>; }
 Update = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
   Map@<K@, V@> map := {
@@ -107,8 +194,21 @@ Update = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V
 #  @arg[K@][key] The key to insert a value for.
 #  @arg[V@][value] The value to insert.
 #  @return[Map@<K@, V@>]
-#   The map with the inserted value. The inserted key and value overwrites any
+#   The map with the inserted value. The inserted key and value overwrite any
 #   previous key and value associated with that key in the map.
+#
+#  Runtime complexity is O(N) in the length of the data bit stream for the
+#  key. Behavior is undefined if the @l{Data@} instances doesn't satisfy the
+#  prefix property (see @l{/Std/Data%}).
+#
+#  For example:
+#
+#  @code[fble] @
+#   Map@, Empty, Put, Get .= /Std/Map%.Of(/Std/String/Data%.Data)<Int@>;
+#
+#   Map@ m = Put(Empty, Str|'answer', Int|42);
+#   Map@ n = Put(m, Str|'question', Int|7);
+#   Maybe@<Int@> answer = Get(n, Str|'answer'); # Just(42);
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
 Put = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
   Update(data, map, key, (Maybe@<V@> _) { value; });
@@ -129,6 +229,26 @@ Put = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
 #  @return[Map@<K@, V@>]
 #   The map with the replaced value. If no value was associated with the key
 #   in the original map, the original map is returned unmodified.
+#
+#  Runtime complexity is O(N) in the length of the data bit stream for the
+#  key, plus the cost of calling the @l{replace} function. Behavior is undefined
+#  if the @l{Data@} instances doesn't satisfy the prefix property (see
+#  @l{/Std/Data%}).
+#
+#  For example, to decremental a value in a map and remove it when it drops to
+#  0:
+#
+#  @code[fble] @
+#   Map@, Empty, Put, Get, Replace .= /Std/Map%.Of(/Std/String/Data%.Data)<Int@>;
+#
+#   Map@ m = Put(Empty, Str|'answer', Int|42);
+#   Map@ n = {
+#     Int@ x := Replace(m, Str|'answer');
+#     Lt(x, 2).?(true: Nothing<Int@>);
+#     Just(Decr(x));
+#   };
+#
+#   Maybe@<Int@> answer = Get(n, Str|'answer'); # Just(41);
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@, (V@) { Maybe@<V@>; }) { Map@<K@, V@>; }
 Replace = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, (V@) { Maybe@<V@>; } replace) {
   Map@<K@, V@> map := {
@@ -161,6 +281,19 @@ Replace = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key, (V@) { Maybe@<V
 #   The map with no value associated with the given key. If the map didn't
 #   contain the key in the first place, the original map is unchanged.
 #   Otherwise the entry for that key is removed.
+#
+#  Runtime complexity is O(N) in the length of the data bit stream for the
+#  key. Behavior is undefined if the @l{Data@} instances doesn't satisfy the
+#  prefix property (see @l{/Std/Data%}).
+#
+#  For example:
+#
+#  @code[fble] @
+#   Map@, Empty, Put, Get, Remove .= /Std/Map%.Of(/Std/String/Data%.Data)<Int@>;
+#
+#   Map@ m = Put(Empty, Str|'answer', Int|42);
+#   Map@ n = Remove(m, Str|'answer');
+#   Maybe@<Int@> answer = Get(n, Str|'answer'); # Nothing
 <@ K@>(Data@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
 Remove = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
   Replace(data, map, key, (V@ _) { Nothing<V@>; });
@@ -171,6 +304,32 @@ Remove = <@ K@>(Data@<K@> data)<@ V@>(Map@<K@, V@> map, K@ key) {
 #  @arg[@][V@] The type of value.
 #  @arg[Map@<K@, V@>][map] The map to iterate over.
 #  @returns[Stream@<Entry@<K@, V@>>] The stream of map entries.
+#
+#  The iteration order matches the order of the associated data streams
+#  provided by the @l{Data@} instance used when adding elements to the map.
+#
+#  The @l{Each} function is best to use if you don't expect to have to visit
+#  every entry of the map. If you know you'll need to visit every entry of the
+#  map, @l{ForEach} provides a simpler interface.
+#
+#  For example, to check if there are any entries with the key equal to the
+#  value:
+#
+#  @code[fble] @
+#   Map@ map = ...;
+#   Bool@ found = {
+#     Unit@ _ := {
+#       # Case for if the map has at least one entry.
+#       Unit@ _, Entry@ entry, (Unit@) { Bool@; } r := Each(map, Unit);
+#       Eq(entry.key, entry.value).?(true: True);
+#       r(Unit);
+#     };
+#
+#     # Case for is if the map is empty.
+#     False;
+#   };
+#
+#  See @l{/Std/Stream%} for more about traversing streams.
 <@ K@, @ V@>(Map@<K@, V@>) { Stream@<Entry@<K@, V@>>; }
 Each = <@ K@, @ V@>(Map@<K@, V@> map) {
   <@ S@>(S@ s)<@ R@>((S@, Entry@<K@, V@>, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
@@ -187,6 +346,16 @@ Each = <@ K@, @ V@>(Map@<K@, V@> map) {
 #  @arg[@][V@] The type of value.
 #  @arg[Map@<K@, V@>][map] The map to iterate over.
 #  @returns[Stream@<K@>] The stream of map keys.
+#
+#  For example, assuming the keys are integers, you could compute the sum of
+#  key values using:
+#
+#  @code[fble] @
+#   Map@ map = ...;
+#   Int@ sum = {
+#     Int@ partial_sum, Int@ key := /Std/Stream%.For(Keys(map));
+#     Add(partial_sum, key);
+#   };
 <@ K@, @ V@>(Map@<K@, V@>) { Stream@<K@>; }
 Keys = <@ K@, @ V@>(Map@<K@, V@> map) {
   <@ S@>(S@ s)<@ R@>((S@, K@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
@@ -203,6 +372,16 @@ Keys = <@ K@, @ V@>(Map@<K@, V@> map) {
 #  @arg[@][V@] The type of value.
 #  @arg[Map@<K@, V@>][map] The map to iterate over.
 #  @returns[Stream@<K@>] The stream of map values.
+#
+#  For example, assuming the values are integers, you could compute the sum of
+#  values using:
+#
+#  @code[fble] @
+#   Map@ map = ...;
+#   Int@ sum = {
+#     Int@ partial_sum, Int@ value := /Std/Stream%.For(Values(map));
+#     Add(partial_sum, value);
+#   };
 <@ K@, @ V@>(Map@<K@, V@>) { Stream@<V@>; }
 Values = <@ K@, @ V@>(Map@<K@, V@> map) {
   <@ S@>(S@ s)<@ R@>((S@, V@, (S@) { R@; }) { R@; } put, (S@) { R@; } return) {
@@ -219,6 +398,20 @@ Values = <@ K@, @ V@>(Map@<K@, V@> map) {
 #  @arg[@][V@] The type of value.
 #  @arg[Map@<K@, V@>][map] The map to iterate over.
 #  @returns[For<Entry@<K@, V@>>] A foreach loop iteration over the map entries.
+#
+#  The iteration goes over all entries in the map. If you want to break out
+#  early, use the @l{Each} function instead.
+#
+#  For example, to count the number of entries where the key and value are the
+#  same:
+#
+#  @code[fble] @
+#   Map@ map = ...;
+#   Int@ count = {
+#     Int@ count, Entry@ entry := ForEach(map);
+#     Eq(entry.key, entry.value).?(true: Incr(count));
+#     count;
+#   };
 <@ K@, @ V@>(Map@<K@, V@>) { For@<Entry@<K@, V@>>; }
 ForEach = <@ K@, @ V@>(Map@<K@, V@> map) {
   <@ S@>(S@ s, (S@, Entry@<K@, V@>) { S@; } body) {
@@ -239,6 +432,19 @@ ForEach = <@ K@, @ V@>(Map@<K@, V@> map) {
 #   It should return Nothing to remove the value from the map, or Just(v) to
 #   update the value to v.
 #  @return[Map@<K@, B@>] The map with the replaced values.
+#
+#  For example, to decrement all values in the map, removing any that drop to
+#  zero:
+#
+#  @code[fble] @
+#   Map@ map = Put(Put(Empty, Str|'hello', Int|3), Str|'goodbye', Int|1);
+#   Map@ n = {
+#     String@ _key, Int@ value := ReplaceAll(map);
+#     Lt(value, Int|2).?(true: Nothing<Int@>);
+#     Just(Decr(value));
+#   };
+#   Maybe@<Int@> mx = Get(n, Str|'hello');    # Just(2)
+#   Maybe@<Int@> my = Get(n, Str|'goodbye');  # Nothing
 <@ K@, @ A@>(Map@<K@, A@>)<@ B@>((K@, A@) { Maybe@<B@>; }) { Map@<K@, B@>; }
 ReplaceAll = <@ K@, @ A@>(Map@<K@, A@> m)<@ B@>((K@, A@) { Maybe@<B@>; } replace) {
   m.?(empty: Empty<K@, B@>);
@@ -261,6 +467,17 @@ ReplaceAll = <@ K@, @ A@>(Map@<K@, A@> m)<@ B@>((K@, A@) { Maybe@<B@>; } replace
 #  @arg[@][B@] The type of the replaced values.
 #  @arg[(K@, A@) { B@; }][f] The function to apply.
 #  @return[Map@<K@, B@>] The new map of values.
+#
+#  For example, to increment all values in a map:
+#
+#  @code[fble] @
+#   Map@ map = Put(Put(Empty, Str|'hello', Int|3), Str|'goodbye', Int|1);
+#   Map@ n = {
+#     String@ _key, Int@ value := Map(map);
+#     Incr(value);
+#   };
+#   Maybe@<Int@> mx = Get(n, Str|'hello');    # Just(4)
+#   Maybe@<Int@> my = Get(n, Str|'goodbye');  # Just(2)
 <@ K@, @ A@>(Map@<K@, A@>)<@ B@>((K@, A@) { B@; }) { Map@<K@, B@>; }
 Map = <@ K@, @ A@>(Map@<K@, A@> m)<@ B@>((K@, A@) { B@; } f) {
   K@ k, A@ a := ReplaceAll(m);
@@ -274,6 +491,18 @@ Map = <@ K@, @ A@>(Map@<K@, A@> m)<@ B@>((K@, A@) { B@; } f) {
 #  @arg[(K@, A@) { Bool@; }][p] Function specifying which values to keep.
 #  @return[Map@<K@, A@>]
 #   The map with only those entries the function indicates to keep.
+#
+#  For example, to keep only the entries whose whose values are greater than
+#  5:
+#
+#  @code[fble] @
+#   Map@ map = Put(Put(Empty, Str|'hello', Int|13), Str|'goodbye', Int|1);
+#   Map@ n = {
+#     String@ _key, Int@ value := Keep(map);
+#     Gt(value, Int|5);
+#   };
+#   Maybe@<Int@> mx = Get(n, Str|'hello');    # Just(13)
+#   Maybe@<Int@> my = Get(n, Str|'goodbye');  # Nothing
 <@ K@, @ A@>(Map@<K@, A@>, (K@, A@) { Bool@; }) { Map@<K@, A@>; }
 Keep = <@ K@, @ A@>(Map@<K@, A@> m, (K@, A@) { Bool@; } p) {
   K@ k, A@ a := ReplaceAll(m);
@@ -289,6 +518,18 @@ Keep = <@ K@, @ A@>(Map@<K@, A@> m, (K@, A@) { Bool@; } p) {
 #   Function specifying which values to remove.
 #  @return[Map@<K@, A@>]
 #   The map without any of those entries the function indicates to omit.
+#
+#  For example, to filter out the entries whose whose values are greater than
+#  5:
+#
+#  @code[fble] @
+#   Map@ map = Put(Put(Empty, Str|'hello', Int|13), Str|'goodbye', Int|1);
+#   Map@ n = {
+#     String@ _key, Int@ value := Omit(map);
+#     Gt(value, Int|5);
+#   };
+#   Maybe@<Int@> mx = Get(n, Str|'hello');    # Nothing
+#   Maybe@<Int@> my = Get(n, Str|'goodbye');  # Just(1)
 <@ K@, @ A@>(Map@<K@, A@>, (K@, A@) { Bool@; }) { Map@<K@, A@>; }
 Omit = <@ K@, @ A@>(Map@<K@, A@> m, (K@, A@) { Bool@; } p) {
   K@ k, A@ a := ReplaceAll(m);
@@ -314,6 +555,20 @@ Omit = <@ K@, @ A@>(Map@<K@, A@> m, (K@, A@) { Bool@; } p) {
 #
 #  Behavior is undefined if you aren't using the same Data@ implementation for
 #  both maps.
+#
+#  For example, to take the intersection of two maps, chosing the smaller
+#  value in case a value appears in both maps and removing any entries where
+#  the value is the same:
+#
+#  @code[fble] @
+#   Map@ a = ...;
+#   Map@ b = ...;
+#   Map@ n = {
+#     String@ _key, Int@ va, Int@ vb := Meet(a, b);
+#     Lt(va, vb).?(true: Just(va));
+#     Lt(vb, va).?(true: Just(vb));
+#     Nothing<Int@>;
+#   };
 <@ K@, @ A@>(Map@<K@, A@>)<@ B@>(Map@<K@, B@>)<@ C@>((K@, A@, B@) { Maybe@<C@>; }) { Map@<K@, C@>; }
 Meet = <@ K@, @ A@>(Map@<K@, A@> a)<@ B@>(Map@<K@, B@> b)<@ C@>((K@, A@, B@) { Maybe@<C@>; } meet) {
   a.?(empty: Empty<K@, C@>);
@@ -346,6 +601,16 @@ Meet = <@ K@, @ A@>(Map@<K@, A@> a)<@ B@>(Map@<K@, B@> b)<@ C@>((K@, A@, B@) { M
 #
 #  Behavior is undefined if you aren't using the same Data@ implementation for
 #  both maps.
+#
+#  For example, to compute the entry wise sum of two maps:
+#
+#  @code[fble] @
+#   Map@ a = ...;
+#   Map@ b = ...;
+#   Map@ n = {
+#     String@ _key, Int@ va, Int@ vb := Join(a, b);
+#     Add(va, vb);
+#   };
 <@ K@, @ V@>(Map@<K@, V@>, Map@<K@, V@>, (K@, V@, V@) { V@; }) { Map@<K@, V@>; }
 Join = <@ K@, @ V@>(Map@<K@, V@> a, Map@<K@, V@> b, (K@, V@, V@) { V@; } join) {
   a.?(empty: b);
@@ -378,6 +643,19 @@ Join = <@ K@, @ V@>(Map@<K@, V@> a, Map@<K@, V@> b, (K@, V@, V@) { V@; } join) {
 #
 #  Behavior is undefined if you aren't using the same Data@ implementation for
 #  both maps.
+#
+#  For example, to update the values in the first map by subtracting out any
+#  corresponding values in the second map and removing resulting zero values:
+#
+#  @code[fble] @
+#   Map@ a = ...;
+#   Map@ b = ...;
+#   Map@ n = {
+#     String@ _key, Int@ va, Int@ vb := Diff(a, b);
+#     Int@ r = Sub(va, vb);
+#     IsZero(r).?(true: Nothing<Int@>);
+#     Just(r);
+#   };
 <@ K@, @ V@>(Map@<K@, V@>, Map@<K@, V@>, (K@, V@, V@) { Maybe@<V@>; }) { Map@<K@, V@>; }
 Diff = <@ K@, @ V@>(Map@<K@, V@> a, Map@<K@, V@> b, (K@, V@, V@) { Maybe@<V@>; } f) {
   a.?(empty: a);
@@ -399,6 +677,19 @@ Diff = <@ K@, @ V@>(Map@<K@, V@> a, Map@<K@, V@> b, (K@, V@, V@) { Maybe@<V@>; }
 #  @arg[Data@<K@>][data] The Data@ instance to use with the map.
 #  @arg[@][V@] The value type.
 #  @returns[...] The Map methods specialized for the given key and value.
+#
+#  The recommended way to import and use the @l{/Std/Map%} functions is to use
+#  a struct import on the result of calling @l{Of} with the key type,
+#  @l{Data@} instance, and value type of the map.
+#
+#  For example, if you want a map from String@ to Int@:
+#
+#  @code[fble] @
+#   Map@, Empty, Put, Get .= /Std/Map%.Of(/Std/String/Data%.Data)<Int@>;
+#
+#   Map@ m = Put(Empty, Str|'answer', Int|42);
+#   Map@ n = Put(m, Str|'question', Int|7);
+#   Maybe@<Int@> answer = Get(n, Str|'answer');
 Of = <@ K@>(Data@<K@> data)<@ V@> {
   @(
     Map@: Map@<K@, V@>,
