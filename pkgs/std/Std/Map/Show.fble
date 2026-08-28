@@ -9,16 +9,22 @@ Stream@, Puts .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # @func[Show] Show a Map@ value.
-#  Sample output from showing a map:
-#
-#  @code[txt] @
-#   { 2 => False; 3 => True; }
-#
 #  @arg[@][K@] The key type.
 #  @arg[Show@<K@>][show_key] How to show a key.
 #  @arg[@][V@] The value type.
 #  @arg[Show@<V@>][show_value] How to show a value.
 #  @returns[Show@<Map@<K@, V@>>] How to show a map.
+#
+#  For example, to show a map from Int@ to Bool@:
+#
+#  @code[fble] @
+#   Map@ map = Put(Put(Empty, Int|2, False), Int|3, True);
+#   /Std/Map/Show%.Show(/Std/Int/Show%.Show, /Std/Bool/Show%.Show
+#
+#  Which in this case would show the following sequence of characters:
+#
+#  @code[txt] @
+#   { 2 => False; 3 => True; }
 <@ K@>(Show@<K@>)<@ V@>(Show@<V@>) { Show@<Map@<K@, V@>>; }
 Show = <@ K@>(Show@<K@> show_key)<@ V@>(Show@<V@> show_value, Map@<K@, V@> map) {
   Unit@ _ := Puts(ForEach(map, String|'{ ',

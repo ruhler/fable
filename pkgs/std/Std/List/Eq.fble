@@ -1,5 +1,5 @@
 # @module[/Std/List/Eq%]
-#  The Eq@ instance for Bool@ and utilities for working with sublists.
+#  The Eq@ instance for List@ and utilities for working with sublists.
 
 Bool@, True, False .= /Std/Bool%;
 Eq@ .= /Std/Eq%;

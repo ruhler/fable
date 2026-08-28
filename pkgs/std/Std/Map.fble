@@ -16,6 +16,12 @@
 #   Map@ m = Put(Empty, Str|'answer', Int|42);
 #   Map@ n = Put(m, Str|'question', Int|7);
 #   Maybe@<Int@> answer = Get(n, Str|'answer');
+#
+#  Additional functionality is provided in submodules:
+#
+#  @def[@l{/Std/Map/Eq%}] Instance of @l{Eq@} for maps.
+#  @def[@l{/Std/Map/List%}] Construct maps from lists of entries.
+#  @def[@l{/Std/Map/Show%}] Instance of @l{Show@} for maps.
 
 Bool@, True, False, And .= /Std/Bool%;
 Data@, Bit@ .= /Std/Data%;
@@ -690,6 +696,15 @@ Diff = <@ K@, @ V@>(Map@<K@, V@> a, Map@<K@, V@> b, (K@, V@, V@) { Maybe@<V@>; }
 #   Map@ m = Put(Empty, Str|'answer', Int|42);
 #   Map@ n = Put(m, Str|'question', Int|7);
 #   Maybe@<Int@> answer = Get(n, Str|'answer');
+#
+#  For convenience you can access the @l{Data@} instance under the name of
+#  @l{Key}, which can be useful for working with submodules like
+#  @l{/Std/Map/List%}:
+#
+#  @code[fble] @
+#   Map@, Value@, Key, Get .= /Std/Map%.Of(/Std/Char/Data%.Data)<Drawing@>;
+#   Entries .= /Std/Map/List%.Of(Key)<Value@>;
+#   Map@ digits = Entries[ ... ];
 Of = <@ K@>(Data@<K@> data)<@ V@> {
   @(
     Map@: Map@<K@, V@>,

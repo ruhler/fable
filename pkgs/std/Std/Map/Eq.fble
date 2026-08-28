@@ -13,6 +13,18 @@ Map@ .= /Std/Map%;
 #  @arg[Map@<K@, V@>][a] The first map.
 #  @arg[Map@<K@, V@>][b] The second map.
 #  @returns[Bool@] True if the two maps are equal, false otherwise.
+#
+#  For example, to check if two maps from Sring@ to Int@ are equal:
+#
+#  @code[fble]@
+#   Map@ .= /Std/Map%.Of(/Std/String/Data%.Data)<Int@>;
+#
+#   Eq@<Map@> Eq = /Std/Map/Eq%.Eq(/Std/String/Eq%.Eq, /Std/Int/Eq%.Eq);
+#   Map@ a = ...;
+#   Map@ b = ...;
+#   Bool@ equal = Eq(a, b);
+#
+#  See @l{/Std/Eq%} for more about the @l{Eq@} interface.
 <@ K@>(Eq@<K@>)<@ V@>(Eq@<V@>, Map@<K@, V@>, Map@<K@, V@>) { Bool@; }
 Eq = <@ K@>(Eq@<K@> eq_key)<@ V@>(Eq@<V@> eq_value, Map@<K@, V@> a, Map@<K@, V@> b) {
   a.?(empty: b.?(empty: True, : False));

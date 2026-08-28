@@ -142,12 +142,12 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Char/Data.fble
 [DONE] pkgs/std/Std/String/Data.fble
 [DONE] pkgs/std/Std/Map.fble
+[DONE] pkgs/std/Std/Map/Show.fble
+[DONE] pkgs/std/Std/Map/Eq.fble
+[DONE] pkgs/std/Std/Map/List.fble
 
 
 
-pkgs/std/Std/Map/Show.fble
-pkgs/std/Std/Map/Eq.fble
-pkgs/std/Std/Map/List.fble
 pkgs/std/Std/Set.fble
 pkgs/std/Std/Set/Show.fble
 pkgs/std/Std/Set/Eq.fble
