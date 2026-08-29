@@ -18,8 +18,10 @@ Unit@ .= /Std/Unit%;
 #  For example, to show a map from Int@ to Bool@:
 #
 #  @code[fble] @
+#   Show@<Map@> Show = /Std/Map/Show%.Show(/Std/Int/Show%.Show, /Std/Bool/Show%.Show);
+#
 #   Map@ map = Put(Put(Empty, Int|2, False), Int|3, True);
-#   /Std/Map/Show%.Show(/Std/Int/Show%.Show, /Std/Bool/Show%.Show
+#   Show(map);
 #
 #  Which in this case would show the following sequence of characters:
 #

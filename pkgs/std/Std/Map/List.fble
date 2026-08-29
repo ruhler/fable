@@ -1,5 +1,5 @@
 # @module[/Std/Map/List%}
-#  Utility for constructing maps from a list of entries.
+#  Utility for constructing maps from lists of entries.
 
 Data@ .= /Std/Data%;
 List@ .= /Std/List%;

@@ -9,15 +9,23 @@ Stream@, Puts .= /Std/Stream%;
 Unit@ .= /Std/Unit%;
 
 # @func[Show] Show a Set@ value.
-#  For example:
-#
-#  @code[txt] @
-#   { 1; 2; 3; }
-#
 #  @arg[@][T@] The element type.
 #  @arg[Show@<T@>][show] How to show an element.
 #  @arg[Set@<T@>][set] The set to show.
 #  @returns[Stream@] The shown contents of the set.
+#
+#  For example, to show a set of Int@:
+#
+#  @code[fble] @
+#   Show@<Set@> Show = /Std/Set/Show%.Show(/Std/Int/Show%.Show);
+#
+#   Set@ set = Set[Int|3, Int|1, Int|2];
+#   Show(set);
+#
+#  Which in this case would show the following sequence of characters:
+#
+#  @code[txt] @
+#   { 1; 2; 3; }
 <@ T@>(Show@<T@>) { Show@<Set@<T@>>; }
 Show = <@ T@>(Show@<T@> show, Set@<T@> set) {
   Unit@ _ := Puts(ForEach(set, String|'{ ',

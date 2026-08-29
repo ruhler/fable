@@ -1,5 +1,5 @@
 # @module[/Std/Set/Eq%]
-#  Eq@ instance for Set.
+#  Eq@ instance for Set@.
 
 Eq@ .= /Std/Eq%;
 Set@ .= /Std/Set%;
@@ -10,6 +10,18 @@ Set@ .= /Std/Set%;
 #  @arg[Set@<T@>][a] The first set.
 #  @arg[Set@<T@>][b] The second set.
 #  @returns[Bool@] True if the two sets are equal, false otherwise.
+#
+#  For example, to check if two sets of String@ are equal:
+#
+#  @code[fble]@
+#   Set@ .= /Std/Set%.Of(/Std/String/Data%.Data);
+#
+#   Eq@<Set@> Eq = /Std/Set/Eq%.Eq(/Std/String/Eq%.Eq);
+#   Set@ a = ...;
+#   Set@ b = ...;
+#   Bool@ equal = Eq(a, b);
+#
+#  See @l{/Std/Eq%} for more about the @l{Eq@} interface.
 <@ K@>(Eq@<K@>) { Eq@<Set@<K@>>; }
 Eq = <@ K@>(Eq@<K@> eq, Set@<K@> a, Set@<K@> b) {
   /Std/Map/Eq%.Eq(eq, /Std/Unit/Eq%.Eq, a, b);

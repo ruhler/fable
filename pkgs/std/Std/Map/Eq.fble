@@ -1,5 +1,5 @@
 # @module[/Std/Map/Eq%]
-#  Eq@ instance for Map.
+#  Eq@ instance for Map@.
 
 Bool@, True, False .= /Std/Bool%;
 Eq@ .= /Std/Eq%;
@@ -14,7 +14,7 @@ Map@ .= /Std/Map%;
 #  @arg[Map@<K@, V@>][b] The second map.
 #  @returns[Bool@] True if the two maps are equal, false otherwise.
 #
-#  For example, to check if two maps from Sring@ to Int@ are equal:
+#  For example, to check if two maps from String@ to Int@ are equal:
 #
 #  @code[fble]@
 #   Map@ .= /Std/Map%.Of(/Std/String/Data%.Data)<Int@>;
