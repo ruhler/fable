@@ -1,11 +1,22 @@
 # @module[/Std/State/Pure%]
-#  A pure implementation of the state monadic interface.
+#  A pure implementation of the @l{/Std/State%.State@} monadic interface.
 
 Monad@ .= /Std/Monad%;
 State@ .= /Std/State%;
 Unit@, Unit .= /Std/Unit%;
 
+# @type[Result@] The result of running the state function.
+#  @arg[@][S@] The state type.
+#  @arg[@][A@] The return type.
+#  @field[S@][state] The state after running the state function.
+#  @field[A@][return] The value returned from the state function.
 Result@ = <@ S@, @ A@> { *(S@ state, A@ return); };
+
+# @type[Pure@] Monadic type @l{M@} for a pure state monad.
+#  @arg[@][S@] The state type.
+#  @arg[@][A@] The return type.
+#  @arg[S@] The input state.
+#  @returns[Result@<S@, A@>] The output state and return value.
 Pure@ = <@ S@, @ A@>(S@) { Result@<S@, A@>; };
 
 # @func[Monad] The monad instance for a pure state monad.

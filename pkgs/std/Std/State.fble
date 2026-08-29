@@ -1,17 +1,36 @@
 # @module[/Std/State%]
-#  The state monadic interface and utilities.
+#  This module provides the @l{State@} monadic interface and associated
+#  utilities, which allows you to read and write state values in a monadic
+#  context.
+#
+#  See @l{/Std/State/Pure%} for a pure implementation of the @l{State@}
+#  interface.
 
 Monad@ .= /Std/Monad%;
 Unit@ .= /Std/Unit%;
 
-# @type[Io@] Interface for running stateful computations.
-#  A mondic interface for running computations that have read and write access
-#  to state.
-#
+# @type[State@] Interface for running stateful computations.
 #  @arg[@][S@] The type of state.
 #  @arg[<@>@][M@] The monadic type for use with the interface.
 #  @field[M@<S@>][get] Gets the value of the state.
 #  @field[(S@) { M@<Unit@>; }][put] Updates the value of the state.
+#
+#  A mondic interface for running computations that have read and write access
+#  to state. The @l{Monad@} interface for type @l{M@} is provided separately.
+#  See @l{/Std/Monad%} for more about @l{Monad@}.
+#
+#  For example, @l{/Std/Stream/State%} provides a function to turn an instance
+#  of the state monad where the state is a list of elements into an input
+#  stream that consumes elements one by one:
+#
+#  @code[fble] @
+#   <<@>@ M@>(Monad@<M@>)<@ A@>(State@<List@<A@>, M@>) { In@<A@, M@>; }
+#   In = <<@>@ M@>(Monad@<M@> m)<@ A@>(State@<List@<A@>, M@> s) {
+#     List@<A@> xs := m.do(s.get);
+#     xs.?(empty: m.return(Nothing<A@>));
+#     Unit@ _ := m.do(s.put(xs.items.tail));
+#     m.return(Just(xs.items.head));
+#   };
 State@ = <@ S@, <@>@ M@> { *(
   M@<S@> get,
   (S@) { M@<Unit@>; } put
@@ -23,6 +42,29 @@ State@ = <@ S@, <@>@ M@> { *(
 #  @arg[@][S@] The state type.
 #  @arg[State@<S@, M@>][s] The state interface.
 #  @returns[M@<S@>] A computation that returns the current state value.
+#
+#  For example:
+#
+#  @code[fble] @
+#   <<@>@ M@>(Monad@<M@>)<@ A@>(State@<List@<A@>, M@>) { In@<A@, M@>; }
+#   In = <<@>@ M@>(Monad@<M@> m)<@ A@>(State@<List@<A@>, M@> s) {
+#     List@<A@> xs := m.do(Get(s));
+#     xs.?(empty: m.return(Nothing<A@>));
+#     Unit@ _ := m.do(Put(s, xs.items.tail));
+#     m.return(Just(xs.items.head));
+#   };
+#
+#  Often it's more convient to access the @l{get} field of @l{State@}
+#  directly:
+#
+#  @code[fble] @
+#   <<@>@ M@>(Monad@<M@>)<@ A@>(State@<List@<A@>, M@>) { In@<A@, M@>; }
+#   In = <<@>@ M@>(Monad@<M@> m)<@ A@>(State@<List@<A@>, M@> s) {
+#     List@<A@> xs := m.do(s.get);
+#     xs.?(empty: m.return(Nothing<A@>));
+#     Unit@ _ := m.do(s.put(xs.items.tail));
+#     m.return(Just(xs.items.head));
+#   };
 <<@>@ M@>(Monad@<M@>)<@ S@>(State@<S@, M@>) { M@<S@>;}
 Get = <<@>@ M@>(Monad@<M@> _)<@ S@>(State@<S@, M@> s) {
   s.get;
@@ -36,6 +78,29 @@ Get = <<@>@ M@>(Monad@<M@> _)<@ S@>(State@<S@, M@> s) {
 #  @arg[S@][x] The new value for the state.
 #  @returns[M@<Unit@>]
 #   A computation that sets the state to the given value.
+#
+#  For example:
+#
+#  @code[fble] @
+#   <<@>@ M@>(Monad@<M@>)<@ A@>(State@<List@<A@>, M@>) { In@<A@, M@>; }
+#   In = <<@>@ M@>(Monad@<M@> m)<@ A@>(State@<List@<A@>, M@> s) {
+#     List@<A@> xs := m.do(Get(s));
+#     xs.?(empty: m.return(Nothing<A@>));
+#     Unit@ _ := m.do(Put(s, xs.items.tail));
+#     m.return(Just(xs.items.head));
+#   };
+#
+#  Often it's more convient to access the @l{put} field of @l{State@}
+#  directly:
+#
+#  @code[fble] @
+#   <<@>@ M@>(Monad@<M@>)<@ A@>(State@<List@<A@>, M@>) { In@<A@, M@>; }
+#   In = <<@>@ M@>(Monad@<M@> m)<@ A@>(State@<List@<A@>, M@> s) {
+#     List@<A@> xs := m.do(s.get);
+#     xs.?(empty: m.return(Nothing<A@>));
+#     Unit@ _ := m.do(s.put(xs.items.tail));
+#     m.return(Just(xs.items.head));
+#   };
 <<@>@ M@>(Monad@<M@>)<@ S@>(State@<S@, M@>, S@) { M@<Unit@>;}
 Put = <<@>@ M@>(Monad@<M@> _)<@ S@>(State@<S@, M@> s) {
   s.put;
@@ -51,6 +116,21 @@ Put = <<@>@ M@>(Monad@<M@> _)<@ S@>(State@<S@, M@> s) {
 #  @returns[M@<A@>]
 #   A computation that returns the result of applying the function f to the
 #   current state value.
+#
+#  For example, here's how you could implement an input stream for a state
+#  monad whose state includes both a list of characters and an error message:
+#
+#  @code[fble] @
+#   S@ = *(String@ in, Stream@<Char@> err);
+#   M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<S@>;
+#  
+#   In@<Char@, M@> in = /Std/Stream/State%.In(M, {
+#     M@<String@> get = { S@ s := Gets(M, S); s.in; };
+#     (String@) { M@<Unit@>; } put = (String@ in) {
+#       S@ s := Modify(M, S); s.@(in);
+#     };
+#     State@<String@, M@>(get, put);
+#   });
 <<@>@ M@>(Monad@<M@>)<@ S@>(State@<S@, M@>)<@ A@>((S@) { A@; }) { M@<A@>;}
 Gets = <<@>@ M@>(Monad@<M@> m)<@ S@>(State@<S@, M@> s)<@ A@>((S@) { A@; } f) {
   S@ x := m.do(s.get);
@@ -66,6 +146,21 @@ Gets = <<@>@ M@>(Monad@<M@> m)<@ S@>(State@<S@, M@> s)<@ A@>((S@) { A@; } f) {
 #  @returns[M@<Unit@>]
 #   A computation that modifies the current value of the state by applying the
 #   function f to it.
+#
+#  For example, here's how you could implement an input stream for a state
+#  monad whose state includes both a list of characters and an error message:
+#
+#  @code[fble] @
+#   S@ = *(String@ in, Stream@<Char@> err);
+#   M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<S@>;
+#  
+#   In@<Char@, M@> in = /Std/Stream/State%.In(M, {
+#     M@<String@> get = { S@ s := Gets(M, S); s.in; };
+#     (String@) { M@<Unit@>; } put = (String@ in) {
+#       S@ s := Modify(M, S); s.@(in);
+#     };
+#     State@<String@, M@>(get, put);
+#   });
 <<@>@ M@>(Monad@<M@>)<@ S@>(State@<S@, M@>, (S@) { S@; }) { M@<Unit@>;}
 Modify = <<@>@ M@>(Monad@<M@> m)<@ S@>(State@<S@, M@> s, (S@) { S@; } f) {
   S@ x := m.do(Gets(m, s, f));

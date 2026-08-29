@@ -145,7 +145,8 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Map/Show.fble
 [DONE] pkgs/std/Std/Map/Eq.fble
 [DONE] pkgs/std/Std/Map/List.fble
-
+[DONE] pkgs/std/Std/Monad.fble
+[DONE] pkgs/std/Std/State.fble
 
 
 pkgs/std/Std/Set.fble
@@ -153,20 +154,19 @@ pkgs/std/Std/Set/Show.fble
 pkgs/std/Std/Set/Eq.fble
 pkgs/std/Std/Set/List.fble
 
-pkgs/std/Std/Bool/Random.fble
-pkgs/std/Std/Int/Random.fble
 pkgs/std/Std/Stream/State.fble
 pkgs/std/Std/State/Pure.fble
-pkgs/std/Std/Monad.fble
-pkgs/std/Std/State.fble
+
+pkgs/std/Std/Bool/Random.fble
+pkgs/std/Std/Int/Random.fble
 pkgs/std/Std/Random/Lcg.fble
 pkgs/std/Std/Random/Prng.fble
 pkgs/std/Std/Random/Prng/Assert.fble
 pkgs/std/Std/Random/Prng/Pure.fble
 pkgs/std/Std/Random/Rng.fble
 pkgs/std/Std/Random/Lfsr.fble
-pkgs/std/Std/Test/Cli.fble
 pkgs/std/Std/List/Random.fble
+
 pkgs/std/Std/Io/Env.fble
 pkgs/std/Std/Io/Cli/Print.fble
 pkgs/std/Std/Io/Cli/Demo.fble
@@ -175,6 +175,7 @@ pkgs/std/Std/Io/File/Char.fble
 pkgs/std/Std/Io/File/Mode.fble
 pkgs/std/Std/Io/File/Utf8.fble
 pkgs/std/Std/Io/Cli.fble
+pkgs/std/Std/Test/Cli.fble
 
 Question:
 * When do I put stuff in the module comment compared to the comment for a

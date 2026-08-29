@@ -2,6 +2,28 @@
 #  The monad interface.
 
 # @type[Monad@] The monad interface
+#  @arg[<@>@][M@] The monadic type.
+#  @field[@<M@>][M@]
+#   The monadic type. We store this as a field to facilitate type inference of
+#   M@ so you don't have to explicitly pass M@ if you have a monad instance.
+#  @field[<@ A@>(A@) { M@<A@>; }][return]
+#   @arg[@][A@] The type of value to return.
+#   @arg[A@][x] The value to return.
+#   @returns[M@<A@>] A monadic computation that returns the given value.
+#
+#   Interface function for returning any kind of value in the monadic context.
+#  @field[<@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; }][do]
+#   @arg[@][A@] The type of value returned from the first computation.
+#   @arg[M@<A@>][ma] The first computation.
+#   @arg[@][B@] The type of value returned from the second computation.
+#   @arg[(A@) { M@<B@>; }][f]
+#    A function to compute the second computation to run, given the result of
+#    the first computation.
+#   @returns[M@<B@>]
+#    A monadic computation that runs the first computation, passes the result
+#    to the function @l{f} to determine the second computation, then runs the
+#    second computation and returns the result.
+#
 #  The monad interface provides general glue logic to allow sequential
 #  composition of side effecting operations.
 #
@@ -11,16 +33,76 @@
 #  second computation.
 #
 #  Typical use of Monad@ is to provide it along with some other specific side
-#  effecting computations, and use bind syntax to compose those other side
-#  effecting computations. For example:
+#  effecting operations, and use function bind syntax to compose those other
+#  side effecting operations in interesting ways.
+#
+#  For example, imagine we want to implement a @l{Cat} function that forwards
+#  input from an input stream to an output stream. The input stream interface
+#  @l{In@} provides a way to get a character from the stream, and @l{Out@}
+#  provides a way to put a character to a stream, all in the context of a
+#  generic monadic type @l{M@}. The @l{Monad@} interface allows you to provide
+#  a generic implementation of @l{Cat} that works for any monadic type @l{M@}:
 #
 #  @code[fble] @ 
-#   <<@>@ M@>(Monad@<M@>, In@<M@>) { M@<Unit@>; }
+#   <<@>@ M@>(Monad@<M@>, In@<M@>, Out@<M@>) { M@<Unit@>; }
 #   Cat = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Out@<M@> out) {
-#     String@ line := m.do(GetLine(m, in));
-#     line.?(empty: m.return(Unit));
-#     Unit@ _ := m.do(out(String(line)));
-#     Cat(in);
+#     Maybe@<Char@> c := m.do(in);
+#     c.?(nothing: m.return(Unit));
+#
+#     Unit@ _ := m.do(out(String[c]));
+#     Cat(m, in, out);
+#   };
+#
+#  We could then apply the @l{Cat} function for different implementations of
+#  @l{Monad@} to get different results. Some examples might be:
+#
+#  @item
+#   The monadic type @l{M@} is provided by the fble-cli interface, with input
+#   and output connected to standard input and output streams, to implement a
+#   command line program that reads from standard input and writes to standard
+#   output.
+#  @item
+#   The monadic type @l{M@} could be a pure state monad which is a function
+#   from list of input characters to list of output characters and result. The
+#   input operation reads the next character from the input list and the
+#   output operation writes the next character from the output list. The
+#   @l{Cat} function can now be tested as pure fble code without the need for
+#   the fble-cli interface.
+#  @item
+#   The monadic type @l{M@} could be some other crazy thing that counts
+#   characters as you go, or searches for a string or operates on multiple
+#   streams at once.
+#
+#  For functions that use a generic monad instance, convention is to take the
+#  monad instance as the first argument to the function called @l{m}, followed
+#  by additional operations that the monad supports. That faciliates type
+#  inference on the monadic type @l{M@}, since the monad instance has @l{M@}
+#  direclty as a field. For example:
+#
+#  @code[fble] @
+#   <<@>@ M@>(Monad@<M@>, In@<M@>, Out@<M@>) { M@<Unit@>; }
+#   Cat = <<@>@ M@>(Monad@<M@> m, In@<M@> in, Out@<M@> out) {
+#     ...
+#   };
+#
+#  To implement a monad, you provide implementations of @l{return} and
+#  @l{do}. For example, a monad instance for the @l{Maybe@} type could be
+#  implemented as:
+#
+#  @code[fble] @
+#   Monad@<Maybe@> m = Monad@(Maybe@, Just, /Std/Monad%.Do);
+#
+#  Or more directly:
+#
+#  @code[fble] @
+#   Monad@<Maybe@> m = {
+#     M@ = Maybe@;
+#     return = <@ T@>(T@ x) { Maybe@(just: x); };
+#     do = <@ A@>(Maybe@<A@> ma)<@ B@>((A@) { MaybE@<B@>; } f) {
+#       ma.?(nothing: Nothing<B@>);
+#       f(m.just);
+#     };
+#     @(M@, return, do);
 #   };
 Monad@ = <<@>@ M@> {
   *(
