@@ -3,7 +3,7 @@
 #  @l{/Std/Data%.Data@} instance.
 #
 #  Insert and lookup are O(N) in the data length of the key. Iteration
-#  traverse keys in the order defined by the @l{Data@} instance for the key.
+#  traverses keys in the order defined by the @l{Data@} instance for the key.
 #
 #  The typical way to use a map is to use struct import on the result of the
 #  @l{Of} function, which provides types and functions specialized for the
