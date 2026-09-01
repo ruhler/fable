@@ -1,5 +1,22 @@
 # @module[/Std/State/Pure%]
 #  A pure implementation of the @l{/Std/State%.State@} monadic interface.
+#
+#  For example, the following is part of a pure test for the @l{GetLine}
+#  function using a pure state monad to provide the input stream of
+#  characters:
+#
+#  @code[fble] @
+#   M@, m(.Monad), s(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+#   In@<Char@, M@> in = /Std/Stream/State%.In(m, s);
+#   String@ got = Eval(GetLine(m, in), StrE|'hello\nthere\nnow');
+#   String@ wnt = StrE|'hello\n';
+#   AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+#
+#  In this case the state type is @l{String@}. A monadic computation of type
+#  @l{M@<String@>} is constructed using the @l{GetLine}, which operates on
+#  generic monadic types. The initial input value is passed as the second
+#  argument to @l{Eval}. The @l{Eval} function runs the state computation, in
+#  this case discarding the final state and returning the final string value.
 
 Monad@ .= /Std/Monad%;
 State@ .= /Std/State%;
@@ -22,6 +39,17 @@ Pure@ = <@ S@, @ A@>(S@) { Result@<S@, A@>; };
 # @func[Monad] The monad instance for a pure state monad.
 #  @arg[@][S@] The type of state.
 #  @returns[Monad@<Pure@<S@>>] The monad instance for a pure state monad.
+#
+#  For example, here's how you can use the @l{Monad} instance as the argument
+#  to a function like @l{GetLine}, which expects something of type
+#  @l{Monad@<M@>} for some type M@:
+#
+#  @code[fble] @
+#   M@, m(.Monad), s(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+#   In@<Char@, M@> in = /Std/Stream/State%.In(m, s);
+#   String@ got = Eval(GetLine(m, in), StrE|'hello\nthere\nnow');
+#   String@ wnt = StrE|'hello\n';
+#   AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
 <@ S@> { Monad@<Pure@<S@>>; }
 Monad = <@ S@> {
   M@ = Pure@<S@>;
@@ -41,6 +69,17 @@ Monad = <@ S@> {
 # @func[State] The state interface for a pure state monad.
 #  @arg[@][S@] The type of state.
 #  @returns[State@<S@, Pure@<S@>>] The state interface for a pure state monad.
+#
+#  For example, here's how you can use the @l{State} instance as the argument
+#  to a function like @l{/Std/Stream/State%.In}, which expects something of
+#  type @l{State@<List@<A@>, M@>} for some types M@ and A@:
+#
+#  @code[fble] @
+#   M@, m(.Monad), s(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+#   In@<Char@, M@> in = /Std/Stream/State%.In(m, s);
+#   String@ got = Eval(GetLine(m, in), StrE|'hello\nthere\nnow');
+#   String@ wnt = StrE|'hello\n';
+#   AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
 <@ S@> { State@<S@, Pure@<S@>>; }
 State = <@ S@> {
   @(get: (S@ s) { Result@(s, s); },
@@ -54,6 +93,19 @@ State = <@ S@> {
 #  @arg[S@][s] The initial state to use.
 #  @returns[Result@<S@, A@>]
 #   The result of the computation along with the final state value.
+#
+#  For example:
+#
+#  @code[fble] @
+#   M@, m(.Monad), s(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+#   In@<Char@, M@> in = /Std/Stream/State%.In(m, s);
+#   Result@<String@, String@> got = Run(GetLine(m, in), StrE|'hello\nthere\nnow');
+#   String@ line = got.return;  # StrE|'hello\n'
+#   String@ rest = got.state;   # StrE|'there\nnow'
+#
+#  Use the @l{Eval} function instead if you are only interested in the return
+#  value, or the @l{Exec} function if you are only interested in the final
+#  state.
 <@ S@, @ A@>(Pure@<S@, A@>, S@) { Result@<S@, A@>; }
 Run = <@ S@, @ A@>(Pure@<S@, A@> ma, S@ s) {
   ma(s);
@@ -65,6 +117,15 @@ Run = <@ S@, @ A@>(Pure@<S@, A@> ma, S@ s) {
 #  @arg[Pure@<S@, A@>][ma] The computation to run.
 #  @arg[S@][s] The initial state to use.
 #  @returns[A@] The result of the computation.
+#
+#  For example:
+#
+#  @code[fble] @
+#   M@, m(.Monad), s(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+#   In@<Char@, M@> in = /Std/Stream/State%.In(m, s);
+#   String@ got = Eval(GetLine(m, in), StrE|'hello\nthere\nnow');
+#   String@ wnt = StrE|'hello\n';
+#   AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
 <@ S@, @ A@>(Pure@<S@, A@>, S@) { A@; }
 Eval = <@ S@, @ A@>(Pure@<S@, A@> ma, S@ s) {
   ma(s).return;
@@ -76,6 +137,15 @@ Eval = <@ S@, @ A@>(Pure@<S@, A@> ma, S@ s) {
 #  @arg[Pure@<S@, A@>][ma] The computation to run.
 #  @arg[S@][s] The initial state to use.
 #  @returns[S@] The final state value after the computation.
+#
+#  For example:
+#
+#  @code[fble] @
+#   M@, m(.Monad), s(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+#   In@<Char@, M@> in = /Std/Stream/State%.In(m, s);
+#   String@ got = Exec(GetLine(m, in), StrE|'hello\nthere\nnow');
+#   String@ wnt = StrE|'there\nnow';
+#   AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
 <@ S@, @ A@>(Pure@<S@, A@>, S@) { S@; }
 Exec = <@ S@, @ A@>(Pure@<S@, A@> ma, S@ s) {
   ma(s).state;
@@ -91,6 +161,24 @@ Exec = <@ S@, @ A@>(Pure@<S@, A@> ma, S@ s) {
 #  @returns[M@<A@>]
 #   A computation to run the pure state computation with the provided generic
 #   state monad interface.
+#
+#  For example, imagine you are given a monadic interface for a state monad
+#  where the state is a string being displayed in some character display
+#  externally. The character display supports the State@ interface in some
+#  abstract monadic type @l{M@} which can record other side effects you don't
+#  know about. You can provide a computation that operates on a pure state
+#  monad and lift it into the generic type @l{M@} so that the changes it makes
+#  to the pure monadic state are reflected on the external display. It might
+#  look something like:
+#
+#  @code[fble] @
+#   Pure@<String@, Int@> pure_computation = ...;
+#
+#   <<@>@ M@>(Monad@<M@>, State@<String@, M@>) { M@<Int@>; }
+#   io_computation = <<@>@ M@>(Monad@<M@> m, State@<String@, M@> s) {
+#     Int@ result := m.do(Lift(m, s, pure_computation));
+#     m.return(result);
+#   };
 <@ S@, <@>@ M@>(Monad@<M@>, State@<S@, M@>)<@ A@>(Pure@<S@, A@>) { M@<A@>; }
 Lift = <@ S@, <@>@ M@>(Monad@<M@> m, State@<S@, M@> s)<@ A@>(Pure@<S@, A@> p) {
   S@ x := m.do(s.get);
@@ -104,6 +192,17 @@ Lift = <@ S@, <@>@ M@>(Monad@<M@> m, State@<S@, M@> s)<@ A@>(Pure@<S@, A@> p) {
 #  @returns[...]
 #   The monad type M@, monad instance Monad, and state interface State
 #   implementing the pure state monad for state type S@.
+#
+#  Used to provide versions of the types and functions in this module
+#  specialized for your state type. Typically used with struct import. For
+#  example:
+#
+#  @code[fble] @
+#   M@, m(.Monad), s(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+#   In@<Char@, M@> in = /Std/Stream/State%.In(m, s);
+#   String@ got = Eval(GetLine(m, in), StrE|'hello\nthere\nnow');
+#   String@ wnt = StrE|'hello\n';
+#   AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
 Pure = <@ S@> {
   @(M@: Pure@<S@>, Monad: Monad<S@>, State: State<S@>,
     Run: Run<S@>, Eval: Eval<S@>, Exec: Exec<S@>, Lift: Lift<S@>);

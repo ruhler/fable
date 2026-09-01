@@ -151,11 +151,11 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Set/Eq.fble
 [DONE] pkgs/std/Std/Set/List.fble
 [DONE] pkgs/std/Std/Set.fble
+[DONE] pkgs/std/Std/State/Pure.fble
 
 
 
 pkgs/std/Std/Stream/State.fble
-pkgs/std/Std/State/Pure.fble
 
 pkgs/std/Std/Bool/Random.fble
 pkgs/std/Std/Int/Random.fble

@@ -2,6 +2,14 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Get rid of the /Std/State/Pure%.Lift function?
+  I don't have any current users, and it's hard for me to come up with a
+  legitimate use case. Why would you have something of type Pure@... to start
+  with?
+
+* Should we not group In@ and Out@ together in /Std/Stream/State%?
+  Given we separated In@ and Out@ declarations?
+
 * Should /Std/Set% implement a Map function?
 
 * Come up with a decent example use case for /Std/Stream/Test%.ToTest?
