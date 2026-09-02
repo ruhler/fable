@@ -14,6 +14,15 @@ Rng@ .= /Std/Random/Rng%;
 #  @arg[Rng@<M@>][rng] The random number generator to use.
 #  @returns[M@<Bool@>]
 #   A random boolean value uniformly distributed between True and False.
+#
+#  For example, to randomly chose between two values:
+#
+#  @code[fble] @
+#   <<@>@ M@>(Monad@<M@>, Rng@<M@>)<@ A@>(A@, A@) { M@<A@>; }
+#   Choose = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng)<@ A@>(A@ a, A@ b) {
+#     Bool@ choice := m.do(Uniform(m, rng));
+#     m.return(choice.?(true: a, false: b));
+#   };
 <<@>@ M@>(Monad@<M@>, Rng@<M@>) { M@<Bool@>; }
 Uniform = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng) {
   Int@ x := m.do(rng.rand(Int|1));

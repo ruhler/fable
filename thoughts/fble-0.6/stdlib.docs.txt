@@ -152,20 +152,18 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Set/List.fble
 [DONE] pkgs/std/Std/Set.fble
 [DONE] pkgs/std/Std/State/Pure.fble
+[DONE] pkgs/std/Std/Stream/State.fble
+[DONE] pkgs/std/Std/Random/Rng.fble
+[DONE] pkgs/std/Std/Bool/Random.fble
 
 
-
-pkgs/std/Std/Stream/State.fble
-
-pkgs/std/Std/Bool/Random.fble
 pkgs/std/Std/Int/Random.fble
-pkgs/std/Std/Random/Lcg.fble
+pkgs/std/Std/List/Random.fble
 pkgs/std/Std/Random/Prng.fble
 pkgs/std/Std/Random/Prng/Assert.fble
 pkgs/std/Std/Random/Prng/Pure.fble
-pkgs/std/Std/Random/Rng.fble
+pkgs/std/Std/Random/Lcg.fble
 pkgs/std/Std/Random/Lfsr.fble
-pkgs/std/Std/List/Random.fble
 
 pkgs/std/Std/Io/Env.fble
 pkgs/std/Std/Io/Cli/Print.fble

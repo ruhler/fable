@@ -1,10 +1,17 @@
 # @module[/Std/Random/Rng%]
-#  Interface for random number generators.
+#  Defines the Rng@ interface for generating random numbers in a monadic
+#  context. This is typically used for providing higher level random value
+#  generation based on a random number generation that may or may not be
+#  pseudorandom. See @l{/Std/Random/Prng%} for a more specific interface for
+#  working with generation of pseudorandom numbers.
+#
+#  See @l{/Std/Bool/Random%}, @l{/Std/Int/Random%}, and @l{/Std/List/Random%}
+#  for examples of where the @l{Rng@} interface is used.
 
 Int@ .= /Std/Int%;
 Unit@ .= /Std/Unit%;
 
-# @type[Rng@] Interface for random number generators.
+# @type[Rng@] Interface for generating random numbers.
 #  @arg[<@>@][M@] The monadic type for the interface.
 #  @field[(Int@) { M@<Int@>; }][rand]
 #   Function to return a random n-bit integer. The argument is the number of
@@ -14,10 +21,23 @@ Unit@ .= /Std/Unit%;
 #   Function to feed n bits of entropy into the generator. The first argument
 #   specifies the number of bits, the second argument should be an integer
 #   value in the range [0, 2^n) with the contents of the bits.
+#
+#  For example, the following shows how to generate a uniformly random boolean
+#  using the @l{Rng@} interface:
+#
+#  @code[fble] @
+#   <<@>@ M@>(Monad@<M@>, Rng@<M@>) { M@<Bool@>; }
+#   Uniform = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng) {
+#     Int@ x := m.do(rng.rand(Int|1));
+#     m.return(Not(IsZero(x)));
+#   };
+#
+#  The @l{feed} function is useful for pseudorandom number generation, to
+#  programmatically influence the flow of random number generation, for
+#  example based on user input.
 Rng@ = <<@>@ M@> { *(
   (Int@) { M@<Int@>; } rand,
   (Int@, Int@) { M@<Unit@>; } feed
 ); };
 
 @(Rng@);
-
