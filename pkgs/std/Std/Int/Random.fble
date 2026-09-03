@@ -16,6 +16,14 @@ Rng@ .= /Std/Random/Rng%;
 #  @arg[Int@][n] Exclusive upper bound on the integer value to generate.
 #  @returns[M@<Int@>]
 #   A random integer value uniformly distributed in the range [0, n).
+#
+#  For example, to randomly chose a coordinate on an 8x10 grid:
+#
+#  @code[fble] @
+#   Pos@ = *(Int@ x, Int@ y);
+#   Int@ x := M.do(UpTo(M, Rng, Int|8));
+#   Int@ y := M.do(UpTo(M, Rng, Int|10));
+#   M.return(@(x, y));
 <<@>@ M@>(Monad@<M@>, Rng@<M@>, Int@) { M@<Int@>; }
 UpTo = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng, Int@ n) {
   # Find the smallest k such that n < 2^k
@@ -43,6 +51,11 @@ UpTo = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng, Int@ n) {
 #  @arg[Int@][hi] Inclusive upper bound on the integer value to generate.
 #  @returns[M@<Int@>]
 #   A random integer value uniformly distributed in the range [lo, hi].
+#
+#  For example, to randomly chose one of three values 10, 11, 12:
+#
+#  @code[fble] @
+#   Range(M, Rng, Int|10, Int|12);
 <<@>@ M@>(Monad@<M@>, Rng@<M@>, Int@, Int@) { M@<Int@>; }
 Range = <<@>@ M@>(Monad@<M@> m, Rng@<M@> rng, Int@ lo, Int@ hi) {
   Int@ x := m.do(UpTo(m, rng, Incr(Sub(hi, lo))));

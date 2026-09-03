@@ -7,6 +7,9 @@
 #
 #  See @l{/Std/Bool/Random%}, @l{/Std/Int/Random%}, and @l{/Std/List/Random%}
 #  for examples of where the @l{Rng@} interface is used.
+#
+#  See @l{/Std/Random/Prng%} for practical examples of how to use the higher
+#  level random value generators to generate values.
 
 Int@ .= /Std/Int%;
 Unit@ .= /Std/Unit%;
