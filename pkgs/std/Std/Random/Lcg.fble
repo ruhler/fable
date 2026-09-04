@@ -1,5 +1,10 @@
 # @module[/Std/Random/Lcg%]
-#  Linear congruential pseudo random number generator.
+#  Implementation of the Rand48 linear congruential pseudo random number
+#  generator, which generates the same sequence of random numbers as Java's
+#  java.util.Random and POSIX [ln]rand48.
+#
+#  This psuedo random number generator is not suitable for cryptographic use
+#  cases.
 
 Int@, Add, Shl, Shr, Mul .= /Std/Int%;
 Mod .= /Std/Int/Div%;
@@ -14,6 +19,15 @@ Prng@ .= /Std/Random/Prng%;
 #  congruential generator as Java java.util.Random and POSIX [ln]rand48.
 #
 #  Not suitable for cryptographic use cases.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Prng(.Rand48) .= /Std/Random/Lcg%;
+#   Eval .= /Std/State/Pure%;
+#   M@, M(.Monad), Rng .= /Std/Random/Prng/Pure%.Pure(Prng);
+#
+#  See @l{/Std/Random/Prng%} for a more extensive example.
 Prng@<Int@> Rand48 = {
   S@ = Int@;
 

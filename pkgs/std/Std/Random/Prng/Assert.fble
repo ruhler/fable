@@ -20,6 +20,19 @@ TestResult@, Pass .= /Std/Test%;
 #  @returns[TestResult@]
 #   A passing test result if the pseudo random number generator generates the
 #   same sequence of states as provided. A failing result otherwise.
+#
+#  For example, to test a 3 bit LFSR has an expected state sequence 010, 101,
+#  011, 111, 110, 100, 001:
+#
+#  @code[fble] @
+#   Test|Basic({
+#     Unit@ _ := Lazy;
+#     AssertSequence(
+#       /Std/List/Eq%.Eq(/Std/Bool/Eq%.Eq),
+#       /Std/List/Show%.Show(/Std/Bool/Show%.Show), Lfsr3)[
+#         S|010, S|101, S|011, S|111,
+#         S|110, S|100, S|001, S|010];
+#   });
 <@ S@>(Eq@<S@>, Show@<S@>, Prng@<S@>, List@<S@>) { TestResult@; }
 AssertSequence = <@ S@>(Eq@<S@> eq, Show@<S@> show, Prng@<S@> prng) {
   (S@, List@<S@>) { List@<S@>; }

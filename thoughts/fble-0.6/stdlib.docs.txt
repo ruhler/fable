@@ -158,12 +158,12 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Int/Random.fble
 [DONE] pkgs/std/Std/List/Random.fble
 [DONE] pkgs/std/Std/Random/Prng.fble
+[DONE] pkgs/std/Std/Random/Prng/Pure.fble
+[DONE] pkgs/std/Std/Random/Prng/Assert.fble
+[DONE] pkgs/std/Std/Random/Lcg.fble
+[DONE] pkgs/std/Std/Random/Lfsr.fble
 
 
-pkgs/std/Std/Random/Prng/Assert.fble
-pkgs/std/Std/Random/Prng/Pure.fble
-pkgs/std/Std/Random/Lcg.fble
-pkgs/std/Std/Random/Lfsr.fble
 
 pkgs/std/Std/Io/Env.fble
 pkgs/std/Std/Io/Cli/Print.fble

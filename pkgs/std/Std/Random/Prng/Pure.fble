@@ -1,5 +1,6 @@
 # @module[/Std/Random/Prng/Pure%]
-#  Rng@ instance for pseudo random number generators.
+#  Provides an Rng@ instance for Prng@ pseudo random number generators using a
+#  pure state monad.
 
 Int@, Add, Sub, Shl, Shr .= /Std/Int%;
 Le .= /Std/Int/Cmp%;
@@ -15,6 +16,21 @@ Unit@ .= /Std/Unit%;
 #  @returns[Rng@<Pure@<S@>>]
 #   A pure state monad based implementation of the Rng@ interface for the
 #   pseudo random number generator.
+#
+#  Normally this is imported using the @l{Pure} function, which provides
+#  convenient access to the monadic type and monad instance being used. For
+#  example, to use the Rand48 linear congruential generator:
+#
+#  @code[fble] @
+#   Prng(.Lfsr8) .= /Std/Random/Lfsr%;
+#   Run .= /Std/State/Pure%;
+#   M@, M(.Monad), Rng .= /Std/Random/Prng/Pure%.Pure(Prng);
+#
+#  You can now pass M and Rng to functions that expect an Rng@ like
+#  @l{/Std/Bool/Random%.Uniform} and execute the resulting computation using
+#  the pure state monad @l{Run} function.
+#
+#  See @l{/Std/Random/Prng%} for more examples.
 <@ S@>(Prng@<S@>) { Rng@<Pure@<S@>>; }
 Rng = <@ S@> (Prng@<S@> prng) {
   M@ = Pure@<S@>;
@@ -49,6 +65,19 @@ Rng = <@ S@> (Prng@<S@> prng) {
 #   A collection monadic type M@, monad instance, state instance, and Rng
 #   instance for the pure state monad implementation of the pseudo random
 #   number generator.
+#
+#  For example, to use the Rand48 linear congruential generator:
+#
+#  @code[fble] @
+#   Prng(.Lfsr8) .= /Std/Random/Lfsr%;
+#   Run .= /Std/State/Pure%;
+#   M@, M(.Monad), Rng .= /Std/Random/Prng/Pure%.Pure(Prng);
+#
+#  You can now pass M and Rng to functions that expect an Rng@ like
+#  @l{/Std/Bool/Random%.Uniform} and execute the resulting computation using
+#  the pure state monad @l{Run} function.
+#
+#  See @l{/Std/Random/Prng%} for more examples.
 Pure = <@ S@>(Prng@<S@> prng) {
   @(M@: Pure@<S@>, Monad: Monad<S@>, State: State<S@>, Rng: Rng(prng));
 };

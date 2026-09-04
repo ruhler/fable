@@ -1,13 +1,25 @@
 # @module[/Std/Random/Lfsr%]
-#  Linear feedback shift register based random number generator.
+#  Implementation of linear feedback shift register based random number
+#  generators.
 #
 #  The linear feedback shift register implementations provided for bit length
 #  n have period 2^n-1. They are relatively fast to implement in fble, but
 #  depending on the bit length can have very short periods. Good for games
-#  where you want unpredictable behavior that's fast to compute.
+#  where you want unpredictable behavior that's fast to compute. Not so good
+#  for satisfying statistics you might expect from random numbers. Not
+#  suitable for cyrptographic use cases.
 #
 #  If you don't care about performance, consider using the more standard
 #  /Std/Random/Lcg%.Rand48 random number generator.
+#
+#  For example, to use the Lfsr8 generator:
+#
+#  @code[fble] @
+#   Prng(.Lfsr8) .= /Std/Random/Lfsr;
+#   Eval .= /Std/State/Pure%;
+#   M@, M(.Monad), Rng .= /Std/Random/Prng/Pure%.Pure(Prng);
+#
+#  See @l{/Std/Random/Prng%} for a more extensive example.
 
 Bool@, True, False, And, Xor .= /Std/Bool%;
 Int@, Decr .= /Std/Int%;
@@ -18,8 +30,13 @@ List@, List, Items, Empty, Append .= /Std/List%;
 Prng@ .= /Std/Random/Prng%;
 Unit@ .= /Std/Unit%;
 
-# Prod --
-#   Compute the element wise product of bits in the given lists.
+# @dev
+#  @func[Prod] Compute the element wise product of bits in the given lists.
+#   @arg[List@<Bool@>][a] The first list of bits.
+#   @arg[List@<Bool@>][b] The second list of bits.
+#   @returns[List@<Bool@>] The element wise AND of bits in the given lists.
+#
+#   Behavior is undefined if the lists are not the same length.
 (List@<Bool@>, List@<Bool@>) { List@<Bool@>; }
 Prod = (List@<Bool@> a, List@<Bool@> b) {
   a.?(empty: a);
@@ -28,8 +45,13 @@ Prod = (List@<Bool@> a, List@<Bool@> b) {
   Items(And(a.items.head, b.items.head), tail);
 };
 
-# Xors --
-#   Compute element wise XOR of bits in the given lists.
+# @dev
+#  @func[Xors] Compute element wise XOR of bits in the given lists.
+#   @arg[List@<Bool@>][a] The first list of bits.
+#   @arg[List@<Bool@>][b] The second list of bits.
+#   @returns[List@<Bool@>] The element wise XOR of bits in the given lists.
+#
+#   Behavior is undefined if the lists are not the same length.
 (List@<Bool@>, List@<Bool@>) { List@<Bool@>; }
 Xors = (List@<Bool@> a, List@<Bool@> b) {
   a.?(empty: a);
@@ -38,33 +60,43 @@ Xors = (List@<Bool@> a, List@<Bool@> b) {
   Items(Xor(a.items.head, b.items.head), tail);
 };
 
-# Sum --
-#   Compute the sum over all bits in the given list.
+# @dev
+#  @func[Sum] Compute the sum over all bits in the given list.
+#   @arg[List@<Bool@>][xs] The list of bits.
+#   @returns[Bool@]
+#    The XOR over all bits in the list. In other words, False if there are an
+#    even number of bits set and True if there are an odd number of bits set.
 (List@<Bool@>) { Bool@; } Sum = (List@<Bool@> xs) {
   xs.?(empty: False);
   Xor(xs.items.head, Sum(xs.items.tail));
 };
 
-# type[Coeffs@] The coefficiencts of the linear feedback shift register.
+# @dev
+#  @type[Coeffs@] The coefficiencts of the linear feedback shift register.
 Coeffs@ = List@<Bool@>;
 
 # @type[S@] The state of the linear feedback shift register.
 S@ = List@<Bool@>;
 
-# func[Next] Transition function for a linear feedback shift register.
-#  @arg[Coeffs@][coeffs] The coefficients to use.
-#  @arg[S@][state] The current state value.
-#  @returns[S@] The next state value.
-#
-#  The number of coefficients must match the state size, otherwise behavior is
-#  undefined.
+# @dev
+#  @func[Next] Transition function for a linear feedback shift register.
+#   @arg[Coeffs@][coeffs] The coefficients to use.
+#   @arg[S@][state] The current state value.
+#   @returns[S@] The next state value.
+#  
+#   The number of coefficients must match the state size, otherwise behavior is
+#   undefined.
 (Coeffs@, S@) { S@; }
 Next = (Coeffs@ coeffs, S@ state) {
   Bool@ in = Sum(Prod(coeffs, state));
   Append(state.items.tail, List[in]);
 };
 
-# Extracts n bits from the given integer.
+# @dev
+#  @func[IntToBits] Extracts n bits from the given integer.
+#   @arg[Int@][n] The number of bits to extract.
+#   @arg[Int@][x] The integer to extract the bits from.
+#   @returns[List@<Bool@>] A list of n bits extracted from x.
 (Int@, Int@) { List@<Bool@>; }
 IntToBits = (Int@ n, Int@ x) {
   IsZero(n).?(true: Empty<Bool@>);
@@ -74,7 +106,15 @@ IntToBits = (Int@ n, Int@ x) {
   Items(bit, IntToBits(Decr(n), qr.q));
 };
 
-# Make sure there is at least one bit set, otherwise the LFSR won't work.
+# @dev
+#  @func[Sanitize] Force at least one bit to be set.
+#   @arg[List@<Bool@>][state] The state to sanitize.
+#   @returns[List@<Bool@>]
+#    The given state value modified to have at least one bit set if it doesn't
+#    already.
+#
+#   The LFSR won't work unless at least one bit is set. Call this when seeding
+#   the state to avoid that degenerate case.
 (List@<Bool@>) { List@<Bool@>; }
 Sanitize = (List@<Bool@> state) {
   /Std/List/Search%.Any(state, (Bool@ bit) { bit; }).?(false: {
@@ -83,11 +123,12 @@ Sanitize = (List@<Bool@> state) {
   state;
 };
 
-# func[Lfsr] Generic implementation of a linear feedback shift register.
-#  @arg[Coeffs@][coeffs] The coefficients to use.
-#  @returns[Prng@<S@>]
-#   A pseudo random number generator derived a linear feedback shift register
-#   with the given coefficients.
+# @dev
+#  @func[Lfsr] Generic implementation of a linear feedback shift register.
+#   @arg[Coeffs@][coeffs] The coefficients to use.
+#   @returns[Prng@<S@>]
+#    A pseudo random number generator derived a linear feedback shift register
+#    with the given coefficients.
 (Coeffs@) { Prng@<S@>; } Lfsr = (Coeffs@ coeffs) {
   Int@ len = /Std/List/Index%.Length(coeffs);
 
@@ -110,8 +151,16 @@ Sanitize = (List@<Bool@> state) {
   @(S@, next, n, bits, seed, feed);
 };
 
+# @dev
+#  @union[Bit@] Letter type for bit strings.
+#   @field[Unit@][0] The bit 0.
+#   @field[Unit@][1] The bit 1.
 Bit@ = +(Unit@ 0, Unit@ 1);
 
+# @dev
+#  @func[S] State literal function for bit strings.
+#   @arg[List@<Bit@>][xs] The bits in the string.
+#   @returns[List@<Bool@>] The corresponding LFSR state.
 (List@<Bit@>) { List@<Bool@>; }
 S = (List@<Bit@> xs) {
   Bit@ bit := /Std/List%.Map(xs);
