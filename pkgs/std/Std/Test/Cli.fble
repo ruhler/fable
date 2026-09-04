@@ -1,5 +1,5 @@
 # @module[/Std/Test/Cli%]
-#  Test runner using a command line interface.
+#  A command line interface program to run a test suite.
 
 Bool@ .= /Std/Bool%;
 Char@ .= /Std/Char%;
@@ -15,6 +15,64 @@ Test@ .= /Std/Test%;
 # @func[Run] A cli program to run a set of tests.
 #  @arg[Test@][test] The test or test suite to run.
 #  @returns[Main@] A cli program that runs the test.
+#
+#  For example, the @l{/Std/Test%} module provides a test suite for all of the
+#  standard library, something like:
+#
+#  @code[fble] @
+#   Test@ Tests = TestSuite|Std[
+#     /Std/Bool/Tests%.Tests,
+#     /Std/Char/Tests%.Tests,
+#     /Std/Int/Tests%.Tests,
+#     /Std/Unit/Tests%.Tests
+#   ];
+#    
+#   /Std/Test/Cli%.Run(Tests);
+#
+#  The tests can then be run using something like:
+#
+#  @code[shell] @
+#   $ fble-cli -p std -p std-tests -m /Std/Tests%
+#   @[Std.Bool.True]: @PASS
+#   @[Std.Bool.False]: @PASS
+#   @[Std.Bool.Not.True]: @PASS
+#   @[Std.Bool.Not.False]: @FAIL: Expected True, but got False
+#   @[Std.Bool.Eq.FF]: @PASS
+#   @[Std.Bool.Eq.FT]: @PASS
+#   @[Std.Bool.Eq.TF]: @PASS
+#   @[Std.Bool.Eq.TT]: @PASS
+#   @[Std.Bool.Show.True]: @PASS
+#   @[Std.Bool.Show.False]: @PASS
+#   @[Std.Char.Char]: @PASS
+#   @[Std.Char.Pos]: @PASS
+#   @[Std.Int.Incr.0]: @PASS
+#   @[Std.Int.Incr.P]: @PASS
+#   @[Std.Unit.Eq]: @PASS
+#   @[Std.Unit.Show]: @PASS
+#
+#  The program returns success if all tests are passing. It returns failure if
+#  any test is unexpectedly failing.
+#
+#  You can provide a test name prefix on the command line using the --prefix
+#  option to add the given prefix to the tests in the output. For example:
+#
+#   $ fble-cli -p std -p std-tests -m /Std/Tests% -- --prefix Compiled
+#   @[Compiled.Std.Bool.True]: @PASS
+#   @[Compiled.Std.Bool.False]: @PASS
+#   @[Compiled.Std.Bool.Not.True]: @PASS
+#   @[Compiled.Std.Bool.Not.False]: @FAIL: Expected True, but got False
+#   @[Compiled.Std.Bool.Eq.FF]: @PASS
+#   @[Compiled.Std.Bool.Eq.FT]: @PASS
+#   @[Compiled.Std.Bool.Eq.TF]: @PASS
+#   @[Compiled.Std.Bool.Eq.TT]: @PASS
+#   @[Compiled.Std.Bool.Show.True]: @PASS
+#   @[Compiled.Std.Bool.Show.False]: @PASS
+#   @[Compiled.Std.Char.Char]: @PASS
+#   @[Compiled.Std.Char.Pos]: @PASS
+#   @[Compiled.Std.Int.Incr.0]: @PASS
+#   @[Compiled.Std.Int.Incr.P]: @PASS
+#   @[Compiled.Std.Unit.Eq]: @PASS
+#   @[Compiled.Std.Unit.Show]: @PASS
 (Test@) { Main@; }
 Run = (Test@ tests) {
   <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {

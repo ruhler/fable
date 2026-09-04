@@ -1,5 +1,6 @@
 # @module[/Std/Io/Cli%]
-#  Main function type for command line interfaces.
+#  Main function type for command line interfaces run using the fble-cli
+#  program.
 
 Int@ .= /Std/Int%;
 Int .= /Std/Int/Lit%;
@@ -31,6 +32,18 @@ Exit@ Failure = Int|1;
 #  @arg[Io@<M@>][native] Interface for executing native code.
 #  @arg[List@<String@>][args] The command line arguments.
 #  @returns[M@<Exit@>] The application exit status.
+#
+#  For example:
+#
+#  @code[fble] @
+#   Main@ HelloWorld = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {
+#    /Std/Io/Cli/Print%.Print(StringE|'hello, world\n');
+#    m.return(Success);
+#   };
+#
+#  The arguments to the function will be supplied by fble-cli program. See
+#  also @l{/Std/Io/Cli/Demo%}, which has a more extensive demo program for
+#  command line interfaces.
 Main@ = <<@>@ M@>(Monad@<M@>, Io@<M@>, List@<String@>) { M@<Exit@>; };
 
 @(Exit@, Main@, Success, Failure);

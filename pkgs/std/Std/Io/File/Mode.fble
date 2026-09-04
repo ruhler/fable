@@ -1,6 +1,8 @@
 # @module[/Std/Io/File/Mode%]
-#  Distinction between text and binary files for purposes of line ending
-#  treatment.
+#  Defines the @l{Mode@} type to distinguish between text and binary files
+#  when reading and writing files. This is specifically for handling of line
+#  endings. For choosing between reading bytes and characters, see 
+#  @l{/Std/Io/File/Byte%} and @l{/Std/Io/File/Char%} instead.
 
 Unit@, Unit .= /Std/Unit%;
 
@@ -15,14 +17,28 @@ Unit@, Unit .= /Std/Unit%;
 #  time being, for interoperability with other programs that use text mode in
 #  a more portable way across platforms, you should pick whichever mode makes
 #  most sense for your application.
+#
+#  For example, to open standard output in binary mode:
+#
+#  @code[fble] @
+#   Main@ Main = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> argv) {
+#   Out@<Int@, M@> out := m.do(/Std/Io/File/Byte%.Stdout(m, io, Binary));
 Mode@ = +(Unit@ binary, Unit@ text);
 
 # @value[Binary] Binary mode
 #  @type[Mode@]
+#
+#  The bytes of the file are read and written as is, without any
+#  transformation of line endings.
 Mode@ Binary = Mode@(binary: Unit);
 
 # @value[Text] Text mode
 #  @type[Mode@]
+#
+#  On Windows, CRLF is replaced with a single newline when reading from a
+#  file, and newlines are replaced with CRLF when writing to a file. Posix
+#  conforming platforms treat text mode the same as binary: no modifications
+#  to line endings are made when reading or writing files.
 Mode@ Text = Mode@(text: Unit);
 
 @(Mode@, Binary, Text);

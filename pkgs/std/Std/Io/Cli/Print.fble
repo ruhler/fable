@@ -1,5 +1,8 @@
 # @module[/Std/Io/Cli/Print%]
 #  A cli program that prints a stream of characters.
+#
+#  This is primarily useful for tutorials and example programs which do
+#  nothing but output some text in a non-interactive fashion.
 
 Char@ .= /Std/Char%;
 Io@ .= /Std/Io%;
@@ -19,6 +22,11 @@ Unit@ .= /Std/Unit%;
 #  @returns[Main@]
 #   A cli program that prints the stream to standard out and exits with
 #   success.
+#
+#  For example:
+#
+#  @code[fble] @
+#   /Std/Io/Cli/Print%.Print(StringE|'hello, world\n');
 (Stream@<Char@>) { Main@; }
 Print = (Stream@<Char@> stream) {
   <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> _args) {

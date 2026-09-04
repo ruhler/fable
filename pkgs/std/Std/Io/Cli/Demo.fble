@@ -1,5 +1,7 @@
 # @module[/Std/Io/Cli/Demo%]
-#  A command line interface demo program.
+#  A command line interface program demonstrating various capabilities of
+#  cli programs, including use of command line arguments, environment
+#  variables, standard input and output streams, and file IO.
 
 Char@ .= /Std/Char%;
 Str .= /Std/Char/Ascii%;
@@ -20,7 +22,16 @@ Eq .= /Std/String/Eq%;
 Unit@, Unit .= /Std/Unit%;
 
 # @func[Demo] Demo command line interface program.
-#  Run with command line argument 'help' for usage info.
+#  @arg[<@>@][M@] Abstract monadic type M@ for computation.
+#  @arg[Monad@<M@>][m] The Monad@ instance for M@.
+#  @arg[Io@<M@>][native] Interface for executing native code.
+#  @arg[List@<String@>][args] The command line arguments.
+#  @returns[M@<Exit@>] The application exit status.
+#
+#  Run with command line argument 'help' for usage info. For example:
+#
+#  @code[sh] @
+#   fble-cli -p std -m /Std/Io/Cli/Demo% -- --help
 Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
   Out@<Char@, M@> out := m.do(/Std/Io/File/Utf8%.Stdout(m, io));
   Out@<Char@, M@> err := m.do(/Std/Io/File/Utf8%.Stderr(m, io));

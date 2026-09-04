@@ -162,18 +162,18 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Random/Prng/Assert.fble
 [DONE] pkgs/std/Std/Random/Lcg.fble
 [DONE] pkgs/std/Std/Random/Lfsr.fble
+[DONE] pkgs/std/Std/Io/Env.fble
+[DONE] pkgs/std/Std/Io/File/Mode.fble
+[DONE] pkgs/std/Std/Io/Cli/Print.fble
+[DONE] pkgs/std/Std/Io/Cli/Demo.fble
+[DONE] pkgs/std/Std/Io/Cli.fble
+[DONE] pkgs/std/Std/Test/Cli.fble
 
 
 
-pkgs/std/Std/Io/Env.fble
-pkgs/std/Std/Io/Cli/Print.fble
-pkgs/std/Std/Io/Cli/Demo.fble
 pkgs/std/Std/Io/File/Byte.fble
 pkgs/std/Std/Io/File/Char.fble
-pkgs/std/Std/Io/File/Mode.fble
 pkgs/std/Std/Io/File/Utf8.fble
-pkgs/std/Std/Io/Cli.fble
-pkgs/std/Std/Test/Cli.fble
 
 Question:
 * When do I put stuff in the module comment compared to the comment for a

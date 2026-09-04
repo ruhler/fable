@@ -16,10 +16,13 @@ Unit@, Unit .= /Std/Unit%;
 # @type[Byte@] An integer that holds 8 bits of data.
 Byte@ = Int@;
 
-# Pretend type for FILE*. Only to be accessed from FFI functions.
+# @dev
+#  @type[File@] Pretend type for FILE*.
+#   Only to be accessed from FFI functions.
 File@ = *(Unit@ file);
 
-# FFI for byte based file IO.
+# @dev
+#  Foreign functions for byte based file IO.
 (Mode@) { External@<File@>; } GetStdin;
 (Mode@) { External@<File@>; } GetStdout;
 (Mode@) { External@<File@>; } GetStderr;
@@ -28,6 +31,16 @@ File@ = *(Unit@ file);
 (File@) { External@<Maybe@<Byte@>>; } GetByte;
 (File@, Byte@) { External@<Unit@>; } PutByte;
 
+# @dev
+#  @func[Output] Output a stream of bytes to a file.
+#   @arg[<@>@][M@] The monadic context type.
+#   @arg[Monad@<M@>][m] The monad instance for the context.
+#   @arg[Io@<M@>][io] Handle to IO interface.
+#   @arg[File@][file] The file to write to.
+#   @arg[Stream@<Byte@>][output] The bytes to write.
+#   @returns[M@<Unit@>]
+#    A computation that writes all the bytes in the stream to the given file
+#    then flushes the file.
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@, Stream@<Byte@>) { M@<Unit@>; }
 Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@<Byte@> output) {
   Unit@ _ := {
@@ -38,6 +51,14 @@ Output = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file, Stream@<Byte@> output) 
   io.run(Flush(file));
 };
 
+# @dev
+#  @func[Out] Provide an Out@ interface for writing to a file.
+#   @arg[<@>@][M@] The monadic context type.
+#   @arg[Monad@<M@>][m] The monad instance for the context.
+#   @arg[Io@<M@>][io] Handle to IO interface.
+#   @arg[File@][file] The file to write to.
+#   @returns[M@<Unit@>]
+#    An output stream that outputs to the given file.
 <<@>@ M@>(Monad@<M@>, Io@<M@>, File@) { Out@<Byte@, M@>; }
 Out = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file) {
   Output(m, io, file);
@@ -61,6 +82,14 @@ Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
 #  @arg[Io@<M@>][io] Interface for performing io.
 #  @arg[Mode@][mode] Whether to open in binary or text mode.
 #  @returns[M@<Out@<Byte@, M@>>] The standard output stream.
+#
+#  For example, to write bytes 0x61 0x62 0x63, to standard output:
+#
+#  Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+#    Out@<Byte@, M@> out := m.do(/Std/Io/File/Byte%.Stdout(m, io, Binary));
+#    Unit@ _ := out(Each[Hex|61, Hex|62, Hex|63]);
+#    m.return(Success);
+#  };
 <<@>@ M@>(Monad@<M@>, Io@<M@>, Mode@) { M@<Out@<Byte@, M@>>; }
 Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
   File@ stdout := m.do(io.run(GetStdout(mode)));
@@ -73,6 +102,14 @@ Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
 #  @arg[Io@<M@>][io] Interface for performing io.
 #  @arg[Mode@][mode] Whether to open in binary or text mode.
 #  @returns[M@<Out@<Byte@, M@>>] The standard error stream.
+#
+#  For example, to write bytes 0x61 0x62 0x63, to standard error:
+#
+#  Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+#    Out@<Byte@, M@> out := m.do(/Std/Io/File/Byte%.Stderr(m, io, Binary));
+#    Unit@ _ := out(Each[Hex|61, Hex|62, Hex|63]);
+#    m.return(Success);
+#  };
 <<@>@ M@>(Monad@<M@>, Io@<M@>, Mode@) { M@<Out@<Byte@, M@>>; }
 Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
   File@ stderr := m.do(io.run(GetStderr(mode)));
@@ -80,9 +117,6 @@ Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
 };
 
 # @func[Read] Opens a file for reading.
-#  Note: the opened file will be closed automatically when you are done
-#  reading from it.
-#
 #  @arg[<@>@][M@] The monadic type for side effects.
 #  @arg[Monad@<M@>][m] The monad instance.
 #  @arg[Io@<M@>][io] Interface for performing io.
@@ -91,6 +125,9 @@ Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
 #  @returns[M@<Maybe@<In@<Byte@, M@>>>]
 #   An input stream for the file to read. Nothing if the file could not be
 #   opened for reading.
+#
+#  The opened file will be closed automatically when you are done reading from
+#  it.
 <<@>@ M@>(Monad@<M@>, Io@<M@>, String@, Mode@) { M@<Maybe@<In@<Byte@, M@>>>; }
 Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path, Mode@ mode) {
   String@ modestr = mode.?(binary: Str|rb, text: Str|r);
