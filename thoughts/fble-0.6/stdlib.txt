@@ -592,3 +592,12 @@ Let's put them with /Std/Stream/In% and /Std/Stream/Out%. The State%
 dependency is basically nothing. Not worth separating out I don't think.
 
 Oh. Actually, it brings in List. Let's separate it then.
+
+---
+
+* Come up with a decent example use case for /Std/Stream/Test%.ToTest?
+
+The benchmark test case makes sense to me, assuming you want to exercise that
+part of the benchmark.
+
+Too hard. Let's just leave it.

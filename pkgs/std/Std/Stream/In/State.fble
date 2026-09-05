@@ -1,0 +1,38 @@
+# @module[/Std/Stream/State%]
+#  Provides an instance of the In@ interfaces for streaming elements from a
+#  state monad.
+
+List@ .= /Std/List%;
+Just, Nothing .= /Std/Maybe%;
+Monad@ .= /Std/Monad%;
+State@ .= /Std/State%;
+In@ .= /Std/Stream/In%;
+Unit@ .= /Std/Unit%;
+
+# @func[In] An input stream that consumes from a list.
+#  @arg[<@>@][M@] The state monad type.
+#  @arg[Monad@<M@>][m] The state monad instance.
+#  @arg[@][A@] The type of value to input.
+#  @arg[State@<List@<A@>, M@>][s]
+#   Interface for accessing the list of elements to consume from the state.
+#  @returns[In@<A@, M@>] An input stream that gets elements from the state.
+#
+#  For example, the following is part of a pure test for the @l{GetLine}
+#  function using a pure state monad to provide the input stream of
+#  characters:
+#
+#  @code[fble] @
+#   M@, m(.Monad), s(.State), Eval .= /Std/State/Pure%.Pure<String@>;
+#   In@<Char@, M@> in = /Std/Stream/In/State%.In(m, s);
+#   String@ got = Eval(GetLine(m, in), StrE|'hello\nthere\nnow');
+#   String@ wnt = StrE|'hello\n';
+#   AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+<<@>@ M@>(Monad@<M@>)<@ A@>(State@<List@<A@>, M@>) { In@<A@, M@>; }
+In = <<@>@ M@>(Monad@<M@> m)<@ A@>(State@<List@<A@>, M@> s) {
+  List@<A@> xs := m.do(s.get);
+  xs.?(empty: m.return(Nothing<A@>));
+  Unit@ _ := m.do(s.put(xs.items.tail));
+  m.return(Just(xs.items.head));
+};
+
+@(In);

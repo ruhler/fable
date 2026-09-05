@@ -8,7 +8,7 @@ ToString .= /Std/Stream/String%;
 String@ .= /Std/String%;
 TestResult@ .= /Std/Test%;
 
-# @func[AssertStream] Assert an stream generates the expected value.
+# @func[AssertStream] Assert a stream generates the expected sequence.
 #  @arg[String@][expected] The expected sequence of characters.
 #  @arg[Stream@<Char@>][actual] The actual stream of characters.
 #  @returns[TestResult@]

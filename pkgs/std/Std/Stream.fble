@@ -8,10 +8,11 @@
 #
 #  @def[@l{/Std/Stream/Debug%}] Debug output streams
 #  @def[@l{/Std/Stream/In%}] Monadic input streams
+#  @def[@l{/Std/Stream/In/State%}] Input streams from state monads
 #  @def[@l{/Std/Stream/List%}] Conversion between lists and streams
 #  @def[@l{/Std/Stream/Null%}] Null output streams
 #  @def[@l{/Std/Stream/Out%}] Monadic output streams
-#  @def[@l{/Std/Stream/State%}] IO streams to and from pure state monads
+#  @def[@l{/Std/Stream/Out/State%}] Output streams to state monads
 #  @def[@l{/Std/Stream/String/Assert%}] Test assertions for streams
 #  @def[@l{/Std/Stream/String%}] Conversions between strings and streams
 #  @def[@l{/Std/Stream/Test%}] Test output streams.

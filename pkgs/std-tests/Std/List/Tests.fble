@@ -128,6 +128,7 @@ Test@ Tests = TestSuite|List[
   /Std/List/Index/Tests%.Tests,
   /Std/List/Maybe/Tests%.Tests,
   /Std/List/Search/Tests%.Tests,
+  /Std/List/Show/Tests%.Tests,
   /Std/List/Sort/Tests%.Tests
 ];
 

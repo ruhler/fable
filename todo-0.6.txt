@@ -2,10 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Should /Std/Set% implement a Map function?
-
-* Come up with a decent example use case for /Std/Stream/Test%.ToTest?
-
 * Add tests for showing lists?
 
 * SkipTest is super awkward to use.

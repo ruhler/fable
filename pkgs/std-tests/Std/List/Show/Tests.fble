@@ -1,0 +1,35 @@
+
+OnAscii .= /Std/Char/Ascii%;
+Int@ .= /Std/Int%;
+Int .= /Std/Int/Lit%;
+Lazy .= /Std/Lazy%;
+List@, List, Empty .= /Std/List%;
+AssertStream = OnAscii(/Std/Stream/String/Assert%.AssertStream);
+Test@ .= /Std/Test%;
+Test = OnAscii(/Std/Test%.Test);
+TestSuite = OnAscii(/Std/Test%.TestSuite);
+Unit@ .= /Std/Unit%;
+
+Show = /Std/List/Show%.Show(/Std/Int/Show%.Show);
+
+Test@ Tests = TestSuite|Show[
+  Test|Empty({
+    Unit@ _ := Lazy;
+    List@<Int@> list = Empty<Int@>;
+    AssertStream|'[]'(Show(list));
+  }),
+
+  Test|Single({
+    Unit@ _ := Lazy;
+    List@<Int@> list = List[Int|1234];
+    AssertStream|'[1234]'(Show(list));
+  }),
+
+  Test|Multi({
+    Unit@ _ := Lazy;
+    List@<Int@> list = List[Int|123, Int|45, Int|667];
+    AssertStream|'[123, 45, 667]'(Show(list));
+  })
+];
+
+@(Tests);

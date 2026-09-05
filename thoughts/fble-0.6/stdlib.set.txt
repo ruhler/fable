@@ -54,3 +54,10 @@ Proposal:
 
 Proposal summary of things to add:
 * And, Or, Diff, Keep, Omit,
+
+--- 
+
+* Should /Std/Set% implement a Map function?
+
+Remember, for set we are talking about keys, not values. I don't think it
+makes sense. Better to iterate over the elements and create a new map.

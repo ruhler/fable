@@ -1,0 +1,35 @@
+# @module[/Std/Stream/State%]
+#  Provides an instance of Out@ for streaming elements to a state monad.
+
+Monad@ .= /Std/Monad%;
+State@ .= /Std/State%;
+Stream@, Puts .= /Std/Stream%;
+Out@ .= /Std/Stream/Out%;
+Unit@ .= /Std/Unit%;
+
+# @func[Out] An output port that puts to a stream.
+#  @arg[<@>@][M@] The state monad type.
+#  @arg[Monad@<M@>][m] The state monad instance.
+#  @arg[@][A@] The type of value to output.
+#  @arg[State@<Stream@<A@>, M@>][s]
+#   Interface for accessing the output stream to write to.
+#  @returns[Out@<A@, M@>] An output port that streams outputs to the state.
+#
+#  For example, here's how you could test a hello world program, capturing the
+#  output in a list:
+#
+#  @code[fble] @
+#   M@, m(.Monad), s(.State), Exec .= /Std/State/Pure%.Pure<String@>;
+#   Out@<Char@, M@> out = /Std/Stream/Out/State%.Out(m, s);
+#   String@ got = Exec(HelloWorld(m, out), Empty<String@>);
+#   String@ wnt = StrE|'hello, world\n';
+#   AssertEquals(/Std/String/Eq%.Eq, /Std/String/Show%.Show, wnt, got);
+<<@>@ M@>(Monad@<M@>)<@ A@>(State@<Stream@<A@>, M@>) { Out@<A@, M@>; }
+Out = <<@>@ M@>(Monad@<M@> m)<@ A@>(State@<Stream@<A@>, M@> s) {
+  (Stream@<A@> stream) {
+    Stream@<A@> prev := m.do(s.get);
+    s.put(Puts(prev, (Unit@ _) { stream; }));
+  };
+};
+
+@(Out);
