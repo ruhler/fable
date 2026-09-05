@@ -108,7 +108,7 @@ Test@ Tests = TestSuite|Parser[
   Test|Basic({
     Unit@ _ := Lazy;
     M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<List@<Int@>>;
-    In@<Int@, M@> in = /Std/Stream/State%.In(M, S);
+    In@<Int@, M@> in = /Std/Stream/In/State%.In(M, S);
 
     Result@<Profile@> got = Eval(/Pprof/Parser%.Parse(M, in), Encoded);
     Result@<Profile@> wnt = Okay(Parsed);

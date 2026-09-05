@@ -555,3 +555,40 @@ No. I don't see the value. What would it have? Traversal, size, isEmpty, add.
 That kind of thing. But Map doesn't have size and we can use streams for
 generic traversal. I don't see a need to add it without any clear motivation.
 
+---
+
+* Get rid of the /Std/State/Pure%.Lift function?
+  I don't have any current users, and it's hard for me to come up with a
+  legitimate use case. Why would you have something of type Pure@... to start
+  with?
+
+How about this for a use case: you want to use a real random number
+generator. So you wrap Rng@ in a pure state monad. Return that. Then lift into
+your IO monad?
+
+I don't now. Let's leave it. If it's no use, we can revisit later on.
+
+The point is, if you are okay using a generic State@, then you don't need
+Lift. If you want something to work generically, then implement it using
+State@.
+
+Why did I add Lift in the first place? Do you remember? I don't see a good
+reason.
+
+Too hard. Can't decide. Let's just leave it for now. See if anyone finds a use
+for it?
+
+Yeah. Too hard.
+
+---
+
+* Should we not group In@ and Out@ together in /Std/Stream/State%?
+  Given we separated In@ and Out@ declarations?
+
+No, we shouldn't group them. Either I should put them under /Std/Stream/In%
+and /Std/Stream/Out%, or /Std/Stream/In/State% and /Std/Stream/Out/State%.
+
+Let's put them with /Std/Stream/In% and /Std/Stream/Out%. The State%
+dependency is basically nothing. Not worth separating out I don't think.
+
+Oh. Actually, it brings in List. Let's separate it then.

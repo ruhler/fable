@@ -16,7 +16,7 @@ Test@ Bench = Test|Sat({
   M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<String@>;
 
   Out@<Char@, M@> null = NullOut<Char@>(M);
-  M@<Exit@> go = /Sat/Main%.Main(M, /Std/Stream/State%.In(M, S), null, null);
+  M@<Exit@> go = /Sat/Main%.Main(M, /Std/Stream/In/State%.In(M, S), null, null);
   Exit@ got = Eval(go, /Sat/Bench/Input%);
   Exit@ wnt = Success;
   AssertEquals(/Std/Int/Eq%.Eq, /Std/Int/Show%.Show, wnt, got);

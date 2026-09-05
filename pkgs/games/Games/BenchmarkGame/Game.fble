@@ -46,8 +46,8 @@ Test = (String@ name, Main@ game, String@ input, List@<String@> args, String@ ex
     });
 
   /Std/Test%.Test(name, (Unit@ _) {
-    In@<Char@, M@> in = /Std/Stream/State%.In(M, s_in);
-    Out@<Char@, M@> out = /Std/Stream/State%.Out(M, s_out);
+    In@<Char@, M@> in = /Std/Stream/In/State%.In(M, s_in);
+    Out@<Char@, M@> out = /Std/Stream/Out/State%.Out(M, s_out);
     M@<Unit@> go = game(M, in, out, args);
     String@ got = ToString(Exec(go, S@(input, End<Char@>)).out);
     String@ wnt = expected_output;
@@ -61,7 +61,7 @@ Bench = (String@ name, Main@ game, String@ input, List@<String@> args) {
   /Std/Test%.Test(name, (Unit@ _) {
     M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<String@>;
 
-    In@<Char@, M@> in = /Std/Stream/State%.In(M, S);
+    In@<Char@, M@> in = /Std/Stream/In/State%.In(M, S);
     Out@<Char@, M@> out = NullOut<Char@>(M);
     Unit@ _ = Eval(game(M, in, out, args), input);
     Pass;

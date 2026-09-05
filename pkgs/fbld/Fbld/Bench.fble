@@ -25,7 +25,7 @@ Test@ Bench = Test|Fbld({
   S@ = *(String@ in, Stream@<Char@> err);
   M@, M(.Monad), S(.State), Eval .= /Std/State/Pure%.Pure<S@>;
 
-  In@<Char@, M@> in = /Std/Stream/State%.In(M, {
+  In@<Char@, M@> in = /Std/Stream/In/State%.In(M, {
     M@<String@> get = { S@ s := Gets(M, S); s.in; };
     (String@) { M@<Unit@>; } put = (String@ in) {
       S@ s := Modify(M, S); s.@(in);
@@ -35,7 +35,7 @@ Test@ Bench = Test|Fbld({
 
   Out@<Char@, M@> out = NullOut(M);
 
-  Out@<Char@, M@> err = /Std/Stream/State%.Out(M, {
+  Out@<Char@, M@> err = /Std/Stream/Out/State%.Out(M, {
     M@<Stream@<Char@>> get = { S@ s := Gets(M, S); s.err; };
     (Stream@<Char@>) { M@<Unit@>; } put = (Stream@<Char@> err) {
       S@ s := Modify(M, S); s.@(err);
