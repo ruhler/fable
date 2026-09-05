@@ -2,8 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Change /Std/List/Sort%.Sort to merge sort?
-
 * Should /Std/List/Count% be merged with /Std/List/Index%?
  - They have the same sets of dependencies?
 

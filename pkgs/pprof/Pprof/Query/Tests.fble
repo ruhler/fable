@@ -124,8 +124,8 @@ Test@ Tests = TestSuite|Query[
     Table@ got = Sequence.Incoming(List[Int|4], Profile);
     Table@ wnt = List[
       @(seq: List[Int|2], value: Int|25),
-      @(seq: List[Int|3], value: Int|18),
-      @(seq: List[Int|1], value: Int|18)
+      @(seq: List[Int|1], value: Int|18),
+      @(seq: List[Int|3], value: Int|18)
     ];
 
     AssertEquals(

@@ -5,19 +5,49 @@ Cmp@ .= /Std/Cmp%;
 List@, Empty, Items .= /Std/List%;
 
 # @dev
-#  @func[Insert] Insert an element into a sorted list.
+#  @func[Evens] Returns elements of the list with even indices.
 #   @arg[@][T@] The type of element on the list.
+#   @arg[List@<T@>][list] The list to get the even index elements of.
+#   @returns[List@<T@>]
+#    Every other element of the list, starting from the first element.
+#
+#   For example, Evens[a, b, c, d, e] returns List[a, c, e].
+<@ T@>(List@<T@>) { List@<T@>; }
+Evens = <@ T@>(List@<T@> list) {
+  list.?(empty: Empty<T@>);
+  Items(list.items.head, Odds(list.items.tail));
+},
+
+# @dev
+#  @func[Odds] Returns elements of the list with odd indices.
+#   @arg[@][T@] The type of element on the list.
+#   @arg[List@<T@>][list] The list to get the odd index elements of.
+#   @returns[List@<T@>]
+#    Every other element of the list, starting from the second element.
+#
+#   For example, Odds[a, b, c, d, e] returns List[b, d].
+<@ T@>(List@<T@>) { List@<T@>; }
+Odds = <@ T@>(List@<T@> list) {
+  list.?(empty: Empty<T@>);
+  Evens(list.items.tail);
+};
+
+# @dev
+#  @func[Merge] Merge two sorted lists.
+#   @arg[@][T@] The type of elements on the list.
+#   @arg[List@<T@>][a] The first sorted list.
+#   @arg[List@<T@>][b] The second sorted list.
 #   @arg[Cmp@<T@>][cmp] Function to compare two elements of the list.
-#   @arg[T@][item] The item to insert.
-#   @arg[List@<T@>][list] The list to insert it into.
-#   @returns[List@<T@>] The list with the item inserted into the sorted location.
-<@ T@>(Cmp@<T@>, T@, List@<T@>) { List@<T@>; }
-Insert = <@ T@>(Cmp@<T@> cmp, T@ item, List@<T@> list) {
-  list.?(empty: Items(item, Empty<T@>));
-  cmp(item, list.items.head).?(greater: {
-    Items(list.items.head, Insert(cmp, item, list.items.tail));
-  });
-  Items(item, list);
+#   @returns[List@<T@>]
+#    A sorted list of all elements from both a and b.
+<@ T@>(List@<T@>, List@<T@>, Cmp@<T@>) { List@<T@>; }
+Merge = <@ T@>(List@<T@> a, List@<T@> b, Cmp@<T@> cmp) {
+  a.?(empty: b);
+  b.?(empty: a);
+  T@ head_a = a.items.head;
+  T@ head_b = b.items.head;
+  cmp(head_a, head_b).?(less: Items(head_a, Merge(a.items.tail, b, cmp)));
+  Items(head_b, Merge(a, b.items.tail, cmp));
 };
 
 # @func[Sort] Sorts the elements of a list.
@@ -46,13 +76,16 @@ Insert = <@ T@>(Cmp@<T@> cmp, T@ item, List@<T@> list) {
 #     Lt(Mul(a, a), Mul(b, b));
 #   };
 #
-#  This sort routine is currently implemented as an O(n^2) insertion sort, but
-#  may be reimplemented as a more efficient O(n log(n)) sort sometime in the
-#  future.
+#  This sort routine is currently implemented as an O(n log(n)) unstable merge
+#  sort.
 <@ T@>(List@<T@>, Cmp@<T@>) { List@<T@>; }
 Sort = <@ T@>(List@<T@> list, Cmp@<T@> cmp) {
   list.?(empty: list);
-  Insert(cmp, list.items.head, Sort(list.items.tail, cmp));
+  list.items.tail.?(empty: list);
+
+  List@<T@> a = Sort(Evens(list), cmp);
+  List@<T@> b = Sort(Odds(list), cmp);
+  Merge(a, b, cmp);
 };
 
 @(Sort);
