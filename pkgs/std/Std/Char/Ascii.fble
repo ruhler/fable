@@ -53,7 +53,7 @@ Unit@ .= /Std/Unit%;
 # @type[Ascii@] The Ascii character letter type.
 #  Includes the Ascii characters you would write in a character or string
 #  literal. The primary use of this type is for specifying functions that
-#  accept ascii string literals, by using the type @l{List@<Ascii@>} in place
+#  accept ASCII string literals, by using the type @l{List@<Ascii@>} in place
 #  of @l{String@}.
 #
 #  For example, a helper function for defining tests on unary boolean
@@ -150,7 +150,7 @@ Ascii = @(
 );
 
 # @func[Tochar] Convert an Ascii letter to a character.
-#  @arg[Ascii@][c] The ascii letter.
+#  @arg[Ascii@][c] The ASCII letter.
 #  @returns[Char@] The character value of the letter.
 #
 #  See @l{/Std/Char/Lit%} for more about the @l{ToChar@} interface. This
@@ -207,7 +207,7 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 #   Char@ tilde = Char|'~';
 (List@<Ascii@>) { Char@; } Char = /Std/Char/Lit%.Char(ToChar);
 
-# @func[Str] An ascii string literal.
+# @func[Str] An ASCII string literal.
 #  @arg[List@<Ascii@>][str] The string literal.
 #  @returns[String@] The string value.
 #
@@ -217,11 +217,11 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 #   String@ s = Str|'hello, world'
 (List@<Ascii@>) { String@; } Str = /Std/Char/Lit%.Str(ToChar);
 
-# @func[OnAscii] Converts a string function to an ascii string function.
+# @func[OnAscii] Converts a string function to an ASCII string function.
 #  @arg[@][A@] The return type of the function.
 #  @arg[(String@) { A@; }][func] The string function to convert.
 #  @returns[(List@<Ascii@>) { A@; }]
-#   The converted function that takes an ascii string argument instead.
+#   The converted function that takes an ASCII string argument instead.
 #
 #  For example, instead of writing:
 #
@@ -246,7 +246,7 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 #   });
 <@ A@>((String@) { A@; }, List@<Ascii@>) { A@; } OnAscii = StrLit(ToChar);
 
-# @func[Str] An ascii string literal supporting character escape sequences.
+# @func[Str] An ASCII string literal supporting character escape sequences.
 #  @arg[List@<Ascii@>][str] The string literal.
 #  @returns[String@] The string value.
 #
@@ -258,11 +258,11 @@ ToChar@<Ascii@> ToChar = (Ascii@ c) {
 #   String@ str = StrE|'hello\nworld\n';
 (List@<Ascii@>) { String@; } StrE = OnAscii(/Std/String/Escape%.Escape);
 
-# @func[OnAsciiE] Convert a string function to an escaped ascii string function.
+# @func[OnAsciiE] Convert a string function to an escaped ASCII string function.
 #  @arg[@][A@] The return type of the function.
 #  @arg[(String@) { A@; }][func] The string function to convert.
 #  @returns[(List@<Ascii@>) { A@; }]
-#   The converted function that takes an ascii string argument with support
+#   The converted function that takes an ASCII string argument with support
 #   for escape sequences instead.
 #
 #  For example, to turn the @l{AssertStream} assertion into something that

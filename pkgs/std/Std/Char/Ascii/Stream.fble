@@ -1,5 +1,5 @@
 # @module[/Std/Char/Ascii/Stream%]
-#  String and Format output functions that accept ascii string literals as
+#  String and Format output functions that accept ASCII string literals as
 #  arguments instead of String@. Useful any time you want to output a literal
 #  string or a variation on a literal string.
 
@@ -8,7 +8,7 @@ Ascii@, OnAscii, OnAsciiE .= /Std/Char/Ascii%;
 List@ .= /Std/List%;
 Stream@ .= /Std/Stream%;
 
-# @func[String] Outputs an ascii string to a character stream.
+# @func[String] Outputs an ASCII string to a character stream.
 #  @arg[List<Ascii@>][str] The string to output.
 #  @returns[Stream@<Char@>] A stream of characters from the given string.
 #
@@ -22,7 +22,7 @@ Stream@ .= /Std/Stream%;
 (List@<Ascii@>) { Stream@<Char@>; }
 String = OnAscii(/Std/Stream/String%.String);
 
-# @func[String] Outputs an ascii string with escape characters.
+# @func[String] Outputs an ASCII string with escape characters.
 #  Supports character sequences as in /Std/String/Escape%.Escape.
 #
 #  @arg[List<Ascii@>][str] The string to output.

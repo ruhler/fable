@@ -58,7 +58,7 @@ In@ = <@ A@, <@>@ M@> { M@<Maybe@<A@>>; };
 #  @arg[(A@) { B@; }][f] Function to convert input values.
 #  @return[In@<B@, M@>] A new In@ that inputs the target input type.
 #
-#  For example, to read a sequence of boolean bits as an ascii file:
+#  For example, to read a sequence of boolean bits as an ASCII file:
 #
 #  @code[fble] @
 #   In@<Bool@, M@> in = ...;

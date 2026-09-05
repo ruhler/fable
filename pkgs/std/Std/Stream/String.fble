@@ -24,7 +24,7 @@ Unit@ .= /Std/Unit%;
 #   Format|'The message is: %s'[String(msg)];
 #
 #  See also @l{/Std/Char/Ascii/Stream%.String} for a variation of this
-#  function that works with ascii string literals.
+#  function that works with ASCII string literals.
 (String@) { Stream@<Char@>; }
 String = (String@ s) {
   Each(s);
@@ -98,7 +98,7 @@ Char@ 's' = U|73;
 #   ];
 #
 #  See also @l{/Std/Char/Ascii/Stream%.Format} for a variation of this
-#  function that takes the format string as an ascii string literal.
+#  function that takes the format string as an ASCII string literal.
 (String@, List@<Stream@<Char@>>) { Stream@<Char@>; }
 Format = (String@ fmt, List@<Stream@<Char@>> args) {
   fmt.?(empty: End<Char@>);

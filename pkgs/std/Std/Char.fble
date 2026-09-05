@@ -29,7 +29,7 @@
 #   Ascii .= /Std/Char/Ascii%;
 #   Char@ a = Ascii.'a';
 #
-#  You can use the ascii @l{Char} literal function:
+#  You can use the ASCII @l{Char} literal function:
 #
 #  @code[fble] @
 #   Char .= /Std/Char/Ascii%;

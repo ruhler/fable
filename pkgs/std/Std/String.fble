@@ -13,11 +13,16 @@
 #  @def[{/Std/String/Lines%}] Handline of lines in strings
 #  @def[{/Std/String/Show%}] Showing strings in human readable form
 #
-#  See also @l{/Std/Char/Ascii%}, which defines @l{Str} and @l{StrE} ascii
+#  See also @l{/Std/Char/Ascii%}, which defines @l{Str} and @l{StrE} ASCII
 #  string literals. For example, to construct a string:
 #
 #  @code[fble] @
 #   String@ message = Str|'hello, world';
+#
+#  If you are only using the string to output characters, prefer to use
+#  the @l{/Std/Stream%.Stream@<Char@>} type, which composes better with string
+#  formatting utilities in @l{/Std/Stream/String%} and the @l{/Std/Show%}
+#  interface.
 
 Char@ .= /Std/Char%;
 List@ .= /Std/List%;

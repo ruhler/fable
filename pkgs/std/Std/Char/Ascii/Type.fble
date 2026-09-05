@@ -3,9 +3,9 @@
 #
 #  Normally an application should use its own character classification, to
 #  satisfy whatever particular requirements the application has for
-#  classifying characters. These ascii character classification functions are
+#  classifying characters. These ASCII character classification functions are
 #  for convenience in the rare case when your application's needs happen to
-#  correspond to ascii character classification as defined according to the
+#  correspond to ASCII character classification as defined according to the
 #  C99 language spec.
 #
 #  These functions return @l{False} for any @l{Char@} values that do not
@@ -18,19 +18,19 @@ InRange .= /Std/Char/Cmp%;
 Eq .= /Std/Char/Eq%;
 U .= /Std/Char/Lit%;
 
-# @func[IsUpper] Checks for uppercase ascii characters.
+# @func[IsUpper] Checks for uppercase ASCII characters.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is in A-Z.
 (Char@) { Bool@; } IsUpper = InRange(Ascii.A, Ascii.Z);
 
-# @func[IsLower] Checks for lowercase ascii characters.
+# @func[IsLower] Checks for lowercase ASCII characters.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is in a-z.
 (Char@) { Bool@; } IsLower = InRange(Ascii.a, Ascii.z);
 
-# @func[IsAscii] Checks for ascii characters.
+# @func[IsAscii] Checks for ASCII characters.
 #  @arg[Char@][c] The character to check.
-#  @returns[Bool@] True if the character is in the ascii range.
+#  @returns[Bool@] True if the character is in the ASCII range.
 (Char@) { Bool@; } IsAscii = InRange(U|0000, U|007F);
 
 # @func[IsDigit] Checks for decimal digits.
@@ -38,7 +38,7 @@ U .= /Std/Char/Lit%;
 #  @returns[Bool@] True if the character is in 0-9.
 (Char@) { Bool@; } IsDigit = InRange(Ascii.0, Ascii.9);
 
-# @func[IsPrint] Checks for printable ascii characters.
+# @func[IsPrint] Checks for printable ASCII characters.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is in U+0020-U+007E.
 #
@@ -46,7 +46,7 @@ U .= /Std/Char/Lit%;
 #  control characters or other whitespace characters like tab and form feed.
 (Char@) { Bool@; } IsPrint = InRange(U|0020, U|007E);
 
-# @func[IsGraph] Checks for graphic ascii characters.
+# @func[IsGraph] Checks for graphic ASCII characters.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is printable and not space.
 #
@@ -54,7 +54,7 @@ U .= /Std/Char/Lit%;
 #  whitespace.
 (Char@) { Bool@; } IsGraph = InRange(U|0021, U|007E);
 
-# @func[IsAlpha] Checks for alphabetic ascii characters.
+# @func[IsAlpha] Checks for alphabetic ASCII characters.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is in A-Za-z.
 (Char@) { Bool@; } IsAlpha = (Char@ c) {
@@ -63,7 +63,7 @@ U .= /Std/Char/Lit%;
   False;
 };
 
-# @func[IsAlNum] Checks for alphanumeric ascii characters.
+# @func[IsAlNum] Checks for alphanumeric ASCII characters.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is in 0-9A-Za-z.
 (Char@) { Bool@; } IsAlNum = (Char@ c) {
@@ -72,7 +72,7 @@ U .= /Std/Char/Lit%;
   False;
 };
 
-# @func[IsCntrl] Checks for ascii control characters.
+# @func[IsCntrl] Checks for ASCII control characters.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is in U|0000-U|001F or U|007F.
 (Char@) { Bool@; } IsCntrl = (Char@ c) {
@@ -91,7 +91,7 @@ U .= /Std/Char/Lit%;
   False;
 };
 
-# @func[IsSpace] Checks for an ascii whitespace character.
+# @func[IsSpace] Checks for an ASCII whitespace character.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is space or \t\n\v\f\r.
 #
@@ -103,7 +103,7 @@ U .= /Std/Char/Lit%;
   False;
 };
 
-# @func[IsPunct] Checks for an ascii punctuation character.
+# @func[IsPunct] Checks for an ASCII punctuation character.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is printable but not alphanumeric.
 #
@@ -115,7 +115,7 @@ U .= /Std/Char/Lit%;
   IsPrint(c);
 };
 
-# @func[IsBlank] Checks for a blank ascii character.
+# @func[IsBlank] Checks for a blank ASCII character.
 #  @arg[Char@][c] The character to check.
 #  @returns[Bool@] True if the character is the space or tab character.
 (Char@) { Bool@; } IsBlank = (Char@ c) {

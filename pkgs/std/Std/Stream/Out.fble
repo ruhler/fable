@@ -42,7 +42,7 @@ Out@ = <@ A@, <@>@ M@>(Stream@<A@>) { M@<Unit@>; };
 #  @arg[(B@) { A@; }][f] Function to convert output values.
 #  @return[Out@<B@, M@>] A new Out@ that outputs the target output type.
 #
-#  For example, to write a sequence of boolean bits to an ascii file:
+#  For example, to write a sequence of boolean bits to an ASCII file:
 #
 #  @code[fble] @
 #   Out@<Char@, M@> out = ...;

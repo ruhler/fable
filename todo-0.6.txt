@@ -2,19 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Add tests for showing lists?
-
-* SkipTest is super awkward to use.
- - Anything we can do about that?
-
-* Add a note to String@ type when Stream@<Char@> is better
- - Namely, if it's going to be consumed once / output once, better to use
-   Stream@<Char@>. Probably more efficient that way.
-
-* How to capitalize ascii?
- - Ascii, ASCII, ascii?
- - I don't do it consistently.
-
 * /Std/Stream/String% seems like a weird place for GetLine, GetText.
 
 * Decide when to use @l in documentation

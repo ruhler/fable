@@ -601,3 +601,15 @@ The benchmark test case makes sense to me, assuming you want to exercise that
 part of the benchmark.
 
 Too hard. Let's just leave it.
+
+---
+
+* How to capitalize ascii?
+
+Seems like everyone uses ASCII. So if I refer to the term, use ASCII. But for
+programming, it's fine to use Ascii to keep with my conventions. Probably I
+shouldn't be using ascii anywhere.
+
+So, use ASCII when referring to it as a term, use Ascii when referring to it as
+a type or module.
+
