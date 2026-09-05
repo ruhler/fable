@@ -16,7 +16,7 @@ Test@ Tests = TestSuite|Sort[
     Unit@ _ := Lazy;
     List@<Elem@> unsorted = Elems|DABEC;
     List@<Elem@> wnt = Elems|ABCDE;
-    List@<Elem@> got = Sort(Cmp, unsorted);
+    List@<Elem@> got = Sort(unsorted, Cmp);
     AssertEquals(Eqs, Shows, wnt, got);
   })
 ];

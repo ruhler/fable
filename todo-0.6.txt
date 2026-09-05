@@ -2,24 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* /Std/Stream/String% seems like a weird place for GetLine, GetText.
-
-* Decide when to use @l in documentation
- - /Std/List/Show%: The @l{Show@} instance for @l{List@}.
- - /Std/Maybe/Show%: The Show@ instance for Maybe@.
-
-* /Std/List/Search%.Span reads weird.
- - Span(Elems|ABCDE, Ge(Elem.C)) reads as: span elements of the list greater
-   than C. But it's actually: span elements of the list C is greater than.
- - Anything worth doing there?
-
-* /Std/List/Index%.Range feels like a weird name for that function.
- - Should it be sub, or sublist?
- - Should it take start and end instead of start and length?
-
-* Should /Std/List/Sort% take Cmp@ as the last argument?
- - For better integration with function bind syntax?
-
 * Change /Std/List/Sort%.Sort to merge sort?
 
 * Should /Std/List/Count% be merged with /Std/List/Index%?

@@ -22,28 +22,37 @@ Insert = <@ T@>(Cmp@<T@> cmp, T@ item, List@<T@> list) {
 
 # @func[Sort] Sorts the elements of a list.
 #  @arg[@][T@] The type of element on the list.
-#  @arg[Cmp@<T@>][cmp] Function to compare two elements of the list.
 #  @arg[List@<T@>][list] The list to sort.
+#  @arg[Cmp@<T@>][cmp] Function to compare two elements of the list.
 #  @returns[List@<T@>] The elements of the list in increasing sorted order.
 #
 #  For example, to sort a list of integers:
 #
 #  @code[fble] @
 #   List@<Int@> list = List[Int|2, Int|0, Int|4, Neg(Int|3)];
-#   List@<Int@> sorted = Sort(/Std/Int/Cmp%.Cmp, list);
+#   List@<Int@> sorted = Sort(list, /Std/Int/Cmp%.Cmp);
 #
 #  Would return a list equivalent to:
 #
 #  @code[fble] @
 #   List@<Int@> sorted = List[Neg(Int|3), Int|0, Int|2, Int|4];
 #
+#  You can use function bind syntax to more easily provide an anonymous
+#  comparison function. For example, to sort by magnitude:
+#
+#  @code[fble] @
+#   List@<Int@> sorted = {
+#     Int@ a, Int@ b := Sort(list);
+#     Lt(Mul(a, a), Mul(b, b));
+#   };
+#
 #  This sort routine is currently implemented as an O(n^2) insertion sort, but
 #  may be reimplemented as a more efficient O(n log(n)) sort sometime in the
 #  future.
-<@ T@>(Cmp@<T@>, List@<T@>) { List@<T@>; }
-Sort = <@ T@>(Cmp@<T@> cmp, List@<T@> list) {
+<@ T@>(List@<T@>, Cmp@<T@>) { List@<T@>; }
+Sort = <@ T@>(List@<T@> list, Cmp@<T@> cmp) {
   list.?(empty: list);
-  Insert(cmp, list.items.head, Sort(cmp, list.items.tail));
+  Insert(cmp, list.items.head, Sort(list.items.tail, cmp));
 };
 
 @(Sort);

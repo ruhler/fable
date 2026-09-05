@@ -1000,3 +1000,32 @@ versus:
 The former suggests building up a list of elements. The later suggests
 using elements to transform a value S@.
 
+---
+
+* /Std/List/Search%.Span reads weird.
+
+ - Span(Elems|ABCDE, Ge(Elem.C)) reads as: span elements of the list greater
+   than C. But it's actually: span elements of the list C is greater than.
+
+I suppose better could be:
+
+  Span(Elems|ABCDE, (Elem@ x) { Ge(Elem.C, x); });
+
+Anyway, I don't see that there's much useful we can do here. Maybe define a
+flipped version of Ge: Ge(x, y) turns into: x >= y. Then IsGe(x)(y); y >= x.
+
+Too awkward. Don't worry about this case.
+
+---
+
+* /Std/List/Index%.Range feels like a weird name for that function.
+ - Should it be sub, or sublist?
+ - Should it take start and end instead of start and length?
+
+It's like lrange from tcl. What's wrong with that? You are getting a range of
+elements in the list. What's wrong with that?
+
+But if it's range, then I feel like it should be start and end index rather
+than start and length?
+
+Looks like I was trying to go with shortish names. Let's leave as is for now.

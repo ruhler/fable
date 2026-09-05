@@ -349,11 +349,11 @@ GetConflictFromSorted = (List@<Assign@> todo)
 
 # Find and return a conflicting assignment in the todo list, if any.
 (List@<Assign@>) { Maybe@<Conflict@>; }
-GetConflict = (List@<Assign@> todo)
-{
-  GetConflictFromSorted(/Std/List/Sort%.Sort(
-      (Assign@ a, Assign@ b) { /Std/Int/Cmp%.Cmp(a.var.id, b.var.id); },
-      todo));
+GetConflict = (List@<Assign@> todo) {
+  GetConflictFromSorted({
+    Assign@ a, Assign@ b := /Std/List/Sort%.Sort(todo);
+    /Std/Int/Cmp%.Cmp(a.var.id, b.var.id);
+  });
 };
 
 (Solver@) { Result@; }

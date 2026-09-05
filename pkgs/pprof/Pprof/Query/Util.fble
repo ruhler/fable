@@ -12,10 +12,11 @@ Entry@, Table@ .= /Pprof/Query%;
 (Metrics@) { Int@; } MetricOf = Last<Int@>;
 
 # Sort a query results table.
-(Table@) { Table@; } Sort = /Std/List/Sort%.Sort(
-  (Entry@ a, Entry@ b) {
-    /Std/Int/Cmp%.Cmp(b.value, a.value);
-  });
+(Table@) { Table@; }
+Sort = (Table@ table) {
+  Entry@ a, Entry@ b := /Std/List/Sort%.Sort(table);
+  /Std/Int/Cmp%.Cmp(b.value, a.value);
+};
 
 @(MetricOf, Sort);
 

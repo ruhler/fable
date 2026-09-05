@@ -613,3 +613,13 @@ shouldn't be using ascii anywhere.
 So, use ASCII when referring to it as a term, use Ascii when referring to it as
 a type or module.
 
+---
+
+* /Std/Stream/String% seems like a weird place for GetLine, GetText.
+
+I agree. The rest is about Stream@<Char@>. This is about In@<Char@> and
+reading strings. It's sort of as messy as In@ and Out@ and In and Out.
+
+Where would I naturally look for these things? Well, probably
+/Std/Stream/String%, because it's streaming in strings. Fine. Leave it.
+

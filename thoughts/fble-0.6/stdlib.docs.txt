@@ -298,3 +298,12 @@ I don't have an @... tag that makes sense for it.
 Make one up? @values[Lt, Le, Gt, Ge...]
 
 Sure. Why not?
+
+---
+
+When to use @l in documentation for referencing types?
+
+I don't know. Whatever I chose, it's too big a change and too hard to audit
+now. Let's revisit when we generate html or other documentation from std
+library doc comments.
+

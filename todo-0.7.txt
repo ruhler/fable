@@ -85,6 +85,7 @@ Things to consider doing for the fble-0.7 release.
 * Improve standard library documentation
  - Generate docs for stdlib documentation, including a summary page and
    details page of all modules/functions.
+ - Decide when to use @l for to types and modules or if there's something better.
 
 * Implement a poker solitaire tutorial for fble
  - With the goal of getting people up and running as fast as possible in fble
