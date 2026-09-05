@@ -21,6 +21,12 @@ Things to consider doing for the fble-0.7 release.
 
 * Reimplement fbld in rust?
 
+* Figure out a way to test foreign function not found
+ - Interpreted gives runtime error.
+ - Compiled gives link time error not an any particular line number.
+ - We would need some extra spec infra support to describe this.
+ - Add spec test for Foreign value not found in interpreted case.
+
 * Switch to sdl3?
 * Standardize /App%
  - Add dpi as separate from width and height?
@@ -75,6 +81,20 @@ Things to consider doing for the fble-0.7 release.
  - You pass the path of a module with the same type expected for the module
    being compiled.
  - Use it in fble-cli and fble-app for better type checking.
+
+* Improve standard library documentation
+ - Generate docs for stdlib documentation, including a summary page and
+   details page of all modules/functions.
+
+* Implement a poker solitaire tutorial for fble
+ - With the goal of getting people up and running as fast as possible in fble
+   with practical examples, without having to learn all details of the
+   language first.
+
+* Update all the sample apps for latest features, styles, idioms.
+
+* Increase standard library test coverage.
+* Implement more rosettacode.org tasks.
 
 * Design a package management / versioning scheme?
  - see thoughts/fble-0.5/modular_compilation.txt for context.

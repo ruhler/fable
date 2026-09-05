@@ -1,5 +1,9 @@
 # @module[/Std/Io/File/Byte%]
 #  Reading and writing bytes from files and streams.
+#
+#  The files can be open in either Binary or Text mode, which only effects the
+#  line endings. Either way they will be read as a sequence of bytes. See also
+#  @l{/Std/Io/File/Char%} for a way to read files as a sequence of characters.
 
 Str .= /Std/Char/Ascii%;
 Int@ .= /Std/Int%;
@@ -70,6 +74,17 @@ Out = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, File@ file) {
 #  @arg[Io@<M@>][io] Interface for performing io.
 #  @arg[Mode@][mode] Whether to open in binary or text mode.
 #  @returns[M@<In@<Byte@, M@>>] The standard input stream.
+#
+#  For example, to read the first byte of standard input:
+#
+#  @code[fble] @
+#   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+#     In@<Byte@, M@> in := m.do(/Std/Io/File/Byte%.Stdin(m, io, Binary));
+#     Maybe@<Byte@> mbyte := m.do(in);
+#     mbyte.?(nothing: ...);   # empty input file.
+#     Byte@ byte = mbyte.just;  # byte is the first byte of the input.
+#     ...
+#   };
 <<@>@ M@>(Monad@<M@>, Io@<M@>, Mode@) { M@<In@<Byte@, M@>>; }
 Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
   File@ stdin := m.do(io.run(GetStdin(mode)));
@@ -105,11 +120,12 @@ Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
 #
 #  For example, to write bytes 0x61 0x62 0x63, to standard error:
 #
-#  Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
-#    Out@<Byte@, M@> out := m.do(/Std/Io/File/Byte%.Stderr(m, io, Binary));
-#    Unit@ _ := out(Each[Hex|61, Hex|62, Hex|63]);
-#    m.return(Success);
-#  };
+#  @code[fble] @
+#   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+#     Out@<Byte@, M@> out := m.do(/Std/Io/File/Byte%.Stderr(m, io, Binary));
+#     Unit@ _ := out(Each[Hex|61, Hex|62, Hex|63]);
+#     m.return(Success);
+#   };
 <<@>@ M@>(Monad@<M@>, Io@<M@>, Mode@) { M@<Out@<Byte@, M@>>; }
 Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
   File@ stderr := m.do(io.run(GetStderr(mode)));
@@ -128,6 +144,19 @@ Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, Mode@ mode) {
 #
 #  The opened file will be closed automatically when you are done reading from
 #  it.
+#
+#  For example, to read the first byte of a file 'foo.txt':
+#
+#  @code[fble] @
+#   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+#     Maybe@<In@<Byte@, M@>> min := m.do(/Std/Io/File/Byte%.Read(m, io, Str|'foo.txt', Binary));
+#     min.?(nothing: ...);            # unable to open file.
+#     In@<Byte@, M@> in = min.just;   # file opened for read.
+#     Maybe@<Byte@> mbyte := m.do(in);
+#     mbyte.?(nothing: ...);          # the file is empty.
+#     Byte@ byte = mbyte.just;         # byte is the first byte of the file.
+#     ...
+#   };
 <<@>@ M@>(Monad@<M@>, Io@<M@>, String@, Mode@) { M@<Maybe@<In@<Byte@, M@>>>; }
 Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path, Mode@ mode) {
   String@ modestr = mode.?(binary: Str|rb, text: Str|r);
@@ -137,9 +166,6 @@ Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path, Mode@ mode) {
 };
 
 # @func[Write] Opens a file for writing.
-#  Note: the opened file will be closed automatically when you are done
-#  writing to it.
-#
 #  @arg[<@>@][M@] The monadic type for side effects.
 #  @arg[Monad@<M@>][m] The monad instance.
 #  @arg[Io@<M@>][io] Interface for performing io.
@@ -148,6 +174,19 @@ Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path, Mode@ mode) {
 #  @returns[M@<Maybe@<Out@<Byte@, M@>>>]
 #   An output stream for writing to the file. Nothing if the file could not be
 #   opened for writing.
+#
+#  The opened file is closed automatically when you are done writing to it.
+#
+#  For example, to write bytes 0x61 0x62 0x63, to foo.txt:
+#
+#  @code[fble] @
+#   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+#     Maybe@<Out@<Byte@, M@>> mout := m.do(/Std/Io/File/Byte%.Write(m, io, Str|'foo.txt', Binary));
+#     mout.?(nothing: ...);             # unable to open file.
+#     Out@<Byte@, M@> out := mout.just; # file open for writing.
+#     Unit@ _ := out(Each[Hex|61, Hex|62, Hex|63]);
+#     m.return(Success);
+#   };
 <<@>@ M@>(Monad@<M@>, Io@<M@>, String@, Mode@) { M@<Maybe@<Out@<Byte@, M@>>>; }
 Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path, Mode@ mode) {
   String@ modestr = mode.?(binary: Str|wb, text: Str|w);
@@ -157,9 +196,6 @@ Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path, Mode@ mode) {
 };
 
 # @func[Append] Opens a file for appending.
-#  Note: the opened file will be closed automatically when you are done
-#  appending to it.
-#
 #  @arg[<@>@][M@] The monadic type for side effects.
 #  @arg[Monad@<M@>][m] The monad instance.
 #  @arg[Io@<M@>][io] Interface for performing io.
@@ -168,6 +204,19 @@ Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path, Mode@ mode) {
 #  @returns[M@<Maybe@<Out@<Byte@, M@>>>]
 #   An output stream for appending to the file. Nothing if the file could not
 #   be opened for writing.
+#
+#  The file is closed automatically when you are done appending to it.
+#
+#  For example, to append bytes 0x61 0x62 0x63, to foo.txt:
+#
+#  @code[fble] @
+#   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+#     Maybe@<Out@<Byte@, M@>> mout := m.do(/Std/Io/File/Byte%.Append(m, io, Str|'foo.txt', Binary));
+#     mout.?(nothing: ...);             # unable to open file.
+#     Out@<Byte@, M@> out := mout.just; # file open for appending.
+#     Unit@ _ := out(Each[Hex|61, Hex|62, Hex|63]);
+#     m.return(Success);
+#   };
 <<@>@ M@>(Monad@<M@>, Io@<M@>, String@, Mode@) { M@<Maybe@<Out@<Byte@, M@>>>; }
 Append = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path, Mode@ mode) {
   String@ modestr = mode.?(binary: Str|ab, text: Str|a);

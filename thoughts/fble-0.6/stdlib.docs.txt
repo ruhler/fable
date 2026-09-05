@@ -168,12 +168,12 @@ Here's our list of modules to document. Have fun!
 [DONE] pkgs/std/Std/Io/Cli/Demo.fble
 [DONE] pkgs/std/Std/Io/Cli.fble
 [DONE] pkgs/std/Std/Test/Cli.fble
+[DONE] pkgs/std/Std/Io/File/Byte.fble
+[DONE] pkgs/std/Std/Io/File/Char.fble
+[DONE] pkgs/std/Std/Io/File/Utf8.fble
 
 
 
-pkgs/std/Std/Io/File/Byte.fble
-pkgs/std/Std/Io/File/Char.fble
-pkgs/std/Std/Io/File/Utf8.fble
 
 Question:
 * When do I put stuff in the module comment compared to the comment for a

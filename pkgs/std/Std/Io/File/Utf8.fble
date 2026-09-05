@@ -1,5 +1,12 @@
 # @module[/Std/Io/File/Utf8%]
 #  Reading and writing UTF-8 encoded text files and streams.
+#
+#  The module provides a @l{Utf8} @l{Encoding@} that can be used with
+#  @l{/Std/Io/File/Char%} for reading and writing UTF-8 encoded characters to
+#  and from files and streams. It provides access to standard input and output
+#  and streams for text mode. See @l{/Std/Io/File/Char%} for more on how to
+#  use these functions, or if you want to open things in binary mode instead
+#  of text mode.
 
 Char@, Char, Pos .= /Std/Char%;
 Int@, Decr, Add, Shl, Shr .= /Std/Int%;
@@ -18,7 +25,10 @@ Stream@, Return .= /Std/Stream%;
 In@ .= /Std/Stream/In%;
 Each .= /Std/Stream/List%;
 
-# Encodes a character as a sequence of UTF-8 encoded bytes.
+# @dev
+#  @func[Encode] Encodes a character as a sequence of UTF-8 encoded bytes.
+#   @arg[Char@][c] A character to encode.
+#   @returns[Stream@<Byte@>] The stream of bytes encoding the given character.
 (Char@) { Stream@<Byte@>; }
 Encode = (Char@ c) {
   Int@ v = Pos(c);
@@ -76,13 +86,26 @@ Encode = (Char@ c) {
   /Std/Undef%.Undef.undef<Stream@<Byte@>>;
 };
 
+# @dev
+#  @value[Utf8Limits] The shortest number of bytes needed for a character
+#   @type[List@<Int@>]
+#
+#   The i'th entry on the list returns one more than the largest unicode code
+#   point that can be encoded in i bytes.
 List@<Int@> Utf8Limits = List[
   Hex|0, Hex|80, Hex|800, Hex|10000, Hex|200000, Hex|4000000, Hex|80000000
 ];
 
-# Decodes a character from a sequence of UTF-8 bytes.
-# Crashes if the bytes aren't properly encoded.
-# TODO: Provide some way for apps to catch and handle that case.
+# @dev
+#  @func[Decode] Decodes a character from a sequence of UTF-8 bytes.
+#   @arg[<@>@][M@] The monadic context type.
+#   @arg[Monad@<M@>][m] The monadic context.
+#   @arg[In@<Byte@, M@>][in] The byte input stream.
+#   @returns[In@<Char@, m@>]
+#    An input stream that reads characters from the given byte stream.
+#
+#   Crashes if the bytes don't form a legal UTF-8 sequence of bytes.
+#   TODO: Provide some way for apps to catch and handle invalid encodings.
 <<@>@ M@>(Monad@<M@>, In@<Byte@, M@>) { In@<Char@, M@>; }
 Decode = <<@>@ M@>(Monad@<M@> m, In@<Byte@, M@> in) {
   Maybe@<Byte@> mh := m.do(in);
@@ -149,8 +172,20 @@ Decode = <<@>@ M@>(Monad@<M@> m, In@<Byte@, M@> in) {
 
 # @value[Utf8] Utf8 encoder.
 #  @type[Encoding@]
+#
+#  For example, to work with input and output streams and files using UTF-8
+#  characters in binary mode:
+#
+#  @code[fble] @
+#   Stdin, Stdout, Stderr, Read, Write, Append .= /Std/Io/File/Char%.Of(Utf8, Binary);
 Encoding@ Utf8 = Encoding@(Encode, Decode);
 
+# @values[Stdin, Stdout, Stderr, Read, Write, Append]
+#  Standard input and output streams and file access using UTF-8 character
+#  encodings and text mode line ending conversion.
+#
+#  See @l{/Std/Io/File/Char%} for more detailed documentation and examples of
+#  how to use these functions.
 Stdin, Stdout, Stderr, Read, Write, Append .= /Std/Io/File/Char%.Of(Utf8, Text);
 
 @(Utf8, Stdin, Stdout, Stderr, Read, Write, Append);

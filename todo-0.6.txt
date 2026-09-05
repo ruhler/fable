@@ -70,26 +70,11 @@ Things to consider doing for the fble-0.6 release.
  - Integrate it into a tutorial somewhere?
  - Maybe as part of the modules tutorial or shortly thereafter?
 
-Documentation:
-* Finish going through clean up of all the std lib documentation.
-* Try generating docs for stdlib documentation
- - A summary of all modules/functions
- - A detail of all modules/functions
 * Mark /Std/Int/IntP%, et all docs as @dev.
 
-Tutorials:
 * Add left side menu to generated website for tutorials?
-* Write a poker solitaire tutorial outside the repo?
 
-* Update all the sample apps for latest features, styles, idioms.
-
-* Revamp the standard library.
- - Test and document (and tutorialize?) all functions.
- - Implement rosettacode.org tasks under pkgs/rosetta to test it out.
-
-* Figure out a way to test foreign function not found?
- - Interpreted gives runtime error.
- - Compiled gives link time error not an any particular line number.
- - We would need some extra spec infra support to describe this.
- - Add spec test for Foreign value not found in interpreted case.
-
+* Update release notes.
+* Double check things still work on github.
+* Proof read tutorials.
+* Make release.

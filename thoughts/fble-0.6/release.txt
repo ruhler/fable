@@ -1184,3 +1184,13 @@ more work rather than help clean up or otherwise wind down the release:
 
 Let's punt those.
 
+---
+
+Okay! Finished going through and documenting all the standard library. I've
+punting anything hard. What remains is one last round of looking through
+things that came up when documenting the standard library. For each item:
+* If I don't feel like doing anything, it's fine to punt.
+* If it's going to open up a can of worms of any kind, punt it.
+* If it has a straight forward clear solution with well bounded scope, I can
+  chose to address it now or punt it.
+

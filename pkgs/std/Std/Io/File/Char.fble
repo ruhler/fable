@@ -1,5 +1,33 @@
 # @module[/Std/Io/File/Char%]
 #  Reading and writing characters from files and streams.
+#
+#  The files can be open in either Binary or Text mode, which only effects the
+#  line endings.
+#
+#  This is a wrapper over the underlying @l{/Std/Io/File/Byte%} interface for
+#  reading and writing bytes from files and streams. You must supply a
+#  character encoding that knows how to translate between characters and
+#  sequences of bytes for your use case.
+#
+#  For example, to work with files using an ASCII character encoding, in text
+#  mode with line ending conversion suitable for the platform you are running
+#  on:
+#
+#  @code[fble] @
+#   Encoding@ Ascii = @(
+#     encode: (Char@ c) { Return(Pos(c)); },
+#     decode: <<@>@ M@>(Monad@<M@> m, In@<Byte@ m> in) {
+#       Maybe@<Byte@> mb = m.do(in);
+#       mb.?(nothing: m.return(Nothing<Char@>));
+#       m.return(Just(Char(mb.just)));
+#     });
+#
+#   Stdin, Stdout, Stderr, Read, Write, Append .= /Std/Io/File/Char%.Of(Ascii, Text);
+#   ...
+#
+#  The @l{/Std/Io/File/Utf8%} module provides access to files using UTF-8
+#  encoding for characters. Prefer to use that unless you have a specific
+#  different character set you need to use for the files you are working with.
 
 Char@ .= /Std/Char%;
 Io@ .= /Std/Io%;
@@ -14,9 +42,22 @@ String@ .= /Std/String%;
 
 # @struct[Encoding@] A character encoding.
 #  @field[(Char@) { Stream@<Byte@>; }] encode
-#   How to encode a character as a sequence of bytes.
+#   How to encode a character as a sequence of bytes. There is not currently
+#   a great way to indicate error for characters that cannot be encoded.
+#
+#   @arg[Char@][c] A character to encode.
+#   @returns[Stream@<Byte@>] The stream of bytes encoding the given character.
+#   
 #  @field[<<@>@ M@>(Monad@<M@>, In@<Byte@, M@>) { In@<Char@, M@>; }] decode
-#   How to decode a sequence of bytes into a sequence of characters.
+#   How to decode a sequence of bytes into a sequence of characters. There is
+#   not currently a great way to indicate error for invalid sequences of bytes
+#   in the input stream.
+#
+#   @arg[<@>@][M@] The monadic context type.
+#   @arg[Monad@<M@>][m] The monadic context.
+#   @arg[In@<Byte@, M@>][in] The byte input stream.
+#   @returns[In@<Char@, m@>]
+#    An input stream that reads characters from the given byte stream.
 Encoding@ = *(
   (Char@) { Stream@<Byte@>; } encode,
   <<@>@ M@>(Monad@<M@>, In@<Byte@, M@>) { In@<Char@, M@>; } decode
@@ -26,6 +67,15 @@ Encoding@ = *(
 #  @arg[Encoding@][encoding] The character encoding to use.
 #  @arg[Mode@][mode] Whether to open files in binary or text mode.
 #  @return[...] Character based APIs that use the given character encoding.
+#
+#  You provide a character encoding and text mode, and this will supply
+#  functions for reading, writing, and appending to files and standard input
+#  and output streams using the given character encoding and text mode.
+#
+#  For example, assuming Utf8 is an instance of Encoding@ for UTF-8:
+#
+#  @code[fble] @
+#   Stdin, Stdout, Stderr, Read, Write, Append .= /Std/Io/File/Char%.Of(Utf16, Text);
 Of = (Encoding@ encoding, Mode@ mode) {
   Byte = /Std/Io/File/Byte%;
 
@@ -44,6 +94,17 @@ Of = (Encoding@ encoding, Mode@ mode) {
   #  @arg[Monad@<M@>][m] The monad instance.
   #  @arg[Io@<M@>][io] Interface for performing io.
   #  @returns[M@<In@<Char@, M@>>] The standard input stream.
+  #
+  #  For example, to read the first character of standard input:
+  #
+  #  @code[fble] @
+  #   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+  #     In@<Char@, M@> in := m.do(Stdin(m, io));
+  #     Maybe@<Char@> mchar := m.do(in);
+  #     mchar.?(nothing: ...);   # empty input file.
+  #     Char@ char = mchar.just; # char is the first character of the input.
+  #     ...
+  #   };
   <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<In@<Char@, M@>>; }
   Stdin = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
     In@<Byte@, M@> stdin := m.do(Byte.Stdin(m, io, mode));
@@ -55,6 +116,14 @@ Of = (Encoding@ encoding, Mode@ mode) {
   #  @arg[Monad@<M@>][m] The monad instance.
   #  @arg[Io@<M@>][io] Interface for performing io.
   #  @returns[M@<Out@<Char@, M@>>] The standard output stream.
+  #
+  #  For example, to write characters a, b, c, to standard output:
+  #
+  #  Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+  #    Out@<Char@, M@> out := m.do(Stdout(m, io));
+  #    Unit@ _ := out(Each[Char|a, Char|b, Char|c]);
+  #    m.return(Success);
+  #  };
   <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Char@, M@>>; }
   Stdout = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
     Out@<Byte@, M@> stdout := m.do(Byte.Stdout(m, io, mode));
@@ -66,6 +135,14 @@ Of = (Encoding@ encoding, Mode@ mode) {
   #  @arg[Monad@<M@>][m] The monad instance.
   #  @arg[Io@<M@>][io] Interface for performing io.
   #  @returns[M@<Out@<Char@, M@>>] The standard error stream.
+  #
+  #  For example, to write characters a, b, c, to standard error:
+  #
+  #  Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+  #    Out@<Char@, M@> out := m.do(Stderr(m, io));
+  #    Unit@ _ := out(Each[Char|a, Char|b, Char|c]);
+  #    m.return(Success);
+  #  };
   <<@>@ M@>(Monad@<M@>, Io@<M@>) { M@<Out@<Char@, M@>>; }
   Stderr = <<@>@ M@>(Monad@<M@> m, Io@<M@> io) {
     Out@<Byte@, M@> stderr := m.do(Byte.Stderr(m, io, mode));
@@ -73,9 +150,6 @@ Of = (Encoding@ encoding, Mode@ mode) {
   };
 
   # @func[Read] Opens a file for reading.
-  #  Note: the opened file will be closed automatically when you are done
-  #  reading from it.
-  #
   #  @arg[<@>@][M@] The monadic type for side effects.
   #  @arg[Monad@<M@>][m] The monad instance.
   #  @arg[Io@<M@>][io] Interface for performing io.
@@ -83,6 +157,22 @@ Of = (Encoding@ encoding, Mode@ mode) {
   #  @returns[M@<Maybe@<In@<Char@, M@>>>]
   #   An input stream for the file to read. Nothing if the file could not be
   #   opened for reading.
+  #
+  #  The opened file will be closed automatically when you are done reading from
+  #  it.
+  #
+  #  For example, to read the first character of a file 'foo.txt':
+  #
+  #  @code[fble] @
+  #   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+  #     Maybe@<In@<Char@, M@>> min := m.do(Read(m, io, Str|'foo.txt'));
+  #     min.?(nothing: ...);            # unable to open file.
+  #     In@<Char@, M@> in = min.just;   # file opened for read.
+  #     Maybe@<Char@> mchar := m.do(in);
+  #     mchar.?(nothing: ...);      # the file is empty.
+  #     Char@ char = mchar.just;    # char is the first character of the file.
+  #     ...
+  #   };
   <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<In@<Char@, M@>>>; }
   Read = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
     Maybe@<In@<Byte@, M@>> file := m.do(Byte.Read(m, io, path, mode));
@@ -91,9 +181,6 @@ Of = (Encoding@ encoding, Mode@ mode) {
   };
 
   # @func[Write] Opens a file for writing.
-  #  Note: the opened file will be closed automatically when you are done
-  #  writing to it.
-  #
   #  @arg[<@>@][M@] The monadic type for side effects.
   #  @arg[Monad@<M@>][m] The monad instance.
   #  @arg[Io@<M@>][io] Interface for performing io.
@@ -101,6 +188,19 @@ Of = (Encoding@ encoding, Mode@ mode) {
   #  @returns[M@<Maybe@<Out@<Char@, M@>>>]
   #   An output stream for writing to the file. Nothing if the file could not be
   #   opened for writing.
+  #
+  #  The opened file is closed automatically when you are done writing to it.
+  #
+  #  For example, to write characters a, b, c to foo.txt:
+  #
+  #  @code[fble] @
+  #   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+  #     Maybe@<Out@<Byte@, M@>> mout := m.do(Write(m, io, Str|'foo.txt'));
+  #     mout.?(nothing: ...);             # unable to open file.
+  #     Out@<Char@, M@> out := mout.just; # file open for writing.
+  #     Unit@ _ := out(Each[Char|a, Char|b, Char|c]);
+  #     m.return(Success);
+  #   };
   <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<Out@<Char@, M@>>>; }
   Write = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
     Maybe@<Out@<Byte@, M@>> file := m.do(Byte.Write(m, io, path, mode));
@@ -109,9 +209,6 @@ Of = (Encoding@ encoding, Mode@ mode) {
   };
 
   # @func[Append] Opens a file for appending.
-  #  Note: the opened file will be closed automatically when you are done
-  #  appending to it.
-  #
   #  @arg[<@>@][M@] The monadic type for side effects.
   #  @arg[Monad@<M@>][m] The monad instance.
   #  @arg[Io@<M@>][io] Interface for performing io.
@@ -119,6 +216,19 @@ Of = (Encoding@ encoding, Mode@ mode) {
   #  @returns[M@<Maybe@<Out@<Char@, M@>>>]
   #   An output stream for appending to the file. Nothing if the file could not
   #   be opened for writing.
+  #
+  #  The opened file is closed automatically when you are done appending to it.
+  #
+  #  For example, to append characters a, b, c to foo.txt:
+  #
+  #  @code[fble] @
+  #   Main@ Demo = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, List@<String@> args) {
+  #     Maybe@<Out@<Byte@, M@>> mout := m.do(Append(m, io, Str|'foo.txt'));
+  #     mout.?(nothing: ...);             # unable to open file.
+  #     Out@<Char@, M@> out := mout.just; # file open for append.
+  #     Unit@ _ := out(Each[Char|a, Char|b, Char|c]);
+  #     m.return(Success);
+  #   };
   <<@>@ M@>(Monad@<M@>, Io@<M@>, String@) { M@<Maybe@<Out@<Char@, M@>>>; }
   Append = <<@>@ M@>(Monad@<M@> m, Io@<M@> io, String@ path) {
     Maybe@<Out@<Byte@, M@>> file := m.do(Byte.Append(m, io, path, mode));
