@@ -448,12 +448,12 @@
      x@;
    };
    
-   @ AnotherInt@ = F(Int@);
+   AnotherInt@ = F(Int@);
  
   But you may as well just write:
  
   @code[fble] @
-   @ AnotherInt@ = Int@;
+   AnotherInt@ = Int@;
  
   There is support for polymorphism in fble, which allows you to write
   functions parameterized on types, but it is a different mechanism from

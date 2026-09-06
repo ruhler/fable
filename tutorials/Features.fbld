@@ -41,7 +41,7 @@
   Fble supports user defined structure types. For example:
 
   @code fble @
-   @ Person@ = *(String@ name, Int@ age);
+   Person@ = *(String@ name, Int@ age);
 
    Person@ george = Person@(Str|'George', 8);
    Person@ fred = @(name: Str|'fred', age: 10);
@@ -245,7 +245,7 @@
    For example:
 
    @code fble @
-    List@ sorted = Sort((Record@ x, Record@ y) { Gt(x.id, y.id); }, list);
+    List@ sorted = Sort(list, (Record@ x, Record@ y) { Gt(x.id, y.id); });
 
  @section Generics
   Fble supports polymorphic data types and functions with straight-forward
@@ -302,12 +302,12 @@
    };
 
    Hashable@<Bool@> BoolHashable = @(
-    equals: /Core/Bool/Eq%.Eq,
+    equals: /Std/Bool/Eq%.Eq,
     hash: (Bool@ x) { x.?(true: 1, false: 0); }
    );
 
    Hashable@<Int@> IntHashable = @(
-    equals: /Core/Int/Eq%.Eq,
+    equals: /Std/Int/Eq%.Eq,
     hash: (Int@ x) { x; }
    );
 
@@ -420,7 +420,7 @@
 
   @code[fble] @
    # Declare a foreign function called PutChar:
-   (Char@) { Unit@; } PutChar = @<PutChar>|PutChar;
+   (Char@) { Unit@; } PutChar;
 
    # Call that function like any normal function:
    (Stream@<Char@>) { Unit@; }

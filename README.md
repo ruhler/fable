@@ -54,7 +54,7 @@ The latest generated documentation is also available online at
 
 * **pkgs/**: Sample fble library and application packages.
 
-* **spec/**: Specification of the fble language, including spec tests.
+* **spec/**: Specification of the fble language, including language tests.
 
 * **test/**:  Source code for fble test binaries and other test utilities.
 

@@ -38,7 +38,7 @@
   @def[include/] Public header files for the fble library.
   @def[lib/] Source code for an fble interpreter and compiler implemented in C.
   @def[pkgs/] Sample fble library and application packages.
-  @def[spec/] Specification of the fble language, including spec tests.
+  @def[spec/] Specification of the fble language, including language tests.
   @def[test/]  Source code for fble test binaries and other test utilities.
   @def[thoughts/] A collection of running discussions about fble.
   @def[tutorials/] Fble language tutorials.

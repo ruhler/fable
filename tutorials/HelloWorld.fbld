@@ -44,7 +44,7 @@
     StringE .= /Std/Char/Ascii/Stream%;
     Stream@ .= /Std/Stream%;
 
-   Names ending in the @l{@} character are types. Names without @L{@} are
+   Names ending in the @l{@} character are types. Names without @l{@} are
    values. In this case @L{Char@} is a type and @L{StringE} is a function
    value.
 
@@ -200,7 +200,7 @@
   @subsection Formatted Output
    To make nicer formatted output, we can use the @L{FormatE} function from
    the @l{/Std/Char/Ascii/Stream%} module. The @L{FormatE} function takes a
-   format string which can contain @L{%s} format specifiers in place of
+   format string which can contain @l{%s} format specifiers in place of
    arguments which are supplied after the format string. Each argument should
    be a @L{Stream@<Char@>}, just like you got when you used @L{StringE} and
    @L{Show} functions.
