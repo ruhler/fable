@@ -1314,3 +1314,18 @@ Or I could do the opposite. Use wmain with wchar_t everywhere, and define a
 I don't know what to do. If I don't do something for windows, unicode
 character support is basically broken on that platform.
 
+---
+
+* Should string show not show surrounding quotes if there is no punctuation?
+ - Like, is the idea it is formatted as an fble word? Then we should be able
+   to output things like hello without surrounding quotes, right?
+
+There's nothing wrong with explicit single quotes. That's still compatible
+with idea of it formatted as a word. And that makes it more obvious that it's
+a string being printed. Like, compare: 
+
+  The value is: false
+  The value is: 'false'
+
+The second one does a better job suggesting it's a string.
+

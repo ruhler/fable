@@ -1,6 +1,22 @@
 @doc Fble Release Notes
  @@FbleVersionStamp
 
+ @section fble-0.6 September 2026
+  The following list highlights the most notable changes from fble-0.5.
+
+  @subsection Fble Language
+   @item Change function bind syntax from '<-' to ':='.
+   @item Remove explicit kind from let syntax.
+   @item Add struct import expression.
+   @item Add a foreign function interface (FFI) to fble.
+   @item Remove undef expressions obsoleted by FFI.
+   @item Add support for composite literal letter types.
+   @item Distinguish between type levels and kinds.
+
+  @subsection Library
+   @item Completely rewrite the standard library.
+   @item Add documentation and examples for everything in the standard library.
+
  @section fble-0.5 July 2025
   The following list highlights the most notable changes from fble-0.4.
 

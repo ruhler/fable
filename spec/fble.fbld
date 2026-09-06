@@ -4,33 +4,33 @@
  @section 1. Introduction
   Fble is a general purpose functional programming language with support for
   polymorphism and modularity.
-  
+
   @subsection 1.1 Goals
    The primary design goals of fble are:
-   
+
    @item
     Fble should be as simple a language as possible while still being useful.
     A simple language will hopefully be simple to specify, simple to learn,
     simple to understand, simple to program, powerful, and low cost to develop
     high quality tools for.
-   
+
    @item
     Fble should support high performance, low overhead computing. This is
     achieved by using a static type system and having a very clear performance
     model that a developer can optimize for.
-   
+
    @item
     Fble should be a joy to program in. It should be easy to describe the
     majority of programs we want to describe, not tediously difficult. To
     accomplish this, fble allows functions to be declared locally with access
     to variables in the context where they are declared, and fble supports
     polymorphic types and functions.
-   
+
    @item
     Fble should support programming at scale. That is, namespace control and
     composition of modules developed by different individual developers or
     organizations.
-  
+
   @subsection 1.2 Overview
    Fble is based around the primitive data types of structs, unions, and
    functions. It is a strongly and statically typed language supporting
@@ -40,7 +40,7 @@
    polymorphism, and structs for types in addition to normal values.
    Additional syntax is provided to make structs suitable for describing and
    manipulating namespaces.
- 
+
  @section @label[variables][2. Types and Variables]
   @subsection 2.1 Types
    Data values and the expressions that describe them are strongly typed. A
@@ -48,17 +48,17 @@
    performed on that value. Types are used to check that an fble program is
    well formed statically. Types do not take meaningful part in the dynamic
    execution of an fble program after it has been statically checked.
-  
+
    Types are themselves treated as data values in fble, which allows us to
    reuse variables, lets, polymorphism, and structs for types in addition to
    normal values. This means an expression can be used to describe either a
    normal value or a type and that types themselves have types.
-  
+
    To ensure all type information is available at compile time, there is a
    one-to-one mapping between a type and the type of that type. As a
    consequence, you can determine the value of a type if you know the type of
    that type.
-  
+
    For example, the boolean value @L{True} is a normal value. The type of
    @L{True} is the type @L{Bool@}, which is a union type. @L{Bool@} is a type
    value. The type of @L{Bool@} is known only as the type of @L{Bool@},
@@ -67,7 +67,7 @@
    expression of type @L{@<Bool@>}, you know statically that the value of that
    expression must be @L{Bool@}, so the expression need not be evaluated at
    runtime.
-  
+
    Type information is stripped away at runtime. The value of a type at
    runtime is a special unit value. Without the type information, there is no
    way to distinguish between the special unit value for different types. For
@@ -79,115 +79,115 @@
   @subsection 2.2 Type Levels
    Type levels are used to classify whether a value is a normal value, a type
    value, or something else. Using the example in the previous section:
-  
+
    @item @L{True} is a normal value. It has type level 0.
    @item @L{Bool@} is a type value. It has type level 1.
    @item @L{@<Bool@>} is a type of a type value. It has type level 2.
    @item @L{@<@<Bool@>>} has type level 3, and so on.
-  
+
    The type level of a value is uniquely determined by the type of the value.
-  
+
    It is useful to be able to recognize immediately whether a variable refers
    to a normal value, a type value, or something else. For that reason, we
    require different namespaces be used for different type levels of values.
    In the concrete syntax, names of normal variables are unadorned, while
    names of type variables must be followed with the character @L{@}. So, for
    example, @L{True} is a normal value, and @L{Bool@} is a type value.
-  
+
    The @L{@} character is not considered part of the variable, but rather is
    an indicator of the namespace of the variable. So, for example @L{'Foo'@}
    is a type variable named @L{Foo}, and @L{'Foo@'} is a normal variable named
    @L{Foo@}.
-  
+
    You are not allowed to use variables to refer to higher type level values,
    because then using @L{@} in variable names to distinguish between normal
    variables and type variables would be insufficient. In practice this is not
    a significant limitation because you can use a type variable for the value
    of the type and use the typeof operator to get the type of the type as
    needed.
-  
+
   @subsection 2.3 Typeof
    @AbstractSyntax @
     Type: typeof (expr : Expr)
-  
+
    @ConcreteSyntax @
     type = '@' '<', expr, '>'
-  
+
    @Example @
     @<x>
-  
+
    Evaluates to the type of the expression, without evaluating the expression
    itself. This is primarily useful for explicitly describing the type of a
    struct that has type fields.
-  
+
    Runtime is O(1).
-  
+
   @subsection 2.4 Variables
    @AbstractSyntax @
     Expr: var (name : Name)
-  
+
    @ConcreteSyntax @
     expr = name
-  
+
    @Example @
     x
-  
+
    Variables allow data values to be reused multiple times within a program.
    In conjunction with let expressions, variables allow data values to be used
    recursively.
-  
+
    Expressions are evaluated in a context that maps variable names to values,
    along with their types. The value and type of the variable expression is
    the value and type associated with the variable name in the context.
-  
+
    In general it is legal to declare a new variable with the same name as an
    existing variable in scope. In this case, the new variable shadows the
    existing variable for as long as the new variable is in scope. The existing
    variable is not visible or accessible as long as the new variable is in
    scope.
-  
+
    The rationale for allowing variables to shadow other variables is for
    modularity: it allows you to re-use a self-contained block of code in any
    context. Otherwise self-contained blocks of code could not be reused in
    contexts that happen to declare a variable with the same name as some
    variable in the self-contained block.
-  
+
    Runtime is O(log(N)), where N is the number of variables in scope. In the
    case of delayed evaluation of functions, the number of variables in scope
    is limited by the number of variables captured by the function when it is
    created.
-  
+
   @subsection 2.5 Let
    @AbstractSyntax @
     Expr: let (bindings : [(Type, Name, Expr)]) (body : Expr)
-  
+
    @ConcreteSyntax @
     stmt = [type], name, '=', expr, {',', [type], name, '=', expr}, ';', stmt
-  
+
    @Example @
     Int@ x = mul(3, 3); mul(x, x)
     Bool@ = +(Unit@ true, Unit@ false); ...
-  
+
    Let expressions can be used to define local variables that allow values to
    be reused in multiple places in a program. Let expressions support
    recursive definitions of variables, which makes it possible to define
    recursive values.
-  
+
    The let expression is used to define variables. For each binding, a new
    variable is defined. The value of the variable is the result of evaluating
    the expression for the variable's binding.
-  
+
    The defined variables are visible in the body of the let expression. To
    support self and mutually recursive values, the defined variables are also
    visible in all of the bindings expressions.
-  
+
    While a variable can be referenced in the bindings where the variable is
    defined, the value of the variable is undefined until after the binding
    expressions have completed evaluation.
-  
+
    The value of the let expression is the value of its body. The type of the
    let expression is the type of its body.
-  
+
    When defining a variable, the type is used to specify the operations
    supported by the value of the variable.
 
@@ -197,30 +197,30 @@
    If a type is used when defining a variable, that type is used for the type
    of the variable in the binding expressions. It must match the type of the
    variable inferred from the variable's definition.
-  
+
    It is recommended that a type be specified for normal values whose types
    are relatively easy to describe, to better document types for readers of
    the code.
-  
+
    Recursively defined values must not be vacuously recursive. For example,
    the following definition is not allowed:
-  
+
    @code[fble] @
     T@ = T@; ...
-  
+
    But it is okay to define recursive types and values that involve a
    constructor somewhere, such as:
-  
+
    @code[fble] @
     T@ = +(T@ x);
 
    Vacuously defined types are reported as compile time errors. Vacuously
    defined values are reported as runtime errors.
-  
+
    Bindings are allowed to define variables with the same name as variables
    already in scope, thus shadowing the variable already in scope. Except that
    the variables defined in a single let expression must have distinct names.
-  
+
    Implementations are encouraged to emit warnings for unused variables, with
    the convention that no warnings should be produced for variables starting
    with @L{_} in their name. This allows the programmer to annotate a variable
@@ -239,108 +239,108 @@
   A struct value is a grouping of other values. The items of a struct are
   organized into a finite number of fields. Each field has a name, used to
   identify the field, and a type, specifying the type of value for that field.
-  
+
   Struct values are constructed by supplying values for all fields of the
   struct. Individual components of a struct can be accessed by field name.
-  
+
   Struct values can be used for namespaces, by grouping together a collection
   of types and normal values. Syntax is provided for bulk exporting and
   importing of variables via struct values to facilitate this use case.
-  
+
   @subsection 3.1 Struct Type
    @AbstractSyntax @
     Expr: struct_type (fields : [(Type, Name)])
-  
+
    @ConcreteSyntax @
     expr = '*(', [type, name, {',', type, name}], ')'
-  
+
    @Example @
     *()                 # The Unit type.
     *(Int@ x, Int@ y)   # The type of a pair of ints x, y.
-  
+
    Struct types are considered equal if their fields are equal, including
    field types, field names, and the order of the fields.
-  
+
    Runtime is O(1).
-  
+
   @subsection 3.2 Struct Value
    @AbstractSyntax @
     Expr: struct_value (type : Type) (args : [Expr])
-  
+
    @ConcreteSyntax @
     expr = type, '(', [expr, {',', expr}], ')'
-  
+
    @Example @
     Coord@(3, 5)
-  
+
    The type of the struct value is the explicit type provided, which must be a
    struct type. The number of arguments provided must match the number of
    fields in the provided type, and the type of each argument must match the
    type of the field of the struct type in the same position.
-  
+
    The expression is evaluated by evaluating all arguments and creating a
    struct value with the results. The arguments may be evaluated in any order,
    sequentially or in parallel.
-  
+
    Runtime is O(N) plus the runtimes of the arguments, where N is the number
    of arguments.
-  
+
   @subsection 3.3 Struct Access
    @AbstractSyntax @
     Expr: struct_access (object : Expr) (field : Name)
-  
+
    @ConcreteSyntax @
     expr = expr, '.', name
-  
+
    @Example @
     x.first
-  
+
    Returns the value passed to the struct at the corresponding field position
    when the struct was constructed.
-  
+
    The object must be a struct value. The field must refer to a field of that
    struct value. The type of the expression is the type of the field being
    accessed.
-  
+
    The expression is evaluated by evaluating the object, then accessing its
    field value.
-  
+
    Runtime is O(log(N)) plus the runtime of the struct object, where N is the
    number of fields in the struct.
 
   @subsection 3.4 Struct Export
    @AbstractSyntax @
     Expr: struct_export (args : [(Name, Expr)])
-  
+
    @ConcreteSyntax @
     expr = '@' '(', [field_arg, {',', field_arg}] ')'
-  
+
    @Example @
     @(x: 3, y: 5)
     @(Bool@, True, False, Not: NotInternal)
-  
+
    Allows you to export values to a struct easily by constructing a struct
    value with an implicit type. When defining structs used as namespaces, it
    is tedious to have to repeat the types of the entities being defined and to
    worry about what order they are defined in. The struct export expression
    makes it more convenient to define structs used as namespaces.
-  
+
    As a syntactic sugar, if no value for a field is provided, its value is
    assumed to be the variable with same name as the field. For example, the
    above example is equivalent to:
-  
+
    @code[fble] @
     @(Bool@: Bool@, True: True, False: False, Not: NotInternal)
-  
+
    The type of the struct value is a struct type with fields defined in the
    same order as the struct export expression: the name of the field is the
    name provided and the type of the field is the type of the argument
    provided.
-  
+
    The expression is evaluated by evaluating all arguments and creating a
    struct value with the results. The arguments may be evaluated in any order,
    sequentially or in parallel.
-  
+
    Runtime is O(N) plus the runtimes of the arguments, where N is the number
    of arguments.
 
@@ -363,7 +363,7 @@
    arguments take their values from the source struct value.
 
    In the above example, the definition of @L{w} is equivalent to:
-  
+
    @code[fble] @
     Vector@ w = @(x: 3, y: v.y, z: v.z);
 
@@ -380,7 +380,7 @@
 
    For consistency, src is still evaluated even if all fields are provided
    explicitly.
-  
+
    Runtime is O(N) plus the runtimes of the arguments, where N is the number
    of fields of the struct.
 
@@ -389,7 +389,7 @@
     Expr: struct_import (imports : [(Type, Name, Name)]) (def : Expr) (body : Expr)
 
    @ConcreteSyntax @
-    stmt = [type], name, ['(.' name ')'] {',' [type], name, ['(.' name ')']}, '.=', expr, ';', stmt 
+    stmt = [type], name, ['(.' name ')'] {',' [type], name, ['(.' name ')']}, '.=', expr, ';', stmt
 
    @Example @
     Bool@, True, False .= /Std/Bool%;
@@ -458,114 +458,114 @@
   The possible choices are organized into a finite number of fields. Each
   field has a name, used to identify the field, and a type, specifying the
   type of value for that field.
-  
+
   Union values are constructed by supplying a value for a particular field of
   the union. The particular value for the union can be accessed by field name,
   and the union can be used to select among other values and expressions based
   on the field present in the union value.
-  
+
   @subsection 4.1 Union Type
    @AbstractSyntax @
     Type: union_type (fields : [(Type, Name)])
-  
+
    @ConcreteSyntax @
     type = '+(', type, name, {',', type, name}, ')'
-  
+
    @Example @
     +(Unit@ true, Unit@ false)
-  
+
    Union types are considered equal if their fields are equal, including field
    types, field names, and the order of the fields.
-  
+
    Runtime is O(1).
-  
+
   @subsection 4.2 Union Value
    @AbstractSyntax @
     Expr: union_value (type : Type) (field : Name) (arg : Expr)
-  
+
    @ConcreteSyntax @
     expr = type, '(', name, ':', expr, ')'
-  
+
    @Example @
     Maybe@(Just: 3)
-  
+
    The type of the union value is the type provided, which must be a union
    type.  The supplied argument name must be of a field in the union type, and
    the type of the argument must match the type of that field.
-  
+
    The expression is evaluated by evaluating the argument and creating a union
    value with the result.
-  
+
    Runtime is O(log(N)) plus the runtime of the arg, where N is the number of
    fields in the union.
-  
+
   @subsection 4.3 Union Access
    @AbstractSyntax @
     Expr: union_access (object : Expr) (field : Name)
-  
+
    @ConcreteSyntax @
     expr = expr, '.', name
-  
+
    @Example @
     x.just
-  
+
    Returns the value passed to the union at the corresponding field position
    when the union was constructed. Behavior is undefined if the union tag does
    not match the field being accessed; implementations are encouraged to
    provide meaningful error messages in this case.
-  
+
    The object must be a union value. The field must refer to a field of that
    union value. The type of the expression is the type of the field being
    accessed.
-  
+
    The expression is evaluated by evaluating the object, then accessing its
    field value.
-  
+
    Runtime is O(log(N)) plus the runtime of the object, where N is the number
    of fields in the union.
-  
+
   @subsection 4.4 Union Select
    @AbstractSyntax @
     Expr: union_select (condition : Expr) (choices : [(Name, Expr)]) (default : Expr)
-  
+
    @ConcreteSyntax @
-    expr = expr, '.?(', name, ':', expr, {',', name, ':', expr}, [',', ':', expr], ')' 
+    expr = expr, '.?(', name, ':', expr, {',', name, ':', expr}, [',', ':', expr], ')'
     stmt = expr, '.?(', name, ':', expr, {',', name, ':', expr} ')', ';', stmt
-  
+
    @Example @
     mfoo.?(Just: mfoo.Just, Nothing: 3)
     char.?(a: True, b: True, : False)
     { char.?(a: True, b: True); False; }
-  
+
    The condition must be a union value. Returns the value of the choice
    selected by the tag of the condition, without causing any other choices to
    be evaluated. The type of all choices must be the same.
-  
+
    If no default is provided, a choice must be present for each field of the
    condition's union type. If a default is provided, the default value will be
    used for any fields not explicitly listed. The fields must be listed in the
    same order as they are declared in the union type, regardless of whether or
    not a default value is provided. At least one non-default choice must be
    provided.
-  
+
    A default branch may be specified even if all fields have explicit
    branches.  This allows new fields to be added to the union type, defaulting
    to the default branch instead of having to update all union select
    expressions on that type. Any errors in compilation of the default branch
    are considered errors in the program, even if the default branch is unused.
-  
+
    The expression is evaluated by evaluating the condition, then evaluating
    the choice selected by the condition. No other choices are evaluated.
-  
+
    Runtime is O(log(N)) plus the runtimes of the condition and selected
    argument, where N is the number of fields in the union.
-  
+
    The stmt form of syntax is an alternate syntax to reduce syntactic overhead
    of nested union select expressions. In this syntax the body of the default
    branch is specified in the statement following the union select.
-  
+
    For example, the following union select expression:
-  
+
    @code[fble] @
     x.?(
       true: y.?(
@@ -574,72 +574,72 @@
       false: y.?(
         true: C,
         : D));
-  
+
    Is equivalent to the following statement based form:
-  
+
    @code[fble] @
     {
       x.?(true: { y.?(true: A); B; });
       y.?(true: C);
       D;
     }
- 
+
  @section @label[functions][5. Functions]
   A function is a mapping from an argument value to a result value.
   The argument has a name, used to identify the argument in the body of the
   function, and a type, specifying the type of value that can be supplied for
   the argument. A function has a return type, specifying the type of value
   that will result when applying the function.
-  
+
   Functions are described using the fble expression language. A function can
   be applied to an argument of appropriate type to produce a value with the
   return type of the function. Syntactic sugar is provided to make it easier
   to describe multi-argument functions and for the special case of calling a
   function with an anonymous function value passed as an argument.
-  
+
   @subsection 5.1 Function Type
    @AbstractSyntax @
     Type: func_type (arg : Type) (return : Type)
-  
+
    @ConcreteSyntax @
     block = '(', type, {',', type}, ')', block
-  
+
    @Example @
     (Int@) { Bool@; }
     (Int@) { (Int@) { Bool@; }; }
     (Int@)(Int@) { Bool@; }
     (Int@, Int@) { Bool@; }
-  
+
    The function type describes the type of a function value by specifying the
    function's argument and return types.
-  
+
    Function arguments can be any kind of value, including types, structs,
    unions, or functions.
-  
+
    Two function types are equal if their argument and return types are equal.
 
    The concrete syntax allows you to specify multiple arguments in a function
    type. This is syntactic sugar for nested single argument function types.
    For example, the following two expressions describe the same type:
-  
+
    @code[fble] @
     (a, b) { c; }
     (a) { (b) { c; }; }
-    
+
    Runtime is O(1).
-  
+
   @subsection 5.2 Function Value
    @AbstractSyntax @
     Expr: func_value (arg : (Type, Name)) (body : Expr)
-  
+
    @ConcreteSyntax @
     block = '(', type, name, {',', type, name}, ')', block
-  
+
    @Example @
     (Bool@ a) { a.?(true: 1, false: 0); }
     (Bool@ a)(Bool@ b) { a.?(true: b, false: False); }
     (Bool@ a, Bool@ b) { a.?(true: b, false: False); }
-  
+
    The function value expression is used to describe a function value given
    the argument and the body of the function. The return type of the function
    is inferred to be the type of the body of the function. The argument name
@@ -653,29 +653,29 @@
    The concrete syntax allows you to specify multiple arguments in a function
    value. This is syntactic sugar for nested single argument function values.
    For example, the following three expressions describe the same function:
-  
+
    @code[fble] @
     (Bool@ a, Bool@ b) { a.?(true: b, false: False); }
     (Bool@ a)(Bool@ b) { a.?(true: b, false: False); }
     (Bool@ a) { (Bool@ b) { a.?(true: b, false: False); }; }
-  
+
    Runtime is O(N log(M)), where N is the number of variables in scope that
    are captured by the function and M is the number of variables in scope.
    Only variables referenced in the body of the function are captured by the
    function.
-  
+
   @subsection 5.3 Function Application
    @AbstractSyntax @
     Expr: func_apply (func : Expr) (arg : Expr)
-  
+
    @ConcreteSyntax @
     expr = expr, '(', expr, {',', expr}, ')'
-  
+
    @Example @
     foo(x)
     foo(x)(y)
     foo(x, y)
-  
+
    The application expression is used to apply a function to an argument.
    The supplied argument must match the type specified for the function. The
    application expression evaluates to the value of the body of the function
@@ -685,7 +685,7 @@
    application. This is syntactic sugar for nested single argument function
    application. For example, the following two expressions describe the same
    function application:
-  
+
    @code[fble] @
     foo(x)(y)
     foo(x, y)
@@ -707,27 +707,27 @@
   @subsection @label[bind][5.4 Function Bind]
    @AbstractSyntax @
     Expr: func_bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
-  
+
    @ConcreteSyntax @
-    stmt = type, name, {',', type, name}, ':=', expr, ';', stmt                 
-  
+    stmt = type, name, {',', type, name}, ':=', expr, ';', stmt
+
    @Example @
     Int@ x := Map(l); f(x, y)
-  
+
    Function bind is syntactic sugar for calling a function with an anonymous
    function as its argument. It is equivalent to:
-  
+
    @code[txt] @
     func_apply func (func_value args [body])
-  
+
    For example, the expression:
-  
+
    @code[fble] @
     Int@ x := Map(l);
     f(x, y)
-  
+
    Desugars to:
-  
+
    @code[fble] @
     Map(l, (Int@ x) { f(x, y); });
 
@@ -737,18 +737,18 @@
    @code[fble] @
     Int@ x, Bool@ y := Map(l);
     f(x, y)
-  
+
    Desugars to:
-  
+
    @code[fble] @
     Map(l, (Int@ x, Bool@ y) { f(x, y); });
-  
+
    Function bind is particularly suited for abstracting glue logic that
    manipulates how program statements are combined. For example, it can be
    used to hide error propagation based on a @L{Maybe@} monad.
-  
+
    Instead of:
-  
+
    @code[fble] @
     Maybe@ a = f(x);
     a.?(
@@ -757,42 +757,42 @@
         b.?(just: h(b.just), nothing: Nothing);
       },
       nothing: Nothing);
-  
+
    And instead of the slightly better:
-  
+
    @code[fble] @
     (Maybe@, (X@) { Maybe@; }) { Maybe@; }
     Maybe = (Maybe@ m, (X@) { Maybe@; } f) {
       m.?(just: f(x.just), nothing: Nothing);
     };
-    
+
     Maybe(f(x), (X@ a) {
       Maybe(g(a), (X@ b) {
         h(b);
       };
     };
-  
+
    You can write:
-  
+
    @code[fble] @
     (Maybe@)((X@) { Maybe@; }) { Maybe@; }
     Maybe = (Maybe@ m)((X@) { Maybe@; } f) {
       m.?(just: f(x.just), nothing: Nothing);
     };
-    
+
     X@ a := Maybe(f(x));
     X@ b := Maybe(g(x));
     h(b);
-  
+
    Which more clearly separates the glue logic from the meat of the program.
-  
+
    The function provided in the bind expression may be a polymorphic function
    value, in which case type inference is performed as with func_apply
    expressions.
-  
+
    Struct types cannot be used for the function in bind syntax, even though
    they share a similar concrete syntax to function application.
- 
+
  @section @label[polymorphism][6. Polymorphism]
   Polymorphism allows types and values to be parameterized by types.
 
@@ -800,11 +800,11 @@
    @AbstractSyntax @
     Kind: type_kind
     Kind: poly_kind (arg : Kind) (return : Kind)
-  
+
    @ConcreteSyntax @
     kind = '@'                                  (* type_kind *)
     kind = '<', kind, {',', kind}, '>', kind    (* poly_kind *)
-  
+
    @Example @
     @
     <@,@>@
@@ -826,64 +826,64 @@
    use when something of kind @L{@} is expected, but not the other way around.
    A poly kind is compatible with another poly kind if both its argument and
    return kinds are compatible with the other argument and return.
-  
+
    When using a let expression to declare a polymorphic recursive type
    variable, the kind of the type variable is treated as non-polymorphic
    anywhere it appears in the let bindings. This restriction ensures type
    checking is possible by restricting the set of recursive types that can be
-   described to ones that the type checker can handle without difficulty.  
+   described to ones that the type checker can handle without difficulty.
 
    The concrete syntax allows you to specify multiple arguments in a poly
    kind. This is syntactic sugar for nested single argument poly kinds. For
    example, the following two variations describe the same kind:
-  
+
    @code[fble] @
     <@,@,@>@
     <@><@><@>@
-  
+
   @subsection 6.2 Poly Value
    @AbstractSyntax @
     Expr: poly_value (arg : (Kind, TypeName)) (body : Expr)
-  
+
    @ConcreteSyntax @
     block = '<', kind, name, {',', kind, name}, '>', block
-   
+
    @Example @
     <@ T@> { +(T@ just, Unit@ nothing); }
     <@ T@>(T@ x){ Maybe@<T@>(just: x); }
-  
+
    A polymorphic value is a value that is parameterized by one or more
    abstract types. The type of a polymorphic value depends on the type
    arguments you supply it, but the runtime value does not.
-  
+
    The type of a poly value is a poly type value with the same arguments as
    the poly value whose body describes the type of the poly body. For example,
    the type of the poly value:
-  
+
    @code[fble] @
     <@ T@> { Maybe@<T@>(nothing: Unit@); }
-  
+
    Is the poly type:
-  
+
    @code[fble] @
     <@ T@> { Maybe@<T@>; }
-  
+
    The body of a poly is evaluated as part of evaluation of the poly value.
    The runtime is the runtime of the body.
-  
+
   @subsection 6.3 Poly Application
    @AbstractSyntax @
     Expr: poly_apply (poly : Expr) (arg : Type)
-  
+
    @ConcreteSyntax @
     expr = expr, '<', type, {',', type}, '>'
-  
+
    @Example @
     Maybe@<Int@>
     fromJust<Int@>(3)
-  
+
    Poly application is used to specialize a poly value for a specific type.
-  
+
    The type of a poly application is the type of the body of the poly value,
    with the abstract type variables substituted for the corresponding concrete
    type values provided as argument to the poly application.
@@ -891,129 +891,129 @@
    It is a type error if the type argument is not a normal, type level 1 type.
    It is a type error if the kind of the type argument is not compatible with
    the kind of the argument expected by the poly.
-  
+
    The runtime of a poly application is linear in the number of arguments plus
    the runtime of the poly. Unlike function application, poly application does
    not cause the body of the poly to be re-evaluated.
-  
+
   @subsection 6.4 Type Inference
    Type inference allows you to use poly values in place of struct types,
    union types, and function values in struct_value, union_value, and
    func_apply respectively. The type arguments of the poly are inferred and
    automatically applied by the compiler based on the types of the arguments
    to the struct_value, union_value, or func_apply.
-  
+
    For example, assume you have a polymorphic function @L{fromJust} of type:
-  
+
    @code[fble] @
     <@ T@>(T@) { Maybe@<T@>; }
-  
+
    Assuming the type of @L{3} is @L{Int@}, the func_apply expression
    @L{fromJust(3)} is rewritten by the compiler to @L{fromJust<Int@>(3)}.
-  
+
    The motivation for supporting type inference is to prevent cluttering the
    code with types that are otherwise straight forward to infer. This is
    particularly important when used in combination with function bind, where
    the common use case requires specifying the return type repeatedly for each
    call in a function bind chain.
-    
+
    It is a type error if the compiler is unable to unambiguously infer all the
    type parameters to the poly based on the arguments. For example, it would
    be impossible to infer type arguments to a poly with either of the
    following types:
-  
+
    @code[fble] @
     <@ T@>(Unit@) { T@; }
     <@ T@, @ M@>(M@<T@>) { M@<T@>; }
-  
+
    The type and runtime behavior of a poly inference expression is the same as
    the type and runtime behavior of the target combined poly application and
    struct_value/union_value/func_apply expression.
- 
+
  @section 7. Literals
   We introduce syntax for describing lists and literals to make it less
   tedious to write code involving sequences of elements of the same type and
   raw sequences of data without the overhead of punctuation between data
   elements.
-  
+
   @subsection @label[lists][7.1 List]
    @AbstractSyntax @
     Expr: list (func : Expr) (args : [Expr])
-    
+
    @ConcreteSyntax @
     expr = expr, '[', [expr, {',', expr}], ']'
-  
+
    @Example @
     List<Int@>[]
     List<Int@>[x]
     List<Int@>[x, f(y), z]
-  
+
    A list expression describes a sequence of zero or more values of the same
    type that are combined together according to a user supplied function. It
    is syntactic sugar for constructing a list value and passing it as a single
    argument to a function.
-  
+
    The list expression can be used with any function that has an argument of
    list type. A list type is any type matching the structure of the following
    type @L{L@}:
-  
+
    @code[fble] @
     L@ = +(*(E@ head, L@ tail) cons, *() nil);
-  
+
    The fields can be named anything, but the order of the fields must match
    that shown above. Any type @L{E@} of list elements may be used.
-  
+
    The list expression @L{f[a, b, c]}, assuming the type of f is
    @L{(L@) { V@; }} for some type @L{V@}, is desugared to:
-  
+
    @code[fble] @
     f(L@(cons: @(head: a, tail:
       L@(cons: @(head: b, tail:
       L@(cons: @(head: c, tail:
       L@(nil: *()()))))))));
-  
+
    Each argument to the list expression must have a type @L{E@} matching the
    element type of the list type @L{L@} expected by the function f.
-  
+
    The function provided in the list expression may be a polymorphic function
    value, in which case type inference is performed as with func_apply
    expressions.
-  
+
    Struct types and package types cannot be used for the function in list
    syntax, even though they share a similar concrete syntax to function
    application.
-  
+
    The motivation for requiring a function to be supplied as part of the list
    expression, instead of having stand alone list expressions like
    @L{[a, b, c]}, is:
-  
+
    @item
     It allows the user to specify what type of list to build instead of assuming
     a single builtin list type.
-  
+
    @item
     It make it possible to specify the type for empty lists.
-  
+
    @item
     It is consistent with literal expressions, which require a user defined
     letter type to be supplied.
-  
+
   @subsection @label[literals][7.2 Literal]
    @AbstractSyntax @
     Expr: literal (func : Expr) (letters : word)
-  
+
    @ConcreteSyntax @
     expr = expr, '|', word
-  
+
    @Example @
     Octal|177
     Str|'hello there!'
-  
+
    The literal expression is syntax that allows you to express a raw sequence
    of data without the overhead of punctuation between data elements.
    Conceptually it is syntactic sugar for a list expression with a separate
    list element for each individual letter of the literal expression's word.
-  
+
    As with the list expression, the literal expression is used with a function
    that has an argument of list type. The element type of the list specifies
    how to break down the literal word into a sequence of letters of that
@@ -1021,15 +1021,15 @@
 
    The most basic element type for use in literals is a union type with fields
    of type @L{*()} for each letter in the word.
-  
+
    For example, the element type for an octal literal might look like:
-  
+
    @code[fble] @
     Octal@ = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
-  
+
    The literal expression @L{f|077}, assuming the element type for the list
    argument to @L{f} is @L{Octal@}, is conceptually desugared to:
-  
+
    @code[fble] @
     f[Octal@(0: *()()), Octal@(7: *()()), Octal@(7: *()())];
 
@@ -1068,65 +1068,65 @@
    they share a similar concrete syntax to function application. Type
    inference is not supported with literals because the word provides no
    information about what type the function should be.
-  
+
    @subsubsection 7.2.1 Example
     To better illustrate the intended use of list and literal expressions,
     imagine we want to define a binary integer literal.
-  
+
     The type of letter is a bit:
-  
+
     @code[fble] @
      Unit@ = *();
      Bit@ = +(Unit@ 0, Unit@ 1);
-  
+
     The literal will be formed of lists of bits:
-  
+
     @code[fble] @
      Bits@ = +(*(Bit@ head, Bits@ tail) cons, Unit@ nil);
-  
+
     The function specifies how to transform a list of bits into an integer,
     assuming some int type @L{Int@}:
-  
+
     @code[fble] @
      (Int@, Bits@) { Int@; } Helper = (Int@ n, Bits@ bits) {
        bits.?(nil: n);
-    
+
        Int@ m = Add(Mul(2, n), bits.cons.head.?(0: 0, 1: 1))
        Helper(m, bit.cons.tail);
      };
-    
+
      (Bits@) { Int@; } Binary = (Bits@ bits) {
        Helper(0, bits);
      };
-  
+
     Now we can form binary literals using list or literal expressions. For
     example:
-  
+
     @code[fble] @
      Int@ 6 = Binary|110;
      Int@ x = Binary[first_bit, second_bit, third_bit];
-  
+
  @section @label[modules][8. Modules]
   Fble code is organized into a hierarchy of reusable modules. Each module
   describes a value that may depend on the value of other modules. A program
   is formed by combining a module with all of its direct and indirect
   dependencies.
-  
+
   @subsection 8.1 Organization
    Modules are organized into a tree structure. The purpose of the tree
    structure is to group modules together that are developed by the same
    organization to help avoid name conflicts.
-  
+
    The module hierarchy is described in a platform dependant manner. On a
    platform with standard file system, the following is suggested:
-  
+
    The hierarchy of modules is expressed using a directory hierarchy. The
    value of a module @l{Foo} is described in the file @l{Foo.fble} as an fble
    expression using the @l{stmt} concrete syntactic term. The child modules of
    @l{Foo} are placed in a directory @l{Foo/}.
-  
+
    For example, you might have the following directory structure:
-  
+
    @code[txt] @
     root/
      StdLib/
@@ -1144,54 +1144,54 @@
    descendants of that module. The only restriction on module dependencies
    is that there must not be any cyclic dependencies. A module may not
    reference itself, as that is considered a form of cyclic dependency.
-  
+
    A module is referred to using an absolute path, which describes a path of
    named children from the root of the module hierarchy.
-  
+
    @AbstractSyntax @
     Path: abs_path (name : [Name])
     Expr: module_path (ref : Path)
-  
+
    @ConcreteSyntax @
     path = '/', name, {'/', name}, '%'
     expr = path
-  
+
    @Example @
     /StdLib/List%
     /Unit%
     /Md5/ImplA%
-  
+
   @subsection 8.3 Program
    A program is an fble expression that creates a value that is used however
    is deemed suitable by whoever is executing the program.
-  
+
    In practice, the value could be a polymorphic function value of abstract
    monadic type. The function is applied to a builtin instance of the monadic
    type that can have side effects. For example, the type of the value might
    be:
-  
+
    @code[fble] @
     <<@>@ M@>(Monad@<M@>, Stdio@<M@>)(List@<String@>) { M@<Bool@>; };
-  
+
    The function is provided with instances of the @L{Monad@} and @L{Stdio@}
    interface and a list of command line arguments. The function is executed,
    resulting in input and output operations over the @L{Stdio@} interface, and
    the final result is converted to a standard exit code.
-  
+
    Other examples of ways to execute an fble program:
-  
+
    @item
     Evaluate the value to ensure there are no runtime errors, for testing
     purposes.
-  
+
    @item
     The value is a polymorphic function of abstract monadic type that takes an
     interface to a graphical display. The function is executed, resulting in
     updates to the display of an application window.
-  
+
    A program is formed of a module and all of its direct and indirect
    dependencies. For example, consider the following module hierarchy:
-  
+
    @code[txt] @
     StdLib/
       Unit
@@ -1199,35 +1199,35 @@
         Tests
     Md5/
       Tests
-  
+
    With the following dependency graph:
-  
+
    @code[txt] @
     /StdLib/List% -> /StdLib/Unit%
     /StdLib/List/Tests% -> /StdLib/List%, /StdLib/Unit%
     /Md5% -> /StdLib/Unit%, /StdLib/List%
     /Md5/Tests% -> /StdLib/Unit%, /Md5%
-  
+
    The module @L{/Md5/Tests%} can be turned into a program to run Md5 tests
    conceptually by forming a let expression in topological sort dependency
    order:
-  
+
    @code[txt] @
     StdLib_Unit = </StdLib/Unit%>;
     StdLib_List = </StdLib/List%>;
     Md5 = </Md5%>;
     </Md5/Tests%>;
-  
+
    Where @L{</Foo%>} is the fble expression describing the value of module
    @L{/Foo%} and we assume references to a module @L{/Foo/Bar%} in the
    expression are replaced with variables named @L{Foo_Bar}.
-  
+
    Notice in this case that the value of @L{/StdLib/List/Tests%} is not used.
-  
+
    The modules may be combined in any order that satisfies their dependencies.
-  
+
    The same module hierarchy can be used for a program to run @l{List} tests:
-  
+
    @code[txt] @
     StdLib_Unit = </Stdlib/Unit%>;
     StdLib_List = </StdLib/List%>;
@@ -1271,13 +1271,13 @@
     (Bool@, Bool@) { Bool@; } Or;
 
     @(Bool@, True, False, Not, And, Or)
- 
+
  @section @label[private][9. Private Types]
   Private types provide a mechanism to define types of values that can only
   be accessed by modules under the same location in the module hierarchy. This
   makes it possible to hide implementation details from users and enforce
   invariants on how values are constructed.
-  
+
   By default, anyone can use any operation supported by the type of a value,
   including construction, field access, conditional access, function
   application, and so on. A private type is a type whose access is restricted
@@ -1287,13 +1287,13 @@
   @subsection 9.1 Package Type
    @AbstractSyntax @
     Expr: package_type (path : Path)
-  
+
    @ConcreteSyntax @
     expr = '@', path
-  
+
    @Example @
     FooBar@ = @/Foo/Bar%;
-  
+
    The package type describes a set of modules under the same location in the
    module hierarchy by using what is called a package path. A module belongs
    to the package if the package path is a prefix of the module path.
@@ -1304,21 +1304,21 @@
    The package path for a package type need not refer to an existing module.
    There need not be any modules that satisfy the package path. A module need
    not be a member of whatever package type it constructs.
-  
+
    A package type has kind @L{@}. Two package types are considered equal if
    they have the same path.
-   
+
    Specifying the module path for a private type via a package type instead of
    directly as a module path allows fble language abstactions like variables
    and structs to be used for describing package types.
-  
+
   @subsection 9.2 Private Type
    @AbstractSyntax @
     Type: private_type (type : Type, package : Type)
-  
+
    @ConcreteSyntax @
     type = type, '.%(', type, ')'
-  
+
    @Example @
     PrivateBool@ = +(Unit@ true, Unit@ false).%(@/Foo/Bar%);
 
@@ -1341,7 +1341,7 @@
    @code[fble] @
     Bool@ = +(Unit@ true, Unit@ false);
     PrivateBool@ = Bool@.%(@/Foo/Bar%);
-    
+
     Bool@ true = Bool@(true: Unit);
     PrivateBool@ private_true = true;
     Bool@ true2 = private_true;
@@ -1357,10 +1357,10 @@
   @subsection 9.3 Private Value
    @AbstractSyntax @
     Expr: private_value (expr : Expr, package : Type)
-  
+
    @ConcreteSyntax @
     expr = expr, '.%(', path, ')'
-  
+
    @Example @
     PrivateBool@ private_true = True.%(@/Foo/Bar%);
 
@@ -1381,37 +1381,37 @@
   @subsection 9.4 Private Type Example
    The following example shows how to define a three element enum type that
    can only be accessed externally using the provided methods.
-  
+
    @code[fble] @
     @ Enum@ = +(Unit@ a, Unit@ b, Unit@ c).%(@/MyPackage%);
-    
+
     Enum@ A = Enum@(a: Unit));
     Enum@ B = Enum@(b: Unit));
     Enum@ C = Enum@(c: Unit));
-    
+
     (Enum@) { Bool@; } IsA = (Enum@ e) { e.?(a: True, : False); };
     (Enum@) { Bool@; } IsB = (Enum@ e) { e.?(b: True, : False); };
     (Enum@) { Bool@; } IsC = (Enum@ e) { e.?(c: True, : False); };
-    
+
     @(Enum@, A, B, C, IsA, IsB, IsC);
-  
+
    The @L{Enum@} type restricts access to internals of the type to modules
    starting with @L{/MyPackage} in their path. Other users are unable to
    construct or access fields of the @L{Enum@} type directly; they can only
    use the provided values @L{A}, @L{B}, @L{C} and functions @L{IsA}, @L{IsB},
    and @L{IsC}.
-  
+
   @subsection 9.5 Private Module Example
    Private types can be used to mark exported functions from a module as
    proviate, and private values can be used to effectively mark a module as
    private. For example, consider a module @L{/Foo/Internal%}:
-  
+
    @code[fble] @
     X@ = ...;
     Y@ = ...;
     X@ X = ...;
     Y@.%(@/Foo/Internal%) Y = ...;
-    
+
     @(X@, Y@, X, Y).%(@/Foo%);
 
    Any attempt to use the value of @L{Y} from a module not starting with
@@ -1421,7 +1421,7 @@
 
    Any attempt to use the value of @L{/Foo/Internal%} from a module not
    starting with @L{/Foo%} will result in a type error.
- 
+
  @section @label[foreign][10. Foreign Function Interface]
   The foreign function interface provides a way to interact with native
   platform code more easily than via fully native builtin modules. It allows
@@ -1433,10 +1433,10 @@
   @subsection 10.1 Foreign
    @AbstractSyntax @
     Expr: foreign (type : Type) (name : Name) (body : Expr)
-  
+
    @ConcreteSyntax @
     stmt = type, name, ';', stmt
-  
+
    @Example @
     (Bool@) { Bool@; } Not; ...
 
@@ -1467,105 +1467,105 @@
    doesn't violate reasonable expectations of the user of a function: namely
    that it is side effect free from the perspective of program behavior unless
    suitably typed otherwise.
-  
+
  @section 11. Abstract Syntax Reference
   @code[txt] @
    NormalName: A string of characters.
    TypeName: A string of characters.
-   
+
    Name:
       normal_name (name : NormalName)
     | type_name (name : TypeName)
     ;
-   
+
    Path:
       abs_path (name : [Name])
     ;
-   
+
    Kind:
       type_kind
     | poly_kind (arg : Kind) (result : Kind)
     ;
-   
+
    Type: Synonym for Expr where a type is expected.
-   
+
    Expr:
       typeof (expr : Expr)
     | var (name : Name)
     | let (bindings : [(Type, Name, Expr)]) (body : Expr)
     | module_path (path : Path)
-   
+
     | struct_type (fields : [(Type, Name)])
     | struct_value (type : Type) (args : [Expr])
     | struct_access (object : Expr) (field : Name)
     | struct_export (args : [(Name, Expr)])
     | struct_copy (src : Expr) (args : [(Name, Expr)])
     | struct_import (imports : [(Type, Name, Name)]) (def : Expr) (body : Expr)
-   
+
     | union_type (fields : [(Type, Name)])
     | union_value (type : Type) (field : Name) (arg : Expr)
     | union_access (object : Expr) (field : Name)
     | union_select (condition : Expr) (choices : [(Name, Expr)]) (default : Expr)
-   
+
     | func_type (arg : Type) (result : Type)
     | func_value (arg : (Type, Name)) (body : Expr)
     | func_apply (func : Expr) (arg : Expr)
     | func_bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
-   
+
     | poly_value (arg : (Kind, Name)) (body : Expr)
     | poly_apply (poly : Expr) (arg : Expr)
-   
+
     | list (func : Expr) (args : [Expr])
     | literal (func : Expr) (letters : word)
-   
+
     | package_type (path : Path)
     | private_type (type : Type) (package : Type)
     | private_value (value : Expr) (package : Type)
 
     | foreign (type : Type) (name : Name) (body : Expr)
     ;
-   
+
    Module: (value : Expr) (modules : [Module])
- 
+
  @section 12. Concrete Syntax
   @subsection 12.1 Lexical Syntax
    We have the following categories of characters:
-  
+
    @def[Whitespace] Any whitespace character, as traditionally classified.
    @def[Comment] The comment character @l{#}.
    @def[Punctuation] The characters @l{(){|};,:?=.<>+*-!$@~'\[]%/^}.
    @def[Word] Any other character.
-   
+
    The lexical syntax is used to interpret a string of arbitrary characters as
    a sequence of punctuation characters and words.
-   
+
    Whitespace is treated as a delimiter of words. The comment character and
    any following characters on the same line are treated as a delimiter of
    words. Whitespace and comments are otherwise ignored.
-   
+
    A sequence of continuous word characters is grouped together into a word.
-   
+
    A sequence of characters surrounded by single quotes is treated as a
    sequence of word characters, regardless of what class the characters come
    from. This makes it possible to specify words containing whitespace,
    comment, and punctuation characters. For example, @L{'Foo,Bar'} is treated
    as a single word where the fourth character of the word is a comma.
-   
+
    Within a single quoted word, a single quote character can be expressed by
    using two adjacent single quote characters. For example, @L{'Foo''Bar'} is
    treated as a single word where the fourth character of the word is a single
    quote.
-   
+
    Single quotes act as word delimiters. For example,
-   
+
    @code[fble] @
     Foo'.'Bar
-   
+
    is treated as three separate words: @L{'Foo'}, @L{'.'}, and @L{'Bar'}, not
    as a single word @L{'Foo.Bar'}.  The only exception is when consecutive
    single quote characters are used to embed a single quote character in a
    word.
-  
+
   @subsection 12.2 Concrete Syntax Reference
    The concrete syntax is described here using Extended Backus–Naur form as
    described in ISO/IEC 14977.
@@ -1574,28 +1574,28 @@
     word = ? word as described in the section on lexical syntax ?
     normal_name = word
     type_name =   word, '@'
-    
-    name = 
+
+    name =
        normal_name
      | type_name
      ;
-    
+
     path = '/', name, {'/', name}, '%' ;
-    
+
     kind =
      | '@'                                             (* type_kind *)
      | '<', kind, {',', kind}, '>', kind               (* poly_kind *)
      ;
-    
+
     type = expr ;
-    
+
     field_arg = name, [':', expr] ;                    (* implicit tagged expr *)
-    
-    expr = 
+
+    expr =
        '@' '<', expr, '>'                              (* typeof *)
      | name                                            (* var *)
      | path                                            (* module_path *)
-    
+
      | '*(', [type, name, {',', type, name}], ')'      (* struct_type *)
      | type, '(', [expr, {',', expr}], ')'             (* struct_value *)
      | expr, '.', name                                 (* struct_access *)
@@ -1607,48 +1607,48 @@
      | expr, '.', name                                 (* union_access *)
      | expr, '.?(', name, ':', expr,                   (* union_select *)
                {',', name, ':', expr},
-               [',', ':', expr], ')'   
-    
+               [',', ':', expr], ')'
+
      | expr, '(', expr, {',', expr}, ')'               (* func_apply *)
-    
+
      | expr, '<', type, {',', type}, '>'               (* poly_apply *)
-    
+
      | expr, '[', [expr, {',', expr}], ']'             (* list *)
      | expr, '|', word                                 (* literal *)
-    
+
      | '@', path                                       (* package_type *)
      | type, '.%', '(', path, ')'                      (* private_type *)
      | expr, '.%', '(', path, ')'                      (* private_value *)
-    
+
      | block
      ;
-    
+
     block =
        '{', stmt, '}'
      | '(', type, {',', type}, ')', block              (* func_type *)
      | '(', type, name, {',', type, name}, ')', block  (* func_value *)
      | '<', kind, name, {',', kind, name}, '>', block  (* poly_value *)
      ;
-    
+
     stmt =
        expr, ';'
      | [type], name, '=', expr,                        (* let *)
-       {',', [type], name, '=', expr}, ';', stmt       
+       {',', [type], name, '=', expr}, ';', stmt
      | [type], name, ['(.' name ')']                   (* struct_import *)
-       {',' [type], name, ['(.' name ')']}, '.=', expr, ';', stmt 
+       {',' [type], name, ['(.' name ')']}, '.=', expr, ';', stmt
      | expr, '.?(', name, ':', expr,                   (* union_select *)
                 {',', name, ':', expr} ')', ';', stmt
      | type, name,                                     (* func_bind *)
-       {',', type, name}, ':=', expr, ';', stmt                 
+       {',', type, name}, ':=', expr, ';', stmt
 
      | type, name, ';', stmt                           (* foreign *)
      ;
-    
+
     module = stmt                                      (* module_value *)
      ;
-   
+
    Notes:
-   
+
    @item
     Struct and union access share the same form. The type of the object is
     used to distinguish between the two kinds of expressions.

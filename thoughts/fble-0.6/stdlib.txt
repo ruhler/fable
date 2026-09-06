@@ -623,3 +623,11 @@ reading strings. It's sort of as messy as In@ and Out@ and In and Out.
 Where would I naturally look for these things? Well, probably
 /Std/Stream/String%, because it's streaming in strings. Fine. Leave it.
 
+---
+
+* The Cmp@ interface feels not much used
+ - When should I provide Le, Ge, etc. and when not?
+
+It's used for sorting, which is used in pprof. Sorting is a useful thing. Thus
+Cmp@ is a useful thing. Leave as is.
+

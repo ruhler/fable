@@ -307,3 +307,19 @@ I don't know. Whatever I chose, it's too big a change and too hard to audit
 now. Let's revisit when we generate html or other documentation from std
 library doc comments.
 
+---
+
+* Mark /Std/Int/IntP%, et all docs as @dev.
+
+The point of @dev is it's documentation for developers, not users. But who is
+the developer and who is the user of IntP%? It's obvious an internal function
+that isn't exported isn't for users. Only the person writing the module could
+make use of it, and by definition they are the developer. But for IntP%, it
+could be used by other modules, which could be developed by others. So...
+let's keep it as is for now. If it's confusing later, people will figure out
+they can't access it without permission.
+
+Generalizing: @dev is internal to the module. It's not related to access
+controls like we are using here. Document restricted access entities for the
+users who have access to those entities.
+

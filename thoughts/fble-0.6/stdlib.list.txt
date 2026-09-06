@@ -1029,3 +1029,19 @@ But if it's range, then I feel like it should be start and end index rather
 than start and length?
 
 Looks like I was trying to go with shortish names. Let's leave as is for now.
+
+---
+
+* Should /Std/List/Count% be merged with /Std/List/Index%?
+ - They have the same sets of dependencies?
+
+Yes, dependencies are the same. It's just weird to me to look for 'Count' in
+something called /Std/List/Index%. It feels like a different kind of thing. I
+vote keep separate as is.
+
+---
+
+* Should Tail and Init of empty lists be empty lists instead of undefined?
+
+Haskell gives an error in these cases. Let's keep consistent with that for
+now. It's easier to relax it later than to make it more strict later.

@@ -2,34 +2,12 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Should /Std/List/Count% be merged with /Std/List/Index%?
- - They have the same sets of dependencies?
-
-* Should string show not show surrounding quotes if there is no punctuation?
- - Like, is the idea it is formatted as an fble word? Then we should be able
-   to output things like hello without surrounding quotes, right?
-
-* Decide when I should use @l{...} around type names or not in doc comments.
- - For example /Std/Cmp/Show% uses it around @l{Compared@}, but not in arg
-   types?
-
-* Should Tail and Init of empty lists be empty lists instead of undefined?
-
-* The Cmp@ interface feels not much used
- - When should I provide Le, Ge, etc. and when not?
-
-* The /Std/Stream/String% module is weird in what it defines.
- - Should it be reorganized some other way?
-
 * Define sample makefiles for people who want to build compiled programs?
  - Integrate it into a tutorial somewhere?
  - Maybe as part of the modules tutorial or shortly thereafter?
 
-* Mark /Std/Int/IntP%, et all docs as @dev.
-
 * Add left side menu to generated website for tutorials?
 
-* Update release notes.
 * Double check things still work on github.
 * Proof read tutorials.
 * Make release.
