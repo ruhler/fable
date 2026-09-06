@@ -91,6 +91,9 @@ Things to consider doing for the fble-0.7 release.
  - With the goal of getting people up and running as fast as possible in fble
    with practical examples, without having to learn all details of the
    language first.
+ - Define sample makefiles for people who want to build compiled programs
+
+* Add left side menu to generated website for tutorials?
 
 * Update all the sample apps for latest features, styles, idioms.
 

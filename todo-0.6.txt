@@ -2,12 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Define sample makefiles for people who want to build compiled programs?
- - Integrate it into a tutorial somewhere?
- - Maybe as part of the modules tutorial or shortly thereafter?
-
-* Add left side menu to generated website for tutorials?
-
 * Double check things still work on github.
 * Proof read tutorials.
 * Make release.
